@@ -131,7 +131,7 @@ main (int argc, char *argv[])
 
 	/* DumConfig */
 	config = dum_config_new ();
-	ret = dum_config_set_filename (config, "./yum.conf", &error);
+	ret = dum_config_set_filename (config, "/etc/yum.conf", &error);
 	if (!ret) {
 		egg_error ("failed to set config: %s", error->message);
 		g_error_free (error);
@@ -158,7 +158,7 @@ main (int argc, char *argv[])
 
 	/* DumRepos */
 	repos = dum_repos_new ();
-	ret = dum_repos_set_repos_dir (repos, "./libdum/test/repos", &error);
+	ret = dum_repos_set_repos_dir (repos, "/etc/yum.repos.d", &error);
 	if (!ret) {
 		egg_error ("failed to set repos dir: %s", error->message);
 		g_error_free (error);
@@ -167,7 +167,7 @@ main (int argc, char *argv[])
 
 	/* DumGroups */
 	groups = dum_groups_new ();
-	ret = dum_groups_set_mapping_file (groups, "../yum/yum-comps-groups.conf", &error);
+	ret = dum_groups_set_mapping_file (groups, "/usr/share/PackageKit/helpers/yum/yum-comps-groups.conf", &error);
 	if (!ret) {
 		egg_error ("failed to set mapping file: %s", error->message);
 		g_error_free (error);
@@ -340,7 +340,13 @@ main (int argc, char *argv[])
 
 	/* DumSack */
 	sack = DUM_SACK (dum_sack_local_new ());
-	array = dum_repos_get_stores_enabled (repos, NULL);
+	array = dum_repos_get_stores_enabled (repos, &error);
+	if (array == NULL) {
+		g_print ("failed to get enabled stores: %s\n", error->message);
+		g_error_free (error);
+		goto out;
+	}
+
 	dum_sack_add_stores (sack, array);
 	g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
 	g_ptr_array_free (array, TRUE);
