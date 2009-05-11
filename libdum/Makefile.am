@@ -16,8 +16,8 @@ INCLUDES = \
 	-DPACKAGE_DATA_DIR=\""$(datadir)"\"			\
 	-DPACKAGE_LOCALE_DIR=\""$(prefix)/$(DATADIRNAME)/locale"\"
 
-dumgconfigdir = $(libdir)/dumgconfig
-dumgconfig_DATA = 						\
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = 						\
 	dum.pc
 
 lib_LTLIBRARIES =						\
@@ -26,7 +26,30 @@ lib_LTLIBRARIES =						\
 libdum_includedir = $(includedir)/libdum
 
 libdum_include_HEADERS =					\
-	dum.h
+	dum.h							\
+	dum-string.h						\
+	dum-string-array.h					\
+	dum-depend.h						\
+	dum-depend-array.h					\
+	dum-package.h						\
+	dum-package-local.h					\
+	dum-package-remote.h					\
+	dum-store.h						\
+	dum-store-local.h					\
+	dum-store-remote.h					\
+	dum-repo-md.h						\
+	dum-repo-md-master.h					\
+	dum-repo-md-filelists.h					\
+	dum-repo-md-primary.h					\
+	dum-sack.h						\
+	dum-sack-local.h					\
+	dum-sack-remote.h					\
+	dum-repos.h						\
+	dum-utils.h						\
+	dum-groups.h						\
+	dum-config.h						\
+	dum-monitor.h						\
+	dum-download.h
 
 libdum_la_SOURCES =						\
 	egg-debug.c						\

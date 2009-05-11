@@ -16,7 +16,7 @@ AC_CONFIG_MACRO_DIR([m4])
 # AGE		If libdum can be linked into executables which can be
 # 		built with previous versions of this library. Don't use.
 LT_CURRENT=1
-LT_REVISION=0
+LT_REVISION=1
 LT_AGE=0
 AC_SUBST(LT_CURRENT)
 AC_SUBST(LT_REVISION)

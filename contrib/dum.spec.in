@@ -1,0 +1,77 @@
+%define glib2_version           2.16.1
+%define alphatag                #ALPHATAG#
+
+Summary:   Simple wrapper for rpm
+Name:      dum
+Version:   #VERSION#
+Release:   0.#BUILD#%{?alphatag}%{?dist}
+License:   GPLv2+
+Group:     System Environment/Libraries
+URL:       http://www.packagekit.org
+Source0:   http://www.packagekit.org/releases/%{name}-%{version}.tar.gz
+BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
+
+BuildRequires: glib2-devel >= %{glib2_version}
+BuildRequires: sqlite-devel
+BuildRequires: libtool
+BuildRequires: docbook-utils
+BuildRequires: gnome-doc-utils
+
+Requires(post): /sbin/ldconfig
+Requires(postun): /sbin/ldconfig
+
+%description
+dum is a simple wrapper around rpm
+
+%package devel
+Summary: GLib Libraries and headers for dum
+Group: Development/Libraries
+Requires: %{name} = %{version}-%{release}
+Requires: pkgconfig
+Requires: sqlite-devel
+
+%description devel
+GLib headers and libraries for dum.
+
+%prep
+%setup -q
+
+%build
+%configure \
+        --disable-static \
+        --disable-dependency-tracking
+
+make %{?_smp_mflags}
+
+%install
+rm -rf $RPM_BUILD_ROOT
+make install DESTDIR=$RPM_BUILD_ROOT
+
+rm -f $RPM_BUILD_ROOT%{_libdir}/libdum*.a
+rm -f $RPM_BUILD_ROOT%{_libdir}/libdum*.la
+
+%clean
+rm -rf $RPM_BUILD_ROOT
+
+%post -p /sbin/ldconfig
+
+%postun -p /sbin/ldconfig
+
+%files
+%defattr(-,root,root,-)
+%doc README AUTHORS NEWS COPYING
+%{_bindir}/dum
+%{_libdir}/*libdum*.so.*
+
+%files devel
+%defattr(-,root,root,-)
+%doc README AUTHORS NEWS COPYING
+%{_libdir}/libdum*.so
+%{_libdir}/pkgconfig/dum.pc
+%dir %{_includedir}/libdum
+%{_includedir}/libdum/*.h
+
+%changelog
+* #LONGDATE# Richard Hughes <richard@hughsie.com> #VERSION#-0.#BUILD##ALPHATAG#
+- Update from git
+
