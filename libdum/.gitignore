@@ -1,0 +1,9 @@
+.deps
+.libs
+dum.pc
+*.lo
+*.la
+*.o
+dum-marshal.c
+dum-marshal.h
+
