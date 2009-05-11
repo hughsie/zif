@@ -114,9 +114,13 @@ dum_repos_get_for_filename (DumRepos *repos, const gchar *filename, GError **err
 	repos_groups = g_key_file_get_groups (file, NULL);
 	for (i=0; repos_groups[i] != NULL; i++) {
 		store = dum_store_remote_new ();
-		ret = dum_store_remote_set_from_file (store, path, repos_groups[i], error);
-		if (!ret)
+		ret = dum_store_remote_set_from_file (store, path, repos_groups[i], &error_local);
+		if (!ret) {
+			if (error != NULL)
+				*error = g_error_new (1, 0, "failed to set from %s: %s", path, error_local->message);
+			g_error_free (error_local);
 			break;
+		}
 		g_ptr_array_add (repos->priv->list, store);
 	}
 out:
@@ -209,7 +213,6 @@ dum_repos_load (DumRepos *repos, GError **error)
 		if (ret)
 			g_ptr_array_add (repos->priv->enabled, g_object_ref (store));
 	}
-
 	/* all loaded okay */
 	repos->priv->loaded = TRUE;
 	ret = TRUE;
@@ -272,7 +275,7 @@ dum_repos_get_stores_enabled (DumRepos *repos, GError **error)
 		ret = dum_repos_load (repos, &error_local);
 		if (!ret) {
 			if (error != NULL)
-				*error = g_error_new (1, 0, "failed to load repos: %s", error_local->message);
+				*error = g_error_new (1, 0, "failed to load enabled repos: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}

@@ -170,6 +170,7 @@ dum_store_remote_load (DumStore *store, GError **error)
 		if (error != NULL)
 			*error = g_error_new (1, 0, "failed to get name: %s", error_local->message);
 		g_error_free (error_local);
+		ret = FALSE;
 		goto out;
 	}
 
@@ -179,6 +180,7 @@ dum_store_remote_load (DumStore *store, GError **error)
 		if (error != NULL)
 			*error = g_error_new (1, 0, "failed to get enabled: %s", error_local->message);
 		g_error_free (error_local);
+		ret = FALSE;
 		goto out;
 	}
 
@@ -214,6 +216,12 @@ dum_store_remote_load (DumStore *store, GError **error)
 		goto out;
 	}
 
+	/* don't load MD if not enabled */
+	if (!remote->priv->enabled) {
+		egg_debug ("no loading MD as not enabled");
+		goto skip_md;
+	}
+
 	/* name */
 	cache_dir = dum_config_get_string (remote->priv->config, "cachedir", &error_local);
 	if (cache_dir == NULL) {
@@ -241,7 +249,13 @@ dum_store_remote_load (DumStore *store, GError **error)
 	}
 
 	/* set info */
-	info_data = dum_repo_md_master_get_info	(remote->priv->md_master, DUM_REPO_MD_TYPE_PRIMARY, NULL);
+	info_data = dum_repo_md_master_get_info	(remote->priv->md_master, DUM_REPO_MD_TYPE_PRIMARY, &error_local);
+	if (info_data == NULL) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "failed to get primary md info: %s", error_local->message);
+		ret = FALSE;
+		goto out;
+	}
 	dum_repo_md_set_info_data (DUM_REPO_MD (remote->priv->md_master), info_data);
 
 	/* don't load metadata for a disabled store */
@@ -272,7 +286,13 @@ dum_store_remote_load (DumStore *store, GError **error)
 	}
 
 	/* set info */
-	info_data = dum_repo_md_master_get_info	(remote->priv->md_master, DUM_REPO_MD_TYPE_FILELISTS, NULL);
+	info_data = dum_repo_md_master_get_info	(remote->priv->md_master, DUM_REPO_MD_TYPE_FILELISTS, &error_local);
+	if (info_data == NULL) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "failed to get filelists md info: %s", error_local->message);
+		ret = FALSE;
+		goto out;
+	}
 	dum_repo_md_set_info_data (DUM_REPO_MD (remote->priv->md_filelists), info_data);
 
 	/* set cache dir */
@@ -292,9 +312,16 @@ dum_store_remote_load (DumStore *store, GError **error)
 	}
 
 	/* set info */
-	info_data = dum_repo_md_master_get_info	(remote->priv->md_master, DUM_REPO_MD_TYPE_PRIMARY, NULL);
+	info_data = dum_repo_md_master_get_info	(remote->priv->md_master, DUM_REPO_MD_TYPE_PRIMARY, &error_local);
+	if (info_data == NULL) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "failed to get primary md info: %s", error_local->message);
+		ret = FALSE;
+		goto out;
+	}
 	dum_repo_md_set_info_data (DUM_REPO_MD (remote->priv->md_primary), info_data);
 
+skip_md:
 	/* okay */
 	remote->priv->loaded = TRUE;
 
@@ -322,6 +349,7 @@ dum_store_remote_set_from_file (DumStoreRemote *store, const gchar *filename, co
 	g_return_val_if_fail (!store->priv->loaded, FALSE);
 
 	/* save */
+	egg_debug ("setting store %s", id);
 	store->priv->id = g_strdup (id);
 	store->priv->filename = g_strdup (filename);
 
@@ -335,10 +363,15 @@ dum_store_remote_set_from_file (DumStoreRemote *store, const gchar *filename, co
 	}
 
 	/* get data */
-	ret = dum_store_remote_load (DUM_STORE (store), error);
-	if (!ret)
+	ret = dum_store_remote_load (DUM_STORE (store), &error_local);
+	if (!ret) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "failed to load %s: %s", id, error_local->message);
+		g_error_free (error_local);
 		goto out;
+	}
 out:
+	/* save */
 	return ret;
 }
 
@@ -367,7 +400,7 @@ dum_store_remote_set_enabled (DumStoreRemote *store, gboolean enabled, GError **
 	}
 
 	/* toggle enabled */
-	store->priv->enabled = !store->priv->enabled;
+	store->priv->enabled = enabled;
 	g_key_file_set_boolean (file, store->priv->id, "enabled", store->priv->enabled);
 
 	/* save new data to file */

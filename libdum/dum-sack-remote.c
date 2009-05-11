@@ -32,6 +32,8 @@
 #include "dum-sack-remote.h"
 #include "dum-utils.h"
 
+#include "egg-debug.h"
+
 G_DEFINE_TYPE (DumSackRemote, dum_sack_remote, DUM_TYPE_SACK)
 
 /**
@@ -67,12 +69,19 @@ dum_sack_remote_init (DumSackRemote *sack)
 {
 	GPtrArray *array;
 	DumRepos *repos;
+	GError *error = NULL;
 
 	repos = dum_repos_new ();
-	array = dum_repos_get_stores_enabled (repos, NULL);
+	array = dum_repos_get_stores_enabled (repos, &error);
+	if (array == NULL) {
+		egg_warning ("failed to get enabled stores: %s", error->message);
+		g_error_free (error);
+		goto out;
+	}
 	dum_sack_add_stores (DUM_SACK (sack), array);
 	g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
 	g_ptr_array_free (array, TRUE);
+out:
 	g_object_unref (repos);
 }
 
