@@ -120,6 +120,8 @@ gboolean		 dum_package_is_devel		(DumPackage	*package);
 gboolean		 dum_package_is_gui		(DumPackage	*package);
 gboolean		 dum_package_is_installed	(DumPackage	*package);
 gboolean		 dum_package_is_free		(DumPackage	*package);
+gint			 dum_package_compare		(DumPackage	*a,
+							 DumPackage	*b);
 
 G_END_DECLS
 

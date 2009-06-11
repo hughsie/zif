@@ -63,6 +63,35 @@ struct DumPackagePrivate
 G_DEFINE_TYPE (DumPackage, dum_package, G_TYPE_OBJECT)
 
 /**
+ * dum_package_compare:
+ **/
+gint
+dum_package_compare (DumPackage *a, DumPackage *b)
+{
+	const PkPackageId *ida;
+	const PkPackageId *idb;
+	gint val = 0;
+
+	g_return_val_if_fail (DUM_IS_PACKAGE (a), 0);
+	g_return_val_if_fail (DUM_IS_PACKAGE (b), 0);
+
+	/* shallow copy */
+	ida = dum_package_get_id (a);
+	idb = dum_package_get_id (b);
+
+	/* check name the same */
+	if (g_strcmp0 (ida->name, idb->name) != 0) {
+		egg_warning ("comparing between %s and %s", ida->name, idb->name);
+		goto out;
+	}
+
+	/* do a version compare */
+	val = dum_compare_evr (ida->version, idb->version);
+out:
+	return val;
+}
+
+/**
  * dum_package_download:
  **/
 gboolean
