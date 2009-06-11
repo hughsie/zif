@@ -674,8 +674,8 @@ dum_store_local_test (EggTest *test)
 		egg_test_failed (test, "failed to load '%s'", error->message);
 
 	/************************************************************/
-	egg_test_title (test, "check time < 1s");
-	if (elapsed < 1000)
+	egg_test_title (test, "check time < 10s");
+	if (elapsed < 10000)
 		egg_test_success (test, "time to load = %ims", elapsed);
 	else
 		egg_test_failed (test, "time to load = %ims", elapsed);
