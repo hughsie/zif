@@ -90,37 +90,45 @@ main (int argc, char *argv[])
 
 	context = g_option_context_new ("DUM Console Program");
 	g_option_context_set_summary (context, 
+		/* new */
+		"  download       Download a package\n"
+		"  getpackages    List all packages\n"
+		"  getfiles       List the files in a package\n"
+		"  resolve        Find a given package name\n"
+		"  searchname     Search package name for the given string\n"
+		"  searchdetails  Search package details for the given string\n"
+		"  searchfile     Search packages for the given filename\n"
+		"  searchgroup    Return packages in the given group\n"
+		"  whatprovides   Find what package provides the given value\n"
+		"  getdepends     List a package's dependencies\n"
+		"  repolist       Display the configured software repositories\n"
+		"  getdetails     Display details about a package or group of packages\n"
+		"  help           Display a helpful usage message\n"
+		/* backwards compat */
+		"\nThe following commands are provided for backwards compatibility.\n"
+		"  resolvedep     Alias to whatprovides\n"
+		"  search         Alias to searchdetails\n"
+		"  deplist        Alias to getdepends\n"
+		"  info           Alias to getdetails\n"
+		"  list           Alias to getpackages\n"
+		"  provides       Alias to whatprovides\n"
+		/* not even started yet */
+		"\nThese won't work just yet...\n"
+		"  refreshcache   Generate the metadata cache\n" /* new */
+		"  makecache      Alias to refreshcache\n" /* backwards */
+		"  upgrade        Alias to update\n" /* backwards */
+		"  update         Update a package or packages on your system\n"
+		"  reinstall      Reinstall a package\n"
 		"  check-update   Check for available package updates\n"
 		"  clean          Remove cached data\n"
-		"☑ deplist        List a package's dependencies\n"
-		"☑ download*      Download a package\n"
 		"  erase          Remove a package or packages from your system\n"
-		"☑ getpackages*   Alias to list\n"
-		"☑ getfiles*      List the files in a package\n"
 		"  groupinfo      Display details about a package group\n"
 		"  groupinstall   Install the packages in a group on your system\n"
 		"  grouplist      List available package groups\n"
 		"  groupremove    Remove the packages in a group from your system\n"
-		"  help           Display a helpful usage message\n"
-		"☑ info           Display details about a package or group of packages\n"
 		"  install        Install a package or packages on your system\n"
-		"☑ list           List all packages\n"
-		"  localinstall   Install a local RPM\n"
-		"  makecache      Generate the metadata cache\n"
-		"☑ provides       Alias to whatprovides\n"
-		"  refreshcache*  Alias to makecache\n"
-		"  reinstall      reinstall a package\n"
-		"☑ repolist       Display the configured software repositories\n"
-		"☑ resolve*       Find a given package name\n"
-		"☑ resolvedep     Alias to whatprovides\n"
-		"☑ search         Alias to searchdetails\n"
-		"☑ searchname*    Search package name for the given string\n"
-		"☑ searchdetails* Search package details for the given string\n"
-		"☑ searchfile*    Search packages for the given filename\n"
-		"☑ searchgroup*   Return packages in the given group\n"
-		"  update         Update a package or packages on your system\n"
-		"  upgrade        Alias to update\n"
-		"☑ whatprovides*  Find what package provides the given value");
+		"  localinstall   Install a local RPM\n");
+
 	g_option_context_add_main_entries (context, options, NULL);
 	g_option_context_parse (context, &argc, &argv, NULL);
 	options_help = g_option_context_get_help (context, TRUE, NULL);
@@ -366,7 +374,7 @@ main (int argc, char *argv[])
 		g_print ("not yet supported\n");
 		goto out;
 	}
-	if (g_strcmp0 (mode, "deplist") == 0) {
+	if (g_strcmp0 (mode, "getdepends") == 0 || g_strcmp0 (mode, "deplist") == 0) {
 		DumDependArray *requires;
 		DumDepend *require;
 		gchar *require_str;
@@ -446,20 +454,27 @@ main (int argc, char *argv[])
 			g_print ("specify a value");
 			goto out;
 		}
+
+		/* resolve */
 		array = dum_sack_resolve (sack, value, &error);
-		if (array == NULL || array->len == 0) {
+		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
 			goto out;
 		}
-		package = g_ptr_array_index (array, 0);
 
-		files = dum_package_get_files (package, NULL);
-		for (i=0; i<files->value->len; i++)
-			g_print ("%s\n", (const gchar *) g_ptr_array_index (files->value, i));
+		/* at least one result */
+		if (array->len > 0) {
+			package = g_ptr_array_index (array, 0);
+			files = dum_package_get_files (package, NULL);
+			for (i=0; i<files->value->len; i++)
+				g_print ("%s\n", (const gchar *) g_ptr_array_index (files->value, i));
+			dum_string_array_unref (files);
+		} else {
+			g_print ("Failed to match any packages to '%s'\n", value);
+		}
 
-		dum_string_array_unref (files);
-
+		/* free results */
 		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
 		g_ptr_array_free (array, TRUE);
 		goto out;
@@ -481,10 +496,10 @@ main (int argc, char *argv[])
 		goto out;
 	}
 	if (g_strcmp0 (mode, "help") == 0) {
-		g_print ("not yet supported\n");
+		g_print ("%s", options_help);
 		goto out;
 	}
-	if (g_strcmp0 (mode, "info") == 0) {
+	if (g_strcmp0 (mode, "getdetails") == 0 || g_strcmp0 (mode, "info") == 0) {
 		const PkPackageId *id;
 		DumString *summary;
 		DumString *description;
