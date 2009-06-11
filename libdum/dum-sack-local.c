@@ -143,6 +143,7 @@ dum_sack_local_test (EggTest *test)
 	g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
 	g_ptr_array_free (array, TRUE);
 
+	g_object_unref (groups);
 	g_object_unref (sack);
 	egg_test_end (test);
 }
