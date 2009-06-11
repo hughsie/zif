@@ -56,6 +56,7 @@ int
 main (int argc, char *argv[])
 {
 	GPtrArray *array;
+	GPtrArray *updates;
 	gboolean ret;
 //	const gchar *id;
 	DumRepos *repos = NULL;
@@ -104,6 +105,7 @@ main (int argc, char *argv[])
 		"  repolist       Display the configured software repositories\n"
 		"  getdetails     Display details about a package or group of packages\n"
 		"  clean          Remove cached data\n"
+		"  get-updates    Check for available package updates\n"
 		"  help           Display a helpful usage message\n"
 		/* backwards compat */
 		"\nThe following commands are provided for backwards compatibility.\n"
@@ -113,6 +115,7 @@ main (int argc, char *argv[])
 		"  info           Alias to getdetails\n"
 		"  list           Alias to getpackages\n"
 		"  provides       Alias to whatprovides\n"
+		"  check-update   Alias to get-updates\n"
 		/* not even started yet */
 		"\nThese won't work just yet...\n"
 		"  refreshcache   Generate the metadata cache\n" /* new */
@@ -120,7 +123,6 @@ main (int argc, char *argv[])
 		"  upgrade        Alias to update\n" /* backwards */
 		"  update         Update a package or packages on your system\n"
 		"  reinstall      Reinstall a package\n"
-		"  check-update   Check for available package updates\n"
 		"  erase          Remove a package or packages from your system\n"
 		"  install        Install a package or packages on your system\n"
 		"  localinstall   Install a local RPM\n");
@@ -362,8 +364,35 @@ main (int argc, char *argv[])
 	}
 	mode = argv[1];
 	value = argv[2];
-	if (g_strcmp0 (mode, "check-update") == 0) {
-		g_print ("not yet supported\n");
+	if (g_strcmp0 (mode, "get-updates") == 0 || g_strcmp0 (mode, "check-update") == 0) {
+
+		/* get all remote stores */
+		array = dum_repos_get_stores_enabled (repos, &error);
+		if (array == NULL) {
+			g_print ("failed to get enabled stores: %s\n", error->message);
+			g_error_free (error);
+			goto out;
+		}
+
+		/* get updates for each one */
+		for (i=0; i<array->len; i++) {
+			store_remote = DUM_STORE_REMOTE (g_ptr_array_index (array, i));
+			updates = dum_store_remote_get_updates (store_remote, &error);
+			if (updates == NULL) {
+				g_print ("failed to get updates for store: %s\n", error->message);
+				g_error_free (error);
+				break;
+			}
+			g_print ("got updates for %s:\n", dum_store_get_id (DUM_STORE (store_remote)));
+			dum_print_packages (updates);
+			g_ptr_array_foreach (updates, (GFunc) g_object_unref, NULL);
+			g_ptr_array_free (updates, TRUE);
+		}
+
+		/* free results */
+		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
+		g_ptr_array_free (array, TRUE);
+
 		goto out;
 	}
 	if (g_strcmp0 (mode, "clean") == 0) {

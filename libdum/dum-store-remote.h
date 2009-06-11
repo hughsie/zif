@@ -75,6 +75,8 @@ gboolean	 dum_store_remote_download		(DumStoreRemote		*store,
 							 GError			**error);
 gboolean	 dum_store_remote_clean			(DumStoreRemote		*store,
 							 GError			**error);
+GPtrArray	*dum_store_remote_get_updates		(DumStoreRemote		*store,
+							 GError			**error);
 
 G_END_DECLS
 

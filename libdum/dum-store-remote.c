@@ -32,6 +32,7 @@
 #include "dum-package-remote.h"
 #include "dum-store.h"
 #include "dum-store-remote.h"
+#include "dum-store-local.h"
 #include "dum-repo-md-master.h"
 #include "dum-repo-md-primary.h"
 #include "dum-repo-md-filelists.h"
@@ -893,16 +894,85 @@ dum_store_remote_new (void)
 	return DUM_STORE_REMOTE (store);
 }
 
+/**
+ * dum_store_remote_get_updates:
+ **/
+GPtrArray *
+dum_store_remote_get_updates (DumStoreRemote *store, GError **error)
+{
+	DumStore *store_local;
+	GPtrArray *packages;
+	GPtrArray *updates;
+	GPtrArray *array = NULL;
+	DumPackage *package;
+	DumPackage *update;
+	GError *error_local = NULL;
+	guint i, j;
+	gint val;
+	const PkPackageId *id_package;
+	const PkPackageId *id_update;
+
+	/* get list of local packages */
+	store_local = DUM_STORE (dum_store_local_new ());
+	packages = dum_store_get_packages (store_local, &error_local);
+	if (packages == NULL) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "failed to get local store: %s", error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* create array for packages to update */
+	array = g_ptr_array_new ();
+
+	/* find each one in a remote repo */
+	for (i=0; i<packages->len; i++) {
+		package = DUM_PACKAGE (g_ptr_array_index (packages, i));
+		id_package = dum_package_get_id (package);
+
+		/* find package name in repo */
+		updates = dum_repo_md_primary_resolve (DUM_REPO_MD_PRIMARY (store->priv->md_primary), id_package->name, NULL);
+		if (updates == NULL) {
+			egg_debug ("not found %s", id_package->name);
+			continue;
+		}
+
+		/* find updates */
+		for (j=0; j<updates->len; j++) {
+			update = DUM_PACKAGE (g_ptr_array_index (updates, j));
+
+			/* newer? */
+			val = dum_package_compare (update, package);
+			if (val > 0) {
+				id_update = dum_package_get_id (update);
+				egg_debug ("*** update %s from %s to %s", id_package->name, id_package->version, id_update->version);
+				g_ptr_array_add (array, g_object_ref (update));
+			}
+		}
+		g_ptr_array_foreach (updates, (GFunc) g_object_unref, NULL);
+		g_ptr_array_free (updates, TRUE);
+	}
+
+	g_ptr_array_foreach (packages, (GFunc) g_object_unref, NULL);
+	g_ptr_array_free (packages, TRUE);
+	g_object_unref (store_local);
+out:
+	return array;
+}
+
 /***************************************************************************
  ***                          MAKE CHECK TESTS                           ***
  ***************************************************************************/
 #ifdef EGG_TEST
 #include "egg-test.h"
+#include "dum-groups.h"
 
 void
 dum_store_remote_test (EggTest *test)
 {
+	DumGroups *groups;
 	DumStoreRemote *store;
+	DumStoreLocal *store_local;
 	DumConfig *config;
 	GPtrArray *array;
 	gboolean ret;
@@ -928,6 +998,23 @@ dum_store_remote_test (EggTest *test)
 		egg_test_success (test, NULL);
 	else
 		egg_test_failed (test, "failed to load '%s'", error->message);
+
+	/* setup state */
+	groups = dum_groups_new ();
+	dum_groups_set_mapping_file (groups, "../test/share/yum-comps-groups.conf", NULL);
+	store_local = dum_store_local_new ();
+	dum_store_local_set_prefix (store_local, "/", NULL);
+	/************************************************************/
+	egg_test_title (test, "get updates");
+	array = dum_store_remote_get_updates (store, NULL);
+	if (array->len > 0)
+		egg_test_success (test, NULL);
+	else
+		egg_test_failed (test, "no updates");
+	g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
+	g_ptr_array_free (array, TRUE);
+	g_object_unref (groups);
+	g_object_unref (store_local);
 
 	/************************************************************/
 	egg_test_title (test, "is devel");
