@@ -6,4 +6,5 @@ dum.pc
 *.o
 dum-marshal.c
 dum-marshal.h
+dum-self-test
 
