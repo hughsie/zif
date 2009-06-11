@@ -700,7 +700,7 @@ dum_store_local_test (EggTest *test)
 	egg_test_title (test, "resolve");
 	array = dum_store_local_resolve (DUM_STORE (store), "kernel", NULL);
 	elapsed = egg_test_elapsed (test);
-	if (array->len > 1)
+	if (array->len >= 1)
 		egg_test_success (test, NULL);
 	else
 		egg_test_failed (test, "incorrect length %i", array->len);

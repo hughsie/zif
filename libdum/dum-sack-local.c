@@ -134,7 +134,7 @@ dum_sack_local_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "resolve correct length");
-	if (array->len > 2)
+	if (array->len >= 1)
 		egg_test_success (test, NULL);
 	else
 		egg_test_failed (test, "incorrect length %i", array->len);

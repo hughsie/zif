@@ -46,7 +46,7 @@ struct DumSackPrivate
 G_DEFINE_TYPE (DumSack, dum_sack, G_TYPE_OBJECT)
 
 /**
- * dum_sack_repos_search:
+ * dum_sack_add_store:
  **/
 gboolean
 dum_sack_add_store (DumSack *sack, DumStore *store)
@@ -59,7 +59,7 @@ dum_sack_add_store (DumSack *sack, DumStore *store)
 }
 
 /**
- * dum_sack_repos_search:
+ * dum_sack_add_stores:
  **/
 gboolean
 dum_sack_add_stores (DumSack *sack, GPtrArray *stores)
