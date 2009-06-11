@@ -100,6 +100,99 @@ dum_package_id_from_nevra (const gchar *name, const gchar *epoch, const gchar *v
 	return id;
 }
 
+/**
+ * dum_package_convert_evr:
+ *
+ * Modifies evr, so pass in copy
+ **/
+static gboolean
+dum_package_convert_evr (gchar *evr, const gchar **epoch, const gchar **version, const gchar **release)
+{
+	gchar *find;
+
+	g_return_val_if_fail (evr != NULL, FALSE);
+
+	/* set to NULL initially */
+	*version = NULL;
+
+	/* split possible epoch */
+	find = strstr (evr, ":");
+	if (find != NULL) {
+		*find = '\0';
+		*epoch = evr;
+		*version = find+1;
+	} else {
+		*epoch = NULL;
+		*version = evr;
+	}
+
+	/* split possible release */
+	find = g_strrstr (*version, "-");
+	if (find != NULL) {
+		*find = '\0';
+		*release = find+1;
+	} else {
+		*release = NULL;
+	}
+
+	return TRUE;
+}
+
+/**
+ * dum_compare_evr:
+ *
+ * compare two [epoch:]version[-release]
+ **/
+gint
+dum_compare_evr (const gchar *a, const gchar *b)
+{
+	gint val = 0;
+	gchar *ad = NULL;
+	gchar *bd = NULL;
+	const gchar *ae, *av, *ar;
+	const gchar *be, *bv, *br;
+
+	g_return_val_if_fail (a != NULL, 0);
+	g_return_val_if_fail (b != NULL, 0);
+
+	/* exactly the same, optimise */
+	if (strcmp (a, b) == 0)
+		goto out;
+
+	/* copy */
+	ad = g_strdup (a);
+	bd = g_strdup (b);
+
+	/* split */
+	dum_package_convert_evr (ad, &ae, &av, &ar);
+	dum_package_convert_evr (bd, &be, &bv, &br);
+
+	/* compare epoch */
+	if (ae != NULL && be != NULL)
+		val = rpmvercmp (ae, be);
+	else if (ae != NULL && atol (ae) > 0) {
+		val = 1;
+		goto out;
+	} else if (be != NULL && atol (be) > 0) {
+		val = -1;
+		goto out;
+	}
+
+	/* compare version */
+	val = rpmvercmp (av, bv);
+	if (val != 0)
+		goto out;
+
+	/* compare release */
+	if (ar != NULL && br != NULL)
+		val = rpmvercmp (ar, br);
+
+out:
+	g_free (ad);
+	g_free (bd);
+	return val;
+}
+
 /***************************************************************************
  ***                          MAKE CHECK TESTS                           ***
  ***************************************************************************/
@@ -112,6 +205,11 @@ dum_utils_test (EggTest *test)
 	PkPackageId *id;
 	gchar *package_id;
 	gboolean ret;
+	gchar *evr;
+	gint val;
+	const gchar *e;
+	const gchar *v;
+	const gchar *r;
 
 	if (!egg_test_start (test, "DumUtils"))
 		return;
@@ -164,6 +262,61 @@ dum_utils_test (EggTest *test)
 	egg_test_title (test, "bool to text blank");
 	ret = dum_boolean_from_text ("");
 	egg_test_assert (test, !ret);
+
+	/************************************************************/
+	egg_test_title (test, "convert evr");
+	evr = g_strdup ("7:1.0.0-6");
+	dum_package_convert_evr (evr, &e, &v, &r);
+	if (egg_strequal (e, "7") && egg_strequal (v, "1.0.0") && egg_strequal (r, "6"))
+		egg_test_success (test, NULL);
+	else
+		egg_test_failed (test, "incorrect evr '%s','%s','%s'", e, v, r);
+	g_free (evr);
+
+	/************************************************************/
+	egg_test_title (test, "convert evr no epoch");
+	evr = g_strdup ("1.0.0-6");
+	dum_package_convert_evr (evr, &e, &v, &r);
+	if (e == NULL && egg_strequal (v, "1.0.0") && egg_strequal (r, "6"))
+		egg_test_success (test, NULL);
+	else
+		egg_test_failed (test, "incorrect evr '%s','%s','%s'", e, v, r);
+	g_free (evr);
+
+	/************************************************************/
+	egg_test_title (test, "convert evr no epoch or release");
+	evr = g_strdup ("1.0.0");
+	dum_package_convert_evr (evr, &e, &v, &r);
+	if (e == NULL && egg_strequal (v, "1.0.0") && r == NULL)
+		egg_test_success (test, NULL);
+	else
+		egg_test_failed (test, "incorrect evr '%s','%s','%s'", e, v, r);
+	g_free (evr);
+
+	/************************************************************/
+	egg_test_title (test, "compare same");
+	val = dum_compare_evr ("1:1.0.2-3", "1:1.0.2-3");
+	egg_test_assert (test, (val == 0));
+
+	/************************************************************/
+	egg_test_title (test, "compare right heavy");
+	val = dum_compare_evr ("1:1.0.2-3", "1:1.0.2-4");
+	egg_test_assert (test, (val == -1));
+
+	/************************************************************/
+	egg_test_title (test, "compare new release");
+	val = dum_compare_evr ("1:1.0.2-4", "1:1.0.2-3");
+	egg_test_assert (test, (val == 1));
+
+	/************************************************************/
+	egg_test_title (test, "compare new epoch");
+	val = dum_compare_evr ("1:0.0.1-1", "1.0.2-2");
+	egg_test_assert (test, (val == 1));
+
+	/************************************************************/
+	egg_test_title (test, "compare new version");
+	val = dum_compare_evr ("1.0.2-1", "1.0.1-1");
+	egg_test_assert (test, (val == 1));
 
 	egg_test_end (test);
 }

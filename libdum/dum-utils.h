@@ -40,6 +40,8 @@ PkPackageId	*dum_package_id_from_nevra	(const gchar	*name,
 						 const gchar	*arch,
 						 const gchar	*data);
 gboolean	 dum_boolean_from_text		(const gchar	*text);
+gint		 dum_compare_evr		(const gchar	*a,
+						 const gchar	*b);
 
 G_END_DECLS
 
