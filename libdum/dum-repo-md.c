@@ -242,6 +242,26 @@ dum_repo_md_load (DumRepoMd *md, GError **error)
 }
 
 /**
+ * dum_repo_md_clean:
+ **/
+gboolean
+dum_repo_md_clean (DumRepoMd *md, GError **error)
+{
+	DumRepoMdClass *klass = DUM_REPO_MD_GET_CLASS (md);
+
+	g_return_val_if_fail (DUM_IS_REPO_MD (md), FALSE);
+
+	/* no support */
+	if (klass->clean == NULL) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "operation cannot be performed on this md");
+		return FALSE;
+	}
+
+	return klass->clean (md, error);
+}
+
+/**
  * dum_repo_md_check:
  **/
 gboolean

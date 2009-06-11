@@ -73,6 +73,8 @@ gboolean	 dum_store_remote_download		(DumStoreRemote		*store,
 							 const gchar		*filename,
 							 const gchar		*directory,
 							 GError			**error);
+gboolean	 dum_store_remote_clean			(DumStoreRemote		*store,
+							 GError			**error);
 
 G_END_DECLS
 

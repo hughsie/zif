@@ -26,6 +26,7 @@
 #include <glib.h>
 #include <string.h>
 #include <stdlib.h>
+#include <gio/gio.h>
 
 #include "dum-repo-md.h"
 #include "dum-repo-md-master.h"
@@ -182,6 +183,46 @@ dum_repo_md_master_parser_text (GMarkupParseContext *context, const gchar *text,
 		md->priv->data[parser_type]->checksum_open = g_strdup (text);
 	else if (md->priv->parser_section == DUM_REPO_MD_MASTER_PARSER_SECTION_TIMESTAMP)
 		md->priv->data[parser_type]->timestamp = atol (text);
+}
+
+/**
+ * dum_repo_md_master_clean:
+ **/
+static gboolean
+dum_repo_md_master_clean (DumRepoMd *md, GError **error)
+{
+	gboolean ret = FALSE;
+	gboolean exists;
+	const gchar *filename;
+	GFile *file;
+	GError *error_local = NULL;
+
+	/* get filename */
+	filename = dum_repo_md_get_filename (md);
+	if (filename == NULL) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "failed to get filename for master");
+		goto out;
+	}
+
+	/* file does not exist */
+	exists = g_file_test (filename, G_FILE_TEST_EXISTS);
+	if (exists) {
+		file = g_file_new_for_path (filename);
+		ret = g_file_delete (file, NULL, &error_local);
+		g_object_unref (file);
+		if (!ret) {
+			if (error != NULL)
+				*error = g_error_new (1, 0, "failed to delete metadata file %s: %s", filename, error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+	}
+
+	/* okay */
+	ret = TRUE;
+out:
+	return ret;
 }
 
 /**
@@ -385,6 +426,7 @@ dum_repo_md_master_class_init (DumRepoMdMasterClass *klass)
 
 	/* map */
 	repo_md_class->load = dum_repo_md_master_load;
+	repo_md_class->clean = dum_repo_md_master_clean;
 
 	g_type_class_add_private (klass, sizeof (DumRepoMdMasterPrivate));
 }

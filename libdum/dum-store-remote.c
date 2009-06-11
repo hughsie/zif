@@ -54,15 +54,57 @@ struct DumStoreRemotePrivate
 	gchar			*metalink;
 	gboolean		 enabled;
 	gboolean		 loaded;
-	DumRepoMdMaster		*md_master;
-	DumRepoMdPrimary	*md_primary;
-	DumRepoMdFilelists	*md_filelists;
+	DumRepoMd		*md_master;
+	DumRepoMd		*md_primary;
+	DumRepoMd		*md_filelists;
 	DumConfig		*config;
 	DumMonitor		*monitor;
 	GPtrArray		*packages;
 };
 
 G_DEFINE_TYPE (DumStoreRemote, dum_store_remote, DUM_TYPE_STORE)
+
+/**
+ * dum_store_remote_clean:
+ **/
+gboolean
+dum_store_remote_clean (DumStoreRemote *store, GError **error)
+{
+	gboolean ret = FALSE;
+	GError *error_local = NULL;
+
+	g_return_val_if_fail (DUM_IS_STORE_REMOTE (store), FALSE);
+	g_return_val_if_fail (store->priv->id != NULL, FALSE);
+
+	/* clean primary */
+	ret = dum_repo_md_clean (store->priv->md_primary, &error_local);
+	if (!ret) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "failed to clean primary: %s", error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* clean filelists */
+	ret = dum_repo_md_clean (store->priv->md_filelists, &error_local);
+	if (!ret) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "failed to clean filelists: %s", error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* clean master (last) */
+	ret = dum_repo_md_clean (store->priv->md_master, &error_local);
+	if (!ret) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "failed to clean master: %s", error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+out:
+	return ret;
+}
 
 /**
  * dum_store_remote_expand_vars:
@@ -233,7 +275,7 @@ dum_store_remote_load (DumStore *store, GError **error)
 	}
 
 	/* set cache dir */
-	ret = dum_repo_md_set_cache_dir (DUM_REPO_MD (remote->priv->md_master), cache_dir);
+	ret = dum_repo_md_set_cache_dir (remote->priv->md_master, cache_dir);
 	if (!ret) {
 		if (error != NULL)
 			*error = g_error_new (1, 0, "failed to set cache dir: %s", cache_dir);
@@ -241,7 +283,7 @@ dum_store_remote_load (DumStore *store, GError **error)
 	}
 
 	/* get metadata */
-	ret = dum_repo_md_set_id (DUM_REPO_MD (remote->priv->md_master), remote->priv->id);
+	ret = dum_repo_md_set_id (remote->priv->md_master, remote->priv->id);
 	if (!ret) {
 		if (error != NULL)
 			*error = g_error_new (1, 0, "failed to set id: %s", remote->priv->id);
@@ -249,18 +291,18 @@ dum_store_remote_load (DumStore *store, GError **error)
 	}
 
 	/* set info */
-	info_data = dum_repo_md_master_get_info	(remote->priv->md_master, DUM_REPO_MD_TYPE_PRIMARY, &error_local);
+	info_data = dum_repo_md_master_get_info	(DUM_REPO_MD_MASTER (remote->priv->md_master), DUM_REPO_MD_TYPE_PRIMARY, &error_local);
 	if (info_data == NULL) {
 		if (error != NULL)
 			*error = g_error_new (1, 0, "failed to get primary md info: %s", error_local->message);
 		ret = FALSE;
 		goto out;
 	}
-	dum_repo_md_set_info_data (DUM_REPO_MD (remote->priv->md_master), info_data);
+	dum_repo_md_set_info_data (remote->priv->md_master, info_data);
 
 	/* don't load metadata for a disabled store */
 	if (remote->priv->enabled) {
-		ret = dum_repo_md_load (DUM_REPO_MD (remote->priv->md_master), &error_local);
+		ret = dum_repo_md_load (remote->priv->md_master, &error_local);
 		if (!ret) {
 			if (error != NULL)
 				*error = g_error_new (1, 0, "failed to load: %s", error_local->message);
@@ -270,7 +312,7 @@ dum_store_remote_load (DumStore *store, GError **error)
 	}
 
 	/* set cache dir */
-	ret = dum_repo_md_set_cache_dir (DUM_REPO_MD (remote->priv->md_filelists), cache_dir);
+	ret = dum_repo_md_set_cache_dir (remote->priv->md_filelists, cache_dir);
 	if (!ret) {
 		if (error != NULL)
 			*error = g_error_new (1, 0, "failed to set cache dir: %s", cache_dir);
@@ -278,7 +320,7 @@ dum_store_remote_load (DumStore *store, GError **error)
 	}
 
 	/* get metadata */
-	ret = dum_repo_md_set_id (DUM_REPO_MD (remote->priv->md_filelists), remote->priv->id);
+	ret = dum_repo_md_set_id (remote->priv->md_filelists, remote->priv->id);
 	if (!ret) {
 		if (error != NULL)
 			*error = g_error_new (1, 0, "failed to set id: %s", remote->priv->id);
@@ -286,17 +328,17 @@ dum_store_remote_load (DumStore *store, GError **error)
 	}
 
 	/* set info */
-	info_data = dum_repo_md_master_get_info	(remote->priv->md_master, DUM_REPO_MD_TYPE_FILELISTS, &error_local);
+	info_data = dum_repo_md_master_get_info	(DUM_REPO_MD_MASTER (remote->priv->md_master), DUM_REPO_MD_TYPE_FILELISTS, &error_local);
 	if (info_data == NULL) {
 		if (error != NULL)
 			*error = g_error_new (1, 0, "failed to get filelists md info: %s", error_local->message);
 		ret = FALSE;
 		goto out;
 	}
-	dum_repo_md_set_info_data (DUM_REPO_MD (remote->priv->md_filelists), info_data);
+	dum_repo_md_set_info_data (remote->priv->md_filelists, info_data);
 
 	/* set cache dir */
-	ret = dum_repo_md_set_cache_dir (DUM_REPO_MD (remote->priv->md_primary), cache_dir);
+	ret = dum_repo_md_set_cache_dir (remote->priv->md_primary, cache_dir);
 	if (!ret) {
 		if (error != NULL)
 			*error = g_error_new (1, 0, "failed to set cache dir: %s", cache_dir);
@@ -304,7 +346,7 @@ dum_store_remote_load (DumStore *store, GError **error)
 	}
 
 	/* get metadata */
-	ret = dum_repo_md_set_id (DUM_REPO_MD (remote->priv->md_primary), remote->priv->id);
+	ret = dum_repo_md_set_id (remote->priv->md_primary, remote->priv->id);
 	if (!ret) {
 		if (error != NULL)
 			*error = g_error_new (1, 0, "failed to set id: %s", remote->priv->id);
@@ -312,14 +354,14 @@ dum_store_remote_load (DumStore *store, GError **error)
 	}
 
 	/* set info */
-	info_data = dum_repo_md_master_get_info	(remote->priv->md_master, DUM_REPO_MD_TYPE_PRIMARY, &error_local);
+	info_data = dum_repo_md_master_get_info	(DUM_REPO_MD_MASTER (remote->priv->md_master), DUM_REPO_MD_TYPE_PRIMARY, &error_local);
 	if (info_data == NULL) {
 		if (error != NULL)
 			*error = g_error_new (1, 0, "failed to get primary md info: %s", error_local->message);
 		ret = FALSE;
 		goto out;
 	}
-	dum_repo_md_set_info_data (DUM_REPO_MD (remote->priv->md_primary), info_data);
+	dum_repo_md_set_info_data (remote->priv->md_primary, info_data);
 
 skip_md:
 	/* okay */
@@ -434,9 +476,9 @@ dum_store_remote_print (DumStore *store)
 	g_print ("name: %s\n", remote->priv->name);
 	g_print ("name-expanded: %s\n", remote->priv->name_expanded);
 	g_print ("enabled: %i\n", remote->priv->enabled);
-	dum_repo_md_print (DUM_REPO_MD (remote->priv->md_master));
-	dum_repo_md_print (DUM_REPO_MD (remote->priv->md_primary));
-	dum_repo_md_print (DUM_REPO_MD (remote->priv->md_filelists));
+	dum_repo_md_print (remote->priv->md_master);
+	dum_repo_md_print (remote->priv->md_primary);
+	dum_repo_md_print (remote->priv->md_filelists);
 }
 
 /**
@@ -451,7 +493,7 @@ dum_store_remote_resolve (DumStore *store, const gchar *search, GError **error)
 	g_return_val_if_fail (DUM_IS_STORE_REMOTE (store), FALSE);
 	g_return_val_if_fail (remote->priv->id != NULL, FALSE);
 
-	array = dum_repo_md_primary_resolve (remote->priv->md_primary, search, error);
+	array = dum_repo_md_primary_resolve (DUM_REPO_MD_PRIMARY (remote->priv->md_primary), search, error);
 	return array;
 }
 
@@ -467,7 +509,7 @@ dum_store_remote_search_name (DumStore *store, const gchar *search, GError **err
 	g_return_val_if_fail (DUM_IS_STORE_REMOTE (store), FALSE);
 	g_return_val_if_fail (remote->priv->id != NULL, FALSE);
 
-	array = dum_repo_md_primary_search_name (remote->priv->md_primary, search, error);
+	array = dum_repo_md_primary_search_name (DUM_REPO_MD_PRIMARY (remote->priv->md_primary), search, error);
 	return array;
 }
 
@@ -483,7 +525,7 @@ dum_store_remote_search_details (DumStore *store, const gchar *search, GError **
 	g_return_val_if_fail (DUM_IS_STORE_REMOTE (store), FALSE);
 	g_return_val_if_fail (remote->priv->id != NULL, FALSE);
 
-	array = dum_repo_md_primary_search_details (remote->priv->md_primary, search, error);
+	array = dum_repo_md_primary_search_details (DUM_REPO_MD_PRIMARY (remote->priv->md_primary), search, error);
 	return array;
 }
 
@@ -499,7 +541,7 @@ dum_store_remote_search_group (DumStore *store, const gchar *search, GError **er
 	g_return_val_if_fail (DUM_IS_STORE_REMOTE (store), FALSE);
 	g_return_val_if_fail (remote->priv->id != NULL, FALSE);
 
-	array = dum_repo_md_primary_search_group (remote->priv->md_primary, search, error);
+	array = dum_repo_md_primary_search_group (DUM_REPO_MD_PRIMARY (remote->priv->md_primary), search, error);
 	return array;
 }
 
@@ -518,7 +560,7 @@ dum_store_remote_find_package (DumStore *store, const PkPackageId *id, GError **
 	g_return_val_if_fail (remote->priv->id != NULL, FALSE);
 
 	/* search with predicate, TODO: search version (epoch+release) */
-	array = dum_repo_md_primary_find_package (remote->priv->md_primary, id, error);
+	array = dum_repo_md_primary_find_package (DUM_REPO_MD_PRIMARY (remote->priv->md_primary), id, error);
 	if (array == NULL) {
 		if (error != NULL)
 			*error = g_error_new (1, 0, "failed to search: %s", error_local->message);
@@ -560,7 +602,7 @@ dum_store_remote_get_packages (DumStore *store, GError **error)
 	g_return_val_if_fail (DUM_IS_STORE_REMOTE (store), FALSE);
 	g_return_val_if_fail (remote->priv->id != NULL, FALSE);
 
-	array = dum_repo_md_primary_get_packages (remote->priv->md_primary, error);
+	array = dum_repo_md_primary_get_packages (DUM_REPO_MD_PRIMARY (remote->priv->md_primary), error);
 	return array;
 }
 
@@ -591,7 +633,7 @@ dum_store_remote_search_file (DumStore *store, const gchar *search, GError **err
 	DumStoreRemote *remote = DUM_STORE_REMOTE (store);
 
 	/* gets a list of pkgId's that match this file */
-	pkgids = dum_repo_md_filelists_search_file (remote->priv->md_filelists, search, &error_local);
+	pkgids = dum_repo_md_filelists_search_file (DUM_REPO_MD_FILELISTS (remote->priv->md_filelists), search, &error_local);
 	if (pkgids == NULL) {
 		if (error != NULL)
 			*error = g_error_new (1, 0, "failed to load get list of pkgids: %s", error_local->message);
@@ -605,7 +647,7 @@ dum_store_remote_search_file (DumStore *store, const gchar *search, GError **err
 		pkgid = g_ptr_array_index (pkgids, i);
 
 		/* get the results (should just be one) */
-		tmp = dum_repo_md_primary_search_pkgid (remote->priv->md_primary, pkgid, &error_local);
+		tmp = dum_repo_md_primary_search_pkgid (DUM_REPO_MD_PRIMARY (remote->priv->md_primary), pkgid, &error_local);
 		if (tmp == NULL) {
 			if (error != NULL)
 				*error = g_error_new (1, 0, "failed to resolve pkgId to package: %s", error_local->message);
@@ -832,9 +874,9 @@ dum_store_remote_init (DumStoreRemote *store)
 	store->priv->mirrorlist = NULL;
 	store->priv->metalink = NULL;
 	store->priv->config = dum_config_new ();
-	store->priv->md_master = dum_repo_md_master_new ();
-	store->priv->md_filelists = dum_repo_md_filelists_new ();
-	store->priv->md_primary = dum_repo_md_primary_new ();
+	store->priv->md_master = DUM_REPO_MD (dum_repo_md_master_new ());
+	store->priv->md_filelists = DUM_REPO_MD (dum_repo_md_filelists_new ());
+	store->priv->md_primary = DUM_REPO_MD (dum_repo_md_primary_new ());
 	store->priv->monitor = dum_monitor_new ();
 	g_signal_connect (store->priv->monitor, "changed", G_CALLBACK (dum_store_remote_file_monitor_cb), store);
 }

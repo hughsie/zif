@@ -58,12 +58,12 @@ main (int argc, char *argv[])
 	GPtrArray *array;
 	gboolean ret;
 //	const gchar *id;
-	DumStoreRemote *repo = NULL;
 	DumRepos *repos = NULL;
 	DumSack *sack = NULL;
 	DumDownload *download = NULL;
 	DumConfig *config = NULL;
 	DumStoreLocal *store_local = NULL;
+	DumStoreRemote *store_remote = NULL;
 	DumGroups *groups = NULL;
 	guint i, j;
 	GError *error = NULL;
@@ -103,6 +103,7 @@ main (int argc, char *argv[])
 		"  getdepends     List a package's dependencies\n"
 		"  repolist       Display the configured software repositories\n"
 		"  getdetails     Display details about a package or group of packages\n"
+		"  clean          Remove cached data\n"
 		"  help           Display a helpful usage message\n"
 		/* backwards compat */
 		"\nThe following commands are provided for backwards compatibility.\n"
@@ -120,12 +121,7 @@ main (int argc, char *argv[])
 		"  update         Update a package or packages on your system\n"
 		"  reinstall      Reinstall a package\n"
 		"  check-update   Check for available package updates\n"
-		"  clean          Remove cached data\n"
 		"  erase          Remove a package or packages from your system\n"
-		"  groupinfo      Display details about a package group\n"
-		"  groupinstall   Install the packages in a group on your system\n"
-		"  grouplist      List available package groups\n"
-		"  groupremove    Remove the packages in a group from your system\n"
 		"  install        Install a package or packages on your system\n"
 		"  localinstall   Install a local RPM\n");
 
@@ -371,7 +367,31 @@ main (int argc, char *argv[])
 		goto out;
 	}
 	if (g_strcmp0 (mode, "clean") == 0) {
-		g_print ("not yet supported\n");
+
+		/* get all remote stores */
+		array = dum_repos_get_stores_enabled (repos, &error);
+		if (array == NULL) {
+			g_print ("failed to get enabled stores: %s\n", error->message);
+			g_error_free (error);
+			goto out;
+		}
+
+		/* clean each one */
+		for (i=0; i<array->len; i++) {
+			store_remote = DUM_STORE_REMOTE (g_ptr_array_index (array, i));
+			ret = dum_store_remote_clean (store_remote, &error);
+			if (!ret) {
+				g_print ("failed to clean store: %s\n", error->message);
+				g_error_free (error);
+				break;
+			}
+			g_print ("Cleaned %s\n", dum_store_get_id (DUM_STORE (store_remote)));
+		}
+
+		/* free results */
+		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
+		g_ptr_array_free (array, TRUE);
+
 		goto out;
 	}
 	if (g_strcmp0 (mode, "getdepends") == 0 || g_strcmp0 (mode, "deplist") == 0) {
@@ -594,8 +614,11 @@ main (int argc, char *argv[])
 
 		/* print */
 		for (i=0; i<array->len; i++) {
-			repo = g_ptr_array_index (array, i);
-			g_print ("%s\t\t%s\t\t%s\n", dum_store_get_id (DUM_STORE (repo)), dum_store_remote_get_enabled (repo, NULL) ? "enabled" : "disabled", dum_store_remote_get_name (repo, NULL));
+			store_remote = g_ptr_array_index (array, i);
+			g_print ("%s\t\t%s\t\t%s\n",
+				 dum_store_get_id (DUM_STORE (store_remote)),
+				 dum_store_remote_get_enabled (store_remote, NULL) ? "enabled" : "disabled",
+				 dum_store_remote_get_name (store_remote, NULL));
 		}
 
 		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);

@@ -53,6 +53,8 @@ typedef struct
 	/* vtable */
 	gboolean	 (*load)		(DumRepoMd		*md,
 						 GError			**error);
+	gboolean	 (*clean)		(DumRepoMd		*md,
+						 GError			**error);
 } DumRepoMdClass;
 
 typedef enum {
@@ -100,6 +102,8 @@ const DumRepoMdInfoData *dum_repo_md_get_info_data (DumRepoMd	*md);
 
 /* actions */
 gboolean	 dum_repo_md_load		(DumRepoMd	*md,
+						 GError		**error);
+gboolean	 dum_repo_md_clean		(DumRepoMd	*md,
 						 GError		**error);
 gboolean	 dum_repo_md_check		(DumRepoMd	*md,
 						 GError		**error);
