@@ -1,0 +1,77 @@
+
+[RepoMd]
+ | * set_mdtype
+ | * refresh
+ | * get_filename
+ | * ...
+ |
+ |- [RepoMdMaster]
+ |   * get_info
+ |
+ |- [RepoMdPrimary]
+ |   * search_name
+ |   * search_pkgid
+ |   * ...
+ |
+ \- [RepoMdFilelists]
+     * search_file
+
+[Store]
+ | * search_group
+ | * what_provides
+ | * get_id
+ | * ...
+ |
+ |- [StoreLocal]
+ |   * set_prefix
+ |
+ \- [StoreRemote]
+     * get_name
+     * set_enabled
+     * download
+     * ...
+
+[Sack]
+ | * add_store
+ | * resolve
+ | * search_group
+ | * what_provides
+ | * ...
+ |
+ |- [SackLocal]
+ |
+ \- [SackRemote]
+
+[Package]
+ | * get_group
+ | * set_requires
+ | * is_installed
+ | * ...
+ |
+ |- [PackageLocal]
+ |   * set_from_header
+ |   * set_from_filename
+ |
+ \- [PackageRemote]
+     * set_from_repo
+
+/[Store]------------------------------------------------------
+|
+| [Package1]
+| [Package2]
+| [Package3]
+|
+\------------------------------------------------------------
+
+/[Sack]------------------------------------------------------
+|
+| [Store1]
+| [Store2]
+| [Store3]
+|
+\------------------------------------------------------------
+
+* Rule 1. [Packages] are held in a [Store]
+* Rule 2. [Stores] are held in a [Sack]
+* Rule 3. You query a sack, not a store unless optimised
+
