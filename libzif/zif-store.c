@@ -36,6 +36,12 @@ G_DEFINE_TYPE (ZifStore, zif_store, G_TYPE_OBJECT)
 
 /**
  * zif_store_load:
+ * @store: the #ZifStore object
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Loads the #ZifStore object.
+ *
+ * Return value: %TRUE for success, %FALSE for failure
  **/
 gboolean
 zif_store_load (ZifStore *store, GError **error)
@@ -56,6 +62,12 @@ zif_store_load (ZifStore *store, GError **error)
 
 /**
  * zif_store_clean:
+ * @store: the #ZifStore object
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Cleans the #ZifStore objects by deleting cache.
+ *
+ * Return value: %TRUE for success, %FALSE for failure
  **/
 gboolean
 zif_store_clean (ZifStore *store, GError **error)
@@ -76,6 +88,13 @@ zif_store_clean (ZifStore *store, GError **error)
 
 /**
  * zif_store_search_name:
+ * @store: the #ZifStore object
+ * @search: the search term, e.g. "power"
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Find packages that match the package name in some part.
+ *
+ * Return value: an array of #ZifPackage's
  **/
 GPtrArray *
 zif_store_search_name (ZifStore *store, const gchar *search, GError **error)
@@ -97,6 +116,13 @@ zif_store_search_name (ZifStore *store, const gchar *search, GError **error)
 
 /**
  * zif_store_search_category:
+ * @store: the #ZifStore object
+ * @search: the search term, e.g. "gnome/games"
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Return packages in a specific category.
+ *
+ * Return value: an array of #ZifPackage's
  **/
 GPtrArray *
 zif_store_search_category (ZifStore *store, const gchar *search, GError **error)
@@ -117,7 +143,14 @@ zif_store_search_category (ZifStore *store, const gchar *search, GError **error)
 }
 
 /**
- * zif_store_earch_details:
+ * zif_store_search_details:
+ * @store: the #ZifStore object
+ * @search: the search term, e.g. "trouble"
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Find packages that match some detail about the package.
+ *
+ * Return value: an array of #ZifPackage's
  **/
 GPtrArray *
 zif_store_search_details (ZifStore *store, const gchar *search, GError **error)
@@ -139,6 +172,13 @@ zif_store_search_details (ZifStore *store, const gchar *search, GError **error)
 
 /**
  * zif_store_search_group:
+ * @store: the #ZifStore object
+ * @search: the search term, e.g. "games"
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Find packages that belong in a specific group.
+ *
+ * Return value: an array of #ZifPackage's
  **/
 GPtrArray *
 zif_store_search_group (ZifStore *store, const gchar *search, GError **error)
@@ -160,6 +200,13 @@ zif_store_search_group (ZifStore *store, const gchar *search, GError **error)
 
 /**
  * zif_store_search_file:
+ * @store: the #ZifStore object
+ * @search: the search term, e.g. "/usr/bin/gnome-power-manager"
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Find packages that provide the specified file.
+ *
+ * Return value: an array of #ZifPackage's
  **/
 GPtrArray *
 zif_store_search_file (ZifStore *store, const gchar *search, GError **error)
@@ -181,6 +228,13 @@ zif_store_search_file (ZifStore *store, const gchar *search, GError **error)
 
 /**
  * zif_store_resolve:
+ * @store: the #ZifStore object
+ * @search: the search term, e.g. "gnome-power-manager"
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Finds packages matching the package name exactly.
+ *
+ * Return value: an array of #ZifPackage's
  **/
 GPtrArray *
 zif_store_resolve (ZifStore *store, const gchar *search, GError **error)
@@ -202,6 +256,13 @@ zif_store_resolve (ZifStore *store, const gchar *search, GError **error)
 
 /**
  * zif_store_what_provides:
+ * @store: the #ZifStore object
+ * @search: the search term, e.g. "gstreamer(codec-mp3)"
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Find packages that provide a specific string.
+ *
+ * Return value: an array of #ZifPackage's
  **/
 GPtrArray *
 zif_store_what_provides (ZifStore *store, const gchar *search, GError **error)
@@ -223,6 +284,12 @@ zif_store_what_provides (ZifStore *store, const gchar *search, GError **error)
 
 /**
  * zif_store_get_packages:
+ * @store: the #ZifStore object
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Return all packages in the #ZifSack's.
+ *
+ * Return value: an array of #ZifPackage's
  **/
 GPtrArray *
 zif_store_get_packages (ZifStore *store, GError **error)
@@ -243,6 +310,12 @@ zif_store_get_packages (ZifStore *store, GError **error)
 
 /**
  * zif_store_get_updates:
+ * @store: the #ZifStore object
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Return a list of packages that are updatable.
+ *
+ * Return value: an array of #ZifPackage's
  **/
 GPtrArray *
 zif_store_get_updates (ZifStore *store, GError **error)
@@ -263,6 +336,13 @@ zif_store_get_updates (ZifStore *store, GError **error)
 
 /**
  * zif_store_find_package:
+ * @store: the #ZifStore object
+ * @id: the #PkPackageId which defines the package
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Find a single package in the #ZifSack.
+ *
+ * Return value: A single #ZifPackage or %NULL
  **/
 ZifPackage *
 zif_store_find_package (ZifStore *store, const PkPackageId *id, GError **error)
@@ -284,6 +364,11 @@ zif_store_find_package (ZifStore *store, const PkPackageId *id, GError **error)
 
 /**
  * zif_store_get_id:
+ * @store: the #ZifStore object
+ *
+ * Gets the id for the object.
+ *
+ * Return value: A text ID, or %NULL
  **/
 const gchar *
 zif_store_get_id (ZifStore *store)
@@ -301,6 +386,9 @@ zif_store_get_id (ZifStore *store)
 
 /**
  * zif_store_print:
+ * @store: the #ZifStore object
+ *
+ * Prints all the objects in the store.
  **/
 void
 zif_store_print (ZifStore *store)
@@ -351,7 +439,8 @@ zif_store_init (ZifStore *store)
 
 /**
  * zif_store_new:
- * Return value: A new store class instance.
+ *
+ * Return value: A new #ZifStore class instance.
  **/
 ZifStore *
 zif_store_new (void)
