@@ -19,6 +19,13 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+/**
+ * SECTION:zif-config
+ * @short_description: A #ZifConfig object manages system wide config options
+ *
+ * #ZifConfig allows settings to be read from a central config file.
+ */
+
 #include <string.h>
 
 #include <glib.h>
@@ -46,6 +53,13 @@ static gpointer zif_config_object = NULL;
 
 /**
  * zif_config_get_string:
+ * @config: the #ZifConfig object
+ * @key: the key name to retrieve, e.g. "cachedir"
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Gets a string value from the config file.
+ *
+ * Return value: the allocated value, or %NULL
  **/
 gchar *
 zif_config_get_string (ZifConfig *config, const gchar *key, GError **error)
@@ -89,6 +103,13 @@ out:
 
 /**
  * zif_config_get_boolean:
+ * @config: the #ZifConfig object
+ * @key: the key name to retrieve, e.g. "keepcache"
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Gets a boolean value from the config file.
+ *
+ * Return value: %TRUE or %FALSE
  **/
 gboolean
 zif_config_get_boolean (ZifConfig *config, const gchar *key, GError **error)
@@ -114,6 +135,13 @@ out:
 
 /**
  * zif_config_set_filename:
+ * @config: the #ZifConfig object
+ * @filename: the system wide config file, e.g. "/etc/yum.conf"
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Sets the filename to use as the system wide config file.
+ *
+ * Return value: %TRUE for success, %FALSE for failure
  **/
 gboolean
 zif_config_set_filename (ZifConfig *config, const gchar *filename, GError **error)
@@ -209,7 +237,8 @@ zif_config_init (ZifConfig *config)
 
 /**
  * zif_config_new:
- * Return value: A new config class instance.
+ *
+ * Return value: A new #ZifConfig class instance.
  **/
 ZifConfig *
 zif_config_new (void)

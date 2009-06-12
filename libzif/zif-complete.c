@@ -253,7 +253,8 @@ zif_complete_init (ZifComplete *complete)
 
 /**
  * zif_complete_new:
- * Return value: A new complete class instance.
+ *
+ * Return value: A new #ZifComplete class instance.
  **/
 ZifComplete *
 zif_complete_new (void)
