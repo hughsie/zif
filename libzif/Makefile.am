@@ -27,7 +27,7 @@ libzif_includedir = $(includedir)/libzif
 
 libzif_include_HEADERS =					\
 	zif.h							\
-	zif-complete.h						\
+	zif-completion.h					\
 	zif-string.h						\
 	zif-string-array.h					\
 	zif-depend.h						\
@@ -55,8 +55,8 @@ libzif_la_SOURCES =						\
 	egg-debug.h						\
 	egg-string.c						\
 	egg-string.h						\
-	zif-complete.c						\
-	zif-complete.h						\
+	zif-completion.c					\
+	zif-completion.h					\
 	zif-string.c						\
 	zif-string.h						\
 	zif-string-array.c					\

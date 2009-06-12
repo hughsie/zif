@@ -47,6 +47,7 @@
       </para>
     </partintro>
     <xi:include href="xml/zif-config.xml"/>
+    <xi:include href="xml/zif-completion.xml"/>
     <xi:include href="xml/zif-depend-array.xml"/>
     <xi:include href="xml/zif-depend.xml"/>
     <xi:include href="xml/zif-download.xml"/>

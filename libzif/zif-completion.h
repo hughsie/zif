@@ -23,52 +23,52 @@
 #error "Only <zif.h> can be included directly."
 #endif
 
-#ifndef __ZIF_COMPLETE_H
-#define __ZIF_COMPLETE_H
+#ifndef __ZIF_COMPLETION_H
+#define __ZIF_COMPLETION_H
 
 #include <glib-object.h>
 
 G_BEGIN_DECLS
 
-#define ZIF_TYPE_COMPLETE		(zif_complete_get_type ())
-#define ZIF_COMPLETE(o)			(G_TYPE_CHECK_INSTANCE_CAST ((o), ZIF_TYPE_COMPLETE, ZifComplete))
-#define ZIF_COMPLETE_CLASS(k)		(G_TYPE_CHECK_CLASS_CAST((k), ZIF_TYPE_COMPLETE, ZifCompleteClass))
-#define ZIF_IS_COMPLETE(o)		(G_TYPE_CHECK_INSTANCE_TYPE ((o), ZIF_TYPE_COMPLETE))
-#define ZIF_IS_COMPLETE_CLASS(k)	(G_TYPE_CHECK_CLASS_TYPE ((k), ZIF_TYPE_COMPLETE))
-#define ZIF_COMPLETE_GET_CLASS(o)	(G_TYPE_INSTANCE_GET_CLASS ((o), ZIF_TYPE_COMPLETE, ZifCompleteClass))
+#define ZIF_TYPE_COMPLETION		(zif_completion_get_type ())
+#define ZIF_COMPLETION(o)		(G_TYPE_CHECK_INSTANCE_CAST ((o), ZIF_TYPE_COMPLETION, ZifCompletion))
+#define ZIF_COMPLETION_CLASS(k)		(G_TYPE_CHECK_CLASS_CAST((k), ZIF_TYPE_COMPLETION, ZifCompletionClass))
+#define ZIF_IS_COMPLETION(o)		(G_TYPE_CHECK_INSTANCE_TYPE ((o), ZIF_TYPE_COMPLETION))
+#define ZIF_IS_COMPLETION_CLASS(k)	(G_TYPE_CHECK_CLASS_TYPE ((k), ZIF_TYPE_COMPLETION))
+#define ZIF_COMPLETION_GET_CLASS(o)	(G_TYPE_INSTANCE_GET_CLASS ((o), ZIF_TYPE_COMPLETION, ZifCompletionClass))
 
-typedef struct ZifCompletePrivate ZifCompletePrivate;
+typedef struct ZifCompletionPrivate ZifCompletionPrivate;
 
 typedef struct
 {
 	GObject				 parent;
-	ZifCompletePrivate		*priv;
-} ZifComplete;
+	ZifCompletionPrivate		*priv;
+} ZifCompletion;
 
 typedef struct
 {
 	GObjectClass	parent_class;
 	/* Signals */
-	void		(* percentage_changed)		(ZifComplete	*complete,
+	void		(* percentage_changed)		(ZifCompletion	*completion,
 							 guint		 value);
-	void		(* subpercentage_changed)	(ZifComplete	*complete,
+	void		(* subpercentage_changed)	(ZifCompletion	*completion,
 							 guint		 value);
 	/* Padding for future expansion */
 	void (*_zif_reserved1) (void);
 	void (*_zif_reserved2) (void);
 	void (*_zif_reserved3) (void);
 	void (*_zif_reserved4) (void);
-} ZifCompleteClass;
+} ZifCompletionClass;
 
-GType		 zif_complete_get_type			(void) G_GNUC_CONST;
-ZifComplete	*zif_complete_new			(void);
-gboolean	 zif_complete_set_number_steps		(ZifComplete		*complete,
+GType		 zif_completion_get_type		(void) G_GNUC_CONST;
+ZifCompletion	*zif_completion_new			(void);
+gboolean	 zif_completion_set_number_steps	(ZifCompletion		*completion,
 							 guint			 steps);
-gboolean	 zif_complete_done			(ZifComplete		*complete);
-gboolean	 zif_complete_set_child			(ZifComplete		*complete,
-							 ZifComplete		*child);
+gboolean	 zif_completion_done			(ZifCompletion		*completion);
+gboolean	 zif_completion_set_child		(ZifCompletion		*completion,
+							 ZifCompletion		*child);
 
 G_END_DECLS
 
-#endif /* __ZIF_COMPLETE_H */
+#endif /* __ZIF_COMPLETION_H */
 
