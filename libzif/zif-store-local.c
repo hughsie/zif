@@ -19,6 +19,13 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+/**
+ * SECTION:zif-store-local
+ * @short_description: A local store is a store that can operate on installed packages
+ *
+ * A #ZifStoreLocal is a subclassed #ZifStore and operates on installed objects.
+ */
+
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
@@ -60,6 +67,13 @@ static gpointer zif_store_local_object = NULL;
 
 /**
  * zif_store_local_set_prefix:
+ * @store: the #ZifStoreLocal object
+ * @prefix: the install root, e.g. "/"
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Sets the prefix to use for the install root.
+ *
+ * Return value: %TRUE for success, %FALSE for failure
  **/
 gboolean
 zif_store_local_set_prefix (ZifStoreLocal *store, const gchar *prefix, GError **error)
@@ -612,7 +626,8 @@ zif_store_local_init (ZifStoreLocal *store)
 
 /**
  * zif_store_local_new:
- * Return value: A new store_local class instance.
+ *
+ * Return value: A new #ZifStoreLocal class instance.
  **/
 ZifStoreLocal *
 zif_store_local_new (void)
