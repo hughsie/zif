@@ -19,6 +19,14 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+/**
+ * SECTION:zif-store-remote
+ * @short_description: A remote store is a store that can operate on remote packages
+ *
+ * A #ZifStoreRemote is a subclassed #ZifStore and operates on remote objects.
+ * A repository is another name for a #ZifStoreRemote.
+ */
+
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
@@ -92,6 +100,14 @@ zif_store_remote_download_progress_changed (ZifDownload *download, guint value, 
 
 /**
  * zif_store_remote_download:
+ * @store: the #ZifStoreRemote object
+ * @filename: the complete filename to download, e.g. "Packages/hal-0.0.1.rpm"
+ * @directory: the directory to put the downloaded file
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Downloads a remote package to a local directory.
+ *
+ * Return value: %TRUE for success, %FALSE for failure
  **/
 gboolean
 zif_store_remote_download (ZifStoreRemote *store, const gchar *filename, const gchar *directory, GError **error)
@@ -421,6 +437,13 @@ out:
 
 /**
  * zif_store_remote_set_enabled:
+ * @store: the #ZifStoreRemote object
+ * @enabled: If the object should be enabled
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Enable or disable a remote repository.
+ *
+ * Return value: %TRUE for success, %FALSE for failure
  **/
 gboolean
 zif_store_remote_set_enabled (ZifStoreRemote *store, gboolean enabled, GError **error)
@@ -745,6 +768,12 @@ out:
 
 /**
  * zif_store_remote_is_devel:
+ * @store: the #ZifStoreRemote object
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Finds out if the repository is a development repository.
+ *
+ * Return value: %TRUE or %FALSE
  **/
 gboolean
 zif_store_remote_is_devel (ZifStoreRemote *store, GError **error)
@@ -783,6 +812,11 @@ out:
 
 /**
  * zif_store_remote_get_id:
+ * @store: the #ZifStoreRemote object
+ *
+ * Get the id of this repository.
+ *
+ * Return value: The repository id, e.g. "fedora"
  **/
 static const gchar *
 zif_store_remote_get_id (ZifStore *store)
@@ -794,6 +828,12 @@ zif_store_remote_get_id (ZifStore *store)
 
 /**
  * zif_store_remote_get_name:
+ * @store: the #ZifStoreRemote object
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Get the name of this repository.
+ *
+ * Return value: The repository name, e.g. "Fedora"
  **/
 const gchar *
 zif_store_remote_get_name (ZifStoreRemote *store, GError **error)
@@ -820,6 +860,12 @@ out:
 
 /**
  * zif_store_remote_get_enabled:
+ * @store: the #ZifStoreRemote object
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Find out if this repository is enabled or not.
+ *
+ * Return value: %TRUE or %FALSE
  **/
 gboolean
 zif_store_remote_get_enabled (ZifStoreRemote *store, GError **error)
@@ -955,7 +1001,8 @@ zif_store_remote_init (ZifStoreRemote *store)
 
 /**
  * zif_store_remote_new:
- * Return value: A new store_remote class instance.
+ *
+ * Return value: A new #ZifStoreRemote class instance.
  **/
 ZifStoreRemote *
 zif_store_remote_new (void)
