@@ -28,6 +28,7 @@
 #include "egg-debug.h"
 
 /* prototypes */
+void zif_complete_test (EggTest *test);
 void zif_monitor_test (EggTest *test);
 void zif_config_test (EggTest *test);
 void zif_utils_test (EggTest *test);
@@ -54,6 +55,7 @@ main (int argc, char **argv)
 	egg_debug_init (TRUE);
 
 	/* tests go here */
+	zif_complete_test (test);
 	zif_repo_md_master_test (test);
 	zif_repo_md_filelists_test (test);
 	zif_repo_md_primary_test (test);
