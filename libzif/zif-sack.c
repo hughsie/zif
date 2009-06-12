@@ -28,6 +28,7 @@
 
 #include "zif-config.h"
 #include "zif-store.h"
+#include "zif-store-local.h"
 #include "zif-sack.h"
 #include "zif-package.h"
 #include "zif-utils.h"
@@ -78,6 +79,99 @@ zif_sack_add_stores (ZifSack *sack, GPtrArray *stores)
 			break;
 	}
 	return ret;
+}
+
+/**
+ * zif_sack_add_local:
+ *
+ * Convenience function to add local store
+ **/
+gboolean
+zif_sack_add_local (ZifSack *sack, GError **error)
+{
+	ZifStoreLocal *store;
+
+	g_return_val_if_fail (ZIF_IS_SACK (sack), FALSE);
+
+	store = zif_store_local_new ();
+	zif_sack_add_store (sack, ZIF_STORE (store));
+	g_object_unref (store);
+
+	return TRUE;
+}
+
+/**
+ * zif_sack_add_remote:
+ *
+ * Convenience function to add remote stores
+ **/
+gboolean
+zif_sack_add_remote (ZifSack *sack, GError **error)
+{
+	GPtrArray *array;
+	ZifRepos *repos;
+	GError *error_local = NULL;
+	gboolean ret = TRUE;
+
+	g_return_val_if_fail (ZIF_IS_SACK (sack), FALSE);
+
+	/* get stores */
+	repos = zif_repos_new ();
+	array = zif_repos_get_stores (repos, &error_local);
+	if (array == NULL) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "failed to get enabled stores: %s", error_local->message);
+		g_error_free (error_local);
+		ret = FALSE;
+		goto out;
+	}
+
+	/* add */
+	zif_sack_add_stores (ZIF_SACK (sack), array);
+
+	/* free */
+	g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
+	g_ptr_array_free (array, TRUE);
+out:
+	g_object_unref (repos);
+	return TRUE;
+}
+
+/**
+ * zif_sack_add_remote_enabled:
+ *
+ * Convenience function to add remote stores
+ **/
+gboolean
+zif_sack_add_remote_enabled (ZifSack *sack, GError **error)
+{
+	GPtrArray *array;
+	ZifRepos *repos;
+	GError *error_local = NULL;
+	gboolean ret = TRUE;
+
+	g_return_val_if_fail (ZIF_IS_SACK (sack), FALSE);
+
+	/* get stores */
+	repos = zif_repos_new ();
+	array = zif_repos_get_stores_enabled (repos, &error_local);
+	if (array == NULL) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "failed to get enabled stores: %s", error_local->message);
+		g_error_free (error_local);
+		ret = FALSE;
+		goto out;
+	}
+
+	/* add */
+	zif_sack_add_stores (ZIF_SACK (sack), array);
+
+	/* free */
+	g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
+	g_ptr_array_free (array, TRUE);
+out:
+	g_object_unref (repos);
+	return TRUE;
 }
 
 /**

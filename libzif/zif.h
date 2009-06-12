@@ -40,8 +40,6 @@
 #include <zif-repo-md-filelists.h>
 #include <zif-repos.h>
 #include <zif-sack.h>
-#include <zif-sack-local.h>
-#include <zif-sack-remote.h>
 #include <zif-utils.h>
 #include <zif-groups.h>
 #include <zif-download.h>

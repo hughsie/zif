@@ -188,7 +188,8 @@ main (int argc, char *argv[])
 
 		/* load local sack */
 		g_print ("load sack local... ");
-		sack = ZIF_SACK (zif_sack_local_new ());
+		sack = zif_sack_new ();
+		zif_sack_add_local (sack, NULL);
 		time_s = g_timer_elapsed (timer, NULL);
 		g_print ("\t\t : %lf\n", time_s);
 		g_timer_reset (timer);
@@ -264,7 +265,8 @@ main (int argc, char *argv[])
 
 		/* load remote sack */
 		g_print ("load sack remote... ");
-		sack = ZIF_SACK (zif_sack_remote_new ());
+		sack = zif_sack_new ();
+		zif_sack_add_remote_enabled (sack, NULL);
 		time_s = g_timer_elapsed (timer, NULL);
 		g_print ("\t\t : %lf\n", time_s);
 		g_timer_reset (timer);
@@ -345,18 +347,9 @@ main (int argc, char *argv[])
 	}
 
 	/* ZifSack */
-	sack = ZIF_SACK (zif_sack_local_new ());
-	array = zif_repos_get_stores_enabled (repos, &error);
-	if (array == NULL) {
-		g_print ("failed to get enabled stores: %s\n", error->message);
-		g_error_free (error);
-		goto out;
-	}
-
-	zif_sack_add_stores (sack, array);
-	g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
-	g_ptr_array_free (array, TRUE);
-
+	sack = zif_sack_new ();
+	zif_sack_add_local (sack, NULL);
+	zif_sack_add_remote_enabled (sack, NULL);
 
 	if (argc < 2) {
 		g_print ("%s", options_help);

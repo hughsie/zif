@@ -4,6 +4,7 @@ Makefile.libs
 *.bak
 *.out
 *.txt
+*.o
 tmpl
 xml
 html

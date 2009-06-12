@@ -42,8 +42,6 @@ libzif_include_HEADERS =					\
 	zif-repo-md-filelists.h					\
 	zif-repo-md-primary.h					\
 	zif-sack.h						\
-	zif-sack-local.h					\
-	zif-sack-remote.h					\
 	zif-repos.h						\
 	zif-utils.h						\
 	zif-groups.h						\
@@ -86,10 +84,6 @@ libzif_la_SOURCES =						\
 	zif-repo-md-primary.h					\
 	zif-sack.c						\
 	zif-sack.h						\
-	zif-sack-local.c					\
-	zif-sack-local.h					\
-	zif-sack-remote.c					\
-	zif-sack-remote.h					\
 	zif-repos.c						\
 	zif-repos.h						\
 	zif-utils.c						\

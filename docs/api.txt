@@ -32,15 +32,10 @@
      * ...
 
 [Sack]
- | * add_store
- | * resolve
- | * search_group
- | * what_provides
- | * ...
- |
- |- [SackLocal]
- |
- \- [SackRemote]
+   * add_store
+   * resolve
+   * search_group
+   * what_provides
 
 [Package]
  | * get_group

@@ -61,6 +61,12 @@ gboolean	 zif_sack_add_store		(ZifSack		*sack,
 						 ZifStore		*store);
 gboolean	 zif_sack_add_stores		(ZifSack		*sack,
 						 GPtrArray		*stores);
+gboolean	 zif_sack_add_local		(ZifSack		*sack,
+						 GError			**error);
+gboolean	 zif_sack_add_remote		(ZifSack		*sack,
+						 GError			**error);
+gboolean	 zif_sack_add_remote_enabled	(ZifSack		*sack,
+						 GError			**error);
 
 /* methods */
 GPtrArray	*zif_sack_resolve		(ZifSack		*sack,
