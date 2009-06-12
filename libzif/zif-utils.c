@@ -19,6 +19,13 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+/**
+ * SECTION:zif-utils
+ * @short_description: Simple utility functions useful to zif
+ *
+ * Common, non-object functions are declared here.
+ */
+
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
@@ -36,6 +43,10 @@
 
 /**
  * zif_init:
+ *
+ * This must be called before any of the zif_* functions are called.
+ *
+ * Return value: %TRUE if we initialised correctly
  **/
 gboolean
 zif_init (void)
@@ -53,6 +64,11 @@ zif_init (void)
 
 /**
  * zif_boolean_from_text:
+ * @text: the input text
+ *
+ * Convert a text boolean into it's enumerated boolean state
+ *
+ * Return value: %TRUE for positive, %FALSE for negative
  **/
 gboolean
 zif_boolean_from_text (const gchar *text)
@@ -67,6 +83,9 @@ zif_boolean_from_text (const gchar *text)
 
 /**
  * zif_list_print_array:
+ * @array: The string array to print
+ *
+ * Print an array of strings to %STDOUT.
  **/
 void
 zif_list_print_array (GPtrArray *array)
@@ -82,6 +101,16 @@ zif_list_print_array (GPtrArray *array)
 
 /**
  * zif_package_id_from_header:
+ * @name: The package name, e.g. "hal"
+ * @epoch: The package epoch, e.g. "1" or %NULL
+ * @version: The package version, e.g. "1.0.0"
+ * @release: The package release, e.g. "2"
+ * @arch: The package architecture, e.g. "i386"
+ * @data: The package data, typically the repo name, or "installed"
+ *
+ * Formats a #PkPackageId structure from a NEVRA.
+ *
+ * Return value: The #PkPackageId value, or %NULL if invalid
  **/
 PkPackageId *
 zif_package_id_from_nevra (const gchar *name, const gchar *epoch, const gchar *version, const gchar *release, const gchar *arch, const gchar *data)
@@ -140,8 +169,12 @@ zif_package_convert_evr (gchar *evr, const gchar **epoch, const gchar **version,
 
 /**
  * zif_compare_evr:
+ * @a: the first version string
+ * @b: the second version string
  *
- * compare two [epoch:]version[-release]
+ * Compare two [epoch:]version[-release] strings
+ *
+ * Return value: 1 for a>b, 0 for a==b, -1 for b>a
  **/
 gint
 zif_compare_evr (const gchar *a, const gchar *b)

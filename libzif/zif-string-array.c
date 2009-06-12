@@ -19,6 +19,14 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+/**
+ * SECTION:zif-string-array
+ * @short_description: Create and manage reference counted string arrays
+ *
+ * To avoid frequent malloc/free, we use reference counted string arrays to
+ * optimise many of the zif internals.
+ */
+
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
@@ -30,6 +38,11 @@
 
 /**
  * zif_string_array_new:
+ * @value: string array to copy
+ *
+ * Creates a new referenced counted string array
+ *
+ * Return value: New allocated object
  **/
 ZifStringArray *
 zif_string_array_new (const GPtrArray *value)
@@ -54,6 +67,12 @@ out:
 
 /**
  * zif_string_array_new_value:
+ * @value: string array to use
+ *
+ * Creates a new referenced counted string array, using the allocated array.
+ * Do not free this array as it is now owned by the #ZifString.
+ *
+ * Return value: New allocated object
  **/
 ZifStringArray *
 zif_string_array_new_value (GPtrArray *value)
@@ -67,6 +86,11 @@ zif_string_array_new_value (GPtrArray *value)
 
 /**
  * zif_string_array_ref:
+ * @array: the #ZifStringArray object
+ *
+ * Increases the reference count on the object.
+ *
+ * Return value: the #ZifStringArray object
  **/
 ZifStringArray *
 zif_string_array_ref (ZifStringArray *array)
@@ -78,6 +102,12 @@ zif_string_array_ref (ZifStringArray *array)
 
 /**
  * zif_string_array_unref:
+ * @array: the #ZifStringArray object
+ *
+ * Decreses the reference count on the object, and frees the value if
+ * it calls to zero.
+ *
+ * Return value: the #ZifStringArray object
  **/
 ZifStringArray *
 zif_string_array_unref (ZifStringArray *array)
@@ -96,8 +126,12 @@ zif_string_array_unref (ZifStringArray *array)
 
 /**
  * zif_string_array_unique:
+ * @array: the #ZifStringArray object
  *
- * Optimised for large lists...
+ * Remove all non-unique strings from the array.
+ * This is optimised for large lists.
+ *
+ * Return value: the #ZifStringArray object
  **/
 ZifStringArray *
 zif_string_array_unique (ZifStringArray *array)

@@ -19,6 +19,14 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+/**
+ * SECTION:zif-string
+ * @short_description: Create and manage reference counted strings
+ *
+ * To avoid frequent malloc/free, we use reference counted strings to
+ * optimise many of the zif internals.
+ */
+
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
@@ -30,6 +38,11 @@
 
 /**
  * zif_string_new:
+ * @value: string to copy
+ *
+ * Creates a new referenced counted string
+ *
+ * Return value: New allocated object
  **/
 ZifString *
 zif_string_new (const gchar *value)
@@ -43,6 +56,12 @@ zif_string_new (const gchar *value)
 
 /**
  * zif_string_new_value:
+ * @value: string to use
+ *
+ * Creates a new referenced counted string, using the allocated memory.
+ * Do not free this string as it is now owned by the #ZifString.
+ *
+ * Return value: New allocated object
  **/
 ZifString *
 zif_string_new_value (gchar *value)
@@ -56,6 +75,11 @@ zif_string_new_value (gchar *value)
 
 /**
  * zif_string_ref:
+ * @string: the #ZifString object
+ *
+ * Increases the reference count on the object.
+ *
+ * Return value: the #ZifString object
  **/
 ZifString *
 zif_string_ref (ZifString *string)
@@ -67,6 +91,12 @@ zif_string_ref (ZifString *string)
 
 /**
  * zif_string_unref:
+ * @string: the #ZifString object
+ *
+ * Decreses the reference count on the object, and frees the value if
+ * it calls to zero.
+ *
+ * Return value: the #ZifString object
  **/
 ZifString *
 zif_string_unref (ZifString *string)
