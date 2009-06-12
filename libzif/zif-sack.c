@@ -48,6 +48,12 @@ G_DEFINE_TYPE (ZifSack, zif_sack, G_TYPE_OBJECT)
 
 /**
  * zif_sack_add_store:
+ * @sack: the #ZifSack object
+ * @store: the #ZifStore to add
+ *
+ * Add a single #ZifStore to the #ZifSack.
+ *
+ * Return value: %TRUE for success, %FALSE for failure
  **/
 gboolean
 zif_sack_add_store (ZifSack *sack, ZifStore *store)
@@ -61,6 +67,12 @@ zif_sack_add_store (ZifSack *sack, ZifStore *store)
 
 /**
  * zif_sack_add_stores:
+ * @sack: the #ZifSack object
+ * @stores: the array of #ZifStore's to add
+ *
+ * Add an array of #ZifStore's to the #ZifSack.
+ *
+ * Return value: %TRUE for success, %FALSE for failure
  **/
 gboolean
 zif_sack_add_stores (ZifSack *sack, GPtrArray *stores)
@@ -83,8 +95,12 @@ zif_sack_add_stores (ZifSack *sack, GPtrArray *stores)
 
 /**
  * zif_sack_add_local:
+ * @sack: the #ZifSack object
+ * @error: a #GError which is used on failure, or %NULL
  *
- * Convenience function to add local store
+ * Convenience function to add local store to the #ZifSack.
+ *
+ * Return value: %TRUE for success, %FALSE for failure
  **/
 gboolean
 zif_sack_add_local (ZifSack *sack, GError **error)
@@ -102,8 +118,12 @@ zif_sack_add_local (ZifSack *sack, GError **error)
 
 /**
  * zif_sack_add_remote:
+ * @sack: the #ZifSack object
+ * @error: a #GError which is used on failure, or %NULL
  *
- * Convenience function to add remote stores
+ * Convenience function to add remote stores to the #ZifSack.
+ *
+ * Return value: %TRUE for success, %FALSE for failure
  **/
 gboolean
 zif_sack_add_remote (ZifSack *sack, GError **error)
@@ -139,8 +159,12 @@ out:
 
 /**
  * zif_sack_add_remote_enabled:
+ * @sack: the #ZifSack object
+ * @error: a #GError which is used on failure, or %NULL
  *
- * Convenience function to add remote stores
+ * Convenience function to add enabled remote stores to the #ZifSack.
+ *
+ * Return value: %TRUE for success, %FALSE for failure
  **/
 gboolean
 zif_sack_add_remote_enabled (ZifSack *sack, GError **error)
@@ -232,6 +256,13 @@ out:
 
 /**
  * zif_sack_find_package:
+ * @sack: the #ZifSack object
+ * @id: the #PkPackageId which defines the package
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Find a single package in the #ZifSack.
+ *
+ * Return value: A single #ZifPackage or %NULL
  **/
 ZifPackage *
 zif_sack_find_package (ZifSack *sack, const PkPackageId *id, GError **error)
@@ -256,6 +287,12 @@ zif_sack_find_package (ZifSack *sack, const PkPackageId *id, GError **error)
 
 /**
  * zif_sack_clean:
+ * @sack: the #ZifSack object
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Cleans the #ZifStoreRemote objects by deleting cache.
+ *
+ * Return value: %TRUE for success, %FALSE for failure
  **/
 gboolean
 zif_sack_clean (ZifSack *sack, GError **error)
@@ -288,6 +325,13 @@ out:
 
 /**
  * zif_sack_resolve:
+ * @sack: the #ZifSack object
+ * @search: the search term, e.g. "gnome-power-manager"
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Finds packages matching the package name exactly.
+ *
+ * Return value: an array of #ZifPackage's
  **/
 GPtrArray *
 zif_sack_resolve (ZifSack *sack, const gchar *search, GError **error)
@@ -298,6 +342,13 @@ zif_sack_resolve (ZifSack *sack, const gchar *search, GError **error)
 
 /**
  * zif_sack_search_name:
+ * @sack: the #ZifSack object
+ * @search: the search term, e.g. "power"
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Find packages that match the package name in some part.
+ *
+ * Return value: an array of #ZifPackage's
  **/
 GPtrArray *
 zif_sack_search_name (ZifSack *sack, const gchar *search, GError **error)
@@ -308,6 +359,13 @@ zif_sack_search_name (ZifSack *sack, const gchar *search, GError **error)
 
 /**
  * zif_sack_search_details:
+ * @sack: the #ZifSack object
+ * @search: the search term, e.g. "trouble"
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Find packages that match some detail about the package.
+ *
+ * Return value: an array of #ZifPackage's
  **/
 GPtrArray *
 zif_sack_search_details (ZifSack *sack, const gchar *search, GError **error)
@@ -318,6 +376,13 @@ zif_sack_search_details (ZifSack *sack, const gchar *search, GError **error)
 
 /**
  * zif_sack_search_group:
+ * @sack: the #ZifSack object
+ * @search: the search term, e.g. "games"
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Find packages that belong in a specific group.
+ *
+ * Return value: an array of #ZifPackage's
  **/
 GPtrArray *
 zif_sack_search_group (ZifSack *sack, const gchar *search, GError **error)
@@ -328,6 +393,13 @@ zif_sack_search_group (ZifSack *sack, const gchar *search, GError **error)
 
 /**
  * zif_sack_search_file:
+ * @sack: the #ZifSack object
+ * @search: the search term, e.g. "/usr/bin/gnome-power-manager"
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Find packages that provide the specified file.
+ *
+ * Return value: an array of #ZifPackage's
  **/
 GPtrArray *
 zif_sack_search_file (ZifSack *sack, const gchar *search, GError **error)
@@ -338,6 +410,12 @@ zif_sack_search_file (ZifSack *sack, const gchar *search, GError **error)
 
 /**
  * zif_sack_get_packages:
+ * @sack: the #ZifSack object
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Return all packages in the #ZifSack's.
+ *
+ * Return value: an array of #ZifPackage's
  **/
 GPtrArray *
 zif_sack_get_packages (ZifSack *sack, GError **error)
@@ -348,6 +426,12 @@ zif_sack_get_packages (ZifSack *sack, GError **error)
 
 /**
  * zif_sack_get_updates:
+ * @sack: the #ZifSack object
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Return a list of packages that are updatable.
+ *
+ * Return value: an array of #ZifPackage's
  **/
 GPtrArray *
 zif_sack_get_updates (ZifSack *sack, GError **error)
@@ -358,6 +442,13 @@ zif_sack_get_updates (ZifSack *sack, GError **error)
 
 /**
  * zif_sack_what_provides:
+ * @sack: the #ZifSack object
+ * @search: the search term, e.g. "gstreamer(codec-mp3)"
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Find packages that provide a specific string.
+ *
+ * Return value: an array of #ZifPackage's
  **/
 GPtrArray *
 zif_sack_what_provides (ZifSack *sack, const gchar *search, GError **error)
@@ -411,7 +502,7 @@ zif_sack_init (ZifSack *sack)
 
 /**
  * zif_sack_new:
- * Return value: A new sack class instance.
+ * Return value: A new #ZifSack class instance.
  **/
 ZifSack *
 zif_sack_new (void)
