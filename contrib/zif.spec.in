@@ -38,6 +38,7 @@ GLib headers and libraries for zif.
 
 %build
 %configure \
+	--enable-gtk-doc \
         --disable-static \
         --disable-dependency-tracking
 
@@ -62,6 +63,10 @@ rm -rf $RPM_BUILD_ROOT
 %doc README AUTHORS NEWS COPYING
 %{_bindir}/zif
 %{_libdir}/*libzif*.so.*
+%{_datadir}/gtk-doc/html/zif/style.css
+%{_datadir}/gtk-doc/html/zif/index.sgml
+%{_datadir}/gtk-doc/html/zif/*.png
+%{_datadir}/gtk-doc/html/zif/*.html
 
 %files devel
 %defattr(-,root,root,-)
@@ -70,6 +75,8 @@ rm -rf $RPM_BUILD_ROOT
 %{_libdir}/pkgconfig/zif.pc
 %dir %{_includedir}/libzif
 %{_includedir}/libzif/*.h
+%{_datadir}/gtk-doc/html/zif/zif.devhelp
+%{_datadir}/gtk-doc/html/zif/zif.devhelp2
 
 %changelog
 * #LONGDATE# Richard Hughes <richard@hughsie.com> #VERSION#-0.#BUILD##ALPHATAG#

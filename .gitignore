@@ -14,7 +14,7 @@ config.status
 config.sub
 configure
 depcomp
-dum-*.tar.gz
+zif-*.tar.gz
 gtk-doc.make
 install-sh
 libtool

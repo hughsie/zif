@@ -1,0 +1,92 @@
+<?xml version="1.0"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+               "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
+<!ENTITY version SYSTEM "version.xml">
+]>
+<book id="index" xmlns:xi="http://www.w3.org/2003/XInclude">
+  <bookinfo>
+    <title>ZIF Reference Manual</title>
+    <releaseinfo>
+      for ZIF &version;
+    </releaseinfo>
+    <authorgroup>
+      <author>
+        <firstname>Richard</firstname>
+        <surname>Hughes</surname>
+        <affiliation>
+          <address>
+            <email>richard@hughsie.com</email>
+          </address>
+        </affiliation>
+      </author>
+    </authorgroup>
+    <copyright>
+      <year>2009</year>
+      <holder>Richard Hughes</holder>
+    </copyright>
+  </bookinfo>
+
+  <reference id="specification">
+    <title>ZIF Specification</title>
+    <partintro>
+      <para>
+        ZIF is a thin layer over rpm.
+      </para>
+      <para>
+        This part documents core features of ZIF.
+      </para>
+    </partintro>
+    <xi:include href="spec/zif-introduction.xml"/>
+  </reference>
+
+  <reference id="libzif">
+    <title>libzif GObject library</title>
+    <partintro>
+      <para>
+        This part documents GObjects used in libzif.
+      </para>
+    </partintro>
+    <xi:include href="xml/zif-config.xml"/>
+    <xi:include href="xml/zif-depend-array.xml"/>
+    <xi:include href="xml/zif-depend.xml"/>
+    <xi:include href="xml/zif-download.xml"/>
+    <xi:include href="xml/zif-groups.xml"/>
+    <xi:include href="xml/zif-monitor.xml"/>
+    <xi:include href="xml/zif-package.xml"/>
+    <xi:include href="xml/zif-package-local.xml"/>
+    <xi:include href="xml/zif-package-remote.xml"/>
+    <xi:include href="xml/zif-repo-md-filelists.xml"/>
+    <xi:include href="xml/zif-repo-md.xml"/>
+    <xi:include href="xml/zif-repo-md-master.xml"/>
+    <xi:include href="xml/zif-repo-md-primary.xml"/>
+    <xi:include href="xml/zif-repos.xml"/>
+    <xi:include href="xml/zif-sack.xml"/>
+    <xi:include href="xml/zif-store.xml"/>
+    <xi:include href="xml/zif-store-local.xml"/>
+    <xi:include href="xml/zif-store-remote.xml"/>
+    <xi:include href="xml/zif-string-array.xml"/>
+    <xi:include href="xml/zif-string.xml"/>
+  </reference>
+
+  <reference id="libzif-helpers">
+    <title>libzif glib helpers</title>
+    <partintro>
+      <para>
+        This part documents helper funtions in libzif.
+      </para>
+    </partintro>
+    <xi:include href="xml/zif-utils.xml"/>
+  </reference>
+
+  <reference id="faq">
+    <title>Frequently asked questions</title>
+    <partintro>
+      <para>
+        This part has answers to developer frequently asked questions.
+      </para>
+    </partintro>
+    <xi:include href="spec/zif-faq.xml"/>
+  </reference>
+
+</book>
+

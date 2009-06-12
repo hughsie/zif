@@ -42,6 +42,7 @@ dnl ---------------------------------------------------------------------------
 CPPFLAGS="$CPPFLAGS -DG_DISABLE_SINGLE_INCLUDES -DGTK_DISABLE_SINGLE_INCLUDES"
 CPPFLAGS="$CPPFLAGS -DG_DISABLE_DEPRECATED -DGTK_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED"
 CPPFLAGS="$CPPFLAGS -DGDK_MULTIHEAD_SAFE -DGTK_MULTIHEAD_SAFE"
+CPPFLAGS="$CPPFLAGS -DGSEAL_ENABLE"
 
 if test "$GCC" = "yes"; then
 	WARNINGFLAGS_C="$WARNINGFLAGS_C -Wall"
@@ -72,7 +73,6 @@ if test "$GCC" = "yes"; then
 #	WARNINGFLAGS_C="$WARNINGFLAGS_C -Wmissing-parameter-type"
 #	WARNINGFLAGS_C="$WARNINGFLAGS_C -Woverride-init"
 else
-	WARNINGFLAGS_C=""
 	WARNINGFLAGS_C=""
 fi
 AC_SUBST(WARNINGFLAGS_C)
@@ -136,6 +136,9 @@ Makefile
 libzif/Makefile
 libzif/zif.pc
 tools/Makefile
+docs/Makefile
+docs/api/Makefile
+docs/api/version.xml
 ])
 
 dnl ==========================================================================

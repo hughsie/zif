@@ -1,5 +1,6 @@
 SUBDIRS = 						\
 	libzif						\
+	docs						\
 	tools
 
 security-check:
@@ -40,6 +41,7 @@ EXTRA_DIST =						\
 	config.h
 
 DISTCHECK_CONFIGURE_FLAGS = 				\
+	--disable-tests					\
 	--enable-gtk-doc
 
 distclean-local:
