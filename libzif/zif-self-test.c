@@ -39,8 +39,6 @@ void zif_repo_md_master_test (EggTest *test);
 void zif_repo_md_primary_test (EggTest *test);
 void zif_repo_md_filelists_test (EggTest *test);
 void zif_repos_test (EggTest *test);
-void zif_sack_local_test (EggTest *test);
-void zif_sack_remote_test (EggTest *test);
 void zif_download_test (EggTest *test);
 void zif_string_test (EggTest *test);
 void zif_string_array_test (EggTest *test);
@@ -70,8 +68,6 @@ main (int argc, char **argv)
 	zif_groups_test (test);
 	zif_store_remote_test (test);
 	zif_repos_test (test);
-	zif_sack_local_test (test);
-	zif_sack_remote_test (test);
 	
 	return (egg_test_finish (test));
 }
