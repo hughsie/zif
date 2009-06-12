@@ -25,6 +25,7 @@
 #define __ZIF_H_INSIDE__
 
 #include <zif-config.h>
+#include <zif-complete.h>
 #include <zif-string.h>
 #include <zif-string-array.h>
 #include <zif-depend.h>
