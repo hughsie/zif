@@ -36,6 +36,12 @@
 #include "egg-debug.h"
 #include "zif-string-array.h"
 
+/* private structure */
+struct ZifStringArray {
+	GPtrArray	*value;
+	guint		 count;
+};
+
 /**
  * zif_string_array_new:
  * @value: string array to copy
@@ -82,6 +88,67 @@ zif_string_array_new_value (GPtrArray *value)
 	array->count = 1;
 	array->value = value;
 	return array;
+}
+
+/**
+ * zif_string_array_add:
+ * @array: the #ZifStringArray object
+ * @text: the text to add to the array
+ *
+ * Adds an item of text to the #ZifStringArray.
+ **/
+void
+zif_string_array_add (ZifStringArray *array, const gchar *text)
+{
+	g_return_if_fail (array != NULL);
+	g_ptr_array_add (array->value, g_strdup (text));
+}
+
+/**
+ * zif_string_array_add_value:
+ * @array: the #ZifStringArray object
+ * @text: the text to add to the array
+ *
+ * Adds an item of text to the #ZifStringArray, using the allocated memory.
+ * Do not free this string as it is now owned by the #ZifStringArray.
+ **/
+void
+zif_string_array_add_value (ZifStringArray *array, gchar *text)
+{
+	g_return_if_fail (array != NULL);
+	g_ptr_array_add (array->value, text);
+}
+
+/**
+ * zif_string_array_get_length:
+ * @array: the #ZifStringArray object
+ *
+ * Returns the size of the #ZifStringArray.
+ *
+ * Return value: the array length
+ **/
+guint
+zif_string_array_get_length (ZifStringArray *array)
+{
+	g_return_val_if_fail (array != NULL, 0);
+	return array->value->len;
+}
+
+/**
+ * zif_string_array_get_value:
+ * @array: the #ZifStringArray object
+ *
+ * Returns the string stored in the #ZifStringArray at the index.
+ * This value is only valid while the #ZifStringArray's reference count > 1.
+ *
+ * Return value: string value
+ **/
+const gchar *
+zif_string_array_get_value (ZifStringArray *array, guint index)
+{
+	g_return_val_if_fail (array != NULL, NULL);
+	g_return_val_if_fail (index >= array->value->len, NULL);
+	return g_ptr_array_index (array->value, index);
 }
 
 /**

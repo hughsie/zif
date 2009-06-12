@@ -30,16 +30,20 @@
 
 G_BEGIN_DECLS
 
-typedef struct {
-	GPtrArray	*value;
-	guint		 count;
-} ZifStringArray;
+typedef struct ZifStringArray ZifStringArray;
 
 ZifStringArray	*zif_string_array_new		(const GPtrArray	*value);
 ZifStringArray	*zif_string_array_new_value	(GPtrArray		*value);
 ZifStringArray	*zif_string_array_ref		(ZifStringArray		*array);
 ZifStringArray	*zif_string_array_unref		(ZifStringArray		*array);
+void		 zif_string_array_add		(ZifStringArray		*array,
+						 const gchar		*text);
+void		 zif_string_array_add_value	(ZifStringArray		*array,
+						 gchar			*text);
 ZifStringArray	*zif_string_array_unique	(ZifStringArray		*array);
+guint		 zif_string_array_get_length	(ZifStringArray		*array);
+const gchar	*zif_string_array_get_value	(ZifStringArray		*array,
+						 guint			 index);
 
 G_END_DECLS
 

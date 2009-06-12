@@ -32,16 +32,16 @@
 
 G_BEGIN_DECLS
 
-typedef struct {
-	GPtrArray	*value;
-	guint		 count;
-} ZifDependArray;
+typedef struct ZifDependArray ZifDependArray;
 
 ZifDependArray	*zif_depend_array_new		(const GPtrArray	*value);
 ZifDependArray	*zif_depend_array_ref		(ZifDependArray		*array);
 ZifDependArray	*zif_depend_array_unref		(ZifDependArray		*array);
 void		 zif_depend_array_add		(ZifDependArray		*array,
 						 ZifDepend		*depend);
+guint		 zif_depend_array_get_length	(ZifDependArray		*array);
+const ZifDepend	*zif_depend_array_get_value	(ZifDependArray		*array,
+						 guint			 index);
 
 G_END_DECLS
 

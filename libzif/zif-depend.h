@@ -45,16 +45,16 @@ typedef struct {
 	guint		 count;
 } ZifDepend;
 
-ZifDepend	*zif_depend_new			(const gchar	*name,
-						 ZifDependFlag	 flag,
-						 const gchar	*version);
-ZifDepend	*zif_depend_new_value		(gchar		*name,
-						 ZifDependFlag	 flag,
-						 gchar		*version);
-ZifDepend	*zif_depend_ref			(ZifDepend	*depend);
-ZifDepend	*zif_depend_unref		(ZifDepend	*depend);
-gchar		*zif_depend_to_string		(ZifDepend	*depend);
-const gchar	*zif_depend_flag_to_string	(ZifDependFlag	 flag);
+ZifDepend	*zif_depend_new			(const gchar		*name,
+						 ZifDependFlag		 flag,
+						 const gchar		*version);
+ZifDepend	*zif_depend_new_value		(gchar			*name,
+						 ZifDependFlag		 flag,
+						 gchar			*version);
+ZifDepend	*zif_depend_ref			(ZifDepend		*depend);
+ZifDepend	*zif_depend_unref		(ZifDepend		*depend);
+gchar		*zif_depend_to_string		(const ZifDepend	*depend);
+const gchar	*zif_depend_flag_to_string	(ZifDependFlag		 flag);
 
 G_END_DECLS
 

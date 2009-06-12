@@ -28,6 +28,12 @@
 #include "egg-debug.h"
 #include "zif-depend-array.h"
 
+/* private structure */
+struct ZifDependArray {
+	GPtrArray	*value;
+	guint		 count;
+};
+
 /**
  * zif_depend_array_new:
  **/
@@ -89,6 +95,38 @@ zif_depend_array_add (ZifDependArray *array, ZifDepend *depend)
 {
 	g_return_if_fail (array != NULL);
 	g_ptr_array_add (array->value, zif_depend_ref (depend));
+}
+
+/**
+ * zif_depend_array_get_length:
+ * @array: the #ZifDependArray object
+ *
+ * Returns the size of the #ZifDependArray.
+ *
+ * Return value: the array length
+ **/
+guint
+zif_depend_array_get_length (ZifDependArray *array)
+{
+	g_return_val_if_fail (array != NULL, 0);
+	return array->value->len;
+}
+
+/**
+ * zif_depend_array_get_value:
+ * @array: the #ZifDependArray object
+ *
+ * Returns the depend stored in the #ZifDependArray at the index.
+ * This value is only valid while the #ZifDependArray's reference count > 1.
+ *
+ * Return value: depend value
+ **/
+const ZifDepend *
+zif_depend_array_get_value (ZifDependArray *array, guint index)
+{
+	g_return_val_if_fail (array != NULL, NULL);
+	g_return_val_if_fail (index >= array->value->len, NULL);
+	return g_ptr_array_index (array->value, index);
 }
 
 /***************************************************************************

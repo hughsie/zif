@@ -330,6 +330,7 @@ static GPtrArray *
 zif_store_local_search_file (ZifStore *store, const gchar *search, GError **error)
 {
 	guint i, j;
+	guint len;
 	GPtrArray *array = NULL;
 	ZifPackage *package;
 	ZifStringArray *files;
@@ -365,8 +366,9 @@ zif_store_local_search_file (ZifStore *store, const gchar *search, GError **erro
 			array = NULL;
 			break;
 		}
-		for (j=0; j<files->value->len; j++) {
-			filename = g_ptr_array_index (files->value, j);
+		len = zif_string_array_get_length (files);
+		for (j=0; j<len; j++) {
+			filename = zif_string_array_get_value (files, j);
 			if (g_strcmp0 (search, filename) == 0)
 				g_ptr_array_add (array, g_object_ref (package));
 		}
@@ -424,12 +426,13 @@ zif_store_local_what_provides (ZifStore *store, const gchar *search, GError **er
 {
 	guint i;
 	guint j;
+	guint len;
 	GPtrArray *array = NULL;
 	ZifPackage *package;
 	ZifDependArray *provides;
 	GError *error_local = NULL;
 	gboolean ret;
-	ZifDepend *provide;
+	const ZifDepend *provide;
 	ZifStoreLocal *local = ZIF_STORE_LOCAL (store);
 
 	g_return_val_if_fail (ZIF_IS_STORE_LOCAL (store), NULL);
@@ -451,8 +454,9 @@ zif_store_local_what_provides (ZifStore *store, const gchar *search, GError **er
 	for (i=0;i<local->priv->packages->len;i++) {
 		package = g_ptr_array_index (local->priv->packages, i);
 		provides = zif_package_get_provides (package, NULL);
-		for (j=0; j<provides->value->len; j++) {
-			provide = g_ptr_array_index (provides->value, j);
+		len = zif_depend_array_get_length (provides);
+		for (j=0; j<len; j++) {
+			provide = zif_depend_array_get_value (provides, j);
 			if (strcmp (provide->name, search) == 0) {
 				g_ptr_array_add (array, g_object_ref (package));
 				break;

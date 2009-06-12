@@ -143,7 +143,8 @@ zif_package_print (ZifPackage *package)
 {
 	guint i;
 	gchar *text;
-	ZifDepend *depend;
+	guint len;
+	const ZifDepend *depend;
 
 	g_return_if_fail (ZIF_IS_PACKAGE (package));
 	g_return_if_fail (package->priv->id != NULL);
@@ -160,13 +161,15 @@ zif_package_print (ZifPackage *package)
 
 	if (package->priv->files != NULL) {
 		g_print ("files:\n");
-		for (i=0; i<package->priv->files->value->len; i++)
-			g_print ("\t%s\n", (const gchar *) g_ptr_array_index (package->priv->files->value, i));
+		len = zif_string_array_get_length (package->priv->files);
+		for (i=0; i<len; i++)
+			g_print ("\t%s\n", zif_string_array_get_value (package->priv->files, i));
 	}
 	if (package->priv->requires != NULL) {
 		g_print ("requires:\n");
-		for (i=0; i<package->priv->requires->value->len; i++) {
-			depend = g_ptr_array_index (package->priv->requires->value, i);
+		len = zif_depend_array_get_length (package->priv->requires);
+		for (i=0; i<len; i++) {
+			depend = zif_depend_array_get_value (package->priv->requires, i);
 			text = zif_depend_to_string (depend);
 			g_print ("\t%s\n", text);
 			g_free (text);
@@ -174,8 +177,9 @@ zif_package_print (ZifPackage *package)
 	}
 	if (package->priv->provides != NULL) {
 		g_print ("provides:\n");
-		for (i=0; i<package->priv->provides->value->len; i++) {
-			depend = g_ptr_array_index (package->priv->provides->value, i);
+		len = zif_depend_array_get_length (package->priv->provides);
+		for (i=0; i<len; i++) {
+			depend = zif_depend_array_get_value (package->priv->provides, i);
 			text = zif_depend_to_string (depend);
 			g_print ("\t%s\n", text);
 			g_free (text);
@@ -210,7 +214,8 @@ gboolean
 zif_package_is_gui (ZifPackage *package)
 {
 	guint i;
-	ZifDepend *depend;
+	guint len;
+	const ZifDepend *depend;
 
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), FALSE);
 	g_return_val_if_fail (package->priv->id != NULL, FALSE);
@@ -219,8 +224,9 @@ zif_package_is_gui (ZifPackage *package)
 	if (package->priv->requires == NULL)
 		return FALSE;
 
-	for (i=0; i<package->priv->requires->value->len; i++) {
-		depend = g_ptr_array_index (package->priv->requires->value, i);
+	len = zif_depend_array_get_length (package->priv->requires);
+	for (i=0; i<len; i++) {
+		depend = zif_depend_array_get_value (package->priv->requires, i);
 		if (strstr (depend->name, "gtk") != NULL)
 			return TRUE;
 		if (strstr (depend->name, "kde") != NULL)

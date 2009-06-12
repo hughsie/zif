@@ -108,7 +108,7 @@ zif_depend_unref (ZifDepend *depend)
  * zif_depend_to_string:
  **/
 gchar *
-zif_depend_to_string (ZifDepend *depend)
+zif_depend_to_string (const ZifDepend *depend)
 {
 	g_return_val_if_fail (depend != NULL, NULL);
 	if (depend->version == NULL)

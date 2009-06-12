@@ -139,7 +139,7 @@ zif_get_header_strv (Header header, rpmTag tag)
 	data = rpmtdGetString (td);
 	data = rpmtdNextString (td);
 	while (data != NULL) {
-		g_ptr_array_add (array->value, g_strdup (data));
+		zif_string_array_add (array, data);
 		data = rpmtdNextString (td);
 	}
 out:
@@ -185,6 +185,7 @@ static ZifDependArray *
 zif_package_local_get_depends_from_name_flags_version (ZifStringArray *names, GPtrArray *flags, ZifStringArray *versions)
 {
 	guint i;
+	guint len;
 	rpmsenseFlags rpmflags;
 	ZifDepend *depend;
 	ZifDependFlag flag;
@@ -194,9 +195,10 @@ zif_package_local_get_depends_from_name_flags_version (ZifStringArray *names, GP
 
 	/* create requires */
 	array = zif_depend_array_new (NULL);
-	for (i=0; i<names->value->len; i++) {
-		name = g_ptr_array_index (names->value, i);
-		version = g_ptr_array_index (versions->value, i);
+	len = zif_string_array_get_length (names);
+	for (i=0; i<len; i++) {
+		name = zif_string_array_get_value (names, i);
+		version = zif_string_array_get_value (versions, i);
 
 		/* no version string */
 		if (version == NULL || version[0] == '\0') {
@@ -241,7 +243,9 @@ gboolean
 zif_package_local_set_from_header (ZifPackageLocal *pkg, Header header, GError **error)
 {
 	guint i;
+	guint len;
 	guint size;
+	gchar *filename;
 	ZifString *tmp;
 	PkPackageId *id;
 	PkGroupEnum group;
@@ -309,7 +313,8 @@ zif_package_local_set_from_header (ZifPackageLocal *pkg, Header header, GError *
 		zif_depend_array_unref (depends);
 	} else {	
 		versions = zif_get_header_strv (header, RPMTAG_REQUIREVERSION);
-		flags = zif_get_header_uin32_index (header, RPMTAG_REQUIREFLAGS, names->value->len);
+		len = zif_string_array_get_length (names);
+		flags = zif_get_header_uin32_index (header, RPMTAG_REQUIREFLAGS, len);
 		depends = zif_package_local_get_depends_from_name_flags_version (names, flags, versions);
 		zif_package_set_requires (ZIF_PACKAGE (pkg), depends);
 		zif_depend_array_unref (depends);
@@ -326,7 +331,8 @@ zif_package_local_set_from_header (ZifPackageLocal *pkg, Header header, GError *
 		zif_depend_array_unref (depends);
 	} else {	
 		versions = zif_get_header_strv (header, RPMTAG_PROVIDEVERSION);
-		flags = zif_get_header_uin32_index (header, RPMTAG_PROVIDEFLAGS, names->value->len);
+		len = zif_string_array_get_length (names);
+		flags = zif_get_header_uin32_index (header, RPMTAG_PROVIDEFLAGS, len);
 		depends = zif_package_local_get_depends_from_name_flags_version (names, flags, versions);
 		zif_package_set_provides (ZIF_PACKAGE (pkg), depends);
 		zif_depend_array_unref (depends);
@@ -343,7 +349,8 @@ zif_package_local_set_from_header (ZifPackageLocal *pkg, Header header, GError *
 		zif_depend_array_unref (depends);
 	} else {	
 		versions = zif_get_header_strv (header, RPMTAG_CONFLICTVERSION);
-		flags = zif_get_header_uin32_index (header, RPMTAG_CONFLICTFLAGS, names->value->len);
+		len = zif_string_array_get_length (names);
+		flags = zif_get_header_uin32_index (header, RPMTAG_CONFLICTFLAGS, len);
 		depends = zif_package_local_get_depends_from_name_flags_version (names, flags, versions);
 		//zif_package_set_conflicts (ZIF_PACKAGE (pkg), depends);
 		zif_depend_array_unref (depends);
@@ -360,7 +367,8 @@ zif_package_local_set_from_header (ZifPackageLocal *pkg, Header header, GError *
 		zif_depend_array_unref (depends);
 	} else {	
 		versions = zif_get_header_strv (header, RPMTAG_OBSOLETEVERSION);
-		flags = zif_get_header_uin32_index (header, RPMTAG_OBSOLETEFLAGS, names->value->len);
+		len = zif_string_array_get_length (names);
+		flags = zif_get_header_uin32_index (header, RPMTAG_OBSOLETEFLAGS, len);
 		depends = zif_package_local_get_depends_from_name_flags_version (names, flags, versions);
 		//zif_package_set_obsoletes (ZIF_PACKAGE (pkg), depends);
 		zif_depend_array_unref (depends);
@@ -377,13 +385,15 @@ zif_package_local_set_from_header (ZifPackageLocal *pkg, Header header, GError *
 
 		/* get the mapping */
 		dirnames = zif_get_header_strv (header, RPMTAG_DIRNAMES);
-		fileindex = zif_get_header_uin32_index (header, RPMTAG_DIRINDEXES, basenames->value->len);
+		len = zif_string_array_get_length (basenames);
+		fileindex = zif_get_header_uin32_index (header, RPMTAG_DIRINDEXES, len);
 
 		files = zif_string_array_new (NULL);
-		for (i=0; i<basenames->value->len; i++) {
+		for (i=0; i<len; i++) {
 			guint idx;
 			idx = GPOINTER_TO_UINT (g_ptr_array_index (fileindex, i));
-			g_ptr_array_add (files->value, g_strconcat (g_ptr_array_index (dirnames->value, idx), g_ptr_array_index (basenames->value, i), NULL));
+			filename = g_strconcat (zif_string_array_get_value (dirnames, idx), zif_string_array_get_value (basenames, i), NULL);
+			zif_string_array_add_value (files, filename);
 		}
 		zif_package_set_files (ZIF_PACKAGE (pkg), files);
 		zif_string_array_unref (files);

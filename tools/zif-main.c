@@ -403,10 +403,11 @@ main (int argc, char *argv[])
 	}
 	if (g_strcmp0 (mode, "getdepends") == 0 || g_strcmp0 (mode, "deplist") == 0) {
 		ZifDependArray *requires;
-		ZifDepend *require;
+		const ZifDepend *require;
 		gchar *require_str;
 		GPtrArray *provides;
 		const PkPackageId *id;
+		guint len;
 
 		if (value == NULL) {
 			g_print ("specify a value");
@@ -421,8 +422,9 @@ main (int argc, char *argv[])
 		package = g_ptr_array_index (array, 0);
 
 		requires = zif_package_get_requires (package, NULL);
-		for (i=0; i<requires->value->len; i++) {
-			require = g_ptr_array_index (requires->value, i);
+		len = zif_depend_array_get_length (requires);
+		for (i=0; i<len; i++) {
+			require = zif_depend_array_get_value (requires, i);
 			require_str = zif_depend_to_string (require);
 			g_print ("  dependency: %s\n", require_str);
 			g_free (require_str);
@@ -476,6 +478,7 @@ main (int argc, char *argv[])
 	}
 	if (g_strcmp0 (mode, "getfiles") == 0) {
 		ZifStringArray *files;
+		guint len;
 
 		if (value == NULL) {
 			g_print ("specify a value");
@@ -494,8 +497,9 @@ main (int argc, char *argv[])
 		if (array->len > 0) {
 			package = g_ptr_array_index (array, 0);
 			files = zif_package_get_files (package, NULL);
-			for (i=0; i<files->value->len; i++)
-				g_print ("%s\n", (const gchar *) g_ptr_array_index (files->value, i));
+			len = zif_string_array_get_length (files);
+			for (i=0; i<len; i++)
+				g_print ("%s\n", zif_string_array_get_value (files, i));
 			zif_string_array_unref (files);
 		} else {
 			g_print ("Failed to match any packages to '%s'\n", value);
