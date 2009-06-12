@@ -73,8 +73,6 @@ gboolean	 zif_store_remote_download		(ZifStoreRemote		*store,
 							 const gchar		*filename,
 							 const gchar		*directory,
 							 GError			**error);
-gboolean	 zif_store_remote_clean			(ZifStoreRemote		*store,
-							 GError			**error);
 
 G_END_DECLS
 

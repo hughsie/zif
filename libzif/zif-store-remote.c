@@ -66,48 +66,6 @@ struct ZifStoreRemotePrivate
 G_DEFINE_TYPE (ZifStoreRemote, zif_store_remote, ZIF_TYPE_STORE)
 
 /**
- * zif_store_remote_clean:
- **/
-gboolean
-zif_store_remote_clean (ZifStoreRemote *store, GError **error)
-{
-	gboolean ret = FALSE;
-	GError *error_local = NULL;
-
-	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), FALSE);
-	g_return_val_if_fail (store->priv->id != NULL, FALSE);
-
-	/* clean primary */
-	ret = zif_repo_md_clean (store->priv->md_primary, &error_local);
-	if (!ret) {
-		if (error != NULL)
-			*error = g_error_new (1, 0, "failed to clean primary: %s", error_local->message);
-		g_error_free (error_local);
-		goto out;
-	}
-
-	/* clean filelists */
-	ret = zif_repo_md_clean (store->priv->md_filelists, &error_local);
-	if (!ret) {
-		if (error != NULL)
-			*error = g_error_new (1, 0, "failed to clean filelists: %s", error_local->message);
-		g_error_free (error_local);
-		goto out;
-	}
-
-	/* clean master (last) */
-	ret = zif_repo_md_clean (store->priv->md_master, &error_local);
-	if (!ret) {
-		if (error != NULL)
-			*error = g_error_new (1, 0, "failed to clean master: %s", error_local->message);
-		g_error_free (error_local);
-		goto out;
-	}
-out:
-	return ret;
-}
-
-/**
  * zif_store_remote_expand_vars:
  **/
 static gchar *
@@ -373,6 +331,49 @@ out:
 	g_free (enabled);
 	if (file != NULL)
 		g_key_file_free (file);
+	return ret;
+}
+
+/**
+ * zif_store_remote_clean:
+ **/
+static gboolean
+zif_store_remote_clean (ZifStore *store, GError **error)
+{
+	gboolean ret = FALSE;
+	GError *error_local = NULL;
+	ZifStoreRemote *remote = ZIF_STORE_REMOTE (store);
+
+	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), FALSE);
+	g_return_val_if_fail (remote->priv->id != NULL, FALSE);
+
+	/* clean primary */
+	ret = zif_repo_md_clean (remote->priv->md_primary, &error_local);
+	if (!ret) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "failed to clean primary: %s", error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* clean filelists */
+	ret = zif_repo_md_clean (remote->priv->md_filelists, &error_local);
+	if (!ret) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "failed to clean filelists: %s", error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* clean master (last) */
+	ret = zif_repo_md_clean (remote->priv->md_master, &error_local);
+	if (!ret) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "failed to clean master: %s", error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+out:
 	return ret;
 }
 
@@ -911,6 +912,7 @@ zif_store_remote_class_init (ZifStoreRemoteClass *klass)
 
 	/* map */
 	store_class->load = zif_store_remote_load;
+	store_class->clean = zif_store_remote_clean;
 	store_class->search_name = zif_store_remote_search_name;
 //	store_class->search_category = zif_store_remote_search_category;
 	store_class->search_details = zif_store_remote_search_details;
