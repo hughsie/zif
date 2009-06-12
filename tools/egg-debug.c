@@ -1,1 +1,1 @@
-../libdum/egg-debug.c
+../libzif/egg-debug.c

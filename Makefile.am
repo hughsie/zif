@@ -1,5 +1,5 @@
 SUBDIRS = 						\
-	libdum						\
+	libzif						\
 	tools
 
 security-check:
@@ -9,7 +9,7 @@ snapshot:
 	$(MAKE) dist distdir=$(PACKAGE)-$(VERSION)-`date +"%Y%m%d"`
 
 DISTCLEANFILES =					\
-	dum-*.tar.gz
+	zif-*.tar.gz
 
 MAINTAINERCLEANFILES =					\
 	*~						\
@@ -50,7 +50,7 @@ distclean-local:
 ChangeLog:
 	@echo Creating $@
 	@if test -d "$(srcdir)/.git"; then \
-	  (GIT_DIR=$(top_srcdir)/.git ./missing --run git log DUM_0_0_X.. --stat -M -C --name-status  --date=short --no-color) | fmt --split-only > $@.tmp \
+	  (GIT_DIR=$(top_srcdir)/.git ./missing --run git log ZIF_0_0_X.. --stat -M -C --name-status  --date=short --no-color) | fmt --split-only > $@.tmp \
 	  && mv -f $@.tmp $@ \
 	  || ($(RM) $@.tmp; \
 	      echo Failed to generate ChangeLog, your ChangeLog may be outdated >&2; \

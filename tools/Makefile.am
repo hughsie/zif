@@ -9,31 +9,31 @@ INCLUDES =						\
 	-DLIBDIR=\""$(libdir)"\" 			\
 	-DVERSION="\"$(VERSION)\"" 			\
 	-DPACKAGE_LOCALE_DIR=\"$(localedir)\"		\
-	-DPK_DATA=\"$(dumgdatadir)\"			\
+	-DPK_DATA=\"$(zifgdatadir)\"			\
 	-DPK_DB_DIR=\""$(PK_DB_DIR)"\" 			\
-	-DEGG_LOG_FILE=\""$(PK_LOG_DIR)/dum"\"		\
+	-DEGG_LOG_FILE=\""$(PK_LOG_DIR)/zif"\"		\
 	-DEGG_VERBOSE="\"PK_VERBOSE\""			\
 	-DEGG_LOGGING="\"PK_LOGGING\""			\
 	-DEGG_CONSOLE="\"PK_CONSOLE\""			\
-	-I$(top_srcdir)/libdum
+	-I$(top_srcdir)/libzif
 
-DUM_LIBS =						\
-	$(top_builddir)/libdum/libdum.la
+ZIF_LIBS =						\
+	$(top_builddir)/libzif/libzif.la
 
 bin_PROGRAMS =						\
-	dum
+	zif
 
-dum_SOURCES =						\
+zif_SOURCES =						\
 	egg-debug.c					\
 	egg-debug.h					\
-	dum-main.c
+	zif-main.c
 
-dum_LDADD =						\
+zif_LDADD =						\
 	$(GLIB_LIBS)					\
 	$(PACKAGEKIT_LIBS)				\
-	$(DUM_LIBS)
+	$(ZIF_LIBS)
 
-dum_CFLAGS =						\
+zif_CFLAGS =						\
 	$(WARNINGFLAGS_C)
 
 clean-local:

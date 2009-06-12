@@ -2,7 +2,7 @@
 %define alphatag                #ALPHATAG#
 
 Summary:   Simple wrapper for rpm
-Name:      dum
+Name:      zif
 Version:   #VERSION#
 Release:   0.#BUILD#%{?alphatag}%{?dist}
 License:   GPLv2+
@@ -21,17 +21,17 @@ Requires(post): /sbin/ldconfig
 Requires(postun): /sbin/ldconfig
 
 %description
-dum is a simple wrapper around rpm
+zif is a simple wrapper around rpm
 
 %package devel
-Summary: GLib Libraries and headers for dum
+Summary: GLib Libraries and headers for zif
 Group: Development/Libraries
 Requires: %{name} = %{version}-%{release}
 Requires: pkgconfig
 Requires: sqlite-devel
 
 %description devel
-GLib headers and libraries for dum.
+GLib headers and libraries for zif.
 
 %prep
 %setup -q
@@ -47,8 +47,8 @@ make %{?_smp_mflags}
 rm -rf $RPM_BUILD_ROOT
 make install DESTDIR=$RPM_BUILD_ROOT
 
-rm -f $RPM_BUILD_ROOT%{_libdir}/libdum*.a
-rm -f $RPM_BUILD_ROOT%{_libdir}/libdum*.la
+rm -f $RPM_BUILD_ROOT%{_libdir}/libzif*.a
+rm -f $RPM_BUILD_ROOT%{_libdir}/libzif*.la
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -60,16 +60,16 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(-,root,root,-)
 %doc README AUTHORS NEWS COPYING
-%{_bindir}/dum
-%{_libdir}/*libdum*.so.*
+%{_bindir}/zif
+%{_libdir}/*libzif*.so.*
 
 %files devel
 %defattr(-,root,root,-)
 %doc README AUTHORS NEWS COPYING
-%{_libdir}/libdum*.so
-%{_libdir}/pkgconfig/dum.pc
-%dir %{_includedir}/libdum
-%{_includedir}/libdum/*.h
+%{_libdir}/libzif*.so
+%{_libdir}/pkgconfig/zif.pc
+%dir %{_includedir}/libzif
+%{_includedir}/libzif/*.h
 
 %changelog
 * #LONGDATE# Richard Hughes <richard@hughsie.com> #VERSION#-0.#BUILD##ALPHATAG#

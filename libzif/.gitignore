@@ -1,0 +1,10 @@
+.deps
+.libs
+zif.pc
+*.lo
+*.la
+*.o
+zif-marshal.c
+zif-marshal.h
+zif-self-test
+

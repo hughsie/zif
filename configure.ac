@@ -1,19 +1,19 @@
 AC_PREREQ(2.52)
 
-AC_INIT(dum, 0.0.1)
-AC_CONFIG_SRCDIR(libdum)
+AC_INIT(zif, 0.0.1)
+AC_CONFIG_SRCDIR(libzif)
 AM_INIT_AUTOMAKE(AC_PACKAGE_NAME, AC_PACKAGE_VERSION)
 AM_CONFIG_HEADER(config.h)
 AC_CONFIG_MACRO_DIR([m4])
 
-# libtool versioning - this applies to libdum
+# libtool versioning - this applies to libzif
 #
 # See http://sources.redhat.com/autobook/autobook/autobook_91.html#SEC91 for details
 #
 # increment;
 # CURRENT	If the API or ABI interface has changed (reset REVISION to 0)
 # REVISION	If the API and ABI remains the same, but bugs are fixed.
-# AGE		If libdum can be linked into executables which can be
+# AGE		If libzif can be linked into executables which can be
 # 		built with previous versions of this library. Don't use.
 LT_CURRENT=1
 LT_REVISION=1
@@ -133,14 +133,14 @@ dnl - Makefiles, etc.
 dnl ---------------------------------------------------------------------------
 AC_OUTPUT([
 Makefile
-libdum/Makefile
-libdum/dum.pc
+libzif/Makefile
+libzif/zif.pc
 tools/Makefile
 ])
 
 dnl ==========================================================================
 echo "
-                    DUM $VERSION
+                    ZIF $VERSION
                   =============
 
         prefix:                    ${prefix}
