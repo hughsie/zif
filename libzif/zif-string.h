@@ -30,15 +30,13 @@
 
 G_BEGIN_DECLS
 
-typedef struct {
-	gchar		*value;
-	guint		 count;
-} ZifString;
+typedef struct ZifString ZifString;
 
 ZifString	*zif_string_new			(const gchar	*value);
 ZifString	*zif_string_new_value		(gchar		*value);
 ZifString	*zif_string_ref			(ZifString	*string);
 ZifString	*zif_string_unref		(ZifString	*string);
+const gchar	*zif_string_get_value		(ZifString	*string);
 
 G_END_DECLS
 

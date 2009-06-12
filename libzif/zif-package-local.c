@@ -296,7 +296,7 @@ zif_package_local_set_from_header (ZifPackageLocal *pkg, Header header, GError *
 	/* category && group */
 	tmp = zif_get_header_string (header, RPMTAG_GROUP);
 	zif_package_set_category (ZIF_PACKAGE (pkg), tmp);
-	group = zif_groups_get_group_for_cat (pkg->priv->groups, tmp->value, NULL);
+	group = zif_groups_get_group_for_cat (pkg->priv->groups, zif_string_get_value (tmp), NULL);
 	if (group != PK_GROUP_ENUM_UNKNOWN)
 		zif_package_set_group (ZIF_PACKAGE (pkg), group);
 	zif_string_unref (tmp);

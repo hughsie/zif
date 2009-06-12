@@ -36,6 +36,12 @@
 #include "egg-debug.h"
 #include "zif-string.h"
 
+/* private structure */
+struct ZifString {
+	gchar		*value;
+	guint		 count;
+};
+
 /**
  * zif_string_new:
  * @value: string to copy
@@ -71,6 +77,22 @@ zif_string_new_value (gchar *value)
 	string->count = 1;
 	string->value = value;
 	return string;
+}
+
+/**
+ * zif_string_get_value:
+ * @string: the #ZifString object
+ *
+ * Returns the string stored in the #ZifString.
+ * This value is only valid while the #ZifString's reference count > 1.
+ *
+ * Return value: string value
+ **/
+const gchar *
+zif_string_get_value (ZifString *string)
+{
+	g_return_val_if_fail (string != NULL, NULL);
+	return string->value;
 }
 
 /**

@@ -122,7 +122,7 @@ zif_package_download (ZifPackage *package, const gchar *directory, GError **erro
 	}
 
 	/* download from the repo */
-	ret = zif_store_remote_download (repo, package->priv->location_href->value, directory, &error_local);
+	ret = zif_store_remote_download (repo, zif_string_get_value (package->priv->location_href), directory, &error_local);
 	if (!ret) {
 		if (error != NULL)
 			*error = g_error_new (1, 0, "cannot download from repo: %s", error_local->message);
@@ -149,13 +149,13 @@ zif_package_print (ZifPackage *package)
 	g_return_if_fail (package->priv->id != NULL);
 
 	g_print ("id=%s\n", package->priv->id_txt);
-	g_print ("summary=%s\n", package->priv->summary->value);
-	g_print ("description=%s\n", package->priv->description->value);
-	g_print ("license=%s\n", package->priv->license->value);
+	g_print ("summary=%s\n", zif_string_get_value (package->priv->summary));
+	g_print ("description=%s\n", zif_string_get_value (package->priv->description));
+	g_print ("license=%s\n", zif_string_get_value (package->priv->license));
 	g_print ("group=%s\n", pk_group_enum_to_text (package->priv->group));
-	g_print ("category=%s\n", package->priv->category->value);
+	g_print ("category=%s\n", zif_string_get_value (package->priv->category));
 	if (package->priv->url != NULL)
-		g_print ("url=%s\n", package->priv->url->value);
+		g_print ("url=%s\n", zif_string_get_value (package->priv->url));
 	g_print ("size=%"G_GUINT64_FORMAT"\n", package->priv->size);
 
 	if (package->priv->files != NULL) {
@@ -281,7 +281,7 @@ zif_package_is_free (ZifPackage *package)
 	g_return_val_if_fail (package->priv->id != NULL, FALSE);
 
 	/* split AND clase */
-	groups = g_strsplit (package->priv->license->value, " and ", 0);
+	groups = g_strsplit (zif_string_get_value (package->priv->license), " and ", 0);
 	len = g_strv_length (groups);
 
 	for (i=0; groups[i] != NULL; i++) {

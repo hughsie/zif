@@ -229,7 +229,7 @@ zif_store_local_search_category (ZifStore *store, const gchar *search, GError **
 	for (i=0;i<local->priv->packages->len;i++) {
 		package = g_ptr_array_index (local->priv->packages, i);
 		category = zif_package_get_category (package, NULL);
-		if (strcmp (category->value, search) == 0)
+		if (strcmp (zif_string_get_value (category), search) == 0)
 			g_ptr_array_add (array, g_object_ref (package));
 		zif_string_unref (category);
 	}
@@ -274,7 +274,7 @@ zif_store_local_search_details (ZifStore *store, const gchar *search, GError **e
 		description = zif_package_get_description (package, NULL);
 		if (strcasestr (id->name, search) != NULL)
 			g_ptr_array_add (array, g_object_ref (package));
-		else if (strcasestr (description->value, search) != NULL)
+		else if (strcasestr (zif_string_get_value (description), search) != NULL)
 			g_ptr_array_add (array, g_object_ref (package));
 		zif_string_unref (description);
 	}
@@ -764,28 +764,28 @@ zif_store_local_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "get summary");
 	string = zif_package_get_summary (package, NULL);
-	if (egg_strequal (string->value, "Package management service"))
+	if (egg_strequal (zif_string_get_value (string), "Package management service"))
 		egg_test_success (test, NULL);
 	else
-		egg_test_failed (test, "incorrect summary: %s", string->value);
+		egg_test_failed (test, "incorrect summary: %s", zif_string_get_value (string));
 	zif_string_unref (string);
 
 	/************************************************************/
 	egg_test_title (test, "get license");
 	string = zif_package_get_license (package, NULL);
-	if (egg_strequal (string->value, "GPLv2+"))
+	if (egg_strequal (zif_string_get_value (string), "GPLv2+"))
 		egg_test_success (test, NULL);
 	else
-		egg_test_failed (test, "incorrect license: %s", string->value);
+		egg_test_failed (test, "incorrect license: %s", zif_string_get_value (string));
 	zif_string_unref (string);
 
 	/************************************************************/
 	egg_test_title (test, "get category");
 	string = zif_package_get_category (package, NULL);
-	if (egg_strequal (string->value, "System Environment/Libraries"))
+	if (egg_strequal (zif_string_get_value (string), "System Environment/Libraries"))
 		egg_test_success (test, NULL);
 	else
-		egg_test_failed (test, "incorrect category: %s", string->value);
+		egg_test_failed (test, "incorrect category: %s", zif_string_get_value (string));
 	zif_string_unref (string);
 
 	/************************************************************/
