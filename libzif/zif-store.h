@@ -27,9 +27,11 @@
 #define __ZIF_STORE_H
 
 #include <glib-object.h>
+#include <gio/gio.h>
 #include <packagekit-glib/packagekit.h>
 
 #include "zif-package.h"
+#include "zif-completion.h"
 
 G_BEGIN_DECLS
 
@@ -55,6 +57,8 @@ typedef struct
 	gboolean	 (*load)		(ZifStore		*store,
 						 GError			**error);
 	gboolean	 (*clean)		(ZifStore		*store,
+						 GCancellable		*cancellable,
+						 ZifCompletion		*completion,
 						 GError			**error);
 	GPtrArray	*(*search_name)		(ZifStore		*store,
 						 const gchar		*search,
@@ -93,6 +97,8 @@ ZifStore	*zif_store_new			(void);
 gboolean	 zif_store_load			(ZifStore		*store,
 						 GError			**error);
 gboolean	 zif_store_clean		(ZifStore		*store,
+						 GCancellable		*cancellable,
+						 ZifCompletion		*completion,
 						 GError			**error);
 GPtrArray	*zif_store_search_name		(ZifStore		*store,
 						 const gchar		*search,

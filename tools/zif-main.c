@@ -50,6 +50,15 @@ zif_print_packages (GPtrArray *array)
 }
 
 /**
+ * zif_completion_progress_changed_cb:
+ **/
+static void
+zif_completion_progress_changed_cb (ZifCompletion *completion, guint value, gpointer data)
+{
+	g_print ("Completion %i%%\n", value);
+}
+
+/**
  * main:
  **/
 int
@@ -65,6 +74,7 @@ main (int argc, char *argv[])
 	ZifStoreLocal *store_local = NULL;
 	ZifStoreRemote *store_remote = NULL;
 	ZifGroups *groups = NULL;
+	ZifCompletion *completion;
 	guint i, j;
 	GError *error = NULL;
 	ZifPackage *package;
@@ -178,6 +188,10 @@ main (int argc, char *argv[])
 		g_error_free (error);
 		goto out;
 	}
+
+	/* ZifCompletion */
+	completion = zif_completion_new ();
+	g_signal_connect (completion, "percentage-changed", G_CALLBACK (zif_completion_progress_changed_cb), NULL);
 
 	if (profile) {
 		GTimer *timer;
@@ -392,7 +406,7 @@ main (int argc, char *argv[])
 		}
 
 		/* clean all the sack */
-		ret = zif_sack_clean (sack, &error);
+		ret = zif_sack_clean (sack, NULL, completion, &error);
 		if (!ret) {
 			g_print ("failed to clean: %s\n", error->message);
 			g_error_free (error);
@@ -749,6 +763,9 @@ out:
 		g_object_unref (repos);
 	if (config != NULL)
 		g_object_unref (config);
+	if (completion != NULL)
+		g_object_unref (completion);
+
 	g_free (options_help);
 	return 0;
 }

@@ -101,7 +101,7 @@ zif_store_remote_download_progress_changed (ZifDownload *download, guint value, 
 /**
  * zif_store_remote_download:
  * @store: the #ZifStoreRemote object
- * @filename: the complete filename to download, e.g. "Packages/hal-0.0.1.rpm"
+ * @filename: the completion filename to download, e.g. "Packages/hal-0.0.1.rpm"
  * @directory: the directory to put the downloaded file
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -354,7 +354,7 @@ out:
  * zif_store_remote_clean:
  **/
 static gboolean
-zif_store_remote_clean (ZifStore *store, GError **error)
+zif_store_remote_clean (ZifStore *store, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	gboolean ret = FALSE;
 	GError *error_local = NULL;
@@ -362,6 +362,10 @@ zif_store_remote_clean (ZifStore *store, GError **error)
 
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), FALSE);
 	g_return_val_if_fail (remote->priv->id != NULL, FALSE);
+
+	/* setup completion with the correct number of steps */
+	if (completion != NULL)
+		zif_completion_set_number_steps (completion, 3);
 
 	/* clean primary */
 	ret = zif_repo_md_clean (remote->priv->md_primary, &error_local);
@@ -372,6 +376,10 @@ zif_store_remote_clean (ZifStore *store, GError **error)
 		goto out;
 	}
 
+	/* this section done */
+	if (completion != NULL)
+		zif_completion_done (completion);
+
 	/* clean filelists */
 	ret = zif_repo_md_clean (remote->priv->md_filelists, &error_local);
 	if (!ret) {
@@ -381,6 +389,10 @@ zif_store_remote_clean (ZifStore *store, GError **error)
 		goto out;
 	}
 
+	/* this section done */
+	if (completion != NULL)
+		zif_completion_done (completion);
+
 	/* clean master (last) */
 	ret = zif_repo_md_clean (remote->priv->md_master, &error_local);
 	if (!ret) {
@@ -389,6 +401,10 @@ zif_store_remote_clean (ZifStore *store, GError **error)
 		g_error_free (error_local);
 		goto out;
 	}
+
+	/* this section done */
+	if (completion != NULL)
+		zif_completion_done (completion);
 out:
 	return ret;
 }

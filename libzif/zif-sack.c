@@ -35,6 +35,7 @@
 #include <packagekit-glib/packagekit.h>
 
 #include "zif-config.h"
+#include "zif-completion.h"
 #include "zif-store.h"
 #include "zif-store-local.h"
 #include "zif-sack.h"
@@ -50,6 +51,7 @@
 struct ZifSackPrivate
 {
 	GPtrArray		*array;
+	ZifCompletion		*completion_local;
 };
 
 G_DEFINE_TYPE (ZifSack, zif_sack, G_TYPE_OBJECT)
@@ -221,6 +223,14 @@ zif_sack_repos_search (ZifSack *sack, PkRoleEnum role, const gchar *search, GErr
 
 	/* find results in each store */
 	stores = sack->priv->array;
+
+	/* create a chain of completions */
+//	if (completion != NULL) {
+//		zif_completion_set_child (completion, sack->priv->completion_local);
+//		zif_completion_set_number_steps (completion, stores->len);
+//	}
+
+	/* do each one */
 	array = g_ptr_array_new ();
 	for (i=0; i<stores->len; i++) {
 		store = g_ptr_array_index (stores, i);
@@ -257,6 +267,10 @@ zif_sack_repos_search (ZifSack *sack, PkRoleEnum role, const gchar *search, GErr
 		for (j=0; j<part->len; j++)
 			g_ptr_array_add (array, g_ptr_array_index (part, j));
 		g_ptr_array_free (part, TRUE);
+
+		/* this section done */
+//		if (completion != NULL)
+//			zif_completion_done (completion);
 	}
 out:
 	return array;
@@ -284,11 +298,23 @@ zif_sack_find_package (ZifSack *sack, const PkPackageId *id, GError **error)
 
 	/* find results in each store */
 	stores = sack->priv->array;
+
+	/* create a chain of completions */
+//	if (completion != NULL) {
+//		zif_completion_set_child (completion, sack->priv->completion_local);
+//		zif_completion_set_number_steps (completion, stores->len);
+//	}
+
+	/* do each one */
 	for (i=0; i<stores->len; i++) {
 		store = g_ptr_array_index (stores, i);
 		package = zif_store_find_package (store, id, NULL);
 		if (package != NULL)
 			break;
+
+		/* this section done */
+//		if (completion != NULL)
+//			zif_completion_done (completion);
 	}
 	return package;
 }
@@ -303,7 +329,7 @@ zif_sack_find_package (ZifSack *sack, const PkPackageId *id, GError **error)
  * Return value: %TRUE for success, %FALSE for failure
  **/
 gboolean
-zif_sack_clean (ZifSack *sack, GError **error)
+zif_sack_clean (ZifSack *sack, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	guint i;
 	GPtrArray *stores;
@@ -313,19 +339,32 @@ zif_sack_clean (ZifSack *sack, GError **error)
 
 	g_return_val_if_fail (ZIF_IS_SACK (sack), FALSE);
 
+
 	/* clean each store */
 	stores = sack->priv->array;
+
+	/* create a chain of completions */
+	if (completion != NULL) {
+		zif_completion_set_child (completion, sack->priv->completion_local);
+		zif_completion_set_number_steps (completion, stores->len);
+	}
+
+	/* do each one */
 	for (i=0; i<stores->len; i++) {
 		store = g_ptr_array_index (stores, i);
 
 		/* clean this one */
-		ret = zif_store_clean (store, &error_local);
+		ret = zif_store_clean (store, cancellable, sack->priv->completion_local, &error_local);
 		if (!ret) {
 			if (error != NULL)
 				*error = g_error_new (1, 0, "failed to clean %s: %s", zif_store_get_id (store), error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
+
+		/* this section done */
+		if (completion != NULL)
+			zif_completion_done (completion);
 	}
 out:
 	return ret;
@@ -481,6 +520,8 @@ zif_sack_finalize (GObject *object)
 	g_return_if_fail (ZIF_IS_SACK (object));
 	sack = ZIF_SACK (object);
 
+	if (sack->priv->completion_local != NULL)
+		g_object_unref (sack->priv->completion_local);
 	g_ptr_array_foreach (sack->priv->array, (GFunc) g_object_unref, NULL);
 	g_ptr_array_free (sack->priv->array, TRUE);
 
@@ -506,6 +547,7 @@ zif_sack_init (ZifSack *sack)
 {
 	sack->priv = ZIF_SACK_GET_PRIVATE (sack);
 	sack->priv->array = g_ptr_array_new ();
+	sack->priv->completion_local = zif_completion_new ();
 }
 
 /**
