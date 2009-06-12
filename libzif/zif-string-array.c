@@ -101,6 +101,7 @@ void
 zif_string_array_add (ZifStringArray *array, const gchar *text)
 {
 	g_return_if_fail (array != NULL);
+	g_return_if_fail (text != NULL);
 	g_ptr_array_add (array->value, g_strdup (text));
 }
 
@@ -116,6 +117,7 @@ void
 zif_string_array_add_value (ZifStringArray *array, gchar *text)
 {
 	g_return_if_fail (array != NULL);
+	g_return_if_fail (text != NULL);
 	g_ptr_array_add (array->value, text);
 }
 
@@ -147,7 +149,7 @@ const gchar *
 zif_string_array_get_value (ZifStringArray *array, guint index)
 {
 	g_return_val_if_fail (array != NULL, NULL);
-	g_return_val_if_fail (index >= array->value->len, NULL);
+	g_return_val_if_fail (index < array->value->len, NULL);
 	return g_ptr_array_index (array->value, index);
 }
 

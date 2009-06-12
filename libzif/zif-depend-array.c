@@ -94,6 +94,7 @@ void
 zif_depend_array_add (ZifDependArray *array, ZifDepend *depend)
 {
 	g_return_if_fail (array != NULL);
+	g_return_if_fail (depend != NULL);
 	g_ptr_array_add (array->value, zif_depend_ref (depend));
 }
 
@@ -125,7 +126,7 @@ const ZifDepend *
 zif_depend_array_get_value (ZifDependArray *array, guint index)
 {
 	g_return_val_if_fail (array != NULL, NULL);
-	g_return_val_if_fail (index >= array->value->len, NULL);
+	g_return_val_if_fail (index < array->value->len, NULL);
 	return g_ptr_array_index (array->value, index);
 }
 

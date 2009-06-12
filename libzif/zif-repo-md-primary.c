@@ -464,10 +464,10 @@ zif_repo_md_primary_test (EggTest *test)
 	egg_test_title (test, "correct value");
 	package = g_ptr_array_index (array, 0);
 	summary = zif_package_get_summary (package, NULL);
-	if (g_strcmp0 (summary->value, "GNOME Power Manager") == 0)
+	if (g_strcmp0 (zif_string_get_value (summary), "GNOME Power Manager") == 0)
 		egg_test_success (test, NULL);
 	else
-		egg_test_failed (test, "failed to get correct summary '%s'", summary->value);
+		egg_test_failed (test, "failed to get correct summary '%s'", zif_string_get_value (summary));
 	zif_string_unref (summary);
 
 	g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
