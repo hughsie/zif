@@ -54,6 +54,8 @@ typedef struct
 	/* vtable */
 	gboolean	 (*load)		(ZifStore		*store,
 						 GError			**error);
+	gboolean	 (*clean)		(ZifStore		*store,
+						 GError			**error);
 	GPtrArray	*(*search_name)		(ZifStore		*store,
 						 const gchar		*search,
 						 GError			**error);
@@ -89,6 +91,8 @@ typedef struct
 GType		 zif_store_get_type		(void) G_GNUC_CONST;
 ZifStore	*zif_store_new			(void);
 gboolean	 zif_store_load			(ZifStore		*store,
+						 GError			**error);
+gboolean	 zif_store_clean		(ZifStore		*store,
 						 GError			**error);
 GPtrArray	*zif_store_search_name		(ZifStore		*store,
 						 const gchar		*search,

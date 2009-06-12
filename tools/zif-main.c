@@ -382,29 +382,22 @@ main (int argc, char *argv[])
 	}
 	if (g_strcmp0 (mode, "clean") == 0) {
 
-		/* get all remote stores */
-		array = zif_repos_get_stores_enabled (repos, &error);
-		if (array == NULL) {
-			g_print ("failed to get enabled stores: %s\n", error->message);
+		/* get a sack of remote stores */
+		sack = zif_sack_new ();
+		ret = zif_sack_add_remote_enabled (sack, &error);
+		if (!ret) {
+			g_print ("failed to add enabled stores: %s\n", error->message);
 			g_error_free (error);
 			goto out;
 		}
 
-		/* clean each one */
-		for (i=0; i<array->len; i++) {
-			store_remote = ZIF_STORE_REMOTE (g_ptr_array_index (array, i));
-			ret = zif_store_remote_clean (store_remote, &error);
-			if (!ret) {
-				g_print ("failed to clean store: %s\n", error->message);
-				g_error_free (error);
-				break;
-			}
-			g_print ("Cleaned %s\n", zif_store_get_id (ZIF_STORE (store_remote)));
+		/* clean all the sack */
+		ret = zif_sack_clean (sack, &error);
+		if (!ret) {
+			g_print ("failed to clean: %s\n", error->message);
+			g_error_free (error);
+			goto out;
 		}
-
-		/* free results */
-		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
-		g_ptr_array_free (array, TRUE);
 
 		goto out;
 	}

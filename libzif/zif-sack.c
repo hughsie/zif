@@ -241,6 +241,8 @@ zif_sack_find_package (ZifSack *sack, const PkPackageId *id, GError **error)
 	ZifStore *store;
 	ZifPackage *package = NULL;
 
+	g_return_val_if_fail (ZIF_IS_SACK (sack), NULL);
+
 	/* find results in each store */
 	stores = sack->priv->array;
 	for (i=0; i<stores->len; i++) {
@@ -253,11 +255,44 @@ zif_sack_find_package (ZifSack *sack, const PkPackageId *id, GError **error)
 }
 
 /**
+ * zif_sack_clean:
+ **/
+gboolean
+zif_sack_clean (ZifSack *sack, GError **error)
+{
+	guint i;
+	GPtrArray *stores;
+	ZifStore *store;
+	gboolean ret = TRUE;
+	GError *error_local = NULL;
+
+	g_return_val_if_fail (ZIF_IS_SACK (sack), FALSE);
+
+	/* clean each store */
+	stores = sack->priv->array;
+	for (i=0; i<stores->len; i++) {
+		store = g_ptr_array_index (stores, i);
+
+		/* clean this one */
+		ret = zif_store_clean (store, &error_local);
+		if (!ret) {
+			if (error != NULL)
+				*error = g_error_new (1, 0, "failed to clean %s: %s", zif_store_get_id (store), error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+	}
+out:
+	return ret;
+}
+
+/**
  * zif_sack_resolve:
  **/
 GPtrArray *
 zif_sack_resolve (ZifSack *sack, const gchar *search, GError **error)
 {
+	g_return_val_if_fail (ZIF_IS_SACK (sack), NULL);
 	return zif_sack_repos_search (sack, PK_ROLE_ENUM_RESOLVE, search, error);
 }
 
@@ -267,6 +302,7 @@ zif_sack_resolve (ZifSack *sack, const gchar *search, GError **error)
 GPtrArray *
 zif_sack_search_name (ZifSack *sack, const gchar *search, GError **error)
 {
+	g_return_val_if_fail (ZIF_IS_SACK (sack), NULL);
 	return zif_sack_repos_search (sack, PK_ROLE_ENUM_SEARCH_NAME, search, error);
 }
 
@@ -276,6 +312,7 @@ zif_sack_search_name (ZifSack *sack, const gchar *search, GError **error)
 GPtrArray *
 zif_sack_search_details (ZifSack *sack, const gchar *search, GError **error)
 {
+	g_return_val_if_fail (ZIF_IS_SACK (sack), NULL);
 	return zif_sack_repos_search (sack, PK_ROLE_ENUM_SEARCH_DETAILS, search, error);
 }
 
@@ -285,6 +322,7 @@ zif_sack_search_details (ZifSack *sack, const gchar *search, GError **error)
 GPtrArray *
 zif_sack_search_group (ZifSack *sack, const gchar *search, GError **error)
 {
+	g_return_val_if_fail (ZIF_IS_SACK (sack), NULL);
 	return zif_sack_repos_search (sack, PK_ROLE_ENUM_SEARCH_GROUP, search, error);
 }
 
@@ -294,6 +332,7 @@ zif_sack_search_group (ZifSack *sack, const gchar *search, GError **error)
 GPtrArray *
 zif_sack_search_file (ZifSack *sack, const gchar *search, GError **error)
 {
+	g_return_val_if_fail (ZIF_IS_SACK (sack), NULL);
 	return zif_sack_repos_search (sack, PK_ROLE_ENUM_SEARCH_FILE, search, error);
 }
 
@@ -303,6 +342,7 @@ zif_sack_search_file (ZifSack *sack, const gchar *search, GError **error)
 GPtrArray *
 zif_sack_get_packages (ZifSack *sack, GError **error)
 {
+	g_return_val_if_fail (ZIF_IS_SACK (sack), NULL);
 	return zif_sack_repos_search (sack, PK_ROLE_ENUM_GET_PACKAGES, NULL, error);
 }
 
@@ -312,6 +352,7 @@ zif_sack_get_packages (ZifSack *sack, GError **error)
 GPtrArray *
 zif_sack_get_updates (ZifSack *sack, GError **error)
 {
+	g_return_val_if_fail (ZIF_IS_SACK (sack), NULL);
 	return zif_sack_repos_search (sack, PK_ROLE_ENUM_GET_UPDATES, NULL, error);
 }
 
@@ -321,6 +362,8 @@ zif_sack_get_updates (ZifSack *sack, GError **error)
 GPtrArray *
 zif_sack_what_provides (ZifSack *sack, const gchar *search, GError **error)
 {
+	g_return_val_if_fail (ZIF_IS_SACK (sack), NULL);
+
 	/* if this is a path, then we use the file list and treat like a SearchFile */
 	if (g_str_has_prefix (search, "/"))
 		return zif_sack_repos_search (sack, PK_ROLE_ENUM_SEARCH_FILE, search, error);

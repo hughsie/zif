@@ -69,6 +69,8 @@ gboolean	 zif_sack_add_remote_enabled	(ZifSack		*sack,
 						 GError			**error);
 
 /* methods */
+gboolean	 zif_sack_clean			(ZifSack		*sack,
+						 GError			**error);
 GPtrArray	*zif_sack_resolve		(ZifSack		*sack,
 						 const gchar		*search,
 						 GError			**error);
