@@ -19,6 +19,14 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+/**
+ * SECTION:zif-repos
+ * @short_description: A #ZifRepos object manages software sources
+ *
+ * A #ZifRepos is an object that allows easy interfacing with remote
+ * repositories.
+ */
+
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
@@ -51,6 +59,13 @@ static gpointer zif_repos_object = NULL;
 
 /**
  * zif_repos_set_repos_dir:
+ * @repos: the #ZifRepos object
+ * @repos_dir: the directory, e.g. "/etc/yum.repos.d"
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Set the repository directory.
+ *
+ * Return value: %TRUE for success, %FALSE for failure
  **/
 gboolean
 zif_repos_set_repos_dir (ZifRepos *repos, const gchar *repos_dir, GError **error)
@@ -132,6 +147,12 @@ out:
 
 /**
  * zif_repos_load:
+ * @repos: the #ZifRepos object
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Load the repository, and parse it's config file.
+ *
+ * Return value: %TRUE for success, %FALSE for failure
  **/
 gboolean
 zif_repos_load (ZifRepos *repos, GError **error)
@@ -223,6 +244,12 @@ out:
 
 /**
  * zif_repos_get_stores:
+ * @repos: the #ZifRepos object
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Gets the enabled and disabled remote stores.
+ *
+ * Return value: a list of #ZifStore's
  **/
 GPtrArray *
 zif_repos_get_stores (ZifRepos *repos, GError **error)
@@ -258,6 +285,12 @@ out:
 
 /**
  * zif_repos_get_stores_enabled:
+ * @repos: the #ZifRepos object
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Gets the enabled remote stores.
+ *
+ * Return value: a list of #ZifStore's
  **/
 GPtrArray *
 zif_repos_get_stores_enabled (ZifRepos *repos, GError **error)
@@ -293,9 +326,16 @@ out:
 
 /**
  * zif_repos_get_store:
+ * @repos: the #ZifRepos object
+ * @id: the repository id, e.g. "fedora"
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Gets the store matching the ID.
+ *
+ * Return value: A #ZifStoreRemote object, or %NULL
  **/
 ZifStoreRemote *
-zif_repos_get_store (ZifRepos *repos, const gchar	*id, GError **error)
+zif_repos_get_store (ZifRepos *repos, const gchar *id, GError **error)
 {
 	guint i;
 	ZifStoreRemote *store = NULL;
@@ -403,7 +443,8 @@ zif_repos_init (ZifRepos *repos)
 
 /**
  * zif_repos_new:
- * Return value: A new repos class instance.
+ *
+ * Return value: A new #ZifRepos class instance.
  **/
 ZifRepos *
 zif_repos_new (void)

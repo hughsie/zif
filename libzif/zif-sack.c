@@ -19,6 +19,14 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+/**
+ * SECTION:zif-sack
+ * @short_description: A sack is a container that holds one or more stores
+ *
+ * A #ZifSack is a container that #ZifStore's are kept. Global operations can
+ * be done on the sack and not the indervidual stores.
+ */
+
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
@@ -502,6 +510,7 @@ zif_sack_init (ZifSack *sack)
 
 /**
  * zif_sack_new:
+ *
  * Return value: A new #ZifSack class instance.
  **/
 ZifSack *
