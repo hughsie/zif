@@ -42,6 +42,7 @@ struct ZifCompletePrivate
 
 typedef enum {
 	PERCENTAGE_CHANGED,
+	SUBPERCENTAGE_CHANGED,
 	LAST_SIGNAL
 } PkSignals;
 
@@ -105,7 +106,9 @@ zif_complete_progress_changed_cb (ZifComplete *child, guint value, ZifComplete *
 	guint range;
 	guint extra;
 
-	egg_debug ("child changed: %i", value);
+	/* always provide two levels of signals */
+	egg_warning ("emitting subpercentage=%i on %p", value, complete);
+	g_signal_emit (complete, signals [SUBPERCENTAGE_CHANGED], 0, value);
 
 	/* get the offset */
 	offset = zif_complete_discrete_to_percent (complete->priv->current, complete->priv->steps);
@@ -138,9 +141,12 @@ zif_complete_set_child (ZifComplete *complete, ZifComplete *child)
 {
 	g_return_val_if_fail (ZIF_IS_COMPLETE (complete), FALSE);
 	g_return_val_if_fail (ZIF_IS_COMPLETE (child), FALSE);
-	g_return_val_if_fail (complete->priv->child == NULL, FALSE);
 
 	/* watch this */
+	if (complete->priv->child != NULL) {
+		//TODO: disconnect signal?
+		g_object_unref (complete->priv->child);
+	}
 	complete->priv->child = g_object_ref (child);
 	g_signal_connect (child, "percentage-changed", G_CALLBACK (zif_complete_progress_changed_cb), complete);
 
@@ -175,7 +181,7 @@ zif_complete_set_number_steps (ZifComplete *complete, guint steps)
  * zif_complete_done:
  * @complete: the #ZifComplete object
  *
- * Called when the current sub task has finished.
+ * Called when the current sub-task has finished.
  *
  * Return value: %TRUE for success, %FALSE for failure
  **/
@@ -232,6 +238,13 @@ zif_complete_class_init (ZifCompleteClass *klass)
 		g_signal_new ("percentage-changed",
 			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,
 			      G_STRUCT_OFFSET (ZifCompleteClass, percentage_changed),
+			      NULL, NULL, g_cclosure_marshal_VOID__UINT,
+			      G_TYPE_NONE, 1, G_TYPE_UINT);
+
+	signals [SUBPERCENTAGE_CHANGED] =
+		g_signal_new ("subpercentage-changed",
+			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,
+			      G_STRUCT_OFFSET (ZifCompleteClass, subpercentage_changed),
 			      NULL, NULL, g_cclosure_marshal_VOID__UINT,
 			      G_TYPE_NONE, 1, G_TYPE_UINT);
 

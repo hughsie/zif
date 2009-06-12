@@ -51,6 +51,8 @@ typedef struct
 	/* Signals */
 	void		(* percentage_changed)		(ZifComplete	*complete,
 							 guint		 value);
+	void		(* subpercentage_changed)	(ZifComplete	*complete,
+							 guint		 value);
 	/* Padding for future expansion */
 	void (*_zif_reserved1) (void);
 	void (*_zif_reserved2) (void);
