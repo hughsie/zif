@@ -206,6 +206,8 @@ zif_sack_repos_search (ZifSack *sack, PkRoleEnum role, const gchar *search, GErr
 			part = zif_store_search_file (store, search, &error_local);
 		else if (role == PK_ROLE_ENUM_GET_PACKAGES)
 			part = zif_store_get_packages (store, &error_local);
+		else if (role == PK_ROLE_ENUM_GET_UPDATES)
+			part = zif_store_get_updates (store, &error_local);
 		else if (role == PK_ROLE_ENUM_WHAT_PROVIDES)
 			part = zif_store_what_provides (store, search, &error_local);
 		else
@@ -302,6 +304,15 @@ GPtrArray *
 zif_sack_get_packages (ZifSack *sack, GError **error)
 {
 	return zif_sack_repos_search (sack, PK_ROLE_ENUM_GET_PACKAGES, NULL, error);
+}
+
+/**
+ * zif_sack_get_updates:
+ **/
+GPtrArray *
+zif_sack_get_updates (ZifSack *sack, GError **error)
+{
+	return zif_sack_repos_search (sack, PK_ROLE_ENUM_GET_UPDATES, NULL, error);
 }
 
 /**

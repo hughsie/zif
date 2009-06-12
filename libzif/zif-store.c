@@ -222,6 +222,26 @@ zif_store_get_packages (ZifStore *store, GError **error)
 }
 
 /**
+ * zif_store_get_updates:
+ **/
+GPtrArray *
+zif_store_get_updates (ZifStore *store, GError **error)
+{
+	ZifStoreClass *klass = ZIF_STORE_GET_CLASS (store);
+
+	g_return_val_if_fail (ZIF_IS_STORE (store), FALSE);
+
+	/* no support */
+	if (klass->get_updates == NULL) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "operation cannot be performed on this store");
+		return FALSE;
+	}
+
+	return klass->get_updates (store, error);
+}
+
+/**
  * zif_store_find_package:
  **/
 ZifPackage *

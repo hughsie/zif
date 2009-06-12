@@ -75,8 +75,6 @@ gboolean	 zif_store_remote_download		(ZifStoreRemote		*store,
 							 GError			**error);
 gboolean	 zif_store_remote_clean			(ZifStoreRemote		*store,
 							 GError			**error);
-GPtrArray	*zif_store_remote_get_updates		(ZifStoreRemote		*store,
-							 GError			**error);
 
 G_END_DECLS
 

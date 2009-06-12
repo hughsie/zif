@@ -77,6 +77,8 @@ typedef struct
 						 GError			**error);
 	GPtrArray	*(*get_packages)	(ZifStore		*store,
 						 GError			**error);
+	GPtrArray	*(*get_updates)		(ZifStore		*store,
+						 GError			**error);
 	ZifPackage	*(*find_package)	(ZifStore		*store,
 						 const PkPackageId	*id,
 						 GError			**error);
@@ -110,6 +112,8 @@ GPtrArray	*zif_store_what_provides	(ZifStore		*store,
 						 const gchar		*search,
 						 GError			**error);
 GPtrArray	*zif_store_get_packages		(ZifStore		*store,
+						 GError			**error);
+GPtrArray	*zif_store_get_updates		(ZifStore		*store,
 						 GError			**error);
 ZifPackage	*zif_store_find_package		(ZifStore		*store,
 						 const PkPackageId	*id,

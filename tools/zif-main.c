@@ -44,7 +44,7 @@ zif_print_packages (GPtrArray *array)
 		package = g_ptr_array_index (array, i);
 		id = zif_package_get_id (package);
 		summary = zif_package_get_summary (package, NULL);
-		g_print ("%s-%s.%s (%s)\t%s\n", id->name, id->version, id->arch, id->data, summary->value);
+		g_print ("%s-%s.%s (%s)\t%s\n", id->name, id->version, id->arch, id->data, zif_string_get_value (summary));
 		zif_string_unref (summary);
 	}
 }
@@ -56,7 +56,6 @@ int
 main (int argc, char *argv[])
 {
 	GPtrArray *array;
-	GPtrArray *updates;
 	gboolean ret;
 //	const gchar *id;
 	ZifRepos *repos = NULL;
@@ -359,30 +358,23 @@ main (int argc, char *argv[])
 	value = argv[2];
 	if (g_strcmp0 (mode, "get-updates") == 0 || g_strcmp0 (mode, "check-update") == 0) {
 
-		/* get all remote stores */
-		array = zif_repos_get_stores_enabled (repos, &error);
-		if (array == NULL) {
-			g_print ("failed to get enabled stores: %s\n", error->message);
+		/* get a sack of remote stores */
+		sack = zif_sack_new ();
+		ret = zif_sack_add_remote_enabled (sack, &error);
+		if (!ret) {
+			g_print ("failed to add enabled stores: %s\n", error->message);
 			g_error_free (error);
 			goto out;
 		}
 
-		/* get updates for each one */
-		for (i=0; i<array->len; i++) {
-			store_remote = ZIF_STORE_REMOTE (g_ptr_array_index (array, i));
-			updates = zif_store_remote_get_updates (store_remote, &error);
-			if (updates == NULL) {
-				g_print ("failed to get updates for store: %s\n", error->message);
-				g_error_free (error);
-				break;
-			}
-			g_print ("got updates for %s:\n", zif_store_get_id (ZIF_STORE (store_remote)));
-			zif_print_packages (updates);
-			g_ptr_array_foreach (updates, (GFunc) g_object_unref, NULL);
-			g_ptr_array_free (updates, TRUE);
+		/* get updates */
+		array = zif_sack_get_updates (sack, &error);
+		if (array == NULL) {
+			g_print ("failed to get updates: %s\n", error->message);
+			g_error_free (error);
+			goto out;
 		}
-
-		/* free results */
+		zif_print_packages (array);
 		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
 		g_ptr_array_free (array, TRUE);
 
@@ -573,10 +565,10 @@ main (int argc, char *argv[])
 		g_print ("Arch\t : %s\n", id->arch);
 		g_print ("Size\t : %" G_GUINT64_FORMAT " bytes\n", size);
 		g_print ("Repo\t : %s\n", id->data);
-		g_print ("Summary\t : %s\n", summary->value);
-		g_print ("URL\t : %s\n", url->value);
-		g_print ("License\t : %s\n", license->value);
-		g_print ("Description\t : %s\n", description->value);
+		g_print ("Summary\t : %s\n", zif_string_get_value (summary));
+		g_print ("URL\t : %s\n", zif_string_get_value (url));
+		g_print ("License\t : %s\n", zif_string_get_value (license));
+		g_print ("Description\t : %s\n", zif_string_get_value (description));
 
 		zif_string_unref (summary);
 		zif_string_unref (url);

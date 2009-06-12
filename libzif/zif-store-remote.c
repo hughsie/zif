@@ -607,6 +607,74 @@ zif_store_remote_get_packages (ZifStore *store, GError **error)
 	return array;
 }
 
+
+/**
+ * zif_store_remote_get_updates:
+ **/
+static GPtrArray *
+zif_store_remote_get_updates (ZifStore *store, GError **error)
+{
+	ZifStore *store_local;
+	GPtrArray *packages;
+	GPtrArray *updates;
+	GPtrArray *array = NULL;
+	ZifPackage *package;
+	ZifPackage *update;
+	GError *error_local = NULL;
+	guint i, j;
+	gint val;
+	const PkPackageId *id_package;
+	const PkPackageId *id_update;
+	ZifStoreRemote *remote = ZIF_STORE_REMOTE (store);
+
+	/* get list of local packages */
+	store_local = ZIF_STORE (zif_store_local_new ());
+	packages = zif_store_get_packages (store_local, &error_local);
+	if (packages == NULL) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "failed to get local store: %s", error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* create array for packages to update */
+	array = g_ptr_array_new ();
+
+	/* find each one in a remote repo */
+	for (i=0; i<packages->len; i++) {
+		package = ZIF_PACKAGE (g_ptr_array_index (packages, i));
+		id_package = zif_package_get_id (package);
+
+		/* find package name in repo */
+		updates = zif_repo_md_primary_resolve (ZIF_REPO_MD_PRIMARY (remote->priv->md_primary), id_package->name, NULL);
+		if (updates == NULL) {
+			egg_debug ("not found %s", id_package->name);
+			continue;
+		}
+
+		/* find updates */
+		for (j=0; j<updates->len; j++) {
+			update = ZIF_PACKAGE (g_ptr_array_index (updates, j));
+
+			/* newer? */
+			val = zif_package_compare (update, package);
+			if (val > 0) {
+				id_update = zif_package_get_id (update);
+				egg_debug ("*** update %s from %s to %s", id_package->name, id_package->version, id_update->version);
+				g_ptr_array_add (array, g_object_ref (update));
+			}
+		}
+		g_ptr_array_foreach (updates, (GFunc) g_object_unref, NULL);
+		g_ptr_array_free (updates, TRUE);
+	}
+
+	g_ptr_array_foreach (packages, (GFunc) g_object_unref, NULL);
+	g_ptr_array_free (packages, TRUE);
+	g_object_unref (store_local);
+out:
+	return array;
+}
+
 /**
  * zif_store_remote_what_provides:
  **/
@@ -851,6 +919,7 @@ zif_store_remote_class_init (ZifStoreRemoteClass *klass)
 	store_class->resolve = zif_store_remote_resolve;
 	store_class->what_provides = zif_store_remote_what_provides;
 	store_class->get_packages = zif_store_remote_get_packages;
+	store_class->get_updates = zif_store_remote_get_updates;
 	store_class->find_package = zif_store_remote_find_package;
 	store_class->get_id = zif_store_remote_get_id;
 	store_class->print = zif_store_remote_print;
@@ -892,72 +961,6 @@ zif_store_remote_new (void)
 	ZifStoreRemote *store;
 	store = g_object_new (ZIF_TYPE_STORE_REMOTE, NULL);
 	return ZIF_STORE_REMOTE (store);
-}
-
-/**
- * zif_store_remote_get_updates:
- **/
-GPtrArray *
-zif_store_remote_get_updates (ZifStoreRemote *store, GError **error)
-{
-	ZifStore *store_local;
-	GPtrArray *packages;
-	GPtrArray *updates;
-	GPtrArray *array = NULL;
-	ZifPackage *package;
-	ZifPackage *update;
-	GError *error_local = NULL;
-	guint i, j;
-	gint val;
-	const PkPackageId *id_package;
-	const PkPackageId *id_update;
-
-	/* get list of local packages */
-	store_local = ZIF_STORE (zif_store_local_new ());
-	packages = zif_store_get_packages (store_local, &error_local);
-	if (packages == NULL) {
-		if (error != NULL)
-			*error = g_error_new (1, 0, "failed to get local store: %s", error_local->message);
-		g_error_free (error_local);
-		goto out;
-	}
-
-	/* create array for packages to update */
-	array = g_ptr_array_new ();
-
-	/* find each one in a remote repo */
-	for (i=0; i<packages->len; i++) {
-		package = ZIF_PACKAGE (g_ptr_array_index (packages, i));
-		id_package = zif_package_get_id (package);
-
-		/* find package name in repo */
-		updates = zif_repo_md_primary_resolve (ZIF_REPO_MD_PRIMARY (store->priv->md_primary), id_package->name, NULL);
-		if (updates == NULL) {
-			egg_debug ("not found %s", id_package->name);
-			continue;
-		}
-
-		/* find updates */
-		for (j=0; j<updates->len; j++) {
-			update = ZIF_PACKAGE (g_ptr_array_index (updates, j));
-
-			/* newer? */
-			val = zif_package_compare (update, package);
-			if (val > 0) {
-				id_update = zif_package_get_id (update);
-				egg_debug ("*** update %s from %s to %s", id_package->name, id_package->version, id_update->version);
-				g_ptr_array_add (array, g_object_ref (update));
-			}
-		}
-		g_ptr_array_foreach (updates, (GFunc) g_object_unref, NULL);
-		g_ptr_array_free (updates, TRUE);
-	}
-
-	g_ptr_array_foreach (packages, (GFunc) g_object_unref, NULL);
-	g_ptr_array_free (packages, TRUE);
-	g_object_unref (store_local);
-out:
-	return array;
 }
 
 /***************************************************************************

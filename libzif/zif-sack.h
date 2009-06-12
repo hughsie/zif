@@ -89,6 +89,8 @@ GPtrArray	*zif_sack_what_provides		(ZifSack		*sack,
 						 GError			**error);
 GPtrArray	*zif_sack_get_packages		(ZifSack		*sack,
 						 GError			**error);
+GPtrArray	*zif_sack_get_updates		(ZifSack		*sack,
+						 GError			**error);
 ZifPackage	*zif_sack_find_package		(ZifSack		*sack,
 						 const PkPackageId	*id,
 						 GError			**error);
