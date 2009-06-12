@@ -19,6 +19,13 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+/**
+ * SECTION:zif-store
+ * @short_description: A store is an abstract collection of packages
+ *
+ * #ZifStoreLocal and #ZifStoreRemote both implement #ZifStore.
+ */
+
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
