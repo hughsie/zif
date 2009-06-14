@@ -290,12 +290,19 @@ zif_completion_new (void)
 
 static guint _updates = 0;
 static guint _last_percent = 0;
+static guint _last_subpercent = 0;
 
 static void
-zif_completion_test_progress_changed_cb (ZifCompletion *completion, guint value, gpointer data)
+zif_completion_test_percentage_changed_cb (ZifCompletion *completion, guint value, gpointer data)
 {
 	_last_percent = value;
 	_updates++;
+}
+
+static void
+zif_completion_test_subpercentage_changed_cb (ZifCompletion *completion, guint value, gpointer data)
+{
+	_last_subpercent = value;
 }
 
 void
@@ -312,7 +319,8 @@ zif_completion_test (EggTest *test)
 	egg_test_title (test, "get completion");
 	completion = zif_completion_new ();
 	egg_test_assert (test, completion != NULL);
-	g_signal_connect (completion, "percentage-changed", G_CALLBACK (zif_completion_test_progress_changed_cb), NULL);
+	g_signal_connect (completion, "percentage-changed", G_CALLBACK (zif_completion_test_percentage_changed_cb), NULL);
+	g_signal_connect (completion, "subpercentage-changed", G_CALLBACK (zif_completion_test_subpercentage_changed_cb), NULL);
 
 	/************************************************************/
 	egg_test_title (test, "set steps");
@@ -359,7 +367,8 @@ zif_completion_test (EggTest *test)
 	_updates = 0;
 	completion = zif_completion_new ();
 	zif_completion_set_number_steps (completion, 2);
-	g_signal_connect (completion, "percentage-changed", G_CALLBACK (zif_completion_test_progress_changed_cb), NULL);
+	g_signal_connect (completion, "percentage-changed", G_CALLBACK (zif_completion_test_percentage_changed_cb), NULL);
+	g_signal_connect (completion, "subpercentage-changed", G_CALLBACK (zif_completion_test_subpercentage_changed_cb), NULL);
 
 	/* now test with a child */
 	child = zif_completion_new ();
