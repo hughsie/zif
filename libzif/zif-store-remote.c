@@ -1076,7 +1076,7 @@ zif_store_remote_test (EggTest *test)
 	zif_store_local_set_prefix (store_local, "/", NULL);
 	/************************************************************/
 	egg_test_title (test, "get updates");
-	array = zif_store_remote_get_updates (store, NULL);
+	array = zif_store_remote_get_updates (store, NULL, NULL, NULL);
 	if (array->len > 0)
 		egg_test_success (test, NULL);
 	else
@@ -1114,7 +1114,7 @@ zif_store_remote_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "load metadata");
-	ret = zif_store_remote_load (ZIF_STORE (store), &error);
+	ret = zif_store_remote_load (ZIF_STORE (store), NULL, NULL, &error);
 	if (ret)
 		egg_test_success (test, NULL);
 	else
@@ -1122,7 +1122,7 @@ zif_store_remote_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "resolve");
-	array = zif_store_remote_resolve (ZIF_STORE (store), "kernel", &error);
+	array = zif_store_remote_resolve (ZIF_STORE (store), "kernel", NULL, NULL, &error);
 	if (array != NULL)
 		egg_test_success (test, NULL);
 	else
@@ -1140,7 +1140,7 @@ zif_store_remote_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "search name");
-	array = zif_store_remote_search_name (ZIF_STORE (store), "power-manager", &error);
+	array = zif_store_remote_search_name (ZIF_STORE (store), "power-manager", NULL, NULL, &error);
 	if (array != NULL)
 		egg_test_success (test, NULL);
 	else
@@ -1158,7 +1158,7 @@ zif_store_remote_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "search details");
-	array = zif_store_remote_search_details (ZIF_STORE (store), "browser plugin", &error);
+	array = zif_store_remote_search_details (ZIF_STORE (store), "browser plugin", NULL, NULL, &error);
 	if (array != NULL)
 		egg_test_success (test, NULL);
 	else
@@ -1176,7 +1176,7 @@ zif_store_remote_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "search file");
-	array = zif_store_remote_search_file (ZIF_STORE (store), "/usr/bin/gnome-power-manager", &error);
+	array = zif_store_remote_search_file (ZIF_STORE (store), "/usr/bin/gnome-power-manager", NULL, NULL, &error);
 	if (array != NULL)
 		egg_test_success (test, NULL);
 	else
@@ -1220,7 +1220,7 @@ zif_store_remote_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "get packages");
-	array = zif_store_remote_get_packages (ZIF_STORE (store), &error);
+	array = zif_store_remote_get_packages (ZIF_STORE (store), NULL, NULL, &error);
 	if (array != NULL)
 		egg_test_success (test, NULL);
 	else

@@ -321,7 +321,7 @@ zif_download_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "download file");
-	ret = zif_download_file (download, "http://people.freedesktop.org/~hughsient/temp/Screenshot.png", "../test/downloads", &error);
+	ret = zif_download_file (download, "http://people.freedesktop.org/~hughsient/temp/Screenshot.png", "../test/downloads", NULL, NULL, &error);
 	if (ret)
 		egg_test_success (test, NULL);
 	else
@@ -339,7 +339,7 @@ zif_download_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "download second file (should be cancelled)");
-	ret = zif_download_file (download, "http://people.freedesktop.org/~hughsient/temp/Screenshot.png", "../test/downloads", &error);
+	ret = zif_download_file (download, "http://people.freedesktop.org/~hughsient/temp/Screenshot.png", "../test/downloads", NULL, NULL, &error);
 	if (!ret)
 		egg_test_success (test, NULL);
 	else
