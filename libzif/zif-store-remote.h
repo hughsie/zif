@@ -72,6 +72,8 @@ gboolean	 zif_store_remote_set_enabled		(ZifStoreRemote		*store,
 gboolean	 zif_store_remote_download		(ZifStoreRemote		*store,
 							 const gchar		*filename,
 							 const gchar		*directory,
+							 GCancellable		*cancellable,
+							 ZifCompletion		*completion,
 							 GError			**error);
 
 G_END_DECLS

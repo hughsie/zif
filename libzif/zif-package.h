@@ -27,9 +27,11 @@
 #define __ZIF_PACKAGE_H
 
 #include <glib-object.h>
+#include <gio/gio.h>
 #include <packagekit-glib/packagekit.h>
 
 #include "zif-string.h"
+#include "zif-completion.h"
 #include "zif-string-array.h"
 #include "zif-depend-array.h"
 
@@ -113,6 +115,8 @@ gboolean		 zif_package_set_provides	(ZifPackage	*package,
 /* actions */
 gboolean		 zif_package_download		(ZifPackage	*package,
 							 const gchar	*directory,
+							 GCancellable	*cancellable,
+							 ZifCompletion	*completion,
 							 GError		**error);
 const gchar		*zif_package_get_package_id	(ZifPackage	*package);
 void			 zif_package_print		(ZifPackage	*package);

@@ -210,7 +210,7 @@ main (int argc, char *argv[])
 
 		/* resolve local sack */
 		g_print ("resolve local sack... ");
-		array = zif_sack_resolve (sack, "gnome-power-manager", &error);
+		array = zif_sack_resolve (sack, "gnome-power-manager", NULL, NULL, &error);
 		if (array == NULL || array->len == 0) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
@@ -225,7 +225,7 @@ main (int argc, char *argv[])
 
 		/* resolve2 local sack */
 		g_print ("resolve2 local sack... ");
-		array = zif_sack_resolve (sack, "gnome-power-manager", &error);
+		array = zif_sack_resolve (sack, "gnome-power-manager", NULL, NULL, &error);
 		if (array == NULL || array->len == 0) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
@@ -240,7 +240,7 @@ main (int argc, char *argv[])
 
 		/* searchfile local sack */
 		g_print ("searchfile local sack... ");
-		array = zif_sack_search_file (sack, "/usr/bin/gnome-power-manager", &error);
+		array = zif_sack_search_file (sack, "/usr/bin/gnome-power-manager", NULL, NULL, &error);
 		if (array == NULL) {
 			g_error ("failed to get results: %s\n", error->message);
 			g_error_free (error);
@@ -255,7 +255,7 @@ main (int argc, char *argv[])
 
 		/* whatprovides local sack */
 		g_print ("whatprovides local sack... ");
-		array = zif_sack_what_provides (sack, "kernel", &error);
+		array = zif_sack_what_provides (sack, "kernel", NULL, NULL, &error);
 		if (array == NULL || array->len == 0) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
@@ -287,7 +287,7 @@ main (int argc, char *argv[])
 
 		/* resolve remote sack */
 		g_print ("resolve remote sack... ");
-		array = zif_sack_resolve (sack, "gnome-power-manager", &error);
+		array = zif_sack_resolve (sack, "gnome-power-manager", NULL, NULL, &error);
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
@@ -302,7 +302,7 @@ main (int argc, char *argv[])
 
 		/* resolve2 remote sack */
 		g_print ("resolve2 remote sack... ");
-		array = zif_sack_resolve (sack, "gnome-power-manager", &error);
+		array = zif_sack_resolve (sack, "gnome-power-manager", NULL, NULL, &error);
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
@@ -317,7 +317,7 @@ main (int argc, char *argv[])
 
 		/* searchfile remote sack */
 		g_print ("searchfile remote sack... ");
-		array = zif_sack_search_file (sack, "/usr/bin/gnome-power-manager", &error);
+		array = zif_sack_search_file (sack, "/usr/bin/gnome-power-manager", NULL, NULL, &error);
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
@@ -332,7 +332,7 @@ main (int argc, char *argv[])
 
 		/* whatprovides remote sack */
 		g_print ("whatprovides remote sack... ");
-		array = zif_sack_what_provides (sack, "kernel", &error);
+		array = zif_sack_what_provides (sack, "kernel", NULL, NULL, &error);
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
@@ -382,7 +382,7 @@ main (int argc, char *argv[])
 		}
 
 		/* get updates */
-		array = zif_sack_get_updates (sack, &error);
+		array = zif_sack_get_updates (sack, NULL, completion, &error);
 		if (array == NULL) {
 			g_print ("failed to get updates: %s\n", error->message);
 			g_error_free (error);
@@ -427,7 +427,7 @@ main (int argc, char *argv[])
 			g_print ("specify a value");
 			goto out;
 		}
-		array = zif_sack_resolve (sack, value, &error);
+		array = zif_sack_resolve (sack, value, NULL, completion, &error);
 		if (array == NULL || array->len == 0) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
@@ -443,7 +443,7 @@ main (int argc, char *argv[])
 			g_print ("  dependency: %s\n", require_str);
 			g_free (require_str);
 
-			provides = zif_sack_what_provides (sack, require->name, &error);
+			provides = zif_sack_what_provides (sack, require->name, NULL, completion, &error);
 			if (provides == NULL) {
 				g_print ("failed to get results: %s\n", error->message);
 				g_error_free (error);
@@ -469,14 +469,14 @@ main (int argc, char *argv[])
 			g_print ("specify a value");
 			goto out;
 		}
-		array = zif_sack_resolve (sack, value, &error);
+		array = zif_sack_resolve (sack, value, NULL, completion, &error);
 		if (array == NULL || array->len == 0) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
 			goto out;
 		}
 		package = g_ptr_array_index (array, 2);
-		ret = zif_package_download (package, "/tmp", &error);
+		ret = zif_package_download (package, "/tmp", NULL, completion, &error);
 		if (!ret) {
 			g_print ("failed to download: %s\n", error->message);
 			g_error_free (error);
@@ -500,7 +500,7 @@ main (int argc, char *argv[])
 		}
 
 		/* resolve */
-		array = zif_sack_resolve (sack, value, &error);
+		array = zif_sack_resolve (sack, value, NULL, completion, &error);
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
@@ -556,7 +556,7 @@ main (int argc, char *argv[])
 			g_print ("specify a value");
 			goto out;
 		}
-		array = zif_sack_resolve (sack, value, &error);
+		array = zif_sack_resolve (sack, value, NULL, completion, &error);
 		if (array == NULL || array->len == 0) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
@@ -595,7 +595,7 @@ main (int argc, char *argv[])
 		goto out;
 	}
 	if (g_strcmp0 (mode, "list") == 0 || g_strcmp0 (mode, "getpackages") == 0) {
-		array = zif_sack_get_packages (sack, &error);
+		array = zif_sack_get_packages (sack, NULL, completion, &error);
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
@@ -655,7 +655,7 @@ main (int argc, char *argv[])
 			g_print ("specify a value");
 			goto out;
 		}
-		array = zif_sack_resolve (sack, value, &error);
+		array = zif_sack_resolve (sack, value, NULL, completion, &error);
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
@@ -671,7 +671,7 @@ main (int argc, char *argv[])
 			g_print ("specify a value");
 			goto out;
 		}
-		array = zif_sack_search_name (sack, value, &error);
+		array = zif_sack_search_name (sack, value, NULL, completion, &error);
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
@@ -687,7 +687,7 @@ main (int argc, char *argv[])
 			g_print ("specify a value");
 			goto out;
 		}
-		array = zif_sack_search_details (sack, value, &error);
+		array = zif_sack_search_details (sack, value, NULL, completion, &error);
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
@@ -703,7 +703,7 @@ main (int argc, char *argv[])
 			g_print ("specify a value");
 			goto out;
 		}
-		array = zif_sack_search_file (sack, value, &error);
+		array = zif_sack_search_file (sack, value, NULL, completion, &error);
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
@@ -719,7 +719,7 @@ main (int argc, char *argv[])
 			g_print ("specify a value");
 			goto out;
 		}
-		array = zif_sack_search_group (sack, value, &error);
+		array = zif_sack_search_group (sack, value, NULL, completion, &error);
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
@@ -735,7 +735,7 @@ main (int argc, char *argv[])
 			g_print ("specify a value");
 			goto out;
 		}
-		array = zif_sack_what_provides (sack, value, &error);
+		array = zif_sack_what_provides (sack, value, NULL, completion, &error);
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);

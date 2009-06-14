@@ -103,6 +103,8 @@ zif_store_remote_download_progress_changed (ZifDownload *download, guint value, 
  * @store: the #ZifStoreRemote object
  * @filename: the completion filename to download, e.g. "Packages/hal-0.0.1.rpm"
  * @directory: the directory to put the downloaded file
+ * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting, or %NULL
  * @error: a #GError which is used on failure, or %NULL
  *
  * Downloads a remote package to a local directory.
@@ -110,7 +112,7 @@ zif_store_remote_download_progress_changed (ZifDownload *download, guint value, 
  * Return value: %TRUE for success, %FALSE for failure
  **/
 gboolean
-zif_store_remote_download (ZifStoreRemote *store, const gchar *filename, const gchar *directory, GError **error)
+zif_store_remote_download (ZifStoreRemote *store, const gchar *filename, const gchar *directory, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	gboolean ret = FALSE;
 	gchar *uri = NULL;
@@ -135,7 +137,7 @@ zif_store_remote_download (ZifStoreRemote *store, const gchar *filename, const g
 
 	/* download */
 	uri = g_strconcat (store->priv->baseurl, filename, NULL);
-	ret = zif_download_file (download, uri, "/tmp/moo.rpm", &error_local);
+	ret = zif_download_file (download, uri, "/tmp/moo.rpm", cancellable, completion, &error_local);
 	if (!ret) {
 		if (error != NULL)
 			*error = g_error_new (1, 0, "failed to download %s: %s", filename, error_local->message);
@@ -153,7 +155,7 @@ out:
  * zif_store_remote_load:
  **/
 static gboolean
-zif_store_remote_load (ZifStore *store, GError **error)
+zif_store_remote_load (ZifStore *store, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	GKeyFile *file = NULL;
 	gboolean ret = TRUE;
@@ -439,7 +441,7 @@ zif_store_remote_set_from_file (ZifStoreRemote *store, const gchar *filename, co
 	}
 
 	/* get data */
-	ret = zif_store_remote_load (ZIF_STORE (store), &error_local);
+	ret = zif_store_remote_load (ZIF_STORE (store), NULL, NULL, &error_local);
 	if (!ret) {
 		if (error != NULL)
 			*error = g_error_new (1, 0, "failed to load %s: %s", id, error_local->message);
@@ -526,7 +528,7 @@ zif_store_remote_print (ZifStore *store)
  * zif_store_remote_resolve:
  **/
 static GPtrArray *
-zif_store_remote_resolve (ZifStore *store, const gchar *search, GError **error)
+zif_store_remote_resolve (ZifStore *store, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	GPtrArray *array;
 	ZifStoreRemote *remote = ZIF_STORE_REMOTE (store);
@@ -542,7 +544,7 @@ zif_store_remote_resolve (ZifStore *store, const gchar *search, GError **error)
  * zif_store_remote_search_name:
  **/
 static GPtrArray *
-zif_store_remote_search_name (ZifStore *store, const gchar *search, GError **error)
+zif_store_remote_search_name (ZifStore *store, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	GPtrArray *array;
 	ZifStoreRemote *remote = ZIF_STORE_REMOTE (store);
@@ -558,7 +560,7 @@ zif_store_remote_search_name (ZifStore *store, const gchar *search, GError **err
  * zif_store_remote_search_details:
  **/
 static GPtrArray *
-zif_store_remote_search_details (ZifStore *store, const gchar *search, GError **error)
+zif_store_remote_search_details (ZifStore *store, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	GPtrArray *array;
 	ZifStoreRemote *remote = ZIF_STORE_REMOTE (store);
@@ -574,7 +576,7 @@ zif_store_remote_search_details (ZifStore *store, const gchar *search, GError **
  * zif_store_remote_search_group:
  **/
 static GPtrArray *
-zif_store_remote_search_group (ZifStore *store, const gchar *search, GError **error)
+zif_store_remote_search_group (ZifStore *store, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	GPtrArray *array;
 	ZifStoreRemote *remote = ZIF_STORE_REMOTE (store);
@@ -590,7 +592,7 @@ zif_store_remote_search_group (ZifStore *store, const gchar *search, GError **er
  * zif_store_remote_find_package:
  **/
 static ZifPackage *
-zif_store_remote_find_package (ZifStore *store, const PkPackageId *id, GError **error)
+zif_store_remote_find_package (ZifStore *store, const PkPackageId *id, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	GPtrArray *array;
 	ZifPackage *package = NULL;
@@ -635,7 +637,7 @@ out:
  * zif_store_remote_get_packages:
  **/
 static GPtrArray *
-zif_store_remote_get_packages (ZifStore *store, GError **error)
+zif_store_remote_get_packages (ZifStore *store, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	GPtrArray *array;
 	ZifStoreRemote *remote = ZIF_STORE_REMOTE (store);
@@ -652,7 +654,7 @@ zif_store_remote_get_packages (ZifStore *store, GError **error)
  * zif_store_remote_get_updates:
  **/
 static GPtrArray *
-zif_store_remote_get_updates (ZifStore *store, GError **error)
+zif_store_remote_get_updates (ZifStore *store, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	ZifStore *store_local;
 	GPtrArray *packages;
@@ -669,7 +671,7 @@ zif_store_remote_get_updates (ZifStore *store, GError **error)
 
 	/* get list of local packages */
 	store_local = ZIF_STORE (zif_store_local_new ());
-	packages = zif_store_get_packages (store_local, &error_local);
+	packages = zif_store_get_packages (store_local, cancellable, completion, &error_local);
 	if (packages == NULL) {
 		if (error != NULL)
 			*error = g_error_new (1, 0, "failed to get local store: %s", error_local->message);
@@ -719,7 +721,7 @@ out:
  * zif_store_remote_what_provides:
  **/
 static GPtrArray *
-zif_store_remote_what_provides (ZifStore *store, const gchar *search, GError **error)
+zif_store_remote_what_provides (ZifStore *store, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 //	ZifStoreRemote *remote = ZIF_STORE_REMOTE (store);
 	//FIXME: load other MD
@@ -730,7 +732,7 @@ zif_store_remote_what_provides (ZifStore *store, const gchar *search, GError **e
  * zif_store_remote_search_file:
  **/
 static GPtrArray *
-zif_store_remote_search_file (ZifStore *store, const gchar *search, GError **error)
+zif_store_remote_search_file (ZifStore *store, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	GError *error_local = NULL;
 	GPtrArray *pkgids;
@@ -802,7 +804,7 @@ zif_store_remote_is_devel (ZifStoreRemote *store, GError **error)
 
 	/* if not already loaded, load */
 	if (!store->priv->loaded) {
-		ret = zif_store_remote_load (ZIF_STORE (store), &error_local);
+		ret = zif_store_remote_load (ZIF_STORE (store), NULL, NULL, &error_local);
 		if (!ret) {
 			if (error != NULL)
 				*error = g_error_new (1, 0, "failed to load store file: %s", error_local->message);
@@ -862,7 +864,7 @@ zif_store_remote_get_name (ZifStoreRemote *store, GError **error)
 
 	/* if not already loaded, load */
 	if (!store->priv->loaded) {
-		ret = zif_store_remote_load (ZIF_STORE (store), &error_local);
+		ret = zif_store_remote_load (ZIF_STORE (store), NULL, NULL, &error_local);
 		if (!ret) {
 			if (error != NULL)
 				*error = g_error_new (1, 0, "failed to load store file: %s", error_local->message);
@@ -894,7 +896,7 @@ zif_store_remote_get_enabled (ZifStoreRemote *store, GError **error)
 
 	/* if not already loaded, load */
 	if (!store->priv->loaded) {
-		ret = zif_store_remote_load (ZIF_STORE (store), &error_local);
+		ret = zif_store_remote_load (ZIF_STORE (store), NULL, NULL, &error_local);
 		if (!ret) {
 			if (error != NULL)
 				*error = g_error_new (1, 0, "failed to load store file: %s", error_local->message);

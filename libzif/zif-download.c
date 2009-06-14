@@ -99,9 +99,19 @@ out:
 
 /**
  * zif_download_file:
+ * @download: the #ZifDownload object
+ * @uri: the full remote URI
+ * @filename: the local filename to save to
+ * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting, or %NULL
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Downloads a file.
+ *
+ * Return value: %TRUE for success, %FALSE for failure
  **/
 gboolean
-zif_download_file (ZifDownload *download, const gchar *uri, const gchar *filename, GError **error)
+zif_download_file (ZifDownload *download, const gchar *uri, const gchar *filename, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	gboolean ret = FALSE;
 	SoupURI *base_uri;
@@ -242,6 +252,7 @@ zif_download_init (ZifDownload *download)
 
 /**
  * zif_download_new:
+ *
  * Return value: A new download class instance.
  **/
 ZifDownload *

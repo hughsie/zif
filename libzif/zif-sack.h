@@ -76,28 +76,46 @@ gboolean	 zif_sack_clean			(ZifSack		*sack,
 						 GError			**error);
 GPtrArray	*zif_sack_resolve		(ZifSack		*sack,
 						 const gchar		*search,
+						 GCancellable		*cancellable,
+						 ZifCompletion		*completion,
 						 GError			**error);
 GPtrArray	*zif_sack_search_name		(ZifSack		*sack,
 						 const gchar		*search,
+						 GCancellable		*cancellable,
+						 ZifCompletion		*completion,
 						 GError			**error);
 GPtrArray	*zif_sack_search_details	(ZifSack		*sack,
 						 const gchar		*search,
+						 GCancellable		*cancellable,
+						 ZifCompletion		*completion,
 						 GError			**error);
 GPtrArray	*zif_sack_search_group		(ZifSack		*sack,
 						 const gchar		*search,
+						 GCancellable		*cancellable,
+						 ZifCompletion		*completion,
 						 GError			**error);
 GPtrArray	*zif_sack_search_file		(ZifSack		*sack,
 						 const gchar		*search,
+						 GCancellable		*cancellable,
+						 ZifCompletion		*completion,
 						 GError			**error);
 GPtrArray	*zif_sack_what_provides		(ZifSack		*sack,
 						 const gchar		*search,
+						 GCancellable		*cancellable,
+						 ZifCompletion		*completion,
 						 GError			**error);
 GPtrArray	*zif_sack_get_packages		(ZifSack		*sack,
+						 GCancellable		*cancellable,
+						 ZifCompletion		*completion,
 						 GError			**error);
 GPtrArray	*zif_sack_get_updates		(ZifSack		*sack,
+						 GCancellable		*cancellable,
+						 ZifCompletion		*completion,
 						 GError			**error);
 ZifPackage	*zif_sack_find_package		(ZifSack		*sack,
 						 const PkPackageId	*id,
+						 GCancellable		*cancellable,
+						 ZifCompletion		*completion,
 						 GError			**error);
 
 G_END_DECLS

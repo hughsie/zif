@@ -212,7 +212,7 @@ out:
  * zif_sack_repos_search:
  **/
 static GPtrArray *
-zif_sack_repos_search (ZifSack *sack, PkRoleEnum role, const gchar *search, GError **error)
+zif_sack_repos_search (ZifSack *sack, PkRoleEnum role, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	guint i, j;
 	GPtrArray *array = NULL;
@@ -225,10 +225,10 @@ zif_sack_repos_search (ZifSack *sack, PkRoleEnum role, const gchar *search, GErr
 	stores = sack->priv->array;
 
 	/* create a chain of completions */
-//	if (completion != NULL) {
-//		zif_completion_set_child (completion, sack->priv->completion_local);
-//		zif_completion_set_number_steps (completion, stores->len);
-//	}
+	if (completion != NULL) {
+		zif_completion_set_child (completion, sack->priv->completion_local);
+		zif_completion_set_number_steps (completion, stores->len);
+	}
 
 	/* do each one */
 	array = g_ptr_array_new ();
@@ -237,21 +237,21 @@ zif_sack_repos_search (ZifSack *sack, PkRoleEnum role, const gchar *search, GErr
 
 		/* get results for this store */
 		if (role == PK_ROLE_ENUM_RESOLVE)
-			part = zif_store_resolve (store, search, &error_local);
+			part = zif_store_resolve (store, search, cancellable, sack->priv->completion_local, &error_local);
 		else if (role == PK_ROLE_ENUM_SEARCH_NAME)
-			part = zif_store_search_name (store, search, &error_local);
+			part = zif_store_search_name (store, search, cancellable, sack->priv->completion_local, &error_local);
 		else if (role == PK_ROLE_ENUM_SEARCH_DETAILS)
-			part = zif_store_search_details (store, search, &error_local);
+			part = zif_store_search_details (store, search, cancellable, sack->priv->completion_local, &error_local);
 		else if (role == PK_ROLE_ENUM_SEARCH_GROUP)
-			part = zif_store_search_group (store, search, &error_local);
+			part = zif_store_search_group (store, search, cancellable, sack->priv->completion_local, &error_local);
 		else if (role == PK_ROLE_ENUM_SEARCH_FILE)
-			part = zif_store_search_file (store, search, &error_local);
+			part = zif_store_search_file (store, search, cancellable, sack->priv->completion_local, &error_local);
 		else if (role == PK_ROLE_ENUM_GET_PACKAGES)
-			part = zif_store_get_packages (store, &error_local);
+			part = zif_store_get_packages (store, cancellable, sack->priv->completion_local, &error_local);
 		else if (role == PK_ROLE_ENUM_GET_UPDATES)
-			part = zif_store_get_updates (store, &error_local);
+			part = zif_store_get_updates (store, cancellable, sack->priv->completion_local, &error_local);
 		else if (role == PK_ROLE_ENUM_WHAT_PROVIDES)
-			part = zif_store_what_provides (store, search, &error_local);
+			part = zif_store_what_provides (store, search, cancellable, sack->priv->completion_local, &error_local);
 		else
 			egg_error ("internal error: %s", pk_role_enum_to_text (role));
 		if (part == NULL) {
@@ -269,8 +269,8 @@ zif_sack_repos_search (ZifSack *sack, PkRoleEnum role, const gchar *search, GErr
 		g_ptr_array_free (part, TRUE);
 
 		/* this section done */
-//		if (completion != NULL)
-//			zif_completion_done (completion);
+		if (completion != NULL)
+			zif_completion_done (completion);
 	}
 out:
 	return array;
@@ -280,6 +280,8 @@ out:
  * zif_sack_find_package:
  * @sack: the #ZifSack object
  * @id: the #PkPackageId which defines the package
+ * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting, or %NULL
  * @error: a #GError which is used on failure, or %NULL
  *
  * Find a single package in the #ZifSack.
@@ -287,7 +289,7 @@ out:
  * Return value: A single #ZifPackage or %NULL
  **/
 ZifPackage *
-zif_sack_find_package (ZifSack *sack, const PkPackageId *id, GError **error)
+zif_sack_find_package (ZifSack *sack, const PkPackageId *id, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	guint i;
 	GPtrArray *stores;
@@ -300,21 +302,21 @@ zif_sack_find_package (ZifSack *sack, const PkPackageId *id, GError **error)
 	stores = sack->priv->array;
 
 	/* create a chain of completions */
-//	if (completion != NULL) {
-//		zif_completion_set_child (completion, sack->priv->completion_local);
-//		zif_completion_set_number_steps (completion, stores->len);
-//	}
+	if (completion != NULL) {
+		zif_completion_set_child (completion, sack->priv->completion_local);
+		zif_completion_set_number_steps (completion, stores->len);
+	}
 
 	/* do each one */
 	for (i=0; i<stores->len; i++) {
 		store = g_ptr_array_index (stores, i);
-		package = zif_store_find_package (store, id, NULL);
+		package = zif_store_find_package (store, id, cancellable, sack->priv->completion_local, NULL);
 		if (package != NULL)
 			break;
 
 		/* this section done */
-//		if (completion != NULL)
-//			zif_completion_done (completion);
+		if (completion != NULL)
+			zif_completion_done (completion);
 	}
 	return package;
 }
@@ -322,6 +324,8 @@ zif_sack_find_package (ZifSack *sack, const PkPackageId *id, GError **error)
 /**
  * zif_sack_clean:
  * @sack: the #ZifSack object
+ * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting, or %NULL
  * @error: a #GError which is used on failure, or %NULL
  *
  * Cleans the #ZifStoreRemote objects by deleting cache.
@@ -374,6 +378,8 @@ out:
  * zif_sack_resolve:
  * @sack: the #ZifSack object
  * @search: the search term, e.g. "gnome-power-manager"
+ * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting, or %NULL
  * @error: a #GError which is used on failure, or %NULL
  *
  * Finds packages matching the package name exactly.
@@ -381,16 +387,18 @@ out:
  * Return value: an array of #ZifPackage's
  **/
 GPtrArray *
-zif_sack_resolve (ZifSack *sack, const gchar *search, GError **error)
+zif_sack_resolve (ZifSack *sack, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	g_return_val_if_fail (ZIF_IS_SACK (sack), NULL);
-	return zif_sack_repos_search (sack, PK_ROLE_ENUM_RESOLVE, search, error);
+	return zif_sack_repos_search (sack, PK_ROLE_ENUM_RESOLVE, search, cancellable, completion, error);
 }
 
 /**
  * zif_sack_search_name:
  * @sack: the #ZifSack object
  * @search: the search term, e.g. "power"
+ * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting, or %NULL
  * @error: a #GError which is used on failure, or %NULL
  *
  * Find packages that match the package name in some part.
@@ -398,16 +406,18 @@ zif_sack_resolve (ZifSack *sack, const gchar *search, GError **error)
  * Return value: an array of #ZifPackage's
  **/
 GPtrArray *
-zif_sack_search_name (ZifSack *sack, const gchar *search, GError **error)
+zif_sack_search_name (ZifSack *sack, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	g_return_val_if_fail (ZIF_IS_SACK (sack), NULL);
-	return zif_sack_repos_search (sack, PK_ROLE_ENUM_SEARCH_NAME, search, error);
+	return zif_sack_repos_search (sack, PK_ROLE_ENUM_SEARCH_NAME, search, cancellable, completion, error);
 }
 
 /**
  * zif_sack_search_details:
  * @sack: the #ZifSack object
  * @search: the search term, e.g. "trouble"
+ * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting, or %NULL
  * @error: a #GError which is used on failure, or %NULL
  *
  * Find packages that match some detail about the package.
@@ -415,16 +425,18 @@ zif_sack_search_name (ZifSack *sack, const gchar *search, GError **error)
  * Return value: an array of #ZifPackage's
  **/
 GPtrArray *
-zif_sack_search_details (ZifSack *sack, const gchar *search, GError **error)
+zif_sack_search_details (ZifSack *sack, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	g_return_val_if_fail (ZIF_IS_SACK (sack), NULL);
-	return zif_sack_repos_search (sack, PK_ROLE_ENUM_SEARCH_DETAILS, search, error);
+	return zif_sack_repos_search (sack, PK_ROLE_ENUM_SEARCH_DETAILS, search, cancellable, completion, error);
 }
 
 /**
  * zif_sack_search_group:
  * @sack: the #ZifSack object
  * @search: the search term, e.g. "games"
+ * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting, or %NULL
  * @error: a #GError which is used on failure, or %NULL
  *
  * Find packages that belong in a specific group.
@@ -432,16 +444,18 @@ zif_sack_search_details (ZifSack *sack, const gchar *search, GError **error)
  * Return value: an array of #ZifPackage's
  **/
 GPtrArray *
-zif_sack_search_group (ZifSack *sack, const gchar *search, GError **error)
+zif_sack_search_group (ZifSack *sack, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	g_return_val_if_fail (ZIF_IS_SACK (sack), NULL);
-	return zif_sack_repos_search (sack, PK_ROLE_ENUM_SEARCH_GROUP, search, error);
+	return zif_sack_repos_search (sack, PK_ROLE_ENUM_SEARCH_GROUP, search, cancellable, completion, error);
 }
 
 /**
  * zif_sack_search_file:
  * @sack: the #ZifSack object
  * @search: the search term, e.g. "/usr/bin/gnome-power-manager"
+ * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting, or %NULL
  * @error: a #GError which is used on failure, or %NULL
  *
  * Find packages that provide the specified file.
@@ -449,15 +463,17 @@ zif_sack_search_group (ZifSack *sack, const gchar *search, GError **error)
  * Return value: an array of #ZifPackage's
  **/
 GPtrArray *
-zif_sack_search_file (ZifSack *sack, const gchar *search, GError **error)
+zif_sack_search_file (ZifSack *sack, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	g_return_val_if_fail (ZIF_IS_SACK (sack), NULL);
-	return zif_sack_repos_search (sack, PK_ROLE_ENUM_SEARCH_FILE, search, error);
+	return zif_sack_repos_search (sack, PK_ROLE_ENUM_SEARCH_FILE, search, cancellable, completion, error);
 }
 
 /**
  * zif_sack_get_packages:
  * @sack: the #ZifSack object
+ * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting, or %NULL
  * @error: a #GError which is used on failure, or %NULL
  *
  * Return all packages in the #ZifSack's.
@@ -465,15 +481,17 @@ zif_sack_search_file (ZifSack *sack, const gchar *search, GError **error)
  * Return value: an array of #ZifPackage's
  **/
 GPtrArray *
-zif_sack_get_packages (ZifSack *sack, GError **error)
+zif_sack_get_packages (ZifSack *sack, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	g_return_val_if_fail (ZIF_IS_SACK (sack), NULL);
-	return zif_sack_repos_search (sack, PK_ROLE_ENUM_GET_PACKAGES, NULL, error);
+	return zif_sack_repos_search (sack, PK_ROLE_ENUM_GET_PACKAGES, NULL, cancellable, completion, error);
 }
 
 /**
  * zif_sack_get_updates:
  * @sack: the #ZifSack object
+ * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting, or %NULL
  * @error: a #GError which is used on failure, or %NULL
  *
  * Return a list of packages that are updatable.
@@ -481,16 +499,18 @@ zif_sack_get_packages (ZifSack *sack, GError **error)
  * Return value: an array of #ZifPackage's
  **/
 GPtrArray *
-zif_sack_get_updates (ZifSack *sack, GError **error)
+zif_sack_get_updates (ZifSack *sack, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	g_return_val_if_fail (ZIF_IS_SACK (sack), NULL);
-	return zif_sack_repos_search (sack, PK_ROLE_ENUM_GET_UPDATES, NULL, error);
+	return zif_sack_repos_search (sack, PK_ROLE_ENUM_GET_UPDATES, NULL, cancellable, completion, error);
 }
 
 /**
  * zif_sack_what_provides:
  * @sack: the #ZifSack object
  * @search: the search term, e.g. "gstreamer(codec-mp3)"
+ * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting, or %NULL
  * @error: a #GError which is used on failure, or %NULL
  *
  * Find packages that provide a specific string.
@@ -498,14 +518,14 @@ zif_sack_get_updates (ZifSack *sack, GError **error)
  * Return value: an array of #ZifPackage's
  **/
 GPtrArray *
-zif_sack_what_provides (ZifSack *sack, const gchar *search, GError **error)
+zif_sack_what_provides (ZifSack *sack, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	g_return_val_if_fail (ZIF_IS_SACK (sack), NULL);
 
 	/* if this is a path, then we use the file list and treat like a SearchFile */
 	if (g_str_has_prefix (search, "/"))
-		return zif_sack_repos_search (sack, PK_ROLE_ENUM_SEARCH_FILE, search, error);
-	return zif_sack_repos_search (sack, PK_ROLE_ENUM_WHAT_PROVIDES, search, error);
+		return zif_sack_repos_search (sack, PK_ROLE_ENUM_SEARCH_FILE, search, cancellable, completion, error);
+	return zif_sack_repos_search (sack, PK_ROLE_ENUM_WHAT_PROVIDES, search, cancellable, completion, error);
 }
 
 /**
@@ -520,8 +540,7 @@ zif_sack_finalize (GObject *object)
 	g_return_if_fail (ZIF_IS_SACK (object));
 	sack = ZIF_SACK (object);
 
-	if (sack->priv->completion_local != NULL)
-		g_object_unref (sack->priv->completion_local);
+	g_object_unref (sack->priv->completion_local);
 	g_ptr_array_foreach (sack->priv->array, (GFunc) g_object_unref, NULL);
 	g_ptr_array_free (sack->priv->array, TRUE);
 

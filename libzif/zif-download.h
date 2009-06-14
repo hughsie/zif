@@ -27,6 +27,7 @@
 #define __ZIF_DOWNLOAD_H
 
 #include <glib-object.h>
+#include "zif-completion.h"
 
 G_BEGIN_DECLS
 
@@ -66,6 +67,8 @@ gboolean	 zif_download_set_proxy			(ZifDownload		*download,
 gboolean	 zif_download_file			(ZifDownload		*download,
 							 const gchar		*uri,
 							 const gchar		*filename,
+							 GCancellable		*cancellable,
+							 ZifCompletion		*completion,
 							 GError			**error);
 gboolean	 zif_download_cancel			(ZifDownload		*download,
 							 GError			**error);
