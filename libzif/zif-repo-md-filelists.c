@@ -238,7 +238,7 @@ zif_repo_md_filelists_search_file (ZifRepoMdFilelists *md, const gchar *search, 
 	g_free (statement);
 	if (rc != SQLITE_OK) {
 		if (error != NULL)
-			*error = g_error_new (1, 0, "SQL error: %s\n", error_msg);
+			*error = g_error_new (1, 0, "SQL error (failed to get keys): %s\n", error_msg);
 		sqlite3_free (error_msg);
 		goto out;
 	}
@@ -256,7 +256,7 @@ zif_repo_md_filelists_search_file (ZifRepoMdFilelists *md, const gchar *search, 
 		g_free (statement);
 		if (rc != SQLITE_OK) {
 			if (error != NULL)
-				*error = g_error_new (1, 0, "SQL error: %s", error_msg);
+				*error = g_error_new (1, 0, "SQL error (failed to get packages): %s", error_msg);
 			sqlite3_free (error_msg);
 			goto out;
 		}
@@ -417,10 +417,10 @@ zif_repo_md_filelists_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "correct value");
 	pkgid = g_ptr_array_index (array, 0);
-	if (g_strcmp0 (pkgid, "58c14cc4a690e9464a13c74bcd57724878870ddd") == 0)
+	if (pkgid[0] != '\0' && strlen (pkgid) == 64)
 		egg_test_success (test, NULL);
 	else
-		egg_test_failed (test, "failed to get correct pkgId '%s'", pkgid);
+		egg_test_failed (test, "failed to get a correct pkgId '%s' (%i)", pkgid, strlen (pkgid));
 
 	g_ptr_array_foreach (array, (GFunc) g_free, NULL);
 	g_ptr_array_free (array, TRUE);
