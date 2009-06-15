@@ -1066,7 +1066,7 @@ zif_store_remote_test (EggTest *test)
 	zif_store_local_set_prefix (store_local, "/", NULL);
 	/************************************************************/
 	egg_test_title (test, "get updates");
-	array = zif_store_remote_get_updates (store, NULL, NULL, NULL);
+	array = zif_store_remote_get_updates (ZIF_STORE (store), NULL, NULL, NULL);
 	if (array->len > 0)
 		egg_test_success (test, NULL);
 	else
