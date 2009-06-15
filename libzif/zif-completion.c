@@ -104,18 +104,36 @@ zif_completion_set_percentage (ZifCompletion *completion, guint percentage)
 }
 
 /**
- * zif_completion_progress_changed_cb:
+ * zif_completion_set_subpercentage:
+ **/
+static gboolean
+zif_completion_set_subpercentage (ZifCompletion *completion, guint percentage)
+{
+	/* emit and save */
+	egg_debug ("emitting subpercentage=%i on %p", percentage, completion);
+	g_signal_emit (completion, signals [SUBPERCENTAGE_CHANGED], 0, percentage);
+	return TRUE;
+}
+
+/**
+ * zif_completion_child_percentage_changed_cb:
  **/
 static void
-zif_completion_progress_changed_cb (ZifCompletion *child, guint value, ZifCompletion *completion)
+zif_completion_child_percentage_changed_cb (ZifCompletion *child, guint percentage, ZifCompletion *completion)
 {
 	gfloat offset;
 	gfloat range;
 	gfloat extra;
 
+	/* propagate up the stack if ZifCompletion has only one step */
+	if (completion->priv->steps == 1) {
+		egg_debug ("using child percentage as parent as only one step");
+		zif_completion_set_percentage (completion, percentage);
+		return;
+	}
+
 	/* always provide two levels of signals */
-	egg_debug ("emitting subpercentage=%i on %p", value, completion);
-	g_signal_emit (completion, signals [SUBPERCENTAGE_CHANGED], 0, value);
+	zif_completion_set_subpercentage (completion, percentage);
 
 	/* already at >= 100% */
 	if (completion->priv->current >= completion->priv->steps) {
@@ -134,10 +152,25 @@ zif_completion_progress_changed_cb (ZifCompletion *child, guint value, ZifComple
 	}
 
 	/* get the extra contributed by the child */
-	extra = ((gfloat) value / 100.0f) * range;
+	extra = ((gfloat) percentage / 100.0f) * range;
 
 	/* emit from the parent */
 	zif_completion_set_percentage (completion, (guint) (offset + extra));
+}
+
+/**
+ * zif_completion_child_subpercentage_changed_cb:
+ **/
+static void
+zif_completion_child_subpercentage_changed_cb (ZifCompletion *child, guint percentage, ZifCompletion *completion)
+{
+	/* discard this, unless the ZifCompletion has only one step */
+	if (completion->priv->steps != 1)
+		return;
+
+	/* propagate up the stack as if the parent didn't exist */
+	egg_debug ("using child subpercentage as parent as only one step");
+	zif_completion_set_subpercentage (completion, percentage);
 }
 
 /**
@@ -161,7 +194,8 @@ zif_completion_set_child (ZifCompletion *completion, ZifCompletion *child)
 		g_object_unref (completion->priv->child);
 	}
 	completion->priv->child = g_object_ref (child);
-	g_signal_connect (child, "percentage-changed", G_CALLBACK (zif_completion_progress_changed_cb), completion);
+	g_signal_connect (child, "percentage-changed", G_CALLBACK (zif_completion_child_percentage_changed_cb), completion);
+	g_signal_connect (child, "subpercentage-changed", G_CALLBACK (zif_completion_child_subpercentage_changed_cb), completion);
 
 	/* reset child */
 	child->priv->current = 0;
@@ -187,10 +221,6 @@ zif_completion_set_number_steps (ZifCompletion *completion, guint steps)
 	g_return_val_if_fail (steps != 0, FALSE);
 
 	egg_debug ("setting up %p with %i steps", completion, steps);
-
-	/* TODO: this will do bad things */
-	if (steps == 1)
-		egg_warning ("TODO: need to use percentage promote logic");
 
 	completion->priv->steps = steps;
 	completion->priv->current = 0;
@@ -431,6 +461,35 @@ zif_completion_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "ensure still correct percent");
 	egg_test_assert (test, (_last_percent == 100));
+
+	g_object_unref (completion);
+	g_object_unref (child);
+
+	/* reset */
+	_updates = 0;
+	completion = zif_completion_new ();
+	zif_completion_set_number_steps (completion, 1);
+	g_signal_connect (completion, "percentage-changed", G_CALLBACK (zif_completion_test_percentage_changed_cb), NULL);
+	g_signal_connect (completion, "subpercentage-changed", G_CALLBACK (zif_completion_test_subpercentage_changed_cb), NULL);
+
+	/* now test with a child */
+	child = zif_completion_new ();
+	zif_completion_set_number_steps (child, 2);
+	zif_completion_set_child (completion, child);
+
+	/* CHILD SET VALUE */
+	zif_completion_set_percentage (child, 33);
+
+	/************************************************************/
+	egg_test_title (test, "ensure 1 updates for completion with one step");
+	egg_test_assert (test, (_updates == 1));
+
+	/************************************************************/
+	egg_test_title (test, "ensure using child value as parent");
+	egg_test_assert (test, (_last_percent == 33));
+
+	g_object_unref (completion);
+	g_object_unref (child);
 
 	egg_test_end (test);
 }
