@@ -95,10 +95,10 @@ out:
 }
 
 /**
- * zif_get_header_uin32_index:
+ * zif_get_header_uint32_index:
  **/
 static GPtrArray *
-zif_get_header_uin32_index (Header header, rpmTag tag, guint length)
+zif_get_header_uint32_index (Header header, rpmTag tag, guint length)
 {
 	gint retval;
 	guint32 *data;
@@ -288,9 +288,10 @@ zif_package_local_set_from_header (ZifPackageLocal *pkg, Header header, GError *
 
 	/* url */
 	tmp = zif_get_header_string (header, RPMTAG_URL);
-	if (tmp != NULL)
+	if (tmp != NULL) {
 		zif_package_set_url (ZIF_PACKAGE (pkg), tmp);
-	zif_string_unref (tmp);
+		zif_string_unref (tmp);
+	}
 
 	/* size */
 	size = zif_get_header_u32 (header, RPMTAG_SIZE);
@@ -314,7 +315,7 @@ zif_package_local_set_from_header (ZifPackageLocal *pkg, Header header, GError *
 	} else {	
 		versions = zif_get_header_strv (header, RPMTAG_REQUIREVERSION);
 		len = zif_string_array_get_length (names);
-		flags = zif_get_header_uin32_index (header, RPMTAG_REQUIREFLAGS, len);
+		flags = zif_get_header_uint32_index (header, RPMTAG_REQUIREFLAGS, len);
 		depends = zif_package_local_get_depends_from_name_flags_version (names, flags, versions);
 		zif_package_set_requires (ZIF_PACKAGE (pkg), depends);
 		zif_depend_array_unref (depends);
@@ -332,7 +333,7 @@ zif_package_local_set_from_header (ZifPackageLocal *pkg, Header header, GError *
 	} else {	
 		versions = zif_get_header_strv (header, RPMTAG_PROVIDEVERSION);
 		len = zif_string_array_get_length (names);
-		flags = zif_get_header_uin32_index (header, RPMTAG_PROVIDEFLAGS, len);
+		flags = zif_get_header_uint32_index (header, RPMTAG_PROVIDEFLAGS, len);
 		depends = zif_package_local_get_depends_from_name_flags_version (names, flags, versions);
 		zif_package_set_provides (ZIF_PACKAGE (pkg), depends);
 		zif_depend_array_unref (depends);
@@ -350,7 +351,7 @@ zif_package_local_set_from_header (ZifPackageLocal *pkg, Header header, GError *
 	} else {	
 		versions = zif_get_header_strv (header, RPMTAG_CONFLICTVERSION);
 		len = zif_string_array_get_length (names);
-		flags = zif_get_header_uin32_index (header, RPMTAG_CONFLICTFLAGS, len);
+		flags = zif_get_header_uint32_index (header, RPMTAG_CONFLICTFLAGS, len);
 		depends = zif_package_local_get_depends_from_name_flags_version (names, flags, versions);
 		//zif_package_set_conflicts (ZIF_PACKAGE (pkg), depends);
 		zif_depend_array_unref (depends);
@@ -368,7 +369,7 @@ zif_package_local_set_from_header (ZifPackageLocal *pkg, Header header, GError *
 	} else {	
 		versions = zif_get_header_strv (header, RPMTAG_OBSOLETEVERSION);
 		len = zif_string_array_get_length (names);
-		flags = zif_get_header_uin32_index (header, RPMTAG_OBSOLETEFLAGS, len);
+		flags = zif_get_header_uint32_index (header, RPMTAG_OBSOLETEFLAGS, len);
 		depends = zif_package_local_get_depends_from_name_flags_version (names, flags, versions);
 		//zif_package_set_obsoletes (ZIF_PACKAGE (pkg), depends);
 		zif_depend_array_unref (depends);
@@ -386,7 +387,7 @@ zif_package_local_set_from_header (ZifPackageLocal *pkg, Header header, GError *
 		/* get the mapping */
 		dirnames = zif_get_header_strv (header, RPMTAG_DIRNAMES);
 		len = zif_string_array_get_length (basenames);
-		fileindex = zif_get_header_uin32_index (header, RPMTAG_DIRINDEXES, len);
+		fileindex = zif_get_header_uint32_index (header, RPMTAG_DIRINDEXES, len);
 
 		files = zif_string_array_new (NULL);
 		for (i=0; i<len; i++) {
