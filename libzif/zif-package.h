@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*-
  *
- * Copyright (C) 2008 Richard Hughes <richard@hughsie.com>
+ * Copyright (C) 2008-2009 Richard Hughes <richard@hughsie.com>
  *
  * Licensed under the GNU General Public License Version 2
  *
@@ -44,20 +44,22 @@ G_BEGIN_DECLS
 #define ZIF_IS_PACKAGE_CLASS(k)		(G_TYPE_CHECK_CLASS_TYPE ((k), ZIF_TYPE_PACKAGE))
 #define ZIF_PACKAGE_GET_CLASS(o)	(G_TYPE_INSTANCE_GET_CLASS ((o), ZIF_TYPE_PACKAGE, ZifPackageClass))
 
-typedef struct ZifPackagePrivate ZifPackagePrivate;
+typedef struct _ZifPackage		ZifPackage;
+typedef struct _ZifPackagePrivate	ZifPackagePrivate;
+typedef struct _ZifPackageClass	ZifPackageClass;
 
-typedef struct
+struct _ZifPackage
 {
 	GObject			 parent;
 	ZifPackagePrivate	*priv;
-} ZifPackage;
+};
 
-typedef struct
+struct _ZifPackageClass
 {
 	GObjectClass	parent_class;
-} ZifPackageClass;
+};
 
-GType			 zif_package_get_type		(void) G_GNUC_CONST;
+GType			 zif_package_get_type		(void);
 ZifPackage		*zif_package_new		(void);
 
 /* public getters */
@@ -99,7 +101,7 @@ gboolean		 zif_package_set_license	(ZifPackage	*package,
 gboolean		 zif_package_set_url		(ZifPackage	*package,
 							 ZifString	*url);
 gboolean		 zif_package_set_location_href	(ZifPackage	*package,
-							 ZifString	*filename);
+							 ZifString	*location_href);
 gboolean		 zif_package_set_category	(ZifPackage	*package,
 							 ZifString	*category);
 gboolean		 zif_package_set_group		(ZifPackage	*package,

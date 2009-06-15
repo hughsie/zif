@@ -39,20 +39,22 @@ G_BEGIN_DECLS
 #define ZIF_IS_REPO_MD_FILELISTS_CLASS(k)	(G_TYPE_CHECK_CLASS_TYPE ((k), ZIF_TYPE_REPO_MD_FILELISTS))
 #define ZIF_REPO_MD_FILELISTS_GET_CLASS(o)	(G_TYPE_INSTANCE_GET_CLASS ((o), ZIF_TYPE_REPO_MD_FILELISTS, ZifRepoMdFilelistsClass))
 
-typedef struct ZifRepoMdFilelistsPrivate ZifRepoMdFilelistsPrivate;
+typedef struct _ZifRepoMdFilelists		ZifRepoMdFilelists;
+typedef struct _ZifRepoMdFilelistsPrivate	ZifRepoMdFilelistsPrivate;
+typedef struct _ZifRepoMdFilelistsClass		ZifRepoMdFilelistsClass;
 
-typedef struct
+struct _ZifRepoMdFilelists
 {
 	ZifRepoMd			 parent;
 	ZifRepoMdFilelistsPrivate	*priv;
-} ZifRepoMdFilelists;
+};
 
-typedef struct
+struct _ZifRepoMdFilelistsClass
 {
 	ZifRepoMdClass			 parent_class;
-} ZifRepoMdFilelistsClass;
+};
 
-GType			 zif_repo_md_filelists_get_type		(void) G_GNUC_CONST;
+GType			 zif_repo_md_filelists_get_type		(void);
 ZifRepoMdFilelists	*zif_repo_md_filelists_new		(void);
 GPtrArray		*zif_repo_md_filelists_search_file	(ZifRepoMdFilelists	*md,
 								 const gchar		*search,

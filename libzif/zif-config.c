@@ -41,7 +41,7 @@
 
 #define ZIF_CONFIG_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_CONFIG, ZifConfigPrivate))
 
-struct ZifConfigPrivate
+struct _ZifConfigPrivate
 {
 	GKeyFile		*keyfile;
 	gboolean		 loaded;

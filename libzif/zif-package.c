@@ -47,7 +47,7 @@
 
 #define ZIF_PACKAGE_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_PACKAGE, ZifPackagePrivate))
 
-struct ZifPackagePrivate
+struct _ZifPackagePrivate
 {
 	ZifGroups		*groups;
 	ZifRepos		*repos;

@@ -37,20 +37,22 @@ G_BEGIN_DECLS
 #define ZIF_IS_MONITOR_CLASS(k)		(G_TYPE_CHECK_CLASS_TYPE ((k), ZIF_TYPE_MONITOR))
 #define ZIF_MONITOR_GET_CLASS(o)	(G_TYPE_INSTANCE_GET_CLASS ((o), ZIF_TYPE_MONITOR, ZifMonitorClass))
 
-typedef struct ZifMonitorPrivate ZifMonitorPrivate;
+typedef struct _ZifMonitor		ZifMonitor;
+typedef struct _ZifMonitorPrivate	ZifMonitorPrivate;
+typedef struct _ZifMonitorClass		ZifMonitorClass;
 
-typedef struct
+struct _ZifMonitor
 {
 	GObject			 parent;
 	ZifMonitorPrivate	*priv;
-} ZifMonitor;
+};
 
-typedef struct
+struct _ZifMonitorClass
 {
-	GObjectClass	parent_class;
-} ZifMonitorClass;
+	GObjectClass		 parent_class;
+};
 
-GType		 zif_monitor_get_type		(void) G_GNUC_CONST;
+GType		 zif_monitor_get_type		(void);
 ZifMonitor	*zif_monitor_new		(void);
 gboolean	 zif_monitor_add_watch		(ZifMonitor	*monitor,
 						 const gchar	*filename,

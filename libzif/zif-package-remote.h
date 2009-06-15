@@ -39,20 +39,22 @@ G_BEGIN_DECLS
 #define ZIF_IS_PACKAGE_REMOTE_CLASS(k)	(G_TYPE_CHECK_CLASS_TYPE ((k), ZIF_TYPE_PACKAGE_REMOTE))
 #define ZIF_PACKAGE_REMOTE_GET_CLASS(o)	(G_TYPE_INSTANCE_GET_CLASS ((o), ZIF_TYPE_PACKAGE_REMOTE, ZifPackageRemoteClass))
 
-typedef struct ZifPackageRemotePrivate ZifPackageRemotePrivate;
+typedef struct _ZifPackageRemote	ZifPackageRemote;
+typedef struct _ZifPackageRemotePrivate	ZifPackageRemotePrivate;
+typedef struct _ZifPackageRemoteClass	ZifPackageRemoteClass;
 
-typedef struct
+struct _ZifPackageRemote
 {
 	ZifPackage		 parent;
 	ZifPackageRemotePrivate	*priv;
-} ZifPackageRemote;
+};
 
-typedef struct
+struct _ZifPackageRemoteClass
 {
 	GObjectClass		 parent_class;
-} ZifPackageRemoteClass;
+};
 
-GType			 zif_package_remote_get_type		(void) G_GNUC_CONST;
+GType			 zif_package_remote_get_type		(void);
 ZifPackageRemote	*zif_package_remote_new			(void);
 gboolean		 zif_package_remote_set_from_repo	(ZifPackageRemote *pkg,
 								 guint		 length,

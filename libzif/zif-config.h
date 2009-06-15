@@ -37,20 +37,22 @@ G_BEGIN_DECLS
 #define ZIF_IS_CONFIG_CLASS(k)	(G_TYPE_CHECK_CLASS_TYPE ((k), ZIF_TYPE_CONFIG))
 #define ZIF_CONFIG_GET_CLASS(o)	(G_TYPE_INSTANCE_GET_CLASS ((o), ZIF_TYPE_CONFIG, ZifConfigClass))
 
-typedef struct ZifConfigPrivate ZifConfigPrivate;
+typedef struct _ZifConfig		ZifConfig;
+typedef struct _ZifConfigPrivate	ZifConfigPrivate;
+typedef struct _ZifConfigClass		ZifConfigClass;
 
-typedef struct
+struct _ZifConfig
 {
-	GObject		      parent;
-	ZifConfigPrivate     *priv;
-} ZifConfig;
+	GObject			 parent;
+	ZifConfigPrivate	*priv;
+};
 
-typedef struct
+struct _ZifConfigClass
 {
-	GObjectClass	parent_class;
-} ZifConfigClass;
+	GObjectClass		 parent_class;
+};
 
-GType		 zif_config_get_type		(void) G_GNUC_CONST;
+GType		 zif_config_get_type		(void);
 ZifConfig	*zif_config_new			(void);
 gboolean	 zif_config_set_filename	(ZifConfig	*config,
 						 const gchar	*filename,

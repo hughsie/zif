@@ -31,7 +31,7 @@
 
 #define ZIF_GROUPS_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_GROUPS, ZifGroupsPrivate))
 
-struct ZifGroupsPrivate
+struct _ZifGroupsPrivate
 {
 	gboolean		 loaded;
 	PkBitfield		 groups;

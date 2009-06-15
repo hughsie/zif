@@ -41,20 +41,22 @@ G_BEGIN_DECLS
 #define ZIF_IS_SACK_CLASS(k)	(G_TYPE_CHECK_CLASS_TYPE ((k), ZIF_TYPE_SACK))
 #define ZIF_SACK_GET_CLASS(o)	(G_TYPE_INSTANCE_GET_CLASS ((o), ZIF_TYPE_SACK, ZifSackClass))
 
-typedef struct ZifSackPrivate ZifSackPrivate;
+typedef struct _ZifSack		ZifSack;
+typedef struct _ZifSackPrivate	ZifSackPrivate;
+typedef struct _ZifSackClass	ZifSackClass;
 
-typedef struct
+struct _ZifSack
 {
 	GObject			 parent;
-	ZifSackPrivate	*priv;
-} ZifSack;
+	ZifSackPrivate		*priv;
+};
 
-typedef struct
+struct _ZifSackClass
 {
-	GObjectClass	parent_class;
-} ZifSackClass;
+	GObjectClass		 parent_class;
+};
 
-GType		 zif_sack_get_type		(void) G_GNUC_CONST;
+GType		 zif_sack_get_type		(void);
 ZifSack		*zif_sack_new			(void);
 
 /* stores */

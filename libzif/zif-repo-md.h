@@ -39,23 +39,25 @@ G_BEGIN_DECLS
 #define ZIF_IS_REPO_MD_CLASS(k)		(G_TYPE_CHECK_CLASS_TYPE ((k), ZIF_TYPE_REPO_MD))
 #define ZIF_REPO_MD_GET_CLASS(o)	(G_TYPE_INSTANCE_GET_CLASS ((o), ZIF_TYPE_REPO_MD, ZifRepoMdClass))
 
-typedef struct ZifRepoMdPrivate ZifRepoMdPrivate;
+typedef struct _ZifRepoMd		ZifRepoMd;
+typedef struct _ZifRepoMdPrivate	ZifRepoMdPrivate;
+typedef struct _ZifRepoMdClass		ZifRepoMdClass;
 
-typedef struct
+struct _ZifRepoMd
 {
 	GObject			 parent;
 	ZifRepoMdPrivate	*priv;
-} ZifRepoMd;
+};
 
-typedef struct
+struct _ZifRepoMdClass
 {
-	GObjectClass	parent_class;
+	GObjectClass		 parent_class;
 	/* vtable */
 	gboolean	 (*load)		(ZifRepoMd		*md,
 						 GError			**error);
 	gboolean	 (*clean)		(ZifRepoMd		*md,
 						 GError			**error);
-} ZifRepoMdClass;
+};
 
 typedef enum {
 	ZIF_REPO_MD_TYPE_PRIMARY,
@@ -73,7 +75,7 @@ typedef struct {
 	GChecksumType	 checksum_type;
 } ZifRepoMdInfoData;
 
-GType		 zif_repo_md_get_type		(void) G_GNUC_CONST;
+GType		 zif_repo_md_get_type		(void);
 ZifRepoMd	*zif_repo_md_new		(void);
 
 /* setters */

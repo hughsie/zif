@@ -39,20 +39,22 @@ G_BEGIN_DECLS
 #define ZIF_IS_REPO_MD_MASTER_CLASS(k)	(G_TYPE_CHECK_CLASS_TYPE ((k), ZIF_TYPE_REPO_MD_MASTER))
 #define ZIF_REPO_MD_MASTER_GET_CLASS(o)	(G_TYPE_INSTANCE_GET_CLASS ((o), ZIF_TYPE_REPO_MD_MASTER, ZifRepoMdMasterClass))
 
-typedef struct ZifRepoMdMasterPrivate ZifRepoMdMasterPrivate;
+typedef struct _ZifRepoMdMaster		ZifRepoMdMaster;
+typedef struct _ZifRepoMdMasterPrivate	ZifRepoMdMasterPrivate;
+typedef struct _ZifRepoMdMasterClass	ZifRepoMdMasterClass;
 
-typedef struct
+struct _ZifRepoMdMaster
 {
 	ZifRepoMd		 parent;
 	ZifRepoMdMasterPrivate	*priv;
-} ZifRepoMdMaster;
+};
 
-typedef struct
+struct _ZifRepoMdMasterClass
 {
 	ZifRepoMdClass		 parent_class;
-} ZifRepoMdMasterClass;
+};
 
-GType		 zif_repo_md_master_get_type		(void) G_GNUC_CONST;
+GType		 zif_repo_md_master_get_type		(void);
 ZifRepoMdMaster	*zif_repo_md_master_new			(void);
 const ZifRepoMdInfoData *zif_repo_md_master_get_info	(ZifRepoMdMaster	*md,
 							 ZifRepoMdType		 type,

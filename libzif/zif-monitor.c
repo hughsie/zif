@@ -37,7 +37,7 @@
 
 #define ZIF_MONITOR_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_MONITOR, ZifMonitorPrivate))
 
-struct ZifMonitorPrivate
+struct _ZifMonitorPrivate
 {
 	GPtrArray		*array;
 };

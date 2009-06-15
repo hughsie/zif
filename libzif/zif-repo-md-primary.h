@@ -40,20 +40,22 @@ G_BEGIN_DECLS
 #define ZIF_IS_REPO_MD_PRIMARY_CLASS(k)		(G_TYPE_CHECK_CLASS_TYPE ((k), ZIF_TYPE_REPO_MD_PRIMARY))
 #define ZIF_REPO_MD_PRIMARY_GET_CLASS(o)	(G_TYPE_INSTANCE_GET_CLASS ((o), ZIF_TYPE_REPO_MD_PRIMARY, ZifRepoMdPrimaryClass))
 
-typedef struct ZifRepoMdPrimaryPrivate ZifRepoMdPrimaryPrivate;
+typedef struct _ZifRepoMdPrimary		ZifRepoMdPrimary;
+typedef struct _ZifRepoMdPrimaryPrivate		ZifRepoMdPrimaryPrivate;
+typedef struct _ZifRepoMdPrimaryClass		ZifRepoMdPrimaryClass;
 
-typedef struct
+struct _ZifRepoMdPrimary
 {
 	ZifRepoMd			 parent;
-	ZifRepoMdPrimaryPrivate	*priv;
-} ZifRepoMdPrimary;
+	ZifRepoMdPrimaryPrivate		*priv;
+};
 
-typedef struct
+struct _ZifRepoMdPrimaryClass
 {
 	ZifRepoMdClass			 parent_class;
-} ZifRepoMdPrimaryClass;
+};
 
-GType		 zif_repo_md_primary_get_type		(void) G_GNUC_CONST;
+GType		 zif_repo_md_primary_get_type		(void);
 ZifRepoMdPrimary *zif_repo_md_primary_new		(void);
 GPtrArray	*zif_repo_md_primary_search_file	(ZifRepoMdPrimary	*md,
 							 const gchar		*search,

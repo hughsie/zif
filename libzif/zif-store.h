@@ -42,15 +42,17 @@ G_BEGIN_DECLS
 #define ZIF_IS_STORE_CLASS(k)	(G_TYPE_CHECK_CLASS_TYPE ((k), ZIF_TYPE_STORE))
 #define ZIF_STORE_GET_CLASS(o)	(G_TYPE_INSTANCE_GET_CLASS ((o), ZIF_TYPE_STORE, ZifStoreClass))
 
-typedef struct ZifStorePrivate ZifStorePrivate;
+typedef struct _ZifStore	ZifStore;
+typedef struct _ZifStorePrivate	ZifStorePrivate;
+typedef struct _ZifStoreClass	ZifStoreClass;
 
-typedef struct
+struct _ZifStore
 {
 	GObject			 parent;
 	ZifStorePrivate		*priv;
-} ZifStore;
+};
 
-typedef struct
+struct _ZifStoreClass
 {
 	GObjectClass	parent_class;
 	/* vtable */
@@ -112,9 +114,9 @@ typedef struct
 						 GError			**error);
 	const gchar	*(*get_id)		(ZifStore		*store);
 	void		 (*print)		(ZifStore		*store);
-} ZifStoreClass;
+};
 
-GType		 zif_store_get_type		(void) G_GNUC_CONST;
+GType		 zif_store_get_type		(void);
 ZifStore	*zif_store_new			(void);
 gboolean	 zif_store_load			(ZifStore		*store,
 						 GCancellable		*cancellable,

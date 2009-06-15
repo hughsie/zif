@@ -38,20 +38,22 @@ G_BEGIN_DECLS
 #define ZIF_IS_GROUPS_CLASS(k)	(G_TYPE_CHECK_CLASS_TYPE ((k), ZIF_TYPE_GROUPS))
 #define ZIF_GROUPS_GET_CLASS(o)	(G_TYPE_INSTANCE_GET_CLASS ((o), ZIF_TYPE_GROUPS, ZifGroupsClass))
 
-typedef struct ZifGroupsPrivate ZifGroupsPrivate;
+typedef struct _ZifGroups		ZifGroups;
+typedef struct _ZifGroupsPrivate	ZifGroupsPrivate;
+typedef struct _ZifGroupsClass		ZifGroupsClass;
 
-typedef struct
+struct _ZifGroups
 {
-	GObject		      parent;
-	ZifGroupsPrivate     *priv;
-} ZifGroups;
+	GObject			 parent;
+	ZifGroupsPrivate	*priv;
+};
 
-typedef struct
+struct _ZifGroupsClass
 {
-	GObjectClass	parent_class;
-} ZifGroupsClass;
+	GObjectClass		 parent_class;
+};
 
-GType		 zif_groups_get_type		(void) G_GNUC_CONST;
+GType		 zif_groups_get_type		(void);
 ZifGroups	*zif_groups_new			(void);
 gboolean	 zif_groups_set_mapping_file	(ZifGroups	*groups,
 						 const gchar	*mapping_file,

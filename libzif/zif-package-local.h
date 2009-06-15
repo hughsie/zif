@@ -41,20 +41,22 @@ G_BEGIN_DECLS
 #define ZIF_IS_PACKAGE_LOCAL_CLASS(k)	(G_TYPE_CHECK_CLASS_TYPE ((k), ZIF_TYPE_PACKAGE_LOCAL))
 #define ZIF_PACKAGE_LOCAL_GET_CLASS(o)	(G_TYPE_INSTANCE_GET_CLASS ((o), ZIF_TYPE_PACKAGE_LOCAL, ZifPackageLocalClass))
 
-typedef struct ZifPackageLocalPrivate ZifPackageLocalPrivate;
+typedef struct _ZifPackageLocal		ZifPackageLocal;
+typedef struct _ZifPackageLocalPrivate	ZifPackageLocalPrivate;
+typedef struct _ZifPackageLocalClass	ZifPackageLocalClass;
 
-typedef struct
+struct _ZifPackageLocal
 {
 	ZifPackage		 parent;
 	ZifPackageLocalPrivate	*priv;
-} ZifPackageLocal;
+};
 
-typedef struct
+struct _ZifPackageLocalClass
 {
 	GObjectClass		 parent_class;
-} ZifPackageLocalClass;
+};
 
-GType			 zif_package_local_get_type		(void) G_GNUC_CONST;
+GType			 zif_package_local_get_type		(void);
 ZifPackageLocal		*zif_package_local_new			(void);
 gboolean		 zif_package_local_set_from_header	(ZifPackageLocal *pkg,
 								 Header		 header,

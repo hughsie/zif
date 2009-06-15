@@ -42,7 +42,7 @@
 
 #define ZIF_PACKAGE_LOCAL_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_PACKAGE_LOCAL, ZifPackageLocalPrivate))
 
-struct ZifPackageLocalPrivate
+struct _ZifPackageLocalPrivate
 {
 	ZifGroups		*groups;
 };

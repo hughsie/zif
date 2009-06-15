@@ -43,7 +43,7 @@ typedef enum {
 	ZIF_REPO_MD_MASTER_PARSER_SECTION_UNKNOWN
 } ZifRepoMdMasterParserSection;
 
-struct ZifRepoMdMasterPrivate
+struct _ZifRepoMdMasterPrivate
 {
 	gboolean		 loaded;
 	ZifRepoMdInfoData	*data[ZIF_REPO_MD_TYPE_UNKNOWN];

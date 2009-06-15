@@ -41,20 +41,22 @@ G_BEGIN_DECLS
 #define ZIF_IS_STORE_REMOTE_CLASS(k)	(G_TYPE_CHECK_CLASS_TYPE ((k), ZIF_TYPE_STORE_REMOTE))
 #define ZIF_STORE_REMOTE_GET_CLASS(o)	(G_TYPE_INSTANCE_GET_CLASS ((o), ZIF_TYPE_STORE_REMOTE, ZifStoreRemoteClass))
 
-typedef struct ZifStoreRemotePrivate ZifStoreRemotePrivate;
+typedef struct _ZifStoreRemote		ZifStoreRemote;
+typedef struct _ZifStoreRemotePrivate	ZifStoreRemotePrivate;
+typedef struct _ZifStoreRemoteClass	ZifStoreRemoteClass;
 
-typedef struct
+struct _ZifStoreRemote
 {
 	ZifStore		 parent;
 	ZifStoreRemotePrivate	*priv;
-} ZifStoreRemote;
+};
 
-typedef struct
+struct _ZifStoreRemoteClass
 {
 	ZifStoreClass		 parent_class;
-} ZifStoreRemoteClass;
+};
 
-GType		 zif_store_remote_get_type		(void) G_GNUC_CONST;
+GType		 zif_store_remote_get_type		(void);
 ZifStoreRemote	*zif_store_remote_new			(void);
 gboolean	 zif_store_remote_set_from_file		(ZifStoreRemote		*store,
 							 const gchar		*filename,

@@ -38,20 +38,22 @@ G_BEGIN_DECLS
 #define ZIF_IS_REPOS_CLASS(k)	(G_TYPE_CHECK_CLASS_TYPE ((k), ZIF_TYPE_REPOS))
 #define ZIF_REPOS_GET_CLASS(o)	(G_TYPE_INSTANCE_GET_CLASS ((o), ZIF_TYPE_REPOS, ZifReposClass))
 
-typedef struct ZifReposPrivate ZifReposPrivate;
+typedef struct _ZifRepos	ZifRepos;
+typedef struct _ZifReposPrivate	ZifReposPrivate;
+typedef struct _ZifReposClass	ZifReposClass;
 
-typedef struct
+struct _ZifRepos
 {
 	GObject			 parent;
 	ZifReposPrivate		*priv;
-} ZifRepos;
+};
 
-typedef struct
+struct _ZifReposClass
 {
-	GObjectClass	parent_class;
-} ZifReposClass;
+	GObjectClass		 parent_class;
+};
 
-GType		 zif_repos_get_type		(void) G_GNUC_CONST;
+GType		 zif_repos_get_type		(void);
 ZifRepos	*zif_repos_new			(void);
 gboolean	 zif_repos_set_repos_dir	(ZifRepos	*repos,
 						 const gchar	*repos_dir,

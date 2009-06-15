@@ -41,20 +41,22 @@ G_BEGIN_DECLS
 #define ZIF_IS_STORE_LOCAL_CLASS(k)	(G_TYPE_CHECK_CLASS_TYPE ((k), ZIF_TYPE_STORE_LOCAL))
 #define ZIF_STORE_LOCAL_GET_CLASS(o)	(G_TYPE_INSTANCE_GET_CLASS ((o), ZIF_TYPE_STORE_LOCAL, ZifStoreLocalClass))
 
-typedef struct ZifStoreLocalPrivate ZifStoreLocalPrivate;
+typedef struct _ZifStoreLocal		ZifStoreLocal;
+typedef struct _ZifStoreLocalPrivate	ZifStoreLocalPrivate;
+typedef struct _ZifStoreLocalClass	ZifStoreLocalClass;
 
-typedef struct
+struct _ZifStoreLocal
 {
 	ZifStore		 parent;
 	ZifStoreLocalPrivate	*priv;
-} ZifStoreLocal;
+};
 
-typedef struct
+struct _ZifStoreLocalClass
 {
 	ZifStoreClass		 parent_class;
-} ZifStoreLocalClass;
+};
 
-GType		 zif_store_local_get_type	(void) G_GNUC_CONST;
+GType		 zif_store_local_get_type	(void);
 ZifStoreLocal	*zif_store_local_new		(void);
 gboolean	 zif_store_local_set_prefix	(ZifStoreLocal		*store,
 						 const gchar		*prefix,

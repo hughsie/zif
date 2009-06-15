@@ -38,7 +38,7 @@
 
 #define ZIF_REPO_MD_FILELISTS_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_REPO_MD_FILELISTS, ZifRepoMdFilelistsPrivate))
 
-struct ZifRepoMdFilelistsPrivate
+struct _ZifRepoMdFilelistsPrivate
 {
 	gboolean		 loaded;
 	sqlite3			*db;

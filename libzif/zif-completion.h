@@ -37,17 +37,19 @@ G_BEGIN_DECLS
 #define ZIF_IS_COMPLETION_CLASS(k)	(G_TYPE_CHECK_CLASS_TYPE ((k), ZIF_TYPE_COMPLETION))
 #define ZIF_COMPLETION_GET_CLASS(o)	(G_TYPE_INSTANCE_GET_CLASS ((o), ZIF_TYPE_COMPLETION, ZifCompletionClass))
 
-typedef struct ZifCompletionPrivate ZifCompletionPrivate;
+typedef struct _ZifCompletion		ZifCompletion;
+typedef struct _ZifCompletionPrivate	ZifCompletionPrivate;
+typedef struct _ZifCompletionClass	ZifCompletionClass;
 
-typedef struct
+struct _ZifCompletion
 {
-	GObject				 parent;
-	ZifCompletionPrivate		*priv;
-} ZifCompletion;
+	GObject			 parent;
+	ZifCompletionPrivate	*priv;
+};
 
-typedef struct
+struct _ZifCompletionClass
 {
-	GObjectClass	parent_class;
+	GObjectClass	 parent_class;
 	/* Signals */
 	void		(* percentage_changed)		(ZifCompletion	*completion,
 							 guint		 value);
@@ -58,9 +60,9 @@ typedef struct
 	void (*_zif_reserved2) (void);
 	void (*_zif_reserved3) (void);
 	void (*_zif_reserved4) (void);
-} ZifCompletionClass;
+};
 
-GType		 zif_completion_get_type		(void) G_GNUC_CONST;
+GType		 zif_completion_get_type		(void);
 ZifCompletion	*zif_completion_new			(void);
 gboolean	 zif_completion_set_number_steps	(ZifCompletion		*completion,
 							 guint			 steps);

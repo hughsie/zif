@@ -36,7 +36,7 @@
 
 #define ZIF_PACKAGE_REMOTE_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_PACKAGE_REMOTE, ZifPackageRemotePrivate))
 
-struct ZifPackageRemotePrivate
+struct _ZifPackageRemotePrivate
 {
 	ZifGroups		*groups;
 	gchar			*sql_id;

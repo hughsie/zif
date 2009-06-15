@@ -19,6 +19,13 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+/**
+ * SECTION:zif-download
+ * @short_description: Generic object to download packages.
+ *
+ * This object is a trivial wrapper around libsoup.
+ */
+
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
@@ -33,7 +40,12 @@
 
 #define ZIF_DOWNLOAD_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_DOWNLOAD, ZifDownloadPrivate))
 
-struct ZifDownloadPrivate
+/**
+ * ZifDownloadPrivate:
+ *
+ * Private #ZifDownload data
+ **/
+struct _ZifDownloadPrivate
 {
 	gchar			*proxy;
 	SoupSession		*session;

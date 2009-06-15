@@ -34,7 +34,7 @@
 
 #define ZIF_REPO_MD_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_REPO_MD, ZifRepoMdPrivate))
 
-struct ZifRepoMdPrivate
+struct _ZifRepoMdPrivate
 {
 	gboolean		 loaded;
 	gchar			*id;

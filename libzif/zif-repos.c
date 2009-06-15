@@ -45,7 +45,7 @@
 
 #define ZIF_REPOS_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_REPOS, ZifReposPrivate))
 
-struct ZifReposPrivate
+struct _ZifReposPrivate
 {
 	gboolean		 loaded;
 	gchar			*repos_dir;

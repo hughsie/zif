@@ -52,7 +52,7 @@
 
 #define ZIF_STORE_REMOTE_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_STORE_REMOTE, ZifStoreRemotePrivate))
 
-struct ZifStoreRemotePrivate
+struct _ZifStoreRemotePrivate
 {
 	gchar			*id;
 	gchar			*name;

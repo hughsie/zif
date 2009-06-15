@@ -48,7 +48,7 @@
 
 #define ZIF_SACK_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_SACK, ZifSackPrivate))
 
-struct ZifSackPrivate
+struct _ZifSackPrivate
 {
 	GPtrArray		*array;
 	ZifCompletion		*completion_local;

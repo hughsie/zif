@@ -52,7 +52,7 @@
 
 #define ZIF_STORE_LOCAL_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_STORE_LOCAL, ZifStoreLocalPrivate))
 
-struct ZifStoreLocalPrivate
+struct _ZifStoreLocalPrivate
 {
 	gboolean		 loaded;
 	gchar			*prefix;

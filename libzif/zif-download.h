@@ -38,25 +38,22 @@ G_BEGIN_DECLS
 #define ZIF_IS_DOWNLOAD_CLASS(k)	(G_TYPE_CHECK_CLASS_TYPE ((k), ZIF_TYPE_DOWNLOAD))
 #define ZIF_DOWNLOAD_GET_CLASS(o)	(G_TYPE_INSTANCE_GET_CLASS ((o), ZIF_TYPE_DOWNLOAD, ZifDownloadClass))
 
-typedef struct ZifDownloadPrivate ZifDownloadPrivate;
+typedef struct _ZifDownload		ZifDownload;
+typedef struct _ZifDownloadPrivate	ZifDownloadPrivate;
+typedef struct _ZifDownloadClass	ZifDownloadClass;
 
-typedef struct
+struct _ZifDownload
 {
 	GObject				 parent;
-	ZifDownloadPrivate		*priv;
-} ZifDownload;
+	ZifDownloadPrivate	*priv;
+};
 
-typedef struct
+struct _ZifDownloadClass
 {
 	GObjectClass	parent_class;
-	/* Padding for future expansion */
-	void (*_zif_reserved1) (void);
-	void (*_zif_reserved2) (void);
-	void (*_zif_reserved3) (void);
-	void (*_zif_reserved4) (void);
-} ZifDownloadClass;
+};
 
-GType		 zif_download_get_type			(void) G_GNUC_CONST;
+GType		 zif_download_get_type			(void);
 ZifDownload	*zif_download_new			(void);
 gboolean	 zif_download_set_proxy			(ZifDownload		*download,
 							 const gchar		*http_proxy,

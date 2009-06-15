@@ -32,7 +32,7 @@
 
 #define ZIF_COMPLETION_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_COMPLETION, ZifCompletionPrivate))
 
-struct ZifCompletionPrivate
+struct _ZifCompletionPrivate
 {
 	guint			 steps;
 	guint			 current;

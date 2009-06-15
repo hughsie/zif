@@ -39,7 +39,7 @@
 
 #define ZIF_REPO_MD_PRIMARY_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_REPO_MD_PRIMARY, ZifRepoMdPrimaryPrivate))
 
-struct ZifRepoMdPrimaryPrivate
+struct _ZifRepoMdPrimaryPrivate
 {
 	gboolean		 loaded;
 	sqlite3			*db;
