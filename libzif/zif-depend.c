@@ -92,8 +92,11 @@ zif_depend_ref (ZifDepend *depend)
 ZifDepend *
 zif_depend_unref (ZifDepend *depend)
 {
-	if (depend == NULL)
-		return NULL;
+#ifdef ZIF_CRASH_DEBUG
+	if (string == NULL)
+		string->count = 999;
+#endif
+	g_return_val_if_fail (depend != NULL, NULL);
 	depend->count--;
 	if (depend->count == 0) {
 		g_free (depend->name);

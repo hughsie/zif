@@ -26,6 +26,8 @@
 #ifndef __ZIF_UTILS_H
 #define __ZIF_UTILS_H
 
+//#define ZIF_CRASH_DEBUG
+
 #include <glib-object.h>
 #include <packagekit-glib/packagekit.h>
 

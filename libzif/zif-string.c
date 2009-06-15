@@ -123,8 +123,11 @@ zif_string_ref (ZifString *string)
 ZifString *
 zif_string_unref (ZifString *string)
 {
+#ifdef ZIF_CRASH_DEBUG
 	if (string == NULL)
-		return NULL;
+		string->count = 999;
+#endif
+	g_return_val_if_fail (string != NULL, NULL);
 	string->count--;
 	if (string->count == 0) {
 		g_free (string->value);
@@ -144,6 +147,7 @@ void
 zif_string_test (EggTest *test)
 {
 	ZifString *string;
+	const gchar *value;
 
 	if (!egg_test_start (test, "ZifString"))
 		return;
@@ -165,6 +169,11 @@ zif_string_test (EggTest *test)
 	egg_test_title (test, "unref");
 	zif_string_unref (string);
 	egg_test_assert (test, string->count == 1);
+
+	/************************************************************/
+	egg_test_title (test, "get value");
+	value = zif_string_get_value (string);
+	egg_test_assert (test, (g_strcmp0 (value, "kernel") == 0));
 
 	/************************************************************/
 	egg_test_title (test, "unref");

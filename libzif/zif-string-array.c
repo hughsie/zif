@@ -181,8 +181,11 @@ zif_string_array_ref (ZifStringArray *array)
 ZifStringArray *
 zif_string_array_unref (ZifStringArray *array)
 {
+#ifdef ZIF_CRASH_DEBUG
 	if (array == NULL)
-		return NULL;
+		array->count = 999;
+#endif
+	g_return_val_if_fail (array != NULL, NULL);
 	array->count--;
 	if (array->count == 0) {
 		g_ptr_array_foreach (array->value, (GFunc) g_free, NULL);
@@ -238,6 +241,8 @@ void
 zif_string_array_test (EggTest *test)
 {
 	ZifStringArray *array;
+	const gchar *value;
+	guint len;
 
 	if (!egg_test_start (test, "ZifStringArray"))
 		return;
@@ -251,9 +256,27 @@ zif_string_array_test (EggTest *test)
 		egg_test_failed (test, "incorrect value %s:%i", array->value, array->count);
 
 	/************************************************************/
+	egg_test_title (test, "correct len");
+	len = zif_string_array_get_length (array);
+	egg_test_assert (test, len == 0);
+
+	/* add */
+	zif_string_array_add (array, "kernel");
+
+	/************************************************************/
+	egg_test_title (test, "correct len");
+	len = zif_string_array_get_length (array);
+	egg_test_assert (test, len == 1);
+
+	/************************************************************/
 	egg_test_title (test, "ref");
 	zif_string_array_ref (array);
 	egg_test_assert (test, array->count == 2);
+
+	/************************************************************/
+	egg_test_title (test, "get value");
+	value = zif_string_array_get_value (array, 0);
+	egg_test_assert (test, (g_strcmp0 (value, "kernel") == 0));
 
 	/************************************************************/
 	egg_test_title (test, "unref");

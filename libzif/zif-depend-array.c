@@ -75,8 +75,11 @@ zif_depend_array_ref (ZifDependArray *array)
 ZifDependArray *
 zif_depend_array_unref (ZifDependArray *array)
 {
+#ifdef ZIF_CRASH_DEBUG
 	if (array == NULL)
-		return NULL;
+		array->count = 999;
+#endif
+	g_return_val_if_fail (array != NULL, NULL);
 	array->count--;
 	if (array->count == 0) {
 		g_ptr_array_foreach (array->value, (GFunc) zif_depend_unref, NULL);
