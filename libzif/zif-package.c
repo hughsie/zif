@@ -425,13 +425,22 @@ zif_package_get_package_id (ZifPackage *package)
  *
  * Gets the package summary.
  *
- * Return value: the reference counted #ZifString, use zif_string_unref() when done
+ * Return value: the reference counted #ZifString or %NULL, use zif_string_unref() when done
  **/
 ZifString *
 zif_package_get_summary (ZifPackage *package, GError **error)
 {
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
 	g_return_val_if_fail (package->priv->id != NULL, NULL);
+
+	/* not exists */
+	if (package->priv->summary == NULL) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "no data for %s", package->priv->id->name);
+		return NULL;
+	}
+
+	/* return refcounted */
 	return zif_string_ref (package->priv->summary);
 }
 
@@ -442,13 +451,22 @@ zif_package_get_summary (ZifPackage *package, GError **error)
  *
  * Gets the package description.
  *
- * Return value: the reference counted #ZifString, use zif_string_unref() when done
+ * Return value: the reference counted #ZifString or %NULL, use zif_string_unref() when done
  **/
 ZifString *
 zif_package_get_description (ZifPackage *package, GError **error)
 {
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
 	g_return_val_if_fail (package->priv->id != NULL, NULL);
+
+	/* not exists */
+	if (package->priv->description == NULL) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "no data for %s", package->priv->id->name);
+		return NULL;
+	}
+
+	/* return refcounted */
 	return zif_string_ref (package->priv->description);
 }
 
@@ -459,13 +477,22 @@ zif_package_get_description (ZifPackage *package, GError **error)
  *
  * Gets the package licence.
  *
- * Return value: the reference counted #ZifString, use zif_string_unref() when done
+ * Return value: the reference counted #ZifString or %NULL, use zif_string_unref() when done
  **/
 ZifString *
 zif_package_get_license (ZifPackage *package, GError **error)
 {
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
 	g_return_val_if_fail (package->priv->id != NULL, NULL);
+
+	/* not exists */
+	if (package->priv->license == NULL) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "no data for %s", package->priv->id->name);
+		return NULL;
+	}
+
+	/* return refcounted */
 	return zif_string_ref (package->priv->license);
 }
 
@@ -476,13 +503,22 @@ zif_package_get_license (ZifPackage *package, GError **error)
  *
  * Gets the homepage URL for the package.
  *
- * Return value: the reference counted #ZifString, use zif_string_unref() when done
+ * Return value: the reference counted #ZifString or %NULL, use zif_string_unref() when done
  **/
 ZifString *
 zif_package_get_url (ZifPackage *package, GError **error)
 {
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
 	g_return_val_if_fail (package->priv->id != NULL, NULL);
+
+	/* not exists */
+	if (package->priv->url == NULL) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "no data for %s", package->priv->id->name);
+		return NULL;
+	}
+
+	/* return refcounted */
 	return zif_string_ref (package->priv->url);
 }
 
@@ -493,13 +529,22 @@ zif_package_get_url (ZifPackage *package, GError **error)
  *
  * Gets the remote filename for the package, e.g. Packages/net-snmp-5.4.2-3.fc10.i386.rpm
  *
- * Return value: the reference counted #ZifString, use zif_string_unref() when done
+ * Return value: the reference counted #ZifString or %NULL, use zif_string_unref() when done
  **/
 ZifString *
 zif_package_get_filename (ZifPackage *package, GError **error)
 {
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
 	g_return_val_if_fail (package->priv->id != NULL, NULL);
+
+	/* not exists */
+	if (package->priv->location_href == NULL) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "no data for %s", package->priv->id->name);
+		return NULL;
+	}
+
+	/* return refcounted */
 	return zif_string_ref (package->priv->location_href);
 }
 
@@ -510,13 +555,22 @@ zif_package_get_filename (ZifPackage *package, GError **error)
  *
  * Gets the category the packag is in.
  *
- * Return value: the reference counted #ZifString, use zif_string_unref() when done
+ * Return value: the reference counted #ZifString or %NULL, use zif_string_unref() when done
  **/
 ZifString *
 zif_package_get_category (ZifPackage *package, GError **error)
 {
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
 	g_return_val_if_fail (package->priv->id != NULL, NULL);
+
+	/* not exists */
+	if (package->priv->category == NULL) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "no data for %s", package->priv->id->name);
+		return NULL;
+	}
+
+	/* return refcounted */
 	return zif_string_ref (package->priv->category);
 }
 
@@ -570,11 +624,16 @@ zif_package_get_files (ZifPackage *package, GError **error)
 {
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
 	g_return_val_if_fail (package->priv->id != NULL, NULL);
+
+	/* not exists */
 	if (package->priv->files == NULL) {
 		if (error != NULL)
 			*error = g_error_new (1, 0, "no data for %s", package->priv->id->name);
+		return NULL;
 	}
-	return package->priv->files;
+
+	/* return refcounted */
+	return zif_string_array_ref (package->priv->files);
 }
 
 /**
@@ -591,7 +650,16 @@ zif_package_get_requires (ZifPackage *package, GError **error)
 {
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
 	g_return_val_if_fail (package->priv->id != NULL, NULL);
-	return package->priv->requires;
+
+	/* not exists */
+	if (package->priv->requires == NULL) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "no data for %s", package->priv->id->name);
+		return NULL;
+	}
+
+	/* return refcounted */
+	return zif_depend_array_ref (package->priv->requires);
 }
 
 /**
@@ -608,7 +676,16 @@ zif_package_get_provides (ZifPackage *package, GError **error)
 {
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
 	g_return_val_if_fail (package->priv->id != NULL, NULL);
-	return package->priv->provides;
+
+	/* not exists */
+	if (package->priv->requires == NULL) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "no data for %s", package->priv->id->name);
+		return NULL;
+	}
+
+	/* return refcounted */
+	return zif_depend_array_ref (package->priv->provides);
 }
 
 /**
@@ -889,9 +966,12 @@ zif_package_finalize (GObject *object)
 	g_free (package->priv->url);
 	g_free (package->priv->category);
 	g_free (package->priv->location_href);
-	zif_string_array_unref (package->priv->files);
-	zif_depend_array_unref (package->priv->requires);
-	zif_depend_array_unref (package->priv->provides);
+	if (package->priv->files != NULL)
+		zif_string_array_unref (package->priv->files);
+	if (package->priv->requires != NULL)
+		zif_depend_array_unref (package->priv->requires);
+	if (package->priv->provides != NULL)
+		zif_depend_array_unref (package->priv->provides);
 	g_object_unref (package->priv->repos);
 	g_object_unref (package->priv->groups);
 	g_object_unref (package->priv->completion_local);
