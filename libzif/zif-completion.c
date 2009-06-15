@@ -85,15 +85,13 @@ zif_completion_discrete_to_percent (guint discrete, guint steps)
 gboolean
 zif_completion_set_percentage (ZifCompletion *completion, guint percentage)
 {
+	/* is it the same */
+	if (percentage == completion->priv->last_percentage)
+		return FALSE;
+
 	/* is it less */
 	if (percentage < completion->priv->last_percentage) {
 		egg_warning ("percentage cannot go down from %i to %i!", completion->priv->last_percentage, percentage);
-		return FALSE;
-	}
-
-	/* is it the same */
-	if (percentage == completion->priv->last_percentage) {
-		egg_debug ("ignoring same percentage value as last");
 		return FALSE;
 	}
 
