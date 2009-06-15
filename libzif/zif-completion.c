@@ -188,6 +188,10 @@ zif_completion_set_number_steps (ZifCompletion *completion, guint steps)
 
 	egg_debug ("setting up %p with %i steps", completion, steps);
 
+	/* TODO: this will do bad things */
+	if (steps == 1)
+		egg_warning ("TODO: need to use percentage promote logic");
+
 	completion->priv->steps = steps;
 	completion->priv->current = 0;
 	completion->priv->last_percentage = 0;
