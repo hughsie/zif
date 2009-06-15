@@ -59,6 +59,186 @@ zif_completion_progress_changed_cb (ZifCompletion *completion, guint value, gpoi
 }
 
 /**
+ * zif_cmd_download:
+ **/
+static gboolean
+zif_cmd_download (const gchar *package_name, ZifCompletion *completion)
+{
+	gboolean ret;
+	GError *error = NULL;
+	GPtrArray *array = NULL;
+	ZifPackage *package;
+	ZifCompletion *completion_local;
+	ZifSack *sack;
+
+	/* setup completion */
+	completion_local = zif_completion_new ();
+	zif_completion_set_child (completion, completion_local);
+	zif_completion_set_number_steps (completion, 2);
+
+	/* add remote stores */
+	sack = zif_sack_new ();
+	ret = zif_sack_add_remote_enabled (sack, &error);
+	if (!ret) {
+		g_print ("failed to add enabled stores: %s\n", error->message);
+		g_error_free (error);
+		goto out;
+	}
+
+	/* resolve package name */
+	array = zif_sack_resolve (sack, package_name, NULL, completion_local, &error);
+	if (array == NULL) {
+		g_print ("failed to get results: %s\n", error->message);
+		g_error_free (error);
+		goto out;
+	}
+	if (array->len == 0) {
+		g_print ("no package found\n");
+		goto out;
+	}
+
+	/* this section done */
+	zif_completion_done (completion);
+
+	/* download package file */
+	package = g_ptr_array_index (array, 0);
+	ret = zif_package_download (package, "/tmp", NULL, completion_local, &error);
+	if (!ret) {
+		g_print ("failed to download: %s\n", error->message);
+		g_error_free (error);
+		goto out;
+	}
+
+	/* this section done */
+	zif_completion_done (completion);
+
+out:
+	if (array != NULL) {
+		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
+		g_ptr_array_free (array, TRUE);
+	}
+	g_object_unref (completion_local);
+	return ret;
+}
+
+/**
+ * zif_cmd_get_depends:
+ **/
+static gboolean
+zif_cmd_get_depends (const gchar *package_name, ZifCompletion *completion)
+{
+	gboolean ret;
+	GError *error = NULL;
+	GPtrArray *array = NULL;
+	ZifPackage *package;
+	ZifCompletion *completion_local;
+	ZifCompletion *completion_loop;
+	ZifSack *sack;
+	ZifDependArray *requires = NULL;
+	const ZifDepend *require;
+	gchar *require_str;
+	GPtrArray *provides;
+	const PkPackageId *id;
+	guint i, j;
+	guint len;
+
+	/* setup completion */
+	completion_local = zif_completion_new ();
+	zif_completion_set_child (completion, completion_local);
+	zif_completion_set_number_steps (completion, 2);
+
+	/* setup deeper completion */
+	completion_loop = zif_completion_new ();
+
+	/* add all stores */
+	sack = zif_sack_new ();
+#if 0
+	ret = zif_sack_add_remote_enabled (sack, &error);
+	if (!ret) {
+		g_print ("failed to add enabled stores: %s\n", error->message);
+		g_error_free (error);
+		goto out;
+	}
+#endif
+	ret = zif_sack_add_local (sack, &error);
+	if (!ret) {
+		g_print ("failed to add local store: %s\n", error->message);
+		g_error_free (error);
+		goto out;
+	}
+
+	/* resolve package name */
+	array = zif_sack_resolve (sack, package_name, NULL, completion_local, &error);
+	if (array == NULL) {
+		g_print ("failed to get results: %s\n", error->message);
+		g_error_free (error);
+		goto out;
+	}
+	if (array->len == 0) {
+		g_print ("no package found\n");
+		goto out;
+	}
+	package = g_ptr_array_index (array, 0);
+
+	/* this section done */
+	zif_completion_done (completion);
+
+	/* get requires */
+	requires = zif_package_get_requires (package, &error);
+	if (requires == NULL) {
+		g_print ("failed to get requires: %s\n", error->message);
+		g_error_free (error);
+		goto out;
+	}
+
+	/* match a package to each require */
+	len = zif_depend_array_get_length (requires);
+	zif_completion_set_number_steps (completion_local, len);
+	for (i=0; i<len; i++) {
+
+		/* setup deeper completion */
+		zif_completion_set_child (completion_local, completion_loop);
+
+		require = zif_depend_array_get_value (requires, i);
+		require_str = zif_depend_to_string (require);
+		g_print ("  dependency: %s\n", require_str);
+		g_free (require_str);
+
+		/* find the package providing the depend */
+		provides = zif_sack_what_provides (sack, require->name, NULL, completion_loop, &error);
+		if (provides == NULL) {
+			g_print ("failed to get results: %s\n", error->message);
+			g_error_free (error);
+			goto out;
+		}
+
+		/* print all of them */
+		for (j=0;j<provides->len;j++) {
+			package = g_ptr_array_index (provides, j);
+			id = zif_package_get_id (package);
+			g_print ("   provider: %s-%s.%s (%s)\n", id->name, id->version, id->arch, id->data);
+		}
+		g_ptr_array_foreach (provides, (GFunc) g_object_unref, NULL);
+		g_ptr_array_free (provides, TRUE);
+
+		/* this section done */
+		zif_completion_done (completion_local);
+	}
+
+	/* this section done */
+	zif_completion_done (completion);
+out:
+	if (requires != NULL)
+		zif_depend_array_unref (requires);
+	if (array != NULL) {
+		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
+		g_ptr_array_free (array, TRUE);
+	}
+	g_object_unref (completion_local);
+	return ret;
+}
+
+/**
  * main:
  **/
 int
@@ -75,7 +255,7 @@ main (int argc, char *argv[])
 	ZifStoreRemote *store_remote = NULL;
 	ZifGroups *groups = NULL;
 	ZifCompletion *completion;
-	guint i, j;
+	guint i;
 	GError *error = NULL;
 	ZifPackage *package;
 	const gchar *mode;
@@ -211,9 +391,13 @@ main (int argc, char *argv[])
 		/* resolve local sack */
 		g_print ("resolve local sack... ");
 		array = zif_sack_resolve (sack, "gnome-power-manager", NULL, NULL, &error);
-		if (array == NULL || array->len == 0) {
+		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
+			goto out;
+		}
+		if (array->len == 0) {
+			g_print ("no package found\n");
 			goto out;
 		}
 		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
@@ -226,9 +410,13 @@ main (int argc, char *argv[])
 		/* resolve2 local sack */
 		g_print ("resolve2 local sack... ");
 		array = zif_sack_resolve (sack, "gnome-power-manager", NULL, NULL, &error);
-		if (array == NULL || array->len == 0) {
+		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
+			goto out;
+		}
+		if (array->len == 0) {
+			g_print ("no package found\n");
 			goto out;
 		}
 		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
@@ -256,9 +444,13 @@ main (int argc, char *argv[])
 		/* whatprovides local sack */
 		g_print ("whatprovides local sack... ");
 		array = zif_sack_what_provides (sack, "kernel", NULL, NULL, &error);
-		if (array == NULL || array->len == 0) {
+		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
+			goto out;
+		}
+		if (array->len == 0) {
+			g_print ("no package found\n");
 			goto out;
 		}
 		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
@@ -416,74 +608,20 @@ main (int argc, char *argv[])
 		goto out;
 	}
 	if (g_strcmp0 (mode, "getdepends") == 0 || g_strcmp0 (mode, "deplist") == 0) {
-		ZifDependArray *requires;
-		const ZifDepend *require;
-		gchar *require_str;
-		GPtrArray *provides;
-		const PkPackageId *id;
-		guint len;
 
 		if (value == NULL) {
-			g_print ("specify a value");
+			g_print ("specify a package name\n");
 			goto out;
 		}
-		array = zif_sack_resolve (sack, value, NULL, completion, &error);
-		if (array == NULL || array->len == 0) {
-			g_print ("failed to get results: %s\n", error->message);
-			g_error_free (error);
-			goto out;
-		}
-		package = g_ptr_array_index (array, 0);
-
-		requires = zif_package_get_requires (package, NULL);
-		len = zif_depend_array_get_length (requires);
-		for (i=0; i<len; i++) {
-			require = zif_depend_array_get_value (requires, i);
-			require_str = zif_depend_to_string (require);
-			g_print ("  dependency: %s\n", require_str);
-			g_free (require_str);
-
-			provides = zif_sack_what_provides (sack, require->name, NULL, completion, &error);
-			if (provides == NULL) {
-				g_print ("failed to get results: %s\n", error->message);
-				g_error_free (error);
-				goto out;
-			}
-
-			for (j=0;j<provides->len;j++) {
-				package = g_ptr_array_index (provides, j);
-				id = zif_package_get_id (package);
-				g_print ("   provider: %s-%s.%s (%s)\n", id->name, id->version, id->arch, id->data);
-			}
-			g_ptr_array_foreach (provides, (GFunc) g_object_unref, NULL);
-			g_ptr_array_free (provides, TRUE);
-		}
-		zif_depend_array_unref (requires);
-
-		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
-		g_ptr_array_free (array, TRUE);
+		zif_cmd_get_depends (value, completion);
 		goto out;
 	}
 	if (g_strcmp0 (mode, "download") == 0) {
 		if (value == NULL) {
-			g_print ("specify a value");
+			g_print ("specify a package name\n");
 			goto out;
 		}
-		array = zif_sack_resolve (sack, value, NULL, completion, &error);
-		if (array == NULL || array->len == 0) {
-			g_print ("failed to get results: %s\n", error->message);
-			g_error_free (error);
-			goto out;
-		}
-		package = g_ptr_array_index (array, 2);
-		ret = zif_package_download (package, "/tmp", NULL, completion, &error);
-		if (!ret) {
-			g_print ("failed to download: %s\n", error->message);
-			g_error_free (error);
-			goto out;
-		}
-		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
-		g_ptr_array_free (array, TRUE);
+		zif_cmd_download (value, completion);
 		goto out;
 	}
 	if (g_strcmp0 (mode, "erase") == 0) {
@@ -495,7 +633,7 @@ main (int argc, char *argv[])
 		guint len;
 
 		if (value == NULL) {
-			g_print ("specify a value");
+			g_print ("specify a package name\n");
 			goto out;
 		}
 
@@ -553,13 +691,17 @@ main (int argc, char *argv[])
 		guint64 size;
 
 		if (value == NULL) {
-			g_print ("specify a value");
+			g_print ("specify a package name\n");
 			goto out;
 		}
 		array = zif_sack_resolve (sack, value, NULL, completion, &error);
-		if (array == NULL || array->len == 0) {
+		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
+			goto out;
+		}
+		if (array->len == 0) {
+			g_print ("no package found\n");
 			goto out;
 		}
 		package = g_ptr_array_index (array, 0);
@@ -652,7 +794,7 @@ main (int argc, char *argv[])
 	}
 	if (g_strcmp0 (mode, "resolve") == 0) {
 		if (value == NULL) {
-			g_print ("specify a value");
+			g_print ("specify a package name\n");
 			goto out;
 		}
 		array = zif_sack_resolve (sack, value, NULL, completion, &error);
@@ -668,7 +810,7 @@ main (int argc, char *argv[])
 	}
 	if (g_strcmp0 (mode, "searchname") == 0) {
 		if (value == NULL) {
-			g_print ("specify a value");
+			g_print ("specify a search term\n");
 			goto out;
 		}
 		array = zif_sack_search_name (sack, value, NULL, completion, &error);
@@ -684,7 +826,7 @@ main (int argc, char *argv[])
 	}
 	if (g_strcmp0 (mode, "searchdetails") == 0 || g_strcmp0 (mode, "search") == 0) {
 		if (value == NULL) {
-			g_print ("specify a value");
+			g_print ("specify a search term\n");
 			goto out;
 		}
 		array = zif_sack_search_details (sack, value, NULL, completion, &error);
@@ -700,7 +842,7 @@ main (int argc, char *argv[])
 	}
 	if (g_strcmp0 (mode, "searchfile") == 0) {
 		if (value == NULL) {
-			g_print ("specify a value");
+			g_print ("specify a filename\n");
 			goto out;
 		}
 		array = zif_sack_search_file (sack, value, NULL, completion, &error);
@@ -716,7 +858,7 @@ main (int argc, char *argv[])
 	}
 	if (g_strcmp0 (mode, "searchgroup") == 0) {
 		if (value == NULL) {
-			g_print ("specify a value");
+			g_print ("specify a search term\n");
 			goto out;
 		}
 		array = zif_sack_search_group (sack, value, NULL, completion, &error);
@@ -732,7 +874,7 @@ main (int argc, char *argv[])
 	}
 	if (g_strcmp0 (mode, "resolvedep") == 0 || g_strcmp0 (mode, "whatprovides") == 0 || g_strcmp0 (mode, "resolvedep") == 0 || g_strcmp0 (mode, "provides") == 0) {
 		if (value == NULL) {
-			g_print ("specify a value");
+			g_print ("specify a search term\n");
 			goto out;
 		}
 		array = zif_sack_what_provides (sack, value, NULL, completion, &error);
@@ -757,8 +899,8 @@ out:
 		g_object_unref (sack);
 	if (download != NULL)
 		g_object_unref (download);
-//	if (store_local != NULL)
-//		g_object_unref (store_local);
+	if (store_local != NULL)
+		g_object_unref (store_local);
 	if (repos != NULL)
 		g_object_unref (repos);
 	if (config != NULL)
