@@ -27,6 +27,7 @@
 #include <libsoup/soup.h>
 
 #include "zif-download.h"
+#include "zif-completion.h"
 
 #include "egg-debug.h"
 
@@ -37,14 +38,9 @@ struct ZifDownloadPrivate
 	gchar			*proxy;
 	SoupSession		*session;
 	SoupMessage		*msg;
+	ZifCompletion		*completion;
 };
 
-typedef enum {
-	ZIF_DOWNLOAD_PERCENTAGE_CHANGED,
-	ZIF_DOWNLOAD_LAST_SIGNAL
-} PkSignals;
-
-static guint signals [ZIF_DOWNLOAD_LAST_SIGNAL] = { 0 };
 static gpointer zif_download_object = NULL;
 
 G_DEFINE_TYPE (ZifDownload, zif_download, G_TYPE_OBJECT)
@@ -60,7 +56,10 @@ zif_download_file_got_chunk_cb (SoupMessage *msg, SoupBuffer *chunk, ZifDownload
 
 	length = soup_message_headers_get_content_length (msg->response_headers);
 	percentage = (100 * msg->response_body->length) / length;
-	g_signal_emit (download, signals [ZIF_DOWNLOAD_PERCENTAGE_CHANGED], 0, percentage);
+
+	if (download->priv->completion != NULL)
+		zif_completion_set_percentage (download->priv->completion, percentage);
+
 }
 
 /**
@@ -123,6 +122,14 @@ zif_download_file (ZifDownload *download, const gchar *uri, const gchar *filenam
 	g_return_val_if_fail (filename != NULL, FALSE);
 	g_return_val_if_fail (download->priv->msg == NULL, FALSE);
 	g_return_val_if_fail (download->priv->session != NULL, FALSE);
+
+	/* save an instance of the completion object */
+	if (download->priv->completion != NULL)
+		g_object_unref (download->priv->completion);
+	if (completion != NULL)
+		download->priv->completion = g_object_ref (completion);
+	else
+		download->priv->completion = NULL;
 
 	base_uri = soup_uri_new (uri);
 	if (base_uri == NULL) {
@@ -215,6 +222,8 @@ zif_download_finalize (GObject *object)
 		g_object_unref (download->priv->msg);
 	if (download->priv->session != NULL)
 		g_object_unref (download->priv->session);
+	if (download->priv->completion != NULL)
+		g_object_unref (download->priv->completion);
 
 	G_OBJECT_CLASS (zif_download_parent_class)->finalize (object);
 }
@@ -227,13 +236,6 @@ zif_download_class_init (ZifDownloadClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 	object_class->finalize = zif_download_finalize;
-
-	signals [ZIF_DOWNLOAD_PERCENTAGE_CHANGED] =
-		g_signal_new ("percentage-changed",
-			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,
-			      G_STRUCT_OFFSET (ZifDownloadClass, percentage_changed),
-			      NULL, NULL, g_cclosure_marshal_VOID__UINT,
-			      G_TYPE_NONE, 1, G_TYPE_UINT);
 
 	g_type_class_add_private (klass, sizeof (ZifDownloadPrivate));
 }
@@ -278,7 +280,6 @@ static guint _updates = 0;
 static void
 zif_download_progress_changed (ZifDownload *download, guint value, gpointer data)
 {
-	egg_debug ("percentage: %i", value);
 	_updates++;
 }
 
@@ -297,6 +298,7 @@ void
 zif_download_test (EggTest *test)
 {
 	ZifDownload *download;
+	ZifCompletion *completion;
 	gboolean ret;
 	GError *error = NULL;
 
@@ -307,7 +309,9 @@ zif_download_test (EggTest *test)
 	egg_test_title (test, "get download");
 	download = zif_download_new ();
 	egg_test_assert (test, download != NULL);
-	g_signal_connect (download, "percentage-changed", G_CALLBACK (zif_download_progress_changed), NULL);
+
+	completion = zif_completion_new ();
+	g_signal_connect (completion, "percentage-changed", G_CALLBACK (zif_download_progress_changed), NULL);
 
 	/************************************************************/
 	egg_test_title (test, "set proxy");
@@ -321,7 +325,7 @@ zif_download_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "download file");
-	ret = zif_download_file (download, "http://people.freedesktop.org/~hughsient/temp/Screenshot.png", "../test/downloads", NULL, NULL, &error);
+	ret = zif_download_file (download, "http://people.freedesktop.org/~hughsient/temp/Screenshot.png", "../test/downloads", NULL, completion, &error);
 	if (ret)
 		egg_test_success (test, NULL);
 	else
@@ -346,6 +350,7 @@ zif_download_test (EggTest *test)
 		egg_test_failed (test, "failed to load '%s'", error->message);
 
 	g_object_unref (download);
+	g_object_unref (completion);
 
 	egg_test_end (test);
 }

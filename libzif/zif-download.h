@@ -49,9 +49,6 @@ typedef struct
 typedef struct
 {
 	GObjectClass	parent_class;
-	/* Signals */
-	void		(* percentage_changed)		(ZifDownload	*download,
-							 guint		 value);
 	/* Padding for future expansion */
 	void (*_zif_reserved1) (void);
 	void (*_zif_reserved2) (void);

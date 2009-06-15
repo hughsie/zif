@@ -90,15 +90,6 @@ zif_store_remote_expand_vars (const gchar *name)
 }
 
 /**
- * zif_store_remote_download_progress_changed:
- **/
-static void
-zif_store_remote_download_progress_changed (ZifDownload *download, guint value, ZifStoreRemote *store)
-{
-	egg_warning ("percentage: %i", value);
-}
-
-/**
  * zif_store_remote_download:
  * @store: the #ZifStoreRemote object
  * @filename: the completion filename to download, e.g. "Packages/hal-0.0.1.rpm"
@@ -133,7 +124,6 @@ zif_store_remote_download (ZifStoreRemote *store, const gchar *filename, const g
 
 	/* download object */
 	download = zif_download_new ();
-	g_signal_connect (download, "percentage-changed", G_CALLBACK (zif_store_remote_download_progress_changed), store);
 
 	/* download */
 	uri = g_strconcat (store->priv->baseurl, filename, NULL);

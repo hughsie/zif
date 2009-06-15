@@ -64,6 +64,8 @@ GType		 zif_completion_get_type		(void) G_GNUC_CONST;
 ZifCompletion	*zif_completion_new			(void);
 gboolean	 zif_completion_set_number_steps	(ZifCompletion		*completion,
 							 guint			 steps);
+gboolean	 zif_completion_set_percentage		(ZifCompletion		*completion,
+							 guint			 percentage);
 gboolean	 zif_completion_done			(ZifCompletion		*completion);
 gboolean	 zif_completion_set_child		(ZifCompletion		*completion,
 							 ZifCompletion		*child);

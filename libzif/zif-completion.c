@@ -73,27 +73,36 @@ zif_completion_discrete_to_percent (guint discrete, guint steps)
 }
 
 /**
- * zif_completion_emit_progress_changed:
+ * zif_completion_set_percentage:
+ * @completion: the #ZifCompletion object
+ * @percentage: A manual percentage value
+ *
+ * Set a percentage manually.
+ * NOTE: this must be above what was previously set, or it will be rejected.
+ *
+ * Return value: %TRUE if the signal was propagated, %FALSE for failure
  **/
-static void
-zif_completion_emit_progress_changed (ZifCompletion *completion, guint percentage)
+gboolean
+zif_completion_set_percentage (ZifCompletion *completion, guint percentage)
 {
 	/* is it less */
 	if (percentage < completion->priv->last_percentage) {
 		egg_warning ("percentage cannot go down from %i to %i!", completion->priv->last_percentage, percentage);
-		return;
+		return FALSE;
 	}
 
 	/* is it the same */
 	if (percentage == completion->priv->last_percentage) {
 		egg_debug ("ignoring same percentage value as last");
-		return;
+		return FALSE;
 	}
 
 	/* emit and save */
 	egg_debug ("emitting percentage=%i on %p", percentage, completion);
 	g_signal_emit (completion, signals [PERCENTAGE_CHANGED], 0, percentage);
 	completion->priv->last_percentage = percentage;
+
+	return TRUE;
 }
 
 /**
@@ -124,7 +133,7 @@ zif_completion_progress_changed_cb (ZifCompletion *child, guint value, ZifComple
 	extra = ((gfloat) value / 100.0f) * (gfloat) range;
 
 	/* emit from the parent */
-	zif_completion_emit_progress_changed (completion, offset + extra);
+	zif_completion_set_percentage (completion, offset + extra);
 }
 
 /**
@@ -207,7 +216,7 @@ zif_completion_done (ZifCompletion *completion)
 
 	/* find new percentage */
 	percentage = zif_completion_discrete_to_percent (completion->priv->current, completion->priv->steps);
-	zif_completion_emit_progress_changed (completion, percentage);
+	zif_completion_set_percentage (completion, percentage);
 
 	return TRUE;
 }
