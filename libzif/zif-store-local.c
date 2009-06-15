@@ -59,6 +59,7 @@ struct _ZifStoreLocalPrivate
 	GPtrArray		*packages;
 	ZifGroups		*groups;
 	ZifMonitor		*monitor;
+	ZifCompletion		*completion_local;
 };
 
 
@@ -134,6 +135,10 @@ zif_store_local_load (ZifStore *store, GCancellable *cancellable, ZifCompletion 
 	if (local->priv->loaded)
 		goto out;
 
+	/* setup completion with the correct number of steps */
+	if (completion != NULL)
+		zif_completion_set_number_steps (completion, 2);
+
 	retval = rpmdbOpen (local->priv->prefix, &db, O_RDONLY, 0777);
 	if (retval != 0) {
 		if (error != NULL)
@@ -141,6 +146,10 @@ zif_store_local_load (ZifStore *store, GCancellable *cancellable, ZifCompletion 
 		ret = FALSE;
 		goto out;
 	}
+
+	/* this section done */
+	if (completion != NULL)
+		zif_completion_done (completion);
 
 	/* get list */
 	mi = rpmdbInitIterator (db, RPMDBI_PACKAGES, NULL, 0);
@@ -163,6 +172,10 @@ zif_store_local_load (ZifStore *store, GCancellable *cancellable, ZifCompletion 
 	} while (TRUE);
 	rpmdbFreeIterator (mi);
 	rpmdbClose (db);
+
+	/* this section done */
+	if (completion != NULL)
+		zif_completion_done (completion);
 
 	/* okay */
 	local->priv->loaded = TRUE;
@@ -188,20 +201,34 @@ zif_store_local_search_name (ZifStore *store, const gchar *search, GCancellable 
 	g_return_val_if_fail (search != NULL, NULL);
 	g_return_val_if_fail (local->priv->prefix != NULL, NULL);
 
+	/* create a chain of completions */
+	if (completion != NULL) {
+		zif_completion_set_child (completion, local->priv->completion_local);
+
+		/* we have a different number of steps depending if we are loaded or not */
+		if (local->priv->loaded)
+			zif_completion_set_number_steps (completion, 1);
+		else
+			zif_completion_set_number_steps (completion, 2);
+	}
+
 	/* if not already loaded, load */
 	if (!local->priv->loaded) {
-		ret = zif_store_local_load (store, NULL, NULL, &error_local);
+		ret = zif_store_local_load (store, cancellable, local->priv->completion_local, &error_local);
 		if (!ret) {
 			if (error != NULL)
 				*error = g_error_new (1, 0, "failed to load package store: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
+
+		/* this section done */
+		if (completion != NULL)
+			zif_completion_done (completion);
 	}
 
 	/* setup completion with the correct number of steps */
-	if (completion != NULL)
-		zif_completion_set_number_steps (completion, local->priv->packages->len);
+	zif_completion_set_number_steps (local->priv->completion_local, local->priv->packages->len);
 
 	/* iterate list */
 	array = g_ptr_array_new ();
@@ -237,20 +264,34 @@ zif_store_local_search_category (ZifStore *store, const gchar *search, GCancella
 	g_return_val_if_fail (search != NULL, NULL);
 	g_return_val_if_fail (local->priv->prefix != NULL, NULL);
 
+	/* create a chain of completions */
+	if (completion != NULL) {
+		zif_completion_set_child (completion, local->priv->completion_local);
+
+		/* we have a different number of steps depending if we are loaded or not */
+		if (local->priv->loaded)
+			zif_completion_set_number_steps (completion, 1);
+		else
+			zif_completion_set_number_steps (completion, 2);
+	}
+
 	/* if not already loaded, load */
 	if (!local->priv->loaded) {
-		ret = zif_store_local_load (store, NULL, NULL, &error_local);
+		ret = zif_store_local_load (store, cancellable, local->priv->completion_local, &error_local);
 		if (!ret) {
 			if (error != NULL)
 				*error = g_error_new (1, 0, "failed to load package store: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
+
+		/* this section done */
+		if (completion != NULL)
+			zif_completion_done (completion);
 	}
 
 	/* setup completion with the correct number of steps */
-	if (completion != NULL)
-		zif_completion_set_number_steps (completion, local->priv->packages->len);
+	zif_completion_set_number_steps (local->priv->completion_local, local->priv->packages->len);
 
 	/* iterate list */
 	array = g_ptr_array_new ();
@@ -288,20 +329,34 @@ zif_store_local_search_details (ZifStore *store, const gchar *search, GCancellab
 	g_return_val_if_fail (search != NULL, NULL);
 	g_return_val_if_fail (local->priv->prefix != NULL, NULL);
 
+	/* create a chain of completions */
+	if (completion != NULL) {
+		zif_completion_set_child (completion, local->priv->completion_local);
+
+		/* we have a different number of steps depending if we are loaded or not */
+		if (local->priv->loaded)
+			zif_completion_set_number_steps (completion, 1);
+		else
+			zif_completion_set_number_steps (completion, 2);
+	}
+
 	/* if not already loaded, load */
 	if (!local->priv->loaded) {
-		ret = zif_store_local_load (store, NULL, NULL, &error_local);
+		ret = zif_store_local_load (store, cancellable, local->priv->completion_local, &error_local);
 		if (!ret) {
 			if (error != NULL)
 				*error = g_error_new (1, 0, "failed to load package store: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
+
+		/* this section done */
+		if (completion != NULL)
+			zif_completion_done (completion);
 	}
 
 	/* setup completion with the correct number of steps */
-	if (completion != NULL)
-		zif_completion_set_number_steps (completion, local->priv->packages->len);
+	zif_completion_set_number_steps (local->priv->completion_local, local->priv->packages->len);
 
 	/* iterate list */
 	array = g_ptr_array_new ();
@@ -341,20 +396,34 @@ zif_store_local_search_group (ZifStore *store, const gchar *search, GCancellable
 	g_return_val_if_fail (ZIF_IS_STORE_LOCAL (store), NULL);
 	g_return_val_if_fail (local->priv->prefix != NULL, NULL);
 
+	/* create a chain of completions */
+	if (completion != NULL) {
+		zif_completion_set_child (completion, local->priv->completion_local);
+
+		/* we have a different number of steps depending if we are loaded or not */
+		if (local->priv->loaded)
+			zif_completion_set_number_steps (completion, 1);
+		else
+			zif_completion_set_number_steps (completion, 2);
+	}
+
 	/* if not already loaded, load */
 	if (!local->priv->loaded) {
-		ret = zif_store_local_load (store, NULL, NULL, &error_local);
+		ret = zif_store_local_load (store, cancellable, local->priv->completion_local, &error_local);
 		if (!ret) {
 			if (error != NULL)
 				*error = g_error_new (1, 0, "failed to load package store: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
+
+		/* this section done */
+		if (completion != NULL)
+			zif_completion_done (completion);
 	}
 
 	/* setup completion with the correct number of steps */
-	if (completion != NULL)
-		zif_completion_set_number_steps (completion, local->priv->packages->len);
+	zif_completion_set_number_steps (local->priv->completion_local, local->priv->packages->len);
 
 	/* iterate list */
 	group = pk_group_enum_from_text (search);
@@ -392,20 +461,34 @@ zif_store_local_search_file (ZifStore *store, const gchar *search, GCancellable 
 	g_return_val_if_fail (ZIF_IS_STORE_LOCAL (store), NULL);
 	g_return_val_if_fail (local->priv->prefix != NULL, NULL);
 
+	/* create a chain of completions */
+	if (completion != NULL) {
+		zif_completion_set_child (completion, local->priv->completion_local);
+
+		/* we have a different number of steps depending if we are loaded or not */
+		if (local->priv->loaded)
+			zif_completion_set_number_steps (completion, 1);
+		else
+			zif_completion_set_number_steps (completion, 2);
+	}
+
 	/* if not already loaded, load */
 	if (!local->priv->loaded) {
-		ret = zif_store_local_load (store, NULL, NULL, &error_local);
+		ret = zif_store_local_load (store, cancellable, local->priv->completion_local, &error_local);
 		if (!ret) {
 			if (error != NULL)
 				*error = g_error_new (1, 0, "failed to load package store: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
+
+		/* this section done */
+		if (completion != NULL)
+			zif_completion_done (completion);
 	}
 
 	/* setup completion with the correct number of steps */
-	if (completion != NULL)
-		zif_completion_set_number_steps (completion, local->priv->packages->len);
+	zif_completion_set_number_steps (local->priv->completion_local, local->priv->packages->len);
 
 	/* iterate list */
 	array = g_ptr_array_new ();
@@ -455,20 +538,34 @@ zif_store_local_resolve (ZifStore *store, const gchar *search, GCancellable *can
 	g_return_val_if_fail (search != NULL, NULL);
 	g_return_val_if_fail (local->priv->prefix != NULL, NULL);
 
+	/* create a chain of completions */
+	if (completion != NULL) {
+		zif_completion_set_child (completion, local->priv->completion_local);
+
+		/* we have a different number of steps depending if we are loaded or not */
+		if (local->priv->loaded)
+			zif_completion_set_number_steps (completion, 1);
+		else
+			zif_completion_set_number_steps (completion, 2);
+	}
+
 	/* if not already loaded, load */
 	if (!local->priv->loaded) {
-		ret = zif_store_local_load (store, NULL, NULL, &error_local);
+		ret = zif_store_local_load (store, cancellable, local->priv->completion_local, &error_local);
 		if (!ret) {
 			if (error != NULL)
 				*error = g_error_new (1, 0, "failed to load package store: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
+
+		/* this section done */
+		if (completion != NULL)
+			zif_completion_done (completion);
 	}
 
 	/* setup completion with the correct number of steps */
-	if (completion != NULL)
-		zif_completion_set_number_steps (completion, local->priv->packages->len);
+	zif_completion_set_number_steps (local->priv->completion_local, local->priv->packages->len);
 
 	/* iterate list */
 	array = g_ptr_array_new ();
@@ -480,8 +577,12 @@ zif_store_local_resolve (ZifStore *store, const gchar *search, GCancellable *can
 
 		/* this section done */
 		if (completion != NULL)
-			zif_completion_done (completion);
+			zif_completion_done (local->priv->completion_local);
 	}
+
+	/* this section done */
+	if (completion != NULL)
+		zif_completion_done (completion);
 out:
 	return array;
 }
@@ -507,20 +608,34 @@ zif_store_local_what_provides (ZifStore *store, const gchar *search, GCancellabl
 	g_return_val_if_fail (search != NULL, NULL);
 	g_return_val_if_fail (local->priv->prefix != NULL, NULL);
 
+	/* create a chain of completions */
+	if (completion != NULL) {
+		zif_completion_set_child (completion, local->priv->completion_local);
+
+		/* we have a different number of steps depending if we are loaded or not */
+		if (local->priv->loaded)
+			zif_completion_set_number_steps (completion, 1);
+		else
+			zif_completion_set_number_steps (completion, 2);
+	}
+
 	/* if not already loaded, load */
 	if (!local->priv->loaded) {
-		ret = zif_store_local_load (store, NULL, NULL, &error_local);
+		ret = zif_store_local_load (store, cancellable, local->priv->completion_local, &error_local);
 		if (!ret) {
 			if (error != NULL)
 				*error = g_error_new (1, 0, "failed to load package store: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
+
+		/* this section done */
+		if (completion != NULL)
+			zif_completion_done (completion);
 	}
 
 	/* setup completion with the correct number of steps */
-	if (completion != NULL)
-		zif_completion_set_number_steps (completion, local->priv->packages->len);
+	zif_completion_set_number_steps (local->priv->completion_local, local->priv->packages->len);
 
 	/* iterate list */
 	array = g_ptr_array_new ();
@@ -560,20 +675,34 @@ zif_store_local_get_packages (ZifStore *store, GCancellable *cancellable, ZifCom
 	g_return_val_if_fail (ZIF_IS_STORE_LOCAL (store), NULL);
 	g_return_val_if_fail (local->priv->prefix != NULL, NULL);
 
+	/* create a chain of completions */
+	if (completion != NULL) {
+		zif_completion_set_child (completion, local->priv->completion_local);
+
+		/* we have a different number of steps depending if we are loaded or not */
+		if (local->priv->loaded)
+			zif_completion_set_number_steps (completion, 1);
+		else
+			zif_completion_set_number_steps (completion, 2);
+	}
+
 	/* if not already loaded, load */
 	if (!local->priv->loaded) {
-		ret = zif_store_local_load (store, NULL, NULL, &error_local);
+		ret = zif_store_local_load (store, cancellable, local->priv->completion_local, &error_local);
 		if (!ret) {
 			if (error != NULL)
 				*error = g_error_new (1, 0, "failed to load package store: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
+
+		/* this section done */
+		if (completion != NULL)
+			zif_completion_done (completion);
 	}
 
 	/* setup completion with the correct number of steps */
-	if (completion != NULL)
-		zif_completion_set_number_steps (completion, local->priv->packages->len);
+	zif_completion_set_number_steps (local->priv->completion_local, local->priv->packages->len);
 
 	/* iterate list */
 	array = g_ptr_array_new ();
@@ -649,6 +778,7 @@ zif_store_local_finalize (GObject *object)
 	g_ptr_array_free (store->priv->packages, TRUE);
 	g_object_unref (store->priv->groups);
 	g_object_unref (store->priv->monitor);
+	g_object_unref (store->priv->completion_local);
 	g_free (store->priv->prefix);
 
 	G_OBJECT_CLASS (zif_store_local_parent_class)->finalize (object);
@@ -691,6 +821,7 @@ zif_store_local_init (ZifStoreLocal *store)
 	store->priv->packages = g_ptr_array_new ();
 	store->priv->groups = zif_groups_new ();
 	store->priv->monitor = zif_monitor_new ();
+	store->priv->completion_local = zif_completion_new ();
 	store->priv->prefix = NULL;
 	store->priv->loaded = FALSE;
 	g_signal_connect (store->priv->monitor, "changed", G_CALLBACK (zif_store_local_file_monitor_cb), store);
