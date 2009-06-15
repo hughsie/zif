@@ -50,12 +50,12 @@ zif_print_packages (GPtrArray *array)
 }
 
 /**
- * zif_completion_progress_changed_cb:
+ * zif_completion_percentage_changed_cb:
  **/
 static void
-zif_completion_progress_changed_cb (ZifCompletion *completion, guint value, gpointer data)
+zif_completion_percentage_changed_cb (ZifCompletion *completion, guint percentage, gpointer data)
 {
-	g_print ("Completion %i%%\n", value);
+	g_print ("Completion %i%%\n", percentage);
 }
 
 /**
@@ -371,7 +371,7 @@ main (int argc, char *argv[])
 
 	/* ZifCompletion */
 	completion = zif_completion_new ();
-	g_signal_connect (completion, "percentage-changed", G_CALLBACK (zif_completion_progress_changed_cb), NULL);
+	g_signal_connect (completion, "percentage-changed", G_CALLBACK (zif_completion_percentage_changed_cb), NULL);
 
 	if (profile) {
 		GTimer *timer;
