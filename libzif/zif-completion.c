@@ -59,7 +59,7 @@ G_DEFINE_TYPE (ZifCompletion, zif_completion, G_TYPE_OBJECT)
  *
  * Return value: The percentage for this discrete value.
  **/
-static guint
+static gfloat
 zif_completion_discrete_to_percent (guint discrete, guint steps)
 {
 	/* check we are in range */
@@ -69,7 +69,7 @@ zif_completion_discrete_to_percent (guint discrete, guint steps)
 		egg_warning ("steps is 0!");
 		return 0;
 	}
-	return (guint) ((gfloat) discrete * (100.0f / (gfloat) (steps)));
+	return ((gfloat) discrete * (100.0f / (gfloat) (steps)));
 }
 
 /**
@@ -111,29 +111,35 @@ zif_completion_set_percentage (ZifCompletion *completion, guint percentage)
 static void
 zif_completion_progress_changed_cb (ZifCompletion *child, guint value, ZifCompletion *completion)
 {
-	guint offset;
-	guint range;
-	guint extra;
+	gfloat offset;
+	gfloat range;
+	gfloat extra;
 
 	/* always provide two levels of signals */
 	egg_debug ("emitting subpercentage=%i on %p", value, completion);
 	g_signal_emit (completion, signals [SUBPERCENTAGE_CHANGED], 0, value);
+
+	/* already at >= 100% */
+	if (completion->priv->current >= completion->priv->steps) {
+		egg_warning ("already at %i/%i steps", completion->priv->current, completion->priv->steps);
+		return;
+	}
 
 	/* get the offset */
 	offset = zif_completion_discrete_to_percent (completion->priv->current, completion->priv->steps);
 
 	/* get the range between the parent step and the next parent step */
 	range = zif_completion_discrete_to_percent (completion->priv->current+1, completion->priv->steps) - offset;
-	if (range == 0) {
-		egg_warning ("range=0, should be impossible");
+	if (range < 0.01) {
+		egg_warning ("range=%f (from %i to %i), should be impossible", range, completion->priv->current+1, completion->priv->steps);
 		return;
 	}
 
 	/* get the extra contributed by the child */
-	extra = ((gfloat) value / 100.0f) * (gfloat) range;
+	extra = ((gfloat) value / 100.0f) * range;
 
 	/* emit from the parent */
-	zif_completion_set_percentage (completion, offset + extra);
+	zif_completion_set_percentage (completion, (guint) (offset + extra));
 }
 
 /**
@@ -202,7 +208,7 @@ zif_completion_set_number_steps (ZifCompletion *completion, guint steps)
 gboolean
 zif_completion_done (ZifCompletion *completion)
 {
-	guint percentage;
+	gfloat percentage;
 
 	g_return_val_if_fail (ZIF_IS_COMPLETION (completion), FALSE);
 	g_return_val_if_fail (completion->priv->steps > 0, FALSE);
@@ -216,7 +222,7 @@ zif_completion_done (ZifCompletion *completion)
 
 	/* find new percentage */
 	percentage = zif_completion_discrete_to_percent (completion->priv->current, completion->priv->steps);
-	zif_completion_set_percentage (completion, percentage);
+	zif_completion_set_percentage (completion, (guint) percentage);
 
 	return TRUE;
 }
