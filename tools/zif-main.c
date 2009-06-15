@@ -297,7 +297,7 @@ zif_cmd_install (const gchar *package_name, ZifCompletion *completion)
 		goto out;
 	}
 
-	/* check not already installed */
+	/* check we can find a package of this name */
 	array = zif_sack_resolve (sack, package_name, NULL, completion_local, &error);
 	if (array == NULL) {
 		g_print ("failed to get results: %s\n", error->message);
@@ -313,6 +313,90 @@ zif_cmd_install (const gchar *package_name, ZifCompletion *completion)
 	zif_completion_done (completion);
 
 	/* install this package, TODO: what if > 1? */
+	package = g_ptr_array_index (array, 0);
+out:
+	if (array != NULL) {
+		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
+		g_ptr_array_free (array, TRUE);
+	}
+	g_object_unref (sack);
+	g_object_unref (completion_local);
+	return ret;
+}
+
+/**
+ * zif_cmd_update:
+ **/
+static gboolean
+zif_cmd_update (const gchar *package_name, ZifCompletion *completion)
+{
+	gboolean ret;
+	GError *error = NULL;
+	GPtrArray *array = NULL;
+	ZifPackage *package;
+	ZifCompletion *completion_local;
+	ZifSack *sack;
+
+	/* setup completion */
+	completion_local = zif_completion_new ();
+	zif_completion_set_child (completion, completion_local);
+	zif_completion_set_number_steps (completion, 2);
+
+	/* add all stores */
+	sack = zif_sack_new ();
+	ret = zif_sack_add_local (sack, &error);
+	if (!ret) {
+		g_print ("failed to add local store: %s\n", error->message);
+		g_error_free (error);
+		goto out;
+	}
+
+	/* check not already installed */
+	array = zif_sack_resolve (sack, package_name, NULL, completion_local, &error);
+	if (array == NULL) {
+		g_print ("failed to get results: %s\n", error->message);
+		g_error_free (error);
+		goto out;
+	}
+	if (array->len == 0) {
+		g_print ("package not already installed\n");
+		goto out;
+	}
+	if (array != NULL) {
+		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
+		g_ptr_array_free (array, TRUE);
+	}
+	array = NULL;
+	g_object_unref (sack);
+
+	/* this section done */
+	zif_completion_done (completion);
+
+	/* check available */
+	sack = zif_sack_new ();
+	ret = zif_sack_add_remote_enabled (sack, &error);
+	if (!ret) {
+		g_print ("failed to add enabled stores: %s\n", error->message);
+		g_error_free (error);
+		goto out;
+	}
+
+	/* check we can find a package of this name */
+	array = zif_sack_resolve (sack, package_name, NULL, completion_local, &error);
+	if (array == NULL) {
+		g_print ("failed to get results: %s\n", error->message);
+		g_error_free (error);
+		goto out;
+	}
+	if (array->len == 0) {
+		g_print ("could not find package in remote source\n");
+		goto out;
+	}
+
+	/* this section done */
+	zif_completion_done (completion);
+
+	/* install this package, TODO: check for newer? */
 	package = g_ptr_array_index (array, 0);
 out:
 	if (array != NULL) {
@@ -824,6 +908,7 @@ main (int argc, char *argv[])
 			goto out;
 		}
 		zif_cmd_install (value, completion);
+		g_print ("not yet supported\n");
 		goto out;
 	}
 	if (g_strcmp0 (mode, "list") == 0 || g_strcmp0 (mode, "getpackages") == 0) {
@@ -980,6 +1065,11 @@ main (int argc, char *argv[])
 		goto out;
 	}
 	if (g_strcmp0 (mode, "update") == 0 || g_strcmp0 (mode, "upgrade") == 0) {
+		if (value == NULL) {
+			g_print ("specify a package name\n");
+			goto out;
+		}
+		zif_cmd_update (value, completion);
 		g_print ("not yet supported\n");
 		goto out;
 	}
