@@ -325,6 +325,38 @@ out:
 }
 
 /**
+ * zif_cmd_refresh_cache:
+ **/
+static gboolean
+zif_cmd_refresh_cache (ZifCompletion *completion)
+{
+	gboolean ret;
+	GError *error = NULL;
+	ZifSack *sack;
+
+	/* add remote stores */
+	sack = zif_sack_new ();
+	ret = zif_sack_add_remote_enabled (sack, &error);
+	if (!ret) {
+		g_print ("failed to add enabled stores: %s\n", error->message);
+		g_error_free (error);
+		goto out;
+	}
+
+	/* refresh all ZifRemoteStores */
+	ret = zif_sack_refresh (sack, NULL, completion, &error);
+	if (!ret) {
+		g_print ("failed to refresh cache: %s\n", error->message);
+		g_error_free (error);
+		goto out;
+	}
+
+out:
+	g_object_unref (sack);
+	return ret;
+}
+
+/**
  * zif_cmd_update:
  **/
 static gboolean
@@ -939,6 +971,8 @@ main (int argc, char *argv[])
 		goto out;
 	}
 	if (g_strcmp0 (mode, "makecache") == 0 || g_strcmp0 (mode, "refreshcache") == 0) {
+
+		zif_cmd_refresh_cache (completion);
 		g_print ("not yet supported\n");
 		goto out;
 	}
