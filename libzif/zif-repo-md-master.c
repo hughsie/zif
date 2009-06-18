@@ -249,6 +249,8 @@ zif_repo_md_master_load (ZifRepoMd *md, GError **error)
 	gboolean ret = TRUE;
 	gchar *contents = NULL;
 	const gchar *filename = NULL;
+	const gchar *directory = NULL;
+	gchar *filename_full = NULL;
 	gsize size;
 	GMarkupParseContext *context = NULL;
 	const GMarkupParser gpk_repo_md_master_markup_parser = {
@@ -269,7 +271,9 @@ zif_repo_md_master_load (ZifRepoMd *md, GError **error)
 	/* get contents */
 	zif_repo_md_set_base_filename (ZIF_REPO_MD (md), "repomd.xml");
 	filename = zif_repo_md_get_filename (md);
-	ret = g_file_get_contents (filename, &contents, &size, error);
+	directory = zif_repo_md_get_local_path (md);
+	filename_full = g_build_filename (directory, filename, NULL);
+	ret = g_file_get_contents (filename_full, &contents, &size, error);
 	if (!ret)
 		goto out;
 
@@ -300,6 +304,7 @@ out:
 	if (context != NULL)
 		g_markup_parse_context_free (context);
 	g_free (contents);
+	g_free (filename_full);
 	return ret;
 }
 

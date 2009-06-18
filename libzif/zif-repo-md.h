@@ -53,15 +53,11 @@ struct _ZifRepoMd
 
 struct _ZifRepoMdClass
 {
-	GObjectClass		 parent_class;
+	GObjectClass				 parent_class;
 	/* vtable */
 	gboolean	 (*load)		(ZifRepoMd		*md,
 						 GError			**error);
 	gboolean	 (*clean)		(ZifRepoMd		*md,
-						 GError			**error);
-	gboolean	 (*refresh)		(ZifRepoMd		*md,
-						 GCancellable		*cancellable,
-						 ZifCompletion		*completion,
 						 GError			**error);
 };
 
@@ -85,8 +81,8 @@ GType		 zif_repo_md_get_type		(void);
 ZifRepoMd	*zif_repo_md_new		(void);
 
 /* setters */
-gboolean	 zif_repo_md_set_mdtype		(ZifRepoMd	*md,
-						 ZifRepoMdType	 type);
+//gboolean	 zif_repo_md_set_mdtype		(ZifRepoMd	*md,
+//						 ZifRepoMdType	 type);
 gboolean	 zif_repo_md_set_id		(ZifRepoMd	*md,
 						 const gchar	*id);
 gboolean	 zif_repo_md_set_cache_dir	(ZifRepoMd	*md,
@@ -99,11 +95,10 @@ gboolean	 zif_repo_md_set_info_data	(ZifRepoMd	*md,
 						 const ZifRepoMdInfoData *info_data);
 
 /* getters */
-ZifRepoMdType	 zif_repo_md_get_mdtype		(ZifRepoMd	*md);
+//ZifRepoMdType	 zif_repo_md_get_mdtype		(ZifRepoMd	*md);
 const gchar	*zif_repo_md_get_id		(ZifRepoMd	*md);
 
 const gchar	*zif_repo_md_get_local_path	(ZifRepoMd	*md);
-const gchar	*zif_repo_md_get_remote_uri	(ZifRepoMd	*md);
 const gchar	*zif_repo_md_get_filename	(ZifRepoMd	*md);
 const gchar	*zif_repo_md_get_filename_raw	(ZifRepoMd	*md);
 const ZifRepoMdInfoData *zif_repo_md_get_info_data (ZifRepoMd	*md);
@@ -114,10 +109,6 @@ gboolean	 zif_repo_md_load		(ZifRepoMd	*md,
 gboolean	 zif_repo_md_clean		(ZifRepoMd	*md,
 						 GError		**error);
 gboolean	 zif_repo_md_check		(ZifRepoMd	*md,
-						 GError		**error);
-gboolean	 zif_repo_md_refresh		(ZifRepoMd	*md,
-						 GCancellable	*cancellable,
-						 ZifCompletion	*completion,
 						 GError		**error);
 guint		 zif_repo_md_get_age		(ZifRepoMd	*md,
 						 GError		**error);

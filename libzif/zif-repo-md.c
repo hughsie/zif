@@ -50,9 +50,9 @@
 struct _ZifRepoMdPrivate
 {
 	gboolean		 loaded;
-	gchar			*id;
-	gchar			*local_path;
-	gchar			*cache_dir;
+	gchar			*id;		/* fedora */
+	gchar			*cache_dir;	/* /var/cache/yum */
+	gchar			*local_path;	/* /var/cache/yum/fedora */
 	gchar			*filename;	/* /var/cache/yum/fedora/repo.sqlite */
 	gchar			*filename_raw;	/* /var/cache/yum/fedora/repo.sqlite.bz2 */
 	const ZifRepoMdInfoData	*info_data;
@@ -197,12 +197,27 @@ out:
 gboolean
 zif_repo_md_set_base_filename (ZifRepoMd *md, const gchar *base_filename)
 {
+	guint len;
+	gchar *tmp;
+
 	g_return_val_if_fail (ZIF_IS_REPO_MD (md), FALSE);
 	g_return_val_if_fail (md->priv->cache_dir != NULL, FALSE);
 	g_return_val_if_fail (md->priv->filename == NULL, FALSE);
 	g_return_val_if_fail (base_filename != NULL, FALSE);
 
-	md->priv->filename = g_build_filename (md->priv->local_path, base_filename, NULL);
+	/* this is the uncompressed name */
+	md->priv->filename_raw = g_strdup (base_filename);
+
+	/* remove compression extension */
+	tmp = g_strdup (base_filename);
+	len = strlen (tmp);
+	if (len > 4 && g_str_has_suffix (tmp, ".gz"))
+		tmp[len-3] = '\0';
+	else if (len > 5 && g_str_has_suffix (tmp, ".bz2"))
+		tmp[len-4] = '\0';
+	md->priv->filename = g_strdup (tmp);
+	g_free (tmp);
+
 	return TRUE;
 }
 
@@ -240,26 +255,18 @@ zif_repo_md_set_id (ZifRepoMd *md, const gchar *id)
 gboolean
 zif_repo_md_set_info_data (ZifRepoMd *md, const ZifRepoMdInfoData *info_data)
 {
-	guint len;
 	gchar *tmp;
 
 	g_return_val_if_fail (ZIF_IS_REPO_MD (md), FALSE);
 	g_return_val_if_fail (md->priv->info_data == NULL, FALSE);
 	g_return_val_if_fail (info_data != NULL, FALSE);
+
+	/* TODO: probably should refcount this */
 	md->priv->info_data = info_data;
 
 	/* get local file name */
 	tmp = g_path_get_basename (info_data->location);
-	len = strlen (tmp);
-	md->priv->filename_raw = g_build_filename (md->priv->local_path, tmp, NULL);
-
-	/* remove compression extension */
-	if (g_str_has_suffix (tmp, ".gz"))
-		tmp[len-3] = '\0';
-	else if (g_str_has_suffix (tmp, ".bz2"))
-		tmp[len-4] = '\0';
-	md->priv->filename = g_build_filename (md->priv->local_path, tmp, NULL);
-
+	zif_repo_md_set_base_filename (md, tmp);
 	g_free (tmp);
 	return TRUE;
 }
@@ -282,6 +289,8 @@ zif_repo_md_print (ZifRepoMd *md)
 
 	g_print ("id=%s\n", md->priv->id);
 	g_print ("cache_dir=%s\n", md->priv->cache_dir);
+	g_print ("filename_raw=%s\n", md->priv->filename_raw);
+	g_print ("filename=%s\n", md->priv->filename);
 	g_print ("local_path=%s\n", md->priv->local_path);
 //	g_print ("type: %s\n", zif_repo_md_type_to_text (i));
 	g_print (" location: %s\n", md->priv->info_data->location);
@@ -343,32 +352,6 @@ zif_repo_md_clean (ZifRepoMd *md, GError **error)
 }
 
 /**
- * zif_repo_md_refresh:
- * @md: the #ZifRepoMd object
- * @error: a #GError which is used on failure, or %NULL
- *
- * Refresh the metadata store.
- *
- * Return value: %TRUE for success, %FALSE for failure
- **/
-gboolean
-zif_repo_md_refresh (ZifRepoMd *md, GCancellable *cancellable, ZifCompletion *completion, GError **error)
-{
-	ZifRepoMdClass *klass = ZIF_REPO_MD_GET_CLASS (md);
-
-	g_return_val_if_fail (ZIF_IS_REPO_MD (md), FALSE);
-
-	/* no support */
-	if (klass->refresh == NULL) {
-		if (error != NULL)
-			*error = g_error_new (1, 0, "operation cannot be performed on this md");
-		return FALSE;
-	}
-
-	return klass->refresh (md, cancellable, completion, error);
-}
-
-/**
  * zif_repo_md_check:
  * @md: the #ZifRepoMd object
  * @error: a #GError which is used on failure, or %NULL
@@ -384,6 +367,7 @@ zif_repo_md_check (ZifRepoMd *md, GError **error)
 	GError *error_local = NULL;
 	gchar *data = NULL;
 	gchar *checksum = NULL;
+	gchar *filename = NULL;
 	const gchar *checksum_wanted = NULL;
 	gsize length;
 
@@ -403,7 +387,8 @@ zif_repo_md_check (ZifRepoMd *md, GError **error)
 	}
 
 	/* get contents */
-	ret = g_file_get_contents (md->priv->filename, &data, &length, &error_local);
+	filename = g_build_filename (md->priv->local_path, md->priv->filename, NULL);
+	ret = g_file_get_contents (filename, &data, &length, &error_local);
 	if (!ret) {
 		if (error != NULL)
 			*error = g_error_new (1, 0, "failed to get contents: %s", error_local->message);
@@ -424,6 +409,7 @@ zif_repo_md_check (ZifRepoMd *md, GError **error)
 			*error = g_error_new (1, 0, "checksum incorrect, wanted %s, got %s", checksum_wanted, checksum);
 	}
 out:
+	g_free (filename);
 	g_free (data);
 	g_free (checksum);
 	return ret;

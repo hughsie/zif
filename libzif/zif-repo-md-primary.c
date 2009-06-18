@@ -111,7 +111,9 @@ out:
 static gboolean
 zif_repo_md_primary_load (ZifRepoMd *md, GError **error)
 {
+	gchar *filename_full = NULL;
 	const gchar *filename;
+	const gchar *directory = NULL;
 	gint rc;
 	ZifRepoMdPrimary *primary = ZIF_REPO_MD_PRIMARY (md);
 
@@ -129,9 +131,12 @@ zif_repo_md_primary_load (ZifRepoMd *md, GError **error)
 		goto out;
 	}
 
+	directory = zif_repo_md_get_local_path (md);
+	filename_full = g_build_filename (directory, filename, NULL);
+
 	/* open database */
-	egg_debug ("filename = %s", filename);
-	rc = sqlite3_open (filename, &primary->priv->db);
+	egg_debug ("filename = %s", filename_full);
+	rc = sqlite3_open (filename_full, &primary->priv->db);
 	if (rc != 0) {
 		egg_warning ("Can't open database: %s\n", sqlite3_errmsg (primary->priv->db));
 		if (error != NULL)
@@ -143,6 +148,7 @@ zif_repo_md_primary_load (ZifRepoMd *md, GError **error)
 	sqlite3_exec (primary->priv->db, "PRAGMA synchronous=OFF", NULL, NULL, NULL);
 	primary->priv->loaded = TRUE;
 out:
+	g_free (filename_full);
 	return primary->priv->loaded;
 }
 

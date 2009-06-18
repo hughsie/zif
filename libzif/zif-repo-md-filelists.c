@@ -110,7 +110,9 @@ out:
 static gboolean
 zif_repo_md_filelists_load (ZifRepoMd *md, GError **error)
 {
+	gchar *filename_full = NULL;
 	const gchar *filename;
+	const gchar *directory = NULL;
 	gint rc;
 	ZifRepoMdFilelists *filelists = ZIF_REPO_MD_FILELISTS (md);
 
@@ -128,9 +130,12 @@ zif_repo_md_filelists_load (ZifRepoMd *md, GError **error)
 		goto out;
 	}
 
+	directory = zif_repo_md_get_local_path (md);
+	filename_full = g_build_filename (directory, filename, NULL);
+
 	/* open database */
-	egg_debug ("filename = %s", filename);
-	rc = sqlite3_open (filename, &filelists->priv->db);
+	egg_debug ("filename = %s", filename_full);
+	rc = sqlite3_open (filename_full, &filelists->priv->db);
 	if (rc != 0) {
 		egg_warning ("Can't open database: %s\n", sqlite3_errmsg (filelists->priv->db));
 		if (error != NULL)
@@ -142,6 +147,7 @@ zif_repo_md_filelists_load (ZifRepoMd *md, GError **error)
 	sqlite3_exec (filelists->priv->db, "PRAGMA synchronous=OFF", NULL, NULL, NULL);
 	filelists->priv->loaded = TRUE;
 out:
+	g_free (filename_full);
 	return filelists->priv->loaded;
 }
 
