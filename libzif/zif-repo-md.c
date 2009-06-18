@@ -19,6 +19,14 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+/**
+ * SECTION:zif-repo-md
+ * @short_description: Metadata file common functionality
+ *
+ * This provides an abstract metadata class.
+ * It is implemented by #ZifRepoMdFilelists, #ZifRepoMdMaster and #ZifRepoMdPrimary.
+ */
+
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
@@ -34,6 +42,11 @@
 
 #define ZIF_REPO_MD_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_REPO_MD, ZifRepoMdPrivate))
 
+/**
+ * ZifRepoMdPrivate:
+ *
+ * Private #ZifRepoMd data
+ **/
 struct _ZifRepoMdPrivate
 {
 	gboolean		 loaded;
@@ -49,6 +62,11 @@ G_DEFINE_TYPE (ZifRepoMd, zif_repo_md, G_TYPE_OBJECT)
 
 /**
  * zif_repo_md_type_to_text:
+ * @type: the #ZifRepoMdType
+ *
+ * Converts the #ZifRepoMdType type to text.
+ *
+ * Return value: the type as text, e.g. "filelists"
  **/
 const gchar *
 zif_repo_md_type_to_text (ZifRepoMdType type)
@@ -66,6 +84,11 @@ zif_repo_md_type_to_text (ZifRepoMdType type)
 
 /**
  * zif_repo_md_get_id:
+ * @md: the #ZifRepoMd object
+ *
+ * Gets the md identifier, usually the repo name.
+ *
+ * Return value: the repo id.
  **/
 const gchar *
 zif_repo_md_get_id (ZifRepoMd *md)
@@ -76,6 +99,11 @@ zif_repo_md_get_id (ZifRepoMd *md)
 
 /**
  * zif_repo_md_get_filename:
+ * @md: the #ZifRepoMd object
+ *
+ * Gets the uncompressed filename of the repo.
+ *
+ * Return value: the filename
  **/
 const gchar *
 zif_repo_md_get_filename (ZifRepoMd *md)
@@ -86,6 +114,11 @@ zif_repo_md_get_filename (ZifRepoMd *md)
 
 /**
  * zif_repo_md_get_filename_raw:
+ * @md: the #ZifRepoMd object
+ *
+ * Gets the compressed, original filename of the repo.
+ *
+ * Return value: the filename
  **/
 const gchar *
 zif_repo_md_get_filename_raw (ZifRepoMd *md)
@@ -96,6 +129,11 @@ zif_repo_md_get_filename_raw (ZifRepoMd *md)
 
 /**
  * zif_repo_md_get_local_path:
+ * @md: the #ZifRepoMd object
+ *
+ * Gets the local path for the repo.
+ *
+ * Return value: the local path, e.g. "/var/cache/yum/fedora-updates"
  **/
 const gchar *
 zif_repo_md_get_local_path (ZifRepoMd *md)
@@ -106,6 +144,11 @@ zif_repo_md_get_local_path (ZifRepoMd *md)
 
 /**
  * zif_repo_md_get_info_data:
+ * @md: the #ZifRepoMd object
+ *
+ * Gets the info data for this repository.
+ *
+ * Return value: the #ZifRepoMdInfoData
  **/
 const ZifRepoMdInfoData *
 zif_repo_md_get_info_data (ZifRepoMd *md)
@@ -116,6 +159,12 @@ zif_repo_md_get_info_data (ZifRepoMd *md)
 
 /**
  * zif_repo_md_set_cache_dir:
+ * @md: the #ZifRepoMd object
+ * @cache_dir: The cache directory, e.g. "/var/cache/yum"
+ *
+ * Sets the global temp cache directory.
+ *
+ * Return value: %TRUE for success, %FALSE for failure
  **/
 gboolean
 zif_repo_md_set_cache_dir (ZifRepoMd *md, const gchar *cache_dir)
@@ -137,8 +186,13 @@ out:
 
 /**
  * zif_repo_md_set_base_filename:
+ * @md: the #ZifRepoMd object
+ * @base_filename: the base filename, e.g. "master.xml"
  *
- * ONLY TO BE USED BY ZifRepoMdMaster
+ * Sets the base filename.
+ * This is ONLY TO BE USED BY #ZifRepoMdMaster
+ *
+ * Return value: %TRUE for success, %FALSE for failure
  **/
 gboolean
 zif_repo_md_set_base_filename (ZifRepoMd *md, const gchar *base_filename)
@@ -154,6 +208,12 @@ zif_repo_md_set_base_filename (ZifRepoMd *md, const gchar *base_filename)
 
 /**
  * zif_repo_md_set_id:
+ * @md: the #ZifRepoMd object
+ * @id: the repository id, e.g. "fedora"
+ *
+ * Sets the repository ID for this metadata.
+ *
+ * Return value: %TRUE for success, %FALSE for failure
  **/
 gboolean
 zif_repo_md_set_id (ZifRepoMd *md, const gchar *id)
@@ -170,6 +230,12 @@ zif_repo_md_set_id (ZifRepoMd *md, const gchar *id)
 
 /**
  * zif_repo_md_set_info_data:
+ * @md: the #ZifRepoMd object
+ * @info_data: The #ZifRepoMdInfoData for this module to use
+ *
+ * Sets the info data for the repository.
+ *
+ * Return value: %TRUE for success, %FALSE for failure
  **/
 gboolean
 zif_repo_md_set_info_data (ZifRepoMd *md, const ZifRepoMdInfoData *info_data)
@@ -200,6 +266,9 @@ zif_repo_md_set_info_data (ZifRepoMd *md, const ZifRepoMdInfoData *info_data)
 
 /**
  * zif_repo_md_print:
+ * @md: the #ZifRepoMd object
+ *
+ * Prints the metadata information.
  **/
 void
 zif_repo_md_print (ZifRepoMd *md)
@@ -223,6 +292,12 @@ zif_repo_md_print (ZifRepoMd *md)
 
 /**
  * zif_repo_md_load:
+ * @md: the #ZifRepoMd object
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Load the metadata store.
+ *
+ * Return value: %TRUE for success, %FALSE for failure
  **/
 gboolean
 zif_repo_md_load (ZifRepoMd *md, GError **error)
@@ -243,6 +318,12 @@ zif_repo_md_load (ZifRepoMd *md, GError **error)
 
 /**
  * zif_repo_md_clean:
+ * @md: the #ZifRepoMd object
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Clean the metadata store.
+ *
+ * Return value: %TRUE for success, %FALSE for failure
  **/
 gboolean
 zif_repo_md_clean (ZifRepoMd *md, GError **error)
@@ -263,6 +344,12 @@ zif_repo_md_clean (ZifRepoMd *md, GError **error)
 
 /**
  * zif_repo_md_check:
+ * @md: the #ZifRepoMd object
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Check the metadata store.
+ *
+ * Return value: %TRUE for success, %FALSE for failure
  **/
 gboolean
 zif_repo_md_check (ZifRepoMd *md, GError **error)
@@ -366,7 +453,8 @@ zif_repo_md_init (ZifRepoMd *md)
 
 /**
  * zif_repo_md_new:
- * Return value: A new repo_md class instance.
+ *
+ * Return value: A new #ZifRepoMd class instance.
  **/
 ZifRepoMd *
 zif_repo_md_new (void)

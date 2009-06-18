@@ -119,6 +119,7 @@ zif_depend_array_get_length (ZifDependArray *array)
 /**
  * zif_depend_array_get_value:
  * @array: the #ZifDependArray object
+ * @index: the position to retrieve
  *
  * Returns the depend stored in the #ZifDependArray at the index.
  * This value is only valid while the #ZifDependArray's reference count > 1.

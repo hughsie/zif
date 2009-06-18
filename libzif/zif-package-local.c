@@ -19,6 +19,13 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+/**
+ * SECTION:zif-package-local
+ * @short_description: Local package object
+ *
+ * This object is a subclass of #ZifPackage
+ */
+
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
@@ -42,6 +49,11 @@
 
 #define ZIF_PACKAGE_LOCAL_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_PACKAGE_LOCAL, ZifPackageLocalPrivate))
 
+/**
+ * ZifPackageLocalPrivate:
+ *
+ * Private #ZifPackageLocal data
+ **/
 struct _ZifPackageLocalPrivate
 {
 	ZifGroups		*groups;
@@ -238,6 +250,13 @@ zif_package_local_get_depends_from_name_flags_version (ZifStringArray *names, GP
 
 /**
  * zif_package_local_set_from_header:
+ * @pkg: the #ZifPackageLocal object
+ * @header: a rpm #Header structure
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Sets the local package from an RPM header object.
+ *
+ * Return value: %TRUE for success, %FALSE for failure
  **/
 gboolean
 zif_package_local_set_from_header (ZifPackageLocal *pkg, Header header, GError **error)
@@ -414,6 +433,13 @@ zif_package_local_set_from_header (ZifPackageLocal *pkg, Header header, GError *
 
 /**
  * zif_package_local_set_from_filename:
+ * @pkg: the #ZifPackageLocal object
+ * @filename: the local filename
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Sets a local package object from a local file.
+ *
+ * Return value: %TRUE for success, %FALSE for failure
  **/
 gboolean
 zif_package_local_set_from_filename (ZifPackageLocal *pkg, const gchar *filename, GError **error)
@@ -518,7 +544,8 @@ zif_package_local_init (ZifPackageLocal *pkg)
 
 /**
  * zif_package_local_new:
- * Return value: A new package_local class instance.
+ *
+ * Return value: A new #ZifPackageLocal class instance.
  **/
 ZifPackageLocal *
 zif_package_local_new (void)

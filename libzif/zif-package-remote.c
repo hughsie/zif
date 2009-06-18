@@ -19,6 +19,13 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+/**
+ * SECTION:zif-package-remote
+ * @short_description: Remote package object
+ *
+ * This object is a subclass of #ZifPackage
+ */
+
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
@@ -36,6 +43,11 @@
 
 #define ZIF_PACKAGE_REMOTE_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_PACKAGE_REMOTE, ZifPackageRemotePrivate))
 
+/**
+ * ZifPackageRemotePrivate:
+ *
+ * Private #ZifPackageRemote data
+ **/
 struct _ZifPackageRemotePrivate
 {
 	ZifGroups		*groups;
@@ -46,6 +58,16 @@ G_DEFINE_TYPE (ZifPackageRemote, zif_package_remote, ZIF_TYPE_PACKAGE)
 
 /**
  * zif_package_remote_set_from_repo:
+ * @pkg: the #ZifPackageRemote object
+ * @length: length of data and type arrays
+ * @type: data type array
+ * @data: data value array
+ * @repo_id: the repository id
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Sets details on a remote package from repo data derived from the metadata xml.
+ *
+ * Return value: %TRUE for success, %FALSE for failure
  **/
 gboolean
 zif_package_remote_set_from_repo (ZifPackageRemote *pkg, guint length, gchar **type, gchar **data, const gchar *repo_id, GError **error)
@@ -156,7 +178,8 @@ zif_package_remote_init (ZifPackageRemote *pkg)
 
 /**
  * zif_package_remote_new:
- * Return value: A new package_remote class instance.
+ *
+ * Return value: A new #ZifPackageRemote class instance.
  **/
 ZifPackageRemote *
 zif_package_remote_new (void)

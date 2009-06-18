@@ -31,6 +31,11 @@
 
 #define ZIF_GROUPS_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_GROUPS, ZifGroupsPrivate))
 
+/**
+ * ZifGroupsPrivate:
+ *
+ * Private #ZifGroups data
+ **/
 struct _ZifGroupsPrivate
 {
 	gboolean		 loaded;
@@ -46,6 +51,13 @@ static gpointer zif_groups_object = NULL;
 
 /**
  * zif_groups_set_mapping_file:
+ * @groups: the #ZifGroups object
+ * @mapping_file: mapping file from categories to groups
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * This sets up the file that is used to map categories to group enums.
+ *
+ * Return value: %TRUE for success, %FALSE for failure
  **/
 gboolean
 zif_groups_set_mapping_file (ZifGroups *groups, const gchar *mapping_file, GError **error)
@@ -82,6 +94,12 @@ out:
 
 /**
  * zif_groups_load:
+ * @groups: the #ZifGroups object
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Loads the mapping file from disk into memory.
+ *
+ * Return value: %TRUE for success, %FALSE for failure
  **/
 gboolean
 zif_groups_load (ZifGroups *groups, GError **error)
@@ -144,6 +162,12 @@ out:
 
 /**
  * zif_groups_get_groups:
+ * @groups: the #ZifGroups object
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Gets the groups supported by the packaging system.
+ *
+ * Return value: A #PkBitfield of the groups that are supported
  **/
 PkBitfield
 zif_groups_get_groups (ZifGroups *groups, GError **error)
@@ -169,6 +193,12 @@ out:
 
 /**
  * zif_groups_get_categories:
+ * @groups: the #ZifGroups object
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Gets the categories supported by the packaging system.
+ *
+ * Return value: category list as an array of strings
  **/
 GPtrArray *
 zif_groups_get_categories (ZifGroups *groups, GError **error)
@@ -200,6 +230,13 @@ out:
 
 /**
  * zif_groups_get_group_for_cat:
+ * @groups: the #ZifGroups object
+ * @cat: the category name, e.g. "games/action"
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Returns the group enumerated type for the category.
+ *
+ * Return value: the specific #PkGroupEnum or %PK_GROUP_ENUM_UNKNOWN
  **/
 PkGroupEnum
 zif_groups_get_group_for_cat (ZifGroups *groups, const gchar *cat, GError **error)
@@ -296,7 +333,8 @@ zif_groups_init (ZifGroups *groups)
 
 /**
  * zif_groups_new:
- * Return value: A new groups class instance.
+ *
+ * Return value: A new #ZifGroups class instance.
  **/
 ZifGroups *
 zif_groups_new (void)

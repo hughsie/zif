@@ -19,6 +19,14 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+/**
+ * SECTION:zif-repo-md-filelists
+ * @short_description: File list metadata functionality
+ *
+ * Provide access to the file list metadata.
+ * This object is a subclass of #ZifRepoMd
+ */
+
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
@@ -38,6 +46,11 @@
 
 #define ZIF_REPO_MD_FILELISTS_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_REPO_MD_FILELISTS, ZifRepoMdFilelistsPrivate))
 
+/**
+ * ZifRepoMdFilelistsPrivate:
+ *
+ * Private #ZifRepoMdFilelists data
+ **/
 struct _ZifRepoMdFilelistsPrivate
 {
 	gboolean		 loaded;
@@ -185,15 +198,14 @@ out:
 
 /**
  * zif_repo_md_filelists_search_file:
+ * @md: the #ZifRepoMdFilelists object
+ * @search: the full path that should be searched for
+ * @error: a #GError which is used on failure, or %NULL
  *
- * CREATE TABLE db_info (dbversion INTEGER, checksum TEXT);
- * INSERT INTO "db_info" VALUES(10,'34d42ab6240fbd8d5fd464fafea49c09f7acc93a');
- * CREATE TABLE packages (  pkgKey INTEGER PRIMARY KEY,  pkgId TEXT);
- * INSERT INTO "packages" VALUES(1,'1f2be47c69ac5f9a6de6b9b50762d48c867d654a');
- * CREATE TABLE filelist (  pkgKey INTEGER,  dirname TEXT,  filenames TEXT,  filetypes TEXT);
- * INSERT INTO "filelist" VALUES(1,'/usr/share/man/man1','metaflac.1.gz/flac.1.gz','ff');
+ * Gets a list of all packages that contain the file.
+ * Results are pkgId's descriptors, i.e. 64 bit hashes as test.
  *
- * Returns a string list of pkgId's
+ * Return value: a string list of pkgId's
  **/
 GPtrArray *
 zif_repo_md_filelists_search_file (ZifRepoMdFilelists *md, const gchar *search, GError **error)
@@ -328,7 +340,8 @@ zif_repo_md_filelists_init (ZifRepoMdFilelists *md)
 
 /**
  * zif_repo_md_filelists_new:
- * Return value: A new repo_md_filelists class instance.
+ *
+ * Return value: A new #ZifRepoMdFilelists class instance.
  **/
 ZifRepoMdFilelists *
 zif_repo_md_filelists_new (void)

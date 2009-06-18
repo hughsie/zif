@@ -139,6 +139,7 @@ zif_string_array_get_length (ZifStringArray *array)
 /**
  * zif_string_array_get_value:
  * @array: the #ZifStringArray object
+ * @index: the position to retrieve
  *
  * Returns the string stored in the #ZifStringArray at the index.
  * This value is only valid while the #ZifStringArray's reference count > 1.

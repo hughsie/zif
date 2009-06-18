@@ -19,6 +19,14 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+/**
+ * SECTION:zif-repo-md-primary
+ * @short_description: Primary metadata functionality
+ *
+ * Provide access to the primary repo metadata.
+ * This object is a subclass of #ZifRepoMd
+ */
+
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
@@ -39,6 +47,11 @@
 
 #define ZIF_REPO_MD_PRIMARY_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_REPO_MD_PRIMARY, ZifRepoMdPrimaryPrivate))
 
+/**
+ * ZifRepoMdPrimaryPrivate:
+ *
+ * Private #ZifRepoMdPrimary data
+ **/
 struct _ZifRepoMdPrimaryPrivate
 {
 	gboolean		 loaded;
@@ -200,6 +213,13 @@ out:
 
 /**
  * zif_repo_md_primary_resolve:
+ * @md: the #ZifRepoMdPrimary object
+ * @search: the search term, e.g. "gnome-power-manager"
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Finds all remote packages that match the name exactly.
+ *
+ * Return value: an array of #ZifPackageRemote's
  **/
 GPtrArray *
 zif_repo_md_primary_resolve (ZifRepoMdPrimary *md, const gchar *search, GError **error)
@@ -219,6 +239,13 @@ zif_repo_md_primary_resolve (ZifRepoMdPrimary *md, const gchar *search, GError *
 
 /**
  * zif_repo_md_primary_search_name:
+ * @md: the #ZifRepoMdPrimary object
+ * @search: the search term, e.g. "power"
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Finds all packages that match the name.
+ *
+ * Return value: an array of #ZifPackageRemote's
  **/
 GPtrArray *
 zif_repo_md_primary_search_name (ZifRepoMdPrimary *md, const gchar *search, GError **error)
@@ -238,6 +265,13 @@ zif_repo_md_primary_search_name (ZifRepoMdPrimary *md, const gchar *search, GErr
 
 /**
  * zif_repo_md_primary_search_details:
+ * @md: the #ZifRepoMdPrimary object
+ * @search: the search term, e.g. "advanced"
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Finds all packages that match the name or description.
+ *
+ * Return value: an array of #ZifPackageRemote's
  **/
 GPtrArray *
 zif_repo_md_primary_search_details (ZifRepoMdPrimary *md, const gchar *search, GError **error)
@@ -257,6 +291,13 @@ zif_repo_md_primary_search_details (ZifRepoMdPrimary *md, const gchar *search, G
 
 /**
  * zif_repo_md_primary_search_group:
+ * @md: the #ZifRepoMdPrimary object
+ * @search: the search term, e.g. "games/console"
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Finds all packages that match the group.
+ *
+ * Return value: an array of #ZifPackageRemote's
  **/
 GPtrArray *
 zif_repo_md_primary_search_group (ZifRepoMdPrimary *md, const gchar *search, GError **error)
@@ -276,6 +317,13 @@ zif_repo_md_primary_search_group (ZifRepoMdPrimary *md, const gchar *search, GEr
 
 /**
  * zif_repo_md_primary_search_pkgid:
+ * @md: the #ZifRepoMdPrimary object
+ * @search: the search term as a 64 bit hash
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Finds all packages that match the given pkgId.
+ *
+ * Return value: an array of #ZifPackageRemote's
  **/
 GPtrArray *
 zif_repo_md_primary_search_pkgid (ZifRepoMdPrimary *md, const gchar *search, GError **error)
@@ -295,6 +343,13 @@ zif_repo_md_primary_search_pkgid (ZifRepoMdPrimary *md, const gchar *search, GEr
 
 /**
  * zif_repo_md_primary_find_package:
+ * @md: the #ZifRepoMdPrimary object
+ * @id: the #PkPackageId to match
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Finds all packages that match #PkPackageId.
+ *
+ * Return value: an array of #ZifPackageRemote's
  **/
 GPtrArray *
 zif_repo_md_primary_find_package (ZifRepoMdPrimary *md, const PkPackageId *id, GError **error)
@@ -314,6 +369,12 @@ zif_repo_md_primary_find_package (ZifRepoMdPrimary *md, const PkPackageId *id, G
 
 /**
  * zif_repo_md_primary_get_packages:
+ * @md: the #ZifRepoMdPrimary object
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Returns all packages in the repo.
+ *
+ * Return value: an array of #ZifPackageRemote's
  **/
 GPtrArray *
 zif_repo_md_primary_get_packages (ZifRepoMdPrimary *md, GError **error)
@@ -373,7 +434,8 @@ zif_repo_md_primary_init (ZifRepoMdPrimary *md)
 
 /**
  * zif_repo_md_primary_new:
- * Return value: A new repo_md_primary class instance.
+ *
+ * Return value: A new #ZifRepoMdPrimary class instance.
  **/
 ZifRepoMdPrimary *
 zif_repo_md_primary_new (void)

@@ -19,6 +19,13 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+/**
+ * SECTION:zif-monitor
+ * @short_description: Generic object to monitor files for changes.
+ *
+ * This object is a trivial multiplexted wrapper around GIO.
+ */
+
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
@@ -37,6 +44,11 @@
 
 #define ZIF_MONITOR_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_MONITOR, ZifMonitorPrivate))
 
+/**
+ * ZifMonitorPrivate:
+ *
+ * Private #ZifMonitor data
+ **/
 struct _ZifMonitorPrivate
 {
 	GPtrArray		*array;
@@ -66,6 +78,14 @@ zif_monitor_file_monitor_cb (GFileMonitor *file_monitor, GFile *file, GFile *oth
 
 /**
  * zif_monitor_add_watch:
+ * @monitor: the #ZifMonitor object
+ * @filename: the full filename to watch
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Sets up a watch on the file, and reports the 'changed' signal when the
+ * file is changed.
+ *
+ * Return value: %TRUE for success, %FALSE for failure
  **/
 gboolean
 zif_monitor_add_watch (ZifMonitor *monitor, const gchar *filename, GError **error)
@@ -147,7 +167,8 @@ zif_monitor_init (ZifMonitor *monitor)
 
 /**
  * zif_monitor_new:
- * Return value: A new monitor class instance.
+ *
+ * Return value: A new #ZifMonitor class instance.
  **/
 ZifMonitor *
 zif_monitor_new (void)

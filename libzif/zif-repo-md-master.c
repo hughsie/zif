@@ -19,6 +19,14 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+/**
+ * SECTION:zif-repo-md-master
+ * @short_description: Master metadata functionality
+ *
+ * Provide access to the master repo metadata.
+ * This object is a subclass of #ZifRepoMd
+ */
+
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
@@ -43,6 +51,11 @@ typedef enum {
 	ZIF_REPO_MD_MASTER_PARSER_SECTION_UNKNOWN
 } ZifRepoMdMasterParserSection;
 
+/**
+ * ZifRepoMdMasterPrivate:
+ *
+ * Private #ZifRepoMdMaster data
+ **/
 struct _ZifRepoMdMasterPrivate
 {
 	gboolean		 loaded;
@@ -292,6 +305,13 @@ out:
 
 /**
  * zif_repo_md_master_get_info:
+ * @md: the #ZifRepoMdMaster object
+ * @type: A #ZifRepoMdType
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Gets the information about a repo, loading if not already loaded.
+ *
+ * Return value: a #ZifRepoMdInfoData object, do not unref.
  **/
 const ZifRepoMdInfoData *
 zif_repo_md_master_get_info (ZifRepoMdMaster *md, ZifRepoMdType type, GError **error)
@@ -319,6 +339,7 @@ zif_repo_md_master_get_info (ZifRepoMdMaster *md, ZifRepoMdType type, GError **e
 out:
 	return infodata;
 }
+
 #if 0
 /**
  * zif_repo_md_master_check:
@@ -457,7 +478,8 @@ zif_repo_md_master_init (ZifRepoMdMaster *md)
 
 /**
  * zif_repo_md_master_new:
- * Return value: A new repo_md_master class instance.
+ *
+ * Return value: A new #ZifRepoMdMaster class instance.
  **/
 ZifRepoMdMaster *
 zif_repo_md_master_new (void)
