@@ -98,6 +98,34 @@ zif_store_clean (ZifStore *store, GCancellable *cancellable, ZifCompletion *comp
 }
 
 /**
+ * zif_store_refresh:
+ * @store: the #ZifStore object
+ * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting, or %NULL
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * refresh the #ZifStore objects by downloading new data if required.
+ *
+ * Return value: %TRUE for success, %FALSE for failure
+ **/
+gboolean
+zif_store_refresh (ZifStore *store, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+{
+	ZifStoreClass *klass = ZIF_STORE_GET_CLASS (store);
+
+	g_return_val_if_fail (ZIF_IS_STORE (store), FALSE);
+
+	/* no support */
+	if (klass->refresh == NULL) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "operation cannot be performed on this store");
+		return FALSE;
+	}
+
+	return klass->refresh (store, cancellable, completion, error);
+}
+
+/**
  * zif_store_search_name:
  * @store: the #ZifStore object
  * @search: the search term, e.g. "power"

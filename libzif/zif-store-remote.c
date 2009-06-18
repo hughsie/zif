@@ -90,87 +90,17 @@ zif_store_remote_expand_vars (const gchar *name)
 }
 
 /**
- * zif_store_remote_refresh_cache:
- * @store: the #ZifStoreRemote object
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
- * @completion: a #ZifCompletion to use for progress reporting, or %NULL
- * @error: a #GError which is used on failure, or %NULL
- *
- * Refreshes the package cache
- *
- * Return value: %TRUE for success, %FALSE for failure
- **/
-gboolean
-zif_store_remote_refresh_cache (ZifStoreRemote *store, GCancellable *cancellable, ZifCompletion *completion, GError **error)
-{
-	gboolean ret = FALSE;
-	GError *error_local = NULL;
-	ZifCompletion *completion_local;
-
-	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), FALSE);
-	g_return_val_if_fail (store->priv->id != NULL, FALSE);
-
-	completion_local = zif_completion_new ();
-
-	/* setup completion with the correct number of steps */
-	if (completion != NULL) {
-		zif_completion_set_number_steps (completion, 3);
-		zif_completion_set_child (completion, completion_local);
-	}
-
-	/* master */
-	ret = zif_repo_md_refresh (store->priv->md_master, cancellable, completion_local, &error_local);
-	if (!ret) {
-		if (error != NULL)
-			*error = g_error_new (1, 0, "failed to refresh master: %s", error_local->message);
-		g_error_free (error_local);
-		goto out;
-	}
-
-	/* this section done */
-	if (completion != NULL)
-		zif_completion_done (completion);
-
-	/* primary */
-	ret = zif_repo_md_refresh (store->priv->md_primary, cancellable, completion_local, &error_local);
-	if (!ret) {
-		if (error != NULL)
-			*error = g_error_new (1, 0, "failed to refresh primary: %s", error_local->message);
-		g_error_free (error_local);
-		goto out;
-	}
-
-	/* this section done */
-	if (completion != NULL)
-		zif_completion_done (completion);
-
-	/* filelists */
-	ret = zif_repo_md_refresh (store->priv->md_filelists, cancellable, completion_local, &error_local);
-	if (!ret) {
-		if (error != NULL)
-			*error = g_error_new (1, 0, "failed to refresh filelists: %s", error_local->message);
-		g_error_free (error_local);
-		goto out;
-	}
-
-	/* this section done */
-	if (completion != NULL)
-		zif_completion_done (completion);
-out:
-	g_object_unref (completion_local);
-	return ret;
-}
-
-/**
  * zif_store_remote_download:
  * @store: the #ZifStoreRemote object
  * @filename: the completion filename to download, e.g. "Packages/hal-0.0.1.rpm"
- * @directory: the directory to put the downloaded file
+ * @directory: the directory to put the downloaded file, e.g. "/var/cache/zif"
  * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @completion: a #ZifCompletion to use for progress reporting, or %NULL
  * @error: a #GError which is used on failure, or %NULL
  *
  * Downloads a remote package to a local directory.
+ * NOTE: if @filename is "Packages/hal-0.0.1.rpm" and @directory is "/var/cache/zif"
+ * then the downloaded file will "/var/cache/zif/hal-0.0.1.rpm"
  *
  * Return value: %TRUE for success, %FALSE for failure
  **/
@@ -181,6 +111,8 @@ zif_store_remote_download (ZifStoreRemote *store, const gchar *filename, const g
 	gchar *uri = NULL;
 	GError *error_local = NULL;
 	ZifDownload *download = NULL;
+	gchar *filename_local = NULL;
+	gchar *basename = NULL;
 
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), FALSE);
 	g_return_val_if_fail (store->priv->id != NULL, FALSE);
@@ -198,8 +130,10 @@ zif_store_remote_download (ZifStoreRemote *store, const gchar *filename, const g
 	download = zif_download_new ();
 
 	/* download */
-	uri = g_strconcat (store->priv->baseurl, filename, NULL);
-	ret = zif_download_file (download, uri, "/tmp/moo.rpm", cancellable, completion, &error_local);
+	uri = g_build_filename (store->priv->baseurl, "repodata", filename, NULL);
+	basename = g_path_get_basename (filename);
+	filename_local = g_build_filename (directory, basename, NULL);
+	ret = zif_download_file (download, uri, filename_local, cancellable, completion, &error_local);
 	if (!ret) {
 		if (error != NULL)
 			*error = g_error_new (1, 0, "failed to download %s: %s", filename, error_local->message);
@@ -207,9 +141,98 @@ zif_store_remote_download (ZifStoreRemote *store, const gchar *filename, const g
 		goto out;
 	}
 out:
+	g_free (basename);
+	g_free (filename_local);
 	g_free (uri);
 	if (download != NULL)
 		g_object_unref (download);
+	return ret;
+}
+
+/**
+ * zif_store_remote_refresh:
+ **/
+static gboolean
+zif_store_remote_refresh (ZifStore *store, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+{
+	gboolean ret = FALSE;
+	GError *error_local = NULL;
+	const gchar *filename;
+	const gchar *directory;
+	ZifCompletion *completion_local;
+	ZifStoreRemote *remote = ZIF_STORE_REMOTE (store);
+
+	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), FALSE);
+	g_return_val_if_fail (remote->priv->id != NULL, FALSE);
+
+	completion_local = zif_completion_new ();
+
+	/* setup completion with the correct number of steps */
+	if (completion != NULL) {
+		zif_completion_set_number_steps (completion, 3);
+		zif_completion_set_child (completion, completion_local);
+	}
+
+	/* master */
+	filename = zif_repo_md_get_filename_raw (remote->priv->md_master);
+	directory = zif_repo_md_get_local_path (remote->priv->md_master);
+
+	/* download new file */
+	egg_debug ("filename=%s, directory=%s", filename, directory);
+	ret = zif_store_remote_download (ZIF_STORE_REMOTE (store), filename, directory, cancellable, completion_local, &error_local);
+	if (!ret) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "failed to download master: %s", error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* this section done */
+	if (completion != NULL)
+		zif_completion_done (completion);
+
+	/* reload */
+	ret = zif_repo_md_load (remote->priv->md_master, &error_local);
+	if (!ret) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "failed to load updated metadata: %s", error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* this section done */
+	if (completion != NULL)
+		zif_completion_done (completion);
+#if 0
+	/* primary */
+	ret = zif_repo_md_refresh (remote->priv->md_primary, cancellable, completion_local, &error_local);
+	if (!ret) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "failed to refresh primary: %s", error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* this section done */
+	if (completion != NULL)
+		zif_completion_done (completion);
+
+	/* filelists */
+	ret = zif_repo_md_refresh (remote->priv->md_filelists, cancellable, completion_local, &error_local);
+	if (!ret) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "failed to refresh filelists: %s", error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* this section done */
+	if (completion != NULL)
+		zif_completion_done (completion);
+#endif
+
+out:
+	g_object_unref (completion_local);
 	return ret;
 }
 
@@ -336,16 +359,6 @@ zif_store_remote_load (ZifStore *store, GCancellable *cancellable, ZifCompletion
 			*error = g_error_new (1, 0, "failed to set id: %s", remote->priv->id);
 		goto out;
 	}
-
-	/* set info */
-	info_data = zif_repo_md_master_get_info	(ZIF_REPO_MD_MASTER (remote->priv->md_master), ZIF_REPO_MD_TYPE_PRIMARY, &error_local);
-	if (info_data == NULL) {
-		if (error != NULL)
-			*error = g_error_new (1, 0, "failed to get primary md info: %s", error_local->message);
-		ret = FALSE;
-		goto out;
-	}
-	zif_repo_md_set_info_data (remote->priv->md_master, info_data);
 
 	/* don't load metadata for a disabled store */
 	if (remote->priv->enabled) {
@@ -1056,6 +1069,7 @@ zif_store_remote_class_init (ZifStoreRemoteClass *klass)
 	/* map */
 	store_class->load = zif_store_remote_load;
 	store_class->clean = zif_store_remote_clean;
+	store_class->refresh = zif_store_remote_refresh;
 	store_class->search_name = zif_store_remote_search_name;
 //	store_class->search_category = zif_store_remote_search_category;
 	store_class->search_details = zif_store_remote_search_details;

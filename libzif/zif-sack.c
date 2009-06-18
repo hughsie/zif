@@ -343,7 +343,6 @@ zif_sack_clean (ZifSack *sack, GCancellable *cancellable, ZifCompletion *complet
 
 	g_return_val_if_fail (ZIF_IS_SACK (sack), FALSE);
 
-
 	/* clean each store */
 	stores = sack->priv->array;
 
@@ -362,6 +361,58 @@ zif_sack_clean (ZifSack *sack, GCancellable *cancellable, ZifCompletion *complet
 		if (!ret) {
 			if (error != NULL)
 				*error = g_error_new (1, 0, "failed to clean %s: %s", zif_store_get_id (store), error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+
+		/* this section done */
+		if (completion != NULL)
+			zif_completion_done (completion);
+	}
+out:
+	return ret;
+}
+
+/**
+ * zif_sack_refresh:
+ * @sack: the #ZifSack object
+ * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting, or %NULL
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Refreshs the #ZifStoreRemote objects by downloading new data
+ *
+ * Return value: %TRUE for success, %FALSE for failure
+ **/
+gboolean
+zif_sack_refresh (ZifSack *sack, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+{
+	guint i;
+	GPtrArray *stores;
+	ZifStore *store;
+	gboolean ret = TRUE;
+	GError *error_local = NULL;
+
+	g_return_val_if_fail (ZIF_IS_SACK (sack), FALSE);
+
+	/* refresh each store */
+	stores = sack->priv->array;
+
+	/* create a chain of completions */
+	if (completion != NULL) {
+		zif_completion_set_child (completion, sack->priv->completion_local);
+		zif_completion_set_number_steps (completion, stores->len);
+	}
+
+	/* do each one */
+	for (i=0; i<stores->len; i++) {
+		store = g_ptr_array_index (stores, i);
+
+		/* refresh this one */
+		ret = zif_store_refresh (store, cancellable, sack->priv->completion_local, &error_local);
+		if (!ret) {
+			if (error != NULL)
+				*error = g_error_new (1, 0, "failed to refresh %s: %s", zif_store_get_id (store), error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}

@@ -76,6 +76,10 @@ gboolean	 zif_sack_clean			(ZifSack		*sack,
 						 GCancellable		*cancellable,
 						 ZifCompletion		*completion,
 						 GError			**error);
+gboolean	 zif_sack_refresh		(ZifSack		*sack,
+						 GCancellable		*cancellable,
+						 ZifCompletion		*completion,
+						 GError			**error);
 GPtrArray	*zif_sack_resolve		(ZifSack		*sack,
 						 const gchar		*search,
 						 GCancellable		*cancellable,

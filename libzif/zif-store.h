@@ -64,6 +64,10 @@ struct _ZifStoreClass
 						 GCancellable		*cancellable,
 						 ZifCompletion		*completion,
 						 GError			**error);
+	gboolean	 (*refresh)		(ZifStore		*store,
+						 GCancellable		*cancellable,
+						 ZifCompletion		*completion,
+						 GError			**error);
 	GPtrArray	*(*search_name)		(ZifStore		*store,
 						 const gchar		*search,
 						 GCancellable		*cancellable,
@@ -123,6 +127,10 @@ gboolean	 zif_store_load			(ZifStore		*store,
 						 ZifCompletion		*completion,
 						 GError			**error);
 gboolean	 zif_store_clean		(ZifStore		*store,
+						 GCancellable		*cancellable,
+						 ZifCompletion		*completion,
+						 GError			**error);
+gboolean	 zif_store_refresh		(ZifStore		*store,
 						 GCancellable		*cancellable,
 						 ZifCompletion		*completion,
 						 GError			**error);
