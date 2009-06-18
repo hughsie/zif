@@ -74,6 +74,8 @@ zif_repo_md_primary_clean (ZifRepoMd *md, GError **error)
 	gboolean ret = FALSE;
 	gboolean exists;
 	const gchar *filename;
+	const gchar *directory = NULL;
+	gchar *filename_full = NULL;
 	GFile *file;
 	GError *error_local = NULL;
 
@@ -85,10 +87,13 @@ zif_repo_md_primary_clean (ZifRepoMd *md, GError **error)
 		goto out;
 	}
 
+	directory = zif_repo_md_get_local_path (md);
+	filename_full = g_build_filename (directory, filename, NULL);
+
 	/* file does not exist */
-	exists = g_file_test (filename, G_FILE_TEST_EXISTS);
+	exists = g_file_test (filename_full, G_FILE_TEST_EXISTS);
 	if (exists) {
-		file = g_file_new_for_path (filename);
+		file = g_file_new_for_path (filename_full);
 		ret = g_file_delete (file, NULL, &error_local);
 		g_object_unref (file);
 		if (!ret) {
@@ -102,6 +107,7 @@ zif_repo_md_primary_clean (ZifRepoMd *md, GError **error)
 	/* okay */
 	ret = TRUE;
 out:
+	g_free (filename_full);
 	return ret;
 }
 
