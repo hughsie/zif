@@ -27,8 +27,10 @@
 #define __ZIF_REPO_MD_H
 
 #include <glib-object.h>
+#include <gio/gio.h>
 
 #include "zif-repo-md.h"
+#include "zif-completion.h"
 
 G_BEGIN_DECLS
 
@@ -56,6 +58,10 @@ struct _ZifRepoMdClass
 	gboolean	 (*load)		(ZifRepoMd		*md,
 						 GError			**error);
 	gboolean	 (*clean)		(ZifRepoMd		*md,
+						 GError			**error);
+	gboolean	 (*refresh)		(ZifRepoMd		*md,
+						 GCancellable		*cancellable,
+						 ZifCompletion		*completion,
 						 GError			**error);
 };
 
@@ -110,6 +116,8 @@ gboolean	 zif_repo_md_clean		(ZifRepoMd	*md,
 gboolean	 zif_repo_md_check		(ZifRepoMd	*md,
 						 GError		**error);
 gboolean	 zif_repo_md_refresh		(ZifRepoMd	*md,
+						 GCancellable	*cancellable,
+						 ZifCompletion	*completion,
 						 GError		**error);
 guint		 zif_repo_md_get_age		(ZifRepoMd	*md,
 						 GError		**error);

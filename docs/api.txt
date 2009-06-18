@@ -66,6 +66,15 @@
 |
 \------------------------------------------------------------
 
+/[Repos]------------------------------------------------------
+|
+| [StoreRemote1]
+| [StoreRemote2]
+| [StoreRemote3]
+|
+\------------------------------------------------------------
+
+
 * Rule 1. [Packages] are held in a [Store]
 * Rule 2. [Stores] are held in a [Sack]
 * Rule 3. You query a sack, not a store unless optimised

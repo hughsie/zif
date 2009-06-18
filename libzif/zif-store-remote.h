@@ -77,6 +77,10 @@ gboolean	 zif_store_remote_download		(ZifStoreRemote		*store,
 							 GCancellable		*cancellable,
 							 ZifCompletion		*completion,
 							 GError			**error);
+gboolean	 zif_store_remote_refresh_cache		(ZifStoreRemote		*store,
+							 GCancellable		*cancellable,
+							 ZifCompletion		*completion,
+							 GError			**error);
 
 G_END_DECLS
 

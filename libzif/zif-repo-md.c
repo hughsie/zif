@@ -343,6 +343,32 @@ zif_repo_md_clean (ZifRepoMd *md, GError **error)
 }
 
 /**
+ * zif_repo_md_refresh:
+ * @md: the #ZifRepoMd object
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Refresh the metadata store.
+ *
+ * Return value: %TRUE for success, %FALSE for failure
+ **/
+gboolean
+zif_repo_md_refresh (ZifRepoMd *md, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+{
+	ZifRepoMdClass *klass = ZIF_REPO_MD_GET_CLASS (md);
+
+	g_return_val_if_fail (ZIF_IS_REPO_MD (md), FALSE);
+
+	/* no support */
+	if (klass->refresh == NULL) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "operation cannot be performed on this md");
+		return FALSE;
+	}
+
+	return klass->refresh (md, cancellable, completion, error);
+}
+
+/**
  * zif_repo_md_check:
  * @md: the #ZifRepoMd object
  * @error: a #GError which is used on failure, or %NULL
