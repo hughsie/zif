@@ -63,11 +63,12 @@ G_DEFINE_TYPE (ZifDownload, zif_download, G_TYPE_OBJECT)
 static void
 zif_download_file_got_chunk_cb (SoupMessage *msg, SoupBuffer *chunk, ZifDownload *download)
 {
-	guint percentage;
+	guint percentage = 0;
 	guint length;
 
 	length = soup_message_headers_get_content_length (msg->response_headers);
-	percentage = (100 * msg->response_body->length) / length;
+	if (length > 0)
+		percentage = (100 * msg->response_body->length) / length;
 
 	if (download->priv->completion != NULL)
 		zif_completion_set_percentage (download->priv->completion, percentage);
