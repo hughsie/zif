@@ -24,7 +24,6 @@
 #endif
 
 #include <glib.h>
-#include <libsoup/soup.h>
 
 #include "zif-completion.h"
 
