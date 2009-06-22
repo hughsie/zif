@@ -56,7 +56,6 @@ main (int argc, char **argv)
 
 	/* tests go here */
 	zif_completion_test (test);
-	zif_repo_md_master_test (test);
 	zif_repo_md_filelists_test (test);
 	zif_repo_md_primary_test (test);
 	zif_string_test (test);

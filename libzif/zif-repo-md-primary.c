@@ -38,7 +38,6 @@
 #include <gio/gio.h>
 
 #include "zif-repo-md.h"
-#include "zif-repo-md-master.h"
 #include "zif-repo-md-primary.h"
 #include "zif-package-remote.h"
 
@@ -74,8 +73,6 @@ zif_repo_md_primary_clean (ZifRepoMd *md, GError **error)
 	gboolean ret = FALSE;
 	gboolean exists;
 	const gchar *filename;
-	const gchar *directory = NULL;
-	gchar *filename_full = NULL;
 	GFile *file;
 	GError *error_local = NULL;
 
@@ -87,13 +84,10 @@ zif_repo_md_primary_clean (ZifRepoMd *md, GError **error)
 		goto out;
 	}
 
-	directory = zif_repo_md_get_local_path (md);
-	filename_full = g_build_filename (directory, filename, NULL);
-
 	/* file does not exist */
-	exists = g_file_test (filename_full, G_FILE_TEST_EXISTS);
+	exists = g_file_test (filename, G_FILE_TEST_EXISTS);
 	if (exists) {
-		file = g_file_new_for_path (filename_full);
+		file = g_file_new_for_path (filename);
 		ret = g_file_delete (file, NULL, &error_local);
 		g_object_unref (file);
 		if (!ret) {
@@ -107,7 +101,6 @@ zif_repo_md_primary_clean (ZifRepoMd *md, GError **error)
 	/* okay */
 	ret = TRUE;
 out:
-	g_free (filename_full);
 	return ret;
 }
 
@@ -117,9 +110,7 @@ out:
 static gboolean
 zif_repo_md_primary_load (ZifRepoMd *md, GError **error)
 {
-	gchar *filename_full = NULL;
 	const gchar *filename;
-	const gchar *directory = NULL;
 	gint rc;
 	ZifRepoMdPrimary *primary = ZIF_REPO_MD_PRIMARY (md);
 
@@ -137,12 +128,9 @@ zif_repo_md_primary_load (ZifRepoMd *md, GError **error)
 		goto out;
 	}
 
-	directory = zif_repo_md_get_local_path (md);
-	filename_full = g_build_filename (directory, filename, NULL);
-
 	/* open database */
-	egg_debug ("filename = %s", filename_full);
-	rc = sqlite3_open (filename_full, &primary->priv->db);
+	egg_debug ("filename = %s", filename);
+	rc = sqlite3_open (filename, &primary->priv->db);
 	if (rc != 0) {
 		egg_warning ("Can't open database: %s\n", sqlite3_errmsg (primary->priv->db));
 		if (error != NULL)
@@ -154,7 +142,6 @@ zif_repo_md_primary_load (ZifRepoMd *md, GError **error)
 	sqlite3_exec (primary->priv->db, "PRAGMA synchronous=OFF", NULL, NULL, NULL);
 	primary->priv->loaded = TRUE;
 out:
-	g_free (filename_full);
 	return primary->priv->loaded;
 }
 
@@ -466,14 +453,12 @@ zif_repo_md_primary_new (void)
 void
 zif_repo_md_primary_test (EggTest *test)
 {
-	ZifRepoMdMaster *master;
 	ZifRepoMdPrimary *md;
 	gboolean ret;
 	GError *error = NULL;
 	GPtrArray *array;
 	ZifPackage *package;
 	ZifString *summary;
-	const ZifRepoMdInfoData *info_data;
 
 	if (!egg_test_start (test, "ZifRepoMdPrimary"))
 		return;
@@ -482,14 +467,6 @@ zif_repo_md_primary_test (EggTest *test)
 	egg_test_title (test, "get repo_md_primary md");
 	md = zif_repo_md_primary_new ();
 	egg_test_assert (test, md != NULL);
-
-	/************************************************************/
-	egg_test_title (test, "set cache dir");
-	ret = zif_repo_md_set_cache_dir (ZIF_REPO_MD (md), "../test/cache");
-	if (ret)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "failed to set");
 
 	/************************************************************/
 	egg_test_title (test, "loaded");
@@ -503,12 +480,13 @@ zif_repo_md_primary_test (EggTest *test)
 	else
 		egg_test_failed (test, "failed to set");
 
-	/* set all the data so we can load this */
-	master = zif_repo_md_master_new ();
-	zif_repo_md_set_cache_dir (ZIF_REPO_MD (master), "../test/cache");
-	zif_repo_md_set_id (ZIF_REPO_MD (master), "fedora");
-	info_data = zif_repo_md_master_get_info (master, ZIF_REPO_MD_TYPE_PRIMARY, NULL);
-	zif_repo_md_set_info_data (ZIF_REPO_MD (md), info_data);
+	/************************************************************/
+	egg_test_title (test, "set filename");
+	ret = zif_repo_md_set_filename (ZIF_REPO_MD (md), "../test/cache/fedora/35d817e2bac701525fa72cec57387a2e3457bf32642adeee1e345cc180044c86-primary.sqlite");
+	if (ret)
+		egg_test_success (test, NULL);
+	else
+		egg_test_failed (test, "failed to set");
 
 	/************************************************************/
 	egg_test_title (test, "load");
@@ -548,7 +526,6 @@ zif_repo_md_primary_test (EggTest *test)
 	g_ptr_array_free (array, TRUE);
 
 	g_object_unref (md);
-	g_object_unref (master);
 
 	egg_test_end (test);
 }

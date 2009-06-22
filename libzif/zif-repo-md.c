@@ -51,36 +51,10 @@ struct _ZifRepoMdPrivate
 {
 	gboolean		 loaded;
 	gchar			*id;		/* fedora */
-	gchar			*cache_dir;	/* /var/cache/yum */
-	gchar			*local_path;	/* /var/cache/yum/fedora */
-	gchar			*filename;	/* /var/cache/yum/fedora/repo.sqlite */
-	gchar			*filename_raw;	/* /var/cache/yum/fedora/repo.sqlite.bz2 */
-	const ZifRepoMdInfoData	*info_data;
+	gchar			*filename;	/* /var/cache/yum/fedora/repo.sqlite.bz2 */
 };
 
 G_DEFINE_TYPE (ZifRepoMd, zif_repo_md, G_TYPE_OBJECT)
-
-/**
- * zif_repo_md_type_to_text:
- * @type: the #ZifRepoMdType
- *
- * Converts the #ZifRepoMdType type to text.
- *
- * Return value: the type as text, e.g. "filelists"
- **/
-const gchar *
-zif_repo_md_type_to_text (ZifRepoMdType type)
-{
-	if (type == ZIF_REPO_MD_TYPE_FILELISTS)
-		return "filelists";
-	if (type == ZIF_REPO_MD_TYPE_PRIMARY)
-		return "primary";
-	if (type == ZIF_REPO_MD_TYPE_OTHER)
-		return "other";
-	if (type == ZIF_REPO_MD_TYPE_COMPS)
-		return "comps";
-	return "unknown";
-}
 
 /**
  * zif_repo_md_get_id:
@@ -113,101 +87,28 @@ zif_repo_md_get_filename (ZifRepoMd *md)
 }
 
 /**
- * zif_repo_md_get_filename_raw:
+ * zif_repo_md_set_filename:
  * @md: the #ZifRepoMd object
+ * @filename: the base filename, e.g. "master.xml"
  *
- * Gets the compressed, original filename of the repo.
- *
- * Return value: the filename
- **/
-const gchar *
-zif_repo_md_get_filename_raw (ZifRepoMd *md)
-{
-	g_return_val_if_fail (ZIF_IS_REPO_MD (md), NULL);
-	return md->priv->filename_raw;
-}
-
-/**
- * zif_repo_md_get_local_path:
- * @md: the #ZifRepoMd object
- *
- * Gets the local path for the repo.
- *
- * Return value: the local path, e.g. "/var/cache/yum/fedora-updates"
- **/
-const gchar *
-zif_repo_md_get_local_path (ZifRepoMd *md)
-{
-	g_return_val_if_fail (ZIF_IS_REPO_MD (md), NULL);
-	return md->priv->local_path;
-}
-
-/**
- * zif_repo_md_get_info_data:
- * @md: the #ZifRepoMd object
- *
- * Gets the info data for this repository.
- *
- * Return value: the #ZifRepoMdInfoData
- **/
-const ZifRepoMdInfoData *
-zif_repo_md_get_info_data (ZifRepoMd *md)
-{
-	g_return_val_if_fail (ZIF_IS_REPO_MD (md), NULL);
-	return md->priv->info_data;
-}
-
-/**
- * zif_repo_md_set_cache_dir:
- * @md: the #ZifRepoMd object
- * @cache_dir: The cache directory, e.g. "/var/cache/yum"
- *
- * Sets the global temp cache directory.
+ * Sets the filename of the uncompressed file.
  *
  * Return value: %TRUE for success, %FALSE for failure
  **/
 gboolean
-zif_repo_md_set_cache_dir (ZifRepoMd *md, const gchar *cache_dir)
+zif_repo_md_set_filename (ZifRepoMd *md, const gchar *filename)
 {
-	gboolean ret;
+//	guint len;
+//	gchar *tmp;
 
 	g_return_val_if_fail (ZIF_IS_REPO_MD (md), FALSE);
-	g_return_val_if_fail (md->priv->cache_dir == NULL, FALSE);
-	g_return_val_if_fail (cache_dir != NULL, FALSE);
-
-	/* check directory exists */
-	ret = g_file_test (cache_dir, G_FILE_TEST_IS_DIR);
-	if (!ret)
-		goto out;
-	md->priv->cache_dir = g_strdup (cache_dir);
-out:
-	return ret;
-}
-
-/**
- * zif_repo_md_set_base_filename:
- * @md: the #ZifRepoMd object
- * @base_filename: the base filename, e.g. "master.xml"
- *
- * Sets the base filename.
- * This is ONLY TO BE USED BY #ZifRepoMdMaster
- *
- * Return value: %TRUE for success, %FALSE for failure
- **/
-gboolean
-zif_repo_md_set_base_filename (ZifRepoMd *md, const gchar *base_filename)
-{
-	guint len;
-	gchar *tmp;
-
-	g_return_val_if_fail (ZIF_IS_REPO_MD (md), FALSE);
-	g_return_val_if_fail (md->priv->cache_dir != NULL, FALSE);
 	g_return_val_if_fail (md->priv->filename == NULL, FALSE);
-	g_return_val_if_fail (base_filename != NULL, FALSE);
+	g_return_val_if_fail (filename != NULL, FALSE);
 
 	/* this is the uncompressed name */
-	md->priv->filename_raw = g_strdup (base_filename);
+	md->priv->filename = g_strdup (filename);
 
+#if 0
 	/* remove compression extension */
 	tmp = g_strdup (base_filename);
 	len = strlen (tmp);
@@ -217,6 +118,7 @@ zif_repo_md_set_base_filename (ZifRepoMd *md, const gchar *base_filename)
 		tmp[len-4] = '\0';
 	md->priv->filename = g_strdup (tmp);
 	g_free (tmp);
+#endif
 
 	return TRUE;
 }
@@ -234,69 +136,11 @@ gboolean
 zif_repo_md_set_id (ZifRepoMd *md, const gchar *id)
 {
 	g_return_val_if_fail (ZIF_IS_REPO_MD (md), FALSE);
-	g_return_val_if_fail (md->priv->cache_dir != NULL, FALSE);
 	g_return_val_if_fail (md->priv->id == NULL, FALSE);
 	g_return_val_if_fail (id != NULL, FALSE);
 
 	md->priv->id = g_strdup (id);
-	md->priv->local_path = g_build_filename (md->priv->cache_dir, id, NULL);
 	return TRUE;
-}
-
-/**
- * zif_repo_md_set_info_data:
- * @md: the #ZifRepoMd object
- * @info_data: The #ZifRepoMdInfoData for this module to use
- *
- * Sets the info data for the repository.
- *
- * Return value: %TRUE for success, %FALSE for failure
- **/
-gboolean
-zif_repo_md_set_info_data (ZifRepoMd *md, const ZifRepoMdInfoData *info_data)
-{
-	gchar *tmp;
-
-	g_return_val_if_fail (ZIF_IS_REPO_MD (md), FALSE);
-	g_return_val_if_fail (md->priv->info_data == NULL, FALSE);
-	g_return_val_if_fail (info_data != NULL, FALSE);
-
-	/* TODO: probably should refcount this */
-	md->priv->info_data = info_data;
-
-	/* get local file name */
-	tmp = g_path_get_basename (info_data->location);
-	zif_repo_md_set_base_filename (md, tmp);
-	g_free (tmp);
-	return TRUE;
-}
-
-/**
- * zif_repo_md_print:
- * @md: the #ZifRepoMd object
- *
- * Prints the metadata information.
- **/
-void
-zif_repo_md_print (ZifRepoMd *md)
-{
-	g_return_if_fail (ZIF_IS_REPO_MD (md));
-	g_return_if_fail (md->priv->id != NULL);
-
-	/* if not already loaded, load */
-	if (!md->priv->loaded)
-		return;
-
-	g_print ("id=%s\n", md->priv->id);
-	g_print ("cache_dir=%s\n", md->priv->cache_dir);
-	g_print ("filename_raw=%s\n", md->priv->filename_raw);
-	g_print ("filename=%s\n", md->priv->filename);
-	g_print ("local_path=%s\n", md->priv->local_path);
-//	g_print ("type: %s\n", zif_repo_md_type_to_text (i));
-	g_print (" location: %s\n", md->priv->info_data->location);
-	g_print (" checksum: %s\n", md->priv->info_data->checksum);
-	g_print (" checksum_open: %s\n", md->priv->info_data->checksum_open);
-	g_print (" timestamp: %i\n", md->priv->info_data->timestamp);
 }
 
 /**
@@ -351,6 +195,7 @@ zif_repo_md_clean (ZifRepoMd *md, GError **error)
 	return klass->clean (md, error);
 }
 
+#if 0
 /**
  * zif_repo_md_check:
  * @md: the #ZifRepoMd object
@@ -414,6 +259,7 @@ out:
 	g_free (checksum);
 	return ret;
 }
+#endif
 
 /**
  * zif_repo_md_finalize:
@@ -428,10 +274,7 @@ zif_repo_md_finalize (GObject *object)
 	md = ZIF_REPO_MD (object);
 
 	g_free (md->priv->id);
-	g_free (md->priv->cache_dir);
-	g_free (md->priv->local_path);
 	g_free (md->priv->filename);
-	g_free (md->priv->filename_raw);
 
 	G_OBJECT_CLASS (zif_repo_md_parent_class)->finalize (object);
 }
@@ -456,11 +299,7 @@ zif_repo_md_init (ZifRepoMd *md)
 	md->priv = ZIF_REPO_MD_GET_PRIVATE (md);
 	md->priv->loaded = FALSE;
 	md->priv->id = NULL;
-	md->priv->info_data = NULL;
-	md->priv->cache_dir = NULL;
-	md->priv->local_path = NULL;
 	md->priv->filename = NULL;
-	md->priv->filename_raw = NULL;
 }
 
 /**
@@ -487,7 +326,6 @@ zif_repo_md_test (EggTest *test)
 {
 	ZifRepoMd *md;
 	gboolean ret;
-//	gchar *text;
 	GError *error = NULL;
 
 	if (!egg_test_start (test, "ZifRepoMd"))
@@ -497,14 +335,6 @@ zif_repo_md_test (EggTest *test)
 	egg_test_title (test, "get store_remote md");
 	md = zif_repo_md_new ();
 	egg_test_assert (test, md != NULL);
-
-	/************************************************************/
-	egg_test_title (test, "set cache dir");
-	ret = zif_repo_md_set_cache_dir (md, "./test/cache");
-	if (ret)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "failed to set");
 
 	/************************************************************/
 	egg_test_title (test, "loaded");
@@ -529,14 +359,6 @@ zif_repo_md_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "loaded");
 	egg_test_assert (test, md->priv->loaded);
-
-	/************************************************************/
-	egg_test_title (test, "check");
-	ret = zif_repo_md_check (md, &error);
-	if (ret)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "failed to check '%s'", error->message);
 
 	g_object_unref (md);
 
