@@ -108,6 +108,19 @@ AC_SUBST(SOUP_CFLAGS)
 AC_SUBST(SOUP_LIBS)
 
 dnl ---------------------------------------------------------------------------
+dnl - libarchive
+dnl ---------------------------------------------------------------------------
+AC_CHECK_HEADERS(archive.h,
+		 HAVE_ARCHIVE_H="yes",
+		 HAVE_ARCHIVE_H="no")
+if test "x$HAVE_ARCHIVE_H" = "xyes"; then
+	ARCHIVE_LIBS=-larchive
+	AC_SUBST(ARCHIVE_LIBS)
+else
+	AC_MSG_ERROR([Cannot find archive.h])
+fi
+
+dnl ---------------------------------------------------------------------------
 dnl - Make paths available for source files
 dnl ---------------------------------------------------------------------------
 AC_SUBST(SYSCONFDIR, $sysconfdir)

@@ -4,6 +4,7 @@ INCLUDES = \
 	$(PACKAGEKIT_CFLAGS)					\
 	$(RPM_CFLAGS)						\
 	$(SOUP_CFLAGS)						\
+	$(ARCHIVE_CFLAGS)					\
 	-I$(top_srcdir)/libzif					\
 	-I$(top_builddir)/libzif				\
 	-I.							\
@@ -103,6 +104,7 @@ libzif_la_LIBADD =						\
 	$(PACKAGEKIT_LIBS)					\
 	$(RPM_LIBS)						\
 	$(SOUP_LIBS)						\
+	$(ARCHIVE_LIBS)						\
 	$(NULL)
 
 libzif_la_LDFLAGS =						\
@@ -131,6 +133,7 @@ zif_self_test_LDADD =						\
 	$(PACKAGEKIT_LIBS)					\
 	$(RPM_LIBS)						\
 	$(SOUP_LIBS)						\
+	$(ARCHIVE_LIBS)						\
 	$(SQLITE_LIBS)
 
 zif_self_test_CFLAGS = -DEGG_TEST $(AM_CFLAGS)
