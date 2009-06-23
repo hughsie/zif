@@ -164,7 +164,7 @@ zif_sack_add_remote (ZifSack *sack, GError **error)
 	g_ptr_array_free (array, TRUE);
 out:
 	g_object_unref (repos);
-	return TRUE;
+	return ret;
 }
 
 /**
@@ -205,7 +205,7 @@ zif_sack_add_remote_enabled (ZifSack *sack, GError **error)
 	g_ptr_array_free (array, TRUE);
 out:
 	g_object_unref (repos);
-	return TRUE;
+	return ret;
 }
 
 /**
@@ -223,6 +223,12 @@ zif_sack_repos_search (ZifSack *sack, PkRoleEnum role, const gchar *search, GCan
 
 	/* find results in each store */
 	stores = sack->priv->array;
+
+	/* nothing to do */
+	if (stores->len == 0) {
+		egg_debug ("nothing to do");
+		goto out;
+	}
 
 	/* create a chain of completions */
 	if (completion != NULL) {
@@ -301,6 +307,12 @@ zif_sack_find_package (ZifSack *sack, const PkPackageId *id, GCancellable *cance
 	/* find results in each store */
 	stores = sack->priv->array;
 
+	/* nothing to do */
+	if (stores->len == 0) {
+		egg_debug ("nothing to do");
+		goto out;
+	}
+
 	/* create a chain of completions */
 	if (completion != NULL) {
 		zif_completion_set_child (completion, sack->priv->completion_local);
@@ -318,6 +330,7 @@ zif_sack_find_package (ZifSack *sack, const PkPackageId *id, GCancellable *cance
 		if (completion != NULL)
 			zif_completion_done (completion);
 	}
+out:
 	return package;
 }
 
@@ -345,6 +358,12 @@ zif_sack_clean (ZifSack *sack, GCancellable *cancellable, ZifCompletion *complet
 
 	/* clean each store */
 	stores = sack->priv->array;
+
+	/* nothing to do */
+	if (stores->len == 0) {
+		egg_debug ("nothing to do");
+		goto out;
+	}
 
 	/* create a chain of completions */
 	if (completion != NULL) {
@@ -397,6 +416,12 @@ zif_sack_refresh (ZifSack *sack, GCancellable *cancellable, ZifCompletion *compl
 
 	/* refresh each store */
 	stores = sack->priv->array;
+
+	/* nothing to do */
+	if (stores->len == 0) {
+		egg_debug ("nothing to do");
+		goto out;
+	}
 
 	/* create a chain of completions */
 	if (completion != NULL) {
