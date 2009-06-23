@@ -35,6 +35,7 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "zif-utils.h"
 #include "zif-repo-md.h"
 
 #include "egg-debug.h"
@@ -50,8 +51,9 @@
 struct _ZifRepoMdPrivate
 {
 	gboolean		 loaded;
-	gchar			*id;		/* fedora */
-	gchar			*filename;	/* /var/cache/yum/fedora/repo.sqlite.bz2 */
+	gchar			*id;			/* fedora */
+	gchar			*filename;		/* /var/cache/yum/fedora/repo.sqlite.bz2 */
+	gchar			*filename_uncompressed;	/* /var/cache/yum/fedora/repo.sqlite */
 };
 
 G_DEFINE_TYPE (ZifRepoMd, zif_repo_md, G_TYPE_OBJECT)
@@ -75,7 +77,7 @@ zif_repo_md_get_id (ZifRepoMd *md)
  * zif_repo_md_get_filename:
  * @md: the #ZifRepoMd object
  *
- * Gets the uncompressed filename of the repo.
+ * Gets the compressed filename of the repo.
  *
  * Return value: the filename
  **/
@@ -87,38 +89,41 @@ zif_repo_md_get_filename (ZifRepoMd *md)
 }
 
 /**
+ * zif_repo_md_get_filename_uncompressed:
+ * @md: the #ZifRepoMd object
+ *
+ * Gets the uncompressed filename of the repo.
+ *
+ * Return value: the filename
+ **/
+const gchar *
+zif_repo_md_get_filename_uncompressed (ZifRepoMd *md)
+{
+	g_return_val_if_fail (ZIF_IS_REPO_MD (md), NULL);
+	return md->priv->filename_uncompressed;
+}
+
+/**
  * zif_repo_md_set_filename:
  * @md: the #ZifRepoMd object
- * @filename: the base filename, e.g. "master.xml"
+ * @filename: the base filename, e.g. "master.xml.bz2"
  *
- * Sets the filename of the uncompressed file.
+ * Sets the filename of the compressed file.
  *
  * Return value: %TRUE for success, %FALSE for failure
  **/
 gboolean
 zif_repo_md_set_filename (ZifRepoMd *md, const gchar *filename)
 {
-//	guint len;
-//	gchar *tmp;
-
 	g_return_val_if_fail (ZIF_IS_REPO_MD (md), FALSE);
 	g_return_val_if_fail (md->priv->filename == NULL, FALSE);
 	g_return_val_if_fail (filename != NULL, FALSE);
 
-	/* this is the uncompressed name */
+	/* this is the compressed name */
 	md->priv->filename = g_strdup (filename);
 
-#if 0
-	/* remove compression extension */
-	tmp = g_strdup (base_filename);
-	len = strlen (tmp);
-	if (len > 4 && g_str_has_suffix (tmp, ".gz"))
-		tmp[len-3] = '\0';
-	else if (len > 5 && g_str_has_suffix (tmp, ".bz2"))
-		tmp[len-4] = '\0';
-	md->priv->filename = g_strdup (tmp);
-	g_free (tmp);
-#endif
+	/* this is the uncompressed name */
+	md->priv->filename_uncompressed = zif_file_uncompressed_name (filename);
 
 	return TRUE;
 }

@@ -61,26 +61,27 @@ struct _ZifRepoMdClass
 						 GError			**error);
 };
 
-GType		 zif_repo_md_get_type		(void);
-ZifRepoMd	*zif_repo_md_new		(void);
+GType		 zif_repo_md_get_type			(void);
+ZifRepoMd	*zif_repo_md_new			(void);
 
 /* setters */
-gboolean	 zif_repo_md_set_id		(ZifRepoMd	*md,
-						 const gchar	*id);
-gboolean	 zif_repo_md_set_filename	(ZifRepoMd	*md,
-						 const gchar	*filename);
+gboolean	 zif_repo_md_set_id			(ZifRepoMd	*md,
+							 const gchar	*id);
+gboolean	 zif_repo_md_set_filename		(ZifRepoMd	*md,
+							 const gchar	*filename);
 
 /* getters */
-const gchar	*zif_repo_md_get_id		(ZifRepoMd	*md);
-const gchar	*zif_repo_md_get_filename	(ZifRepoMd	*md);
-guint		 zif_repo_md_get_age		(ZifRepoMd	*md,
-						 GError		**error);
+const gchar	*zif_repo_md_get_id			(ZifRepoMd	*md);
+const gchar	*zif_repo_md_get_filename		(ZifRepoMd	*md);
+const gchar	*zif_repo_md_get_filename_uncompressed	(ZifRepoMd	*md);
+guint		 zif_repo_md_get_age			(ZifRepoMd	*md,
+							 GError		**error);
 
 /* actions */
-gboolean	 zif_repo_md_load		(ZifRepoMd	*md,
-						 GError		**error);
-gboolean	 zif_repo_md_clean		(ZifRepoMd	*md,
-						 GError		**error);
+gboolean	 zif_repo_md_load			(ZifRepoMd	*md,
+							 GError		**error);
+gboolean	 zif_repo_md_clean			(ZifRepoMd	*md,
+							 GError		**error);
 
 G_END_DECLS
 
