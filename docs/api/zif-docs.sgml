@@ -54,9 +54,8 @@
     <xi:include href="xml/zif-package.xml"/>
     <xi:include href="xml/zif-package-local.xml"/>
     <xi:include href="xml/zif-package-remote.xml"/>
-    <xi:include href="xml/zif-repo-md-filelists.xml"/>
     <xi:include href="xml/zif-repo-md.xml"/>
-    <xi:include href="xml/zif-repo-md-master.xml"/>
+    <xi:include href="xml/zif-repo-md-filelists.xml"/>
     <xi:include href="xml/zif-repo-md-primary.xml"/>
     <xi:include href="xml/zif-repos.xml"/>
     <xi:include href="xml/zif-sack.xml"/>
