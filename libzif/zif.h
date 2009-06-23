@@ -36,7 +36,6 @@
 #include <zif-store-local.h>
 #include <zif-store-remote.h>
 #include <zif-repo-md.h>
-#include <zif-repo-md-master.h>
 #include <zif-repo-md-primary.h>
 #include <zif-repo-md-filelists.h>
 #include <zif-repos.h>
