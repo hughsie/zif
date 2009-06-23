@@ -33,6 +33,8 @@
 #include <glib.h>
 #include <rpm/rpmlib.h>
 #include <rpm/rpmdb.h>
+#include <archive.h>
+#include <archive_entry.h>
 #include <packagekit-glib/packagekit.h>
 
 #include "egg-debug.h"
@@ -224,6 +226,86 @@ out:
 	g_free (ad);
 	g_free (bd);
 	return val;
+}
+
+/**
+ * zif_file_decompress:
+ * @filename: the filename to unpack
+ * @directory: the directory to unpack into
+ * @error: a valid %GError
+ *
+ * Decompress a file
+ *
+ * Return value: %TRUE if the file was decompressed
+ **/
+gboolean
+zif_file_decompress (const gchar *filename, const gchar *directory, GError **error)
+{
+	gboolean ret = FALSE;
+	struct archive *arch = NULL;
+	struct archive_entry *entry;
+	int r;
+	int retval;
+	gchar *retcwd;
+	gchar buf[PATH_MAX];
+
+	/* save the PWD as we chdir to extract */
+	retcwd = getcwd (buf, PATH_MAX);
+	if (retcwd == NULL) {
+		*error = g_error_new (1, 0, "failed to get cwd");
+		goto out;
+	}
+
+	/* we can only read tar achives */
+	arch = archive_read_new ();
+	archive_read_support_format_all (arch);
+	archive_read_support_compression_all (arch);
+
+	/* open the tar file */
+	r = archive_read_open_file (arch, filename, 10240);
+	if (r) {
+		*error = g_error_new (1, 0, "cannot open: %s", archive_error_string (arch));
+		goto out;
+	}
+
+	/* switch to our destination directory */
+	retval = chdir (directory);
+	if (retval != 0) {
+		*error = g_error_new (1, 0, "failed chdir to %s", directory);
+		goto out;
+	}
+
+	/* decompress each file */
+	for (;;) {
+		r = archive_read_next_header (arch, &entry);
+		if (r == ARCHIVE_EOF)
+			break;
+		if (r != ARCHIVE_OK) {
+			*error = g_error_new (1, 0, "cannot read header: %s", archive_error_string (arch));
+			goto out;
+		}
+		r = archive_read_extract (arch, entry, 0);
+		if (r != ARCHIVE_OK) {
+			*error = g_error_new (1, 0, "cannot extract: %s", archive_error_string (arch));
+			goto out;
+		}
+	}
+
+	/* completed all okay */
+	ret = TRUE;
+out:
+	/* close the archive */
+	if (arch != NULL) {
+		archive_read_close (arch);
+		archive_read_finish (arch);
+	}
+
+	/* switch back to PWD */
+	retval = chdir (buf);
+	if (retval != 0)
+		egg_warning ("cannot chdir back!");
+
+	return ret;
 }
 
 /***************************************************************************
