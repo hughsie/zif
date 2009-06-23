@@ -80,8 +80,9 @@ struct _ZifStoreRemotePrivate
 	gchar			*id;			/* fedora */
 	gchar			*name;			/* Fedora $arch */
 	gchar			*name_expanded;		/* Fedora 1386 */
+	gchar			*directory;		/* /var/cache/yum/fedora */
 	gchar			*repomd_filename;	/* /var/cache/yum/fedora/repomd.xml */
-	gchar			*baseurl;		/* http://download.fedora.org/ */
+	GPtrArray		*baseurls;		/* http://download.fedora.org/ */
 	gchar			*mirrorlist;
 	gchar			*metalink;
 	gchar			*cache_dir;		/* /var/cache/yum */
@@ -311,24 +312,28 @@ zif_store_remote_download (ZifStoreRemote *store, const gchar *filename, const g
 	ZifDownload *download = NULL;
 	gchar *filename_local = NULL;
 	gchar *basename = NULL;
+	const gchar *baseurl;
 
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), FALSE);
 	g_return_val_if_fail (store->priv->id != NULL, FALSE);
 	g_return_val_if_fail (filename != NULL, FALSE);
 	g_return_val_if_fail (directory != NULL, FALSE);
 
-	/* we need baseurl */
-	if (store->priv->baseurl == NULL) {
+	/* we need at least one baseurl */
+	if (store->priv->baseurls->len == 0) {
 		if (error != NULL)
-			*error = g_error_new (1, 0, "don't support mirror lists at the moment on %s", store->priv->id);
+			*error = g_error_new (1, 0, "no baseurls for %s", store->priv->id);
 		goto out;
 	}
 
 	/* download object */
 	download = zif_download_new ();
 
+	/* FIXME: use first */
+	baseurl = g_ptr_array_index (store->priv->baseurls, 0);
+
 	/* download */
-	uri = g_build_filename (store->priv->baseurl, "repodata", filename, NULL);
+	uri = g_build_filename (baseurl, "repodata", filename, NULL);
 	basename = g_path_get_basename (filename);
 	filename_local = g_build_filename (directory, basename, NULL);
 	ret = zif_download_file (download, uri, filename_local, cancellable, completion, &error_local);
@@ -348,6 +353,44 @@ out:
 }
 
 /**
+ * zif_store_remote_add_mirrorlist:
+ **/
+static gboolean
+zif_store_remote_add_mirrorlist (ZifStoreRemote *store, GError **error)
+{
+	gboolean ret;
+	gchar *filename;
+	gchar *contents = NULL;
+	gchar **lines = NULL;
+	GError *error_local = NULL;
+	guint i;
+
+	/* get contents */
+	filename = g_build_filename (store->priv->directory, "mirrorlist.txt", NULL);
+	ret = g_file_get_contents (filename, &contents, NULL, &error_local);
+	if (!ret) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "failed to get contents %s: %s", filename, error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* split, and add mirrorlists */
+	lines = g_strsplit (contents, "\n", -1);
+	for (i=0; lines[i] != NULL; i++) {
+		if (lines[i][0] == '\0' ||
+		    lines[i][0] == '#')
+			continue;
+		g_ptr_array_add (store->priv->baseurls, g_strdup (lines[i]));
+	}
+out:
+	g_strfreev (lines);
+	g_free (filename);
+	g_free (contents);
+	return ret;
+}
+
+/**
  * zif_store_remote_load_md:
  **/
 static gboolean
@@ -357,7 +400,6 @@ zif_store_remote_load_md (ZifStoreRemote *store, GError **error)
 	ZifStoreRemoteInfoData **data;
 	gboolean ret = TRUE;
 	gchar *contents = NULL;
-	gchar *directory = NULL;
 	gchar *basename;
 	gchar *filename;
 	gsize size;
@@ -403,9 +445,6 @@ zif_store_remote_load_md (ZifStoreRemote *store, GError **error)
 		}
 	}
 
-	/* /var/cache/yum/fedora */
-	directory = g_build_filename (store->priv->cache_dir, store->priv->id, NULL);
-
 	/* set MD id and filename for each repo type */
 	for (i=0; i<ZIF_STORE_REMOTE_MD_TYPE_UNKNOWN; i++) {
 		md = zif_store_remote_get_md_from_type (store, i);
@@ -416,11 +455,22 @@ zif_store_remote_load_md (ZifStoreRemote *store, GError **error)
 
 		/* set MD id and filename */
 		basename = g_path_get_basename (store->priv->data[i]->location);
-		filename = g_build_filename (directory, basename, NULL);
+		filename = g_build_filename (store->priv->directory, basename, NULL);
 		zif_repo_md_set_id (md, store->priv->id);
 		zif_repo_md_set_filename (md, filename);
 		g_free (basename);
 		g_free (filename);
+	}
+
+	/* extract details from mirrorlist */
+	if (store->priv->mirrorlist != NULL) {
+		ret = zif_store_remote_add_mirrorlist (store, &error_local);
+		if (!ret) {
+			if (error != NULL)
+				*error = g_error_new (1, 0, "failed to add mirrorlist: %s", error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
 	}
 
 	/* all okay */
@@ -440,7 +490,6 @@ zif_store_remote_load_md (ZifStoreRemote *store, GError **error)
 out:
 	if (context != NULL)
 		g_markup_parse_context_free (context);
-	g_free (directory);
 	g_free (contents);
 	return ret;
 }
@@ -454,7 +503,6 @@ zif_store_remote_refresh (ZifStore *store, GCancellable *cancellable, ZifComplet
 	gboolean ret = FALSE;
 	GError *error_local = NULL;
 	const gchar *filename;
-	gchar *directory;
 	ZifCompletion *completion_local;
 	ZifStoreRemote *remote = ZIF_STORE_REMOTE (store);
 	ZifRepoMd *md;
@@ -471,11 +519,8 @@ zif_store_remote_refresh (ZifStore *store, GCancellable *cancellable, ZifComplet
 		zif_completion_set_child (completion, completion_local);
 	}
 
-	/* /var/cache/yum/fedora */
-	directory = g_build_filename (remote->priv->cache_dir, remote->priv->id, NULL);
-
 	/* download new file */
-	ret = zif_store_remote_download (remote, remote->priv->repomd_filename, directory, cancellable, completion_local, &error_local);
+	ret = zif_store_remote_download (remote, remote->priv->repomd_filename, remote->priv->directory, cancellable, completion_local, &error_local);
 	if (!ret) {
 		if (error != NULL)
 			*error = g_error_new (1, 0, "failed to download repomd: %s", error_local->message);
@@ -510,7 +555,7 @@ zif_store_remote_refresh (ZifStore *store, GCancellable *cancellable, ZifComplet
 
 		/* download new file */
 		filename = zif_repo_md_get_filename (md);
-		ret = zif_store_remote_download (remote, filename, directory, cancellable, completion_local, &error_local);
+		ret = zif_store_remote_download (remote, filename, remote->priv->directory, cancellable, completion_local, &error_local);
 		if (!ret) {
 			if (error != NULL)
 				*error = g_error_new (1, 0, "failed to refresh %s: %s", zif_store_remote_md_type_to_text (i), error_local->message);
@@ -523,7 +568,7 @@ zif_store_remote_refresh (ZifStore *store, GCancellable *cancellable, ZifComplet
 			zif_completion_done (completion);
 
 		/* decompress */
-		ret = zif_file_decompress (filename, directory, &error_local);
+		ret = zif_file_decompress (filename, remote->priv->directory, &error_local);
 		if (!ret) {
 			if (error != NULL)
 				*error = g_error_new (1, 0, "failed to decompress %s: %s", zif_store_remote_md_type_to_text (i), error_local->message);
@@ -537,7 +582,6 @@ zif_store_remote_refresh (ZifStore *store, GCancellable *cancellable, ZifComplet
 	}
 
 out:
-	g_free (directory);
 	g_object_unref (completion_local);
 	return ret;
 }
@@ -609,7 +653,7 @@ zif_store_remote_load (ZifStore *store, GCancellable *cancellable, ZifCompletion
 	/* get base url (allowed to be blank) */
 	temp = g_key_file_get_string (file, remote->priv->id, "baseurl", NULL);
 	if (temp != NULL && temp[0] != '\0')
-		remote->priv->baseurl = zif_store_remote_expand_vars (temp);
+		g_ptr_array_add (remote->priv->baseurls, zif_store_remote_expand_vars (temp));
 	g_free (temp);
 
 	/* get mirror list (allowed to be blank) */
@@ -625,7 +669,7 @@ zif_store_remote_load (ZifStore *store, GCancellable *cancellable, ZifCompletion
 	g_free (temp);
 
 	/* we need either a base url or mirror list for an enabled store */
-	if (remote->priv->enabled && remote->priv->baseurl == NULL && remote->priv->mirrorlist == NULL && remote->priv->metalink == NULL) {
+	if (remote->priv->enabled && remote->priv->baseurls->len > 0 && remote->priv->metalink == NULL) {
 		if (error != NULL)
 			*error = g_error_new (1, 0, "baseurl, metalink or mirrorlist required");
 		ret = FALSE;
@@ -839,6 +883,7 @@ zif_store_remote_set_from_file (ZifStoreRemote *store, const gchar *repo_filenam
 	egg_debug ("setting store %s", id);
 	store->priv->id = g_strdup (id);
 	store->priv->repo_filename = g_strdup (repo_filename);
+	store->priv->directory = g_build_filename (store->priv->cache_dir, store->priv->id, NULL);
 
 	/* repomd location */
 	store->priv->repomd_filename = g_build_filename (store->priv->cache_dir, store->priv->id, "repomd.xml", NULL);
@@ -1450,7 +1495,8 @@ zif_store_remote_file_monitor_cb (ZifMonitor *monitor, ZifStoreRemote *store)
 	g_free (store->priv->name);
 	g_free (store->priv->name_expanded);
 	g_free (store->priv->repo_filename);
-	g_free (store->priv->baseurl);
+	g_ptr_array_foreach (store->priv->baseurls, (GFunc) g_free, NULL);
+	g_ptr_array_set_size (store->priv->baseurls, 0);
 	g_free (store->priv->mirrorlist);
 	g_free (store->priv->metalink);
 
@@ -1461,7 +1507,6 @@ zif_store_remote_file_monitor_cb (ZifMonitor *monitor, ZifStoreRemote *store)
 	store->priv->name = NULL;
 	store->priv->name_expanded = NULL;
 	store->priv->repo_filename = NULL;
-	store->priv->baseurl = NULL;
 	store->priv->mirrorlist = NULL;
 	store->priv->metalink = NULL;
 
@@ -1486,16 +1531,19 @@ zif_store_remote_finalize (GObject *object)
 	g_free (store->priv->name);
 	g_free (store->priv->name_expanded);
 	g_free (store->priv->repo_filename);
-	g_free (store->priv->baseurl);
 	g_free (store->priv->mirrorlist);
 	g_free (store->priv->metalink);
 	g_free (store->priv->cache_dir);
 	g_free (store->priv->repomd_filename);
+	g_free (store->priv->directory);
 
 	g_object_unref (store->priv->md_primary);
 	g_object_unref (store->priv->md_filelists);
 	g_object_unref (store->priv->config);
 	g_object_unref (store->priv->monitor);
+
+	g_ptr_array_foreach (store->priv->baseurls, (GFunc) g_free, NULL);
+	g_ptr_array_free (store->priv->baseurls, TRUE);
 
 	data = store->priv->data;
 	for (i=0; i<ZIF_STORE_REMOTE_MD_TYPE_UNKNOWN; i++) {
@@ -1553,10 +1601,11 @@ zif_store_remote_init (ZifStoreRemote *store)
 	store->priv->loaded_md = FALSE;
 	store->priv->id = NULL;
 	store->priv->name = NULL;
+	store->priv->directory = NULL;
 	store->priv->name_expanded = NULL;
 	store->priv->enabled = FALSE;
 	store->priv->repo_filename = NULL;
-	store->priv->baseurl = NULL;
+	store->priv->baseurls = g_ptr_array_new ();
 	store->priv->mirrorlist = NULL;
 	store->priv->metalink = NULL;
 	store->priv->config = zif_config_new ();
