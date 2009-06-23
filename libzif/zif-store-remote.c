@@ -118,11 +118,6 @@ zif_store_remote_checksum_type_from_text (const gchar *type)
 
 /**
  * zif_store_remote_md_type_to_text:
- * @type: the #ZifStoreRemoteMdType
- *
- * Converts the #ZifStoreRemoteMdType type to text.
- *
- * Return value: the type as text, e.g. "filelists"
  **/
 static const gchar *
 zif_store_remote_md_type_to_text (ZifStoreRemoteMdType type)
@@ -136,6 +131,26 @@ zif_store_remote_md_type_to_text (ZifStoreRemoteMdType type)
 	if (type == ZIF_STORE_REMOTE_MD_TYPE_COMPS)
 		return "comps";
 	return "unknown";
+}
+
+/**
+ * zif_store_remote_get_md_from_type:
+ **/
+static ZifRepoMd *
+zif_store_remote_get_md_from_type (ZifStoreRemote *store, ZifStoreRemoteMdType type)
+{
+	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), NULL);
+	g_return_val_if_fail (type != ZIF_STORE_REMOTE_MD_TYPE_UNKNOWN, NULL);
+
+	if (type == ZIF_STORE_REMOTE_MD_TYPE_FILELISTS)
+		return store->priv->md_filelists;
+	if (type == ZIF_STORE_REMOTE_MD_TYPE_PRIMARY)
+		return store->priv->md_primary;
+	if (type == ZIF_STORE_REMOTE_MD_TYPE_OTHER)
+		return NULL;
+	if (type == ZIF_STORE_REMOTE_MD_TYPE_COMPS)
+		return NULL;
+	return NULL;
 }
 
 /**
@@ -403,6 +418,8 @@ zif_store_remote_refresh (ZifStore *store, GCancellable *cancellable, ZifComplet
 	gchar *directory;
 	ZifCompletion *completion_local;
 	ZifStoreRemote *remote = ZIF_STORE_REMOTE (store);
+	ZifRepoMd *md;
+	guint i;
 
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), FALSE);
 	g_return_val_if_fail (remote->priv->id != NULL, FALSE);
@@ -444,59 +461,41 @@ zif_store_remote_refresh (ZifStore *store, GCancellable *cancellable, ZifComplet
 	if (completion != NULL)
 		zif_completion_done (completion);
 
-	/* primary */
-	filename = zif_repo_md_get_filename (remote->priv->md_primary);
-	ret = zif_store_remote_download (remote, filename, directory, cancellable, completion_local, &error_local);
-	if (!ret) {
-		if (error != NULL)
-			*error = g_error_new (1, 0, "failed to refresh primary: %s", error_local->message);
-		g_error_free (error_local);
-		goto out;
+	/* refresh each repo type */
+	for (i=0; i<ZIF_STORE_REMOTE_MD_TYPE_UNKNOWN; i++) {
+		md = zif_store_remote_get_md_from_type (remote, i);
+		if (md == NULL) {
+			egg_warning ("failed to get local store for %s", zif_store_remote_md_type_to_text (i));
+			continue;
+		}
+
+		/* download new file */
+		filename = zif_repo_md_get_filename (md);
+		ret = zif_store_remote_download (remote, filename, directory, cancellable, completion_local, &error_local);
+		if (!ret) {
+			if (error != NULL)
+				*error = g_error_new (1, 0, "failed to refresh %s: %s", zif_store_remote_md_type_to_text (i), error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+
+		/* this section done */
+		if (completion != NULL)
+			zif_completion_done (completion);
+
+		/* decompress */
+		ret = zif_file_decompress (filename, directory, &error_local);
+		if (!ret) {
+			if (error != NULL)
+				*error = g_error_new (1, 0, "failed to decompress %s: %s", zif_store_remote_md_type_to_text (i), error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+
+		/* this section done */
+		if (completion != NULL)
+			zif_completion_done (completion);
 	}
-
-	/* this section done */
-	if (completion != NULL)
-		zif_completion_done (completion);
-
-	/* decompress */
-	ret = zif_file_decompress (filename, directory, &error_local);
-	if (!ret) {
-		if (error != NULL)
-			*error = g_error_new (1, 0, "failed to decompress filelists: %s", error_local->message);
-		g_error_free (error_local);
-		goto out;
-	}
-
-	/* this section done */
-	if (completion != NULL)
-		zif_completion_done (completion);
-
-	/* filelists */
-	filename = zif_repo_md_get_filename (remote->priv->md_filelists);
-	ret = zif_store_remote_download (remote, filename, directory, cancellable, completion_local, &error_local);
-	if (!ret) {
-		if (error != NULL)
-			*error = g_error_new (1, 0, "failed to refresh filelists: %s", error_local->message);
-		g_error_free (error_local);
-		goto out;
-	}
-
-	/* this section done */
-	if (completion != NULL)
-		zif_completion_done (completion);
-
-	/* decompress */
-	ret = zif_file_decompress (filename, directory, &error_local);
-	if (!ret) {
-		if (error != NULL)
-			*error = g_error_new (1, 0, "failed to decompress filelists: %s", error_local->message);
-		g_error_free (error_local);
-		goto out;
-	}
-
-	/* this section done */
-	if (completion != NULL)
-		zif_completion_done (completion);
 
 out:
 	g_free (directory);
@@ -636,6 +635,16 @@ zif_store_remote_load (ZifStore *store, GCancellable *cancellable, ZifCompletion
 	zif_repo_md_set_filename (remote->priv->md_filelists, filename);
 	g_free (basename);
 	g_free (filename);
+
+	/* check all metadata */
+	ret = zif_store_remote_check (remote, NULL, NULL, &error_local);
+	if (!ret) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "failed to check during load: %s", error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
 skip_md:
 	/* okay */
 	remote->priv->loaded = TRUE;
@@ -653,38 +662,30 @@ out:
 	return ret;
 }
 
-#if 0
 /**
- * zif_store_remote_check:
+ * zif_store_remote_check_type:
  **/
-gboolean
-zif_store_remote_check (ZifStoreRemote *store, ZifStoreRemoteMdType type, GError **error)
+static gboolean
+zif_store_remote_check_type (ZifStoreRemote *store, ZifStoreRemoteMdType type, GError **error)
 {
 	gboolean ret = FALSE;
 	GError *error_local = NULL;
-	gchar *filename = NULL;
+	const gchar *filename = NULL;
 	gchar *data = NULL;
 	gchar *checksum = NULL;
 	const gchar *checksum_wanted = NULL;
 	gsize length;
+	ZifRepoMd *md;
 
-	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), FALSE);
-	g_return_val_if_fail (type != ZIF_STORE_REMOTE_MD_TYPE_UNKNOWN, FALSE);
-	g_return_val_if_fail (store->priv->id != NULL, FALSE);
-
-	/* if not already loaded, load */
-	if (!store->priv->loaded) {
-		ret = zif_store_remote_load_xml (store, &error_local);
-		if (!ret) {
-			if (error != NULL)
-				*error = g_error_new (1, 0, "failed to load metadata: %s", error_local->message);
-			g_error_free (error_local);
-			goto out;
-		}
+	/* get MD */
+	md = zif_store_remote_get_md_from_type (store, type);
+	if (md == NULL) {
+		egg_warning ("failed to get local store");
+		goto out;
 	}
 
 	/* get correct filename */
-	filename = zif_store_remote_get_filename (store, type, NULL);
+	filename = zif_repo_md_get_filename (md);
 	if (filename == NULL) {
 		if (error != NULL)
 			*error = g_error_new (1, 0, "failed to get filename");
@@ -710,18 +711,62 @@ zif_store_remote_check (ZifStoreRemote *store, ZifStoreRemoteMdType type, GError
 		checksum_wanted = store->priv->data[type]->checksum_open;
 
 	/* matches? */
-	ret = (strcmp (checksum, checksum_wanted) == 0);
+	ret = (g_strcmp0 (checksum, checksum_wanted) == 0);
 	if (!ret) {
 		if (error != NULL)
-			*error = g_error_new (1, 0, "%s checksum incorrect, wanted %s, got %s", zif_store_remote_md_type_to_text (type), checksum_wanted, checksum);
+			*error = g_error_new (1, 0, "checksum incorrect, wanted %s, got %s", checksum_wanted, checksum);
 	}
 out:
 	g_free (data);
-	g_free (filename);
 	g_free (checksum);
 	return ret;
 }
-#endif
+
+/**
+ * zif_store_remote_check:
+ **/
+gboolean
+zif_store_remote_check (ZifStoreRemote *store, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+{
+	gboolean ret = FALSE;
+	GError *error_local = NULL;
+	guint i;
+
+	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), FALSE);
+	g_return_val_if_fail (store->priv->id != NULL, FALSE);
+
+	/* setup completion with the correct number of steps */
+	if (completion != NULL)
+		zif_completion_set_number_steps (completion, ZIF_STORE_REMOTE_MD_TYPE_UNKNOWN);
+
+	/* if not already loaded, load */
+	if (!store->priv->loaded) {
+		ret = zif_store_remote_load_xml (store, &error_local);
+		if (!ret) {
+			if (error != NULL)
+				*error = g_error_new (1, 0, "failed to load metadata: %s", error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+	}
+
+	/* refresh each repo type */
+	for (i=0; i<ZIF_STORE_REMOTE_MD_TYPE_UNKNOWN; i++) {
+		ret = zif_store_remote_check_type (store, i, &error_local);
+		if (!ret) {
+			if (error != NULL)
+				*error = g_error_new (1, 0, "failed to check type %s: %s", zif_store_remote_md_type_to_text (i), error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+
+		/* this section done */
+		if (completion != NULL)
+			zif_completion_done (completion);
+	}
+out:
+	return ret;
+}
 
 /**
  * zif_store_remote_clean:
