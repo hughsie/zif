@@ -249,6 +249,9 @@ zif_file_decompress (const gchar *filename, const gchar *directory, GError **err
 	gchar *retcwd;
 	gchar buf[PATH_MAX];
 
+	g_return_val_if_fail (filename != NULL, FALSE);
+	g_return_val_if_fail (directory != NULL, FALSE);
+
 	/* save the PWD as we chdir to extract */
 	retcwd = getcwd (buf, PATH_MAX);
 	if (retcwd == NULL) {
@@ -306,6 +309,34 @@ out:
 		egg_warning ("cannot chdir back!");
 
 	return ret;
+}
+
+/**
+ * zif_file_uncompressed_name:
+ * @filename: the filename, e.g. /lib/dave.tar.gz
+ *
+ * Finds the uncompressed filename.
+ *
+ * Return value: the uncompressed file name, e.g. /lib/dave.tar, use g_free() to free.
+ **/
+gchar *
+zif_file_uncompressed_name (const gchar *filename)
+{
+	guint len;
+	gchar *tmp;
+
+	g_return_val_if_fail (filename != NULL, NULL);
+
+	/* remove compression extension */
+	tmp = g_strdup (filename);
+	len = strlen (tmp);
+	if (len > 4 && g_str_has_suffix (tmp, ".gz"))
+		tmp[len-3] = '\0';
+	else if (len > 5 && g_str_has_suffix (tmp, ".bz2"))
+		tmp[len-4] = '\0';
+
+	/* return newly allocated string */
+	return tmp;
 }
 
 /***************************************************************************
