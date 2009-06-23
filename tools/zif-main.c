@@ -466,12 +466,15 @@ main (int argc, char *argv[])
 	gchar *options_help;
 	gboolean verbose = FALSE;
 	gboolean profile = FALSE;
+	gchar *config_file = NULL;
 
 	const GOptionEntry options[] = {
 		{ "verbose", 'v', 0, G_OPTION_ARG_NONE, &verbose,
 			_("Show extra debugging information"), NULL },
 		{ "profile", 'p', 0, G_OPTION_ARG_NONE, &profile,
 			_("Profile ZIF"), NULL },
+		{ "config", 'c', 0, G_OPTION_ARG_STRING, &config_file,
+			_("Use different config file"), NULL },
 		{ NULL}
 	};
 
@@ -526,9 +529,13 @@ main (int argc, char *argv[])
 	/* verbose? */
 	egg_debug_init (verbose);
 
+	/* fallback */
+	if (config_file == NULL)
+		config_file = g_strdup ("/etc/yum.conf");
+
 	/* ZifConfig */
 	config = zif_config_new ();
-	ret = zif_config_set_filename (config, "/etc/yum.conf", &error);
+	ret = zif_config_set_filename (config, config_file, &error);
 	if (!ret) {
 		egg_error ("failed to set config: %s", error->message);
 		g_error_free (error);
@@ -1123,6 +1130,7 @@ out:
 	if (completion != NULL)
 		g_object_unref (completion);
 
+	g_free (config_file);
 	g_free (options_help);
 	return 0;
 }
