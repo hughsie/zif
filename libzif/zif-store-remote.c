@@ -357,6 +357,7 @@ zif_store_remote_load_xml (ZifStoreRemote *store, GError **error)
 	if (store->priv->loaded)
 		goto out;
 
+	/* get repo contents */
 	ret = g_file_get_contents (store->priv->repomd_filename, &contents, &size, error);
 	if (!ret)
 		goto out;
@@ -410,7 +411,7 @@ zif_store_remote_refresh (ZifStore *store, GCancellable *cancellable, ZifComplet
 
 	/* setup completion with the correct number of steps */
 	if (completion != NULL) {
-		zif_completion_set_number_steps (completion, 3);
+		zif_completion_set_number_steps (completion, 6);
 		zif_completion_set_child (completion, completion_local);
 	}
 
@@ -457,6 +458,19 @@ zif_store_remote_refresh (ZifStore *store, GCancellable *cancellable, ZifComplet
 	if (completion != NULL)
 		zif_completion_done (completion);
 
+	/* decompress */
+	ret = zif_file_decompress (filename, directory, &error_local);
+	if (!ret) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "failed to decompress filelists: %s", error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* this section done */
+	if (completion != NULL)
+		zif_completion_done (completion);
+
 	/* filelists */
 	filename = zif_repo_md_get_filename (remote->priv->md_filelists);
 	ret = zif_store_remote_download (remote, filename, directory, cancellable, completion_local, &error_local);
@@ -470,6 +484,20 @@ zif_store_remote_refresh (ZifStore *store, GCancellable *cancellable, ZifComplet
 	/* this section done */
 	if (completion != NULL)
 		zif_completion_done (completion);
+
+	/* decompress */
+	ret = zif_file_decompress (filename, directory, &error_local);
+	if (!ret) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "failed to decompress filelists: %s", error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* this section done */
+	if (completion != NULL)
+		zif_completion_done (completion);
+
 out:
 	g_free (directory);
 	g_object_unref (completion_local);
@@ -580,7 +608,7 @@ zif_store_remote_load (ZifStore *store, GCancellable *cancellable, ZifCompletion
 		ret = zif_store_remote_load_xml (remote, &error_local);
 		if (!ret) {
 			if (error != NULL)
-				*error = g_error_new (1, 0, "failed to load: %s", error_local->message);
+				*error = g_error_new (1, 0, "failed to load xml: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
@@ -604,7 +632,7 @@ zif_store_remote_load (ZifStore *store, GCancellable *cancellable, ZifCompletion
 	/* set filename */
 	basename = g_path_get_basename (remote->priv->data[ZIF_STORE_REMOTE_MD_TYPE_FILELISTS]->location);
 	filename = g_build_filename (directory, basename, NULL);
-	zif_repo_md_set_id (remote->priv->md_primary, remote->priv->id);
+	zif_repo_md_set_id (remote->priv->md_filelists, remote->priv->id);
 	zif_repo_md_set_filename (remote->priv->md_filelists, filename);
 	g_free (basename);
 	g_free (filename);
@@ -781,6 +809,9 @@ zif_store_remote_set_from_file (ZifStoreRemote *store, const gchar *repo_filenam
 	egg_debug ("setting store %s", id);
 	store->priv->id = g_strdup (id);
 	store->priv->repo_filename = g_strdup (repo_filename);
+
+	/* repomd location */
+	store->priv->repomd_filename = g_build_filename (store->priv->cache_dir, store->priv->id, "repomd.xml", NULL);
 
 	/* setup watch */
 	ret = zif_monitor_add_watch (store->priv->monitor, repo_filename, &error_local);
@@ -1258,76 +1289,6 @@ out:
 	return store->priv->enabled;
 }
 
-#if 0
-/**
- * zif_repo_md_master_check:
- **/
-gboolean
-zif_repo_md_master_check (ZifRepoMdMaster *md, ZifRepoMdType type, GError **error)
-{
-	gboolean ret = FALSE;
-	GError *error_local = NULL;
-	gchar *filename = NULL;
-	gchar *data = NULL;
-	gchar *checksum = NULL;
-	const gchar *checksum_wanted = NULL;
-	gsize length;
-
-	g_return_val_if_fail (ZIF_IS_REPO_MD_MASTER (md), FALSE);
-	g_return_val_if_fail (type != ZIF_REPO_MD_TYPE_UNKNOWN, FALSE);
-	g_return_val_if_fail (md->priv->id != NULL, FALSE);
-
-	/* if not already loaded, load */
-	if (!md->priv->loaded) {
-		ret = zif_repo_md_master_load (md, &error_local);
-		if (!ret) {
-			if (error != NULL)
-				*error = g_error_new (1, 0, "failed to load metadata: %s", error_local->message);
-			g_error_free (error_local);
-			goto out;
-		}
-	}
-
-	/* get correct filename */
-	filename = zif_repo_md_master_get_filename (md, type, NULL);
-	if (filename == NULL) {
-		if (error != NULL)
-			*error = g_error_new (1, 0, "failed to get filename");
-		goto out;
-	}
-
-	/* get contents */
-	ret = g_file_get_contents (filename, &data, &length, &error_local);
-	if (!ret) {
-		if (error != NULL)
-			*error = g_error_new (1, 0, "failed to get contents: %s", error_local->message);
-		g_error_free (error_local);
-		goto out;
-	}
-
-	/* compute checksum */
-	checksum = g_compute_checksum_for_data (md->priv->data[type]->checksum_type, (guchar*) data, length);
-
-	/* get the one we want */
-	if (type == ZIF_REPO_MD_TYPE_COMPS)
-		checksum_wanted = md->priv->data[type]->checksum;
-	else
-		checksum_wanted = md->priv->data[type]->checksum_open;
-
-	/* matches? */
-	ret = (strcmp (checksum, checksum_wanted) == 0);
-	if (!ret) {
-		if (error != NULL)
-			*error = g_error_new (1, 0, "%s checksum incorrect, wanted %s, got %s", zif_repo_md_type_to_text (type), checksum_wanted, checksum);
-	}
-out:
-	g_free (data);
-	g_free (filename);
-	g_free (checksum);
-	return ret;
-}
-#endif
-
 /**
  * zif_store_remote_file_monitor_cb:
  **/
@@ -1447,14 +1408,12 @@ zif_store_remote_init (ZifStoreRemote *store)
 	store->priv->mirrorlist = NULL;
 	store->priv->metalink = NULL;
 	store->priv->config = zif_config_new ();
+	store->priv->monitor = zif_monitor_new ();
 	store->priv->md_filelists = ZIF_REPO_MD (zif_repo_md_filelists_new ());
 	store->priv->md_primary = ZIF_REPO_MD (zif_repo_md_primary_new ());
-	store->priv->monitor = zif_monitor_new ();
-	g_signal_connect (store->priv->monitor, "changed", G_CALLBACK (zif_store_remote_file_monitor_cb), store);
-
-	store->priv->loaded = FALSE;
 	store->priv->parser_type = ZIF_STORE_REMOTE_MD_TYPE_UNKNOWN;
 	store->priv->parser_section = ZIF_STORE_REMOTE_PARSER_SECTION_UNKNOWN;
+	g_signal_connect (store->priv->monitor, "changed", G_CALLBACK (zif_store_remote_file_monitor_cb), store);
 
 	data = store->priv->data;
 	for (i=0; i<ZIF_STORE_REMOTE_MD_TYPE_UNKNOWN; i++) {
@@ -1471,9 +1430,6 @@ zif_store_remote_init (ZifStoreRemote *store)
 		egg_warning ("failed to get cachedir: %s", error->message);
 		g_error_free (error);
 	}
-
-	/* repomd location */
-	store->priv->repomd_filename = g_build_filename (store->priv->cache_dir, store->priv->id, "repomd.xml", NULL);
 }
 
 /**
@@ -1566,7 +1522,7 @@ zif_store_remote_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "get name");
 	id = zif_store_remote_get_name (store, NULL);
-	if (egg_strequal (id, "Fedora 10 - i386"))
+	if (egg_strequal (id, "Fedora 11 - i386"))
 		egg_test_success (test, NULL);
 	else
 		egg_test_failed (test, "invalid name '%s'", id);
