@@ -80,6 +80,30 @@ zif_repo_md_filelists_clean (ZifRepoMd *md, GError **error)
 	if (filename == NULL) {
 		if (error != NULL)
 			*error = g_error_new (1, 0, "failed to get filename for filelists");
+		ret = FALSE;
+		goto out;
+	}
+
+	/* file does not exist */
+	exists = g_file_test (filename, G_FILE_TEST_EXISTS);
+	if (exists) {
+		file = g_file_new_for_path (filename);
+		ret = g_file_delete (file, NULL, &error_local);
+		g_object_unref (file);
+		if (!ret) {
+			if (error != NULL)
+				*error = g_error_new (1, 0, "failed to delete metadata file %s: %s", filename, error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+	}
+
+	/* get filename */
+	filename = zif_repo_md_get_filename_uncompressed (md);
+	if (filename == NULL) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "failed to get uncompressed filename for filelists");
+		ret = FALSE;
 		goto out;
 	}
 
@@ -120,7 +144,7 @@ zif_repo_md_filelists_load (ZifRepoMd *md, GError **error)
 		goto out;
 
 	/* get filename */
-	filename = zif_repo_md_get_filename (md);
+	filename = zif_repo_md_get_filename_uncompressed (md);
 	if (filename == NULL) {
 		if (error != NULL)
 			*error = g_error_new (1, 0, "failed to get filename for filelists");
