@@ -36,7 +36,7 @@ void zif_package_test (EggTest *test);
 void zif_store_local_test (EggTest *test);
 void zif_groups_test (EggTest *test);
 void zif_store_remote_test (EggTest *test);
-void zif_repo_md_master_test (EggTest *test);
+void zif_repo_md_metalink_test (EggTest *test);
 void zif_repo_md_primary_test (EggTest *test);
 void zif_repo_md_filelists_test (EggTest *test);
 void zif_repos_test (EggTest *test);
@@ -56,6 +56,7 @@ main (int argc, char **argv)
 
 	/* tests go here */
 	zif_completion_test (test);
+	zif_repo_md_metalink_test (test);
 	zif_repo_md_filelists_test (test);
 	zif_repo_md_primary_test (test);
 	zif_string_test (test);
