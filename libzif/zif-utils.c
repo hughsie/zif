@@ -230,7 +230,7 @@ out:
 	return val;
 }
 
-#define ZIF_BUFFER_SIZE 1024
+#define ZIF_BUFFER_SIZE 16384
 
 /**
  * zif_file_decompress_zlib:
@@ -239,19 +239,17 @@ static gboolean
 zif_file_decompress_zlib (const gchar *in, const gchar *out, GError **error)
 {
 	gboolean ret = FALSE;
-	FILE *f_in = NULL;
+	gint size;
+	gint written;
+	gzFile *f_in = NULL;
 	FILE *f_out = NULL;
-	gint retval;
-	guint have;
-	z_stream strm;
-	guchar buffer_in[ZIF_BUFFER_SIZE];
-	guchar buffer_out[ZIF_BUFFER_SIZE];
+	guchar buf[ZIF_BUFFER_SIZE];
 
 	g_return_val_if_fail (in != NULL, FALSE);
 	g_return_val_if_fail (out != NULL, FALSE);
 
 	/* open file for reading */
-	f_in = fopen (in, "r");
+	f_in = gzopen (in, "rb");
 	if (f_in == NULL) {
 		if (error != NULL)
 			*error = g_error_new (1, 0, "cannot open %s for reading", in);
@@ -266,71 +264,34 @@ zif_file_decompress_zlib (const gchar *in, const gchar *out, GError **error)
 		goto out;
 	}
 
-	/* allocate inflate state */
-	strm.zalloc = Z_NULL;
-	strm.zfree = Z_NULL;
-	strm.opaque = Z_NULL;
-	strm.avail_in = 0;
-	strm.next_in = Z_NULL;
-	retval = inflateInit (&strm);
-	if (retval != Z_OK) {
-		if (error != NULL)
-			*error = g_error_new (1, 0, "cannot initialize zlib");
-		goto out;
-	}
+	/* read in all data in chunks */
+	while (TRUE) {
+		/* read data */
+		size = gzread (f_in, buf, ZIF_BUFFER_SIZE);
+		if (size == 0)
+			break;
 
-	/* decompress until deflate stream ends or end of file */
-	do {
-		strm.avail_in = fread (buffer_in, 1, ZIF_BUFFER_SIZE, f_in);
-		if (ferror (f_in)) {
+		/* error */
+		if (size < 0) {
 			if (error != NULL)
-				*error = g_error_new (1, 0, "failed to inflate");
+				*error = g_error_new (1, 0, "failed read");
 			goto out;
 		}
-egg_debug ("%i", strm.avail_in);
-		/* no more to decompress */
-		if (strm.avail_in == 0)
-			break;
-		strm.next_in = buffer_in;
 
-		/* run inflate() on input until output buffer not full */
-		do {
-			strm.avail_out = ZIF_BUFFER_SIZE;
-			strm.next_out = buffer_out;
-			retval = inflate (&strm, Z_NO_FLUSH);
-			switch (retval) {
-			case Z_NEED_DICT:
-				retval = Z_DATA_ERROR;	 /* and fall through */
-			case Z_DATA_ERROR:
-			case Z_MEM_ERROR:
-				if (error != NULL)
-					*error = g_error_new (1, 0, "out of memory (buffer %i bytes)", ZIF_BUFFER_SIZE);
-				goto out;
-			}
-			have = ZIF_BUFFER_SIZE - strm.avail_out;
-			if (fwrite (buffer_out, 1, have, f_out) != have || ferror (f_out)) {
-				if (error != NULL)
-					*error = g_error_new (1, 0, "failed to write");
-				goto out;
-			}
-		} while (strm.avail_out == 0);
-
-		/* done when inflate() says it's done */
-	} while (retval != Z_STREAM_END);
-
-	/* failed to read */
-	if (retval != Z_STREAM_END) {
-		if (error != NULL)
-			*error = g_error_new (1, 0, "did not decompress file: %s", in);
-		goto out;
+		/* write data */
+		written = fwrite (buf, 1, size, f_out);
+		if (written != size) {
+			if (error != NULL)
+				*error = g_error_new (1, 0, "only wrote %i/%i bytes", written, size);
+			goto out;
+		}
 	}
 
 	/* success */
 	ret = TRUE;
 out:
-	inflateEnd (&strm);
 	if (f_in != NULL)
-		fclose (f_in);
+		gzclose (f_in);
 	if (f_out != NULL)
 		fclose (f_out);
 	return ret;
@@ -378,18 +339,18 @@ zif_file_decompress_bz2 (const gchar *in, const gchar *out, GError **error)
 		goto out;
 	}
 
-	/* read in all data in 1k chunks */
+	/* read in all data in chunks */
 	while (TRUE) {
 		/* read data */
-		size = BZ2_bzRead (&bzerror, b, buf, 1024);
+		size = BZ2_bzRead (&bzerror, b, buf, ZIF_BUFFER_SIZE);
 		if (bzerror != BZ_OK)
 			break;
 
 		/* write data */
-		written = fwrite (buf, size, 1, f_out);
+		written = fwrite (buf, 1, size, f_out);
 		if (written != size) {
 			if (error != NULL)
-				*error = g_error_new (1, 0, "failed to write %i/%i bytes", written, size);
+				*error = g_error_new (1, 0, "only wrote %i/%i bytes", written, size);
 			goto out;
 		}
 	}
@@ -487,7 +448,7 @@ zif_file_untar (const gchar *filename, const gchar *directory, GError **error)
 	archive_read_support_compression_all (arch);
 
 	/* open the tar file */
-	r = archive_read_open_file (arch, filename, 10240);
+	r = archive_read_open_file (arch, filename, ZIF_BUFFER_SIZE);
 	if (r) {
 		*error = g_error_new (1, 0, "cannot open: %s", archive_error_string (arch));
 		goto out;

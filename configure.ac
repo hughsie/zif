@@ -127,7 +127,7 @@ AC_CHECK_HEADERS(bzlib.h,
 		 HAVE_BZLIB_H="yes",
 		 HAVE_BZLIB_H="no")
 if test "x$HAVE_BZLIB_H" = "xyes"; then
-	BZLIB_LIBS=-lbz
+	BZLIB_LIBS=-lbz2
 	AC_SUBST(BZLIB_LIBS)
 else
 	AC_MSG_ERROR([Cannot find bzlib.h])
