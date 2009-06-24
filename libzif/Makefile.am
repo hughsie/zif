@@ -3,6 +3,8 @@ INCLUDES = \
 	$(SQLITE_CFLAGS)					\
 	$(PACKAGEKIT_CFLAGS)					\
 	$(RPM_CFLAGS)						\
+	$(ZLIB_CFLAGS)						\
+	$(BZLIB_CFLAGS)						\
 	$(SOUP_CFLAGS)						\
 	$(ARCHIVE_CFLAGS)					\
 	-I$(top_srcdir)/libzif					\
@@ -101,6 +103,8 @@ libzif_la_LIBADD =						\
 	$(GLIB_LIBS)						\
 	$(SQLITE_LIBS)						\
 	$(PACKAGEKIT_LIBS)					\
+	$(ZLIB_LIBS)						\
+	$(BZLIB_LIBS)						\
 	$(RPM_LIBS)						\
 	$(SOUP_LIBS)						\
 	$(ARCHIVE_LIBS)						\
@@ -128,6 +132,8 @@ zif_self_test_SOURCES =						\
 
 zif_self_test_LDADD =						\
 	$(GLIB_LIBS)						\
+	$(ZLIB_LIBS)						\
+	$(BZLIB_LIBS)						\
 	$(SELFTEST_LIBS)					\
 	$(PACKAGEKIT_LIBS)					\
 	$(RPM_LIBS)						\

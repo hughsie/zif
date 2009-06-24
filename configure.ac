@@ -134,6 +134,19 @@ else
 fi
 
 dnl ---------------------------------------------------------------------------
+dnl - zlib
+dnl ---------------------------------------------------------------------------
+AC_CHECK_HEADERS(zlib.h,
+		 HAVE_ZLIB_H="yes",
+		 HAVE_ZLIB_H="no")
+if test "x$HAVE_BZLIB_H" = "xyes"; then
+	ZLIB_LIBS=-lz
+	AC_SUBST(ZLIB_LIBS)
+else
+	AC_MSG_ERROR([Cannot find zlib.h])
+fi
+
+dnl ---------------------------------------------------------------------------
 dnl - Make paths available for source files
 dnl ---------------------------------------------------------------------------
 AC_SUBST(SYSCONFDIR, $sysconfdir)

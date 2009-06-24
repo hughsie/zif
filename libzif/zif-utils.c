@@ -36,6 +36,7 @@
 #include <archive.h>
 #include <archive_entry.h>
 #include <bzlib.h>
+#include <zlib.h>
 #include <packagekit-glib/packagekit.h>
 
 #include "egg-debug.h"
@@ -229,6 +230,112 @@ out:
 	return val;
 }
 
+#define ZIF_BUFFER_SIZE 1024
+
+/**
+ * zif_file_decompress_zlib:
+ **/
+static gboolean
+zif_file_decompress_zlib (const gchar *in, const gchar *out, GError **error)
+{
+	gboolean ret = FALSE;
+	FILE *f_in = NULL;
+	FILE *f_out = NULL;
+	gint retval;
+	guint have;
+	z_stream strm;
+	guchar buffer_in[ZIF_BUFFER_SIZE];
+	guchar buffer_out[ZIF_BUFFER_SIZE];
+
+	g_return_val_if_fail (in != NULL, FALSE);
+	g_return_val_if_fail (out != NULL, FALSE);
+
+	/* open file for reading */
+	f_in = fopen (in, "r");
+	if (f_in == NULL) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "cannot open %s for reading", in);
+		goto out;
+	}
+
+	/* open file for writing */
+	f_out = fopen (out, "w");
+	if (f_out == NULL) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "cannot open %s for writing", out);
+		goto out;
+	}
+
+	/* allocate inflate state */
+	strm.zalloc = Z_NULL;
+	strm.zfree = Z_NULL;
+	strm.opaque = Z_NULL;
+	strm.avail_in = 0;
+	strm.next_in = Z_NULL;
+	retval = inflateInit (&strm);
+	if (retval != Z_OK) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "cannot initialize zlib");
+		goto out;
+	}
+
+	/* decompress until deflate stream ends or end of file */
+	do {
+		strm.avail_in = fread (buffer_in, 1, ZIF_BUFFER_SIZE, f_in);
+		if (ferror (f_in)) {
+			if (error != NULL)
+				*error = g_error_new (1, 0, "failed to inflate");
+			goto out;
+		}
+egg_debug ("%i", strm.avail_in);
+		/* no more to decompress */
+		if (strm.avail_in == 0)
+			break;
+		strm.next_in = buffer_in;
+
+		/* run inflate() on input until output buffer not full */
+		do {
+			strm.avail_out = ZIF_BUFFER_SIZE;
+			strm.next_out = buffer_out;
+			retval = inflate (&strm, Z_NO_FLUSH);
+			switch (retval) {
+			case Z_NEED_DICT:
+				retval = Z_DATA_ERROR;	 /* and fall through */
+			case Z_DATA_ERROR:
+			case Z_MEM_ERROR:
+				if (error != NULL)
+					*error = g_error_new (1, 0, "out of memory (buffer %i bytes)", ZIF_BUFFER_SIZE);
+				goto out;
+			}
+			have = ZIF_BUFFER_SIZE - strm.avail_out;
+			if (fwrite (buffer_out, 1, have, f_out) != have || ferror (f_out)) {
+				if (error != NULL)
+					*error = g_error_new (1, 0, "failed to write");
+				goto out;
+			}
+		} while (strm.avail_out == 0);
+
+		/* done when inflate() says it's done */
+	} while (retval != Z_STREAM_END);
+
+	/* failed to read */
+	if (retval != Z_STREAM_END) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "did not decompress file: %s", in);
+		goto out;
+	}
+
+	/* success */
+	ret = TRUE;
+out:
+	inflateEnd (&strm);
+	if (f_in != NULL)
+		fclose (f_in);
+	if (f_out != NULL)
+		fclose (f_out);
+	return ret;
+}
+
 /**
  * zif_file_decompress_bz2:
  **/
@@ -240,14 +347,12 @@ zif_file_decompress_bz2 (const gchar *in, const gchar *out, GError **error)
 	FILE *f_out = NULL;
 	BZFILE *b = NULL;
 	gint size;
-	gchar buf[1024];
+	gint written;
+	gchar buf[ZIF_BUFFER_SIZE];
 	gint bzerror = BZ_OK;
 
 	g_return_val_if_fail (in != NULL, FALSE);
 	g_return_val_if_fail (out != NULL, FALSE);
-
-	if (!g_str_has_suffix (in, "bz2"))
-		egg_error ("moo");
 
 	/* open file for reading */
 	f_in = fopen (in, "r");
@@ -281,7 +386,12 @@ zif_file_decompress_bz2 (const gchar *in, const gchar *out, GError **error)
 			break;
 
 		/* write data */
-		fwrite (buf, size, 1, f_out);
+		written = fwrite (buf, size, 1, f_out);
+		if (written != size) {
+			if (error != NULL)
+				*error = g_error_new (1, 0, "failed to write %i/%i bytes", written, size);
+			goto out;
+		}
 	}
 
 	/* failed to read */
@@ -324,6 +434,12 @@ zif_file_decompress (const gchar *in, const gchar *out, GError **error)
 	/* bz2 */
 	if (g_str_has_suffix (in, "bz2")) {
 		ret = zif_file_decompress_bz2 (in, out, error);
+		goto out;
+	}
+
+	/* zlib */
+	if (g_str_has_suffix (in, "gz")) {
+		ret = zif_file_decompress_zlib (in, out, error);
 		goto out;
 	}
 
@@ -596,7 +712,17 @@ zif_utils_test (EggTest *test)
 	g_free (filename);
 
 	/************************************************************/
-	egg_test_title (test, "decompress");
+	egg_test_title (test, "decompress gz");
+	ret = zif_file_decompress ("../test/cache/fedora/cf940a26805152e5f675edd695022d890241aba057a4a4a97a0b46618a51c482-comps-rawhide.xml.gz", "/tmp/comps-rawhide.xml", &error);
+	if (ret)
+		egg_test_success (test, NULL);
+	else {
+		egg_test_failed (test, "failed: %s", error->message);
+		g_error_free (error);
+	}
+
+	/************************************************************/
+	egg_test_title (test, "decompress bz2");
 	ret = zif_file_decompress ("../test/cache/fedora/35d817e2bac701525fa72cec57387a2e3457bf32642adeee1e345cc180044c86-primary.sqlite.bz2", "/tmp/moo.sqlite", &error);
 	if (ret)
 		egg_test_success (test, NULL);
