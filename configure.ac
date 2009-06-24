@@ -121,6 +121,19 @@ else
 fi
 
 dnl ---------------------------------------------------------------------------
+dnl - libbzip2
+dnl ---------------------------------------------------------------------------
+AC_CHECK_HEADERS(bzlib.h,
+		 HAVE_BZLIB_H="yes",
+		 HAVE_BZLIB_H="no")
+if test "x$HAVE_BZLIB_H" = "xyes"; then
+	BZLIB_LIBS=-lbz
+	AC_SUBST(BZLIB_LIBS)
+else
+	AC_MSG_ERROR([Cannot find bzlib.h])
+fi
+
+dnl ---------------------------------------------------------------------------
 dnl - Make paths available for source files
 dnl ---------------------------------------------------------------------------
 AC_SUBST(SYSCONFDIR, $sysconfdir)

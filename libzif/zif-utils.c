@@ -35,6 +35,7 @@
 #include <rpm/rpmdb.h>
 #include <archive.h>
 #include <archive_entry.h>
+#include <bzlib.h>
 #include <packagekit-glib/packagekit.h>
 
 #include "egg-debug.h"
@@ -226,6 +227,111 @@ out:
 	g_free (ad);
 	g_free (bd);
 	return val;
+}
+
+/**
+ * zif_file_decompress_bz2:
+ **/
+static gboolean
+zif_file_decompress_bz2 (const gchar *in, const gchar *out, GError **error)
+{
+	gboolean ret = FALSE;
+	FILE *f_in = NULL;
+	FILE *f_out = NULL;
+	BZFILE *b = NULL;
+	gint size;
+	gchar buf[1024];
+	gint bzerror = BZ_OK;
+
+	g_return_val_if_fail (in != NULL, FALSE);
+	g_return_val_if_fail (out != NULL, FALSE);
+
+	if (!g_str_has_suffix (in, "bz2"))
+		egg_error ("moo");
+
+	/* open file for reading */
+	f_in = fopen (in, "r");
+	if (f_in == NULL) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "cannot open %s for reading", in);
+		goto out;
+	}
+
+	/* open file for writing */
+	f_out = fopen (out, "w");
+	if (f_out == NULL) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "cannot open %s for writing", out);
+		goto out;
+	}
+
+	/* read in file */
+	b = BZ2_bzReadOpen (&bzerror, f_in, 0, 0, NULL, 0);
+	if (bzerror != BZ_OK) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "cannot open %s for bz2 reading", in);
+		goto out;
+	}
+
+	/* read in all data in 1k chunks */
+	while (TRUE) {
+		/* read data */
+		size = BZ2_bzRead (&bzerror, b, buf, 1024);
+		if (bzerror != BZ_OK)
+			break;
+
+		/* write data */
+		fwrite (buf, size, 1, f_out);
+	}
+
+	/* failed to read */
+	if (bzerror != BZ_STREAM_END) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "did not decompress file: %s", in);
+		goto out;
+	}
+
+	/* success */
+	ret = TRUE;
+out:
+	if (b != NULL)
+		BZ2_bzReadClose (&bzerror, b);
+	if (f_in != NULL)
+		fclose (f_in);
+	if (f_out != NULL)
+		fclose (f_out);
+	return ret;
+}
+
+/**
+ * zif_file_decompress:
+ * @in: the filename to unpack
+ * @out: the file to create
+ * @error: a valid %GError
+ *
+ * Decompress files into a directory
+ *
+ * Return value: %TRUE if the file was decompressed
+ **/
+gboolean
+zif_file_decompress (const gchar *in, const gchar *out, GError **error)
+{
+	gboolean ret = FALSE;
+
+	g_return_val_if_fail (in != NULL, FALSE);
+	g_return_val_if_fail (out != NULL, FALSE);
+
+	/* bz2 */
+	if (g_str_has_suffix (in, "bz2")) {
+		ret = zif_file_decompress_bz2 (in, out, error);
+		goto out;
+	}
+
+	/* no support */
+	if (error != NULL)
+		*error = g_error_new (1, 0, "no support to decompress file: %s", in);
+out:
+	return ret;
 }
 
 /**
@@ -491,7 +597,7 @@ zif_utils_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "decompress");
-	ret = zif_file_untar ("../test/cache/fedora/35d817e2bac701525fa72cec57387a2e3457bf32642adeee1e345cc180044c86-primary.sqlite.bz2", "/tmp", &error);
+	ret = zif_file_decompress ("../test/cache/fedora/35d817e2bac701525fa72cec57387a2e3457bf32642adeee1e345cc180044c86-primary.sqlite.bz2", "/tmp/moo.sqlite", &error);
 	if (ret)
 		egg_test_success (test, NULL);
 	else {

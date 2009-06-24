@@ -680,7 +680,7 @@ zif_store_remote_refresh (ZifStore *store, GCancellable *cancellable, ZifComplet
 			zif_completion_done (completion);
 
 		/* decompress */
-		ret = zif_file_untar (filename, remote->priv->directory, &error_local);
+		ret = zif_file_decompress (filename, remote->priv->directory, &error_local);
 		if (!ret) {
 			if (error != NULL)
 				*error = g_error_new (1, 0, "failed to decompress %s for %s: %s", filename, zif_store_remote_md_type_to_text (i), error_local->message);
