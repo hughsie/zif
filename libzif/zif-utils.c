@@ -229,17 +229,17 @@ out:
 }
 
 /**
- * zif_file_decompress:
+ * zif_file_untar:
  * @filename: the filename to unpack
  * @directory: the directory to unpack into
  * @error: a valid %GError
  *
- * Decompress a file
+ * Untar files into a directory
  *
  * Return value: %TRUE if the file was decompressed
  **/
 gboolean
-zif_file_decompress (const gchar *filename, const gchar *directory, GError **error)
+zif_file_untar (const gchar *filename, const gchar *directory, GError **error)
 {
 	gboolean ret = FALSE;
 	struct archive *arch = NULL;
@@ -356,6 +356,8 @@ zif_utils_test (EggTest *test)
 	const gchar *e;
 	const gchar *v;
 	const gchar *r;
+	gchar *filename;
+	GError *error;
 
 	if (!egg_test_start (test, "ZifUtils"))
 		return;
@@ -474,6 +476,28 @@ zif_utils_test (EggTest *test)
 	egg_test_title (test, "compare new version");
 	val = zif_compare_evr ("1.0.2-1", "1.0.1-1");
 	egg_test_assert (test, (val == 1));
+
+	/************************************************************/
+	egg_test_title (test, "get uncompressed name from compressed");
+	filename = zif_file_uncompressed_name ("/dave/moo.sqlite.gz");
+	egg_test_assert (test, (g_strcmp0 (filename, "/dave/moo.sqlite") == 0));
+	g_free (filename);
+
+	/************************************************************/
+	egg_test_title (test, "get uncompressed name from uncompressed");
+	filename = zif_file_uncompressed_name ("/dave/moo.sqlite");
+	egg_test_assert (test, (g_strcmp0 (filename, "/dave/moo.sqlite") == 0));
+	g_free (filename);
+
+	/************************************************************/
+	egg_test_title (test, "decompress");
+	ret = zif_file_untar ("../test/cache/fedora/35d817e2bac701525fa72cec57387a2e3457bf32642adeee1e345cc180044c86-primary.sqlite.bz2", "/tmp", &error);
+	if (ret)
+		egg_test_success (test, NULL);
+	else {
+		egg_test_failed (test, "failed: %s", error->message);
+		g_error_free (error);
+	}
 
 	egg_test_end (test);
 }

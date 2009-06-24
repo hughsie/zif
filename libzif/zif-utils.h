@@ -44,7 +44,7 @@ PkPackageId	*zif_package_id_from_nevra	(const gchar	*name,
 gboolean	 zif_boolean_from_text		(const gchar	*text);
 gint		 zif_compare_evr		(const gchar	*a,
 						 const gchar	*b);
-gboolean	 zif_file_decompress		(const gchar	*filename,
+gboolean	 zif_file_untar			(const gchar	*filename,
 						 const gchar	*directory,
 						 GError		**error);
 gchar		*zif_file_uncompressed_name	(const gchar	*filename);
