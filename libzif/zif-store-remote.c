@@ -44,6 +44,7 @@
 #include "zif-store-local.h"
 #include "zif-repo-md-primary.h"
 #include "zif-repo-md-filelists.h"
+#include "zif-repo-md-metalink.h"
 #include "zif-monitor.h"
 #include "zif-download.h"
 
@@ -64,6 +65,7 @@ typedef enum {
 	ZIF_STORE_REMOTE_MD_TYPE_FILELISTS,
 	ZIF_STORE_REMOTE_MD_TYPE_OTHER,
 	ZIF_STORE_REMOTE_MD_TYPE_COMPS,
+	ZIF_STORE_REMOTE_MD_TYPE_METALINK,
 	ZIF_STORE_REMOTE_MD_TYPE_UNKNOWN
 } ZifStoreRemoteMdType;
 
@@ -92,6 +94,7 @@ struct _ZifStoreRemotePrivate
 	gboolean		 loaded_md;
 	ZifRepoMd		*md_primary;
 	ZifRepoMd		*md_filelists;
+	ZifRepoMd		*md_metalink;
 	ZifConfig		*config;
 	ZifMonitor		*monitor;
 	GPtrArray		*packages;
@@ -102,6 +105,8 @@ struct _ZifStoreRemotePrivate
 };
 
 G_DEFINE_TYPE (ZifStoreRemote, zif_store_remote, ZIF_TYPE_STORE)
+
+static gboolean zif_store_remote_load_md (ZifStoreRemote *store, GError **error);
 
 /**
  * zif_store_remote_checksum_type_from_text:
@@ -132,6 +137,8 @@ zif_store_remote_md_type_to_text (ZifStoreRemoteMdType type)
 		return "other";
 	if (type == ZIF_STORE_REMOTE_MD_TYPE_COMPS)
 		return "comps";
+	if (type == ZIF_STORE_REMOTE_MD_TYPE_METALINK)
+		return "metalink";
 	return "unknown";
 }
 
@@ -152,6 +159,8 @@ zif_store_remote_get_md_from_type (ZifStoreRemote *store, ZifStoreRemoteMdType t
 		return NULL;
 	if (type == ZIF_STORE_REMOTE_MD_TYPE_COMPS)
 		return NULL;
+	if (type == ZIF_STORE_REMOTE_MD_TYPE_METALINK)
+		return store->priv->md_metalink;
 	return NULL;
 }
 
@@ -289,6 +298,30 @@ zif_store_remote_expand_vars (const gchar *name)
 }
 
 /**
+ * zif_store_remote_download_try:
+ **/
+static gboolean
+zif_store_remote_download_try (ZifStoreRemote *store, const gchar *uri, const gchar *filename, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+{
+	gboolean ret = FALSE;
+	GError *error_local = NULL;
+	ZifDownload *download = NULL;
+
+	/* download object */
+	download = zif_download_new ();
+	ret = zif_download_file (download, uri, filename, cancellable, completion, &error_local);
+	if (!ret) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "failed to download %s from %s: %s", filename, uri, error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+out:
+	g_object_unref (download);
+	return ret;
+}
+
+/**
  * zif_store_remote_download:
  * @store: the #ZifStoreRemote object
  * @filename: the completion filename to download, e.g. "Packages/hal-0.0.1.rpm"
@@ -306,10 +339,11 @@ zif_store_remote_expand_vars (const gchar *name)
 gboolean
 zif_store_remote_download (ZifStoreRemote *store, const gchar *filename, const gchar *directory, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
+	guint i;
+	guint len;
 	gboolean ret = FALSE;
 	gchar *uri = NULL;
 	GError *error_local = NULL;
-	ZifDownload *download = NULL;
 	gchar *filename_local = NULL;
 	gchar *basename = NULL;
 	const gchar *baseurl;
@@ -319,6 +353,17 @@ zif_store_remote_download (ZifStoreRemote *store, const gchar *filename, const g
 	g_return_val_if_fail (filename != NULL, FALSE);
 	g_return_val_if_fail (directory != NULL, FALSE);
 
+	/* if not already loaded, load */
+	if (!store->priv->loaded_md) {
+		ret = zif_store_remote_load_md (store, &error_local);
+		if (!ret) {
+			if (error != NULL)
+				*error = g_error_new (1, 0, "failed to load metadata: %s", error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+	}
+
 	/* we need at least one baseurl */
 	if (store->priv->baseurls->len == 0) {
 		if (error != NULL)
@@ -326,30 +371,76 @@ zif_store_remote_download (ZifStoreRemote *store, const gchar *filename, const g
 		goto out;
 	}
 
-	/* download object */
-	download = zif_download_new ();
-
-	/* FIXME: use first */
-	baseurl = g_ptr_array_index (store->priv->baseurls, 0);
-
-	/* download */
-	uri = g_build_filename (baseurl, "repodata", filename, NULL);
+	/* get the location to download to */
 	basename = g_path_get_basename (filename);
 	filename_local = g_build_filename (directory, basename, NULL);
-	ret = zif_download_file (download, uri, filename_local, cancellable, completion, &error_local);
+
+	/* try to use all uris */
+	len = store->priv->baseurls->len;
+	for (i=0; i<len; i++) {
+
+		/* build url */
+		baseurl = g_ptr_array_index (store->priv->baseurls, 0);
+		uri = g_build_filename (baseurl, "repodata", basename, NULL);
+
+		/* try download */
+		ret = zif_store_remote_download_try (store, uri, filename_local, cancellable, completion, &error_local);
+
+		/* free */
+		g_free (uri);
+
+		/* succeeded, otherwise retry with new mirrors */
+		if (ret)
+			break;
+
+		/* free error */
+		egg_debug ("%s", error_local->message);
+		g_error_free (error_local);
+	}
+
+	/* nothing */
 	if (!ret) {
 		if (error != NULL)
-			*error = g_error_new (1, 0, "failed to download %s: %s", filename, error_local->message);
-		g_error_free (error_local);
+			*error = g_error_new (1, 0, "failed to download from any sources");
 		goto out;
 	}
 out:
 	g_free (basename);
 	g_free (filename_local);
-	g_free (uri);
-	if (download != NULL)
-		g_object_unref (download);
 	return ret;
+}
+
+/**
+ * zif_store_remote_add_metalink:
+ **/
+static gboolean
+zif_store_remote_add_metalink (ZifStoreRemote *store, GError **error)
+{
+	guint i;
+	GPtrArray *array;
+	GError *error_local = NULL;
+	const gchar *uri;
+
+	/* get mirrors */
+	array = zif_repo_md_metalink_get_mirrors (ZIF_REPO_MD_METALINK (store->priv->md_metalink), 50, &error_local);
+	if (array == NULL) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "failed to add mirrors: %s", error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* add array */
+	for (i=0; i<array->len; i++) {
+		uri = g_ptr_array_index (array, i);
+		g_ptr_array_add (store->priv->baseurls, g_strdup (uri));
+	}
+
+	/* free */
+	g_ptr_array_foreach (array, (GFunc) g_free, NULL);
+	g_ptr_array_free (array, TRUE);
+out:
+	return (array != NULL);
 }
 
 /**
@@ -445,11 +536,21 @@ zif_store_remote_load_md (ZifStoreRemote *store, GError **error)
 		}
 	}
 
+	/* metalink is specified in the repo file */
+	if (store->priv->metalink != NULL)
+		store->priv->data[ZIF_STORE_REMOTE_MD_TYPE_METALINK]->location = g_strdup (store->priv->metalink);
+
 	/* set MD id and filename for each repo type */
 	for (i=0; i<ZIF_STORE_REMOTE_MD_TYPE_UNKNOWN; i++) {
 		md = zif_store_remote_get_md_from_type (store, i);
 		if (md == NULL) {
 			egg_warning ("failed to get local store for %s", zif_store_remote_md_type_to_text (i));
+			continue;
+		}
+
+		/* location not set */
+		if (store->priv->data[i]->location == NULL) {
+			egg_warning ("no location set for %s", zif_store_remote_md_type_to_text (i));
 			continue;
 		}
 
@@ -473,10 +574,21 @@ zif_store_remote_load_md (ZifStoreRemote *store, GError **error)
 		}
 	}
 
+	/* extract details from metalink */
+	if (store->priv->metalink != NULL) {
+		ret = zif_store_remote_add_metalink (store, &error_local);
+		if (!ret) {
+			if (error != NULL)
+				*error = g_error_new (1, 0, "failed to add metalink: %s", error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+	}
+
 	/* all okay */
 	store->priv->loaded_md = TRUE;
 
-#if 1
+#if 0
 	/* check all metadata */
 	ret = zif_store_remote_check (store, NULL, NULL, &error_local);
 	if (!ret) {
@@ -515,7 +627,7 @@ zif_store_remote_refresh (ZifStore *store, GCancellable *cancellable, ZifComplet
 
 	/* setup completion with the correct number of steps */
 	if (completion != NULL) {
-		zif_completion_set_number_steps (completion, 6);
+		zif_completion_set_number_steps (completion, (ZIF_STORE_REMOTE_MD_TYPE_UNKNOWN * 2) + 2);
 		zif_completion_set_child (completion, completion_local);
 	}
 
@@ -571,7 +683,7 @@ zif_store_remote_refresh (ZifStore *store, GCancellable *cancellable, ZifComplet
 		ret = zif_file_decompress (filename, remote->priv->directory, &error_local);
 		if (!ret) {
 			if (error != NULL)
-				*error = g_error_new (1, 0, "failed to decompress %s: %s", zif_store_remote_md_type_to_text (i), error_local->message);
+				*error = g_error_new (1, 0, "failed to decompress %s for %s: %s", filename, zif_store_remote_md_type_to_text (i), error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
@@ -669,7 +781,7 @@ zif_store_remote_load (ZifStore *store, GCancellable *cancellable, ZifCompletion
 	g_free (temp);
 
 	/* we need either a base url or mirror list for an enabled store */
-	if (remote->priv->enabled && remote->priv->baseurls->len > 0 && remote->priv->metalink == NULL) {
+	if (remote->priv->enabled && remote->priv->baseurls->len == 0 && remote->priv->metalink == NULL && remote->priv->mirrorlist == NULL) {
 		if (error != NULL)
 			*error = g_error_new (1, 0, "baseurl, metalink or mirrorlist required");
 		ret = FALSE;
@@ -976,8 +1088,6 @@ zif_store_remote_print (ZifStore *store)
 	g_print ("name: %s\n", remote->priv->name);
 	g_print ("name-expanded: %s\n", remote->priv->name_expanded);
 	g_print ("enabled: %i\n", remote->priv->enabled);
-//	zif_repo_md_print (remote->priv->md_primary);
-//	zif_repo_md_print (remote->priv->md_filelists);
 }
 
 /**
@@ -1539,6 +1649,7 @@ zif_store_remote_finalize (GObject *object)
 
 	g_object_unref (store->priv->md_primary);
 	g_object_unref (store->priv->md_filelists);
+	g_object_unref (store->priv->md_metalink);
 	g_object_unref (store->priv->config);
 	g_object_unref (store->priv->monitor);
 
@@ -1612,6 +1723,7 @@ zif_store_remote_init (ZifStoreRemote *store)
 	store->priv->monitor = zif_monitor_new ();
 	store->priv->md_filelists = ZIF_REPO_MD (zif_repo_md_filelists_new ());
 	store->priv->md_primary = ZIF_REPO_MD (zif_repo_md_primary_new ());
+	store->priv->md_metalink = ZIF_REPO_MD (zif_repo_md_metalink_new ());
 	store->priv->parser_type = ZIF_STORE_REMOTE_MD_TYPE_UNKNOWN;
 	store->priv->parser_section = ZIF_STORE_REMOTE_PARSER_SECTION_UNKNOWN;
 	g_signal_connect (store->priv->monitor, "changed", G_CALLBACK (zif_store_remote_file_monitor_cb), store);
