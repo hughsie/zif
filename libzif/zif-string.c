@@ -34,6 +34,8 @@
 #include <glib.h>
 
 #include "egg-debug.h"
+
+#include "zif-utils.h"
 #include "zif-string.h"
 
 /* private structure */
@@ -123,10 +125,9 @@ zif_string_ref (ZifString *string)
 ZifString *
 zif_string_unref (ZifString *string)
 {
-#ifdef ZIF_CRASH_DEBUG
 	if (string == NULL)
-		string->count = 999;
-#endif
+		zif_debug_crash ();
+
 	g_return_val_if_fail (string != NULL, NULL);
 	string->count--;
 	if (string->count == 0) {

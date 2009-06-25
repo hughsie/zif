@@ -26,6 +26,8 @@
 #include <glib.h>
 
 #include "egg-debug.h"
+
+#include "zif-utils.h"
 #include "zif-depend-array.h"
 
 /* private structure */
@@ -75,10 +77,9 @@ zif_depend_array_ref (ZifDependArray *array)
 ZifDependArray *
 zif_depend_array_unref (ZifDependArray *array)
 {
-#ifdef ZIF_CRASH_DEBUG
 	if (array == NULL)
-		array->count = 999;
-#endif
+		zif_debug_crash ();
+
 	g_return_val_if_fail (array != NULL, NULL);
 	array->count--;
 	if (array->count == 0) {

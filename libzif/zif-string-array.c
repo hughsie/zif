@@ -34,6 +34,8 @@
 #include <glib.h>
 
 #include "egg-debug.h"
+
+#include "zif-utils.h"
 #include "zif-string-array.h"
 
 /* private structure */
@@ -182,10 +184,9 @@ zif_string_array_ref (ZifStringArray *array)
 ZifStringArray *
 zif_string_array_unref (ZifStringArray *array)
 {
-#ifdef ZIF_CRASH_DEBUG
 	if (array == NULL)
-		array->count = 999;
-#endif
+		zif_debug_crash ();
+
 	g_return_val_if_fail (array != NULL, NULL);
 	array->count--;
 	if (array->count == 0) {
