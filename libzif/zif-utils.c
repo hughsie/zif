@@ -45,6 +45,8 @@
 #include "zif-utils.h"
 #include "zif-package.h"
 
+#define ZIF_CRASH_DEBUG
+
 /**
  * zif_init:
  *
@@ -64,6 +66,20 @@ zif_init (void)
 	}
 
 	return TRUE;
+}
+
+/**
+ * zif_debug_crash:
+ *
+ * Does a null dereference, useful for debugging.
+ **/
+void
+zif_debug_crash (void)
+{
+#ifdef ZIF_CRASH_DEBUG
+	GString *string = NULL;
+	string->str = NULL;
+#endif
 }
 
 /**
@@ -495,7 +511,7 @@ out:
 }
 
 /**
- * zif_file_uncompressed_name:
+ * zif_file_get_uncompressed_name:
  * @filename: the filename, e.g. /lib/dave.tar.gz
  *
  * Finds the uncompressed filename.
@@ -503,7 +519,7 @@ out:
  * Return value: the uncompressed file name, e.g. /lib/dave.tar, use g_free() to free.
  **/
 gchar *
-zif_file_uncompressed_name (const gchar *filename)
+zif_file_get_uncompressed_name (const gchar *filename)
 {
 	guint len;
 	gchar *tmp;
@@ -520,6 +536,27 @@ zif_file_uncompressed_name (const gchar *filename)
 
 	/* return newly allocated string */
 	return tmp;
+}
+
+/**
+ * zif_file_is_compressed_name:
+ * @filename: the filename, e.g. /lib/dave.tar.gz
+ *
+ * Finds out if the filename is compressed
+ *
+ * Return value: %TRUE if the file needs decompression
+ **/
+gboolean
+zif_file_is_compressed_name (const gchar *filename)
+{
+	g_return_val_if_fail (filename != NULL, FALSE);
+
+	if (g_str_has_suffix (filename, ".gz"))
+		return TRUE;
+	if (g_str_has_suffix (filename, ".bz2"))
+		return TRUE;
+
+	return FALSE;
 }
 
 /***************************************************************************
@@ -662,13 +699,13 @@ zif_utils_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "get uncompressed name from compressed");
-	filename = zif_file_uncompressed_name ("/dave/moo.sqlite.gz");
+	filename = zif_file_get_uncompressed_name ("/dave/moo.sqlite.gz");
 	egg_test_assert (test, (g_strcmp0 (filename, "/dave/moo.sqlite") == 0));
 	g_free (filename);
 
 	/************************************************************/
 	egg_test_title (test, "get uncompressed name from uncompressed");
-	filename = zif_file_uncompressed_name ("/dave/moo.sqlite");
+	filename = zif_file_get_uncompressed_name ("/dave/moo.sqlite");
 	egg_test_assert (test, (g_strcmp0 (filename, "/dave/moo.sqlite") == 0));
 	g_free (filename);
 

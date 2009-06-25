@@ -26,14 +26,13 @@
 #ifndef __ZIF_UTILS_H
 #define __ZIF_UTILS_H
 
-//#define ZIF_CRASH_DEBUG
-
 #include <glib-object.h>
 #include <packagekit-glib/packagekit.h>
 
 G_BEGIN_DECLS
 
 gboolean	 zif_init			(void);
+void		 zif_debug_crash		(void);
 void		 zif_list_print_array		(GPtrArray	*array);
 PkPackageId	*zif_package_id_from_nevra	(const gchar	*name,
 						 const gchar	*epoch,
@@ -50,7 +49,8 @@ gboolean	 zif_file_untar			(const gchar	*filename,
 gboolean	 zif_file_decompress		(const gchar	*filename,
 						 const gchar	*directory,
 						 GError		**error);
-gchar		*zif_file_uncompressed_name	(const gchar	*filename);
+gchar		*zif_file_get_uncompressed_name	(const gchar	*filename);
+gboolean	 zif_file_is_compressed_name	(const gchar	*filename);
 
 G_END_DECLS
 
