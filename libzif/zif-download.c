@@ -63,16 +63,27 @@ G_DEFINE_TYPE (ZifDownload, zif_download, G_TYPE_OBJECT)
 static void
 zif_download_file_got_chunk_cb (SoupMessage *msg, SoupBuffer *chunk, ZifDownload *download)
 {
-	guint percentage = 0;
-	guint length;
+	guint percentage;
+	guint header_size;
+	guint body_length;
 
-	length = soup_message_headers_get_content_length (msg->response_headers);
-	if (length > 0)
-		percentage = (100 * msg->response_body->length) / length;
+	/* get data */
+	body_length = (guint) msg->response_body->length;
+	header_size = soup_message_headers_get_content_length (msg->response_headers);
 
+	/* how can this happen */
+	if (header_size < body_length) {
+		egg_warning ("length=%i/%i", body_length, header_size);
+		goto out;
+	}
+
+	/* calulate percentage */
+	percentage = (100 * body_length) / header_size;
 	if (download->priv->completion != NULL)
 		zif_completion_set_percentage (download->priv->completion, percentage);
 
+out:
+	return;
 }
 
 /**
@@ -139,10 +150,12 @@ zif_download_file (ZifDownload *download, const gchar *uri, const gchar *filenam
 	/* save an instance of the completion object */
 	if (download->priv->completion != NULL)
 		g_object_unref (download->priv->completion);
-	if (completion != NULL)
+	if (completion != NULL) {
 		download->priv->completion = g_object_ref (completion);
-	else
+		zif_completion_reset (download->priv->completion);
+	} else {
 		download->priv->completion = NULL;
+	}
 
 	base_uri = soup_uri_new (uri);
 	if (base_uri == NULL) {
@@ -207,7 +220,7 @@ zif_download_set_proxy (ZifDownload *download, const gchar *http_proxy, GError *
 
 	/* setup the session */
 	download->priv->session = soup_session_async_new_with_options (SOUP_SESSION_PROXY_URI, proxy,
-						       SOUP_SESSION_USER_AGENT, "zif", NULL);
+								       SOUP_SESSION_USER_AGENT, "zif", NULL);
 	if (download->priv->session == NULL) {
 		if (error != NULL)
 			*error = g_error_new (1, 0, "could not setup session");

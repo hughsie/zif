@@ -309,6 +309,7 @@ zif_store_remote_download_try (ZifStoreRemote *store, const gchar *uri, const gc
 
 	/* download object */
 	download = zif_download_new ();
+	egg_warning ("trying to download %s", uri);
 	ret = zif_download_file (download, uri, filename, cancellable, completion, &error_local);
 	if (!ret) {
 		if (error != NULL)
@@ -394,7 +395,7 @@ zif_store_remote_download (ZifStoreRemote *store, const gchar *filename, const g
 			break;
 
 		/* free error */
-		egg_debug ("%s", error_local->message);
+		egg_debug ("failed to download (non-fatal): %s", error_local->message);
 		g_error_free (error_local);
 	}
 
@@ -607,6 +608,33 @@ out:
 }
 
 /**
+ * zif_store_file_decompress:
+ **/
+static gboolean
+zif_store_file_decompress (const gchar *filename, GError **error)
+{
+	gboolean ret = TRUE;
+	gboolean compressed;
+	gchar *filename_uncompressed = NULL;
+
+	/* only do for compressed filenames */
+	compressed = zif_file_is_compressed_name (filename);
+	if (!compressed) {
+		egg_debug ("%s not compressed", filename);
+		goto out;
+	}
+
+	/* get new name */
+	filename_uncompressed = zif_file_get_uncompressed_name (filename);
+
+	/* decompress */
+	ret = zif_file_decompress (filename, filename_uncompressed, error);
+out:
+	g_free (filename_uncompressed);
+	return ret;
+}
+
+/**
  * zif_store_remote_refresh:
  **/
 static gboolean
@@ -624,9 +652,10 @@ zif_store_remote_refresh (ZifStore *store, GCancellable *cancellable, ZifComplet
 	g_return_val_if_fail (remote->priv->id != NULL, FALSE);
 
 	completion_local = zif_completion_new ();
-
+egg_warning ("%p, %p", completion, completion_local);
 	/* setup completion with the correct number of steps */
 	if (completion != NULL) {
+		zif_completion_reset (completion);
 		zif_completion_set_number_steps (completion, (ZIF_STORE_REMOTE_MD_TYPE_UNKNOWN * 2) + 2);
 		zif_completion_set_child (completion, completion_local);
 	}
@@ -665,8 +694,17 @@ zif_store_remote_refresh (ZifStore *store, GCancellable *cancellable, ZifComplet
 			continue;
 		}
 
-		/* download new file */
+		/* get filename */
 		filename = zif_repo_md_get_filename (md);
+		if (filename == NULL) {
+			egg_warning ("no filename set for %s", zif_store_remote_md_type_to_text (i));
+			continue;
+		}
+
+		/* reset completion */
+		zif_completion_reset (completion_local);
+
+		/* download new file */
 		ret = zif_store_remote_download (remote, filename, remote->priv->directory, cancellable, completion_local, &error_local);
 		if (!ret) {
 			if (error != NULL)
@@ -680,7 +718,7 @@ zif_store_remote_refresh (ZifStore *store, GCancellable *cancellable, ZifComplet
 			zif_completion_done (completion);
 
 		/* decompress */
-		ret = zif_file_decompress (filename, remote->priv->directory, &error_local);
+		ret = zif_store_file_decompress (filename, &error_local);
 		if (!ret) {
 			if (error != NULL)
 				*error = g_error_new (1, 0, "failed to decompress %s for %s: %s", filename, zif_store_remote_md_type_to_text (i), error_local->message);

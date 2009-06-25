@@ -59,7 +59,6 @@ struct _ZifPackagePrivate
 	ZifString		*url;
 	ZifString		*category;
 	ZifString		*location_href;
-	ZifCompletion		*completion_local;
 	PkGroupEnum		 group;
 	guint64			 size;
 	ZifStringArray		*files;
@@ -123,10 +122,14 @@ zif_package_download (ZifPackage *package, const gchar *directory, GCancellable 
 	gboolean ret = FALSE;
 	ZifStoreRemote *repo = NULL;
 	GError *error_local = NULL;
+	ZifCompletion *completion_local;
 
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), FALSE);
 	g_return_val_if_fail (directory != NULL, FALSE);
 	g_return_val_if_fail (package->priv->id != NULL, FALSE);
+
+	/* use local completion */
+	completion_local = zif_completion_new ();
 
 	/* check we are not installed */
 	if (package->priv->installed) {
@@ -137,7 +140,8 @@ zif_package_download (ZifPackage *package, const gchar *directory, GCancellable 
 
 	/* create a chain of completions */
 	if (completion != NULL) {
-		zif_completion_set_child (completion, package->priv->completion_local);
+		zif_completion_reset (completion);
+		zif_completion_set_child (completion, completion_local);
 		zif_completion_set_number_steps (completion, 2);
 	}
 
@@ -155,7 +159,7 @@ zif_package_download (ZifPackage *package, const gchar *directory, GCancellable 
 		zif_completion_done (completion);
 
 	/* download from the repo */
-	ret = zif_store_remote_download (repo, zif_string_get_value (package->priv->location_href), directory, cancellable, package->priv->completion_local, &error_local);
+	ret = zif_store_remote_download (repo, zif_string_get_value (package->priv->location_href), directory, cancellable, completion_local, &error_local);
 	if (!ret) {
 		if (error != NULL)
 			*error = g_error_new (1, 0, "cannot download from repo: %s", error_local->message);
@@ -167,6 +171,7 @@ zif_package_download (ZifPackage *package, const gchar *directory, GCancellable 
 	if (completion != NULL)
 		zif_completion_done (completion);
 out:
+	g_object_unref (completion_local);
 	if (repo != NULL)
 		g_object_unref (repo);
 	return ret;
@@ -974,7 +979,6 @@ zif_package_finalize (GObject *object)
 		zif_depend_array_unref (package->priv->provides);
 	g_object_unref (package->priv->repos);
 	g_object_unref (package->priv->groups);
-	g_object_unref (package->priv->completion_local);
 
 	G_OBJECT_CLASS (zif_package_parent_class)->finalize (object);
 }
@@ -1013,7 +1017,6 @@ zif_package_init (ZifPackage *package)
 	package->priv->size = 0;
 	package->priv->repos = zif_repos_new ();
 	package->priv->groups = zif_groups_new ();
-	package->priv->completion_local = zif_completion_new ();
 }
 
 /**

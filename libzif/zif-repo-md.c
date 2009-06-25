@@ -123,7 +123,7 @@ zif_repo_md_set_filename (ZifRepoMd *md, const gchar *filename)
 	md->priv->filename = g_strdup (filename);
 
 	/* this is the uncompressed name */
-	md->priv->filename_uncompressed = zif_file_uncompressed_name (filename);
+	md->priv->filename_uncompressed = zif_file_get_uncompressed_name (filename);
 
 	return TRUE;
 }
