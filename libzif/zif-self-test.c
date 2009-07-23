@@ -43,6 +43,7 @@ void zif_repos_test (EggTest *test);
 void zif_download_test (EggTest *test);
 void zif_string_test (EggTest *test);
 void zif_string_array_test (EggTest *test);
+void zif_lock_test (EggTest *test);
 
 int
 main (int argc, char **argv)
@@ -55,6 +56,7 @@ main (int argc, char **argv)
 	egg_debug_init (TRUE);
 
 	/* tests go here */
+	zif_lock_test (test);
 	zif_completion_test (test);
 	zif_repo_md_metalink_test (test);
 	zif_repo_md_filelists_test (test);

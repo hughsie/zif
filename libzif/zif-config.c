@@ -76,18 +76,22 @@ zif_config_get_string (ZifConfig *config, const gchar *key, GError **error)
 	if (value == NULL) {
 
 		/* special keys, FIXME: add to yum */
-		if (strcmp (key, "reposdir") == 0) {
+		if (g_strcmp0 (key, "reposdir") == 0) {
 			value = g_strdup ("/etc/yum.repos.d");
+			goto out;
+		}
+		if (g_strcmp0 (key, "pidfile") == 0) {
+			value = g_strdup ("/var/run/yum.pid");
 			goto out;
 		}
 
 		/* special rpmkeys */
-		if (strcmp (key, "osinfo") == 0) {
+		if (g_strcmp0 (key, "osinfo") == 0) {
 			rpmGetOsInfo (&info, NULL);
 			value = g_strdup (info);
 			goto out;
 		}
-		if (strcmp (key, "archinfo") == 0) {
+		if (g_strcmp0 (key, "archinfo") == 0) {
 			rpmGetArchInfo (&info, NULL);
 			value = g_strdup (info);
 			goto out;
