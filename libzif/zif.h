@@ -43,6 +43,7 @@
 #include <zif-utils.h>
 #include <zif-groups.h>
 #include <zif-download.h>
+#include <zif-lock.h>
 
 #undef __ZIF_H_INSIDE__
 
