@@ -456,8 +456,10 @@ main (int argc, char *argv[])
 	ZifStoreLocal *store_local = NULL;
 	ZifStoreRemote *store_remote = NULL;
 	ZifGroups *groups = NULL;
-	ZifCompletion *completion;
+	ZifCompletion *completion = NULL;
+	ZifLock *lock;
 	guint i;
+	guint pid;
 	GError *error = NULL;
 	ZifPackage *package;
 	const gchar *mode;
@@ -467,6 +469,7 @@ main (int argc, char *argv[])
 	gboolean verbose = FALSE;
 	gboolean profile = FALSE;
 	gchar *config_file = NULL;
+	gchar *repos_dir = NULL;
 
 	const GOptionEntry options[] = {
 		{ "verbose", 'v', 0, G_OPTION_ARG_NONE, &verbose,
@@ -542,6 +545,15 @@ main (int argc, char *argv[])
 		goto out;
 	}
 
+	/* ZifLock */
+	lock = zif_lock_new ();
+	ret = zif_lock_set_locked (lock, &pid, &error);
+	if (!ret) {
+		egg_debug ("failed to lock, already locked by PID %i: %s", pid, error->message);
+		g_error_free (error);
+		goto out;
+	}
+
 	/* ZifDownload */
 	download = zif_download_new ();
 	ret = zif_download_set_proxy (download, NULL, &error);
@@ -562,7 +574,13 @@ main (int argc, char *argv[])
 
 	/* ZifRepos */
 	repos = zif_repos_new ();
-	ret = zif_repos_set_repos_dir (repos, "/etc/yum.repos.d", &error);
+	repos_dir = zif_config_get_string (config, "reposdir", &error);
+	if (repos_dir == NULL) {
+		egg_error ("failed to get repos dir: %s", error->message);
+		g_error_free (error);
+		goto out;
+	}
+	ret = zif_repos_set_repos_dir (repos, repos_dir, &error);
 	if (!ret) {
 		egg_error ("failed to set repos dir: %s", error->message);
 		g_error_free (error);
@@ -1129,7 +1147,16 @@ out:
 		g_object_unref (config);
 	if (completion != NULL)
 		g_object_unref (completion);
+	if (lock != NULL) {
+		ret = zif_lock_set_unlocked (lock, &error);
+		if (!ret) {
+			egg_warning ("failed to unlock: %s", error->message);
+			g_error_free (error);
+		}
+		g_object_unref (lock);
+	}
 
+	g_free (repos_dir);
 	g_free (config_file);
 	g_free (options_help);
 	return 0;
