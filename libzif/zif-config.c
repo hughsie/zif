@@ -64,14 +64,21 @@ static gpointer zif_config_object = NULL;
 gchar *
 zif_config_get_string (ZifConfig *config, const gchar *key, GError **error)
 {
-	gchar *value;
+	gchar *value = NULL;
 	const gchar *info;
 	GError *error_local = NULL;
 
 	g_return_val_if_fail (ZIF_IS_CONFIG (config), NULL);
-	g_return_val_if_fail (config->priv->loaded, FALSE);
 	g_return_val_if_fail (key != NULL, NULL);
 
+	/* not loaded yet */
+	if (!config->priv->loaded) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "config not loaded");
+		goto out;
+	}
+
+	/* get value */
 	value = g_key_file_get_string (config->priv->keyfile, "main", key, &error_local);
 	if (value == NULL) {
 
@@ -122,9 +129,9 @@ zif_config_get_boolean (ZifConfig *config, const gchar *key, GError **error)
 	gboolean ret = FALSE;
 
 	g_return_val_if_fail (ZIF_IS_CONFIG (config), FALSE);
-	g_return_val_if_fail (config->priv->loaded, FALSE);
 	g_return_val_if_fail (key != NULL, FALSE);
 
+	/* get string value */
 	value = zif_config_get_string (config, key, error);
 	if (value == NULL)
 		goto out;
