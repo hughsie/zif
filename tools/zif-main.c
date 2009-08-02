@@ -551,11 +551,13 @@ main (int argc, char *argv[])
 	/* ZifLock */
 	lock = zif_lock_new ();
 	for (i=0; i<ZIF_MAIN_LOCKING_RETRIES; i++) {
-		ret = zif_lock_set_locked (lock, &pid, NULL);
+		ret = zif_lock_set_locked (lock, &pid, &error);
 		if (ret)
 			break;
 		g_print ("Failed to lock on try %i of %i, already locked by PID %i (sleeping for %i seconds)\n",
 			 i+1, ZIF_MAIN_LOCKING_RETRIES, pid, ZIF_MAIN_LOCKING_DELAY);
+		egg_debug ("failed to lock: %s", error->message);
+		g_clear_error (&error);
 		g_usleep (ZIF_MAIN_LOCKING_DELAY * G_USEC_PER_SEC);
 	}
 
