@@ -128,7 +128,8 @@ zif_lock_is_locked (ZifLock *lock, guint *pid)
 	/* optimise as we hold the lock */
 	if (lock->priv->self_locked) {
 		ret = TRUE;
-		*pid = getpid ();
+		if (pid != NULL)
+			*pid = getpid ();
 		goto out;
 	}
 
