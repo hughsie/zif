@@ -29,6 +29,9 @@
 #include "egg-debug.h"
 #include "egg-string.h"
 
+#define ZIF_MAIN_LOCKING_RETRIES	10
+#define ZIF_MAIN_LOCKING_DELAY		2 /* seconds */
+
 /**
  * zif_print_packages:
  **/
@@ -547,12 +550,18 @@ main (int argc, char *argv[])
 
 	/* ZifLock */
 	lock = zif_lock_new ();
-	ret = zif_lock_set_locked (lock, &pid, &error);
-	if (!ret) {
-		egg_debug ("failed to lock, already locked by PID %i: %s", pid, error->message);
-		g_error_free (error);
-		goto out;
+	for (i=0; i<ZIF_MAIN_LOCKING_RETRIES; i++) {
+		ret = zif_lock_set_locked (lock, &pid, NULL);
+		if (ret)
+			break;
+		g_print ("Failed to lock on try %i of %i, already locked by PID %i (sleeping for %i seconds)\n",
+			 i+1, ZIF_MAIN_LOCKING_RETRIES, pid, ZIF_MAIN_LOCKING_DELAY);
+		g_usleep (ZIF_MAIN_LOCKING_DELAY * G_USEC_PER_SEC);
 	}
+
+	/* could not lock, even after retrying */
+	if (!ret)
+		goto out;
 
 	/* ZifDownload */
 	download = zif_download_new ();
