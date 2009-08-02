@@ -51,6 +51,7 @@ struct _ZifLockPrivate
 {
 	gchar			*filename;
 	ZifConfig		*config;
+	gboolean		 self_locked;
 };
 
 static gpointer zif_lock_object = NULL;
@@ -124,6 +125,13 @@ zif_lock_is_locked (ZifLock *lock, guint *pid)
 
 	g_return_val_if_fail (ZIF_IS_LOCK (lock), FALSE);
 
+	/* optimise as we hold the lock */
+	if (lock->priv->self_locked) {
+		ret = TRUE;
+		*pid = getpid ();
+		goto out;
+	}
+
 	/* get pid */
 	pid_tmp = zif_lock_get_pid (lock);
 	if (pid_tmp == 0)
@@ -172,6 +180,14 @@ zif_lock_set_locked (ZifLock *lock, guint *pid, GError **error)
 		goto out;
 	}
 
+	/* no lock file set */
+	if (lock->priv->filename == NULL) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "lock file not set");
+		ret = FALSE;
+		goto out;
+	}
+
 	/* save our pid */
 	pid_tmp = getpid ();
 	pid_text = g_strdup_printf ("%i", pid_tmp);
@@ -182,6 +198,9 @@ zif_lock_set_locked (ZifLock *lock, guint *pid, GError **error)
 		g_error_free (error_local);
 		goto out;
 	}
+
+	/* optimise as we now hold the lock */
+	lock->priv->self_locked = TRUE;
 
 	/* return pid */
 	if (pid != NULL)
@@ -210,11 +229,17 @@ zif_lock_set_unlocked (ZifLock *lock, GError **error)
 
 	g_return_val_if_fail (ZIF_IS_LOCK (lock), FALSE);
 
+	/* optimise as we hold the lock */
+	if (lock->priv->self_locked) {
+		lock->priv->self_locked = FALSE;
+		goto skip_checks;
+	}
+
 	/* are we already locked */
 	ret = zif_lock_is_locked (lock, &pid);
 	if (!ret) {
 		if (error != NULL)
-			*error = g_error_new (1, 0, "no locked");
+			*error = g_error_new (1, 0, "not locked");
 		goto out;
 	}
 
@@ -226,6 +251,8 @@ zif_lock_set_unlocked (ZifLock *lock, GError **error)
 		ret = FALSE;
 		goto out;
 	}
+
+skip_checks:
 
 	/* remove file */
 	retval = g_unlink (lock->priv->filename);
@@ -254,6 +281,10 @@ zif_lock_finalize (GObject *object)
 	g_return_if_fail (ZIF_IS_LOCK (object));
 	lock = ZIF_LOCK (object);
 
+	/* unlock if we hold the lock */
+	if (lock->priv->self_locked)
+		zif_lock_set_unlocked (lock, NULL);
+
 	g_free (lock->priv->filename);
 	g_object_unref (lock->priv->config);
 
@@ -280,6 +311,7 @@ zif_lock_init (ZifLock *lock)
 {
 	GError *error = NULL;
 	lock->priv = ZIF_LOCK_GET_PRIVATE (lock);
+	lock->priv->self_locked = FALSE;
 	lock->priv->config = zif_config_new ();
 	lock->priv->filename = zif_config_get_string (lock->priv->config, "pidfile", &error);
 	if (lock->priv->filename == NULL) {
