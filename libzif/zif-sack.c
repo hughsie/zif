@@ -112,7 +112,7 @@ zif_sack_add_stores (ZifSack *sack, GPtrArray *stores)
  * Return value: %TRUE for success, %FALSE for failure
  **/
 gboolean
-zif_sack_add_local (ZifSack *sack, GError **error)
+zif_sack_add_local (ZifSack *sack, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	ZifStoreLocal *store;
 
@@ -135,7 +135,7 @@ zif_sack_add_local (ZifSack *sack, GError **error)
  * Return value: %TRUE for success, %FALSE for failure
  **/
 gboolean
-zif_sack_add_remote (ZifSack *sack, GError **error)
+zif_sack_add_remote (ZifSack *sack, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	GPtrArray *array;
 	ZifRepos *repos;
@@ -146,7 +146,7 @@ zif_sack_add_remote (ZifSack *sack, GError **error)
 
 	/* get stores */
 	repos = zif_repos_new ();
-	array = zif_repos_get_stores (repos, &error_local);
+	array = zif_repos_get_stores (repos, cancellable, completion, &error_local);
 	if (array == NULL) {
 		if (error != NULL)
 			*error = g_error_new (1, 0, "failed to get enabled stores: %s", error_local->message);
@@ -176,7 +176,7 @@ out:
  * Return value: %TRUE for success, %FALSE for failure
  **/
 gboolean
-zif_sack_add_remote_enabled (ZifSack *sack, GError **error)
+zif_sack_add_remote_enabled (ZifSack *sack, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	GPtrArray *array;
 	ZifRepos *repos;
@@ -187,7 +187,7 @@ zif_sack_add_remote_enabled (ZifSack *sack, GError **error)
 
 	/* get stores */
 	repos = zif_repos_new ();
-	array = zif_repos_get_stores_enabled (repos, &error_local);
+	array = zif_repos_get_stores_enabled (repos, cancellable, completion, &error_local);
 	if (array == NULL) {
 		if (error != NULL)
 			*error = g_error_new (1, 0, "failed to get enabled stores: %s", error_local->message);
@@ -219,10 +219,7 @@ zif_sack_repos_search (ZifSack *sack, PkRoleEnum role, const gchar *search, GCan
 	GPtrArray *part;
 	ZifStore *store;
 	GError *error_local = NULL;
-	ZifCompletion *completion_local;
-
-	/* create local completion object */
-	completion_local = zif_completion_new ();
+	ZifCompletion *completion_local = NULL;
 
 	/* find results in each store */
 	stores = sack->priv->array;
@@ -233,17 +230,16 @@ zif_sack_repos_search (ZifSack *sack, PkRoleEnum role, const gchar *search, GCan
 		goto out;
 	}
 
-	/* create a chain of completions */
-	if (completion != NULL) {
-		zif_completion_reset (completion);
-		zif_completion_set_child (completion, completion_local);
-		zif_completion_set_number_steps (completion, stores->len);
-	}
+	/* set number of stores */
+	zif_completion_set_number_steps (completion, stores->len);
 
 	/* do each one */
 	array = g_ptr_array_new ();
 	for (i=0; i<stores->len; i++) {
 		store = g_ptr_array_index (stores, i);
+
+		/* create a chain of completions */
+		completion_local = zif_completion_get_child (completion);
 
 		/* get results for this store */
 		if (role == PK_ROLE_ENUM_RESOLVE)
@@ -279,11 +275,9 @@ zif_sack_repos_search (ZifSack *sack, PkRoleEnum role, const gchar *search, GCan
 		g_ptr_array_free (part, TRUE);
 
 		/* this section done */
-		if (completion != NULL)
-			zif_completion_done (completion);
+		zif_completion_done (completion);
 	}
 out:
-	g_object_unref (completion_local);
 	return array;
 }
 
@@ -306,12 +300,9 @@ zif_sack_find_package (ZifSack *sack, const PkPackageId *id, GCancellable *cance
 	GPtrArray *stores;
 	ZifStore *store;
 	ZifPackage *package = NULL;
-	ZifCompletion *completion_local;
+	ZifCompletion *completion_local = NULL;
 
 	g_return_val_if_fail (ZIF_IS_SACK (sack), NULL);
-
-	/* create local completion object */
-	completion_local = zif_completion_new ();
 
 	/* find results in each store */
 	stores = sack->priv->array;
@@ -323,28 +314,21 @@ zif_sack_find_package (ZifSack *sack, const PkPackageId *id, GCancellable *cance
 	}
 
 	/* create a chain of completions */
-	if (completion != NULL) {
-		zif_completion_reset (completion);
-		zif_completion_set_child (completion, completion_local);
-		zif_completion_set_number_steps (completion, stores->len);
-	}
+	completion_local = zif_completion_get_child (completion);
+	zif_completion_set_number_steps (completion, stores->len);
 
 	/* do each one */
 	for (i=0; i<stores->len; i++) {
 		store = g_ptr_array_index (stores, i);
 
-		/* clear local completion */
-		zif_completion_reset (completion_local);
 		package = zif_store_find_package (store, id, cancellable, completion_local, NULL);
 		if (package != NULL)
 			break;
 
 		/* this section done */
-		if (completion != NULL)
-			zif_completion_done (completion);
+		zif_completion_done (completion);
 	}
 out:
-	g_object_unref (completion_local);
 	return package;
 }
 
@@ -367,12 +351,9 @@ zif_sack_clean (ZifSack *sack, GCancellable *cancellable, ZifCompletion *complet
 	ZifStore *store;
 	gboolean ret = TRUE;
 	GError *error_local = NULL;
-	ZifCompletion *completion_local;
+	ZifCompletion *completion_local = NULL;
 
 	g_return_val_if_fail (ZIF_IS_SACK (sack), FALSE);
-
-	/* create local completion object */
-	completion_local = zif_completion_new ();
 
 	/* clean each store */
 	stores = sack->priv->array;
@@ -383,18 +364,15 @@ zif_sack_clean (ZifSack *sack, GCancellable *cancellable, ZifCompletion *complet
 		goto out;
 	}
 
-	/* create a chain of completions */
-	if (completion != NULL) {
-		zif_completion_reset (completion);
-		zif_completion_set_child (completion, completion_local);
-		zif_completion_set_number_steps (completion, stores->len);
-	}
+	/* set number of stores */
+	zif_completion_set_number_steps (completion, stores->len);
 
 	/* do each one */
 	for (i=0; i<stores->len; i++) {
 		store = g_ptr_array_index (stores, i);
 
 		/* clean this one */
+		completion_local = zif_completion_get_child (completion);
 		ret = zif_store_clean (store, cancellable, completion_local, &error_local);
 		if (!ret) {
 			if (error != NULL)
@@ -404,11 +382,9 @@ zif_sack_clean (ZifSack *sack, GCancellable *cancellable, ZifCompletion *complet
 		}
 
 		/* this section done */
-		if (completion != NULL)
-			zif_completion_done (completion);
+		zif_completion_done (completion);
 	}
 out:
-	g_object_unref (completion_local);
 	return ret;
 }
 
@@ -431,12 +407,9 @@ zif_sack_refresh (ZifSack *sack, GCancellable *cancellable, ZifCompletion *compl
 	ZifStore *store;
 	gboolean ret = TRUE;
 	GError *error_local = NULL;
-	ZifCompletion *completion_local;
+	ZifCompletion *completion_local = NULL;
 
 	g_return_val_if_fail (ZIF_IS_SACK (sack), FALSE);
-
-	/* create local completion object */
-	completion_local = zif_completion_new ();
 
 	/* refresh each store */
 	stores = sack->priv->array;
@@ -448,19 +421,16 @@ zif_sack_refresh (ZifSack *sack, GCancellable *cancellable, ZifCompletion *compl
 	}
 
 	/* create a chain of completions */
-	if (completion != NULL) {
-		zif_completion_reset (completion);
-		zif_completion_set_child (completion, completion_local);
-		zif_completion_set_number_steps (completion, stores->len);
-	}
+	zif_completion_set_number_steps (completion, stores->len);
 
 	/* do each one */
 	for (i=0; i<stores->len; i++) {
 		store = g_ptr_array_index (stores, i);
 
-		egg_warning ("refreshing %s (completion:%p, %p)", zif_store_get_id (store), completion, completion_local);
+		egg_warning ("refreshing %s", zif_store_get_id (store));
 
 		/* refresh this one */
+		completion_local = zif_completion_get_child (completion);
 		ret = zif_store_refresh (store, cancellable, completion_local, &error_local);
 		if (!ret) {
 			if (error != NULL)
@@ -470,11 +440,9 @@ zif_sack_refresh (ZifSack *sack, GCancellable *cancellable, ZifCompletion *compl
 		}
 
 		/* this section done */
-		if (completion != NULL)
-			zif_completion_done (completion);
+		zif_completion_done (completion);
 	}
 out:
-	g_object_unref (completion_local);
 	return ret;
 }
 

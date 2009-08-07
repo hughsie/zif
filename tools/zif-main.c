@@ -75,20 +75,23 @@ zif_cmd_download (const gchar *package_name, ZifCompletion *completion)
 	ZifSack *sack;
 
 	/* setup completion */
-	completion_local = zif_completion_new ();
-	zif_completion_set_child (completion, completion_local);
-	zif_completion_set_number_steps (completion, 2);
+	zif_completion_set_number_steps (completion, 3);
 
 	/* add remote stores */
 	sack = zif_sack_new ();
-	ret = zif_sack_add_remote_enabled (sack, &error);
+	completion_local = zif_completion_get_child (completion);
+	ret = zif_sack_add_remote_enabled (sack, NULL, completion_local, &error);
 	if (!ret) {
 		g_print ("failed to add enabled stores: %s\n", error->message);
 		g_error_free (error);
 		goto out;
 	}
 
+	/* this section done */
+	zif_completion_done (completion);
+
 	/* resolve package name */
+	completion_local = zif_completion_get_child (completion);
 	array = zif_sack_resolve (sack, package_name, NULL, completion_local, &error);
 	if (array == NULL) {
 		g_print ("failed to get results: %s\n", error->message);
@@ -147,12 +150,7 @@ zif_cmd_get_depends (const gchar *package_name, ZifCompletion *completion)
 	guint len;
 
 	/* setup completion */
-	completion_local = zif_completion_new ();
-	zif_completion_set_child (completion, completion_local);
 	zif_completion_set_number_steps (completion, 2);
-
-	/* setup deeper completion */
-	completion_loop = zif_completion_new ();
 
 	/* add all stores */
 	sack = zif_sack_new ();
@@ -164,14 +162,19 @@ zif_cmd_get_depends (const gchar *package_name, ZifCompletion *completion)
 		goto out;
 	}
 #endif
-	ret = zif_sack_add_local (sack, &error);
+	completion_local = zif_completion_get_child (completion);
+	ret = zif_sack_add_local (sack, NULL, completion, &error);
 	if (!ret) {
 		g_print ("failed to add local store: %s\n", error->message);
 		g_error_free (error);
 		goto out;
 	}
 
+	/* this section done */
+	zif_completion_done (completion);
+
 	/* resolve package name */
+	completion_local = zif_completion_get_child (completion);
 	array = zif_sack_resolve (sack, package_name, NULL, completion_local, &error);
 	if (array == NULL) {
 		g_print ("failed to get results: %s\n", error->message);
@@ -197,11 +200,12 @@ zif_cmd_get_depends (const gchar *package_name, ZifCompletion *completion)
 
 	/* match a package to each require */
 	len = zif_depend_array_get_length (requires);
+	completion_local = zif_completion_get_child (completion);
 	zif_completion_set_number_steps (completion_local, len);
 	for (i=0; i<len; i++) {
 
 		/* setup deeper completion */
-		zif_completion_set_child (completion_local, completion_loop);
+		completion_loop = zif_completion_get_child (completion_local);
 
 		require = zif_depend_array_get_value (requires, i);
 		require_str = zif_depend_to_string (require);
@@ -257,20 +261,23 @@ zif_cmd_install (const gchar *package_name, ZifCompletion *completion)
 	ZifSack *sack;
 
 	/* setup completion */
-	completion_local = zif_completion_new ();
-	zif_completion_set_child (completion, completion_local);
-	zif_completion_set_number_steps (completion, 2);
+	zif_completion_set_number_steps (completion, 3);
 
 	/* add all stores */
 	sack = zif_sack_new ();
-	ret = zif_sack_add_local (sack, &error);
+	completion_local = zif_completion_get_child (completion);
+	ret = zif_sack_add_local (sack, NULL, completion_local, &error);
 	if (!ret) {
 		g_print ("failed to add local store: %s\n", error->message);
 		g_error_free (error);
 		goto out;
 	}
 
+	/* this section done */
+	zif_completion_done (completion);
+
 	/* check not already installed */
+	completion_local = zif_completion_get_child (completion);
 	array = zif_sack_resolve (sack, package_name, NULL, completion_local, &error);
 	if (array == NULL) {
 		g_print ("failed to get results: %s\n", error->message);
@@ -293,12 +300,16 @@ zif_cmd_install (const gchar *package_name, ZifCompletion *completion)
 
 	/* check available */
 	sack = zif_sack_new ();
-	ret = zif_sack_add_remote_enabled (sack, &error);
+	completion_local = zif_completion_get_child (completion);
+	ret = zif_sack_add_remote_enabled (sack, NULL, completion_local, &error);
 	if (!ret) {
 		g_print ("failed to add enabled stores: %s\n", error->message);
 		g_error_free (error);
 		goto out;
 	}
+
+	/* this section done */
+	zif_completion_done (completion);
 
 	/* check we can find a package of this name */
 	array = zif_sack_resolve (sack, package_name, NULL, completion_local, &error);
@@ -336,24 +347,35 @@ zif_cmd_refresh_cache (ZifCompletion *completion)
 	gboolean ret;
 	GError *error = NULL;
 	ZifSack *sack;
+	ZifCompletion *completion_local;
+
+	/* setup completion */
+	zif_completion_set_number_steps (completion, 2);
 
 	/* add remote stores */
 	sack = zif_sack_new ();
-	ret = zif_sack_add_remote_enabled (sack, &error);
+	completion_local = zif_completion_get_child (completion);
+	ret = zif_sack_add_remote_enabled (sack, NULL, completion_local, &error);
 	if (!ret) {
 		g_print ("failed to add enabled stores: %s\n", error->message);
 		g_error_free (error);
 		goto out;
 	}
 
+	/* this section done */
+	zif_completion_done (completion);
+
 	/* refresh all ZifRemoteStores */
-	ret = zif_sack_refresh (sack, NULL, completion, &error);
+	completion_local = zif_completion_get_child (completion);
+	ret = zif_sack_refresh (sack, NULL, completion_local, &error);
 	if (!ret) {
 		g_print ("failed to refresh cache: %s\n", error->message);
 		g_error_free (error);
 		goto out;
 	}
 
+	/* this section done */
+	zif_completion_done (completion);
 out:
 	g_object_unref (sack);
 	return ret;
@@ -373,20 +395,23 @@ zif_cmd_update (const gchar *package_name, ZifCompletion *completion)
 	ZifSack *sack;
 
 	/* setup completion */
-	completion_local = zif_completion_new ();
-	zif_completion_set_child (completion, completion_local);
-	zif_completion_set_number_steps (completion, 2);
+	zif_completion_set_number_steps (completion, 4);
 
 	/* add all stores */
 	sack = zif_sack_new ();
-	ret = zif_sack_add_local (sack, &error);
+	completion_local = zif_completion_get_child (completion);
+	ret = zif_sack_add_local (sack, NULL, completion_local, &error);
 	if (!ret) {
 		g_print ("failed to add local store: %s\n", error->message);
 		g_error_free (error);
 		goto out;
 	}
 
+	/* this section done */
+	zif_completion_done (completion);
+
 	/* check not already installed */
+	completion_local = zif_completion_get_child (completion);
 	array = zif_sack_resolve (sack, package_name, NULL, completion_local, &error);
 	if (array == NULL) {
 		g_print ("failed to get results: %s\n", error->message);
@@ -409,14 +434,19 @@ zif_cmd_update (const gchar *package_name, ZifCompletion *completion)
 
 	/* check available */
 	sack = zif_sack_new ();
-	ret = zif_sack_add_remote_enabled (sack, &error);
+	completion_local = zif_completion_get_child (completion);
+	ret = zif_sack_add_remote_enabled (sack, NULL, completion_local, &error);
 	if (!ret) {
 		g_print ("failed to add enabled stores: %s\n", error->message);
 		g_error_free (error);
 		goto out;
 	}
 
+	/* this section done */
+	zif_completion_done (completion);
+
 	/* check we can find a package of this name */
+	completion_local = zif_completion_get_child (completion);
 	array = zif_sack_resolve (sack, package_name, NULL, completion_local, &error);
 	if (array == NULL) {
 		g_print ("failed to get results: %s\n", error->message);
@@ -460,6 +490,7 @@ main (int argc, char *argv[])
 	ZifStoreRemote *store_remote = NULL;
 	ZifGroups *groups = NULL;
 	ZifCompletion *completion = NULL;
+	ZifCompletion *completion_local = NULL;
 	ZifLock *lock;
 	guint i;
 	guint pid;
@@ -620,7 +651,7 @@ main (int argc, char *argv[])
 		/* load local sack */
 		g_print ("load sack local... ");
 		sack = zif_sack_new ();
-		zif_sack_add_local (sack, NULL);
+		zif_sack_add_local (sack, NULL, completion, NULL);
 		time_s = g_timer_elapsed (timer, NULL);
 		g_print ("\t\t : %lf\n", time_s);
 		g_timer_reset (timer);
@@ -709,7 +740,7 @@ main (int argc, char *argv[])
 		/* load remote sack */
 		g_print ("load sack remote... ");
 		sack = zif_sack_new ();
-		zif_sack_add_remote_enabled (sack, NULL);
+		zif_sack_add_remote_enabled (sack, NULL, completion, NULL);
 		time_s = g_timer_elapsed (timer, NULL);
 		g_print ("\t\t : %lf\n", time_s);
 		g_timer_reset (timer);
@@ -789,11 +820,6 @@ main (int argc, char *argv[])
 		goto out;
 	}
 
-	/* ZifSack */
-	sack = zif_sack_new ();
-	zif_sack_add_local (sack, NULL);
-	zif_sack_add_remote_enabled (sack, NULL);
-
 	if (argc < 2) {
 		g_print ("%s", options_help);
 		goto out;
@@ -802,22 +828,34 @@ main (int argc, char *argv[])
 	value = argv[2];
 	if (g_strcmp0 (mode, "get-updates") == 0 || g_strcmp0 (mode, "check-update") == 0) {
 
+		/* setup completion with the correct number of steps */
+		zif_completion_set_number_steps (completion, 2);
+
 		/* get a sack of remote stores */
 		sack = zif_sack_new ();
-		ret = zif_sack_add_remote_enabled (sack, &error);
+		completion_local = zif_completion_get_child (completion);
+		ret = zif_sack_add_remote_enabled (sack, NULL, completion_local, &error);
 		if (!ret) {
 			g_print ("failed to add enabled stores: %s\n", error->message);
 			g_error_free (error);
 			goto out;
 		}
 
+		/* this section done */
+		zif_completion_done (completion);
+
 		/* get updates */
-		array = zif_sack_get_updates (sack, NULL, completion, &error);
+		completion_local = zif_completion_get_child (completion);
+		array = zif_sack_get_updates (sack, NULL, completion_local, &error);
 		if (array == NULL) {
 			g_print ("failed to get updates: %s\n", error->message);
 			g_error_free (error);
 			goto out;
 		}
+
+		/* this section done */
+		zif_completion_done (completion);
+
 		zif_print_packages (array);
 		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
 		g_ptr_array_free (array, TRUE);
@@ -826,22 +864,33 @@ main (int argc, char *argv[])
 	}
 	if (g_strcmp0 (mode, "clean") == 0) {
 
+		/* setup completion with the correct number of steps */
+		zif_completion_set_number_steps (completion, 2);
+
 		/* get a sack of remote stores */
 		sack = zif_sack_new ();
-		ret = zif_sack_add_remote_enabled (sack, &error);
+		completion_local = zif_completion_get_child (completion);
+		ret = zif_sack_add_remote_enabled (sack, NULL, completion_local, &error);
 		if (!ret) {
 			g_print ("failed to add enabled stores: %s\n", error->message);
 			g_error_free (error);
 			goto out;
 		}
 
+		/* this section done */
+		zif_completion_done (completion);
+
 		/* clean all the sack */
-		ret = zif_sack_clean (sack, NULL, completion, &error);
+		completion_local = zif_completion_get_child (completion);
+		ret = zif_sack_clean (sack, NULL, completion_local, &error);
 		if (!ret) {
 			g_print ("failed to clean: %s\n", error->message);
 			g_error_free (error);
 			goto out;
 		}
+
+		/* this section done */
+		zif_completion_done (completion);
 
 		goto out;
 	}
@@ -875,13 +924,34 @@ main (int argc, char *argv[])
 			goto out;
 		}
 
+		/* setup completion with the correct number of steps */
+		zif_completion_set_number_steps (completion, 3);
+
+		/* add both local and remote packages */
+		sack = zif_sack_new ();
+		completion_local = zif_completion_get_child (completion);
+		zif_sack_add_local (sack, NULL, completion_local, NULL);
+
+		/* this section done */
+		zif_completion_done (completion);
+
+		completion_local = zif_completion_get_child (completion);
+		zif_sack_add_remote_enabled (sack, NULL, completion_local, NULL);
+
+		/* this section done */
+		zif_completion_done (completion);
+
 		/* resolve */
-		array = zif_sack_resolve (sack, value, NULL, completion, &error);
+		completion_local = zif_completion_get_child (completion);
+		array = zif_sack_resolve (sack, value, NULL, completion_local, &error);
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
 			goto out;
 		}
+
+		/* this section done */
+		zif_completion_done (completion);
 
 		/* at least one result */
 		if (array->len > 0) {
@@ -928,11 +998,33 @@ main (int argc, char *argv[])
 		ZifString *url;
 		guint64 size;
 
+		/* setup completion with the correct number of steps */
+		zif_completion_set_number_steps (completion, 3);
+
+		/* add both local and remote packages */
+		sack = zif_sack_new ();
+		completion_local = zif_completion_get_child (completion);
+		zif_sack_add_local (sack, NULL, completion_local, NULL);
+
+		/* this section done */
+		zif_completion_done (completion);
+
+		completion_local = zif_completion_get_child (completion);
+		zif_sack_add_remote_enabled (sack, NULL, completion_local, NULL);
+
+		/* this section done */
+		zif_completion_done (completion);
+
 		if (value == NULL) {
 			g_print ("specify a package name\n");
 			goto out;
 		}
-		array = zif_sack_resolve (sack, value, NULL, completion, &error);
+		completion_local = zif_completion_get_child (completion);
+		array = zif_sack_resolve (sack, value, NULL, completion_local, &error);
+
+		/* this section done */
+		zif_completion_done (completion);
+
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
@@ -980,12 +1072,35 @@ main (int argc, char *argv[])
 		goto out;
 	}
 	if (g_strcmp0 (mode, "list") == 0 || g_strcmp0 (mode, "getpackages") == 0) {
-		array = zif_sack_get_packages (sack, NULL, completion, &error);
+
+		/* setup completion with the correct number of steps */
+		zif_completion_set_number_steps (completion, 3);
+
+		/* add both local and remote packages */
+		sack = zif_sack_new ();
+		completion_local = zif_completion_get_child (completion);
+		zif_sack_add_local (sack, NULL, completion_local, NULL);
+
+		/* this section done */
+		zif_completion_done (completion);
+
+		completion_local = zif_completion_get_child (completion);
+		zif_sack_add_remote_enabled (sack, NULL, completion_local, NULL);
+
+		/* this section done */
+		zif_completion_done (completion);
+
+		completion_local = zif_completion_get_child (completion);
+		array = zif_sack_get_packages (sack, NULL, completion_local, &error);
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
 			goto out;
 		}
+
+		/* this section done */
+		zif_completion_done (completion);
+
 		zif_print_packages (array);
 		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
 		g_ptr_array_free (array, TRUE);
@@ -1018,7 +1133,7 @@ main (int argc, char *argv[])
 	}
 	if (g_strcmp0 (mode, "repolist") == 0) {
 		/* get list */
-		array = zif_repos_get_stores (repos, &error);
+		array = zif_repos_get_stores (repos, NULL, completion, &error);
 		if (array == NULL) {
 			g_print ("failed to get list of repos: %s\n", error->message);
 			g_error_free (error);
@@ -1043,12 +1158,35 @@ main (int argc, char *argv[])
 			g_print ("specify a package name\n");
 			goto out;
 		}
-		array = zif_sack_resolve (sack, value, NULL, completion, &error);
+
+		/* setup completion with the correct number of steps */
+		zif_completion_set_number_steps (completion, 3);
+
+		/* add both local and remote packages */
+		sack = zif_sack_new ();
+		completion_local = zif_completion_get_child (completion);
+		zif_sack_add_local (sack, NULL, completion_local, NULL);
+
+		/* this section done */
+		zif_completion_done (completion);
+
+		completion_local = zif_completion_get_child (completion);
+		zif_sack_add_remote_enabled (sack, NULL, completion_local, NULL);
+
+		/* this section done */
+		zif_completion_done (completion);
+
+		completion_local = zif_completion_get_child (completion);
+		array = zif_sack_resolve (sack, value, NULL, completion_local, &error);
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
 			goto out;
 		}
+
+		/* this section done */
+		zif_completion_done (completion);
+
 		zif_print_packages (array);
 		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
 		g_ptr_array_free (array, TRUE);
@@ -1059,12 +1197,35 @@ main (int argc, char *argv[])
 			g_print ("specify a search term\n");
 			goto out;
 		}
-		array = zif_sack_search_name (sack, value, NULL, completion, &error);
+
+		/* setup completion with the correct number of steps */
+		zif_completion_set_number_steps (completion, 3);
+
+		/* add both local and remote packages */
+		sack = zif_sack_new ();
+		completion_local = zif_completion_get_child (completion);
+		zif_sack_add_local (sack, NULL, completion_local, NULL);
+
+		/* this section done */
+		zif_completion_done (completion);
+
+		completion_local = zif_completion_get_child (completion);
+		zif_sack_add_remote_enabled (sack, NULL, completion_local, NULL);
+
+		/* this section done */
+		zif_completion_done (completion);
+
+		completion_local = zif_completion_get_child (completion);
+		array = zif_sack_search_name (sack, value, NULL, completion_local, &error);
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
 			goto out;
 		}
+
+		/* this section done */
+		zif_completion_done (completion);
+
 		zif_print_packages (array);
 		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
 		g_ptr_array_free (array, TRUE);
@@ -1075,12 +1236,35 @@ main (int argc, char *argv[])
 			g_print ("specify a search term\n");
 			goto out;
 		}
-		array = zif_sack_search_details (sack, value, NULL, completion, &error);
+
+		/* setup completion with the correct number of steps */
+		zif_completion_set_number_steps (completion, 3);
+
+		/* add both local and remote packages */
+		sack = zif_sack_new ();
+		completion_local = zif_completion_get_child (completion);
+		zif_sack_add_local (sack, NULL, completion_local, NULL);
+
+		/* this section done */
+		zif_completion_done (completion);
+
+		completion_local = zif_completion_get_child (completion);
+		zif_sack_add_remote_enabled (sack, NULL, completion_local, NULL);
+
+		/* this section done */
+		zif_completion_done (completion);
+
+		completion_local = zif_completion_get_child (completion);
+		array = zif_sack_search_details (sack, value, NULL, completion_local, &error);
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
 			goto out;
 		}
+
+		/* this section done */
+		zif_completion_done (completion);
+
 		zif_print_packages (array);
 		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
 		g_ptr_array_free (array, TRUE);
@@ -1091,12 +1275,35 @@ main (int argc, char *argv[])
 			g_print ("specify a filename\n");
 			goto out;
 		}
-		array = zif_sack_search_file (sack, value, NULL, completion, &error);
+
+		/* setup completion with the correct number of steps */
+		zif_completion_set_number_steps (completion, 3);
+
+		/* add both local and remote packages */
+		sack = zif_sack_new ();
+		completion_local = zif_completion_get_child (completion);
+		zif_sack_add_local (sack, NULL, completion_local, NULL);
+
+		/* this section done */
+		zif_completion_done (completion);
+
+		completion_local = zif_completion_get_child (completion);
+		zif_sack_add_remote_enabled (sack, NULL, completion_local, NULL);
+
+		/* this section done */
+		zif_completion_done (completion);
+
+		completion_local = zif_completion_get_child (completion);
+		array = zif_sack_search_file (sack, value, NULL, completion_local, &error);
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
 			goto out;
 		}
+
+		/* this section done */
+		zif_completion_done (completion);
+
 		zif_print_packages (array);
 		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
 		g_ptr_array_free (array, TRUE);
@@ -1107,28 +1314,74 @@ main (int argc, char *argv[])
 			g_print ("specify a search term\n");
 			goto out;
 		}
-		array = zif_sack_search_group (sack, value, NULL, completion, &error);
+
+		/* setup completion with the correct number of steps */
+		zif_completion_set_number_steps (completion, 3);
+
+		/* add both local and remote packages */
+		sack = zif_sack_new ();
+		completion_local = zif_completion_get_child (completion);
+		zif_sack_add_local (sack, NULL, completion_local, NULL);
+
+		/* this section done */
+		zif_completion_done (completion);
+
+		completion_local = zif_completion_get_child (completion);
+		zif_sack_add_remote_enabled (sack, NULL, completion_local, NULL);
+
+		/* this section done */
+		zif_completion_done (completion);
+
+		completion_local = zif_completion_get_child (completion);
+		array = zif_sack_search_group (sack, value, NULL, completion_local, &error);
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
 			goto out;
 		}
+
+		/* this section done */
+		zif_completion_done (completion);
+
 		zif_print_packages (array);
 		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
 		g_ptr_array_free (array, TRUE);
 		goto out;
 	}
-	if (g_strcmp0 (mode, "resolvedep") == 0 || g_strcmp0 (mode, "whatprovides") == 0 || g_strcmp0 (mode, "resolvedep") == 0 || g_strcmp0 (mode, "provides") == 0) {
+	if (g_strcmp0 (mode, "resolvedep") == 0 || g_strcmp0 (mode, "whatprovides") == 0 || g_strcmp0 (mode, "provides") == 0) {
 		if (value == NULL) {
 			g_print ("specify a search term\n");
 			goto out;
 		}
-		array = zif_sack_what_provides (sack, value, NULL, completion, &error);
+
+		/* setup completion with the correct number of steps */
+		zif_completion_set_number_steps (completion, 3);
+
+		/* add both local and remote packages */
+		sack = zif_sack_new ();
+		completion_local = zif_completion_get_child (completion);
+		zif_sack_add_local (sack, NULL, completion_local, NULL);
+
+		/* this section done */
+		zif_completion_done (completion);
+
+		completion_local = zif_completion_get_child (completion);
+		zif_sack_add_remote_enabled (sack, NULL, completion_local, NULL);
+
+		/* this section done */
+		zif_completion_done (completion);
+
+		completion_local = zif_completion_get_child (completion);
+		array = zif_sack_what_provides (sack, value, NULL, completion_local, &error);
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
 			goto out;
 		}
+
+		/* this section done */
+		zif_completion_done (completion);
+
 		zif_print_packages (array);
 		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
 		g_ptr_array_free (array, TRUE);

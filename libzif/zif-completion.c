@@ -88,10 +88,8 @@ gboolean
 zif_completion_set_percentage (ZifCompletion *completion, guint percentage)
 {
 	/* is it the same */
-	if (percentage == completion->priv->last_percentage) {
-		egg_debug ("ignoring same percentage=%i on %p", percentage, completion);
-		return FALSE;
-	}
+	if (percentage == completion->priv->last_percentage)
+		goto out;
 
 	/* is it less */
 	if (percentage < completion->priv->last_percentage) {
@@ -104,7 +102,7 @@ zif_completion_set_percentage (ZifCompletion *completion, guint percentage)
 	egg_debug ("emitting percentage=%i on %p", percentage, completion);
 	g_signal_emit (completion, signals [PERCENTAGE_CHANGED], 0, percentage);
 	completion->priv->last_percentage = percentage;
-
+out:
 	return TRUE;
 }
 
@@ -134,6 +132,13 @@ zif_completion_child_percentage_changed_cb (ZifCompletion *child, guint percenta
 	if (completion->priv->steps == 1) {
 		egg_debug ("using child percentage as parent as only one step on %p", completion);
 		zif_completion_set_percentage (completion, percentage);
+		return;
+	}
+
+	/* did we call done on a completion that did not have a size set? */
+	if (completion->priv->steps == 0) {
+		egg_warning ("done on a completion %p that did not have a size set!", completion);
+		zif_debug_crash ();
 		return;
 	}
 
@@ -198,33 +203,51 @@ zif_completion_reset (ZifCompletion *completion)
 	completion->priv->current = 0;
 	completion->priv->last_percentage = 0;
 
+	/* disconnect client */
+	if (completion->priv->percentage_child_id != 0) {
+		g_signal_handler_disconnect (completion->priv->child, completion->priv->percentage_child_id);
+		completion->priv->percentage_child_id = 0;
+	}
+	if (completion->priv->subpercentage_child_id != 0) {
+		g_signal_handler_disconnect (completion->priv->child, completion->priv->subpercentage_child_id);
+		completion->priv->subpercentage_child_id = 0;
+	}
+
+	/* unref child */
+	if (completion->priv->child != NULL) {
+		g_object_unref (completion->priv->child);
+		completion->priv->child = NULL;
+	}
+
 	return TRUE;
 }
 
 /**
- * zif_completion_set_child:
+ * zif_completion_get_child:
  * @completion: the #ZifCompletion object
- * @child: A child #ZifCompletion to monitor
  *
  * Monitor a child completion and proxy back up to the parent completion
  *
- * Return value: %TRUE for success, %FALSE for failure
+ * Return value: a new %ZifCompletion or %NULL for failure
  **/
-gboolean
-zif_completion_set_child (ZifCompletion *completion, ZifCompletion *child)
+ZifCompletion *
+zif_completion_get_child (ZifCompletion *completion)
 {
-	g_return_val_if_fail (ZIF_IS_COMPLETION (completion), FALSE);
-	g_return_val_if_fail (ZIF_IS_COMPLETION (child), FALSE);
+	ZifCompletion *child = NULL;
 
-	/* watch this */
+	g_return_val_if_fail (ZIF_IS_COMPLETION (completion), FALSE);
+
+	/* already set child */
 	if (completion->priv->child != NULL) {
-		/* disconnect signals */
+		egg_debug ("already set child %p on %p (unreffing)",
+			   completion->priv->child, completion);
 		g_signal_handler_disconnect (completion->priv->child, completion->priv->percentage_child_id);
 		g_signal_handler_disconnect (completion->priv->child, completion->priv->subpercentage_child_id);
 		g_object_unref (completion->priv->child);
 	}
 
 	/* connect up signals */
+	child = zif_completion_new ();
 	completion->priv->child = g_object_ref (child);
 	completion->priv->percentage_child_id =
 		g_signal_connect (child, "percentage-changed", G_CALLBACK (zif_completion_child_percentage_changed_cb), completion);
@@ -235,7 +258,7 @@ zif_completion_set_child (ZifCompletion *completion, ZifCompletion *child)
 	child->priv->current = 0;
 	child->priv->last_percentage = 0;
 
-	return TRUE;
+	return child;
 }
 
 /**
@@ -253,6 +276,13 @@ zif_completion_set_number_steps (ZifCompletion *completion, guint steps)
 {
 	g_return_val_if_fail (ZIF_IS_COMPLETION (completion), FALSE);
 	g_return_val_if_fail (steps != 0, FALSE);
+
+	/* did we call done on a completion that did not have a size set? */
+	if (completion->priv->steps != 0) {
+		egg_warning ("steps already set (%i)!", completion->priv->steps);
+		zif_debug_crash ();
+		return FALSE;
+	}
 
 	egg_debug ("setting up %i steps on %p", steps, completion);
 
@@ -279,7 +309,13 @@ zif_completion_done (ZifCompletion *completion)
 	gfloat percentage;
 
 	g_return_val_if_fail (ZIF_IS_COMPLETION (completion), FALSE);
-	g_return_val_if_fail (completion->priv->steps > 0, FALSE);
+
+	/* did we call done on a completion that did not have a size set? */
+	if (completion->priv->steps == 0) {
+		egg_warning ("done on a completion %p that did not have a size set!", completion);
+		zif_debug_crash ();
+		return FALSE;
+	}
 
 	/* is already at 100%? */
 	if (completion->priv->current == completion->priv->steps) {
@@ -293,6 +329,10 @@ zif_completion_done (ZifCompletion *completion)
 	/* find new percentage */
 	percentage = zif_completion_discrete_to_percent (completion->priv->current, completion->priv->steps);
 	zif_completion_set_percentage (completion, (guint) percentage);
+
+	/* reset child if it exists */
+	if (completion->priv->child != NULL)
+		zif_completion_reset (completion->priv->child);
 
 	return TRUE;
 }
@@ -309,12 +349,8 @@ zif_completion_finalize (GObject *object)
 	g_return_if_fail (ZIF_IS_COMPLETION (object));
 	completion = ZIF_COMPLETION (object);
 
-	/* free, and disconnect */
-	if (completion->priv->child != NULL) {
-		g_signal_handler_disconnect (completion->priv->child, completion->priv->percentage_child_id);
-		g_signal_handler_disconnect (completion->priv->child, completion->priv->subpercentage_child_id);
-		g_object_unref (completion->priv->child);
-	}
+	/* unref child too */
+	zif_completion_reset (completion);
 
 	G_OBJECT_CLASS (zif_completion_parent_class)->finalize (object);
 }
@@ -356,6 +392,8 @@ zif_completion_init (ZifCompletion *completion)
 	completion->priv->steps = 0;
 	completion->priv->current = 0;
 	completion->priv->last_percentage = 0;
+	completion->priv->percentage_child_id = 0;
+	completion->priv->subpercentage_child_id = 0;
 }
 
 /**
@@ -459,10 +497,9 @@ zif_completion_test (EggTest *test)
 	g_signal_connect (completion, "percentage-changed", G_CALLBACK (zif_completion_test_percentage_changed_cb), NULL);
 	g_signal_connect (completion, "subpercentage-changed", G_CALLBACK (zif_completion_test_subpercentage_changed_cb), NULL);
 
-	/* now test with a child */
-	child = zif_completion_new ();
-	zif_completion_set_child (completion, child);
-	zif_completion_set_number_steps (child, 2);
+	// completion: |-----------------------|-----------------------|
+	// step1:      |-----------------------|
+	// child:                              |-------------|---------|
 
 	/* PARENT UPDATE */
 	zif_completion_done (completion);
@@ -470,6 +507,14 @@ zif_completion_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "ensure 1 update");
 	egg_test_assert (test, (_updates == 1));
+
+	/************************************************************/
+	egg_test_title (test, "ensure correct percent");
+	egg_test_assert (test, (_last_percent == 50));
+
+	/* now test with a child */
+	child = zif_completion_get_child (completion);
+	zif_completion_set_number_steps (child, 2);
 
 	/* CHILD UPDATE */
 	zif_completion_done (child);
@@ -487,7 +532,10 @@ zif_completion_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "ensure 3 updates");
-	egg_test_assert (test, (_updates == 3));
+	if (_updates == 3)
+		egg_test_success (test, NULL);
+	else
+		egg_test_failed (test, "got %i updates", _updates);
 
 	/************************************************************/
 	egg_test_title (test, "ensure correct percent");
@@ -498,15 +546,22 @@ zif_completion_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "ensure 3 updates (and we ignored the duplicate)");
-	egg_test_assert (test, (_updates == 3));
+	if (_updates == 3)
+		egg_test_success (test, NULL);
+	else
+		egg_test_failed (test, "got %i updates", _updates);
 
 	/************************************************************/
 	egg_test_title (test, "ensure still correct percent");
 	egg_test_assert (test, (_last_percent == 100));
 
+	egg_debug ("unref completion");
 	g_object_unref (completion);
+
+	egg_debug ("unref child");
 	g_object_unref (child);
 
+	egg_debug ("reset");
 	/* reset */
 	_updates = 0;
 	completion = zif_completion_new ();
@@ -515,9 +570,8 @@ zif_completion_test (EggTest *test)
 	g_signal_connect (completion, "subpercentage-changed", G_CALLBACK (zif_completion_test_subpercentage_changed_cb), NULL);
 
 	/* now test with a child */
-	child = zif_completion_new ();
+	child = zif_completion_get_child (completion);
 	zif_completion_set_number_steps (child, 2);
-	zif_completion_set_child (completion, child);
 
 	/* CHILD SET VALUE */
 	zif_completion_set_percentage (child, 33);

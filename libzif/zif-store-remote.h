@@ -61,6 +61,8 @@ ZifStoreRemote	*zif_store_remote_new			(void);
 gboolean	 zif_store_remote_set_from_file		(ZifStoreRemote		*store,
 							 const gchar		*filename,
 							 const gchar		*id,
+							 GCancellable		*cancellable,
+							 ZifCompletion		*completion,
 							 GError			**error);
 gboolean	 zif_store_remote_is_devel		(ZifStoreRemote		*store,
 							 GError			**error);

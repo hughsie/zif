@@ -79,8 +79,13 @@ zif_download_file_got_chunk_cb (SoupMessage *msg, SoupBuffer *chunk, ZifDownload
 
 	/* calulate percentage */
 	percentage = (100 * body_length) / header_size;
-	if (download->priv->completion != NULL)
-		zif_completion_set_percentage (download->priv->completion, percentage);
+	if (percentage == 100) {
+		egg_warning ("ignoring percentage: %i", percentage);
+		goto out;
+	}
+
+	egg_debug ("DOWNLOAD: %i%% (%i, %i) - %p, %p", percentage, body_length, header_size, msg, download);
+	zif_completion_set_percentage (download->priv->completion, percentage);
 
 out:
 	return;
@@ -148,14 +153,7 @@ zif_download_file (ZifDownload *download, const gchar *uri, const gchar *filenam
 	g_return_val_if_fail (download->priv->session != NULL, FALSE);
 
 	/* save an instance of the completion object */
-	if (download->priv->completion != NULL)
-		g_object_unref (download->priv->completion);
-	if (completion != NULL) {
-		download->priv->completion = g_object_ref (completion);
-		zif_completion_reset (download->priv->completion);
-	} else {
-		download->priv->completion = NULL;
-	}
+	download->priv->completion = g_object_ref (completion);
 
 	base_uri = soup_uri_new (uri);
 	if (base_uri == NULL) {
@@ -201,6 +199,8 @@ zif_download_file (ZifDownload *download, const gchar *uri, const gchar *filenam
 		goto out;
 	}
 out:
+	g_object_unref (download->priv->completion);
+	download->priv->completion = NULL;
 	soup_uri_free (base_uri);
 	if (msg != NULL)
 		g_object_unref (msg);
@@ -248,8 +248,6 @@ zif_download_finalize (GObject *object)
 		g_object_unref (download->priv->msg);
 	if (download->priv->session != NULL)
 		g_object_unref (download->priv->session);
-	if (download->priv->completion != NULL)
-		g_object_unref (download->priv->completion);
 
 	G_OBJECT_CLASS (zif_download_parent_class)->finalize (object);
 }
@@ -276,6 +274,7 @@ zif_download_init (ZifDownload *download)
 	download->priv->msg = NULL;
 	download->priv->session = NULL;
 	download->priv->proxy = NULL;
+	download->priv->completion = NULL;
 }
 
 /**
@@ -358,7 +357,7 @@ zif_download_test (EggTest *test)
 		egg_test_failed (test, "failed to load '%s'", error->message);
 
 	/************************************************************/
-	egg_test_title (test, "we got updates");
+	egg_test_title (test, "enough updates");
 	if (_updates > 5)
 		egg_test_success (test, "got %i updates", _updates);
 	else
@@ -369,7 +368,8 @@ zif_download_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "download second file (should be cancelled)");
-	ret = zif_download_file (download, "http://people.freedesktop.org/~hughsient/temp/Screenshot.png", "../test/downloads", NULL, NULL, &error);
+	zif_completion_reset (completion);
+	ret = zif_download_file (download, "http://people.freedesktop.org/~hughsient/temp/Screenshot.png", "../test/downloads", NULL, completion, &error);
 	if (!ret)
 		egg_test_success (test, NULL);
 	else

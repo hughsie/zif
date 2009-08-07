@@ -65,10 +65,16 @@ gboolean	 zif_sack_add_store		(ZifSack		*sack,
 gboolean	 zif_sack_add_stores		(ZifSack		*sack,
 						 GPtrArray		*stores);
 gboolean	 zif_sack_add_local		(ZifSack		*sack,
+						 GCancellable		*cancellable,
+						 ZifCompletion		*completion,
 						 GError			**error);
 gboolean	 zif_sack_add_remote		(ZifSack		*sack,
+						 GCancellable		*cancellable,
+						 ZifCompletion		*completion,
 						 GError			**error);
 gboolean	 zif_sack_add_remote_enabled	(ZifSack		*sack,
+						 GCancellable		*cancellable,
+						 ZifCompletion		*completion,
 						 GError			**error);
 
 /* methods */
