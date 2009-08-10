@@ -46,6 +46,7 @@ struct _ZifConfigPrivate
 	GKeyFile		*keyfile;
 	gboolean		 loaded;
 	ZifMonitor		*monitor;
+	GHashTable		*hash;
 };
 
 G_DEFINE_TYPE (ZifConfig, zif_config, G_TYPE_OBJECT)
@@ -57,7 +58,7 @@ static gpointer zif_config_object = NULL;
  * @key: the key name to retrieve, e.g. "cachedir"
  * @error: a #GError which is used on failure, or %NULL
  *
- * Gets a string value from the config file.
+ * Gets a string value from a local setting, falling back to the config file.
  *
  * Return value: the allocated value, or %NULL
  **/
@@ -65,6 +66,7 @@ gchar *
 zif_config_get_string (ZifConfig *config, const gchar *key, GError **error)
 {
 	gchar *value = NULL;
+	const gchar *value_tmp;
 	const gchar *info;
 	GError *error_local = NULL;
 
@@ -75,6 +77,13 @@ zif_config_get_string (ZifConfig *config, const gchar *key, GError **error)
 	if (!config->priv->loaded) {
 		if (error != NULL)
 			*error = g_error_new (1, 0, "config not loaded");
+		goto out;
+	}
+
+	/* exists as local override */
+	value_tmp = g_hash_table_lookup (config->priv->hash, key);
+	if (value_tmp != NULL) {
+		value = g_strdup (value_tmp);
 		goto out;
 	}
 
@@ -118,7 +127,7 @@ out:
  * @key: the key name to retrieve, e.g. "keepcache"
  * @error: a #GError which is used on failure, or %NULL
  *
- * Gets a boolean value from the config file.
+ * Gets a boolean value from a local setting, falling back to the config file.
  *
  * Return value: %TRUE or %FALSE
  **/
@@ -150,7 +159,7 @@ out:
  * @key: the key name to retrieve, e.g. "keepcache"
  * @error: a #GError which is used on failure, or %NULL
  *
- * Gets a unsigned integer value from the config file.
+ * Gets a unsigned integer value from a local setting, falling back to the config file.
  *
  * Return value: the data value
  **/
@@ -235,6 +244,58 @@ out:
 }
 
 /**
+ * zif_config_reset_default:
+ * @config: the #ZifConfig object
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Removes any local settings previously set.
+ *
+ * Return value: %TRUE for success, %FALSE for failure
+ **/
+gboolean
+zif_config_reset_default (ZifConfig *config, GError **error)
+{
+	g_return_val_if_fail (ZIF_IS_CONFIG (config), FALSE);
+	g_hash_table_remove_all (config->priv->hash);
+	return TRUE;
+}
+
+/**
+ * zif_config_set_local:
+ * @config: the #ZifConfig object
+ * @key: the key name to save, e.g. "keepcache"
+ * @value: the key data to save, e.g. "always"
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Sets a local value which is used in preference to the config value.
+ *
+ * Return value: %TRUE for success, %FALSE for failure
+ **/
+gboolean
+zif_config_set_local (ZifConfig *config, const gchar *key, const gchar *value, GError **error)
+{
+	const gchar *value_tmp;
+	gboolean ret = TRUE;
+
+	g_return_val_if_fail (ZIF_IS_CONFIG (config), FALSE);
+	g_return_val_if_fail (key != NULL, FALSE);
+
+	/* already exists? */
+	value_tmp = g_hash_table_lookup (config->priv->hash, key);
+	if (value_tmp != NULL) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "already set key %s to %s, cannot overwrite with %s", key, value_tmp, value);
+		ret = FALSE;
+		goto out;
+	}
+
+	/* insert into table */
+	g_hash_table_insert (config->priv->hash, g_strdup (key), g_strdup (value));
+out:
+	return ret;
+}
+
+/**
  * zif_config_file_monitor_cb:
  **/
 static void
@@ -255,6 +316,7 @@ zif_config_finalize (GObject *object)
 	config = ZIF_CONFIG (object);
 
 	g_key_file_free (config->priv->keyfile);
+	g_hash_table_unref (config->priv->hash);
 	g_object_unref (config->priv->monitor);
 
 	G_OBJECT_CLASS (zif_config_parent_class)->finalize (object);
@@ -280,6 +342,7 @@ zif_config_init (ZifConfig *config)
 	config->priv = ZIF_CONFIG_GET_PRIVATE (config);
 	config->priv->keyfile = g_key_file_new ();
 	config->priv->loaded = FALSE;
+	config->priv->hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
 	config->priv->monitor = zif_monitor_new ();
 	g_signal_connect (config->priv->monitor, "changed", G_CALLBACK (zif_config_file_monitor_cb), config);
 }
@@ -353,6 +416,39 @@ zif_config_test (EggTest *test)
 	egg_test_title (test, "get exactarch");
 	ret = zif_config_get_boolean (config, "exactarch", NULL);
 	egg_test_assert (test, ret);
+
+	/************************************************************/
+	egg_test_title (test, "set local cachedir");
+	ret = zif_config_set_local (config, "cachedir", "/tmp/cache", NULL);
+	egg_test_assert (test, ret);
+
+	/************************************************************/
+	egg_test_title (test, "set local cachedir (again, should fail)");
+	ret = zif_config_set_local (config, "cachedir", "/tmp/cache", NULL);
+	egg_test_assert (test, !ret);
+
+	/************************************************************/
+	egg_test_title (test, "get cachedir");
+	value = zif_config_get_string (config, "cachedir", NULL);
+	if (egg_strequal (value, "/tmp/cache"))
+		egg_test_success (test, NULL);
+	else
+		egg_test_failed (test, "invalid value '%s'", value);
+	g_free (value);
+
+	/************************************************************/
+	egg_test_title (test, "reset back to defaults");
+	ret = zif_config_reset_default (config, NULL);
+	egg_test_assert (test, ret);
+
+	/************************************************************/
+	egg_test_title (test, "get cachedir");
+	value = zif_config_get_string (config, "cachedir", NULL);
+	if (egg_strequal (value, "../test/cache"))
+		egg_test_success (test, NULL);
+	else
+		egg_test_failed (test, "invalid value '%s'", value);
+	g_free (value);
 
 	g_object_unref (config);
 
