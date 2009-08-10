@@ -26,6 +26,9 @@ bin_PROGRAMS =						\
 zif_SOURCES =						\
 	egg-debug.c					\
 	egg-debug.h					\
+	pk-progress-bar.c				\
+	pk-progress-bar.h				\
+	egg-debug.h					\
 	zif-main.c
 
 zif_LDADD =						\

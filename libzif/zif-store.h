@@ -65,6 +65,7 @@ struct _ZifStoreClass
 						 ZifCompletion		*completion,
 						 GError			**error);
 	gboolean	 (*refresh)		(ZifStore		*store,
+						 gboolean		 force,
 						 GCancellable		*cancellable,
 						 ZifCompletion		*completion,
 						 GError			**error);
@@ -131,6 +132,7 @@ gboolean	 zif_store_clean		(ZifStore		*store,
 						 ZifCompletion		*completion,
 						 GError			**error);
 gboolean	 zif_store_refresh		(ZifStore		*store,
+						 gboolean		 force,
 						 GCancellable		*cancellable,
 						 ZifCompletion		*completion,
 						 GError			**error);

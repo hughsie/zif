@@ -109,7 +109,7 @@ zif_store_clean (ZifStore *store, GCancellable *cancellable, ZifCompletion *comp
  * Return value: %TRUE for success, %FALSE for failure
  **/
 gboolean
-zif_store_refresh (ZifStore *store, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+zif_store_refresh (ZifStore *store, gboolean force, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	ZifStoreClass *klass = ZIF_STORE_GET_CLASS (store);
 
@@ -122,7 +122,7 @@ zif_store_refresh (ZifStore *store, GCancellable *cancellable, ZifCompletion *co
 		return FALSE;
 	}
 
-	return klass->refresh (store, cancellable, completion, error);
+	return klass->refresh (store, force, cancellable, completion, error);
 }
 
 /**

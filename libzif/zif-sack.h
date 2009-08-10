@@ -83,6 +83,7 @@ gboolean	 zif_sack_clean			(ZifSack		*sack,
 						 ZifCompletion		*completion,
 						 GError			**error);
 gboolean	 zif_sack_refresh		(ZifSack		*sack,
+						 gboolean		 force,
 						 GCancellable		*cancellable,
 						 ZifCompletion		*completion,
 						 GError			**error);

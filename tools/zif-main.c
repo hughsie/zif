@@ -29,8 +29,12 @@
 #include "egg-debug.h"
 #include "egg-string.h"
 
+#include "pk-progress-bar.h"
+
 #define ZIF_MAIN_LOCKING_RETRIES	10
 #define ZIF_MAIN_LOCKING_DELAY		2 /* seconds */
+
+static PkProgressBar *progressbar;
 
 /**
  * zif_print_packages:
@@ -58,7 +62,16 @@ zif_print_packages (GPtrArray *array)
 static void
 zif_completion_percentage_changed_cb (ZifCompletion *completion, guint percentage, gpointer data)
 {
-	g_print ("Completion %i%%\n", percentage);
+	pk_progress_bar_set_value (progressbar, percentage);
+}
+
+/**
+ * zif_completion_subpercentage_changed_cb:
+ **/
+static void
+zif_completion_subpercentage_changed_cb (ZifCompletion *completion, guint percentage, gpointer data)
+{
+	pk_progress_bar_set_percentage (progressbar, percentage);
 }
 
 /**
@@ -342,7 +355,7 @@ out:
  * zif_cmd_refresh_cache:
  **/
 static gboolean
-zif_cmd_refresh_cache (ZifCompletion *completion)
+zif_cmd_refresh_cache (ZifCompletion *completion, gboolean force)
 {
 	gboolean ret;
 	GError *error = NULL;
@@ -367,7 +380,7 @@ zif_cmd_refresh_cache (ZifCompletion *completion)
 
 	/* refresh all ZifRemoteStores */
 	completion_local = zif_completion_get_child (completion);
-	ret = zif_sack_refresh (sack, NULL, completion_local, &error);
+	ret = zif_sack_refresh (sack, force, NULL, completion_local, &error);
 	if (!ret) {
 		g_print ("failed to refresh cache: %s\n", error->message);
 		g_error_free (error);
@@ -563,6 +576,8 @@ main (int argc, char *argv[])
 	options_help = g_option_context_get_help (context, TRUE, NULL);
 	g_option_context_free (context);
 
+	progressbar = pk_progress_bar_new ();
+
 	/* verbose? */
 	egg_debug_init (verbose);
 
@@ -641,6 +656,7 @@ main (int argc, char *argv[])
 	/* ZifCompletion */
 	completion = zif_completion_new ();
 	g_signal_connect (completion, "percentage-changed", G_CALLBACK (zif_completion_percentage_changed_cb), NULL);
+	g_signal_connect (completion, "subpercentage-changed", G_CALLBACK (zif_completion_subpercentage_changed_cb), NULL);
 
 	if (profile) {
 		GTimer *timer;
@@ -824,9 +840,17 @@ main (int argc, char *argv[])
 		g_print ("%s", options_help);
 		goto out;
 	}
+
+	/* setup progressbar */
+	pk_progress_bar_set_padding (progressbar, 30);
+	pk_progress_bar_set_size (progressbar, 30);
+	pk_progress_bar_start (progressbar, "Performing action");
+
 	mode = argv[1];
 	value = argv[2];
 	if (g_strcmp0 (mode, "get-updates") == 0 || g_strcmp0 (mode, "check-update") == 0) {
+
+		pk_progress_bar_start (progressbar, "Getting updates");
 
 		/* setup completion with the correct number of steps */
 		zif_completion_set_number_steps (completion, 2);
@@ -1123,7 +1147,7 @@ main (int argc, char *argv[])
 	}
 	if (g_strcmp0 (mode, "makecache") == 0 || g_strcmp0 (mode, "refreshcache") == 0) {
 
-		zif_cmd_refresh_cache (completion);
+		zif_cmd_refresh_cache (completion, FALSE);
 		g_print ("not yet supported\n");
 		goto out;
 	}
@@ -1420,6 +1444,7 @@ out:
 		g_object_unref (lock);
 	}
 
+	g_object_unref (progressbar);
 	g_free (repos_dir);
 	g_free (config_file);
 	g_free (options_help);

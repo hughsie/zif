@@ -400,7 +400,7 @@ out:
  * Return value: %TRUE for success, %FALSE for failure
  **/
 gboolean
-zif_sack_refresh (ZifSack *sack, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+zif_sack_refresh (ZifSack *sack, gboolean force, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	guint i;
 	GPtrArray *stores;
@@ -431,7 +431,7 @@ zif_sack_refresh (ZifSack *sack, GCancellable *cancellable, ZifCompletion *compl
 
 		/* refresh this one */
 		completion_local = zif_completion_get_child (completion);
-		ret = zif_store_refresh (store, cancellable, completion_local, &error_local);
+		ret = zif_store_refresh (store, force, cancellable, completion_local, &error_local);
 		if (!ret) {
 			if (error != NULL)
 				*error = g_error_new (1, 0, "failed to refresh %s: %s", zif_store_get_id (store), error_local->message);
