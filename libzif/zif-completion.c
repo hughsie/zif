@@ -94,12 +94,12 @@ zif_completion_set_percentage (ZifCompletion *completion, guint percentage)
 	/* is it less */
 	if (percentage < completion->priv->last_percentage) {
 		egg_warning ("percentage cannot go down from %i to %i on %p!", completion->priv->last_percentage, percentage, completion);
-		zif_debug_crash ();
+//		zif_debug_crash ();
 		return FALSE;
 	}
 
 	/* emit and save */
-	egg_debug ("emitting percentage=%i on %p", percentage, completion);
+//	egg_debug ("emitting percentage=%i on %p", percentage, completion);
 	g_signal_emit (completion, signals [PERCENTAGE_CHANGED], 0, percentage);
 	completion->priv->last_percentage = percentage;
 out:
@@ -113,7 +113,7 @@ static gboolean
 zif_completion_set_subpercentage (ZifCompletion *completion, guint percentage)
 {
 	/* emit and save */
-	egg_debug ("emitting subpercentage=%i on %p", percentage, completion);
+//	egg_debug ("emitting subpercentage=%i on %p", percentage, completion);
 	g_signal_emit (completion, signals [SUBPERCENTAGE_CHANGED], 0, percentage);
 	return TRUE;
 }
