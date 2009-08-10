@@ -19,6 +19,16 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+/**
+ * SECTION:zif-groups
+ * @short_description: A #ZifGroups class handles category to group mapping
+ *
+ * In Zif, we have a few groups that are enumerated, and categories that are
+ * not enumerated and are custom to the vendor. The mapping from categories
+ * to groups (and vice versa) is done with a mapping file which has to be
+ * set using zif_groups_set_mapping_file() before any queries are done.
+ */
+
 #include <string.h>
 
 #include <glib.h>

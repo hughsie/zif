@@ -19,6 +19,59 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
+/**
+ * SECTION:zif-completion
+ * @short_description: A #ZifCompletion object allows progress reporting
+ *
+ * Objects can use zif_completion_set_percentage() if the absolute percentage
+ * is known. Percentages should always go up, not down.
+ *
+ * Modules usually set the number of steps that are expected using
+ * zif_completion_set_number_steps() and then after each section is completed,
+ * the zif_completion_done() function should be called. This will automatically
+ * call zif_completion_set_percentage() with the correct values.
+ *
+ * #ZifCompletion allows sub-modules to be "chained up" to the parent module
+ * so that as the sub-module progresses, so does the parent.
+ * The child can be reused for each section, and chains can be deep.
+ *
+ * To get a child object, you should use zif_completion_get_child() and then
+ * use the result in any sub-process. You should ensure that the child object
+ * is not re-used without calling zif_completion_done().
+ *
+ * There are a few nice touches in this module, so that if a module only has
+ * one progress step, the child progress is used for updates.
+ *
+ *
+ * <example>
+ *   <title>Using a #ZifCompletion.</title>
+ *   <programlisting>
+ * static void
+ * _do_something (ZifCompletion *completion)
+ * {
+ * 	ZifCompletion *completion_local;
+ *
+ * 	// setup correct number of steps
+ * 	zif_completion_set_number_steps (completion, 2);
+ *
+ * 	// run a sub function
+ * 	completion_local = zif_completion_get_child (completion);
+ * 	_do_something_else1 (completion_local);
+ *
+ * 	// this section done
+ * 	zif_completion_done (completion);
+ *
+ * 	// run another sub function
+ * 	completion_local = zif_completion_get_child (completion);
+ * 	_do_something_else2 (completion_local);
+ *
+ * 	// this section done (all complete)
+ * 	zif_completion_done (completion);
+ * }
+ *   </programlisting>
+ * </example>
+ */
+
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
@@ -226,7 +279,8 @@ zif_completion_reset (ZifCompletion *completion)
  * zif_completion_get_child:
  * @completion: the #ZifCompletion object
  *
- * Monitor a child completion and proxy back up to the parent completion
+ * Monitor a child completion and proxy back up to the parent completion.
+ * Yo udo not have to g_object_unref() this value.
  *
  * Return value: a new %ZifCompletion or %NULL for failure
  **/

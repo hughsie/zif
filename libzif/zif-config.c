@@ -23,7 +23,15 @@
  * SECTION:zif-config
  * @short_description: A #ZifConfig object manages system wide config options
  *
- * #ZifConfig allows settings to be read from a central config file.
+ * #ZifConfig allows settings to be read from a central config file. Some
+ * values can be overridden in a running instance.
+ *
+ * The values that are overridden can be reset back to the defaults without
+ * re-reading the config file.
+ *
+ * Different types of data can be read (string, bool, uint, time).
+ * Before reading any data, the backing config file has to be set with
+ * zif_config_set_filename() and any reads prior to that will fail.
  */
 
 #include <string.h>
