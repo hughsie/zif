@@ -670,7 +670,7 @@ out:
  * zif_store_file_decompress:
  **/
 static gboolean
-zif_store_file_decompress (const gchar *filename, GError **error)
+zif_store_file_decompress (const gchar *filename, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	gboolean ret = TRUE;
 	gboolean compressed;
@@ -687,7 +687,7 @@ zif_store_file_decompress (const gchar *filename, GError **error)
 	filename_uncompressed = zif_file_get_uncompressed_name (filename);
 
 	/* decompress */
-	ret = zif_file_decompress (filename, filename_uncompressed, error);
+	ret = zif_file_decompress (filename, filename_uncompressed, cancellable, completion, error);
 out:
 	g_free (filename_uncompressed);
 	return ret;
@@ -768,6 +768,7 @@ zif_store_remote_refresh (ZifStore *store, gboolean force, GCancellable *cancell
 		/* TODO: use force information to miss some */
 
 		/* download new file */
+		completion_local = zif_completion_get_child (completion);
 		ret = zif_store_remote_download (remote, filename, remote->priv->directory, cancellable, completion_local, &error_local);
 		if (!ret) {
 			if (error != NULL)
@@ -780,7 +781,8 @@ zif_store_remote_refresh (ZifStore *store, gboolean force, GCancellable *cancell
 		zif_completion_done (completion);
 
 		/* decompress */
-		ret = zif_store_file_decompress (filename, &error_local);
+		completion_local = zif_completion_get_child (completion);
+		ret = zif_store_file_decompress (filename, cancellable, completion_local, &error_local);
 		if (!ret) {
 			if (error != NULL)
 				*error = g_error_new (1, 0, "failed to decompress %s for %s: %s",

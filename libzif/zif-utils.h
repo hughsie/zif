@@ -26,8 +26,11 @@
 #ifndef __ZIF_UTILS_H
 #define __ZIF_UTILS_H
 
+#include <gio/gio.h>
 #include <glib-object.h>
 #include <packagekit-glib/packagekit.h>
+
+#include "zif-completion.h"
 
 G_BEGIN_DECLS
 
@@ -48,6 +51,8 @@ gboolean	 zif_file_untar			(const gchar	*filename,
 						 GError		**error);
 gboolean	 zif_file_decompress		(const gchar	*filename,
 						 const gchar	*directory,
+						 GCancellable	*cancellable,
+						 ZifCompletion	*completion,
 						 GError		**error);
 gchar		*zif_file_get_uncompressed_name	(const gchar	*filename);
 gboolean	 zif_file_is_compressed_name	(const gchar	*filename);

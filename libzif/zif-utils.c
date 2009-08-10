@@ -252,7 +252,7 @@ out:
  * zif_file_decompress_zlib:
  **/
 static gboolean
-zif_file_decompress_zlib (const gchar *in, const gchar *out, GError **error)
+zif_file_decompress_zlib (const gchar *in, const gchar *out, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	gboolean ret = FALSE;
 	gint size;
@@ -301,6 +301,14 @@ zif_file_decompress_zlib (const gchar *in, const gchar *out, GError **error)
 				*error = g_error_new (1, 0, "only wrote %i/%i bytes", written, size);
 			goto out;
 		}
+
+		/* is cancelled */
+		ret = !g_cancellable_is_cancelled (cancellable);
+		if (!ret) {
+			if (error != NULL)
+				*error = g_error_new (1, 0, "cancelled");
+			goto out;
+		}
 	}
 
 	/* success */
@@ -317,7 +325,7 @@ out:
  * zif_file_decompress_bz2:
  **/
 static gboolean
-zif_file_decompress_bz2 (const gchar *in, const gchar *out, GError **error)
+zif_file_decompress_bz2 (const gchar *in, const gchar *out, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	gboolean ret = FALSE;
 	FILE *f_in = NULL;
@@ -369,6 +377,14 @@ zif_file_decompress_bz2 (const gchar *in, const gchar *out, GError **error)
 				*error = g_error_new (1, 0, "only wrote %i/%i bytes", written, size);
 			goto out;
 		}
+
+		/* is cancelled */
+		ret = !g_cancellable_is_cancelled (cancellable);
+		if (!ret) {
+			if (error != NULL)
+				*error = g_error_new (1, 0, "cancelled");
+			goto out;
+		}
 	}
 
 	/* failed to read */
@@ -401,7 +417,7 @@ out:
  * Return value: %TRUE if the file was decompressed
  **/
 gboolean
-zif_file_decompress (const gchar *in, const gchar *out, GError **error)
+zif_file_decompress (const gchar *in, const gchar *out, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	gboolean ret = FALSE;
 
@@ -410,13 +426,13 @@ zif_file_decompress (const gchar *in, const gchar *out, GError **error)
 
 	/* bz2 */
 	if (g_str_has_suffix (in, "bz2")) {
-		ret = zif_file_decompress_bz2 (in, out, error);
+		ret = zif_file_decompress_bz2 (in, out, cancellable, completion, error);
 		goto out;
 	}
 
 	/* zlib */
 	if (g_str_has_suffix (in, "gz")) {
-		ret = zif_file_decompress_zlib (in, out, error);
+		ret = zif_file_decompress_zlib (in, out, cancellable, completion, error);
 		goto out;
 	}
 
@@ -578,9 +594,14 @@ zif_utils_test (EggTest *test)
 	const gchar *r;
 	gchar *filename;
 	GError *error;
+	GCancellable *cancellable;
+	ZifCompletion *completion;
 
 	if (!egg_test_start (test, "ZifUtils"))
 		return;
+
+	cancellable = g_cancellable_new ();
+	completion = zif_completion_new ();
 
 	/************************************************************
 	 ****************           NEVRA          ******************
@@ -711,7 +732,8 @@ zif_utils_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "decompress gz");
-	ret = zif_file_decompress ("../test/cache/fedora/cf940a26805152e5f675edd695022d890241aba057a4a4a97a0b46618a51c482-comps-rawhide.xml.gz", "/tmp/comps-rawhide.xml", &error);
+	ret = zif_file_decompress ("../test/cache/fedora/cf940a26805152e5f675edd695022d890241aba057a4a4a97a0b46618a51c482-comps-rawhide.xml.gz",
+				   "/tmp/comps-rawhide.xml", cancellable, completion, &error);
 	if (ret)
 		egg_test_success (test, NULL);
 	else {
@@ -721,13 +743,17 @@ zif_utils_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "decompress bz2");
-	ret = zif_file_decompress ("../test/cache/fedora/35d817e2bac701525fa72cec57387a2e3457bf32642adeee1e345cc180044c86-primary.sqlite.bz2", "/tmp/moo.sqlite", &error);
+	ret = zif_file_decompress ("../test/cache/fedora/35d817e2bac701525fa72cec57387a2e3457bf32642adeee1e345cc180044c86-primary.sqlite.bz2",
+				   "/tmp/moo.sqlite", cancellable, completion, &error);
 	if (ret)
 		egg_test_success (test, NULL);
 	else {
 		egg_test_failed (test, "failed: %s", error->message);
 		g_error_free (error);
 	}
+
+	g_object_unref (cancellable);
+	g_object_unref (completion);
 
 	egg_test_end (test);
 }
