@@ -201,7 +201,8 @@ zif_download_file (ZifDownload *download, const gchar *uri, const gchar *filenam
 out:
 	g_object_unref (download->priv->completion);
 	download->priv->completion = NULL;
-	soup_uri_free (base_uri);
+	if (base_uri != NULL)
+		soup_uri_free (base_uri);
 	if (msg != NULL)
 		g_object_unref (msg);
 	return ret;
