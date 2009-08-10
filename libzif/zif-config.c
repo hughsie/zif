@@ -192,6 +192,93 @@ out:
 }
 
 /**
+ * zif_config_string_to_time:
+ *
+ * Converts: 10s to 10
+ *           10m to 600 (10*60)
+ *           10h to 36000 (10*60*60)
+ *           10d to 864000 (10*60*60*24)
+ **/
+static guint
+zif_config_string_to_time (const gchar *value)
+{
+	gboolean ret;
+	guint len;
+	guint timeval = 0;
+	gchar suffix;
+	gchar *value_copy = NULL;
+
+	g_return_val_if_fail (value != NULL, FALSE);
+
+	/* long enough */
+	len = egg_strlen (value, 10);
+	if (len < 2)
+		goto out;
+
+	/* get suffix */
+	suffix = value[len-1];
+
+	/* remove suffix */
+	value_copy = g_strdup (value);
+	value_copy[len-1] = '\0';
+
+	/* convert to number */
+	ret = egg_strtouint (value_copy, &timeval);
+	if (!ret) {
+		egg_warning ("failed to convert %s", value_copy);
+		goto out;
+	}
+
+	/* seconds, minutes, hours, days */
+	if (suffix == 's')
+		timeval *= 1;
+	else if (suffix == 'm')
+		timeval *= 60;
+	else if (suffix == 'h')
+		timeval *= 60*60;
+	else if (suffix == 'd')
+		timeval *= 24*60*60;
+	else {
+		egg_warning ("unknown suffix: '%c'", suffix);
+		timeval = 0;
+	}
+out:
+	g_free (value_copy);
+	return timeval;
+}
+
+/**
+ * zif_config_get_time:
+ * @config: the #ZifConfig object
+ * @key: the key name to retrieve, e.g. "metadata_expire"
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Gets a time value from a local setting, falling back to the config file.
+ *
+ * Return value: the data value
+ **/
+guint
+zif_config_get_time (ZifConfig *config, const gchar *key, GError **error)
+{
+	gchar *value;
+	guint timeval = 0;
+
+	g_return_val_if_fail (ZIF_IS_CONFIG (config), FALSE);
+	g_return_val_if_fail (key != NULL, FALSE);
+
+	/* get string value */
+	value = zif_config_get_string (config, key, error);
+	if (value == NULL)
+		goto out;
+
+	/* convert to time */
+	timeval = zif_config_string_to_time (value);
+out:
+	g_free (value);
+	return timeval;
+}
+
+/**
  * zif_config_set_filename:
  * @config: the #ZifConfig object
  * @filename: the system wide config file, e.g. "/etc/yum.conf"
@@ -377,6 +464,7 @@ zif_config_test (EggTest *test)
 	gboolean ret;
 	GError *error = NULL;
 	gchar *value;
+	guint time;
 
 	if (!egg_test_start (test, "ZifConfig"))
 		return;
@@ -449,6 +537,46 @@ zif_config_test (EggTest *test)
 	else
 		egg_test_failed (test, "invalid value '%s'", value);
 	g_free (value);
+
+	/************************************************************/
+	egg_test_title (test, "convert time (invalid)");
+	time = zif_config_string_to_time ("");
+	egg_test_assert (test, (time == 0));
+
+	/************************************************************/
+	egg_test_title (test, "convert time (no suffix)");
+	time = zif_config_string_to_time ("10");
+	egg_test_assert (test, (time == 0));
+
+	/************************************************************/
+	egg_test_title (test, "convert time (invalid suffix)");
+	time = zif_config_string_to_time ("10f");
+	egg_test_assert (test, (time == 0));
+
+	/************************************************************/
+	egg_test_title (test, "convert time (mixture)");
+	time = zif_config_string_to_time ("10d10s");
+	egg_test_assert (test, (time == 0));
+
+	/************************************************************/
+	egg_test_title (test, "convert time (seconds)");
+	time = zif_config_string_to_time ("10s");
+	egg_test_assert (test, (time == 10));
+
+	/************************************************************/
+	egg_test_title (test, "convert time (minutes)");
+	time = zif_config_string_to_time ("10m");
+	egg_test_assert (test, (time == 600));
+
+	/************************************************************/
+	egg_test_title (test, "convert time (hours)");
+	time = zif_config_string_to_time ("10h");
+	egg_test_assert (test, (time == 36000));
+
+	/************************************************************/
+	egg_test_title (test, "convert time (days)");
+	time = zif_config_string_to_time ("10d");
+	egg_test_assert (test, (time == 864000));
 
 	g_object_unref (config);
 
