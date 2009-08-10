@@ -63,6 +63,9 @@ gchar		*zif_config_get_string		(ZifConfig	*config,
 gboolean	 zif_config_get_boolean		(ZifConfig	*config,
 						 const gchar	*key,
 						 GError		**error);
+guint		 zif_config_get_uint		(ZifConfig	*config,
+						 const gchar	*key,
+						 GError		**error);
 
 G_END_DECLS
 

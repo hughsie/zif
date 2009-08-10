@@ -139,9 +139,47 @@ zif_config_get_boolean (ZifConfig *config, const gchar *key, GError **error)
 	/* convert to bool */
 	ret = zif_boolean_from_text (value);
 
-	g_free (value);
 out:
+	g_free (value);
 	return ret;
+}
+
+/**
+ * zif_config_get_uint:
+ * @config: the #ZifConfig object
+ * @key: the key name to retrieve, e.g. "keepcache"
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Gets a unsigned integer value from the config file.
+ *
+ * Return value: the data value
+ **/
+guint
+zif_config_get_uint (ZifConfig *config, const gchar *key, GError **error)
+{
+	gchar *value;
+	gboolean ret;
+	guint retval = 0;
+
+	g_return_val_if_fail (ZIF_IS_CONFIG (config), FALSE);
+	g_return_val_if_fail (key != NULL, FALSE);
+
+	/* get string value */
+	value = zif_config_get_string (config, key, error);
+	if (value == NULL)
+		goto out;
+
+	/* convert to int */
+	ret = egg_strtouint (value, &retval);
+	if (!ret) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "failed to convert '%s' to unsigned integer", value);
+		goto out;
+	}
+
+out:
+	g_free (value);
+	return retval;
 }
 
 /**
