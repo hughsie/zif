@@ -49,8 +49,8 @@ gint		 zif_compare_evr		(const gchar	*a,
 gboolean	 zif_file_untar			(const gchar	*filename,
 						 const gchar	*directory,
 						 GError		**error);
-gboolean	 zif_file_decompress		(const gchar	*filename,
-						 const gchar	*directory,
+gboolean	 zif_file_decompress		(const gchar	*in,
+						 const gchar	*out,
 						 GCancellable	*cancellable,
 						 ZifCompletion	*completion,
 						 GError		**error);

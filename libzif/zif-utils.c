@@ -364,11 +364,14 @@ zif_file_decompress_bz2 (const gchar *in, const gchar *out, GCancellable *cancel
 	}
 
 	/* read in all data in chunks */
-	while (TRUE) {
+	while (bzerror != BZ_STREAM_END) {
 		/* read data */
 		size = BZ2_bzRead (&bzerror, b, buf, ZIF_BUFFER_SIZE);
-		if (bzerror != BZ_OK)
-			break;
+		if (bzerror != BZ_OK && bzerror != BZ_STREAM_END) {
+			if (error != NULL)
+				*error = g_error_new (1, 0, "failed to decompress");
+			goto out;
+		}
 
 		/* write data */
 		written = fwrite (buf, 1, size, f_out);
