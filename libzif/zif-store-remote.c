@@ -75,7 +75,7 @@ struct _ZifStoreRemotePrivate
 	gchar			*repo_filename;		/* /etc/yum.repos.d/fedora.repo */
 	gboolean		 enabled;
 	gboolean		 loaded;
-	gboolean		 loaded_md;
+	gboolean		 loaded_metadata;
 	ZifRepoMd		*md_primary;
 	ZifRepoMd		*md_filelists;
 	ZifRepoMd		*md_metalink;
@@ -84,13 +84,13 @@ struct _ZifStoreRemotePrivate
 	ZifLock			*lock;
 	GPtrArray		*packages;
 	/* temp data for the xml parser */
-	ZifRepoMdType	 parser_type;
-	ZifRepoMdType	 parser_section;
+	ZifRepoMdType		 parser_type;
+	ZifRepoMdType		 parser_section;
 };
 
 G_DEFINE_TYPE (ZifStoreRemote, zif_store_remote, ZIF_TYPE_STORE)
 
-static gboolean zif_store_remote_load_md (ZifStoreRemote *store, GCancellable *cancellable, ZifCompletion *completion, GError **error);
+static gboolean zif_store_remote_load_metadata (ZifStoreRemote *store, GCancellable *cancellable, ZifCompletion *completion, GError **error);
 
 /**
  * zif_store_remote_checksum_type_from_text:
@@ -333,15 +333,15 @@ zif_store_remote_download (ZifStoreRemote *store, const gchar *filename, const g
 	g_return_val_if_fail (directory != NULL, FALSE);
 
 	/* setup completion */
-	if (store->priv->loaded_md)
+	if (store->priv->loaded_metadata)
 		zif_completion_set_number_steps (completion, 1);
 	else
 		zif_completion_set_number_steps (completion, 2);
 
 	/* if not already loaded, load */
-	if (!store->priv->loaded_md) {
+	if (!store->priv->loaded_metadata) {
 		completion_local = zif_completion_get_child (completion);
-		ret = zif_store_remote_load_md (store, cancellable, completion_local, &error_local);
+		ret = zif_store_remote_load_metadata (store, cancellable, completion_local, &error_local);
 		if (!ret) {
 			if (error != NULL)
 				*error = g_error_new (1, 0, "failed to load metadata: %s", error_local->message);
@@ -495,7 +495,7 @@ out:
 }
 
 /**
- * zif_store_remote_load_md:
+ * zif_store_remote_load_metadata:
  *
  * This function does the following things:
  *
@@ -506,7 +506,7 @@ out:
  * - checks all the uncompressed metadata checksums are valid, else they are deleted
  **/
 static gboolean
-zif_store_remote_load_md (ZifStoreRemote *store, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+zif_store_remote_load_metadata (ZifStoreRemote *store, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	guint i;
 	ZifCompletion *completion_local;
@@ -539,7 +539,7 @@ zif_store_remote_load_md (ZifStoreRemote *store, GCancellable *cancellable, ZifC
 	}
 
 	/* already loaded */
-	if (store->priv->loaded_md)
+	if (store->priv->loaded_metadata)
 		goto out;
 
 	/* setup completion */
@@ -634,7 +634,7 @@ zif_store_remote_load_md (ZifStoreRemote *store, GCancellable *cancellable, ZifC
 	}
 
 	/* all okay */
-	store->priv->loaded_md = TRUE;
+	store->priv->loaded_metadata = TRUE;
 
 	/* this section done */
 	zif_completion_done (completion);
@@ -718,7 +718,7 @@ zif_store_remote_refresh (ZifStore *store, gboolean force, GCancellable *cancell
 
 	/* reload */
 	completion_local = zif_completion_get_child (completion);
-	ret = zif_store_remote_load_md (remote, cancellable, completion_local, &error_local);
+	ret = zif_store_remote_load_metadata (remote, cancellable, completion_local, &error_local);
 	if (!ret) {
 		if (error != NULL)
 			*error = g_error_new (1, 0, "failed to load updated metadata: %s", error_local->message);
@@ -1130,15 +1130,15 @@ zif_store_remote_resolve (ZifStore *store, const gchar *search, GCancellable *ca
 	}
 
 	/* setup completion */
-	if (remote->priv->loaded_md)
+	if (remote->priv->loaded_metadata)
 		zif_completion_set_number_steps (completion, 1);
 	else
 		zif_completion_set_number_steps (completion, 2);
 
 	/* load metadata */
-	if (!remote->priv->loaded_md) {
+	if (!remote->priv->loaded_metadata) {
 		completion_local = zif_completion_get_child (completion);
-		ret = zif_store_remote_load_md (remote, cancellable, completion_local, &error_local);
+		ret = zif_store_remote_load_metadata (remote, cancellable, completion_local, &error_local);
 		if (!ret) {
 			if (error != NULL)
 				*error = g_error_new (1, 0, "failed to load xml: %s", error_local->message);
@@ -1184,15 +1184,15 @@ zif_store_remote_search_name (ZifStore *store, const gchar *search, GCancellable
 	}
 
 	/* setup completion */
-	if (remote->priv->loaded_md)
+	if (remote->priv->loaded_metadata)
 		zif_completion_set_number_steps (completion, 1);
 	else
 		zif_completion_set_number_steps (completion, 2);
 
 	/* load metadata */
-	if (!remote->priv->loaded_md) {
+	if (!remote->priv->loaded_metadata) {
 		completion_local = zif_completion_get_child (completion);
-		ret = zif_store_remote_load_md (remote, cancellable, completion_local, &error_local);
+		ret = zif_store_remote_load_metadata (remote, cancellable, completion_local, &error_local);
 		if (!ret) {
 			if (error != NULL)
 				*error = g_error_new (1, 0, "failed to load xml: %s", error_local->message);
@@ -1238,15 +1238,15 @@ zif_store_remote_search_details (ZifStore *store, const gchar *search, GCancella
 	}
 
 	/* setup completion */
-	if (remote->priv->loaded_md)
+	if (remote->priv->loaded_metadata)
 		zif_completion_set_number_steps (completion, 1);
 	else
 		zif_completion_set_number_steps (completion, 2);
 
 	/* load metadata */
-	if (!remote->priv->loaded_md) {
+	if (!remote->priv->loaded_metadata) {
 		completion_local = zif_completion_get_child (completion);
-		ret = zif_store_remote_load_md (remote, cancellable, completion_local, &error_local);
+		ret = zif_store_remote_load_metadata (remote, cancellable, completion_local, &error_local);
 		if (!ret) {
 			if (error != NULL)
 				*error = g_error_new (1, 0, "failed to load xml: %s", error_local->message);
@@ -1292,15 +1292,15 @@ zif_store_remote_search_group (ZifStore *store, const gchar *search, GCancellabl
 	}
 
 	/* setup completion */
-	if (remote->priv->loaded_md)
+	if (remote->priv->loaded_metadata)
 		zif_completion_set_number_steps (completion, 1);
 	else
 		zif_completion_set_number_steps (completion, 2);
 
 	/* load metadata */
-	if (!remote->priv->loaded_md) {
+	if (!remote->priv->loaded_metadata) {
 		completion_local = zif_completion_get_child (completion);
-		ret = zif_store_remote_load_md (remote, cancellable, completion_local, &error_local);
+		ret = zif_store_remote_load_metadata (remote, cancellable, completion_local, &error_local);
 		if (!ret) {
 			if (error != NULL)
 				*error = g_error_new (1, 0, "failed to load xml: %s", error_local->message);
@@ -1347,15 +1347,15 @@ zif_store_remote_find_package (ZifStore *store, const PkPackageId *id, GCancella
 	}
 
 	/* setup completion */
-	if (remote->priv->loaded_md)
+	if (remote->priv->loaded_metadata)
 		zif_completion_set_number_steps (completion, 1);
 	else
 		zif_completion_set_number_steps (completion, 2);
 
 	/* load metadata */
-	if (!remote->priv->loaded_md) {
+	if (!remote->priv->loaded_metadata) {
 		completion_local = zif_completion_get_child (completion);
-		ret = zif_store_remote_load_md (remote, cancellable, completion_local, &error_local);
+		ret = zif_store_remote_load_metadata (remote, cancellable, completion_local, &error_local);
 		if (!ret) {
 			if (error != NULL)
 				*error = g_error_new (1, 0, "failed to load xml: %s", error_local->message);
@@ -1427,15 +1427,15 @@ zif_store_remote_get_packages (ZifStore *store, GCancellable *cancellable, ZifCo
 	}
 
 	/* setup completion */
-	if (remote->priv->loaded_md)
+	if (remote->priv->loaded_metadata)
 		zif_completion_set_number_steps (completion, 1);
 	else
 		zif_completion_set_number_steps (completion, 2);
 
 	/* load metadata */
-	if (!remote->priv->loaded_md) {
+	if (!remote->priv->loaded_metadata) {
 		completion_local = zif_completion_get_child (completion);
-		ret = zif_store_remote_load_md (remote, cancellable, completion_local, &error_local);
+		ret = zif_store_remote_load_metadata (remote, cancellable, completion_local, &error_local);
 		if (!ret) {
 			if (error != NULL)
 				*error = g_error_new (1, 0, "failed to load xml: %s", error_local->message);
@@ -1488,15 +1488,15 @@ zif_store_remote_get_updates (ZifStore *store, GCancellable *cancellable, ZifCom
 	}
 
 	/* setup completion */
-	if (remote->priv->loaded_md)
+	if (remote->priv->loaded_metadata)
 		zif_completion_set_number_steps (completion, 2);
 	else
 		zif_completion_set_number_steps (completion, 3);
 
 	/* load metadata */
-	if (!remote->priv->loaded_md) {
+	if (!remote->priv->loaded_metadata) {
 		completion_local = zif_completion_get_child (completion);
-		ret = zif_store_remote_load_md (remote, cancellable, completion_local, &error_local);
+		ret = zif_store_remote_load_metadata (remote, cancellable, completion_local, &error_local);
 		if (!ret) {
 			if (error != NULL)
 				*error = g_error_new (1, 0, "failed to load xml: %s", error_local->message);
@@ -1585,8 +1585,8 @@ zif_store_remote_what_provides (ZifStore *store, const gchar *search, GCancellab
 	}
 
 	/* load metadata */
-	if (!remote->priv->loaded_md) {
-		ret = zif_store_remote_load_md (remote, cancellable, completion, &error_local);
+	if (!remote->priv->loaded_metadata) {
+		ret = zif_store_remote_load_metadata (remote, cancellable, completion, &error_local);
 		if (!ret) {
 			if (error != NULL)
 				*error = g_error_new (1, 0, "failed to load xml: %s", error_local->message);
@@ -1626,15 +1626,15 @@ zif_store_remote_search_file (ZifStore *store, const gchar *search, GCancellable
 	}
 
 	/* setup completion */
-	if (remote->priv->loaded_md)
+	if (remote->priv->loaded_metadata)
 		zif_completion_set_number_steps (completion, 2);
 	else
 		zif_completion_set_number_steps (completion, 3);
 
 	/* load metadata */
-	if (!remote->priv->loaded_md) {
+	if (!remote->priv->loaded_metadata) {
 		completion_local = zif_completion_get_child (completion);
-		ret = zif_store_remote_load_md (remote, cancellable, completion_local, &error_local);
+		ret = zif_store_remote_load_metadata (remote, cancellable, completion_local, &error_local);
 		if (!ret) {
 			if (error != NULL)
 				*error = g_error_new (1, 0, "failed to load xml: %s", error_local->message);
@@ -1705,7 +1705,7 @@ out:
  * Return value: %TRUE or %FALSE
  **/
 gboolean
-zif_store_remote_is_devel (ZifStoreRemote *store, GError **error)
+zif_store_remote_is_devel (ZifStoreRemote *store, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	gboolean ret;
 	GError *error_local = NULL;
@@ -1724,7 +1724,7 @@ zif_store_remote_is_devel (ZifStoreRemote *store, GError **error)
 
 	/* if not already loaded, load */
 	if (!store->priv->loaded) {
-		ret = zif_store_remote_load (ZIF_STORE (store), NULL, NULL, &error_local);
+		ret = zif_store_remote_load (ZIF_STORE (store), cancellable, completion, &error_local);
 		if (!ret) {
 			if (error != NULL)
 				*error = g_error_new (1, 0, "failed to load store file: %s", error_local->message);
@@ -1774,7 +1774,7 @@ zif_store_remote_get_id (ZifStore *store)
  * Return value: The repository name, e.g. "Fedora"
  **/
 const gchar *
-zif_store_remote_get_name (ZifStoreRemote *store, GError **error)
+zif_store_remote_get_name (ZifStoreRemote *store, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	gboolean ret;
 	GError *error_local = NULL;
@@ -1793,7 +1793,7 @@ zif_store_remote_get_name (ZifStoreRemote *store, GError **error)
 
 	/* if not already loaded, load */
 	if (!store->priv->loaded) {
-		ret = zif_store_remote_load (ZIF_STORE (store), NULL, NULL, &error_local);
+		ret = zif_store_remote_load (ZIF_STORE (store), cancellable, completion, &error_local);
 		if (!ret) {
 			if (error != NULL)
 				*error = g_error_new (1, 0, "failed to load store file: %s", error_local->message);
@@ -1815,7 +1815,7 @@ out:
  * Return value: %TRUE or %FALSE
  **/
 gboolean
-zif_store_remote_get_enabled (ZifStoreRemote *store, GError **error)
+zif_store_remote_get_enabled (ZifStoreRemote *store, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	GError *error_local = NULL;
 	gboolean ret;
@@ -1834,7 +1834,7 @@ zif_store_remote_get_enabled (ZifStoreRemote *store, GError **error)
 
 	/* if not already loaded, load */
 	if (!store->priv->loaded) {
-		ret = zif_store_remote_load (ZIF_STORE (store), NULL, NULL, &error_local);
+		ret = zif_store_remote_load (ZIF_STORE (store), cancellable, completion, &error_local);
 		if (!ret) {
 			if (error != NULL)
 				*error = g_error_new (1, 0, "failed to load store file: %s", error_local->message);
@@ -1863,7 +1863,7 @@ zif_store_remote_file_monitor_cb (ZifMonitor *monitor, ZifStoreRemote *store)
 	g_free (store->priv->metalink);
 
 	store->priv->loaded = FALSE;
-	store->priv->loaded_md = FALSE;
+	store->priv->loaded_metadata = FALSE;
 	store->priv->enabled = FALSE;
 	store->priv->id = NULL;
 	store->priv->name = NULL;
@@ -1950,7 +1950,7 @@ zif_store_remote_init (ZifStoreRemote *store)
 
 	store->priv = ZIF_STORE_REMOTE_GET_PRIVATE (store);
 	store->priv->loaded = FALSE;
-	store->priv->loaded_md = FALSE;
+	store->priv->loaded_metadata = FALSE;
 	store->priv->id = NULL;
 	store->priv->name = NULL;
 	store->priv->directory = NULL;
@@ -2068,12 +2068,12 @@ zif_store_remote_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "is devel");
-	ret = zif_store_remote_is_devel (store, NULL);
+	ret = zif_store_remote_is_devel (store, NULL, completion, NULL);
 	egg_test_assert (test, !ret);
 
 	/************************************************************/
 	egg_test_title (test, "is enabled");
-	ret = zif_store_remote_get_enabled (store, NULL);
+	ret = zif_store_remote_get_enabled (store, NULL, completion, NULL);
 	egg_test_assert (test, ret);
 
 	/************************************************************/
@@ -2086,7 +2086,7 @@ zif_store_remote_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "get name");
-	id = zif_store_remote_get_name (store, NULL);
+	id = zif_store_remote_get_name (store, NULL, completion, NULL);
 	if (egg_strequal (id, "Fedora 11 - i386"))
 		egg_test_success (test, NULL);
 	else
@@ -2187,7 +2187,7 @@ zif_store_remote_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "is enabled");
-	ret = zif_store_remote_get_enabled (store, NULL);
+	ret = zif_store_remote_get_enabled (store, NULL, completion, NULL);
 	egg_test_assert (test, !ret);
 
 	/************************************************************/
@@ -2200,7 +2200,7 @@ zif_store_remote_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "is enabled");
-	ret = zif_store_remote_get_enabled (store, NULL);
+	ret = zif_store_remote_get_enabled (store, NULL, completion, NULL);
 	egg_test_assert (test, ret);
 
 	/************************************************************/

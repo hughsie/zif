@@ -65,10 +65,16 @@ gboolean	 zif_store_remote_set_from_file		(ZifStoreRemote		*store,
 							 ZifCompletion		*completion,
 							 GError			**error);
 gboolean	 zif_store_remote_is_devel		(ZifStoreRemote		*store,
+							 GCancellable		*cancellable,
+							 ZifCompletion		*completion,
 							 GError			**error);
 const gchar	*zif_store_remote_get_name		(ZifStoreRemote		*store,
+							 GCancellable		*cancellable,
+							 ZifCompletion		*completion,
 							 GError			**error);
 gboolean	 zif_store_remote_get_enabled		(ZifStoreRemote		*store,
+							 GCancellable		*cancellable,
+							 ZifCompletion		*completion,
 							 GError			**error);
 gboolean	 zif_store_remote_set_enabled		(ZifStoreRemote		*store,
 							 gboolean		 enabled,

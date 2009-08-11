@@ -246,7 +246,8 @@ zif_repos_load (ZifRepos *repos, GCancellable *cancellable, ZifCompletion *compl
 		store = g_ptr_array_index (repos->priv->list, i);
 
 		/* get repo enabled state */
-		ret = zif_store_remote_get_enabled (store, &error_local);
+		completion_local = zif_completion_get_child (completion);
+		ret = zif_store_remote_get_enabled (store, cancellable, completion_local, &error_local);
 		if (error_local != NULL) {
 			if (error != NULL)
 				*error = g_error_new (1, 0, "failed to get repo state for %s: %s", zif_store_get_id (ZIF_STORE (store)), error_local->message);
@@ -593,7 +594,7 @@ zif_repos_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "get name");
-	value = zif_store_remote_get_name (store, NULL);
+	value = zif_store_remote_get_name (store, NULL, completion, NULL);
 	if (egg_strequal (value, "Fedora 11 - i386"))
 		egg_test_success (test, NULL);
 	else
