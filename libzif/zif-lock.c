@@ -177,7 +177,8 @@ zif_lock_set_locked (ZifLock *lock, guint *pid, GError **error)
 	if (ret) {
 		if (error != NULL)
 			*error = g_error_new (1, 0, "already locked by %i", pid_tmp);
-		*pid = pid_tmp;
+		if (pid != NULL)
+			*pid = pid_tmp;
 		ret = FALSE;
 		goto out;
 	}
