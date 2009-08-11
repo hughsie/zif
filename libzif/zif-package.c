@@ -959,12 +959,18 @@ zif_package_finalize (GObject *object)
 
 	pk_package_id_free (package->priv->id);
 	g_free (package->priv->id_txt);
-	g_free (package->priv->summary);
-	g_free (package->priv->description);
-	g_free (package->priv->license);
-	g_free (package->priv->url);
-	g_free (package->priv->category);
-	g_free (package->priv->location_href);
+	if (package->priv->summary != NULL)
+		zif_string_unref (package->priv->summary);
+	if (package->priv->description != NULL)
+		zif_string_unref (package->priv->description);
+	if (package->priv->license != NULL)
+		zif_string_unref (package->priv->license);
+	if (package->priv->url != NULL)
+		zif_string_unref (package->priv->url);
+	if (package->priv->category != NULL)
+		zif_string_unref (package->priv->category);
+	if (package->priv->location_href != NULL)
+		zif_string_unref (package->priv->location_href);
 	if (package->priv->files != NULL)
 		zif_string_array_unref (package->priv->files);
 	if (package->priv->requires != NULL)
