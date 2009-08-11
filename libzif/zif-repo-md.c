@@ -344,7 +344,8 @@ zif_repo_md_set_store_remote (ZifRepoMd *md, ZifStoreRemote *remote)
 	g_return_val_if_fail (md->priv->remote == NULL, FALSE);
 	g_return_val_if_fail (remote != NULL, FALSE);
 
-//	md->priv->remote = g_object_ref (remote);
+	/* do not take a reference, else the parent device never goes away */
+	md->priv->remote = remote;
 	return TRUE;
 }
 
@@ -410,6 +411,7 @@ gboolean
 zif_repo_md_load (ZifRepoMd *md, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	gboolean ret;
+	gboolean uncompressed_check;
 	GError *error_local = NULL;
 	ZifRepoMdClass *klass = ZIF_REPO_MD_GET_CLASS (md);
 	ZifCompletion *completion_local;
@@ -425,6 +427,13 @@ zif_repo_md_load (ZifRepoMd *md, GCancellable *cancellable, ZifCompletion *compl
 	zif_completion_set_number_steps (completion, 3);
 
 	g_return_val_if_fail (ZIF_IS_REPO_MD (md), FALSE);
+
+	/* optimise: if uncompressed file is okay, then do't even check the compressed file */
+	uncompressed_check = zif_repo_md_file_check (md, TRUE, &error_local);
+	if (uncompressed_check) {
+		zif_completion_done (completion);
+		goto skip_compressed_check;
+	}
 
 	/* check compressed file */
 	ret = zif_repo_md_file_check (md, FALSE, &error_local);
@@ -467,8 +476,7 @@ egg_error ("moo");
 	zif_completion_done (completion);
 
 	/* check uncompressed file */
-	ret = zif_repo_md_file_check (md, TRUE, &error_local);
-	if (!ret) {
+	if (!uncompressed_check) {
 		egg_warning ("failed checksum for uncompressed: %s", error_local->message);
 		g_clear_error (&error_local);
 
@@ -494,6 +502,8 @@ egg_error ("moo");
 			goto out;
 		}
 	}
+
+skip_compressed_check:
 
 	/* this section done */
 	zif_completion_done (completion);
@@ -558,7 +568,7 @@ zif_repo_md_clean (ZifRepoMd *md, GError **error)
 	filename = zif_repo_md_get_filename (md);
 	if (filename == NULL) {
 		if (error != NULL)
-			*error = g_error_new (1, 0, "failed to get filename for filelists");
+			*error = g_error_new (1, 0, "failed to get filename for %s", zif_repo_md_type_to_text (md->priv->type));
 		ret = FALSE;
 		goto out;
 	}
@@ -581,7 +591,7 @@ zif_repo_md_clean (ZifRepoMd *md, GError **error)
 	filename = zif_repo_md_get_filename_uncompressed (md);
 	if (filename == NULL) {
 		if (error != NULL)
-			*error = g_error_new (1, 0, "failed to get uncompressed filename for filelists");
+			*error = g_error_new (1, 0, "failed to get uncompressed filename for %s", zif_repo_md_type_to_text (md->priv->type));
 		ret = FALSE;
 		goto out;
 	}
@@ -709,9 +719,6 @@ zif_repo_md_finalize (GObject *object)
 	g_free (md->priv->location);
 	g_free (md->priv->checksum);
 	g_free (md->priv->checksum_uncompressed);
-
-	if (md->priv->remote != NULL)
-		g_object_unref (md->priv->remote);
 
 	G_OBJECT_CLASS (zif_repo_md_parent_class)->finalize (object);
 }
