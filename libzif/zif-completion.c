@@ -293,8 +293,6 @@ zif_completion_get_child (ZifCompletion *completion)
 
 	/* already set child */
 	if (completion->priv->child != NULL) {
-		egg_debug ("already set child %p on %p (unreffing)",
-			   completion->priv->child, completion);
 		g_signal_handler_disconnect (completion->priv->child, completion->priv->percentage_child_id);
 		g_signal_handler_disconnect (completion->priv->child, completion->priv->subpercentage_child_id);
 		g_object_unref (completion->priv->child);
