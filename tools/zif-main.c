@@ -844,7 +844,6 @@ main (int argc, char *argv[])
 	/* setup progressbar */
 	pk_progress_bar_set_padding (progressbar, 30);
 	pk_progress_bar_set_size (progressbar, 30);
-	pk_progress_bar_start (progressbar, "Performing action");
 
 	mode = argv[1];
 	value = argv[2];
@@ -888,6 +887,8 @@ main (int argc, char *argv[])
 	}
 	if (g_strcmp0 (mode, "clean") == 0) {
 
+		pk_progress_bar_start (progressbar, "Cleaning");
+
 		/* setup completion with the correct number of steps */
 		zif_completion_set_number_steps (completion, 2);
 
@@ -924,6 +925,7 @@ main (int argc, char *argv[])
 			g_print ("specify a package name\n");
 			goto out;
 		}
+		pk_progress_bar_start (progressbar, "Getting depends");
 		zif_cmd_get_depends (value, completion);
 		goto out;
 	}
@@ -932,6 +934,7 @@ main (int argc, char *argv[])
 			g_print ("specify a package name\n");
 			goto out;
 		}
+		pk_progress_bar_start (progressbar, "Downloading");
 		zif_cmd_download (value, completion);
 		goto out;
 	}
@@ -947,6 +950,8 @@ main (int argc, char *argv[])
 			g_print ("specify a package name\n");
 			goto out;
 		}
+
+		pk_progress_bar_start (progressbar, "Get file data");
 
 		/* setup completion with the correct number of steps */
 		zif_completion_set_number_steps (completion, 3);
@@ -1022,6 +1027,8 @@ main (int argc, char *argv[])
 		ZifString *url;
 		guint64 size;
 
+		pk_progress_bar_start (progressbar, "Getting details");
+
 		/* setup completion with the correct number of steps */
 		zif_completion_set_number_steps (completion, 3);
 
@@ -1091,11 +1098,14 @@ main (int argc, char *argv[])
 			g_print ("specify a package name\n");
 			goto out;
 		}
+		pk_progress_bar_start (progressbar, "Installing");
 		zif_cmd_install (value, completion);
 		g_print ("not yet supported\n");
 		goto out;
 	}
 	if (g_strcmp0 (mode, "list") == 0 || g_strcmp0 (mode, "getpackages") == 0) {
+
+		pk_progress_bar_start (progressbar, "Getting packages");
 
 		/* setup completion with the correct number of steps */
 		zif_completion_set_number_steps (completion, 3);
@@ -1136,6 +1146,7 @@ main (int argc, char *argv[])
 			value = "/home/hughsie/rpmbuild/REPOS/fedora/11/i386/dum-0.0.1-0.8.20090511git.fc11.i586.rpm";
 			//goto out;
 		}
+		pk_progress_bar_start (progressbar, "Installing");
 		package = ZIF_PACKAGE (zif_package_local_new ());
 		ret = zif_package_local_set_from_filename (ZIF_PACKAGE_LOCAL (package), value, &error);
 		if (!ret)
@@ -1147,6 +1158,7 @@ main (int argc, char *argv[])
 	}
 	if (g_strcmp0 (mode, "makecache") == 0 || g_strcmp0 (mode, "refreshcache") == 0) {
 
+		pk_progress_bar_start (progressbar, "Refreshing cache");
 		zif_cmd_refresh_cache (completion, FALSE);
 		g_print ("not yet supported\n");
 		goto out;
@@ -1156,6 +1168,8 @@ main (int argc, char *argv[])
 		goto out;
 	}
 	if (g_strcmp0 (mode, "repolist") == 0) {
+		pk_progress_bar_start (progressbar, "Getting repo list");
+
 		/* get list */
 		array = zif_repos_get_stores (repos, NULL, completion, &error);
 		if (array == NULL) {
@@ -1182,6 +1196,8 @@ main (int argc, char *argv[])
 			g_print ("specify a package name\n");
 			goto out;
 		}
+
+		pk_progress_bar_start (progressbar, "Resolving");
 
 		/* setup completion with the correct number of steps */
 		zif_completion_set_number_steps (completion, 3);
@@ -1222,6 +1238,8 @@ main (int argc, char *argv[])
 			goto out;
 		}
 
+		pk_progress_bar_start (progressbar, "Searching name");
+
 		/* setup completion with the correct number of steps */
 		zif_completion_set_number_steps (completion, 3);
 
@@ -1260,6 +1278,8 @@ main (int argc, char *argv[])
 			g_print ("specify a search term\n");
 			goto out;
 		}
+
+		pk_progress_bar_start (progressbar, "Searching details");
 
 		/* setup completion with the correct number of steps */
 		zif_completion_set_number_steps (completion, 3);
@@ -1300,6 +1320,8 @@ main (int argc, char *argv[])
 			goto out;
 		}
 
+		pk_progress_bar_start (progressbar, "Searching file");
+
 		/* setup completion with the correct number of steps */
 		zif_completion_set_number_steps (completion, 3);
 
@@ -1338,6 +1360,8 @@ main (int argc, char *argv[])
 			g_print ("specify a search term\n");
 			goto out;
 		}
+
+		pk_progress_bar_start (progressbar, "Search group");
 
 		/* setup completion with the correct number of steps */
 		zif_completion_set_number_steps (completion, 3);
@@ -1378,6 +1402,8 @@ main (int argc, char *argv[])
 			goto out;
 		}
 
+		pk_progress_bar_start (progressbar, "Resolving");
+
 		/* setup completion with the correct number of steps */
 		zif_completion_set_number_steps (completion, 3);
 
@@ -1416,6 +1442,7 @@ main (int argc, char *argv[])
 			g_print ("specify a package name\n");
 			goto out;
 		}
+		pk_progress_bar_start (progressbar, "Updating");
 		zif_cmd_update (value, completion);
 		g_print ("not yet supported\n");
 		goto out;
