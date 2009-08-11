@@ -959,13 +959,23 @@ main (int argc, char *argv[])
 		/* add both local and remote packages */
 		sack = zif_sack_new ();
 		completion_local = zif_completion_get_child (completion);
-		zif_sack_add_local (sack, NULL, completion_local, NULL);
+		ret = zif_sack_add_local (sack, NULL, completion_local, &error);
+		if (!ret) {
+			g_print ("failed to add remote: %s\n", error->message);
+			g_error_free (error);
+			goto out;
+		}
 
 		/* this section done */
 		zif_completion_done (completion);
 
 		completion_local = zif_completion_get_child (completion);
-		zif_sack_add_remote_enabled (sack, NULL, completion_local, NULL);
+		ret = zif_sack_add_remote_enabled (sack, NULL, completion_local, &error);
+		if (!ret) {
+			g_print ("failed to add remote: %s\n", error->message);
+			g_error_free (error);
+			goto out;
+		}
 
 		/* this section done */
 		zif_completion_done (completion);
@@ -1035,13 +1045,23 @@ main (int argc, char *argv[])
 		/* add both local and remote packages */
 		sack = zif_sack_new ();
 		completion_local = zif_completion_get_child (completion);
-		zif_sack_add_local (sack, NULL, completion_local, NULL);
+		ret = zif_sack_add_local (sack, NULL, completion_local, &error);
+		if (!ret) {
+			g_print ("failed to add remote: %s\n", error->message);
+			g_error_free (error);
+			goto out;
+		}
 
 		/* this section done */
 		zif_completion_done (completion);
 
 		completion_local = zif_completion_get_child (completion);
-		zif_sack_add_remote_enabled (sack, NULL, completion_local, NULL);
+		ret = zif_sack_add_remote_enabled (sack, NULL, completion_local, &error);
+		if (!ret) {
+			g_print ("failed to add remote: %s\n", error->message);
+			g_error_free (error);
+			goto out;
+		}
 
 		/* this section done */
 		zif_completion_done (completion);
@@ -1113,13 +1133,23 @@ main (int argc, char *argv[])
 		/* add both local and remote packages */
 		sack = zif_sack_new ();
 		completion_local = zif_completion_get_child (completion);
-		zif_sack_add_local (sack, NULL, completion_local, NULL);
+		ret = zif_sack_add_local (sack, NULL, completion_local, &error);
+		if (!ret) {
+			g_print ("failed to add remote: %s\n", error->message);
+			g_error_free (error);
+			goto out;
+		}
 
 		/* this section done */
 		zif_completion_done (completion);
 
 		completion_local = zif_completion_get_child (completion);
-		zif_sack_add_remote_enabled (sack, NULL, completion_local, NULL);
+		ret = zif_sack_add_remote_enabled (sack, NULL, completion_local, &error);
+		if (!ret) {
+			g_print ("failed to add remote: %s\n", error->message);
+			g_error_free (error);
+			goto out;
+		}
 
 		/* this section done */
 		zif_completion_done (completion);
@@ -1205,13 +1235,23 @@ main (int argc, char *argv[])
 		/* add both local and remote packages */
 		sack = zif_sack_new ();
 		completion_local = zif_completion_get_child (completion);
-		zif_sack_add_local (sack, NULL, completion_local, NULL);
+		ret = zif_sack_add_local (sack, NULL, completion_local, &error);
+		if (!ret) {
+			g_print ("failed to add remote: %s\n", error->message);
+			g_error_free (error);
+			goto out;
+		}
 
 		/* this section done */
 		zif_completion_done (completion);
 
 		completion_local = zif_completion_get_child (completion);
-		zif_sack_add_remote_enabled (sack, NULL, completion_local, NULL);
+		ret = zif_sack_add_remote_enabled (sack, NULL, completion_local, &error);
+		if (!ret) {
+			g_print ("failed to add remote: %s\n", error->message);
+			g_error_free (error);
+			goto out;
+		}
 
 		/* this section done */
 		zif_completion_done (completion);
@@ -1246,13 +1286,23 @@ main (int argc, char *argv[])
 		/* add both local and remote packages */
 		sack = zif_sack_new ();
 		completion_local = zif_completion_get_child (completion);
-		zif_sack_add_local (sack, NULL, completion_local, NULL);
+		ret = zif_sack_add_local (sack, NULL, completion_local, &error);
+		if (!ret) {
+			g_print ("failed to add remote: %s\n", error->message);
+			g_error_free (error);
+			goto out;
+		}
 
 		/* this section done */
 		zif_completion_done (completion);
 
 		completion_local = zif_completion_get_child (completion);
-		zif_sack_add_remote_enabled (sack, NULL, completion_local, NULL);
+		ret = zif_sack_add_remote_enabled (sack, NULL, completion_local, &error);
+		if (!ret) {
+			g_print ("failed to add remote: %s\n", error->message);
+			g_error_free (error);
+			goto out;
+		}
 
 		/* this section done */
 		zif_completion_done (completion);
@@ -1267,6 +1317,8 @@ main (int argc, char *argv[])
 
 		/* this section done */
 		zif_completion_done (completion);
+
+		g_print ("\n");
 
 		zif_print_packages (array);
 		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
@@ -1287,13 +1339,23 @@ main (int argc, char *argv[])
 		/* add both local and remote packages */
 		sack = zif_sack_new ();
 		completion_local = zif_completion_get_child (completion);
-		zif_sack_add_local (sack, NULL, completion_local, NULL);
+		ret = zif_sack_add_local (sack, NULL, completion_local, &error);
+		if (!ret) {
+			g_print ("failed to add remote: %s\n", error->message);
+			g_error_free (error);
+			goto out;
+		}
 
 		/* this section done */
 		zif_completion_done (completion);
 
 		completion_local = zif_completion_get_child (completion);
-		zif_sack_add_remote_enabled (sack, NULL, completion_local, NULL);
+		ret = zif_sack_add_remote_enabled (sack, NULL, completion_local, &error);
+		if (!ret) {
+			g_print ("failed to add remote: %s\n", error->message);
+			g_error_free (error);
+			goto out;
+		}
 
 		/* this section done */
 		zif_completion_done (completion);
@@ -1328,13 +1390,23 @@ main (int argc, char *argv[])
 		/* add both local and remote packages */
 		sack = zif_sack_new ();
 		completion_local = zif_completion_get_child (completion);
-		zif_sack_add_local (sack, NULL, completion_local, NULL);
+		ret = zif_sack_add_local (sack, NULL, completion_local, &error);
+		if (!ret) {
+			g_print ("failed to add remote: %s\n", error->message);
+			g_error_free (error);
+			goto out;
+		}
 
 		/* this section done */
 		zif_completion_done (completion);
 
 		completion_local = zif_completion_get_child (completion);
-		zif_sack_add_remote_enabled (sack, NULL, completion_local, NULL);
+		ret = zif_sack_add_remote_enabled (sack, NULL, completion_local, &error);
+		if (!ret) {
+			g_print ("failed to add remote: %s\n", error->message);
+			g_error_free (error);
+			goto out;
+		}
 
 		/* this section done */
 		zif_completion_done (completion);
@@ -1369,13 +1441,23 @@ main (int argc, char *argv[])
 		/* add both local and remote packages */
 		sack = zif_sack_new ();
 		completion_local = zif_completion_get_child (completion);
-		zif_sack_add_local (sack, NULL, completion_local, NULL);
+		ret = zif_sack_add_local (sack, NULL, completion_local, &error);
+		if (!ret) {
+			g_print ("failed to add remote: %s\n", error->message);
+			g_error_free (error);
+			goto out;
+		}
 
 		/* this section done */
 		zif_completion_done (completion);
 
 		completion_local = zif_completion_get_child (completion);
-		zif_sack_add_remote_enabled (sack, NULL, completion_local, NULL);
+		ret = zif_sack_add_remote_enabled (sack, NULL, completion_local, &error);
+		if (!ret) {
+			g_print ("failed to add remote: %s\n", error->message);
+			g_error_free (error);
+			goto out;
+		}
 
 		/* this section done */
 		zif_completion_done (completion);
@@ -1410,13 +1492,23 @@ main (int argc, char *argv[])
 		/* add both local and remote packages */
 		sack = zif_sack_new ();
 		completion_local = zif_completion_get_child (completion);
-		zif_sack_add_local (sack, NULL, completion_local, NULL);
+		ret = zif_sack_add_local (sack, NULL, completion_local, &error);
+		if (!ret) {
+			g_print ("failed to add remote: %s\n", error->message);
+			g_error_free (error);
+			goto out;
+		}
 
 		/* this section done */
 		zif_completion_done (completion);
 
 		completion_local = zif_completion_get_child (completion);
-		zif_sack_add_remote_enabled (sack, NULL, completion_local, NULL);
+		ret = zif_sack_add_remote_enabled (sack, NULL, completion_local, &error);
+		if (!ret) {
+			g_print ("failed to add remote: %s\n", error->message);
+			g_error_free (error);
+			goto out;
+		}
 
 		/* this section done */
 		zif_completion_done (completion);
