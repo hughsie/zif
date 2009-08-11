@@ -183,7 +183,6 @@ zif_completion_child_percentage_changed_cb (ZifCompletion *child, guint percenta
 
 	/* propagate up the stack if ZifCompletion has only one step */
 	if (completion->priv->steps == 1) {
-		egg_debug ("using child percentage as parent as only one step on %p", completion);
 		zif_completion_set_percentage (completion, percentage);
 		return;
 	}
@@ -232,7 +231,6 @@ zif_completion_child_subpercentage_changed_cb (ZifCompletion *child, guint perce
 		return;
 
 	/* propagate up the stack as if the parent didn't exist */
-	egg_debug ("using child subpercentage as parent as only one step");
 	zif_completion_set_subpercentage (completion, percentage);
 }
 
@@ -248,8 +246,6 @@ gboolean
 zif_completion_reset (ZifCompletion *completion)
 {
 	g_return_val_if_fail (ZIF_IS_COMPLETION (completion), FALSE);
-
-	egg_debug ("resetting %p", completion);
 
 	/* reset values */
 	completion->priv->steps = 0;
