@@ -68,7 +68,7 @@ G_DEFINE_TYPE (ZifRepoMdPrimary, zif_repo_md_primary, ZIF_TYPE_REPO_MD)
  * zif_repo_md_primary_unload:
  **/
 static gboolean
-zif_repo_md_primary_unload (ZifRepoMd *md, GError **error)
+zif_repo_md_primary_unload (ZifRepoMd *md, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	gboolean ret = FALSE;
 	return ret;
@@ -78,7 +78,7 @@ zif_repo_md_primary_unload (ZifRepoMd *md, GError **error)
  * zif_repo_md_primary_load:
  **/
 static gboolean
-zif_repo_md_primary_load (ZifRepoMd *md, GError **error)
+zif_repo_md_primary_load (ZifRepoMd *md, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	const gchar *filename;
 	gint rc;
@@ -135,7 +135,7 @@ zif_repo_md_primary_sqlite_create_package_cb (void *data, gint argc, gchar **arg
  * zif_repo_md_primary_search:
  **/
 static GPtrArray *
-zif_repo_md_primary_search (ZifRepoMdPrimary *md, const gchar *pred, GError **error)
+zif_repo_md_primary_search (ZifRepoMdPrimary *md, const gchar *pred, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	gchar *statement = NULL;
 	gchar *error_msg = NULL;
@@ -147,7 +147,7 @@ zif_repo_md_primary_search (ZifRepoMdPrimary *md, const gchar *pred, GError **er
 
 	/* if not already loaded, load */
 	if (!md->priv->loaded) {
-		ret = zif_repo_md_load (ZIF_REPO_MD (md), &error_local);
+		ret = zif_repo_md_load (ZIF_REPO_MD (md), cancellable, completion, &error_local);
 		if (!ret) {
 			if (error != NULL)
 				*error = g_error_new (1, 0, "failed to load repo_md_primary file: %s", error_local->message);
@@ -191,7 +191,7 @@ out:
  * Return value: an array of #ZifPackageRemote's
  **/
 GPtrArray *
-zif_repo_md_primary_resolve (ZifRepoMdPrimary *md, const gchar *search, GError **error)
+zif_repo_md_primary_resolve (ZifRepoMdPrimary *md, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	gchar *pred;
 	GPtrArray *array;
@@ -200,7 +200,7 @@ zif_repo_md_primary_resolve (ZifRepoMdPrimary *md, const gchar *search, GError *
 
 	/* search with predicate */
 	pred = g_strdup_printf ("WHERE name = '%s'", search);
-	array = zif_repo_md_primary_search (md, pred, error);
+	array = zif_repo_md_primary_search (md, pred, cancellable, completion, error);
 	g_free (pred);
 
 	return array;
@@ -217,7 +217,7 @@ zif_repo_md_primary_resolve (ZifRepoMdPrimary *md, const gchar *search, GError *
  * Return value: an array of #ZifPackageRemote's
  **/
 GPtrArray *
-zif_repo_md_primary_search_name (ZifRepoMdPrimary *md, const gchar *search, GError **error)
+zif_repo_md_primary_search_name (ZifRepoMdPrimary *md, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	gchar *pred;
 	GPtrArray *array;
@@ -226,7 +226,7 @@ zif_repo_md_primary_search_name (ZifRepoMdPrimary *md, const gchar *search, GErr
 
 	/* search with predicate */
 	pred = g_strdup_printf ("WHERE name LIKE '%%%s%%'", search);
-	array = zif_repo_md_primary_search (md, pred, error);
+	array = zif_repo_md_primary_search (md, pred, cancellable, completion, error);
 	g_free (pred);
 
 	return array;
@@ -243,7 +243,7 @@ zif_repo_md_primary_search_name (ZifRepoMdPrimary *md, const gchar *search, GErr
  * Return value: an array of #ZifPackageRemote's
  **/
 GPtrArray *
-zif_repo_md_primary_search_details (ZifRepoMdPrimary *md, const gchar *search, GError **error)
+zif_repo_md_primary_search_details (ZifRepoMdPrimary *md, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	gchar *pred;
 	GPtrArray *array;
@@ -252,7 +252,7 @@ zif_repo_md_primary_search_details (ZifRepoMdPrimary *md, const gchar *search, G
 
 	/* search with predicate */
 	pred = g_strdup_printf ("WHERE name LIKE '%%%s%%' OR summary LIKE '%%%s%%' OR description LIKE '%%%s%%'", search, search, search);
-	array = zif_repo_md_primary_search (md, pred, error);
+	array = zif_repo_md_primary_search (md, pred, cancellable, completion, error);
 	g_free (pred);
 
 	return array;
@@ -269,7 +269,7 @@ zif_repo_md_primary_search_details (ZifRepoMdPrimary *md, const gchar *search, G
  * Return value: an array of #ZifPackageRemote's
  **/
 GPtrArray *
-zif_repo_md_primary_search_group (ZifRepoMdPrimary *md, const gchar *search, GError **error)
+zif_repo_md_primary_search_group (ZifRepoMdPrimary *md, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	gchar *pred;
 	GPtrArray *array;
@@ -278,7 +278,7 @@ zif_repo_md_primary_search_group (ZifRepoMdPrimary *md, const gchar *search, GEr
 
 	/* FIXME: search with predicate */
 	pred = g_strdup_printf ("WHERE group = '%s'", search);
-	array = zif_repo_md_primary_search (md, pred, error);
+	array = zif_repo_md_primary_search (md, pred, cancellable, completion, error);
 	g_free (pred);
 
 	return array;
@@ -295,7 +295,7 @@ zif_repo_md_primary_search_group (ZifRepoMdPrimary *md, const gchar *search, GEr
  * Return value: an array of #ZifPackageRemote's
  **/
 GPtrArray *
-zif_repo_md_primary_search_pkgid (ZifRepoMdPrimary *md, const gchar *search, GError **error)
+zif_repo_md_primary_search_pkgid (ZifRepoMdPrimary *md, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	gchar *pred;
 	GPtrArray *array;
@@ -304,7 +304,7 @@ zif_repo_md_primary_search_pkgid (ZifRepoMdPrimary *md, const gchar *search, GEr
 
 	/* FIXME: search with predicate */
 	pred = g_strdup_printf ("WHERE pkgid = '%s'", search);
-	array = zif_repo_md_primary_search (md, pred, error);
+	array = zif_repo_md_primary_search (md, pred, cancellable, completion, error);
 	g_free (pred);
 
 	return array;
@@ -321,7 +321,7 @@ zif_repo_md_primary_search_pkgid (ZifRepoMdPrimary *md, const gchar *search, GEr
  * Return value: an array of #ZifPackageRemote's
  **/
 GPtrArray *
-zif_repo_md_primary_find_package (ZifRepoMdPrimary *md, const PkPackageId *id, GError **error)
+zif_repo_md_primary_find_package (ZifRepoMdPrimary *md, const PkPackageId *id, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	gchar *pred;
 	GPtrArray *array;
@@ -330,7 +330,7 @@ zif_repo_md_primary_find_package (ZifRepoMdPrimary *md, const PkPackageId *id, G
 
 	/* search with predicate, TODO: search version (epoch+release) */
 	pred = g_strdup_printf ("WHERE name = '%s' AND arch = '%s'", id->name, id->arch);
-	array = zif_repo_md_primary_search (md, pred, error);
+	array = zif_repo_md_primary_search (md, pred, cancellable, completion, error);
 	g_free (pred);
 
 	return array;
@@ -346,14 +346,14 @@ zif_repo_md_primary_find_package (ZifRepoMdPrimary *md, const PkPackageId *id, G
  * Return value: an array of #ZifPackageRemote's
  **/
 GPtrArray *
-zif_repo_md_primary_get_packages (ZifRepoMdPrimary *md, GError **error)
+zif_repo_md_primary_get_packages (ZifRepoMdPrimary *md, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	GPtrArray *array;
 
 	g_return_val_if_fail (ZIF_IS_REPO_MD_PRIMARY (md), FALSE);
 
 	/* search with predicate */
-	array = zif_repo_md_primary_search (md, "", error);
+	array = zif_repo_md_primary_search (md, "", cancellable, completion, error);
 	return array;
 }
 
@@ -429,9 +429,15 @@ zif_repo_md_primary_test (EggTest *test)
 	GPtrArray *array;
 	ZifPackage *package;
 	ZifString *summary;
+	GCancellable *cancellable;
+	ZifCompletion *completion;
 
 	if (!egg_test_start (test, "ZifRepoMdPrimary"))
 		return;
+
+	/* use */
+	cancellable = g_cancellable_new ();
+	completion = zif_completion_new ();
 
 	/************************************************************/
 	egg_test_title (test, "get repo_md_primary md");
@@ -451,8 +457,40 @@ zif_repo_md_primary_test (EggTest *test)
 		egg_test_failed (test, "failed to set");
 
 	/************************************************************/
+	egg_test_title (test, "set type");
+	ret = zif_repo_md_set_mdtype (ZIF_REPO_MD (md), ZIF_REPO_MD_TYPE_PRIMARY);
+	if (ret)
+		egg_test_success (test, NULL);
+	else
+		egg_test_failed (test, "failed to set");
+
+	/************************************************************/
+	egg_test_title (test, "set checksum type");
+	ret = zif_repo_md_set_checksum_type (ZIF_REPO_MD (md), G_CHECKSUM_SHA256);
+	if (ret)
+		egg_test_success (test, NULL);
+	else
+		egg_test_failed (test, "failed to set");
+
+	/************************************************************/
+	egg_test_title (test, "set checksum compressed");
+	ret = zif_repo_md_set_checksum (ZIF_REPO_MD (md), "35d817e2bac701525fa72cec57387a2e3457bf32642adeee1e345cc180044c86");
+	if (ret)
+		egg_test_success (test, NULL);
+	else
+		egg_test_failed (test, "failed to set");
+
+	/************************************************************/
+	egg_test_title (test, "set checksum uncompressed");
+	ret = zif_repo_md_set_checksum_uncompressed (ZIF_REPO_MD (md), "9b2b072a83b5175bc88d03ee64b52b39c0d40fec1516baa62dba81eea73cc645");
+	if (ret)
+		egg_test_success (test, NULL);
+	else
+		egg_test_failed (test, "failed to set");
+
+	/************************************************************/
 	egg_test_title (test, "set filename");
-	ret = zif_repo_md_set_filename (ZIF_REPO_MD (md), "../test/cache/fedora/35d817e2bac701525fa72cec57387a2e3457bf32642adeee1e345cc180044c86-primary.sqlite");
+	ret = zif_repo_md_set_filename (ZIF_REPO_MD (md), "../test/cache/fedora/35d817e2bac701525fa72cec57387a2e3457bf32642adeee1e345cc180044c86-primary.sqlite.bz2");
 	if (ret)
 		egg_test_success (test, NULL);
 	else
@@ -460,7 +498,7 @@ zif_repo_md_primary_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "load");
-	ret = zif_repo_md_load (ZIF_REPO_MD (md), &error);
+	ret = zif_repo_md_load (ZIF_REPO_MD (md), cancellable, completion, &error);
 	if (ret)
 		egg_test_success (test, NULL);
 	else
@@ -472,7 +510,7 @@ zif_repo_md_primary_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "search for files");
-	array = zif_repo_md_primary_resolve (md, "gnome-power-manager", &error);
+	array = zif_repo_md_primary_resolve (md, "gnome-power-manager", cancellable, completion, &error);
 	if (array != NULL)
 		egg_test_success (test, NULL);
 	else
@@ -495,6 +533,8 @@ zif_repo_md_primary_test (EggTest *test)
 	g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
 	g_ptr_array_free (array, TRUE);
 
+	g_object_unref (cancellable);
+	g_object_unref (completion);
 	g_object_unref (md);
 
 	egg_test_end (test);

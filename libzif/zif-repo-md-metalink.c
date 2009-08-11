@@ -158,11 +158,15 @@ zif_repo_md_metalink_parser_text (GMarkupParseContext *context, const gchar *tex
 
 	/* shouldn't happen */
 	if (metalink->priv->temp == NULL) {
-		egg_warning ("no data!");
+		egg_warning ("no data, so cannot save %s!", text);
 		goto out;
 	}
 
 	/* save uri */
+	if (metalink->priv->temp->uri != NULL) {
+		egg_warning ("previously set uri to '%s', cannot overwrite with '%s'", metalink->priv->temp->uri, text);
+		goto out;
+	}
 	metalink->priv->temp->uri = g_strdup (text);
 out:
 	return;
@@ -172,7 +176,7 @@ out:
  * zif_repo_md_metalink_unload:
  **/
 static gboolean
-zif_repo_md_metalink_unload (ZifRepoMd *md, GError **error)
+zif_repo_md_metalink_unload (ZifRepoMd *md, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	gboolean ret = FALSE;
 	return ret;
@@ -182,7 +186,7 @@ zif_repo_md_metalink_unload (ZifRepoMd *md, GError **error)
  * zif_repo_md_metalink_load:
  **/
 static gboolean
-zif_repo_md_metalink_load (ZifRepoMd *md, GError **error)
+zif_repo_md_metalink_load (ZifRepoMd *md, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	gboolean ret = TRUE;
 	gchar *contents = NULL;
@@ -247,7 +251,7 @@ out:
  * Return value: the uris to use as an array of strings
  **/
 GPtrArray *
-zif_repo_md_metalink_get_mirrors (ZifRepoMdMetalink *md, guint threshold, GError **error)
+zif_repo_md_metalink_get_mirrors (ZifRepoMdMetalink *md, guint threshold, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	gboolean ret;
 	guint len;
@@ -261,7 +265,7 @@ zif_repo_md_metalink_get_mirrors (ZifRepoMdMetalink *md, guint threshold, GError
 
 	/* if not already loaded, load */
 	if (!metalink->priv->loaded) {
-		ret = zif_repo_md_metalink_load (ZIF_REPO_MD (md), &error_local);
+		ret = zif_repo_md_metalink_load (ZIF_REPO_MD (md), cancellable, completion, &error_local);
 		if (!ret) {
 			if (error != NULL)
 				*error = g_error_new (1, 0, "failed to get mirrors from metalink: %s", error_local->message);
@@ -289,6 +293,16 @@ out:
 }
 
 /**
+ * zif_repo_md_metalink_free_data:
+ **/
+static void
+zif_repo_md_metalink_free_data (ZifRepoMdMetalinkData *data)
+{
+	g_free (data->uri);
+	g_free (data);
+}
+
+/**
  * zif_repo_md_metalink_finalize:
  **/
 static void
@@ -300,7 +314,7 @@ zif_repo_md_metalink_finalize (GObject *object)
 	g_return_if_fail (ZIF_IS_REPO_MD_METALINK (object));
 	md = ZIF_REPO_MD_METALINK (object);
 
-	g_ptr_array_foreach (md->priv->array, (GFunc) g_free, NULL);
+	g_ptr_array_foreach (md->priv->array, (GFunc) zif_repo_md_metalink_free_data, NULL);
 	g_ptr_array_free (md->priv->array, TRUE);
 
 	G_OBJECT_CLASS (zif_repo_md_metalink_parent_class)->finalize (object);
@@ -360,9 +374,15 @@ zif_repo_md_metalink_test (EggTest *test)
 	GError *error = NULL;
 	GPtrArray *array;
 	const gchar *uri;
+	GCancellable *cancellable;
+	ZifCompletion *completion;
 
 	if (!egg_test_start (test, "ZifRepoMdMetalink"))
 		return;
+
+	/* use */
+	cancellable = g_cancellable_new ();
+	completion = zif_completion_new ();
 
 	/************************************************************/
 	egg_test_title (test, "get repo_md_metalink md");
@@ -382,6 +402,14 @@ zif_repo_md_metalink_test (EggTest *test)
 		egg_test_failed (test, "failed to set");
 
 	/************************************************************/
+	egg_test_title (test, "set type");
+	ret = zif_repo_md_set_mdtype (ZIF_REPO_MD (md), ZIF_REPO_MD_TYPE_METALINK);
+	if (ret)
+		egg_test_success (test, NULL);
+	else
+		egg_test_failed (test, "failed to set");
+
+	/************************************************************/
 	egg_test_title (test, "set filename");
 	ret = zif_repo_md_set_filename (ZIF_REPO_MD (md), "../test/cache/fedora/metalink.xml");
 	if (ret)
@@ -391,7 +419,7 @@ zif_repo_md_metalink_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "load");
-	ret = zif_repo_md_load (ZIF_REPO_MD (md), &error);
+	ret = zif_repo_md_load (ZIF_REPO_MD (md), cancellable, completion, &error);
 	if (ret)
 		egg_test_success (test, NULL);
 	else
@@ -403,7 +431,7 @@ zif_repo_md_metalink_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "get mirros(50)");
-	array = zif_repo_md_metalink_get_mirrors (md, 50, &error);
+	array = zif_repo_md_metalink_get_mirrors (md, 50, cancellable, completion, &error);
 	if (array != NULL)
 		egg_test_success (test, NULL);
 	else
@@ -428,6 +456,8 @@ zif_repo_md_metalink_test (EggTest *test)
 	g_ptr_array_free (array, TRUE);
 
 	g_object_unref (md);
+	g_object_unref (cancellable);
+	g_object_unref (completion);
 
 	egg_test_end (test);
 }

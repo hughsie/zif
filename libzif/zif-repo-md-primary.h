@@ -59,26 +59,42 @@ GType		 zif_repo_md_primary_get_type		(void);
 ZifRepoMdPrimary *zif_repo_md_primary_new		(void);
 GPtrArray	*zif_repo_md_primary_search_file	(ZifRepoMdPrimary	*md,
 							 const gchar		*search,
+							 GCancellable		*cancellable,
+							 ZifCompletion		*completion,
 							 GError			**error);
 GPtrArray	*zif_repo_md_primary_search_name	(ZifRepoMdPrimary	*md,
 							 const gchar		*search,
+							 GCancellable		*cancellable,
+							 ZifCompletion		*completion,
 							 GError			**error);
 GPtrArray	*zif_repo_md_primary_search_details	(ZifRepoMdPrimary	*md,
 							 const gchar		*search,
+							 GCancellable		*cancellable,
+							 ZifCompletion		*completion,
 							 GError			**error);
 GPtrArray	*zif_repo_md_primary_search_group	(ZifRepoMdPrimary	*md,
 							 const gchar		*search,
+							 GCancellable		*cancellable,
+							 ZifCompletion		*completion,
 							 GError			**error);
 GPtrArray	*zif_repo_md_primary_search_pkgid	(ZifRepoMdPrimary	*md,
 							 const gchar		*search,
+							 GCancellable		*cancellable,
+							 ZifCompletion		*completion,
 							 GError			**error);
 GPtrArray	*zif_repo_md_primary_resolve		(ZifRepoMdPrimary	*md,
 							 const gchar		*search,
+							 GCancellable		*cancellable,
+							 ZifCompletion		*completion,
 							 GError			**error);
 GPtrArray	*zif_repo_md_primary_get_packages	(ZifRepoMdPrimary	*md,
+							 GCancellable		*cancellable,
+							 ZifCompletion		*completion,
 							 GError			**error);
 GPtrArray	*zif_repo_md_primary_find_package	(ZifRepoMdPrimary	*md,
 							 const PkPackageId	*id,
+							 GCancellable		*cancellable,
+							 ZifCompletion		*completion,
 							 GError			**error);
 
 G_END_DECLS

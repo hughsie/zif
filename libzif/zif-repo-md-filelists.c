@@ -67,7 +67,7 @@ G_DEFINE_TYPE (ZifRepoMdFilelists, zif_repo_md_filelists, ZIF_TYPE_REPO_MD)
  * zif_repo_md_filelists_unload:
  **/
 static gboolean
-zif_repo_md_filelists_unload (ZifRepoMd *md, GError **error)
+zif_repo_md_filelists_unload (ZifRepoMd *md, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	gboolean ret = FALSE;
 	return ret;
@@ -77,7 +77,7 @@ zif_repo_md_filelists_unload (ZifRepoMd *md, GError **error)
  * zif_repo_md_filelists_load:
  **/
 static gboolean
-zif_repo_md_filelists_load (ZifRepoMd *md, GError **error)
+zif_repo_md_filelists_load (ZifRepoMd *md, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	const gchar *filename;
 	gint rc;
@@ -177,7 +177,7 @@ out:
  * Return value: a string list of pkgId's
  **/
 GPtrArray *
-zif_repo_md_filelists_search_file (ZifRepoMdFilelists *md, const gchar *search, GError **error)
+zif_repo_md_filelists_search_file (ZifRepoMdFilelists *md, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	GPtrArray *array = NULL;
 	gchar *statement = NULL;
@@ -194,7 +194,7 @@ zif_repo_md_filelists_search_file (ZifRepoMdFilelists *md, const gchar *search, 
 
 	/* if not already loaded, load */
 	if (!md->priv->loaded) {
-		ret = zif_repo_md_filelists_load (ZIF_REPO_MD (md), &error_local);
+		ret = zif_repo_md_filelists_load (ZIF_REPO_MD (md), cancellable, completion, &error_local);
 		if (!ret) {
 			if (error != NULL)
 				*error = g_error_new (1, 0, "failed to load store file: %s", error_local->message);
@@ -334,9 +334,15 @@ zif_repo_md_filelists_test (EggTest *test)
 	GError *error = NULL;
 	GPtrArray *array;
 	const gchar *pkgid;
+	GCancellable *cancellable;
+	ZifCompletion *completion;
 
 	if (!egg_test_start (test, "ZifRepoMdFilelists"))
 		return;
+
+	/* use */
+	cancellable = g_cancellable_new ();
+	completion = zif_completion_new ();
 
 	/************************************************************/
 	egg_test_title (test, "get store_remote md");
@@ -356,8 +362,40 @@ zif_repo_md_filelists_test (EggTest *test)
 		egg_test_failed (test, "failed to set");
 
 	/************************************************************/
+	egg_test_title (test, "set type");
+	ret = zif_repo_md_set_mdtype (ZIF_REPO_MD (md), ZIF_REPO_MD_TYPE_FILELISTS);
+	if (ret)
+		egg_test_success (test, NULL);
+	else
+		egg_test_failed (test, "failed to set");
+
+	/************************************************************/
+	egg_test_title (test, "set checksum type");
+	ret = zif_repo_md_set_checksum_type (ZIF_REPO_MD (md), G_CHECKSUM_SHA256);
+	if (ret)
+		egg_test_success (test, NULL);
+	else
+		egg_test_failed (test, "failed to set");
+
+	/************************************************************/
+	egg_test_title (test, "set checksum compressed");
+	ret = zif_repo_md_set_checksum (ZIF_REPO_MD (md), "e00e88a8b6eee3798544764b6fe31ef8c9d071a824177c7cdc4fe749289198a9");
+	if (ret)
+		egg_test_success (test, NULL);
+	else
+		egg_test_failed (test, "failed to set");
+
+	/************************************************************/
+	egg_test_title (test, "set checksum uncompressed");
+	ret = zif_repo_md_set_checksum_uncompressed (ZIF_REPO_MD (md), "2b4336cb43e75610662bc0b3a362ca4cb7ba874528735a27c0d55148c3901792");
+	if (ret)
+		egg_test_success (test, NULL);
+	else
+		egg_test_failed (test, "failed to set");
+
+	/************************************************************/
 	egg_test_title (test, "set filename");
-	ret = zif_repo_md_set_filename (ZIF_REPO_MD (md), "../test/cache/fedora/e00e88a8b6eee3798544764b6fe31ef8c9d071a824177c7cdc4fe749289198a9-filelists.sqlite");
+	ret = zif_repo_md_set_filename (ZIF_REPO_MD (md), "../test/cache/fedora/e00e88a8b6eee3798544764b6fe31ef8c9d071a824177c7cdc4fe749289198a9-filelists.sqlite.bz2");
 	if (ret)
 		egg_test_success (test, NULL);
 	else
@@ -365,7 +403,7 @@ zif_repo_md_filelists_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "load");
-	ret = zif_repo_md_load (ZIF_REPO_MD (md), &error);
+	ret = zif_repo_md_load (ZIF_REPO_MD (md), cancellable, completion, &error);
 	if (ret)
 		egg_test_success (test, NULL);
 	else
@@ -377,7 +415,7 @@ zif_repo_md_filelists_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "search for files");
-	array = zif_repo_md_filelists_search_file (md, "/usr/bin/gnome-power-manager", &error);
+	array = zif_repo_md_filelists_search_file (md, "/usr/bin/gnome-power-manager", cancellable, completion, &error);
 	if (array != NULL)
 		egg_test_success (test, NULL);
 	else
@@ -399,6 +437,8 @@ zif_repo_md_filelists_test (EggTest *test)
 	g_ptr_array_free (array, TRUE);
 
 	g_object_unref (md);
+	g_object_unref (cancellable);
+	g_object_unref (completion);
 
 	egg_test_end (test);
 }

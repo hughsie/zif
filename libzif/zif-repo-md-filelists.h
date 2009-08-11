@@ -58,6 +58,8 @@ GType			 zif_repo_md_filelists_get_type		(void);
 ZifRepoMdFilelists	*zif_repo_md_filelists_new		(void);
 GPtrArray		*zif_repo_md_filelists_search_file	(ZifRepoMdFilelists	*md,
 								 const gchar		*search,
+								 GCancellable		*cancellable,
+								 ZifCompletion		*completion,
 								 GError			**error);
 
 G_END_DECLS

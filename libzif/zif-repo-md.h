@@ -31,6 +31,7 @@
 
 #include "zif-repo-md.h"
 #include "zif-completion.h"
+#include "zif-store-remote.h"
 
 G_BEGIN_DECLS
 
@@ -56,8 +57,12 @@ struct _ZifRepoMdClass
 	GObjectClass				 parent_class;
 	/* vtable */
 	gboolean	 (*load)		(ZifRepoMd		*md,
+						 GCancellable		*cancellable,
+						 ZifCompletion		*completion,
 						 GError			**error);
 	gboolean	 (*unload)		(ZifRepoMd		*md,
+						 GCancellable		*cancellable,
+						 ZifCompletion		*completion,
 						 GError			**error);
 };
 
@@ -77,6 +82,8 @@ ZifRepoMd	*zif_repo_md_new			(void);
 /* setters */
 gboolean	 zif_repo_md_set_mdtype			(ZifRepoMd	*md,
 							 ZifRepoMdType	 type);
+gboolean	 zif_repo_md_set_store_remote		(ZifRepoMd	*md,
+							 ZifStoreRemote	*remote);
 gboolean	 zif_repo_md_set_id			(ZifRepoMd	*md,
 							 const gchar	*id);
 gboolean	 zif_repo_md_set_filename		(ZifRepoMd	*md,
@@ -104,8 +111,12 @@ const gchar	*zif_repo_md_get_location		(ZifRepoMd	*md);
 
 /* actions */
 gboolean	 zif_repo_md_load			(ZifRepoMd	*md,
+							 GCancellable	*cancellable,
+							 ZifCompletion	*completion,
 							 GError		**error);
 gboolean	 zif_repo_md_unload			(ZifRepoMd	*md,
+							 GCancellable	*cancellable,
+							 ZifCompletion	*completion,
 							 GError		**error);
 gboolean	 zif_repo_md_clean			(ZifRepoMd	*md,
 							 GError		**error);

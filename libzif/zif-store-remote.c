@@ -408,7 +408,7 @@ out:
  * zif_store_remote_add_metalink:
  **/
 static gboolean
-zif_store_remote_add_metalink (ZifStoreRemote *store, GError **error)
+zif_store_remote_add_metalink (ZifStoreRemote *store, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	guint i;
 	GPtrArray *array;
@@ -416,7 +416,7 @@ zif_store_remote_add_metalink (ZifStoreRemote *store, GError **error)
 	const gchar *uri;
 
 	/* get mirrors */
-	array = zif_repo_md_metalink_get_mirrors (ZIF_REPO_MD_METALINK (store->priv->md_metalink), 50, &error_local);
+	array = zif_repo_md_metalink_get_mirrors (ZIF_REPO_MD_METALINK (store->priv->md_metalink), 50, cancellable, completion, &error_local);
 	if (array == NULL) {
 		if (error != NULL)
 			*error = g_error_new (1, 0, "failed to add mirrors: %s", error_local->message);
@@ -581,6 +581,9 @@ zif_store_remote_load_md (ZifStoreRemote *store, GCancellable *cancellable, ZifC
 			continue;
 		}
 
+		/* set parent reference */
+		zif_repo_md_set_store_remote (md, store);
+
 		/* set MD type */
 		zif_repo_md_set_mdtype (md, i);
 
@@ -620,7 +623,8 @@ zif_store_remote_load_md (ZifStoreRemote *store, GCancellable *cancellable, ZifC
 
 	/* extract details from metalink */
 	if (store->priv->metalink != NULL) {
-		ret = zif_store_remote_add_metalink (store, &error_local);
+		completion_local = zif_completion_get_child (completion);
+		ret = zif_store_remote_add_metalink (store, cancellable, completion_local, &error_local);
 		if (!ret) {
 			if (error != NULL)
 				*error = g_error_new (1, 0, "failed to add metalink: %s", error_local->message);
@@ -1146,7 +1150,8 @@ zif_store_remote_resolve (ZifStore *store, const gchar *search, GCancellable *ca
 		zif_completion_done (completion);
 	}
 
-	array = zif_repo_md_primary_resolve (ZIF_REPO_MD_PRIMARY (remote->priv->md_primary), search, error);
+	completion_local = zif_completion_get_child (completion);
+	array = zif_repo_md_primary_resolve (ZIF_REPO_MD_PRIMARY (remote->priv->md_primary), search, cancellable, completion_local, error);
 
 	/* this section done */
 	zif_completion_done (completion);
@@ -1199,7 +1204,8 @@ zif_store_remote_search_name (ZifStore *store, const gchar *search, GCancellable
 		zif_completion_done (completion);
 	}
 
-	array = zif_repo_md_primary_search_name (ZIF_REPO_MD_PRIMARY (remote->priv->md_primary), search, error);
+	completion_local = zif_completion_get_child (completion);
+	array = zif_repo_md_primary_search_name (ZIF_REPO_MD_PRIMARY (remote->priv->md_primary), search, cancellable, completion_local, error);
 
 	/* this section done */
 	zif_completion_done (completion);
@@ -1252,7 +1258,8 @@ zif_store_remote_search_details (ZifStore *store, const gchar *search, GCancella
 		zif_completion_done (completion);
 	}
 
-	array = zif_repo_md_primary_search_details (ZIF_REPO_MD_PRIMARY (remote->priv->md_primary), search, error);
+	completion_local = zif_completion_get_child (completion);
+	array = zif_repo_md_primary_search_details (ZIF_REPO_MD_PRIMARY (remote->priv->md_primary), search, cancellable, completion_local, error);
 
 	/* this section done */
 	zif_completion_done (completion);
@@ -1305,7 +1312,8 @@ zif_store_remote_search_group (ZifStore *store, const gchar *search, GCancellabl
 		zif_completion_done (completion);
 	}
 
-	array = zif_repo_md_primary_search_group (ZIF_REPO_MD_PRIMARY (remote->priv->md_primary), search, error);
+	completion_local = zif_completion_get_child (completion);
+	array = zif_repo_md_primary_search_group (ZIF_REPO_MD_PRIMARY (remote->priv->md_primary), search, cancellable, completion_local, error);
 
 	/* this section done */
 	zif_completion_done (completion);
@@ -1360,7 +1368,8 @@ zif_store_remote_find_package (ZifStore *store, const PkPackageId *id, GCancella
 	}
 
 	/* search with predicate, TODO: search version (epoch+release) */
-	array = zif_repo_md_primary_find_package (ZIF_REPO_MD_PRIMARY (remote->priv->md_primary), id, error);
+	completion_local = zif_completion_get_child (completion);
+	array = zif_repo_md_primary_find_package (ZIF_REPO_MD_PRIMARY (remote->priv->md_primary), id, cancellable, completion_local, error);
 	if (array == NULL) {
 		if (error != NULL)
 			*error = g_error_new (1, 0, "failed to search: %s", error_local->message);
@@ -1438,7 +1447,8 @@ zif_store_remote_get_packages (ZifStore *store, GCancellable *cancellable, ZifCo
 		zif_completion_done (completion);
 	}
 
-	array = zif_repo_md_primary_get_packages (ZIF_REPO_MD_PRIMARY (remote->priv->md_primary), error);
+	completion_local = zif_completion_get_child (completion);
+	array = zif_repo_md_primary_get_packages (ZIF_REPO_MD_PRIMARY (remote->priv->md_primary), cancellable, completion_local, error);
 
 	/* this section done */
 	zif_completion_done (completion);
@@ -1522,7 +1532,8 @@ zif_store_remote_get_updates (ZifStore *store, GCancellable *cancellable, ZifCom
 		id_package = zif_package_get_id (package);
 
 		/* find package name in repo */
-		updates = zif_repo_md_primary_resolve (ZIF_REPO_MD_PRIMARY (remote->priv->md_primary), id_package->name, NULL);
+		completion_local = zif_completion_get_child (completion);
+		updates = zif_repo_md_primary_resolve (ZIF_REPO_MD_PRIMARY (remote->priv->md_primary), id_package->name, cancellable, completion_local, NULL);
 		if (updates == NULL) {
 			egg_debug ("not found %s", id_package->name);
 			continue;
@@ -1636,7 +1647,8 @@ zif_store_remote_search_file (ZifStore *store, const gchar *search, GCancellable
 	}
 
 	/* gets a list of pkgId's that match this file */
-	pkgids = zif_repo_md_filelists_search_file (ZIF_REPO_MD_FILELISTS (remote->priv->md_filelists), search, &error_local);
+	completion_local = zif_completion_get_child (completion);
+	pkgids = zif_repo_md_filelists_search_file (ZIF_REPO_MD_FILELISTS (remote->priv->md_filelists), search, cancellable, completion_local, &error_local);
 	if (pkgids == NULL) {
 		if (error != NULL)
 			*error = g_error_new (1, 0, "failed to load get list of pkgids: %s", error_local->message);
@@ -1653,7 +1665,8 @@ zif_store_remote_search_file (ZifStore *store, const gchar *search, GCancellable
 		pkgid = g_ptr_array_index (pkgids, i);
 
 		/* get the results (should just be one) */
-		tmp = zif_repo_md_primary_search_pkgid (ZIF_REPO_MD_PRIMARY (remote->priv->md_primary), pkgid, &error_local);
+		completion_local = zif_completion_get_child (completion);
+		tmp = zif_repo_md_primary_search_pkgid (ZIF_REPO_MD_PRIMARY (remote->priv->md_primary), pkgid, cancellable, completion_local, &error_local);
 		if (tmp == NULL) {
 			if (error != NULL)
 				*error = g_error_new (1, 0, "failed to resolve pkgId to package: %s", error_local->message);

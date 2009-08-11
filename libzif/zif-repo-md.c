@@ -32,6 +32,7 @@
 #endif
 
 #include <glib.h>
+#include <glib/gstdio.h>
 #include <string.h>
 #include <stdlib.h>
 
@@ -60,6 +61,7 @@ struct _ZifRepoMdPrivate
 	gchar			*checksum_uncompressed;	/* of uncompressed file */
 	GChecksumType		 checksum_type;
 	ZifRepoMdType		 type;
+	ZifStoreRemote		*remote;
 };
 
 G_DEFINE_TYPE (ZifRepoMd, zif_repo_md, G_TYPE_OBJECT)
@@ -327,20 +329,90 @@ zif_repo_md_set_id (ZifRepoMd *md, const gchar *id)
 }
 
 /**
+ * zif_repo_md_set_id:
+ * @md: the #ZifRepoMd object
+ * @id: the repository id, e.g. "fedora"
+ *
+ * Sets the repository ID for this metadata.
+ *
+ * Return value: %TRUE for success, %FALSE for failure
+ **/
+gboolean
+zif_repo_md_set_store_remote (ZifRepoMd *md, ZifStoreRemote *remote)
+{
+	g_return_val_if_fail (ZIF_IS_REPO_MD (md), FALSE);
+	g_return_val_if_fail (md->priv->remote == NULL, FALSE);
+	g_return_val_if_fail (remote != NULL, FALSE);
+
+//	md->priv->remote = g_object_ref (remote);
+	return TRUE;
+}
+
+/**
+ * zif_repo_md_delete_file:
+ **/
+static gboolean
+zif_repo_md_delete_file (const gchar *filename)
+{
+	gint retval;
+	gboolean ret;
+
+	/* file exists? */
+	ret = g_file_test (filename, G_FILE_TEST_EXISTS);
+	if (!ret)
+		goto out;
+
+	egg_warning ("deleting %s", filename);
+
+	/* remove */
+	retval = g_unlink (filename);
+	if (retval != 0) {
+		egg_warning ("failed to delete %s", filename);
+		ret = FALSE;
+	}
+out:
+	return ret;
+}
+
+/**
  * zif_repo_md_load:
  * @md: the #ZifRepoMd object
  * @error: a #GError which is used on failure, or %NULL
  *
  * Load the metadata store.
  *
+ * - Check compressed file
+ *   if invalid:
+ *       delete_it()
+ *       if online:
+ *           download_it()
+ *           if failure:
+ *               abort
+ *           check_it()
+ *           if failure:
+ *               abort
+ *       else
+ *           abort
+ *
+ * - Check uncompressed file
+ *   if invalid:
+ *       delete_it()
+ *       decompress_it()
+ *           if failure:
+ *               abort()
+ *       check_it()
+ *       if failure:
+ *           abort
+ *
  * Return value: %TRUE for success, %FALSE for failure
  **/
 gboolean
-zif_repo_md_load (ZifRepoMd *md, GError **error)
+zif_repo_md_load (ZifRepoMd *md, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
+	gboolean ret;
+	GError *error_local = NULL;
 	ZifRepoMdClass *klass = ZIF_REPO_MD_GET_CLASS (md);
-
-	g_return_val_if_fail (ZIF_IS_REPO_MD (md), FALSE);
+	ZifCompletion *completion_local;
 
 	/* no support */
 	if (klass->load == NULL) {
@@ -349,7 +421,91 @@ zif_repo_md_load (ZifRepoMd *md, GError **error)
 		return FALSE;
 	}
 
-	return klass->load (md, error);
+	/* setup completion */
+	zif_completion_set_number_steps (completion, 3);
+
+	g_return_val_if_fail (ZIF_IS_REPO_MD (md), FALSE);
+
+	/* check compressed file */
+	ret = zif_repo_md_file_check (md, FALSE, &error_local);
+	if (!ret) {
+		egg_warning ("failed checksum for compressed: %s", error_local->message);
+		g_clear_error (&error_local);
+
+		/* delete file if it exists */
+//		zif_repo_md_delete_file (md->priv->filename);
+egg_error ("moo");
+
+		/* if not online, then this is fatal */
+		ret = FALSE;//is_online ();
+		if (!ret) {
+			if (error != NULL)
+				*error = g_error_new (1, 0, "failed to check %s checksum for %s and offline",
+						      zif_repo_md_type_to_text (md->priv->type), md->priv->id);
+			ret = FALSE;
+			goto out;
+		}
+
+		/* download file */
+		//ret = download (&error_local)
+		if (!ret) {
+			if (error != NULL)
+				*error = g_error_new (1, 0, "failed to download missing compressed file: %s", error_local->message);
+			goto out;
+		}
+
+		/* check newly downloaded compressed file */
+		ret = zif_repo_md_file_check (md, FALSE, &error_local);
+		if (!ret) {
+			if (error != NULL)
+				*error = g_error_new (1, 0, "failed checksum on downloaded file: %s", error_local->message);
+			goto out;
+		}
+	}
+
+	/* this section done */
+	zif_completion_done (completion);
+
+	/* check uncompressed file */
+	ret = zif_repo_md_file_check (md, TRUE, &error_local);
+	if (!ret) {
+		egg_warning ("failed checksum for uncompressed: %s", error_local->message);
+		g_clear_error (&error_local);
+
+		/* delete file if it exists */
+		zif_repo_md_delete_file (md->priv->filename_uncompressed);
+
+		/* decompress file */
+		egg_debug ("decompressing file");
+		completion_local = zif_completion_get_child (completion);
+		ret = zif_file_decompress (md->priv->filename, md->priv->filename_uncompressed,
+					   cancellable, completion_local, &error_local);
+		if (!ret) {
+			if (error != NULL)
+				*error = g_error_new (1, 0, "failed to decompress: %s", error_local->message);
+			goto out;
+		}
+
+		/* check newly uncompressed file */
+		ret = zif_repo_md_file_check (md, TRUE, &error_local);
+		if (!ret) {
+			if (error != NULL)
+				*error = g_error_new (1, 0, "failed checksum on decompressed file: %s", error_local->message);
+			goto out;
+		}
+	}
+
+	/* this section done */
+	zif_completion_done (completion);
+
+	/* do subclassed load */
+	completion_local = zif_completion_get_child (completion);
+	ret = klass->load (md, cancellable, completion_local, error);
+
+	/* this section done */
+	zif_completion_done (completion);
+out:
+	return ret;
 }
 
 /**
@@ -362,7 +518,7 @@ zif_repo_md_load (ZifRepoMd *md, GError **error)
  * Return value: %TRUE for success, %FALSE for failure
  **/
 gboolean
-zif_repo_md_unload (ZifRepoMd *md, GError **error)
+zif_repo_md_unload (ZifRepoMd *md, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	ZifRepoMdClass *klass = ZIF_REPO_MD_GET_CLASS (md);
 
@@ -375,7 +531,7 @@ zif_repo_md_unload (ZifRepoMd *md, GError **error)
 		return FALSE;
 	}
 
-	return klass->unload (md, error);
+	return klass->unload (md, cancellable, completion, error);
 }
 
 /**
@@ -492,6 +648,13 @@ zif_repo_md_file_check (ZifRepoMd *md, gboolean use_uncompressed, GError **error
 	g_return_val_if_fail (ZIF_IS_REPO_MD (md), FALSE);
 	g_return_val_if_fail (md->priv->id != NULL, FALSE);
 
+	/* metalink has no checksum... */
+	if (md->priv->type == ZIF_REPO_MD_TYPE_METALINK) {
+		egg_debug ("skipping checksum check on metalink");
+		ret = TRUE;
+		goto out;
+	}
+
 	/* get correct filename */
 	if (use_uncompressed)
 		filename = md->priv->filename_uncompressed;
@@ -517,11 +680,12 @@ zif_repo_md_file_check (ZifRepoMd *md, gboolean use_uncompressed, GError **error
 		checksum_wanted = md->priv->checksum;
 
 	/* matches? */
-	ret = (strcmp (checksum, checksum_wanted) == 0);
+	ret = (g_strcmp0 (checksum, checksum_wanted) == 0);
 	if (!ret) {
 		if (error != NULL)
-			*error = g_error_new (1, 0, "checksum incorrect, wanted %s, got %s", checksum_wanted, checksum);
+			*error = g_error_new (1, 0, "checksum incorrect, wanted %s, got %s for %s", checksum_wanted, checksum, filename);
 	}
+	egg_debug ("%s checksum correct (%s)", filename, checksum_wanted);
 out:
 	g_free (data);
 	g_free (checksum);
@@ -545,6 +709,9 @@ zif_repo_md_finalize (GObject *object)
 	g_free (md->priv->location);
 	g_free (md->priv->checksum);
 	g_free (md->priv->checksum_uncompressed);
+
+	if (md->priv->remote != NULL)
+		g_object_unref (md->priv->remote);
 
 	G_OBJECT_CLASS (zif_repo_md_parent_class)->finalize (object);
 }
@@ -576,6 +743,7 @@ zif_repo_md_init (ZifRepoMd *md)
 	md->priv->checksum = NULL;
 	md->priv->checksum_uncompressed = NULL;
 	md->priv->checksum_type = 0;
+	md->priv->remote = NULL;
 }
 
 /**
@@ -603,9 +771,15 @@ zif_repo_md_test (EggTest *test)
 	ZifRepoMd *md;
 	gboolean ret;
 	GError *error = NULL;
+	GCancellable *cancellable;
+	ZifCompletion *completion;
 
 	if (!egg_test_start (test, "ZifRepoMd"))
 		return;
+
+	/* use */
+	cancellable = g_cancellable_new ();
+	completion = zif_completion_new ();
 
 	/************************************************************/
 	egg_test_title (test, "get store_remote md");
@@ -626,7 +800,7 @@ zif_repo_md_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "load");
-	ret = zif_repo_md_load (md, &error);
+	ret = zif_repo_md_load (md, cancellable, completion, &error);
 	if (ret)
 		egg_test_success (test, NULL);
 	else
@@ -637,6 +811,8 @@ zif_repo_md_test (EggTest *test)
 	egg_test_assert (test, md->priv->loaded);
 
 	g_object_unref (md);
+	g_object_unref (cancellable);
+	g_object_unref (completion);
 
 	egg_test_end (test);
 }

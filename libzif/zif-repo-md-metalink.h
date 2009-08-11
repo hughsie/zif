@@ -58,6 +58,8 @@ GType		 zif_repo_md_metalink_get_type		(void);
 ZifRepoMdMetalink *zif_repo_md_metalink_new		(void);
 GPtrArray	*zif_repo_md_metalink_get_mirrors	(ZifRepoMdMetalink	*md,
 							 guint			 threshold,
+							 GCancellable		*cancellable,
+							 ZifCompletion		*completion,
 							 GError			**error);
 
 G_END_DECLS
