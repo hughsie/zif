@@ -65,66 +65,12 @@ typedef struct {
 G_DEFINE_TYPE (ZifRepoMdPrimary, zif_repo_md_primary, ZIF_TYPE_REPO_MD)
 
 /**
- * zif_repo_md_primary_clean:
+ * zif_repo_md_primary_unload:
  **/
 static gboolean
-zif_repo_md_primary_clean (ZifRepoMd *md, GError **error)
+zif_repo_md_primary_unload (ZifRepoMd *md, GError **error)
 {
 	gboolean ret = FALSE;
-	gboolean exists;
-	const gchar *filename;
-	GFile *file;
-	GError *error_local = NULL;
-
-	/* get filename */
-	filename = zif_repo_md_get_filename (md);
-	if (filename == NULL) {
-		if (error != NULL)
-			*error = g_error_new (1, 0, "failed to get filename for primary");
-		ret = FALSE;
-		goto out;
-	}
-
-	/* file does not exist */
-	exists = g_file_test (filename, G_FILE_TEST_EXISTS);
-	if (exists) {
-		file = g_file_new_for_path (filename);
-		ret = g_file_delete (file, NULL, &error_local);
-		g_object_unref (file);
-		if (!ret) {
-			if (error != NULL)
-				*error = g_error_new (1, 0, "failed to delete metadata file %s: %s", filename, error_local->message);
-			g_error_free (error_local);
-			goto out;
-		}
-	}
-
-	/* get filename */
-	filename = zif_repo_md_get_filename_uncompressed (md);
-	if (filename == NULL) {
-		if (error != NULL)
-			*error = g_error_new (1, 0, "failed to get uncompressed filename for primary");
-		ret = FALSE;
-		goto out;
-	}
-
-	/* file does not exist */
-	exists = g_file_test (filename, G_FILE_TEST_EXISTS);
-	if (exists) {
-		file = g_file_new_for_path (filename);
-		ret = g_file_delete (file, NULL, &error_local);
-		g_object_unref (file);
-		if (!ret) {
-			if (error != NULL)
-				*error = g_error_new (1, 0, "failed to delete metadata file %s: %s", filename, error_local->message);
-			g_error_free (error_local);
-			goto out;
-		}
-	}
-
-	/* okay */
-	ret = TRUE;
-out:
 	return ret;
 }
 
@@ -440,7 +386,7 @@ zif_repo_md_primary_class_init (ZifRepoMdPrimaryClass *klass)
 
 	/* map */
 	repo_md_class->load = zif_repo_md_primary_load;
-	repo_md_class->clean = zif_repo_md_primary_clean;
+	repo_md_class->unload = zif_repo_md_primary_unload;
 	g_type_class_add_private (klass, sizeof (ZifRepoMdPrimaryPrivate));
 }
 

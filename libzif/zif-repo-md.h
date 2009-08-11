@@ -57,30 +57,60 @@ struct _ZifRepoMdClass
 	/* vtable */
 	gboolean	 (*load)		(ZifRepoMd		*md,
 						 GError			**error);
-	gboolean	 (*clean)		(ZifRepoMd		*md,
+	gboolean	 (*unload)		(ZifRepoMd		*md,
 						 GError			**error);
 };
+
+/* types of metadata */
+typedef enum {
+	ZIF_REPO_MD_TYPE_PRIMARY,
+	ZIF_REPO_MD_TYPE_FILELISTS,
+	ZIF_REPO_MD_TYPE_OTHER,
+	ZIF_REPO_MD_TYPE_COMPS,
+	ZIF_REPO_MD_TYPE_METALINK,
+	ZIF_REPO_MD_TYPE_UNKNOWN
+} ZifRepoMdType;
 
 GType		 zif_repo_md_get_type			(void);
 ZifRepoMd	*zif_repo_md_new			(void);
 
 /* setters */
+gboolean	 zif_repo_md_set_mdtype			(ZifRepoMd	*md,
+							 ZifRepoMdType	 type);
 gboolean	 zif_repo_md_set_id			(ZifRepoMd	*md,
 							 const gchar	*id);
 gboolean	 zif_repo_md_set_filename		(ZifRepoMd	*md,
 							 const gchar	*filename);
+gboolean	 zif_repo_md_set_timestamp		(ZifRepoMd	*md,
+							 guint		 timestamp);
+gboolean	 zif_repo_md_set_location		(ZifRepoMd	*md,
+							 const gchar	*location);
+gboolean	 zif_repo_md_set_checksum		(ZifRepoMd	*md,
+							 const gchar	*checksum);
+gboolean	 zif_repo_md_set_checksum_uncompressed	(ZifRepoMd	*md,
+							 const gchar	*checksum_uncompressed);
+gboolean	 zif_repo_md_set_checksum_type		(ZifRepoMd	*md,
+							 GChecksumType	 checksum_type);
+const gchar	*zif_repo_md_type_to_text		(ZifRepoMdType	 type);
 
 /* getters */
 const gchar	*zif_repo_md_get_id			(ZifRepoMd	*md);
+ZifRepoMdType	 zif_repo_md_get_mdtype			(ZifRepoMd	*md);
 const gchar	*zif_repo_md_get_filename		(ZifRepoMd	*md);
 const gchar	*zif_repo_md_get_filename_uncompressed	(ZifRepoMd	*md);
 guint		 zif_repo_md_get_age			(ZifRepoMd	*md,
 							 GError		**error);
+const gchar	*zif_repo_md_get_location		(ZifRepoMd	*md);
 
 /* actions */
 gboolean	 zif_repo_md_load			(ZifRepoMd	*md,
 							 GError		**error);
+gboolean	 zif_repo_md_unload			(ZifRepoMd	*md,
+							 GError		**error);
 gboolean	 zif_repo_md_clean			(ZifRepoMd	*md,
+							 GError		**error);
+gboolean	 zif_repo_md_file_check			(ZifRepoMd	*md,
+							 gboolean	 use_uncompressed,
 							 GError		**error);
 
 G_END_DECLS
