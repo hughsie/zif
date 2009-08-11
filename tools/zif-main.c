@@ -1183,8 +1183,8 @@ main (int argc, char *argv[])
 			store_remote = g_ptr_array_index (array, i);
 			g_print ("%s\t\t%s\t\t%s\n",
 				 zif_store_get_id (ZIF_STORE (store_remote)),
-				 zif_store_remote_get_enabled (store_remote, NULL) ? "enabled" : "disabled",
-				 zif_store_remote_get_name (store_remote, NULL));
+				 zif_store_remote_get_enabled (store_remote, NULL, completion, NULL) ? "enabled" : "disabled",
+				 zif_store_remote_get_name (store_remote, NULL, completion, NULL));
 		}
 
 		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
