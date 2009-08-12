@@ -79,14 +79,14 @@ typedef struct {
 	gchar				*name;
 	gchar				*description;
 	gboolean			 visible;
-	GPtrArray			*packagelist;
+	GPtrArray			*packagelist;		/* stored as gchar */
 } ZifRepoMdCompsGroupData;
 
 typedef struct {
 	gchar				*id;
 	gchar				*name;
 	gchar				*description;
-	GPtrArray			*grouplist;
+	GPtrArray			*grouplist;		/* stored as gchar */
 } ZifRepoMdCompsCategoryData;
 
 /**
@@ -97,8 +97,8 @@ typedef struct {
 struct _ZifRepoMdCompsPrivate
 {
 	gboolean			 loaded;
-	GPtrArray			*array_groups;
-	GPtrArray			*array_categories;
+	GPtrArray			*array_groups;	 	/* stored as ZifRepoMdCompsGroupData */
+	GPtrArray			*array_categories;	/* stored as ZifRepoMdCompsCategoryData */
 	/* for parser */
 	ZifRepoMdCompsSection		 section;
 	ZifRepoMdCompsSectionGroup	 section_group;
@@ -132,6 +132,32 @@ zif_repo_md_comps_category_data_new (void)
 	data = g_new0 (ZifRepoMdCompsCategoryData, 1);
 	data->grouplist = g_ptr_array_new ();
 	return data;
+}
+
+/**
+ * zif_repo_md_comps_obj_new:
+ **/
+static ZifRepoMdCompsObj *
+zif_repo_md_comps_obj_new (const gchar *id, const gchar *name, const gchar *description)
+{
+	ZifRepoMdCompsObj *obj;
+	obj = g_new0 (ZifRepoMdCompsObj, 1);
+	obj->id = g_strdup (id);
+	obj->name = g_strdup (name);
+	obj->description = g_strdup (description);
+	return obj;
+}
+
+/**
+ * zif_repo_md_comps_obj_free:
+ **/
+void
+zif_repo_md_comps_obj_free (ZifRepoMdCompsObj *obj)
+{
+	g_free (obj->id);
+	g_free (obj->name);
+	g_free (obj->description);
+	g_free (obj);
 }
 
 /**
@@ -495,7 +521,7 @@ out:
  *
  * Gets the available list of categories.
  *
- * Return value: gchar pointer array of category names
+ * Return value: %ZifRepoMdCompsObj array of categories
  **/
 GPtrArray *
 zif_repo_md_comps_get_categories (ZifRepoMdComps *md, GCancellable *cancellable,
@@ -507,6 +533,7 @@ zif_repo_md_comps_get_categories (ZifRepoMdComps *md, GCancellable *cancellable,
 	gboolean ret;
 	GError *error_local = NULL;
 	const ZifRepoMdCompsCategoryData *data;
+	ZifRepoMdCompsObj *obj;
 
 	g_return_val_if_fail (ZIF_IS_REPO_MD_COMPS (md), NULL);
 
@@ -526,10 +553,34 @@ zif_repo_md_comps_get_categories (ZifRepoMdComps *md, GCancellable *cancellable,
 	len = md->priv->array_categories->len;
 	for (i=0; i<len; i++) {
 		data = g_ptr_array_index (md->priv->array_categories, i);
-		g_ptr_array_add (array, g_strdup (data->id));
+		obj = zif_repo_md_comps_obj_new (data->id, data->name, data->description);
+		g_ptr_array_add (array, obj);
 	}
 out:
 	return array;
+}
+
+/**
+ * zif_repo_md_comps_get_obj_for_group:
+ **/
+static ZifRepoMdCompsObj *
+zif_repo_md_comps_get_obj_for_group (ZifRepoMdComps *md, const gchar *group_id)
+{
+	guint i;
+	guint len;
+	ZifRepoMdCompsObj *obj = NULL;
+	const ZifRepoMdCompsGroupData *data;
+
+	/* find group matching group_id */
+	len = md->priv->array_groups->len;
+	for (i=0; i<len; i++) {
+		data = g_ptr_array_index (md->priv->array_groups, i);
+		if (g_strcmp0 (group_id, data->id) == 0) {
+			obj = zif_repo_md_comps_obj_new (data->id, data->name, data->description);
+			break;
+		}
+	}
+	return obj;
 }
 
 /**
@@ -542,7 +593,7 @@ out:
  *
  * Gets the list of groups for a specific category.
  *
- * Return value: gchar pointer array of group names
+ * Return value: %ZifRepoMdCompsObj array of groups
  **/
 GPtrArray *
 zif_repo_md_comps_get_groups_for_category (ZifRepoMdComps *md, const gchar *category_id,
@@ -556,6 +607,7 @@ zif_repo_md_comps_get_groups_for_category (ZifRepoMdComps *md, const gchar *cate
 	GError *error_local = NULL;
 	const ZifRepoMdCompsCategoryData *data;
 	const gchar *id;
+	ZifRepoMdCompsObj *obj;
 
 	g_return_val_if_fail (ZIF_IS_REPO_MD_COMPS (md), NULL);
 	g_return_val_if_fail (category_id != NULL, NULL);
@@ -581,7 +633,10 @@ zif_repo_md_comps_get_groups_for_category (ZifRepoMdComps *md, const gchar *cate
 			array = g_ptr_array_new ();
 			for (j=0; j<data->grouplist->len; j++) {
 				id = g_ptr_array_index (data->grouplist, j);
-				g_ptr_array_add (array, g_strdup (id));
+				/* find group matching group_id */
+				obj = zif_repo_md_comps_get_obj_for_group (md, id);
+				if (obj != NULL)
+					g_ptr_array_add (array, obj);
 			}
 			break;
 		}
@@ -635,8 +690,8 @@ zif_repo_md_comps_get_packages_for_group (ZifRepoMdComps *md, const gchar *group
 		}
 	}
 
-	/* get categories */
-	len = md->priv->array_categories->len;
+	/* get packages in this group */
+	len = md->priv->array_groups->len;
 	for (i=0; i<len; i++) {
 		data = g_ptr_array_index (md->priv->array_groups, i);
 
@@ -741,6 +796,7 @@ zif_repo_md_comps_test (EggTest *test)
 	const gchar *id;
 	GCancellable *cancellable;
 	ZifCompletion *completion;
+	const ZifRepoMdCompsObj *obj;
 
 	if (!egg_test_start (test, "ZifRepoMdComps"))
 		return;
@@ -818,18 +874,34 @@ zif_repo_md_comps_test (EggTest *test)
 		egg_test_failed (test, "incorrect value %i", array->len);
 
 	/************************************************************/
-	egg_test_title (test, "correct value");
-	id = g_ptr_array_index (array, 0);
-	if (g_strcmp0 (id, "apps") == 0)
+	egg_test_title (test, "correct id value");
+	obj = g_ptr_array_index (array, 0);
+	if (g_strcmp0 (obj->id, "apps") == 0)
 		egg_test_success (test, NULL);
 	else
-		egg_test_failed (test, "failed to get correct id '%s'", id);
+		egg_test_failed (test, "failed to get correct id '%s'", obj->id);
 
-	g_ptr_array_foreach (array, (GFunc) g_free, NULL);
+	/************************************************************/
+	egg_test_title (test, "correct name value");
+	obj = g_ptr_array_index (array, 0);
+	if (g_strcmp0 (obj->name, "Applications") == 0)
+		egg_test_success (test, NULL);
+	else
+		egg_test_failed (test, "failed to get correct name '%s'", obj->name);
+
+	/************************************************************/
+	egg_test_title (test, "correct description value");
+	obj = g_ptr_array_index (array, 0);
+	if (g_strcmp0 (obj->description, "Applications to perform a variety of tasks") == 0)
+		egg_test_success (test, NULL);
+	else
+		egg_test_failed (test, "failed to get correct description '%s'", obj->description);
+
+	g_ptr_array_foreach (array, (GFunc) zif_repo_md_comps_obj_free, NULL);
 	g_ptr_array_free (array, TRUE);
 
 	/************************************************************/
-	egg_test_title (test, "get groups for apps");
+	egg_test_title (test, "get groups for category");
 	array = zif_repo_md_comps_get_groups_for_category (md, "apps", cancellable, completion, &error);
 	if (array != NULL)
 		egg_test_success (test, NULL);
@@ -844,14 +916,14 @@ zif_repo_md_comps_test (EggTest *test)
 		egg_test_failed (test, "incorrect value %i", array->len);
 
 	/************************************************************/
-	egg_test_title (test, "correct value");
-	id = g_ptr_array_index (array, 0);
-	if (g_strcmp0 (id, "admin-tools") == 0)
+	egg_test_title (test, "correct id value");
+	obj = g_ptr_array_index (array, 0);
+	if (g_strcmp0 (obj->id, "admin-tools") == 0)
 		egg_test_success (test, NULL);
 	else
-		egg_test_failed (test, "failed to get correct id '%s'", id);
+		egg_test_failed (test, "failed to get correct id '%s'", obj->id);
 
-	g_ptr_array_foreach (array, (GFunc) g_free, NULL);
+	g_ptr_array_foreach (array, (GFunc) zif_repo_md_comps_obj_free, NULL);
 	g_ptr_array_free (array, TRUE);
 
 	/************************************************************/
