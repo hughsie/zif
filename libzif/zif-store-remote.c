@@ -45,6 +45,7 @@
 #include "zif-repo-md-primary.h"
 #include "zif-repo-md-filelists.h"
 #include "zif-repo-md-metalink.h"
+#include "zif-repo-md-comps.h"
 #include "zif-monitor.h"
 #include "zif-download.h"
 #include "zif-lock.h"
@@ -79,6 +80,7 @@ struct _ZifStoreRemotePrivate
 	ZifRepoMd		*md_primary;
 	ZifRepoMd		*md_filelists;
 	ZifRepoMd		*md_metalink;
+	ZifRepoMd		*md_comps;
 	ZifConfig		*config;
 	ZifMonitor		*monitor;
 	ZifLock			*lock;
@@ -123,7 +125,7 @@ zif_store_remote_get_md_from_type (ZifStoreRemote *store, ZifRepoMdType type)
 	if (type == ZIF_REPO_MD_TYPE_OTHER)
 		return NULL;
 	if (type == ZIF_REPO_MD_TYPE_COMPS)
-		return NULL;
+		return store->priv->md_comps;
 	if (type == ZIF_REPO_MD_TYPE_METALINK)
 		return store->priv->md_metalink;
 	return NULL;
@@ -925,7 +927,7 @@ zif_store_remote_clean (ZifStore *store, GCancellable *cancellable, ZifCompletio
 	}
 
 	/* setup completion with the correct number of steps */
-	zif_completion_set_number_steps (completion, 3);
+	zif_completion_set_number_steps (completion, 4);
 
 	/* clean primary */
 	ret = zif_repo_md_clean (remote->priv->md_primary, &error_local);
@@ -944,6 +946,18 @@ zif_store_remote_clean (ZifStore *store, GCancellable *cancellable, ZifCompletio
 	if (!ret) {
 		if (error != NULL)
 			*error = g_error_new (1, 0, "failed to clean filelists: %s", error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* this section done */
+	zif_completion_done (completion);
+
+	/* clean comps */
+	ret = zif_repo_md_clean (remote->priv->md_comps, &error_local);
+	if (!ret) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "failed to clean comps: %s", error_local->message);
 		g_error_free (error_local);
 		goto out;
 	}
@@ -1899,6 +1913,7 @@ zif_store_remote_finalize (GObject *object)
 
 	g_object_unref (store->priv->md_primary);
 	g_object_unref (store->priv->md_filelists);
+	g_object_unref (store->priv->md_comps);
 	g_object_unref (store->priv->md_metalink);
 	g_object_unref (store->priv->config);
 	g_object_unref (store->priv->monitor);
@@ -1966,6 +1981,7 @@ zif_store_remote_init (ZifStoreRemote *store)
 	store->priv->md_filelists = ZIF_REPO_MD (zif_repo_md_filelists_new ());
 	store->priv->md_primary = ZIF_REPO_MD (zif_repo_md_primary_new ());
 	store->priv->md_metalink = ZIF_REPO_MD (zif_repo_md_metalink_new ());
+	store->priv->md_comps = ZIF_REPO_MD (zif_repo_md_comps_new ());
 	store->priv->parser_type = ZIF_REPO_MD_TYPE_UNKNOWN;
 	store->priv->parser_section = ZIF_STORE_REMOTE_PARSER_SECTION_UNKNOWN;
 	g_signal_connect (store->priv->monitor, "changed", G_CALLBACK (zif_store_remote_file_monitor_cb), store);

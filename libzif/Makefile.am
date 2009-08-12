@@ -87,6 +87,8 @@ libzif_la_SOURCES =						\
 	zif-repo-md-primary.h					\
 	zif-repo-md-metalink.c					\
 	zif-repo-md-metalink.h					\
+	zif-repo-md-comps.c					\
+	zif-repo-md-comps.h					\
 	zif-sack.c						\
 	zif-sack.h						\
 	zif-repos.c						\
