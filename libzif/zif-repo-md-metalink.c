@@ -265,7 +265,7 @@ zif_repo_md_metalink_get_mirrors (ZifRepoMdMetalink *md, guint threshold, GCance
 
 	/* if not already loaded, load */
 	if (!metalink->priv->loaded) {
-		ret = zif_repo_md_metalink_load (ZIF_REPO_MD (md), cancellable, completion, &error_local);
+		ret = zif_repo_md_load (ZIF_REPO_MD (md), cancellable, completion, &error_local);
 		if (!ret) {
 			if (error != NULL)
 				*error = g_error_new (1, 0, "failed to get mirrors from metalink: %s", error_local->message);
