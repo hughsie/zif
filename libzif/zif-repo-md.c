@@ -428,12 +428,16 @@ zif_repo_md_load (ZifRepoMd *md, GCancellable *cancellable, ZifCompletion *compl
 
 	g_return_val_if_fail (ZIF_IS_REPO_MD (md), FALSE);
 
-	/* optimise: if uncompressed file is okay, then do't even check the compressed file */
+	/* optimise: if uncompressed file is okay, then don't even check the compressed file */
 	uncompressed_check = zif_repo_md_file_check (md, TRUE, &error_local);
 	if (uncompressed_check) {
 		zif_completion_done (completion);
 		goto skip_compressed_check;
 	}
+
+	/* display any warning */
+	egg_warning ("failed checksum for uncompressed: %s", error_local->message);
+	g_clear_error (&error_local);
 
 	/* check compressed file */
 	ret = zif_repo_md_file_check (md, FALSE, &error_local);
@@ -443,7 +447,6 @@ zif_repo_md_load (ZifRepoMd *md, GCancellable *cancellable, ZifCompletion *compl
 
 		/* delete file if it exists */
 //		zif_repo_md_delete_file (md->priv->filename);
-egg_error ("moo");
 
 		/* if not online, then this is fatal */
 		ret = FALSE;//is_online ();
@@ -680,20 +683,29 @@ zif_repo_md_file_check (ZifRepoMd *md, gboolean use_uncompressed, GError **error
 		goto out;
 	}
 
-	/* compute checksum */
-	checksum = g_compute_checksum_for_data (md->priv->checksum_type, (guchar*) data, length);
-
 	/* get the one we want */
 	if (use_uncompressed)
 		checksum_wanted = md->priv->checksum_uncompressed;
 	else
 		checksum_wanted = md->priv->checksum;
 
+	/* no checksum set */
+	if (checksum_wanted == NULL) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "checksum not set for %s", filename);
+		ret = FALSE;
+		goto out;
+	}
+
+	/* compute checksum */
+	checksum = g_compute_checksum_for_data (md->priv->checksum_type, (guchar*) data, length);
+
 	/* matches? */
 	ret = (g_strcmp0 (checksum, checksum_wanted) == 0);
 	if (!ret) {
 		if (error != NULL)
 			*error = g_error_new (1, 0, "checksum incorrect, wanted %s, got %s for %s", checksum_wanted, checksum, filename);
+		goto out;
 	}
 	egg_debug ("%s checksum correct (%s)", filename, checksum_wanted);
 out:
