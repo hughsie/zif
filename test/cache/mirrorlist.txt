@@ -1,0 +1,4 @@
+http://rpm.livna.org/repo/$releasever/$basearch/
+http://wftp.tu-chemnitz.de/pub/linux/livna/repo/$releasever/$basearch/
+http://ftp-stud.fht-esslingen.de/pub/Mirrors/rpm.livna.org/repo/$releasever/$basearch/
+ftp://mirrors.tummy.com/pub/rpm.livna.org/repo/$releasever/$basearch/

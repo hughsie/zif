@@ -1,0 +1,29 @@
+<?xml version="1.0" ?>
+<updates>
+<update from="updates@fedoraproject.org" status="stable" type="bugfix" version="1.4">
+ <id>FEDORA-2008-9969</id>
+ <title>lvm2-2.02.39-7.fc10</title>
+ <release>Fedora 10</release>
+ <issued date="2008-12-09 11:31:26"/>
+ <references>
+  <reference href="https://bugzilla.redhat.com/show_bug.cgi?id=472090" id="472090" title="/etc/init.d/clvmd points to /usr/sbin for LVM tools" type="bugzilla"/>
+  <reference href="https://bugzilla.gnome.com/show_bug.cgi?id=472090" id="472091" title="CVE DATA" type="cve"/>
+ </references>
+ <description>Fix an incorrect path that prevents the clvmd init script from working and include licence files with the sub-packages.</description>
+ <pkglist>
+  <collection short="F10">
+   <name>Fedora 10</name>
+   <package arch="ppc64" name="device-mapper-libs" release="7.fc10" src="http:///device-mapper-libs-1.02.27-7.fc10.ppc64.rpm" version="1.02.27">
+    <filename>device-mapper-libs-1.02.27-7.fc10.ppc64.rpm</filename>
+   </package>
+   <package arch="ppc" name="lvm2" release="7.fc10" src="http://0/ppc/lvm2-2.02.39-7.fc10.ppc.rpm" version="2.02.39">
+    <filename>lvm2-2.02.39-7.fc10.ppc.rpm</filename>
+   </package>
+   <package arch="src" name="lvm2" release="7.fc10" src="http://SRPMS/lvm2-2.02.39-7.fc10.src.rpm" version="2.02.39">
+    <filename>lvm2-2.02.39-7.fc10.src.rpm</filename>
+   </package>
+  </collection>
+ </pkglist>
+</update>
+</updates>
+
