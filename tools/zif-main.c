@@ -536,41 +536,43 @@ main (int argc, char *argv[])
 	context = g_option_context_new ("ZIF Console Program");
 	g_option_context_set_summary (context, 
 		/* new */
+		"  clean          Remove cached data\n"
 		"  download       Download a package\n"
-		"  getpackages    List all packages\n"
+		"  getcategories  Returns the list of categories\n"
+		"  getdepends     List a package's dependencies\n"
+		"  getdetails     Display details about a package or group of packages\n"
 		"  getfiles       List the files in a package\n"
+		"  getgroups      Get the groups the system supports\n"
+		"  getpackages    List all packages\n"
+		"  getupdates     Check for available package updates\n"
+		"  help           Display a helpful usage message\n"
+		"  repolist       Display the configured software repositories\n"
 		"  resolve        Find a given package name\n"
-		"  searchname     Search package name for the given string\n"
 		"  searchdetails  Search package details for the given string\n"
 		"  searchfile     Search packages for the given filename\n"
 		"  searchgroup    Return packages in the given group\n"
+		"  searchname     Search package name for the given string\n"
 		"  whatprovides   Find what package provides the given value\n"
-		"  getdepends     List a package's dependencies\n"
-		"  repolist       Display the configured software repositories\n"
-		"  getdetails     Display details about a package or group of packages\n"
-		"  clean          Remove cached data\n"
-		"  getupdates     Check for available package updates\n"
-		"  getcategories  Returns the list of categories\n"
-		"  help           Display a helpful usage message\n"
 		/* backwards compat */
 		"\nThe following commands are provided for backwards compatibility.\n"
-		"  resolvedep     Alias to whatprovides\n"
-		"  search         Alias to searchdetails\n"
+		"  check-update   Alias to getupdates\n"
 		"  deplist        Alias to getdepends\n"
 		"  info           Alias to getdetails\n"
 		"  list           Alias to getpackages\n"
 		"  provides       Alias to whatprovides\n"
-		"  check-update   Alias to getupdates\n"
+		"  resolvedep     Alias to whatprovides\n"
+		"  search         Alias to searchdetails\n"
 		/* not even started yet */
 		"\nThese won't work just yet...\n"
-		"  refreshcache   Generate the metadata cache\n" /* new */
-		"  makecache      Alias to refreshcache\n" /* backwards */
-		"  upgrade        Alias to update\n" /* backwards */
-		"  update         Update a package or packages on your system\n"
-		"  reinstall      Reinstall a package\n"
 		"  erase          Remove a package or packages from your system\n"
 		"  install        Install a package or packages on your system\n"
-		"  localinstall   Install a local RPM\n");
+		"  localinstall   Install a local RPM\n"
+		"  makecache      Alias to refreshcache\n" /* backwards */
+		"  refreshcache   Generate the metadata cache\n" /* new */
+		"  reinstall      Reinstall a package\n"
+		"  update         Update a package or packages on your system\n"
+		"  upgrade        Alias to update\n" /* backwards */
+		);
 
 	g_option_context_add_main_entries (context, options, NULL);
 	g_option_context_parse (context, &argc, &argv, NULL);
@@ -934,6 +936,29 @@ main (int argc, char *argv[])
 
 		goto out;
 	}
+
+	if (g_strcmp0 (mode, "getgroups") == 0) {
+		PkBitfield group_bitfield;
+		gchar *text;
+
+		/* get bitfield */
+		group_bitfield = zif_groups_get_groups (groups, &error);
+		if (group_bitfield == 0) {
+			g_print ("failed to get groups: %s\n", error->message);
+			g_error_free (error);
+			goto out;
+		}
+
+		/* convert to text */
+		text = pk_group_bitfield_to_text (group_bitfield);
+		g_strdelimit (text, ";", '\n');
+
+		/* print it */
+		g_print ("%s\n", text);
+		g_free (text);
+		goto out;
+	}
+
 	if (g_strcmp0 (mode, "clean") == 0) {
 
 		pk_progress_bar_start (progressbar, "Cleaning");
