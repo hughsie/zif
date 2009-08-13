@@ -1306,6 +1306,209 @@ out:
 }
 
 /**
+ * zif_store_remote_search_category_resolve:
+ **/
+static ZifPackage *
+zif_store_remote_search_category_resolve (ZifStore *store, const gchar *name, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+{
+	ZifStoreLocal *store_local = NULL;
+	GError *error_local = NULL;
+	GPtrArray *array = NULL;
+	ZifPackage *package = NULL;
+	ZifCompletion *completion_local;
+
+	store_local = zif_store_local_new ();
+
+	/* setup steps */
+	zif_completion_set_number_steps (completion, 2);
+
+	/* is already installed? */
+	completion_local = zif_completion_get_child (completion);
+	array = zif_store_resolve (ZIF_STORE (store_local), name, cancellable, completion_local, &error_local);
+	if (array == NULL) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "failed to resolve installed package %s: %s", name, error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* this section done */
+	zif_completion_done (completion);
+
+	/* get newest, ignore error */
+	package = zif_package_array_get_newest (array, NULL);
+	if (package != NULL) {
+		/* we don't need to do the second part */
+		zif_completion_done (completion);
+		goto out;
+	}
+
+	/* clear array */
+	g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
+	g_ptr_array_free (array, TRUE);
+
+	/* is available in this repo? */
+	completion_local = zif_completion_get_child (completion);
+	array = zif_store_resolve (ZIF_STORE (store), name, cancellable, completion_local, &error_local);
+	if (array == NULL) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "failed to resolve installed package %s: %s", name, error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* this section done */
+	zif_completion_done (completion);
+
+	/* get newest, ignore error */
+	package = zif_package_array_get_newest (array, NULL);
+	if (package != NULL)
+		goto out;
+
+	/* we suck */
+	if (error != NULL)
+		*error = g_error_new (1, 0, "failed to resolve installed package %s installed or in this repo", name);
+out:
+	if (array != NULL) {
+		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
+		g_ptr_array_free (array, TRUE);
+	}
+	if (store_local != NULL)
+		g_object_unref (store_local);
+	return package;
+}
+
+
+/**
+ * zif_store_remote_search_category:
+ **/
+static GPtrArray *
+zif_store_remote_search_category (ZifStore *store, const gchar *group_id, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+{
+	gboolean ret;
+	GError *error_local = NULL;
+	GPtrArray *array = NULL;
+	GPtrArray *array_names = NULL;
+	ZifStoreRemote *remote = ZIF_STORE_REMOTE (store);
+	ZifCompletion *completion_local;
+	ZifCompletion *completion_loop;
+	ZifPackage *package;
+	const gchar *name;
+	const gchar *location;
+	guint i;
+
+	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), FALSE);
+	g_return_val_if_fail (remote->priv->id != NULL, FALSE);
+
+	/* not locked */
+	ret = zif_lock_is_locked (remote->priv->lock, NULL);
+	if (!ret) {
+		egg_warning ("not locked");
+		if (error != NULL)
+			*error = g_error_new (1, 0, "not locked");
+		goto out;
+	}
+
+	/* setup completion */
+	if (remote->priv->loaded_metadata)
+		zif_completion_set_number_steps (completion, 2);
+	else
+		zif_completion_set_number_steps (completion, 3);
+
+	/* load metadata */
+	if (!remote->priv->loaded_metadata) {
+		completion_local = zif_completion_get_child (completion);
+		ret = zif_store_remote_load_metadata (remote, cancellable, completion_local, &error_local);
+		if (!ret) {
+			if (error != NULL)
+				*error = g_error_new (1, 0, "failed to load xml: %s", error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+
+		/* this section done */
+		zif_completion_done (completion);
+	}
+
+	/* does this repo have comps data? */
+	location = zif_repo_md_get_location (remote->priv->md_comps);
+	if (location == NULL) {
+		/* empty array, as we want success */
+		array = g_ptr_array_new ();
+		goto out;
+	}
+
+	/* get package names for group */
+	completion_local = zif_completion_get_child (completion);
+	array_names = zif_repo_md_comps_get_packages_for_group (ZIF_REPO_MD_COMPS (remote->priv->md_comps),
+								group_id, cancellable, completion_local, &error_local);
+	if (array_names == NULL) {
+		/* ignore when group isn't present, TODO: use GError code */
+		if (g_str_has_prefix (error_local->message, "could not find group")) {
+			array = g_ptr_array_new ();
+			g_error_free (error_local);
+			goto out;
+		}
+		if (error != NULL)
+			*error = g_error_new (1, 0, "failed to get packages for group %s: %s", group_id, error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* this section done */
+	zif_completion_done (completion);
+
+	/* setup completion */
+	completion_local = zif_completion_get_child (completion);
+	zif_completion_set_number_steps (completion_local, array_names->len);
+
+	/* results array */
+	array = g_ptr_array_new ();
+
+	/* resolve names */
+	for (i=0; i<array_names->len; i++) {
+		name = g_ptr_array_index (array_names, i);
+
+		/* completion */
+		completion_loop = zif_completion_get_child (completion_local);
+		package = zif_store_remote_search_category_resolve (store, name, cancellable, completion_loop, &error_local);
+		if (package == NULL) {
+			/* ignore when package isn't present, TODO: use GError code */
+			if (g_str_has_prefix (error_local->message, "failed to resolve")) {
+				g_error_free (error_local);
+				egg_warning ("Failed to find %s installed or in repo %s", name, remote->priv->id);
+				goto ignore_error;
+			}
+
+			if (error != NULL)
+				*error = g_error_new (1, 0, "failed to get resolve %s for %s: %s", name, group_id, error_local->message);
+			g_error_free (error_local);
+
+			/* undo all our hard work */
+			g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
+			g_ptr_array_free (array, TRUE);
+			array = NULL;
+			goto out;
+		}
+
+		/* add to array */
+		g_ptr_array_add (array, package);
+ignore_error:
+		/* this section done */
+		zif_completion_done (completion_local);
+	}
+
+	/* this section done */
+	zif_completion_done (completion);
+out:
+	if (array_names != NULL) {
+		g_ptr_array_foreach (array_names, (GFunc) g_free, NULL);
+		g_ptr_array_free (array_names, TRUE);
+	}
+	return array;
+}
+
+/**
  * zif_store_remote_search_group:
  **/
 static GPtrArray *
@@ -2097,7 +2300,7 @@ zif_store_remote_class_init (ZifStoreRemoteClass *klass)
 	store_class->clean = zif_store_remote_clean;
 	store_class->refresh = zif_store_remote_refresh;
 	store_class->search_name = zif_store_remote_search_name;
-//	store_class->search_category = zif_store_remote_search_category;
+	store_class->search_category = zif_store_remote_search_category;
 	store_class->search_details = zif_store_remote_search_details;
 	store_class->search_group = zif_store_remote_search_group;
 	store_class->search_file = zif_store_remote_search_file;
@@ -2440,6 +2643,20 @@ zif_store_remote_test (EggTest *test)
 		egg_test_failed (test, "incorrect data: %s", obj->name);
 
 	g_ptr_array_foreach (array, (GFunc) pk_category_obj_free, NULL);
+	g_ptr_array_free (array, TRUE);
+
+	/************************************************************/
+	egg_test_title (test, "search category");
+	zif_completion_reset (completion);
+	array = zif_store_remote_search_category (ZIF_STORE (store), "admin-tools", NULL, completion, &error);
+	if (array == NULL)
+		egg_test_failed (test, "no data: %s", error->message);
+	else if (array->len > 0)
+		egg_test_success (test, NULL);
+	else
+		egg_test_failed (test, "no results");
+
+	g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
 	g_ptr_array_free (array, TRUE);
 
 	g_object_unref (store);

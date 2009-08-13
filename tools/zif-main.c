@@ -548,9 +548,10 @@ main (int argc, char *argv[])
 		"  help           Display a helpful usage message\n"
 		"  repolist       Display the configured software repositories\n"
 		"  resolve        Find a given package name\n"
+		"  searchcategory Search package details for the given category\n"
 		"  searchdetails  Search package details for the given string\n"
 		"  searchfile     Search packages for the given filename\n"
-		"  searchgroup    Return packages in the given group\n"
+		"  searchgroup    Search packages in the given group\n"
 		"  searchname     Search package name for the given string\n"
 		"  whatprovides   Find what package provides the given value\n"
 		/* backwards compat */
@@ -1546,6 +1547,49 @@ main (int argc, char *argv[])
 
 		/* this section done */
 		zif_completion_done (completion);
+
+		zif_print_packages (array);
+		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
+		g_ptr_array_free (array, TRUE);
+		goto out;
+	}
+	if (g_strcmp0 (mode, "searchcategory") == 0) {
+		if (value == NULL) {
+			g_print ("specify a category\n");
+			goto out;
+		}
+
+		pk_progress_bar_start (progressbar, "Search category");
+
+		/* setup completion with the correct number of steps */
+		zif_completion_set_number_steps (completion, 2);
+
+		/* add remote stores */
+		sack = zif_sack_new ();
+		completion_local = zif_completion_get_child (completion);
+		ret = zif_sack_add_remote_enabled (sack, NULL, completion_local, &error);
+		if (!ret) {
+			g_print ("failed to add remote: %s\n", error->message);
+			g_error_free (error);
+			goto out;
+		}
+
+		/* this section done */
+		zif_completion_done (completion);
+
+		completion_local = zif_completion_get_child (completion);
+		array = zif_sack_search_category (sack, value, NULL, completion_local, &error);
+		if (array == NULL) {
+			g_print ("failed to get results: %s\n", error->message);
+			g_error_free (error);
+			goto out;
+		}
+
+		/* this section done */
+		zif_completion_done (completion);
+
+		/* newline for output */
+		g_print ("\n");
 
 		zif_print_packages (array);
 		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);

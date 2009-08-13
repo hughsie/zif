@@ -539,15 +539,39 @@ zif_sack_search_group (ZifSack *sack, const gchar *group_enum, GCancellable *can
  *
  * Find packages that belong in a specific category.
  *
- * TODO: need to remove duplicate installed packages
- *
  * Return value: an array of #ZifPackage's
  **/
 GPtrArray *
 zif_sack_search_category (ZifSack *sack, const gchar *group_id, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
+	guint i, j;
+	GPtrArray *array;
+	ZifPackage *package;
+	const PkPackageId *id;
+	const PkPackageId *id_tmp;
+
 	g_return_val_if_fail (ZIF_IS_SACK (sack), NULL);
-	return zif_sack_repos_search (sack, PK_ROLE_ENUM_SEARCH_CATEGORY, group_id, cancellable, completion, error);
+
+	/* get all results from all repos */
+	array = zif_sack_repos_search (sack, PK_ROLE_ENUM_SEARCH_CATEGORY, group_id, cancellable, completion, error);
+
+	/* remove duplicate package_ids */
+	for (i=0; i<array->len; i++) {
+		package = g_ptr_array_index (array, i);
+		id = zif_package_get_id (package);
+		for (j=0; j<array->len; j++) {
+			if (i == j)
+				continue;
+			package = g_ptr_array_index (array, j);
+			id_tmp = zif_package_get_id (package);
+			if (pk_package_id_equal (id, id_tmp)) {
+				egg_warning ("duplicate %s-%s", id->name, id->version);
+				g_ptr_array_remove_index (array, j);
+			}
+		}
+	}
+
+	return array;
 }
 
 /**
