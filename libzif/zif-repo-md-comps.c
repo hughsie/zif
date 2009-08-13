@@ -261,6 +261,20 @@ zif_repo_md_comps_parser_start_element (GMarkupParseContext *context, const gcha
 			comps->priv->section_group = ZIF_REPO_MD_COMPS_SECTION_GROUP_PACKAGELIST;
 			goto out;
 		}
+		if (g_strcmp0 (element_name, "packagereq") == 0) {
+			comps->priv->section_group = ZIF_REPO_MD_COMPS_SECTION_GROUP_PACKAGE;
+
+			/* find the package type as a bonus */
+			comps->priv->section_group_type = ZIF_REPO_MD_COMPS_SECTION_GROUP_TYPE_UNKNOWN;
+			for (i=0; attribute_names[i] != NULL; i++) {
+				if (g_strcmp0 (element_name, "type") == 0) {
+					if (g_strcmp0 (attribute_values[i], "default"))
+						comps->priv->section_group_type = ZIF_REPO_MD_COMPS_SECTION_GROUP_TYPE_DEFAULT;
+					break;
+				}
+			}
+			goto out;
+		}
 	}
 
 	/* category element */
@@ -282,31 +296,10 @@ zif_repo_md_comps_parser_start_element (GMarkupParseContext *context, const gcha
 			comps->priv->section_category = ZIF_REPO_MD_COMPS_SECTION_CATEGORY_GROUPLIST;
 			goto out;
 		}
-	}
-
-	/* a package! */
-	if (comps->priv->section == ZIF_REPO_MD_COMPS_SECTION_GROUP &&
-	    comps->priv->section_group == ZIF_REPO_MD_COMPS_SECTION_GROUP_PACKAGELIST &&
-	    g_strcmp0 (element_name, "packagereq") == 0) {
-		/* find the package type */
-		comps->priv->section_group_type = ZIF_REPO_MD_COMPS_SECTION_GROUP_TYPE_UNKNOWN;
-		for (i=0; attribute_names[i] != NULL; i++) {
-			if (g_strcmp0 (element_name, "type") == 0) {
-				if (g_strcmp0 (attribute_values[i], "default"))
-					comps->priv->section_group_type = ZIF_REPO_MD_COMPS_SECTION_GROUP_TYPE_DEFAULT;
-				break;
-			}
+		if (g_strcmp0 (element_name, "groupid") == 0) {
+			comps->priv->section_category = ZIF_REPO_MD_COMPS_SECTION_CATEGORY_GROUP;
+			goto out;
 		}
-		comps->priv->section_group = ZIF_REPO_MD_COMPS_SECTION_GROUP_PACKAGE;
-		goto out;
-	}
-
-	/* a group! */
-	if (comps->priv->section == ZIF_REPO_MD_COMPS_SECTION_CATEGORY &&
-	    comps->priv->section_category == ZIF_REPO_MD_COMPS_SECTION_CATEGORY_GROUPLIST &&
-	    g_strcmp0 (element_name, "groupid") == 0) {
-		comps->priv->section_category = ZIF_REPO_MD_COMPS_SECTION_CATEGORY_GROUP;
-		goto out;
 	}
 out:
 	return;
@@ -328,6 +321,7 @@ zif_repo_md_comps_parser_end_element (GMarkupParseContext *context, const gchar 
 		/* add to array */
 		g_ptr_array_add (comps->priv->array_groups, comps->priv->group_data_temp);
 
+		if (FALSE)
 		egg_debug ("added GROUP '%s' name:%s, desc:%s, visible:%i, list=%p",
 			   comps->priv->group_data_temp->id,
 			   comps->priv->group_data_temp->name,
@@ -346,6 +340,7 @@ zif_repo_md_comps_parser_end_element (GMarkupParseContext *context, const gchar 
 		/* add to array */
 		g_ptr_array_add (comps->priv->array_categories, comps->priv->category_data_temp);
 
+		if (FALSE)
 		egg_debug ("added CATEGORY '%s' name:%s, desc:%s, list=%p",
 			   comps->priv->category_data_temp->id,
 			   comps->priv->category_data_temp->name,
@@ -910,7 +905,7 @@ zif_repo_md_comps_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "correct number");
-	if (array->len == 1)
+	if (array->len == 2)
 		egg_test_success (test, NULL);
 	else
 		egg_test_failed (test, "incorrect value %i", array->len);
@@ -936,7 +931,7 @@ zif_repo_md_comps_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "correct number");
-	if (array->len == 1)
+	if (array->len == 2)
 		egg_test_success (test, NULL);
 	else
 		egg_test_failed (test, "incorrect value %i", array->len);
