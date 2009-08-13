@@ -23,8 +23,8 @@
 #error "Only <zif.h> can be included directly."
 #endif
 
-#ifndef __ZIF_REPO_MD_METALINK_H
-#define __ZIF_REPO_MD_METALINK_H
+#ifndef __ZIF_REPO_MD_MIRRORLIST_H
+#define __ZIF_REPO_MD_MIRRORLIST_H
 
 #include <glib-object.h>
 
@@ -32,37 +32,36 @@
 
 G_BEGIN_DECLS
 
-#define ZIF_TYPE_REPO_MD_METALINK		(zif_repo_md_metalink_get_type ())
-#define ZIF_REPO_MD_METALINK(o)			(G_TYPE_CHECK_INSTANCE_CAST ((o), ZIF_TYPE_REPO_MD_METALINK, ZifRepoMdMetalink))
-#define ZIF_REPO_MD_METALINK_CLASS(k)		(G_TYPE_CHECK_CLASS_CAST((k), ZIF_TYPE_REPO_MD_METALINK, ZifRepoMdMetalinkClass))
-#define ZIF_IS_REPO_MD_METALINK(o)		(G_TYPE_CHECK_INSTANCE_TYPE ((o), ZIF_TYPE_REPO_MD_METALINK))
-#define ZIF_IS_REPO_MD_METALINK_CLASS(k)	(G_TYPE_CHECK_CLASS_TYPE ((k), ZIF_TYPE_REPO_MD_METALINK))
-#define ZIF_REPO_MD_METALINK_GET_CLASS(o)	(G_TYPE_INSTANCE_GET_CLASS ((o), ZIF_TYPE_REPO_MD_METALINK, ZifRepoMdMetalinkClass))
+#define ZIF_TYPE_REPO_MD_MIRRORLIST		(zif_repo_md_mirrorlist_get_type ())
+#define ZIF_REPO_MD_MIRRORLIST(o)		(G_TYPE_CHECK_INSTANCE_CAST ((o), ZIF_TYPE_REPO_MD_MIRRORLIST, ZifRepoMdMirrorlist))
+#define ZIF_REPO_MD_MIRRORLIST_CLASS(k)		(G_TYPE_CHECK_CLASS_CAST((k), ZIF_TYPE_REPO_MD_MIRRORLIST, ZifRepoMdMirrorlistClass))
+#define ZIF_IS_REPO_MD_MIRRORLIST(o)		(G_TYPE_CHECK_INSTANCE_TYPE ((o), ZIF_TYPE_REPO_MD_MIRRORLIST))
+#define ZIF_IS_REPO_MD_MIRRORLIST_CLASS(k)	(G_TYPE_CHECK_CLASS_TYPE ((k), ZIF_TYPE_REPO_MD_MIRRORLIST))
+#define ZIF_REPO_MD_MIRRORLIST_GET_CLASS(o)	(G_TYPE_INSTANCE_GET_CLASS ((o), ZIF_TYPE_REPO_MD_MIRRORLIST, ZifRepoMdMirrorlistClass))
 
-typedef struct _ZifRepoMdMetalink		ZifRepoMdMetalink;
-typedef struct _ZifRepoMdMetalinkPrivate	ZifRepoMdMetalinkPrivate;
-typedef struct _ZifRepoMdMetalinkClass		ZifRepoMdMetalinkClass;
+typedef struct _ZifRepoMdMirrorlist		ZifRepoMdMirrorlist;
+typedef struct _ZifRepoMdMirrorlistPrivate	ZifRepoMdMirrorlistPrivate;
+typedef struct _ZifRepoMdMirrorlistClass	ZifRepoMdMirrorlistClass;
 
-struct _ZifRepoMdMetalink
+struct _ZifRepoMdMirrorlist
 {
 	ZifRepoMd			 parent;
-	ZifRepoMdMetalinkPrivate	*priv;
+	ZifRepoMdMirrorlistPrivate	*priv;
 };
 
-struct _ZifRepoMdMetalinkClass
+struct _ZifRepoMdMirrorlistClass
 {
 	ZifRepoMdClass			 parent_class;
 };
 
-GType		 zif_repo_md_metalink_get_type		(void);
-ZifRepoMdMetalink *zif_repo_md_metalink_new		(void);
-GPtrArray	*zif_repo_md_metalink_get_uris		(ZifRepoMdMetalink	*md,
-							 guint			 threshold,
+GType		 zif_repo_md_mirrorlist_get_type		(void);
+ZifRepoMdMirrorlist *zif_repo_md_mirrorlist_new		(void);
+GPtrArray	*zif_repo_md_mirrorlist_get_uris	(ZifRepoMdMirrorlist	*md,
 							 GCancellable		*cancellable,
 							 ZifCompletion		*completion,
 							 GError			**error);
 
 G_END_DECLS
 
-#endif /* __ZIF_REPO_MD_METALINK_H */
+#endif /* __ZIF_REPO_MD_MIRRORLIST_H */
 

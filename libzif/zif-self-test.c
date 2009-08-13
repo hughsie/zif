@@ -60,22 +60,23 @@ main (int argc, char **argv)
 	/* tests go here */
 	zif_lock_test (test);
 	zif_completion_test (test);
+	zif_config_test (test);
+	zif_string_test (test);
+	zif_string_array_test (test);
 	zif_repo_md_metalink_test (test);
+	zif_repo_md_mirrorlist_test (test);
 	zif_repo_md_filelists_test (test);
 	zif_repo_md_primary_test (test);
 	zif_repo_md_comps_test (test);
-	zif_string_test (test);
-	zif_string_array_test (test);
 	zif_download_test (test);
 	zif_monitor_test (test);
-	zif_utils_test (test);
-	zif_config_test (test);
 	zif_package_test (test);
 	zif_store_local_test (test);
 	zif_groups_test (test);
 	zif_store_remote_test (test);
 	zif_repos_test (test);
-	
+	zif_utils_test (test);
+
 	return (egg_test_finish (test));
 }
 

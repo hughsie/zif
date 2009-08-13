@@ -296,15 +296,22 @@ zif_repo_md_set_mdtype (ZifRepoMd *md, ZifRepoMdType type)
 	/* metalink is not specified in the repomd.xml file */
 	if (type == ZIF_REPO_MD_TYPE_METALINK) {
 		zif_repo_md_set_location (md, "metalink.xml");
-	} else {
-		/* check we've got the needed data */
-		if (md->priv->location != NULL && (md->priv->checksum == NULL || md->priv->timestamp == 0)) {
-			egg_warning ("cannot load md for %s (loc=%s, checksum=%s, checksum_open=%s, timestamp=%i)",
-				     zif_repo_md_type_to_text (type), md->priv->location,
-				     md->priv->checksum, md->priv->checksum_uncompressed, md->priv->timestamp);
-			ret = FALSE;
-			goto out;
-		}
+		goto out;
+	}
+
+	/* mirrorlist is not specified in the repomd.xml file */
+	if (type == ZIF_REPO_MD_TYPE_MIRRORLIST) {
+		zif_repo_md_set_location (md, "mirrorlist.txt");
+		goto out;
+	}
+
+	/* check we've got the needed data */
+	if (md->priv->location != NULL && (md->priv->checksum == NULL || md->priv->timestamp == 0)) {
+		egg_warning ("cannot load md for %s (loc=%s, checksum=%s, checksum_open=%s, timestamp=%i)",
+			     zif_repo_md_type_to_text (type), md->priv->location,
+			     md->priv->checksum, md->priv->checksum_uncompressed, md->priv->timestamp);
+		ret = FALSE;
+		goto out;
 	}
 out:
 	return ret;
@@ -634,6 +641,8 @@ zif_repo_md_type_to_text (ZifRepoMdType type)
 		return "comps";
 	if (type == ZIF_REPO_MD_TYPE_METALINK)
 		return "metalink";
+	if (type == ZIF_REPO_MD_TYPE_MIRRORLIST)
+		return "mirrorlist";
 	return "unknown";
 }
 
@@ -661,8 +670,9 @@ zif_repo_md_file_check (ZifRepoMd *md, gboolean use_uncompressed, GError **error
 	g_return_val_if_fail (md->priv->id != NULL, FALSE);
 
 	/* metalink has no checksum... */
-	if (md->priv->type == ZIF_REPO_MD_TYPE_METALINK) {
-		egg_debug ("skipping checksum check on metalink");
+	if (md->priv->type == ZIF_REPO_MD_TYPE_METALINK ||
+	    md->priv->type == ZIF_REPO_MD_TYPE_MIRRORLIST) {
+		egg_debug ("skipping checksum check on %s", zif_repo_md_type_to_text (md->priv->type));
 		ret = TRUE;
 		goto out;
 	}

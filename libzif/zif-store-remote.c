@@ -35,20 +35,21 @@
 #include <stdlib.h>
 #include <gio/gio.h>
 
-#include "zif-utils.h"
 #include "zif-config.h"
-#include "zif-package.h"
-#include "zif-package-remote.h"
-#include "zif-store.h"
-#include "zif-store-remote.h"
-#include "zif-store-local.h"
-#include "zif-repo-md-primary.h"
-#include "zif-repo-md-filelists.h"
-#include "zif-repo-md-metalink.h"
-#include "zif-repo-md-comps.h"
-#include "zif-monitor.h"
 #include "zif-download.h"
 #include "zif-lock.h"
+#include "zif-monitor.h"
+#include "zif-package.h"
+#include "zif-package-remote.h"
+#include "zif-repo-md-comps.h"
+#include "zif-repo-md-filelists.h"
+#include "zif-repo-md-metalink.h"
+#include "zif-repo-md-mirrorlist.h"
+#include "zif-repo-md-primary.h"
+#include "zif-store.h"
+#include "zif-store-local.h"
+#include "zif-store-remote.h"
+#include "zif-utils.h"
 
 #include "egg-debug.h"
 #include "egg-string.h"
@@ -80,6 +81,7 @@ struct _ZifStoreRemotePrivate
 	ZifRepoMd		*md_primary;
 	ZifRepoMd		*md_filelists;
 	ZifRepoMd		*md_metalink;
+	ZifRepoMd		*md_mirrorlist;
 	ZifRepoMd		*md_comps;
 	ZifConfig		*config;
 	ZifMonitor		*monitor;
@@ -128,6 +130,8 @@ zif_store_remote_get_md_from_type (ZifStoreRemote *store, ZifRepoMdType type)
 		return store->priv->md_comps;
 	if (type == ZIF_REPO_MD_TYPE_METALINK)
 		return store->priv->md_metalink;
+	if (type == ZIF_REPO_MD_TYPE_MIRRORLIST)
+		return store->priv->md_mirrorlist;
 	return NULL;
 }
 
@@ -230,7 +234,6 @@ zif_store_remote_parser_end_element (GMarkupParseContext *context, const gchar *
 		store->priv->parser_type = ZIF_REPO_MD_TYPE_UNKNOWN;
 }
 
-
 /**
  * zif_store_remote_parser_text:
  **/
@@ -256,22 +259,6 @@ zif_store_remote_parser_text (GMarkupParseContext *context, const gchar *text, g
 		zif_repo_md_set_checksum_uncompressed (md, text);
 	else if (store->priv->parser_section == ZIF_STORE_REMOTE_PARSER_SECTION_TIMESTAMP)
 		zif_repo_md_set_timestamp (md, atol (text));
-}
-
-/**
- * zif_store_remote_expand_vars:
- **/
-static gchar *
-zif_store_remote_expand_vars (const gchar *name)
-{
-	gchar *name1;
-	gchar *name2;
-
-	name1 = egg_strreplace (name, "$releasever", "11");
-	name2 = egg_strreplace (name1, "$basearch", "i386");
-
-	g_free (name1);
-	return name2;
 }
 
 /**
@@ -306,7 +293,7 @@ out:
  * @filename: the completion filename to download, e.g. "Packages/hal-0.0.1.rpm"
  * @directory: the directory to put the downloaded file, e.g. "/var/cache/zif"
  * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
- * @completion: a #ZifCompletion to use for progress reporting, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Downloads a remote package to a local directory.
@@ -426,7 +413,7 @@ zif_store_remote_add_metalink (ZifStoreRemote *store, GCancellable *cancellable,
 	const gchar *uri;
 
 	/* get mirrors */
-	array = zif_repo_md_metalink_get_mirrors (ZIF_REPO_MD_METALINK (store->priv->md_metalink), 50, cancellable, completion, &error_local);
+	array = zif_repo_md_metalink_get_uris (ZIF_REPO_MD_METALINK (store->priv->md_metalink), 50, cancellable, completion, &error_local);
 	if (array == NULL) {
 		if (error != NULL)
 			*error = g_error_new (1, 0, "failed to add mirrors: %s", error_local->message);
@@ -453,55 +440,32 @@ out:
 static gboolean
 zif_store_remote_add_mirrorlist (ZifStoreRemote *store, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
-	gboolean ret;
-	gchar *filename;
-	gchar *contents = NULL;
-	gchar **lines = NULL;
-	GError *error_local = NULL;
 	guint i;
-	ZifDownload *download;
+	GPtrArray *array;
+	GError *error_local = NULL;
+	const gchar *uri;
 
-	filename = g_build_filename (store->priv->directory, "mirrorlist.txt", NULL);
-
-	/* download mirrorlist only if it does not exist */
-	ret = g_file_test (filename, G_FILE_TEST_EXISTS);
-	if (!ret) {
-
-		/* download new file */
-		egg_debug ("need to download mirrorlist: %s to %s", store->priv->mirrorlist, filename);
-		download = zif_download_new ();
-		ret = zif_download_file (download, store->priv->mirrorlist, filename, cancellable, completion, &error_local);
-		g_object_unref (download);
-		if (!ret) {
-			if (error != NULL)
-				*error = g_error_new (1, 0, "failed to download mirrorlist.txt: %s", error_local->message);
-			g_error_free (error_local);
-			goto out;
-		}
-	}
-
-	/* get contents */
-	ret = g_file_get_contents (filename, &contents, NULL, &error_local);
-	if (!ret) {
+	/* get mirrors */
+	array = zif_repo_md_mirrorlist_get_uris (ZIF_REPO_MD_MIRRORLIST (store->priv->md_mirrorlist), cancellable, completion, &error_local);
+	if (array == NULL) {
 		if (error != NULL)
-			*error = g_error_new (1, 0, "failed to get contents %s: %s", filename, error_local->message);
+			*error = g_error_new (1, 0, "failed to add mirrors: %s", error_local->message);
 		g_error_free (error_local);
 		goto out;
 	}
 
-	/* split, and add mirrorlists */
-	lines = g_strsplit (contents, "\n", -1);
-	for (i=0; lines[i] != NULL; i++) {
-		if (lines[i][0] == '\0' ||
-		    lines[i][0] == '#')
-			continue;
-		g_ptr_array_add (store->priv->baseurls, g_strdup (lines[i]));
+	/* add array */
+	for (i=0; i<array->len; i++) {
+		uri = g_ptr_array_index (array, i);
+		g_ptr_array_add (store->priv->baseurls, g_strdup (uri));
 	}
+
+	/* free */
+	g_ptr_array_foreach (array, (GFunc) g_free, NULL);
+	g_ptr_array_free (array, TRUE);
 out:
-	g_strfreev (lines);
-	g_free (filename);
-	g_free (contents);
-	return ret;
+	return (array != NULL);
+
 }
 
 /**
@@ -877,24 +841,24 @@ zif_store_remote_load (ZifStore *store, GCancellable *cancellable, ZifCompletion
 	remote->priv->enabled = zif_boolean_from_text (enabled);
 
 	/* expand out */
-	remote->priv->name_expanded = zif_store_remote_expand_vars (remote->priv->name);
+	remote->priv->name_expanded = zif_config_expand_substitutions (remote->priv->config, remote->priv->name, NULL);
 
 	/* get base url (allowed to be blank) */
 	temp = g_key_file_get_string (file, remote->priv->id, "baseurl", NULL);
 	if (temp != NULL && temp[0] != '\0')
-		g_ptr_array_add (remote->priv->baseurls, zif_store_remote_expand_vars (temp));
+		g_ptr_array_add (remote->priv->baseurls, zif_config_expand_substitutions (remote->priv->config, temp, NULL));
 	g_free (temp);
 
 	/* get mirror list (allowed to be blank) */
 	temp = g_key_file_get_string (file, remote->priv->id, "mirrorlist", NULL);
 	if (temp != NULL && temp[0] != '\0')
-		remote->priv->mirrorlist = zif_store_remote_expand_vars (temp);
+		remote->priv->mirrorlist = zif_config_expand_substitutions (remote->priv->config, temp, NULL);
 	g_free (temp);
 
 	/* get metalink (allowed to be blank) */
 	temp = g_key_file_get_string (file, remote->priv->id, "metalink", NULL);
 	if (temp != NULL && temp[0] != '\0')
-		remote->priv->metalink = zif_store_remote_expand_vars (temp);
+		remote->priv->metalink = zif_config_expand_substitutions (remote->priv->config, temp, NULL);
 	g_free (temp);
 
 	/* urgh.. yum allows mirrorlist= to be used as well as metalink= for metalink URLs */
@@ -1377,7 +1341,6 @@ out:
 		g_object_unref (store_local);
 	return package;
 }
-
 
 /**
  * zif_store_remote_search_category:
@@ -2275,6 +2238,7 @@ zif_store_remote_finalize (GObject *object)
 	g_object_unref (store->priv->md_filelists);
 	g_object_unref (store->priv->md_comps);
 	g_object_unref (store->priv->md_metalink);
+	g_object_unref (store->priv->md_mirrorlist);
 	g_object_unref (store->priv->config);
 	g_object_unref (store->priv->monitor);
 	g_object_unref (store->priv->lock);
@@ -2342,6 +2306,7 @@ zif_store_remote_init (ZifStoreRemote *store)
 	store->priv->md_filelists = ZIF_REPO_MD (zif_repo_md_filelists_new ());
 	store->priv->md_primary = ZIF_REPO_MD (zif_repo_md_primary_new ());
 	store->priv->md_metalink = ZIF_REPO_MD (zif_repo_md_metalink_new ());
+	store->priv->md_mirrorlist = ZIF_REPO_MD (zif_repo_md_mirrorlist_new ());
 	store->priv->md_comps = ZIF_REPO_MD (zif_repo_md_comps_new ());
 	store->priv->parser_type = ZIF_REPO_MD_TYPE_UNKNOWN;
 	store->priv->parser_section = ZIF_STORE_REMOTE_PARSER_SECTION_UNKNOWN;

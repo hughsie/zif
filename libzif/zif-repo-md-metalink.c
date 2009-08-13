@@ -36,6 +36,7 @@
 
 #include "zif-repo-md.h"
 #include "zif-repo-md-metalink.h"
+#include "zif-config.h"
 
 #include "egg-debug.h"
 #include "egg-string.h"
@@ -69,6 +70,7 @@ struct _ZifRepoMdMetalinkPrivate
 {
 	gboolean			 loaded;
 	GPtrArray			*array;
+	ZifConfig			*config;
 	/* for parser */
 	ZifRepoMdMetalinkParserSection	 section;
 	ZifRepoMdMetalinkData		*temp;
@@ -141,7 +143,6 @@ zif_repo_md_metalink_parser_end_element (GMarkupParseContext *context, const gch
 	metalink->priv->temp = NULL;
 	metalink->priv->section = ZIF_REPO_MD_METALINK_PARSER_SECTION_UNKNOWN;
 }
-
 
 /**
  * zif_repo_md_metalink_parser_text:
@@ -241,9 +242,11 @@ out:
 }
 
 /**
- * zif_repo_md_metalink_get_mirrors:
+ * zif_repo_md_metalink_get_uris:
  * @md: the #ZifRepoMdMetalink object
  * @threshold: the threshold in percent
+ * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Finds all mirrors we should use.
@@ -251,10 +254,11 @@ out:
  * Return value: the uris to use as an array of strings
  **/
 GPtrArray *
-zif_repo_md_metalink_get_mirrors (ZifRepoMdMetalink *md, guint threshold, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+zif_repo_md_metalink_get_uris (ZifRepoMdMetalink *md, guint threshold, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	gboolean ret;
 	guint len;
+	gchar *uri;
 	GPtrArray *array = NULL;
 	GError *error_local = NULL;
 	ZifRepoMdMetalinkData *data;
@@ -285,8 +289,20 @@ zif_repo_md_metalink_get_mirrors (ZifRepoMdMetalink *md, guint threshold, GCance
 			continue;
 
 		/* ignore low priority */
-		if (data->preference >= threshold)
-			g_ptr_array_add (array, g_strdup (data->uri));
+		if (data->preference >= threshold) {
+			uri = zif_config_expand_substitutions (md->priv->config, data->uri, &error_local);
+			if (uri == NULL) {
+				if (error != NULL)
+					*error = g_error_new (1, 0, "failed to expand substitutions: %s", error_local->message);
+				g_error_free (error_local);
+				/* rip apart what we've done already */
+				g_ptr_array_foreach (array, (GFunc) g_free, NULL);
+				g_ptr_array_free (array, TRUE);
+				array = NULL;
+				goto out;
+			}
+			g_ptr_array_add (array, uri);
+		}
 	}
 out:
 	return array;
@@ -316,6 +332,7 @@ zif_repo_md_metalink_finalize (GObject *object)
 
 	g_ptr_array_foreach (md->priv->array, (GFunc) zif_repo_md_metalink_free_data, NULL);
 	g_ptr_array_free (md->priv->array, TRUE);
+	g_object_unref (md->priv->config);
 
 	G_OBJECT_CLASS (zif_repo_md_metalink_parent_class)->finalize (object);
 }
@@ -344,6 +361,7 @@ zif_repo_md_metalink_init (ZifRepoMdMetalink *md)
 {
 	md->priv = ZIF_REPO_MD_METALINK_GET_PRIVATE (md);
 	md->priv->loaded = FALSE;
+	md->priv->config = zif_config_new ();
 	md->priv->array = g_ptr_array_new ();
 }
 
@@ -376,6 +394,7 @@ zif_repo_md_metalink_test (EggTest *test)
 	const gchar *uri;
 	GCancellable *cancellable;
 	ZifCompletion *completion;
+	ZifConfig *config;
 
 	if (!egg_test_start (test, "ZifRepoMdMetalink"))
 		return;
@@ -383,6 +402,8 @@ zif_repo_md_metalink_test (EggTest *test)
 	/* use */
 	cancellable = g_cancellable_new ();
 	completion = zif_completion_new ();
+	config = zif_config_new ();
+	zif_config_set_filename (config, "../test/etc/yum.conf", NULL);
 
 	/************************************************************/
 	egg_test_title (test, "get repo_md_metalink md");
@@ -430,8 +451,8 @@ zif_repo_md_metalink_test (EggTest *test)
 	egg_test_assert (test, md->priv->loaded);
 
 	/************************************************************/
-	egg_test_title (test, "get mirros(50)");
-	array = zif_repo_md_metalink_get_mirrors (md, 50, cancellable, completion, &error);
+	egg_test_title (test, "get uris");
+	array = zif_repo_md_metalink_get_uris (md, 50, cancellable, completion, &error);
 	if (array != NULL)
 		egg_test_success (test, NULL);
 	else
@@ -458,6 +479,7 @@ zif_repo_md_metalink_test (EggTest *test)
 	g_object_unref (md);
 	g_object_unref (cancellable);
 	g_object_unref (completion);
+	g_object_unref (config);
 
 	egg_test_end (test);
 }
