@@ -55,6 +55,7 @@ main (int argc, char **argv)
 	g_thread_init (NULL);
 	test = egg_test_init ();
 	egg_debug_init (TRUE);
+	zif_init ();
 
 	/* tests go here */
 	zif_lock_test (test);
