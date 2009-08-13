@@ -103,12 +103,12 @@ GPtrArray	*zif_sack_search_details	(ZifSack		*sack,
 						 ZifCompletion		*completion,
 						 GError			**error);
 GPtrArray	*zif_sack_search_group		(ZifSack		*sack,
-						 const gchar		*search,
+						 const gchar		*group_enum,
 						 GCancellable		*cancellable,
 						 ZifCompletion		*completion,
 						 GError			**error);
 GPtrArray	*zif_sack_search_category	(ZifSack		*sack,
-						 const gchar		*search,
+						 const gchar		*group_id,
 						 GCancellable		*cancellable,
 						 ZifCompletion		*completion,
 						 GError			**error);

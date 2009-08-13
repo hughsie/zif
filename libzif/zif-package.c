@@ -38,6 +38,7 @@
 #include "egg-debug.h"
 
 #include "zif-utils.h"
+#include "zif-config.h"
 #include "zif-package.h"
 #include "zif-repos.h"
 #include "zif-groups.h"
@@ -49,6 +50,7 @@
 
 struct _ZifPackagePrivate
 {
+	ZifConfig		*config;
 	ZifGroups		*groups;
 	ZifRepos		*repos;
 	PkPackageId		*id;
@@ -150,7 +152,7 @@ out:
  * @package: the #ZifPackage object
  * @directory: the local directory to save to
  * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
- * @completion: a #ZifCompletion to use for progress reporting, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Downloads a package.
@@ -339,6 +341,37 @@ zif_package_is_installed (ZifPackage *package)
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), FALSE);
 	g_return_val_if_fail (package->priv->id != NULL, FALSE);
 	return package->priv->installed;
+}
+
+/**
+ * zif_package_is_native:
+ * @package: the #ZifPackage object
+ *
+ * Finds out if a package is the native architecture for the system.
+ *
+ * Return value: %TRUE or %FALSE
+ **/
+gboolean
+zif_package_is_native (ZifPackage *package)
+{
+	gchar **array;
+	guint i;
+	const gchar *arch;
+	gboolean ret = FALSE;
+
+	g_return_val_if_fail (ZIF_IS_PACKAGE (package), FALSE);
+	g_return_val_if_fail (package->priv->id != NULL, FALSE);
+
+	/* is package in arch array */
+	arch = package->priv->id->arch;
+	array = zif_config_get_basearch_array (package->priv->config);
+	for (i=0; array[i] != NULL; i++) {
+		if (g_strcmp0 (array[i], arch) == 0) {
+			ret = TRUE;
+			break;
+		}
+	}
+	return ret;
 }
 
 /**
@@ -1020,6 +1053,7 @@ zif_package_finalize (GObject *object)
 		zif_depend_array_unref (package->priv->provides);
 	g_object_unref (package->priv->repos);
 	g_object_unref (package->priv->groups);
+	g_object_unref (package->priv->config);
 
 	G_OBJECT_CLASS (zif_package_parent_class)->finalize (object);
 }
@@ -1058,6 +1092,7 @@ zif_package_init (ZifPackage *package)
 	package->priv->size = 0;
 	package->priv->repos = zif_repos_new ();
 	package->priv->groups = zif_groups_new ();
+	package->priv->config = zif_config_new ();
 }
 
 /**

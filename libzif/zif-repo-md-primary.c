@@ -184,6 +184,8 @@ out:
  * zif_repo_md_primary_resolve:
  * @md: the #ZifRepoMdPrimary object
  * @search: the search term, e.g. "gnome-power-manager"
+ * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Finds all remote packages that match the name exactly.
@@ -210,6 +212,8 @@ zif_repo_md_primary_resolve (ZifRepoMdPrimary *md, const gchar *search, GCancell
  * zif_repo_md_primary_search_name:
  * @md: the #ZifRepoMdPrimary object
  * @search: the search term, e.g. "power"
+ * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Finds all packages that match the name.
@@ -236,6 +240,8 @@ zif_repo_md_primary_search_name (ZifRepoMdPrimary *md, const gchar *search, GCan
  * zif_repo_md_primary_search_details:
  * @md: the #ZifRepoMdPrimary object
  * @search: the search term, e.g. "advanced"
+ * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Finds all packages that match the name or description.
@@ -262,6 +268,8 @@ zif_repo_md_primary_search_details (ZifRepoMdPrimary *md, const gchar *search, G
  * zif_repo_md_primary_search_group:
  * @md: the #ZifRepoMdPrimary object
  * @search: the search term, e.g. "games/console"
+ * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Finds all packages that match the group.
@@ -288,6 +296,8 @@ zif_repo_md_primary_search_group (ZifRepoMdPrimary *md, const gchar *search, GCa
  * zif_repo_md_primary_search_pkgid:
  * @md: the #ZifRepoMdPrimary object
  * @search: the search term as a 64 bit hash
+ * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Finds all packages that match the given pkgId.
@@ -314,6 +324,8 @@ zif_repo_md_primary_search_pkgid (ZifRepoMdPrimary *md, const gchar *search, GCa
  * zif_repo_md_primary_find_package:
  * @md: the #ZifRepoMdPrimary object
  * @id: the #PkPackageId to match
+ * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Finds all packages that match #PkPackageId.
@@ -339,6 +351,8 @@ zif_repo_md_primary_find_package (ZifRepoMdPrimary *md, const PkPackageId *id, G
 /**
  * zif_repo_md_primary_get_packages:
  * @md: the #ZifRepoMdPrimary object
+ * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Returns all packages in the repo.

@@ -169,6 +169,8 @@ out:
  * zif_repo_md_filelists_search_file:
  * @md: the #ZifRepoMdFilelists object
  * @search: the full path that should be searched for
+ * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Gets a list of all packages that contain the file.

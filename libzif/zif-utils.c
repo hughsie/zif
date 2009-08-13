@@ -413,6 +413,8 @@ out:
  * zif_file_decompress:
  * @in: the filename to unpack
  * @out: the file to create
+ * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting
  * @error: a valid %GError
  *
  * Decompress files into a directory

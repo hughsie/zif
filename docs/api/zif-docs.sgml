@@ -46,22 +46,26 @@
         This part documents GObjects used in libzif.
       </para>
     </partintro>
-    <xi:include href="xml/zif-config.xml"/>
     <xi:include href="xml/zif-completion.xml"/>
+    <xi:include href="xml/zif-config.xml"/>
     <xi:include href="xml/zif-download.xml"/>
     <xi:include href="xml/zif-groups.xml"/>
+    <xi:include href="xml/zif-lock.xml"/>
     <xi:include href="xml/zif-monitor.xml"/>
-    <xi:include href="xml/zif-package.xml"/>
     <xi:include href="xml/zif-package-local.xml"/>
     <xi:include href="xml/zif-package-remote.xml"/>
-    <xi:include href="xml/zif-repo-md.xml"/>
+    <xi:include href="xml/zif-package.xml"/>
     <xi:include href="xml/zif-repo-md-filelists.xml"/>
     <xi:include href="xml/zif-repo-md-primary.xml"/>
+    <xi:include href="xml/zif-repo-md-comps.xml"/>
+    <xi:include href="xml/zif-repo-md-mirrorlist.xml"/>
+    <xi:include href="xml/zif-repo-md-primary.xml"/>
+    <xi:include href="xml/zif-repo-md.xml"/>
     <xi:include href="xml/zif-repos.xml"/>
     <xi:include href="xml/zif-sack.xml"/>
-    <xi:include href="xml/zif-store.xml"/>
     <xi:include href="xml/zif-store-local.xml"/>
     <xi:include href="xml/zif-store-remote.xml"/>
+    <xi:include href="xml/zif-store.xml"/>
   </reference>
 
   <reference id="libzif-helpers">
@@ -71,11 +75,11 @@
         This part documents helper funtions in libzif.
       </para>
     </partintro>
-    <xi:include href="xml/zif-utils.xml"/>
-    <xi:include href="xml/zif-string.xml"/>
-    <xi:include href="xml/zif-string-array.xml"/>
-    <xi:include href="xml/zif-depend.xml"/>
     <xi:include href="xml/zif-depend-array.xml"/>
+    <xi:include href="xml/zif-depend.xml"/>
+    <xi:include href="xml/zif-string-array.xml"/>
+    <xi:include href="xml/zif-string.xml"/>
+    <xi:include href="xml/zif-utils.xml"/>
   </reference>
 
   <reference id="faq">

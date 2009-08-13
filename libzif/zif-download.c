@@ -131,7 +131,7 @@ out:
  * @uri: the full remote URI
  * @filename: the local filename to save to
  * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
- * @completion: a #ZifCompletion to use for progress reporting, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Downloads a file.

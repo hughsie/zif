@@ -581,7 +581,7 @@ zif_repo_md_comps_get_obj_for_group (ZifRepoMdComps *md, const gchar *group_id)
 /**
  * zif_repo_md_comps_get_groups_for_category:
  * @md: the #ZifRepoMdComps object
- * @category: the category to search for
+ * @category_id: the category to search for
  * @cancellable: the %GCancellable, or %NULL
  * @completion: the %ZifCompletion object
  * @error: a #GError which is used on failure, or %NULL
@@ -649,7 +649,7 @@ out:
 /**
  * zif_repo_md_comps_get_packages_for_group:
  * @md: the #ZifRepoMdComps object
- * @group: the group to search for
+ * @group_id: the group to search for
  * @cancellable: the %GCancellable, or %NULL
  * @completion: the %ZifCompletion object
  * @error: a #GError which is used on failure, or %NULL

@@ -387,6 +387,8 @@ out:
 /**
  * zif_repo_md_load:
  * @md: the #ZifRepoMd object
+ * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Load the metadata store.
@@ -530,6 +532,8 @@ out:
 /**
  * zif_repo_md_unload:
  * @md: the #ZifRepoMd object
+ * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Unload the metadata store.
@@ -649,6 +653,7 @@ zif_repo_md_type_to_text (ZifRepoMdType type)
 /**
  * zif_repo_md_file_check:
  * @md: the #ZifRepoMd object
+ * @use_uncompressed: If we should check only the uncompresed version
  * @error: a #GError which is used on failure, or %NULL
  *
  * Check the metadata files to make sure they are valid.

@@ -78,6 +78,7 @@ gboolean	 zif_config_reset_default	(ZifConfig	*config,
 gchar		*zif_config_expand_substitutions (ZifConfig	*config,
 						 const gchar	*text,
 						 GError		**error);
+gchar		**zif_config_get_basearch_array	(ZifConfig	*config);
 
 G_END_DECLS
 

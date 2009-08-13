@@ -159,6 +159,8 @@ out:
 /**
  * zif_repos_load:
  * @repos: the #ZifRepos object
+ * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Load the repository, and parse it's config file.
@@ -280,6 +282,8 @@ out:
 /**
  * zif_repos_get_stores:
  * @repos: the #ZifRepos object
+ * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Gets the enabled and disabled remote stores.
@@ -321,6 +325,8 @@ out:
 /**
  * zif_repos_get_stores_enabled:
  * @repos: the #ZifRepos object
+ * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Gets the enabled remote stores.
@@ -363,6 +369,8 @@ out:
  * zif_repos_get_store:
  * @repos: the #ZifRepos object
  * @id: the repository id, e.g. "fedora"
+ * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Gets the store matching the ID.

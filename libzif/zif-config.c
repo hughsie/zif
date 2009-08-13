@@ -55,6 +55,7 @@ struct _ZifConfigPrivate
 	gboolean		 loaded;
 	ZifMonitor		*monitor;
 	GHashTable		*hash;
+	gchar			**basearch_list;
 };
 
 G_DEFINE_TYPE (ZifConfig, zif_config, G_TYPE_OBJECT)
@@ -123,7 +124,7 @@ zif_config_get_string (ZifConfig *config, const gchar *key, GError **error)
 	}
 
 	/* dumb metadata */
-	if (g_strcmp0 (key, "archinfo-metadata") == 0) {
+	if (g_strcmp0 (key, "basearch") == 0) {
 		rpmGetArchInfo (&info, NULL);
 		if (g_strcmp0 (info, "i486") == 0 ||
 		    g_strcmp0 (info, "i586") == 0 ||
@@ -310,6 +311,7 @@ out:
  * zif_config_expand_substitutions:
  * @config: the #ZifConfig object
  * @text: string to scan, e.g. "http://fedora/$releasever/$basearch/moo.rpm"
+ * @error: a #GError which is used on failure, or %NULL
  *
  * Replaces substitutions in text with the actual values of the running system.
  *
@@ -327,7 +329,7 @@ zif_config_expand_substitutions (ZifConfig *config, const gchar *text, GError **
 	g_return_val_if_fail (text != NULL, NULL);
 
 	/* get data */
-	basearch = zif_config_get_string (config, "archinfo-metadata", error);
+	basearch = zif_config_get_string (config, "basearch", error);
 	if (basearch == NULL)
 		goto out;
 
@@ -347,6 +349,21 @@ out:
 }
 
 /**
+ * zif_config_get_basearch_array:
+ * @config: the #ZifConfig object
+ *
+ * Gets the list of architectures that packages are native on for this machine.
+ *
+ * Return value: A array of strings, do not free, e.g. [ "i386", "i486", "noarch" ]
+ **/
+gchar **
+zif_config_get_basearch_array (ZifConfig *config)
+{
+	g_return_val_if_fail (ZIF_IS_CONFIG (config), NULL);
+	return config->priv->basearch_list;
+}
+
+/**
  * zif_config_set_filename:
  * @config: the #ZifConfig object
  * @filename: the system wide config file, e.g. "/etc/yum.conf"
@@ -361,6 +378,10 @@ zif_config_set_filename (ZifConfig *config, const gchar *filename, GError **erro
 {
 	gboolean ret;
 	GError *error_local = NULL;
+	gchar *basearch = NULL;
+	const gchar *text;
+	GPtrArray *array;
+	guint i;
 
 	g_return_val_if_fail (ZIF_IS_CONFIG (config), FALSE);
 	g_return_val_if_fail (filename != NULL, FALSE);
@@ -394,7 +415,36 @@ zif_config_set_filename (ZifConfig *config, const gchar *filename, GError **erro
 
 	/* done */
 	config->priv->loaded = TRUE;
+
+	/* calculate the valid basearchs */
+	basearch = zif_config_get_string (config, "basearch", &error_local);
+	if (basearch == NULL) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "failed to get basearch: %s", error_local->message);
+		g_error_free (error_local);
+		ret = FALSE;
+		goto out;
+	}
+
+	/* add valid archs to array */
+	array = g_ptr_array_new ();
+	g_ptr_array_add (array, g_strdup (basearch));
+	g_ptr_array_add (array, g_strdup ("noarch"));
+	if (g_strcmp0 (basearch, "i386") == 0) {
+		g_ptr_array_add (array, g_strdup ("i486"));
+		g_ptr_array_add (array, g_strdup ("i586"));
+		g_ptr_array_add (array, g_strdup ("i686"));
+	}
+
+	/* copy into GStrv array */
+	config->priv->basearch_list = g_new0 (gchar*, array->len+1);
+	for (i=0; i < array->len; i++) {
+		text = g_ptr_array_index (array, i);
+		config->priv->basearch_list[i] = g_strdup (text);
+	}
+	g_ptr_array_free (array, TRUE);
 out:
+	g_free (basearch);
 	return ret;
 }
 
@@ -473,6 +523,7 @@ zif_config_finalize (GObject *object)
 	g_key_file_free (config->priv->keyfile);
 	g_hash_table_unref (config->priv->hash);
 	g_object_unref (config->priv->monitor);
+	g_strfreev (config->priv->basearch_list);
 
 	G_OBJECT_CLASS (zif_config_parent_class)->finalize (object);
 }
@@ -498,6 +549,7 @@ zif_config_init (ZifConfig *config)
 	config->priv->keyfile = g_key_file_new ();
 	config->priv->loaded = FALSE;
 	config->priv->hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+	config->priv->basearch_list = NULL;
 	config->priv->monitor = zif_monitor_new ();
 	g_signal_connect (config->priv->monitor, "changed", G_CALLBACK (zif_config_file_monitor_cb), config);
 }
@@ -533,6 +585,8 @@ zif_config_test (EggTest *test)
 	GError *error = NULL;
 	gchar *value;
 	guint time;
+	guint len;
+	gchar **array;
 
 	if (!egg_test_start (test, "ZifConfig"))
 		return;
@@ -623,6 +677,22 @@ zif_config_test (EggTest *test)
 	else
 		egg_test_failed (test, "invalid value '%s'", value);
 	g_free (value);
+
+	/************************************************************/
+	egg_test_title (test, "get basearch array size");
+	array = zif_config_get_basearch_array (config);
+	len = g_strv_length (array);
+	if (len == 5)
+		egg_test_success (test, NULL);
+	else
+		egg_test_failed (test, "invalid size '%i'", len);
+
+	/************************************************************/
+	egg_test_title (test, "get basearch array value");
+	if (egg_strequal (array[0], "i386"))
+		egg_test_success (test, NULL);
+	else
+		egg_test_failed (test, "invalid value '%s'", array[0]);
 
 	/************************************************************/
 	egg_test_title (test, "convert time (invalid)");

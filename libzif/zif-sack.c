@@ -108,6 +108,8 @@ zif_sack_add_stores (ZifSack *sack, GPtrArray *stores)
 /**
  * zif_sack_add_local:
  * @sack: the #ZifSack object
+ * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Convenience function to add local store to the #ZifSack.
@@ -131,6 +133,8 @@ zif_sack_add_local (ZifSack *sack, GCancellable *cancellable, ZifCompletion *com
 /**
  * zif_sack_add_remote:
  * @sack: the #ZifSack object
+ * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Convenience function to add remote stores to the #ZifSack.
@@ -172,6 +176,8 @@ out:
 /**
  * zif_sack_add_remote_enabled:
  * @sack: the #ZifSack object
+ * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Convenience function to add enabled remote stores to the #ZifSack.
@@ -293,7 +299,7 @@ out:
  * @sack: the #ZifSack object
  * @id: the #PkPackageId which defines the package
  * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
- * @completion: a #ZifCompletion to use for progress reporting, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Find a single package in the #ZifSack.
@@ -343,7 +349,7 @@ out:
  * zif_sack_clean:
  * @sack: the #ZifSack object
  * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
- * @completion: a #ZifCompletion to use for progress reporting, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Cleans the #ZifStoreRemote objects by deleting cache.
@@ -398,8 +404,9 @@ out:
 /**
  * zif_sack_refresh:
  * @sack: the #ZifSack object
+ * @force: if the data should be re-downloaded if it's still valid
  * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
- * @completion: a #ZifCompletion to use for progress reporting, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Refreshs the #ZifStoreRemote objects by downloading new data
@@ -458,7 +465,7 @@ out:
  * @sack: the #ZifSack object
  * @search: the search term, e.g. "gnome-power-manager"
  * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
- * @completion: a #ZifCompletion to use for progress reporting, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Finds packages matching the package name exactly.
@@ -477,7 +484,7 @@ zif_sack_resolve (ZifSack *sack, const gchar *search, GCancellable *cancellable,
  * @sack: the #ZifSack object
  * @search: the search term, e.g. "power"
  * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
- * @completion: a #ZifCompletion to use for progress reporting, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Find packages that match the package name in some part.
@@ -496,7 +503,7 @@ zif_sack_search_name (ZifSack *sack, const gchar *search, GCancellable *cancella
  * @sack: the #ZifSack object
  * @search: the search term, e.g. "trouble"
  * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
- * @completion: a #ZifCompletion to use for progress reporting, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Find packages that match some detail about the package.
@@ -515,7 +522,7 @@ zif_sack_search_details (ZifSack *sack, const gchar *search, GCancellable *cance
  * @sack: the #ZifSack object
  * @group_enum: the group enumerated value, e.g. "games"
  * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
- * @completion: a #ZifCompletion to use for progress reporting, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Find packages that belong in a specific group.
@@ -534,7 +541,7 @@ zif_sack_search_group (ZifSack *sack, const gchar *group_enum, GCancellable *can
  * @sack: the #ZifSack object
  * @group_id: the group id, e.g. "gnome-system-tools"
  * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
- * @completion: a #ZifCompletion to use for progress reporting, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Find packages that belong in a specific category.
@@ -579,7 +586,7 @@ zif_sack_search_category (ZifSack *sack, const gchar *group_id, GCancellable *ca
  * @sack: the #ZifSack object
  * @search: the search term, e.g. "/usr/bin/gnome-power-manager"
  * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
- * @completion: a #ZifCompletion to use for progress reporting, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Find packages that provide the specified file.
@@ -597,7 +604,7 @@ zif_sack_search_file (ZifSack *sack, const gchar *search, GCancellable *cancella
  * zif_sack_get_packages:
  * @sack: the #ZifSack object
  * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
- * @completion: a #ZifCompletion to use for progress reporting, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Return all packages in the #ZifSack's.
@@ -615,7 +622,7 @@ zif_sack_get_packages (ZifSack *sack, GCancellable *cancellable, ZifCompletion *
  * zif_sack_get_updates:
  * @sack: the #ZifSack object
  * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
- * @completion: a #ZifCompletion to use for progress reporting, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Return a list of packages that are updatable.
@@ -634,7 +641,7 @@ zif_sack_get_updates (ZifSack *sack, GCancellable *cancellable, ZifCompletion *c
  * @sack: the #ZifSack object
  * @search: the search term, e.g. "gstreamer(codec-mp3)"
  * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
- * @completion: a #ZifCompletion to use for progress reporting, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Find packages that provide a specific string.
@@ -656,7 +663,7 @@ zif_sack_what_provides (ZifSack *sack, const gchar *search, GCancellable *cancel
  * zif_sack_get_categories:
  * @sack: the #ZifSack object
  * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
- * @completion: a #ZifCompletion to use for progress reporting, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Return a list of custom categories from all repos.

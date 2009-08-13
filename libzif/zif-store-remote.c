@@ -976,6 +976,8 @@ out:
 
 /**
  * zif_store_remote_set_from_file:
+ * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting
  **/
 gboolean
 zif_store_remote_set_from_file (ZifStoreRemote *store, const gchar *repo_filename, const gchar *id,
@@ -2035,6 +2037,8 @@ out:
 /**
  * zif_store_remote_is_devel:
  * @store: the #ZifStoreRemote object
+ * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Finds out if the repository is a development repository.
@@ -2104,6 +2108,8 @@ zif_store_remote_get_id (ZifStore *store)
 /**
  * zif_store_remote_get_name:
  * @store: the #ZifStoreRemote object
+ * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Get the name of this repository.
@@ -2145,6 +2151,8 @@ out:
 /**
  * zif_store_remote_get_enabled:
  * @store: the #ZifStoreRemote object
+ * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Find out if this repository is enabled or not.
