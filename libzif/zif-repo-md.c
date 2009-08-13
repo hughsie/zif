@@ -480,8 +480,6 @@ zif_repo_md_load (ZifRepoMd *md, GCancellable *cancellable, ZifCompletion *compl
 
 	/* check uncompressed file */
 	if (!uncompressed_check) {
-		egg_warning ("failed checksum for uncompressed: %s", error_local->message);
-		g_clear_error (&error_local);
 
 		/* delete file if it exists */
 		zif_repo_md_delete_file (md->priv->filename_uncompressed);
