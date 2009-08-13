@@ -105,6 +105,47 @@ out:
 }
 
 /**
+ * zif_package_array_get_newest:
+ * @array: array of %ZifPackage's
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Returns the newest package from a list.
+ *
+ * Return value: a single %ZifPackage, or %NULL in the case of an error
+ **/
+ZifPackage *
+zif_package_array_get_newest (GPtrArray *array, GError **error)
+{
+	ZifPackage *package_newest;
+	ZifPackage *package = NULL;
+	guint i;
+	gint retval;
+
+	/* no results */
+	if (array->len == 0) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "nothing in array");
+		goto out;
+	}
+
+	/* start with the first package being the newest */
+	package_newest = g_ptr_array_index (array, 0);
+
+	/* find newest in rest of the array */
+	for (i=1; i<array->len; i++) {
+		package = g_ptr_array_index (array, i);
+		retval = zif_package_compare (package, package_newest);
+		if (retval > 0)
+			package_newest = package;
+	}
+
+	/* return reference so we can unref the list */
+	package = g_object_ref (package_newest);
+out:
+	return package;
+}
+
+/**
  * zif_package_download:
  * @package: the #ZifPackage object
  * @directory: the local directory to save to
