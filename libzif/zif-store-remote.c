@@ -1470,6 +1470,139 @@ out:
 	return array;
 }
 
+/**
+ * zif_store_remote_get_categories:
+ **/
+static GPtrArray *
+zif_store_remote_get_categories (ZifStore *store, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+{
+	gboolean ret;
+	guint i, j;
+	const gchar *location;
+	GError *error_local = NULL;
+	GPtrArray *array = NULL;
+	GPtrArray *array_cats = NULL;
+	GPtrArray *array_groups;
+	ZifStoreRemote *remote = ZIF_STORE_REMOTE (store);
+	ZifCompletion *completion_local;
+	ZifCompletion *completion_loop;
+	const ZifRepoMdCompsObj *category;
+	const ZifRepoMdCompsObj *group;
+	PkCategoryObj *obj;
+
+	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), FALSE);
+	g_return_val_if_fail (remote->priv->id != NULL, FALSE);
+
+	/* not locked */
+	ret = zif_lock_is_locked (remote->priv->lock, NULL);
+	if (!ret) {
+		egg_warning ("not locked");
+		if (error != NULL)
+			*error = g_error_new (1, 0, "not locked");
+		goto out;
+	}
+
+	/* setup completion */
+	if (remote->priv->loaded_metadata)
+		zif_completion_set_number_steps (completion, 2);
+	else
+		zif_completion_set_number_steps (completion, 3);
+
+	/* load metadata */
+	if (!remote->priv->loaded_metadata) {
+		completion_local = zif_completion_get_child (completion);
+		ret = zif_store_remote_load_metadata (remote, cancellable, completion_local, &error_local);
+		if (!ret) {
+			if (error != NULL)
+				*error = g_error_new (1, 0, "failed to load xml: %s", error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+
+		/* this section done */
+		zif_completion_done (completion);
+	}
+
+	/* does this repo have comps data? */
+	location = zif_repo_md_get_location (remote->priv->md_comps);
+	if (location == NULL) {
+		/* empty array, as we want success */
+		array = g_ptr_array_new ();
+		goto out;
+	}
+
+	/* get list of categories */
+	completion_local = zif_completion_get_child (completion);
+	array_cats = zif_repo_md_comps_get_categories (ZIF_REPO_MD_COMPS (remote->priv->md_comps), cancellable, completion_local, &error_local);
+	if (array_cats == NULL) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "failed to get categories: %s", error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* this section done */
+	zif_completion_done (completion);
+
+	/* results array */
+	array = g_ptr_array_new ();
+
+	/* no results */
+	if (array_cats->len == 0)
+		goto skip;
+
+	/* setup steps */
+	completion_local = zif_completion_get_child (completion);
+	zif_completion_set_number_steps (completion_local, array_cats->len);
+
+	/* get groups for categories */
+	for (i=0; i<array_cats->len; i++) {
+		category = g_ptr_array_index (array_cats, i);
+
+		/* get the groups for this category */
+		completion_loop = zif_completion_get_child (completion_local);
+		array_groups = zif_repo_md_comps_get_groups_for_category (ZIF_REPO_MD_COMPS (remote->priv->md_comps),
+									  category->id, cancellable, completion_loop, &error_local);
+		if (array_groups == NULL) {
+			if (error != NULL)
+				*error = g_error_new (1, 0, "failed to get groups for %s: %s", category->id, error_local->message);
+			g_error_free (error_local);
+
+			/* undo the work we've already done */
+			g_ptr_array_foreach (array, (GFunc) pk_category_obj_free, NULL);
+			g_ptr_array_free (array, TRUE);
+			array = NULL;
+			goto out;
+		}
+
+		/* only add categories which have groups */
+		if (array_groups->len > 0) {
+
+			/* first, add the parent */
+			obj = pk_category_obj_new_from_data (NULL, category->id, category->name, category->description, NULL);
+			g_ptr_array_add (array, obj);
+
+			/* second, add the groups belonging to this parent */
+			for (j=0; j<array_groups->len; j++) {
+				group = g_ptr_array_index (array_groups, j);
+				obj = pk_category_obj_new_from_data (category->id, group->id, group->name, group->description, NULL);
+				g_ptr_array_add (array, obj);
+			}
+		}
+
+		/* this section done */
+		zif_completion_done (completion_local);
+	}
+skip:
+	/* this section done */
+	zif_completion_done (completion);
+out:
+	if (array_cats != NULL) {
+		g_ptr_array_foreach (array_cats, (GFunc) zif_repo_md_comps_obj_free, NULL);
+		g_ptr_array_free (array_cats, TRUE);
+	}
+	return array;
+}
 
 /**
  * zif_store_remote_get_updates:
@@ -1949,6 +2082,7 @@ zif_store_remote_class_init (ZifStoreRemoteClass *klass)
 	store_class->get_packages = zif_store_remote_get_packages;
 	store_class->get_updates = zif_store_remote_get_updates;
 	store_class->find_package = zif_store_remote_find_package;
+	store_class->get_categories = zif_store_remote_get_categories;
 	store_class->get_id = zif_store_remote_get_id;
 	store_class->print = zif_store_remote_print;
 
@@ -2027,6 +2161,8 @@ zif_store_remote_test (EggTest *test)
 	gboolean ret;
 	GError *error = NULL;
 	const gchar *id;
+	const PkCategoryObj *obj;
+	guint i;
 
 	if (!egg_test_start (test, "ZifStoreRemote"))
 		return;
@@ -2067,6 +2203,7 @@ zif_store_remote_test (EggTest *test)
 	zif_groups_set_mapping_file (groups, "../test/share/yum-comps-groups.conf", NULL);
 	store_local = zif_store_local_new ();
 	zif_store_local_set_prefix (store_local, "/", NULL);
+
 	/************************************************************/
 	egg_test_title (test, "get updates");
 	zif_completion_reset (completion);
@@ -2079,8 +2216,6 @@ zif_store_remote_test (EggTest *test)
 		egg_test_success (test, "no updates"); //TODO: failure
 	g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
 	g_ptr_array_free (array, TRUE);
-	g_object_unref (groups);
-	g_object_unref (store_local);
 
 	/************************************************************/
 	egg_test_title (test, "is devel");
@@ -2238,10 +2373,57 @@ zif_store_remote_test (EggTest *test)
 	g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
 	g_ptr_array_free (array, TRUE);
 
+	/************************************************************/
+	egg_test_title (test, "get categories");
+	zif_completion_reset (completion);
+	array = zif_store_remote_get_categories (ZIF_STORE (store), NULL, completion, &error);
+	if (array == NULL)
+		egg_test_failed (test, "no data: %s", error->message);
+	else if (array->len > 0)
+		egg_test_success (test, NULL);
+	else
+		egg_test_failed (test, "no categories"); //TODO: failure
+
+	/* dump to console */
+	for (i=0; i<array->len; i++) {
+		obj = g_ptr_array_index (array, i);
+		g_print ("parent_id='%s', cat_id='%s', name='%s', summary='%s', icon='%s'\n",
+			 obj->parent_id, obj->cat_id, obj->name, obj->summary, obj->icon);
+	}
+
+	/* get first object */
+	obj = g_ptr_array_index (array, 0);
+
+	/************************************************************/
+	egg_test_title (test, "test parent_id");
+	if (obj->parent_id == NULL)
+		egg_test_success (test, NULL);
+	else
+		egg_test_failed (test, "incorrect data: %s", obj->parent_id);
+
+	/************************************************************/
+	egg_test_title (test, "test cat_id");
+	if (g_strcmp0 (obj->cat_id, "language-support") == 0)
+		egg_test_success (test, NULL);
+	else
+		egg_test_failed (test, "incorrect data: %s", obj->cat_id);
+
+	/************************************************************/
+	egg_test_title (test, "test name");
+	if (g_strcmp0 (obj->name, "Languages") == 0)
+		egg_test_success (test, NULL);
+	else
+		egg_test_failed (test, "incorrect data: %s", obj->name);
+
+	g_ptr_array_foreach (array, (GFunc) pk_category_obj_free, NULL);
+	g_ptr_array_free (array, TRUE);
+
 	g_object_unref (store);
 	g_object_unref (config);
 	g_object_unref (lock);
 	g_object_unref (completion);
+	g_object_unref (groups);
+	g_object_unref (store_local);
 
 	egg_test_end (test);
 }

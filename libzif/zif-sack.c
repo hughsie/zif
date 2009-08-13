@@ -258,6 +258,8 @@ zif_sack_repos_search (ZifSack *sack, PkRoleEnum role, const gchar *search, GCan
 			part = zif_store_get_updates (store, cancellable, completion_local, &error_local);
 		else if (role == PK_ROLE_ENUM_WHAT_PROVIDES)
 			part = zif_store_what_provides (store, search, cancellable, completion_local, &error_local);
+		else if (role == PK_ROLE_ENUM_GET_CATEGORIES)
+			part = zif_store_get_categories (store, cancellable, completion_local, &error_local);
 		else
 			egg_error ("internal error: %s", pk_role_enum_to_text (role));
 		if (part == NULL) {
@@ -598,6 +600,48 @@ zif_sack_what_provides (ZifSack *sack, const gchar *search, GCancellable *cancel
 	if (g_str_has_prefix (search, "/"))
 		return zif_sack_repos_search (sack, PK_ROLE_ENUM_SEARCH_FILE, search, cancellable, completion, error);
 	return zif_sack_repos_search (sack, PK_ROLE_ENUM_WHAT_PROVIDES, search, cancellable, completion, error);
+}
+
+/**
+ * zif_sack_get_categories:
+ * @sack: the #ZifSack object
+ * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting, or %NULL
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Return a list of custom categories from all repos.
+ *
+ * Return value: an array of #PkCategoryObj's
+ **/
+GPtrArray *
+zif_sack_get_categories (ZifSack *sack, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+{
+	guint i, j;
+	GPtrArray *array;
+	PkCategoryObj *obj;
+	PkCategoryObj *obj_tmp;
+
+	g_return_val_if_fail (ZIF_IS_SACK (sack), NULL);
+
+	/* get all results from all repos */
+	array = zif_sack_repos_search (sack, PK_ROLE_ENUM_GET_CATEGORIES, NULL, cancellable, completion, error);
+
+	/* remove duplicate parents and groups */
+	for (i=0; i<array->len; i++) {
+		obj = g_ptr_array_index (array, i);
+		for (j=0; j<array->len; j++) {
+			if (i == j)
+				continue;
+			obj_tmp = g_ptr_array_index (array, j);
+			if (g_strcmp0 (obj_tmp->parent_id, obj->parent_id) == 0 &&
+			    g_strcmp0 (obj_tmp->cat_id, obj->cat_id) == 0) {
+				egg_warning ("duplicate %s-%s", obj->parent_id, obj->cat_id);
+				g_ptr_array_remove_index (array, j);
+			}
+		}
+	}
+
+	return array;
 }
 
 /**

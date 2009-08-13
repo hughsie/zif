@@ -130,6 +130,10 @@ ZifPackage	*zif_sack_find_package		(ZifSack		*sack,
 						 GCancellable		*cancellable,
 						 ZifCompletion		*completion,
 						 GError			**error);
+GPtrArray	*zif_sack_get_categories	(ZifSack		*sack,
+						 GCancellable		*cancellable,
+						 ZifCompletion		*completion,
+						 GError			**error);
 
 G_END_DECLS
 

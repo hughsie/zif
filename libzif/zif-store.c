@@ -422,6 +422,34 @@ zif_store_find_package (ZifStore *store, const PkPackageId *id, GCancellable *ca
 }
 
 /**
+ * zif_store_get_categories:
+ * @store: the #ZifStore object
+ * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting, or %NULL
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Return a list of custom categories.
+ *
+ * Return value: an array of #PkCategoryObj's
+ **/
+GPtrArray *
+zif_store_get_categories (ZifStore *store, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+{
+	ZifStoreClass *klass = ZIF_STORE_GET_CLASS (store);
+
+	g_return_val_if_fail (ZIF_IS_STORE (store), FALSE);
+
+	/* no support */
+	if (klass->get_categories == NULL) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "operation cannot be performed on this store");
+		return FALSE;
+	}
+
+	return klass->get_categories (store, cancellable, completion, error);
+}
+
+/**
  * zif_store_get_id:
  * @store: the #ZifStore object
  *

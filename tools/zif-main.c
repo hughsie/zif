@@ -549,7 +549,8 @@ main (int argc, char *argv[])
 		"  repolist       Display the configured software repositories\n"
 		"  getdetails     Display details about a package or group of packages\n"
 		"  clean          Remove cached data\n"
-		"  get-updates    Check for available package updates\n"
+		"  getupdates     Check for available package updates\n"
+		"  getcategories  Returns the list of categories\n"
 		"  help           Display a helpful usage message\n"
 		/* backwards compat */
 		"\nThe following commands are provided for backwards compatibility.\n"
@@ -559,7 +560,7 @@ main (int argc, char *argv[])
 		"  info           Alias to getdetails\n"
 		"  list           Alias to getpackages\n"
 		"  provides       Alias to whatprovides\n"
-		"  check-update   Alias to get-updates\n"
+		"  check-update   Alias to getupdates\n"
 		/* not even started yet */
 		"\nThese won't work just yet...\n"
 		"  refreshcache   Generate the metadata cache\n" /* new */
@@ -847,7 +848,7 @@ main (int argc, char *argv[])
 
 	mode = argv[1];
 	value = argv[2];
-	if (g_strcmp0 (mode, "get-updates") == 0 || g_strcmp0 (mode, "check-update") == 0) {
+	if (g_strcmp0 (mode, "getupdates") == 0 || g_strcmp0 (mode, "check-update") == 0) {
 
 		pk_progress_bar_start (progressbar, "Getting updates");
 
@@ -881,6 +882,54 @@ main (int argc, char *argv[])
 
 		zif_print_packages (array);
 		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
+		g_ptr_array_free (array, TRUE);
+
+		goto out;
+	}
+	if (g_strcmp0 (mode, "getcategories") == 0) {
+		const PkCategoryObj *obj;
+
+		pk_progress_bar_start (progressbar, "Getting categories");
+
+		/* setup completion with the correct number of steps */
+		zif_completion_set_number_steps (completion, 2);
+
+		/* get a sack of remote stores */
+		sack = zif_sack_new ();
+		completion_local = zif_completion_get_child (completion);
+		ret = zif_sack_add_remote_enabled (sack, NULL, completion_local, &error);
+		if (!ret) {
+			g_print ("failed to add enabled stores: %s\n", error->message);
+			g_error_free (error);
+			goto out;
+		}
+
+		/* this section done */
+		zif_completion_done (completion);
+
+		/* get categories */
+		completion_local = zif_completion_get_child (completion);
+		array = zif_sack_get_categories (sack, NULL, completion_local, &error);
+		if (array == NULL) {
+			g_print ("failed to get categories: %s\n", error->message);
+			g_error_free (error);
+			goto out;
+		}
+
+		/* this section done */
+		zif_completion_done (completion);
+
+		/* newline for output */
+		g_print ("\n");
+
+		/* dump to console */
+		for (i=0; i<array->len; i++) {
+			obj = g_ptr_array_index (array, i);
+			g_print ("parent_id='%s', cat_id='%s', name='%s', summary='%s'\n",
+				 obj->parent_id, obj->cat_id, obj->name, obj->summary);
+		}
+
+		g_ptr_array_foreach (array, (GFunc) pk_category_obj_free, NULL);
 		g_ptr_array_free (array, TRUE);
 
 		goto out;

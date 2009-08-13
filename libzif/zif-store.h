@@ -117,6 +117,10 @@ struct _ZifStoreClass
 						 GCancellable		*cancellable,
 						 ZifCompletion		*completion,
 						 GError			**error);
+	GPtrArray	*(*get_categories)	(ZifStore		*store,
+						 GCancellable		*cancellable,
+						 ZifCompletion		*completion,
+						 GError			**error);
 	const gchar	*(*get_id)		(ZifStore		*store);
 	void		 (*print)		(ZifStore		*store);
 };
@@ -181,6 +185,10 @@ GPtrArray	*zif_store_get_updates		(ZifStore		*store,
 						 GError			**error);
 ZifPackage	*zif_store_find_package		(ZifStore		*store,
 						 const PkPackageId	*id,
+						 GCancellable		*cancellable,
+						 ZifCompletion		*completion,
+						 GError			**error);
+GPtrArray	*zif_store_get_categories	(ZifStore		*store,
 						 GCancellable		*cancellable,
 						 ZifCompletion		*completion,
 						 GError			**error);
