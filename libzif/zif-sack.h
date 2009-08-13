@@ -107,6 +107,11 @@ GPtrArray	*zif_sack_search_group		(ZifSack		*sack,
 						 GCancellable		*cancellable,
 						 ZifCompletion		*completion,
 						 GError			**error);
+GPtrArray	*zif_sack_search_category	(ZifSack		*sack,
+						 const gchar		*search,
+						 GCancellable		*cancellable,
+						 ZifCompletion		*completion,
+						 GError			**error);
 GPtrArray	*zif_sack_search_file		(ZifSack		*sack,
 						 const gchar		*search,
 						 GCancellable		*cancellable,

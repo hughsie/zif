@@ -53,6 +53,9 @@ struct _ZifSackPrivate
 	GPtrArray		*array;
 };
 
+/* in PackageKit we split categories from groups using a special @ prefix (bodge) */
+#define PK_ROLE_ENUM_SEARCH_CATEGORY	PK_ROLE_ENUM_UNKNOWN + 1
+
 G_DEFINE_TYPE (ZifSack, zif_sack, G_TYPE_OBJECT)
 
 /**
@@ -250,6 +253,8 @@ zif_sack_repos_search (ZifSack *sack, PkRoleEnum role, const gchar *search, GCan
 			part = zif_store_search_details (store, search, cancellable, completion_local, &error_local);
 		else if (role == PK_ROLE_ENUM_SEARCH_GROUP)
 			part = zif_store_search_group (store, search, cancellable, completion_local, &error_local);
+		else if (role == PK_ROLE_ENUM_SEARCH_CATEGORY)
+			part = zif_store_search_category (store, search, cancellable, completion_local, &error_local);
 		else if (role == PK_ROLE_ENUM_SEARCH_FILE)
 			part = zif_store_search_file (store, search, cancellable, completion_local, &error_local);
 		else if (role == PK_ROLE_ENUM_GET_PACKAGES)
@@ -508,7 +513,7 @@ zif_sack_search_details (ZifSack *sack, const gchar *search, GCancellable *cance
 /**
  * zif_sack_search_group:
  * @sack: the #ZifSack object
- * @search: the search term, e.g. "games"
+ * @group_enum: the group enumerated value, e.g. "games"
  * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @completion: a #ZifCompletion to use for progress reporting, or %NULL
  * @error: a #GError which is used on failure, or %NULL
@@ -518,10 +523,31 @@ zif_sack_search_details (ZifSack *sack, const gchar *search, GCancellable *cance
  * Return value: an array of #ZifPackage's
  **/
 GPtrArray *
-zif_sack_search_group (ZifSack *sack, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+zif_sack_search_group (ZifSack *sack, const gchar *group_enum, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	g_return_val_if_fail (ZIF_IS_SACK (sack), NULL);
-	return zif_sack_repos_search (sack, PK_ROLE_ENUM_SEARCH_GROUP, search, cancellable, completion, error);
+	return zif_sack_repos_search (sack, PK_ROLE_ENUM_SEARCH_GROUP, group_enum, cancellable, completion, error);
+}
+
+/**
+ * zif_sack_search_category:
+ * @sack: the #ZifSack object
+ * @group_id: the group id, e.g. "gnome-system-tools"
+ * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting, or %NULL
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Find packages that belong in a specific category.
+ *
+ * TODO: need to remove duplicate installed packages
+ *
+ * Return value: an array of #ZifPackage's
+ **/
+GPtrArray *
+zif_sack_search_category (ZifSack *sack, const gchar *group_id, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+{
+	g_return_val_if_fail (ZIF_IS_SACK (sack), NULL);
+	return zif_sack_repos_search (sack, PK_ROLE_ENUM_SEARCH_CATEGORY, group_id, cancellable, completion, error);
 }
 
 /**
