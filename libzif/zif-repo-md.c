@@ -38,6 +38,7 @@
 
 #include "zif-utils.h"
 #include "zif-repo-md.h"
+#include "zif-config.h"
 
 #include "egg-debug.h"
 #include "egg-string.h"
@@ -62,6 +63,7 @@ struct _ZifRepoMdPrivate
 	GChecksumType		 checksum_type;
 	ZifRepoMdType		 type;
 	ZifStoreRemote		*remote;
+	ZifConfig		*config;
 };
 
 G_DEFINE_TYPE (ZifRepoMd, zif_repo_md, G_TYPE_OBJECT)
@@ -446,19 +448,18 @@ zif_repo_md_load (ZifRepoMd *md, GCancellable *cancellable, ZifCompletion *compl
 		g_clear_error (&error_local);
 
 		/* delete file if it exists */
-//		zif_repo_md_delete_file (md->priv->filename);
+		zif_repo_md_delete_file (md->priv->filename);
 
 		/* if not online, then this is fatal */
-		ret = FALSE;//is_online ();
+		ret = zif_config_get_boolean (md->priv->config, "network", NULL);
 		if (!ret) {
 			if (error != NULL)
 				*error = g_error_new (1, 0, "failed to check %s checksum for %s and offline",
 						      zif_repo_md_type_to_text (md->priv->type), md->priv->id);
-			ret = FALSE;
 			goto out;
 		}
 
-		/* download file */
+		/* TODO: download file */
 		//ret = download (&error_local)
 		if (!ret) {
 			if (error != NULL)
@@ -730,6 +731,8 @@ zif_repo_md_finalize (GObject *object)
 	g_free (md->priv->checksum);
 	g_free (md->priv->checksum_uncompressed);
 
+	g_object_unref (md->priv->config);
+
 	G_OBJECT_CLASS (zif_repo_md_parent_class)->finalize (object);
 }
 
@@ -761,6 +764,7 @@ zif_repo_md_init (ZifRepoMd *md)
 	md->priv->checksum_uncompressed = NULL;
 	md->priv->checksum_type = 0;
 	md->priv->remote = NULL;
+	md->priv->config = zif_config_new ();
 }
 
 /**

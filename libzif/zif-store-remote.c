@@ -334,6 +334,14 @@ zif_store_remote_download (ZifStoreRemote *store, const gchar *filename, const g
 	g_return_val_if_fail (filename != NULL, FALSE);
 	g_return_val_if_fail (directory != NULL, FALSE);
 
+	/* if not online, then this is fatal */
+	ret = zif_config_get_boolean (store->priv->config, "network", NULL);
+	if (!ret) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "failed to download %s as offline", filename);
+		goto out;
+	}
+
 	/* setup completion */
 	if (store->priv->loaded_metadata)
 		zif_completion_set_number_steps (completion, 1);
@@ -550,6 +558,14 @@ zif_store_remote_load_metadata (ZifStoreRemote *store, GCancellable *cancellable
 	/* repomd file does not exist */
 	ret = g_file_test (store->priv->repomd_filename, G_FILE_TEST_EXISTS);
 	if (!ret) {
+		/* if not online, then this is fatal */
+		ret = zif_config_get_boolean (store->priv->config, "network", NULL);
+		if (!ret) {
+			if (error != NULL)
+				*error = g_error_new (1, 0, "failed to download repomd as offline");
+			goto out;
+		}
+
 		/* download new file */
 		completion_local = zif_completion_get_child (completion);
 		ret = zif_store_remote_download (store, store->priv->repomd_filename, store->priv->directory, cancellable, completion_local, &error_local);
@@ -690,6 +706,14 @@ zif_store_remote_refresh (ZifStore *store, gboolean force, GCancellable *cancell
 
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), FALSE);
 	g_return_val_if_fail (remote->priv->id != NULL, FALSE);
+
+	/* if not online, then this is fatal */
+	ret = zif_config_get_boolean (remote->priv->config, "network", NULL);
+	if (!ret) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "failed to refresh as offline");
+		goto out;
+	}
 
 	/* setup completion with the correct number of steps */
 	zif_completion_set_number_steps (completion, (ZIF_REPO_MD_TYPE_UNKNOWN * 2) + 2);
