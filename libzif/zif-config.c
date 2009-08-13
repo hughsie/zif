@@ -97,34 +97,54 @@ zif_config_get_string (ZifConfig *config, const gchar *key, GError **error)
 
 	/* get value */
 	value = g_key_file_get_string (config->priv->keyfile, "main", key, &error_local);
-	if (value == NULL) {
+	if (value != NULL)
+		goto out;
 
-		/* special keys, FIXME: add to yum */
-		if (g_strcmp0 (key, "reposdir") == 0) {
-			value = g_strdup ("/etc/yum.repos.d");
-			goto out;
-		}
-		if (g_strcmp0 (key, "pidfile") == 0) {
-			value = g_strdup ("/var/run/yum.pid");
-			goto out;
-		}
-
-		/* special rpmkeys */
-		if (g_strcmp0 (key, "osinfo") == 0) {
-			rpmGetOsInfo (&info, NULL);
-			value = g_strdup (info);
-			goto out;
-		}
-		if (g_strcmp0 (key, "archinfo") == 0) {
-			rpmGetArchInfo (&info, NULL);
-			value = g_strdup (info);
-			goto out;
-		}
-
-		if (error != NULL)
-			*error = g_error_new (1, 0, "failed to read %s: %s", key, error_local->message);
-		g_error_free (error_local);
+	/* special keys, FIXME: add to yum */
+	if (g_strcmp0 (key, "reposdir") == 0) {
+		value = g_strdup ("/etc/yum.repos.d");
+		goto free_error;
 	}
+	if (g_strcmp0 (key, "pidfile") == 0) {
+		value = g_strdup ("/var/run/yum.pid");
+		goto free_error;
+	}
+
+	/* special rpmkeys */
+	if (g_strcmp0 (key, "osinfo") == 0) {
+		rpmGetOsInfo (&info, NULL);
+		value = g_strdup (info);
+		goto free_error;
+	}
+	if (g_strcmp0 (key, "archinfo") == 0) {
+		rpmGetArchInfo (&info, NULL);
+		value = g_strdup (info);
+		goto free_error;
+	}
+
+	/* dumb metadata */
+	if (g_strcmp0 (key, "archinfo-metadata") == 0) {
+		rpmGetArchInfo (&info, NULL);
+		if (g_strcmp0 (info, "i486") == 0 ||
+		    g_strcmp0 (info, "i586") == 0 ||
+		    g_strcmp0 (info, "i686") == 0)
+			info = "i386";
+		value = g_strdup (info);
+		goto free_error;
+	}
+
+	/* distro constants */
+	if (g_strcmp0 (key, "releasever") == 0) {
+		//TODO: get from fedora-release
+		value = g_strdup ("11");
+		goto free_error;
+	}
+
+	/* nothing matched */
+	if (error != NULL)
+		*error = g_error_new (1, 0, "failed to read %s: %s", key, error_local->message);
+free_error:
+	g_error_free (error_local);
 out:
 	return value;
 }
@@ -284,6 +304,46 @@ zif_config_get_time (ZifConfig *config, const gchar *key, GError **error)
 out:
 	g_free (value);
 	return timeval;
+}
+
+/**
+ * zif_config_expand_substitutions:
+ * @config: the #ZifConfig object
+ * @text: string to scan, e.g. "http://fedora/$releasever/$basearch/moo.rpm"
+ *
+ * Replaces substitutions in text with the actual values of the running system.
+ *
+ * Return value: A new allocated string or %NULL for error, free with g_free()
+ **/
+gchar *
+zif_config_expand_substitutions (ZifConfig *config, const gchar *text, GError **error)
+{
+	gchar *basearch = NULL;
+	gchar *releasever = NULL;
+	gchar *name1 = NULL;
+	gchar *name2 = NULL;
+
+	g_return_val_if_fail (ZIF_IS_CONFIG (config), NULL);
+	g_return_val_if_fail (text != NULL, NULL);
+
+	/* get data */
+	basearch = zif_config_get_string (config, "archinfo-metadata", error);
+	if (basearch == NULL)
+		goto out;
+
+	releasever = zif_config_get_string (config, "releasever", error);
+	if (releasever == NULL)
+		goto out;
+
+	/* do the replacements */
+	name1 = egg_strreplace (text, "$releasever", releasever);
+	name2 = egg_strreplace (name1, "$basearch", basearch);
+
+out:
+	g_free (basearch);
+	g_free (releasever);
+	g_free (name1);
+	return name2;
 }
 
 /**
@@ -541,6 +601,24 @@ zif_config_test (EggTest *test)
 	egg_test_title (test, "get cachedir");
 	value = zif_config_get_string (config, "cachedir", NULL);
 	if (egg_strequal (value, "../test/cache"))
+		egg_test_success (test, NULL);
+	else
+		egg_test_failed (test, "invalid value '%s'", value);
+	g_free (value);
+
+	/************************************************************/
+	egg_test_title (test, "do substitutions (none)");
+	value = zif_config_expand_substitutions (config, "http://fedora/4/6/moo.rpm", NULL);
+	if (egg_strequal (value, "http://fedora/4/6/moo.rpm"))
+		egg_test_success (test, NULL);
+	else
+		egg_test_failed (test, "invalid value '%s'", value);
+	g_free (value);
+
+	/************************************************************/
+	egg_test_title (test, "do substitutions (both)");
+	value = zif_config_expand_substitutions (config, "http://fedora/$releasever/$basearch/moo.rpm", NULL);
+	if (egg_strequal (value, "http://fedora/11/i386/moo.rpm"))
 		egg_test_success (test, NULL);
 	else
 		egg_test_failed (test, "invalid value '%s'", value);

@@ -75,6 +75,9 @@ gboolean	 zif_config_set_local		(ZifConfig	*config,
 						 GError		**error);
 gboolean	 zif_config_reset_default	(ZifConfig	*config,
 						 GError		**error);
+gchar		*zif_config_expand_substitutions (ZifConfig	*config,
+						 const gchar	*text,
+						 GError		**error);
 
 G_END_DECLS
 
