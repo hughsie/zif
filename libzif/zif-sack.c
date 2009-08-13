@@ -321,13 +321,13 @@ zif_sack_find_package (ZifSack *sack, const PkPackageId *id, GCancellable *cance
 	}
 
 	/* create a chain of completions */
-	completion_local = zif_completion_get_child (completion);
 	zif_completion_set_number_steps (completion, stores->len);
 
 	/* do each one */
 	for (i=0; i<stores->len; i++) {
 		store = g_ptr_array_index (stores, i);
 
+		completion_local = zif_completion_get_child (completion);
 		package = zif_store_find_package (store, id, cancellable, completion_local, NULL);
 		if (package != NULL)
 			break;
@@ -686,6 +686,7 @@ zif_sack_get_categories (ZifSack *sack, GCancellable *cancellable, ZifCompletion
 			if (g_strcmp0 (obj_tmp->parent_id, obj->parent_id) == 0 &&
 			    g_strcmp0 (obj_tmp->cat_id, obj->cat_id) == 0) {
 				egg_warning ("duplicate %s-%s", obj->parent_id, obj->cat_id);
+				pk_category_obj_free (obj_tmp);
 				g_ptr_array_remove_index (array, j);
 			}
 		}

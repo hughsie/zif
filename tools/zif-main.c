@@ -37,6 +37,21 @@
 static PkProgressBar *progressbar;
 
 /**
+ * zif_print_package:
+ **/
+static void
+zif_print_package (ZifPackage *package)
+{
+	const PkPackageId *id;
+	ZifString *summary;
+
+	id = zif_package_get_id (package);
+	summary = zif_package_get_summary (package, NULL);
+	g_print ("%s-%s.%s (%s)\t%s\n", id->name, id->version, id->arch, id->data, zif_string_get_value (summary));
+	zif_string_unref (summary);
+}
+
+/**
  * zif_print_packages:
  **/
 static void
@@ -44,15 +59,10 @@ zif_print_packages (GPtrArray *array)
 {
 	guint i;
 	ZifPackage *package;
-	const PkPackageId *id;
-	ZifString *summary;
 
 	for (i=0;i<array->len;i++) {
 		package = g_ptr_array_index (array, i);
-		id = zif_package_get_id (package);
-		summary = zif_package_get_summary (package, NULL);
-		g_print ("%s-%s.%s (%s)\t%s\n", id->name, id->version, id->arch, id->data, zif_string_get_value (summary));
-		zif_string_unref (summary);
+		zif_print_package (package);
 	}
 }
 
@@ -538,6 +548,7 @@ main (int argc, char *argv[])
 		/* new */
 		"  clean          Remove cached data\n"
 		"  download       Download a package\n"
+		"  findpackage    Find a given package given the ID\n"
 		"  getcategories  Returns the list of categories\n"
 		"  getdepends     List a package's dependencies\n"
 		"  getdetails     Display details about a package or group of packages\n"
@@ -882,6 +893,9 @@ main (int argc, char *argv[])
 
 		/* this section done */
 		zif_completion_done (completion);
+
+		/* newline for output */
+		g_print ("\n");
 
 		zif_print_packages (array);
 		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
@@ -1240,6 +1254,9 @@ main (int argc, char *argv[])
 		/* this section done */
 		zif_completion_done (completion);
 
+		/* newline for output */
+		g_print ("\n");
+
 		zif_print_packages (array);
 		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
 		g_ptr_array_free (array, TRUE);
@@ -1342,9 +1359,76 @@ main (int argc, char *argv[])
 		/* this section done */
 		zif_completion_done (completion);
 
+		/* newline for output */
+		g_print ("\n");
+
 		zif_print_packages (array);
 		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
 		g_ptr_array_free (array, TRUE);
+		goto out;
+	}
+	if (g_strcmp0 (mode, "findpackage") == 0) {
+		PkPackageId *id;
+
+		if (value == NULL) {
+			g_print ("specify a package_id\n");
+			goto out;
+		}
+
+		pk_progress_bar_start (progressbar, "Resolving ID");
+
+		/* setup completion with the correct number of steps */
+		zif_completion_set_number_steps (completion, 3);
+
+		/* add both local and remote packages */
+		sack = zif_sack_new ();
+		completion_local = zif_completion_get_child (completion);
+		ret = zif_sack_add_local (sack, NULL, completion_local, &error);
+		if (!ret) {
+			g_print ("failed to add remote: %s\n", error->message);
+			g_error_free (error);
+			goto out;
+		}
+
+		/* this section done */
+		zif_completion_done (completion);
+
+		completion_local = zif_completion_get_child (completion);
+		ret = zif_sack_add_remote_enabled (sack, NULL, completion_local, &error);
+		if (!ret) {
+			g_print ("failed to add remote: %s\n", error->message);
+			g_error_free (error);
+			goto out;
+		}
+
+		/* this section done */
+		zif_completion_done (completion);
+
+		/* get id */
+		id = pk_package_id_new_from_string (value);
+		if (id == NULL) {
+			g_print ("failed to parse ID: %s\n", value);
+			goto out;
+		}
+
+		/* find package id */
+		completion_local = zif_completion_get_child (completion);
+		package = zif_sack_find_package (sack, id, NULL, completion_local, &error);
+		pk_package_id_free (id);
+		if (package == NULL) {
+			g_print ("failed to get results: %s\n", error->message);
+			g_error_free (error);
+			goto out;
+		}
+
+		/* this section done */
+		zif_completion_done (completion);
+
+		/* newline for output */
+		g_print ("\n");
+
+		zif_print_package (package);
+		g_object_unref (package);
 		goto out;
 	}
 	if (g_strcmp0 (mode, "searchname") == 0) {
@@ -1446,6 +1530,9 @@ main (int argc, char *argv[])
 		/* this section done */
 		zif_completion_done (completion);
 
+		/* newline for output */
+		g_print ("\n");
+
 		zif_print_packages (array);
 		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
 		g_ptr_array_free (array, TRUE);
@@ -1497,6 +1584,9 @@ main (int argc, char *argv[])
 		/* this section done */
 		zif_completion_done (completion);
 
+		/* newline for output */
+		g_print ("\n");
+
 		zif_print_packages (array);
 		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
 		g_ptr_array_free (array, TRUE);
@@ -1547,6 +1637,9 @@ main (int argc, char *argv[])
 
 		/* this section done */
 		zif_completion_done (completion);
+
+		/* newline for output */
+		g_print ("\n");
 
 		zif_print_packages (array);
 		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
@@ -1641,6 +1734,9 @@ main (int argc, char *argv[])
 
 		/* this section done */
 		zif_completion_done (completion);
+
+		/* newline for output */
+		g_print ("\n");
 
 		zif_print_packages (array);
 		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
