@@ -149,7 +149,6 @@ zif_get_header_strv (Header header, rpmTag tag)
 		goto out;
 	array = zif_string_array_new (NULL);
 	data = rpmtdGetString (td);
-	data = rpmtdNextString (td);
 	while (data != NULL) {
 		zif_string_array_add (array, data);
 		data = rpmtdNextString (td);

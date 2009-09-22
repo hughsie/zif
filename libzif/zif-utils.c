@@ -221,9 +221,10 @@ zif_compare_evr (const gchar *a, const gchar *b)
 	zif_package_convert_evr (bd, &be, &bv, &br);
 
 	/* compare epoch */
-	if (ae != NULL && be != NULL)
+	if (ae != NULL && be != NULL) {
 		val = rpmvercmp (ae, be);
-	else if (ae != NULL && atol (ae) > 0) {
+		goto out;
+	} else if (ae != NULL && atol (ae) > 0) {
 		val = 1;
 		goto out;
 	} else if (be != NULL && atol (be) > 0) {

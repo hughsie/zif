@@ -7,7 +7,7 @@
  <issued date="2008-12-09 11:31:26"/>
  <references>
   <reference href="https://bugzilla.redhat.com/show_bug.cgi?id=472090" id="472090" title="/etc/init.d/clvmd points to /usr/sbin for LVM tools" type="bugzilla"/>
-  <reference href="https://bugzilla.gnome.com/show_bug.cgi?id=472090" id="472091" title="CVE DATA" type="cve"/>
+  <reference href="https://bugzilla.gnome.com/show_bug.cgi?id=472091" id="472091" title="CVE DATA" type="cve"/>
  </references>
  <description>Fix an incorrect path that prevents the clvmd init script from working and include licence files with the sub-packages.</description>
  <pkglist>

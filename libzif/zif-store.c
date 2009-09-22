@@ -498,11 +498,8 @@ zif_store_print (ZifStore *store)
 static void
 zif_store_finalize (GObject *object)
 {
-	ZifStore *store;
-
 	g_return_if_fail (object != NULL);
 	g_return_if_fail (ZIF_IS_STORE (object));
-	store = ZIF_STORE (object);
 
 	G_OBJECT_CLASS (zif_store_parent_class)->finalize (object);
 }

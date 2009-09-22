@@ -410,7 +410,6 @@ zif_package_is_free (ZifPackage *package)
 	gboolean group_is_free;
 	gchar **groups;
 	gchar **licenses;
-	guint len;
 	guint i;
 	guint j;
 
@@ -419,8 +418,6 @@ zif_package_is_free (ZifPackage *package)
 
 	/* split AND clase */
 	groups = g_strsplit (zif_string_get_value (package->priv->license), " and ", 0);
-	len = g_strv_length (groups);
-
 	for (i=0; groups[i] != NULL; i++) {
 		/* remove grouping */
 		g_strdelimit (groups[i], "()", ' ');

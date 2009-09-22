@@ -1575,7 +1575,7 @@ zif_store_remote_find_package (ZifStore *store, const PkPackageId *id, GCancella
 
 	/* search with predicate, TODO: search version (epoch+release) */
 	completion_local = zif_completion_get_child (completion);
-	array = zif_repo_md_primary_find_package (ZIF_REPO_MD_PRIMARY (remote->priv->md_primary), id, cancellable, completion_local, error);
+	array = zif_repo_md_primary_find_package (ZIF_REPO_MD_PRIMARY (remote->priv->md_primary), id, cancellable, completion_local, &error_local);
 	if (array == NULL) {
 		if (error != NULL)
 			*error = g_error_new (1, 0, "failed to search: %s", error_local->message);

@@ -484,7 +484,7 @@ zif_cmd_update (const gchar *package_name, ZifCompletion *completion)
 	/* this section done */
 	zif_completion_done (completion);
 
-	/* install this package, TODO: check for newer? */
+	/* update this package, TODO: check for newer? */
 	package = g_ptr_array_index (array, 0);
 out:
 	if (array != NULL) {
