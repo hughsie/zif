@@ -428,8 +428,7 @@ zif_store_remote_add_metalink (ZifStoreRemote *store, GCancellable *cancellable,
 	}
 
 	/* free */
-	g_ptr_array_foreach (array, (GFunc) g_free, NULL);
-	g_ptr_array_free (array, TRUE);
+	g_ptr_array_unref (array);
 out:
 	return (array != NULL);
 }
@@ -461,8 +460,7 @@ zif_store_remote_add_mirrorlist (ZifStoreRemote *store, GCancellable *cancellabl
 	}
 
 	/* free */
-	g_ptr_array_foreach (array, (GFunc) g_free, NULL);
-	g_ptr_array_free (array, TRUE);
+	g_ptr_array_unref (array);
 out:
 	return (array != NULL);
 
@@ -1310,8 +1308,7 @@ zif_store_remote_search_category_resolve (ZifStore *store, const gchar *name, GC
 	}
 
 	/* clear array */
-	g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
-	g_ptr_array_free (array, TRUE);
+	g_ptr_array_unref (array);
 
 	/* is available in this repo? */
 	completion_local = zif_completion_get_child (completion);
@@ -1335,10 +1332,8 @@ zif_store_remote_search_category_resolve (ZifStore *store, const gchar *name, GC
 	if (error != NULL)
 		*error = g_error_new (1, 0, "failed to resolve installed package %s installed or in this repo", name);
 out:
-	if (array != NULL) {
-		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
-		g_ptr_array_free (array, TRUE);
-	}
+	if (array != NULL)
+		g_ptr_array_unref (array);
 	if (store_local != NULL)
 		g_object_unref (store_local);
 	return package;
@@ -1399,7 +1394,7 @@ zif_store_remote_search_category (ZifStore *store, const gchar *group_id, GCance
 	location = zif_repo_md_get_location (remote->priv->md_comps);
 	if (location == NULL) {
 		/* empty array, as we want success */
-		array = g_ptr_array_new ();
+		array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 		goto out;
 	}
 
@@ -1410,7 +1405,7 @@ zif_store_remote_search_category (ZifStore *store, const gchar *group_id, GCance
 	if (array_names == NULL) {
 		/* ignore when group isn't present, TODO: use GError code */
 		if (g_str_has_prefix (error_local->message, "could not find group")) {
-			array = g_ptr_array_new ();
+			array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 			g_error_free (error_local);
 			goto out;
 		}
@@ -1428,7 +1423,7 @@ zif_store_remote_search_category (ZifStore *store, const gchar *group_id, GCance
 	zif_completion_set_number_steps (completion_local, array_names->len);
 
 	/* results array */
-	array = g_ptr_array_new ();
+	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 
 	/* resolve names */
 	for (i=0; i<array_names->len; i++) {
@@ -1450,8 +1445,7 @@ zif_store_remote_search_category (ZifStore *store, const gchar *group_id, GCance
 			g_error_free (error_local);
 
 			/* undo all our hard work */
-			g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
-			g_ptr_array_free (array, TRUE);
+			g_ptr_array_unref (array);
 			array = NULL;
 			goto out;
 		}
@@ -1466,10 +1460,8 @@ ignore_error:
 	/* this section done */
 	zif_completion_done (completion);
 out:
-	if (array_names != NULL) {
-		g_ptr_array_foreach (array_names, (GFunc) g_free, NULL);
-		g_ptr_array_free (array_names, TRUE);
-	}
+	if (array_names != NULL)
+		g_ptr_array_unref (array_names);
 	return array;
 }
 
@@ -1603,8 +1595,7 @@ zif_store_remote_find_package (ZifStore *store, const PkPackageId *id, GCancella
 	/* return ref to package */
 	package = g_object_ref (g_ptr_array_index (array, 0));
 out:
-	g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
-	g_ptr_array_free (array, TRUE);
+	g_ptr_array_unref (array);
 	return package;
 }
 
@@ -1719,7 +1710,7 @@ zif_store_remote_get_categories (ZifStore *store, GCancellable *cancellable, Zif
 	location = zif_repo_md_get_location (remote->priv->md_comps);
 	if (location == NULL) {
 		/* empty array, as we want success */
-		array = g_ptr_array_new ();
+		array = g_ptr_array_new_with_free_func ((GDestroyNotify) pk_category_obj_free);
 		goto out;
 	}
 
@@ -1737,7 +1728,7 @@ zif_store_remote_get_categories (ZifStore *store, GCancellable *cancellable, Zif
 	zif_completion_done (completion);
 
 	/* results array */
-	array = g_ptr_array_new ();
+	array = g_ptr_array_new_with_free_func ((GDestroyNotify) pk_category_obj_free);
 
 	/* no results */
 	if (array_cats->len == 0)
@@ -1761,8 +1752,7 @@ zif_store_remote_get_categories (ZifStore *store, GCancellable *cancellable, Zif
 			g_error_free (error_local);
 
 			/* undo the work we've already done */
-			g_ptr_array_foreach (array, (GFunc) pk_category_obj_free, NULL);
-			g_ptr_array_free (array, TRUE);
+			g_ptr_array_unref (array);
 			array = NULL;
 			goto out;
 		}
@@ -1789,10 +1779,8 @@ skip:
 	/* this section done */
 	zif_completion_done (completion);
 out:
-	if (array_cats != NULL) {
-		g_ptr_array_foreach (array_cats, (GFunc) zif_repo_md_comps_obj_free, NULL);
-		g_ptr_array_free (array_cats, TRUE);
-	}
+	if (array_cats != NULL)
+		g_ptr_array_unref (array_cats);
 	return array;
 }
 
@@ -1863,7 +1851,7 @@ zif_store_remote_get_updates (ZifStore *store, GCancellable *cancellable, ZifCom
 	zif_completion_done (completion);
 
 	/* create array for packages to update */
-	array = g_ptr_array_new ();
+	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 
 	/* find each one in a remote repo */
 	for (i=0; i<packages->len; i++) {
@@ -1890,15 +1878,13 @@ zif_store_remote_get_updates (ZifStore *store, GCancellable *cancellable, ZifCom
 				g_ptr_array_add (array, g_object_ref (update));
 			}
 		}
-		g_ptr_array_foreach (updates, (GFunc) g_object_unref, NULL);
-		g_ptr_array_free (updates, TRUE);
+		g_ptr_array_unref (updates);
 	}
 
 	/* this section done */
 	zif_completion_done (completion);
 
-	g_ptr_array_foreach (packages, (GFunc) g_object_unref, NULL);
-	g_ptr_array_free (packages, TRUE);
+	g_ptr_array_unref (packages);
 	g_object_unref (store_local);
 out:
 	return array;
@@ -1935,7 +1921,7 @@ zif_store_remote_what_provides (ZifStore *store, const gchar *search, GCancellab
 	}
 	//FIXME: load other MD
 out:
-	return g_ptr_array_new ();
+	return g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 }
 
 /**
@@ -1999,7 +1985,7 @@ zif_store_remote_search_file (ZifStore *store, const gchar *search, GCancellable
 	zif_completion_done (completion);
 
 	/* resolve the pkgId to a set of packages */
-	array = g_ptr_array_new ();
+	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	for (i=0; i<pkgids->len; i++) {
 		pkgid = g_ptr_array_index (pkgids, i);
 
@@ -2011,8 +1997,7 @@ zif_store_remote_search_file (ZifStore *store, const gchar *search, GCancellable
 				*error = g_error_new (1, 0, "failed to resolve pkgId to package: %s", error_local->message);
 			g_error_free (error_local);
 			/* free what we've collected already */
-			g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
-			g_ptr_array_free (array, TRUE);
+			g_ptr_array_unref (array);
 			array = NULL;
 			goto out;
 		}
@@ -2024,8 +2009,7 @@ zif_store_remote_search_file (ZifStore *store, const gchar *search, GCancellable
 		}
 
 		/* free temp array */
-		g_ptr_array_foreach (tmp, (GFunc) g_object_unref, NULL);
-		g_ptr_array_free (tmp, TRUE);
+		g_ptr_array_unref (tmp);
 	}
 
 	/* this section done */
@@ -2202,7 +2186,6 @@ zif_store_remote_file_monitor_cb (ZifMonitor *monitor, ZifStoreRemote *store)
 	g_free (store->priv->name);
 	g_free (store->priv->name_expanded);
 	g_free (store->priv->repo_filename);
-	g_ptr_array_foreach (store->priv->baseurls, (GFunc) g_free, NULL);
 	g_ptr_array_set_size (store->priv->baseurls, 0);
 	g_free (store->priv->mirrorlist);
 	g_free (store->priv->metalink);
@@ -2251,8 +2234,7 @@ zif_store_remote_finalize (GObject *object)
 	g_object_unref (store->priv->monitor);
 	g_object_unref (store->priv->lock);
 
-	g_ptr_array_foreach (store->priv->baseurls, (GFunc) g_free, NULL);
-	g_ptr_array_free (store->priv->baseurls, TRUE);
+	g_ptr_array_unref (store->priv->baseurls);
 
 	G_OBJECT_CLASS (zif_store_remote_parent_class)->finalize (object);
 }
@@ -2305,7 +2287,7 @@ zif_store_remote_init (ZifStoreRemote *store)
 	store->priv->name_expanded = NULL;
 	store->priv->enabled = FALSE;
 	store->priv->repo_filename = NULL;
-	store->priv->baseurls = g_ptr_array_new ();
+	store->priv->baseurls = g_ptr_array_new_with_free_func ((GDestroyNotify) g_free);
 	store->priv->mirrorlist = NULL;
 	store->priv->metalink = NULL;
 	store->priv->config = zif_config_new ();
@@ -2414,8 +2396,7 @@ zif_store_remote_test (EggTest *test)
 		egg_test_success (test, NULL);
 	else
 		egg_test_success (test, "no updates"); //TODO: failure
-	g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
-	g_ptr_array_free (array, TRUE);
+	g_ptr_array_unref (array);
 
 	/************************************************************/
 	egg_test_title (test, "is devel");
@@ -2468,8 +2449,7 @@ zif_store_remote_test (EggTest *test)
 	else
 		egg_test_failed (test, "incorrect length %i", array->len);
 
-	g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
-	g_ptr_array_free (array, TRUE);
+	g_ptr_array_unref (array);
 
 	/************************************************************/
 	egg_test_title (test, "search name");
@@ -2487,8 +2467,7 @@ zif_store_remote_test (EggTest *test)
 	else
 		egg_test_failed (test, "incorrect length %i", array->len);
 
-	g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
-	g_ptr_array_free (array, TRUE);
+	g_ptr_array_unref (array);
 
 	/************************************************************/
 	egg_test_title (test, "search details");
@@ -2506,8 +2485,7 @@ zif_store_remote_test (EggTest *test)
 	else
 		egg_test_failed (test, "incorrect length %i", array->len);
 
-	g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
-	g_ptr_array_free (array, TRUE);
+	g_ptr_array_unref (array);
 
 	/************************************************************/
 	egg_test_title (test, "search file");
@@ -2525,8 +2503,7 @@ zif_store_remote_test (EggTest *test)
 	else
 		egg_test_failed (test, "incorrect length %i", array->len);
 
-	g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
-	g_ptr_array_free (array, TRUE);
+	g_ptr_array_unref (array);
 
 	/************************************************************/
 	egg_test_title (test, "set disabled");
@@ -2570,8 +2547,7 @@ zif_store_remote_test (EggTest *test)
 	else
 		egg_test_failed (test, "incorrect length %i", array->len);
 
-	g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
-	g_ptr_array_free (array, TRUE);
+	g_ptr_array_unref (array);
 
 	/************************************************************/
 	egg_test_title (test, "get categories");
@@ -2615,8 +2591,7 @@ zif_store_remote_test (EggTest *test)
 	else
 		egg_test_failed (test, "incorrect data: %s", obj->name);
 
-	g_ptr_array_foreach (array, (GFunc) pk_category_obj_free, NULL);
-	g_ptr_array_free (array, TRUE);
+	g_ptr_array_unref (array);
 
 	/************************************************************/
 	egg_test_title (test, "search category");
@@ -2629,8 +2604,7 @@ zif_store_remote_test (EggTest *test)
 	else
 		egg_test_failed (test, "no results");
 
-	g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
-	g_ptr_array_free (array, TRUE);
+	g_ptr_array_unref (array);
 
 	g_object_unref (store);
 	g_object_unref (config);

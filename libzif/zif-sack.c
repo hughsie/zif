@@ -166,8 +166,7 @@ zif_sack_add_remote (ZifSack *sack, GCancellable *cancellable, ZifCompletion *co
 	zif_sack_add_stores (ZIF_SACK (sack), array);
 
 	/* free */
-	g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
-	g_ptr_array_free (array, TRUE);
+	g_ptr_array_unref (array);
 out:
 	g_object_unref (repos);
 	return ret;
@@ -209,8 +208,7 @@ zif_sack_add_remote_enabled (ZifSack *sack, GCancellable *cancellable, ZifComple
 	zif_sack_add_stores (ZIF_SACK (sack), array);
 
 	/* free */
-	g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
-	g_ptr_array_free (array, TRUE);
+	g_ptr_array_unref (array);
 out:
 	g_object_unref (repos);
 	return ret;
@@ -227,6 +225,7 @@ zif_sack_repos_search (ZifSack *sack, PkRoleEnum role, const gchar *search, GCan
 	GPtrArray *stores;
 	GPtrArray *part;
 	ZifStore *store;
+	ZifPackage *package;
 	GError *error_local = NULL;
 	ZifCompletion *completion_local = NULL;
 
@@ -243,7 +242,7 @@ zif_sack_repos_search (ZifSack *sack, PkRoleEnum role, const gchar *search, GCan
 	zif_completion_set_number_steps (completion, stores->len);
 
 	/* do each one */
-	array = g_ptr_array_new ();
+	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	for (i=0; i<stores->len; i++) {
 		store = g_ptr_array_index (stores, i);
 
@@ -277,15 +276,16 @@ zif_sack_repos_search (ZifSack *sack, PkRoleEnum role, const gchar *search, GCan
 			if (error != NULL)
 				*error = g_error_new (1, 0, "failed to %s in %s: %s", pk_role_enum_to_text (role), zif_store_get_id (store), error_local->message);
 			g_error_free (error_local);
-			g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
-			g_ptr_array_free (array, TRUE);
+			g_ptr_array_unref (array);
 			array = NULL;
 			goto out;
 		}
 
-		for (j=0; j<part->len; j++)
-			g_ptr_array_add (array, g_ptr_array_index (part, j));
-		g_ptr_array_free (part, TRUE);
+		for (j=0; j<part->len; j++) {
+			package = g_ptr_array_index (part, j);
+			g_ptr_array_add (array, g_object_ref (package));
+		}
+		g_ptr_array_unref (part);
 
 		/* this section done */
 		zif_completion_done (completion);
@@ -714,8 +714,7 @@ zif_sack_finalize (GObject *object)
 	g_return_if_fail (ZIF_IS_SACK (object));
 	sack = ZIF_SACK (object);
 
-	g_ptr_array_foreach (sack->priv->array, (GFunc) g_object_unref, NULL);
-	g_ptr_array_free (sack->priv->array, TRUE);
+	g_ptr_array_unref (sack->priv->array);
 
 	G_OBJECT_CLASS (zif_sack_parent_class)->finalize (object);
 }
@@ -738,7 +737,7 @@ static void
 zif_sack_init (ZifSack *sack)
 {
 	sack->priv = ZIF_SACK_GET_PRIVATE (sack);
-	sack->priv->array = g_ptr_array_new ();
+	sack->priv->array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 }
 
 /**

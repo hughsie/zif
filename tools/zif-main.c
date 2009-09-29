@@ -143,8 +143,7 @@ zif_cmd_download (const gchar *package_name, ZifCompletion *completion)
 
 out:
 	if (array != NULL) {
-		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
-		g_ptr_array_free (array, TRUE);
+		g_ptr_array_unref (array);
 	}
 	g_object_unref (completion_local);
 	g_object_unref (sack);
@@ -248,8 +247,7 @@ zif_cmd_get_depends (const gchar *package_name, ZifCompletion *completion)
 			id = zif_package_get_id (package);
 			g_print ("   provider: %s-%s.%s (%s)\n", id->name, id->version, id->arch, id->data);
 		}
-		g_ptr_array_foreach (provides, (GFunc) g_object_unref, NULL);
-		g_ptr_array_free (provides, TRUE);
+		g_ptr_array_unref (provides);
 
 		/* this section done */
 		zif_completion_done (completion_local);
@@ -261,8 +259,7 @@ out:
 	if (requires != NULL)
 		g_ptr_array_unref (requires);
 	if (array != NULL) {
-		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
-		g_ptr_array_free (array, TRUE);
+		g_ptr_array_unref (array);
 	}
 	g_object_unref (completion_local);
 	g_object_unref (sack);
@@ -311,8 +308,7 @@ zif_cmd_install (const gchar *package_name, ZifCompletion *completion)
 		goto out;
 	}
 	if (array != NULL) {
-		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
-		g_ptr_array_free (array, TRUE);
+		g_ptr_array_unref (array);
 	}
 	array = NULL;
 	g_object_unref (sack);
@@ -352,8 +348,7 @@ zif_cmd_install (const gchar *package_name, ZifCompletion *completion)
 	package = g_ptr_array_index (array, 0);
 out:
 	if (array != NULL) {
-		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
-		g_ptr_array_free (array, TRUE);
+		g_ptr_array_unref (array);
 	}
 	g_object_unref (sack);
 	g_object_unref (completion_local);
@@ -445,8 +440,7 @@ zif_cmd_update (const gchar *package_name, ZifCompletion *completion)
 		goto out;
 	}
 	if (array != NULL) {
-		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
-		g_ptr_array_free (array, TRUE);
+		g_ptr_array_unref (array);
 	}
 	array = NULL;
 	g_object_unref (sack);
@@ -487,8 +481,7 @@ zif_cmd_update (const gchar *package_name, ZifCompletion *completion)
 	package = g_ptr_array_index (array, 0);
 out:
 	if (array != NULL) {
-		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
-		g_ptr_array_free (array, TRUE);
+		g_ptr_array_unref (array);
 	}
 	g_object_unref (sack);
 	g_object_unref (completion_local);
@@ -699,8 +692,7 @@ main (int argc, char *argv[])
 			g_print ("no package found\n");
 			goto out;
 		}
-		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
-		g_ptr_array_free (array, TRUE);
+		g_ptr_array_unref (array);
 		time_s = g_timer_elapsed (timer, NULL);
 		g_print ("\t\t : %lf\n", time_s);
 		g_timer_reset (timer);
@@ -718,8 +710,7 @@ main (int argc, char *argv[])
 			g_print ("no package found\n");
 			goto out;
 		}
-		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
-		g_ptr_array_free (array, TRUE);
+		g_ptr_array_unref (array);
 		time_s = g_timer_elapsed (timer, NULL);
 		g_print ("\t\t : %lf\n", time_s);
 		g_timer_reset (timer);
@@ -733,8 +724,7 @@ main (int argc, char *argv[])
 			g_error_free (error);
 			goto out;
 		}
-		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
-		g_ptr_array_free (array, TRUE);
+		g_ptr_array_unref (array);
 		time_s = g_timer_elapsed (timer, NULL);
 		g_print ("\t\t : %lf\n", time_s);
 		g_timer_reset (timer);
@@ -752,8 +742,7 @@ main (int argc, char *argv[])
 			g_print ("no package found\n");
 			goto out;
 		}
-		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
-		g_ptr_array_free (array, TRUE);
+		g_ptr_array_unref (array);
 		time_s = g_timer_elapsed (timer, NULL);
 		g_print ("\t\t : %lf\n", time_s);
 		g_timer_reset (timer);
@@ -784,8 +773,7 @@ main (int argc, char *argv[])
 			g_error_free (error);
 			goto out;
 		}
-		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
-		g_ptr_array_free (array, TRUE);
+		g_ptr_array_unref (array);
 		time_s = g_timer_elapsed (timer, NULL);
 		g_print ("\t\t : %lf\n", time_s);
 		g_timer_reset (timer);
@@ -799,8 +787,7 @@ main (int argc, char *argv[])
 			g_error_free (error);
 			goto out;
 		}
-		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
-		g_ptr_array_free (array, TRUE);
+		g_ptr_array_unref (array);
 		time_s = g_timer_elapsed (timer, NULL);
 		g_print ("\t\t : %lf\n", time_s);
 		g_timer_reset (timer);
@@ -814,8 +801,7 @@ main (int argc, char *argv[])
 			g_error_free (error);
 			goto out;
 		}
-		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
-		g_ptr_array_free (array, TRUE);
+		g_ptr_array_unref (array);
 		time_s = g_timer_elapsed (timer, NULL);
 		g_print ("\t\t : %lf\n", time_s);
 		g_timer_reset (timer);
@@ -829,8 +815,7 @@ main (int argc, char *argv[])
 			g_error_free (error);
 			goto out;
 		}
-		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
-		g_ptr_array_free (array, TRUE);
+		g_ptr_array_unref (array);
 		time_s = g_timer_elapsed (timer, NULL);
 		g_print ("\t\t : %lf\n", time_s);
 		g_timer_reset (timer);
@@ -897,8 +882,7 @@ main (int argc, char *argv[])
 		g_print ("\n");
 
 		zif_print_packages (array);
-		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
-		g_ptr_array_free (array, TRUE);
+		g_ptr_array_unref (array);
 
 		goto out;
 	}
@@ -944,10 +928,7 @@ main (int argc, char *argv[])
 			g_print ("parent_id='%s', cat_id='%s', name='%s', summary='%s'\n",
 				 obj->parent_id, obj->cat_id, obj->name, obj->summary);
 		}
-
-		g_ptr_array_foreach (array, (GFunc) pk_category_obj_free, NULL);
-		g_ptr_array_free (array, TRUE);
-
+		g_ptr_array_unref (array);
 		goto out;
 	}
 
@@ -1091,8 +1072,7 @@ main (int argc, char *argv[])
 		}
 
 		/* free results */
-		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
-		g_ptr_array_free (array, TRUE);
+		g_ptr_array_unref (array);
 		goto out;
 	}
 	if (g_strcmp0 (mode, "groupinfo") == 0) {
@@ -1195,8 +1175,7 @@ main (int argc, char *argv[])
 		zif_string_unref (license);
 		zif_string_unref (description);
 
-		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
-		g_ptr_array_free (array, TRUE);
+		g_ptr_array_unref (array);
 		goto out;
 	}
 	if (g_strcmp0 (mode, "install") == 0) {
@@ -1255,8 +1234,7 @@ main (int argc, char *argv[])
 		g_print ("\n");
 
 		zif_print_packages (array);
-		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
-		g_ptr_array_free (array, TRUE);
+		g_ptr_array_unref (array);
 		goto out;
 	}
 	if (g_strcmp0 (mode, "localinstall") == 0) {
@@ -1306,8 +1284,7 @@ main (int argc, char *argv[])
 				 zif_store_remote_get_name (store_remote, NULL, completion, NULL));
 		}
 
-		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
-		g_ptr_array_free (array, TRUE);
+		g_ptr_array_unref (array);
 		goto out;
 	}
 	if (g_strcmp0 (mode, "resolve") == 0) {
@@ -1360,8 +1337,7 @@ main (int argc, char *argv[])
 		g_print ("\n");
 
 		zif_print_packages (array);
-		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
-		g_ptr_array_free (array, TRUE);
+		g_ptr_array_unref (array);
 		goto out;
 	}
 	if (g_strcmp0 (mode, "findpackage") == 0) {
@@ -1477,8 +1453,7 @@ main (int argc, char *argv[])
 		g_print ("\n");
 
 		zif_print_packages (array);
-		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
-		g_ptr_array_free (array, TRUE);
+		g_ptr_array_unref (array);
 		goto out;
 	}
 	if (g_strcmp0 (mode, "searchdetails") == 0 || g_strcmp0 (mode, "search") == 0) {
@@ -1531,8 +1506,7 @@ main (int argc, char *argv[])
 		g_print ("\n");
 
 		zif_print_packages (array);
-		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
-		g_ptr_array_free (array, TRUE);
+		g_ptr_array_unref (array);
 		goto out;
 	}
 	if (g_strcmp0 (mode, "searchfile") == 0) {
@@ -1585,8 +1559,7 @@ main (int argc, char *argv[])
 		g_print ("\n");
 
 		zif_print_packages (array);
-		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
-		g_ptr_array_free (array, TRUE);
+		g_ptr_array_unref (array);
 		goto out;
 	}
 	if (g_strcmp0 (mode, "searchgroup") == 0) {
@@ -1639,8 +1612,7 @@ main (int argc, char *argv[])
 		g_print ("\n");
 
 		zif_print_packages (array);
-		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
-		g_ptr_array_free (array, TRUE);
+		g_ptr_array_unref (array);
 		goto out;
 	}
 	if (g_strcmp0 (mode, "searchcategory") == 0) {
@@ -1682,8 +1654,7 @@ main (int argc, char *argv[])
 		g_print ("\n");
 
 		zif_print_packages (array);
-		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
-		g_ptr_array_free (array, TRUE);
+		g_ptr_array_unref (array);
 		goto out;
 	}
 	if (g_strcmp0 (mode, "resolvedep") == 0 || g_strcmp0 (mode, "whatprovides") == 0 || g_strcmp0 (mode, "provides") == 0) {
@@ -1736,8 +1707,7 @@ main (int argc, char *argv[])
 		g_print ("\n");
 
 		zif_print_packages (array);
-		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
-		g_ptr_array_free (array, TRUE);
+		g_ptr_array_unref (array);
 		goto out;
 	}
 	if (g_strcmp0 (mode, "update") == 0 || g_strcmp0 (mode, "upgrade") == 0) {

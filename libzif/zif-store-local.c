@@ -244,7 +244,7 @@ zif_store_local_search_name (ZifStore *store, const gchar *search, GCancellable 
 	zif_completion_set_number_steps (completion_local, local->priv->packages->len);
 
 	/* iterate list */
-	array = g_ptr_array_new ();
+	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	for (i=0;i<local->priv->packages->len;i++) {
 		package = g_ptr_array_index (local->priv->packages, i);
 		id = zif_package_get_id (package);
@@ -315,7 +315,7 @@ zif_store_local_search_category (ZifStore *store, const gchar *search, GCancella
 	zif_completion_set_number_steps (completion_local, local->priv->packages->len);
 
 	/* iterate list */
-	array = g_ptr_array_new ();
+	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	for (i=0;i<local->priv->packages->len;i++) {
 		package = g_ptr_array_index (local->priv->packages, i);
 		category = zif_package_get_category (package, NULL);
@@ -388,7 +388,7 @@ zif_store_local_search_details (ZifStore *store, const gchar *search, GCancellab
 	zif_completion_set_number_steps (completion_local, local->priv->packages->len);
 
 	/* iterate list */
-	array = g_ptr_array_new ();
+	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	for (i=0;i<local->priv->packages->len;i++) {
 		package = g_ptr_array_index (local->priv->packages, i);
 		id = zif_package_get_id (package);
@@ -464,7 +464,7 @@ zif_store_local_search_group (ZifStore *store, const gchar *search, GCancellable
 
 	/* iterate list */
 	group = pk_group_enum_from_text (search);
-	array = g_ptr_array_new ();
+	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	for (i=0;i<local->priv->packages->len;i++) {
 		package = g_ptr_array_index (local->priv->packages, i);
 		group_tmp = zif_package_get_group (package, NULL);
@@ -535,7 +535,7 @@ zif_store_local_search_file (ZifStore *store, const gchar *search, GCancellable 
 	zif_completion_set_number_steps (completion_local, local->priv->packages->len);
 
 	/* iterate list */
-	array = g_ptr_array_new ();
+	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	for (i=0;i<local->priv->packages->len;i++) {
 		package = g_ptr_array_index (local->priv->packages, i);
 		files = zif_package_get_files (package, &error_local);
@@ -543,8 +543,7 @@ zif_store_local_search_file (ZifStore *store, const gchar *search, GCancellable 
 			if (error != NULL)
 				*error = g_error_new (1, 0, "failed to get file lists: %s", error_local->message);
 			g_error_free (error_local);
-			g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
-			g_ptr_array_free (array, TRUE);
+			g_ptr_array_unref (array);
 			array = NULL;
 			break;
 		}
@@ -616,7 +615,7 @@ zif_store_local_resolve (ZifStore *store, const gchar *search, GCancellable *can
 	zif_completion_set_number_steps (completion_local, local->priv->packages->len);
 
 	/* iterate list */
-	array = g_ptr_array_new ();
+	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	for (i=0;i<local->priv->packages->len;i++) {
 		package = g_ptr_array_index (local->priv->packages, i);
 		id = zif_package_get_id (package);
@@ -689,7 +688,7 @@ zif_store_local_what_provides (ZifStore *store, const gchar *search, GCancellabl
 	zif_completion_set_number_steps (completion_local, local->priv->packages->len);
 
 	/* iterate list */
-	array = g_ptr_array_new ();
+	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	for (i=0;i<local->priv->packages->len;i++) {
 		package = g_ptr_array_index (local->priv->packages, i);
 		provides = zif_package_get_provides (package, NULL);
@@ -763,7 +762,7 @@ zif_store_local_get_packages (ZifStore *store, GCancellable *cancellable, ZifCom
 	zif_completion_set_number_steps (completion_local, local->priv->packages->len);
 
 	/* iterate list */
-	array = g_ptr_array_new ();
+	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	for (i=0;i<local->priv->packages->len;i++) {
 		package = g_ptr_array_index (local->priv->packages, i);
 		g_ptr_array_add (array, g_object_ref (package));
@@ -816,7 +815,6 @@ zif_store_local_file_monitor_cb (ZifMonitor *monitor, ZifStoreLocal *store)
 {
 	store->priv->loaded = FALSE;
 
-	g_ptr_array_foreach (store->priv->packages, (GFunc) g_object_unref, NULL);
 	g_ptr_array_set_size (store->priv->packages, 0);
 
 	egg_debug ("rpmdb changed");
@@ -834,8 +832,7 @@ zif_store_local_finalize (GObject *object)
 	g_return_if_fail (ZIF_IS_STORE_LOCAL (object));
 	store = ZIF_STORE_LOCAL (object);
 
-	g_ptr_array_foreach (store->priv->packages, (GFunc) g_object_unref, NULL);
-	g_ptr_array_free (store->priv->packages, TRUE);
+	g_ptr_array_unref (store->priv->packages);
 	g_object_unref (store->priv->groups);
 	g_object_unref (store->priv->monitor);
 	g_object_unref (store->priv->lock);
@@ -878,7 +875,7 @@ static void
 zif_store_local_init (ZifStoreLocal *store)
 {
 	store->priv = ZIF_STORE_LOCAL_GET_PRIVATE (store);
-	store->priv->packages = g_ptr_array_new ();
+	store->priv->packages = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	store->priv->groups = zif_groups_new ();
 	store->priv->monitor = zif_monitor_new ();
 	store->priv->lock = zif_lock_new ();
@@ -1010,8 +1007,7 @@ zif_store_local_test (EggTest *test)
 		egg_test_success (test, NULL);
 	else
 		egg_test_failed (test, "incorrect length %i", array->len);
-	g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
-	g_ptr_array_free (array, TRUE);
+	g_ptr_array_unref (array);
 
 	/************************************************************/
 	egg_test_title (test, "check time < 10ms");
@@ -1028,8 +1024,7 @@ zif_store_local_test (EggTest *test)
 		egg_test_success (test, NULL);
 	else
 		egg_test_failed (test, "incorrect length %i", array->len);
-	g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
-	g_ptr_array_free (array, TRUE);
+	g_ptr_array_unref (array);
 
 	/************************************************************/
 	egg_test_title (test, "search details");
@@ -1039,8 +1034,7 @@ zif_store_local_test (EggTest *test)
 		egg_test_success (test, NULL);
 	else
 		egg_test_failed (test, "incorrect length %i", array->len);
-	g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
-	g_ptr_array_free (array, TRUE);
+	g_ptr_array_unref (array);
 
 	/************************************************************/
 	egg_test_title (test, "what-provides");
@@ -1117,8 +1111,7 @@ zif_store_local_test (EggTest *test)
 	ret = zif_package_is_free (package);
 	egg_test_assert (test, ret);
 
-	g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
-	g_ptr_array_free (array, TRUE);
+	g_ptr_array_unref (array);
 
 	g_object_unref (store);
 	g_object_unref (groups);

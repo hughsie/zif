@@ -227,7 +227,7 @@ zif_repo_md_filelists_search_file (ZifRepoMdFilelists *md, const gchar *search, 
 	}
 
 	/* convert each pkgKey */
-	array = g_ptr_array_new ();
+	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_free);
 	for (i=0; i<data->array->len; i++) {
 		guint key;
 		gchar *pkgid = NULL;
@@ -257,7 +257,7 @@ zif_repo_md_filelists_search_file (ZifRepoMdFilelists *md, const gchar *search, 
 out:
 	if (data != NULL) {
 		g_free (data->filename);
-		g_ptr_array_free (data->array, TRUE);
+		g_ptr_array_unref (data->array);
 		g_free (data);
 	}
 	g_free (dirname);
@@ -434,9 +434,7 @@ zif_repo_md_filelists_test (EggTest *test)
 		egg_test_success (test, NULL);
 	else
 		egg_test_failed (test, "failed to get a correct pkgId '%s' (%i)", pkgid, strlen (pkgid));
-
-	g_ptr_array_foreach (array, (GFunc) g_free, NULL);
-	g_ptr_array_free (array, TRUE);
+	g_ptr_array_unref (array);
 
 	g_object_unref (md);
 	g_object_unref (cancellable);

@@ -197,7 +197,7 @@ zif_repos_load (ZifRepos *repos, GCancellable *cancellable, ZifCompletion *compl
 	}
 
 	/* find the repo files we care about */
-	repofiles = g_ptr_array_new ();
+	repofiles = g_ptr_array_new_with_free_func ((GDestroyNotify) g_free);
 	filename = g_dir_read_name (dir);
 	while (filename != NULL) {
 		if (g_str_has_suffix (filename, ".repo"))
@@ -229,7 +229,6 @@ zif_repos_load (ZifRepos *repos, GCancellable *cancellable, ZifCompletion *compl
 			if (error != NULL)
 				*error = g_error_new (1, 0, "failed to get filename %s: %s", filename, error_local->message);
 			g_error_free (error_local);
-			g_ptr_array_foreach (repos->priv->list, (GFunc) g_object_unref, NULL);
 			g_ptr_array_set_size (repos->priv->list, 0);
 			ret = FALSE;
 			break;
@@ -253,7 +252,6 @@ zif_repos_load (ZifRepos *repos, GCancellable *cancellable, ZifCompletion *compl
 		if (error_local != NULL) {
 			if (error != NULL)
 				*error = g_error_new (1, 0, "failed to get repo state for %s: %s", zif_store_get_id (ZIF_STORE (store)), error_local->message);
-			g_ptr_array_foreach (repos->priv->enabled, (GFunc) g_object_unref, NULL);
 			g_ptr_array_set_size (repos->priv->enabled, 0);
 			ret = FALSE;
 			goto out;
@@ -272,10 +270,8 @@ zif_repos_load (ZifRepos *repos, GCancellable *cancellable, ZifCompletion *compl
 	ret = TRUE;
 
 out:
-	if (repofiles != NULL) {
-		g_ptr_array_foreach (repofiles, (GFunc) g_free, NULL);
-		g_ptr_array_free (repofiles, TRUE);
-	}
+	if (repofiles != NULL)
+		g_ptr_array_unref (repofiles);
 	return ret;
 }
 
@@ -313,7 +309,7 @@ zif_repos_get_stores (ZifRepos *repos, GCancellable *cancellable, ZifCompletion 
 	}
 
 	/* make a copy */
-	array = g_ptr_array_new ();
+	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	for (i=0; i<repos->priv->list->len; i++) {
 		store = g_ptr_array_index (repos->priv->list, i);
 		g_ptr_array_add (array, g_object_ref (store));
@@ -356,7 +352,7 @@ zif_repos_get_stores_enabled (ZifRepos *repos, GCancellable *cancellable, ZifCom
 	}
 
 	/* make a copy */
-	array = g_ptr_array_new ();
+	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	for (i=0; i<repos->priv->enabled->len; i++) {
 		store = g_ptr_array_index (repos->priv->enabled, i);
 		g_ptr_array_add (array, g_object_ref (store));
@@ -429,8 +425,6 @@ out:
 static void
 zif_repos_file_monitor_cb (ZifMonitor *monitor, ZifRepos *repos)
 {
-	g_ptr_array_foreach (repos->priv->list, (GFunc) g_object_unref, NULL);
-	g_ptr_array_foreach (repos->priv->enabled, (GFunc) g_object_unref, NULL);
 	g_ptr_array_set_size (repos->priv->list, 0);
 	g_ptr_array_set_size (repos->priv->enabled, 0);
 	egg_debug ("repo file changed");
@@ -451,10 +445,8 @@ zif_repos_finalize (GObject *object)
 	g_object_unref (repos->priv->monitor);
 	g_free (repos->priv->repos_dir);
 
-	g_ptr_array_foreach (repos->priv->list, (GFunc) g_object_unref, NULL);
-	g_ptr_array_foreach (repos->priv->enabled, (GFunc) g_object_unref, NULL);
-	g_ptr_array_free (repos->priv->list, TRUE);
-	g_ptr_array_free (repos->priv->enabled, TRUE);
+	g_ptr_array_unref (repos->priv->list);
+	g_ptr_array_unref (repos->priv->enabled);
 
 	G_OBJECT_CLASS (zif_repos_parent_class)->finalize (object);
 }
@@ -478,8 +470,8 @@ zif_repos_init (ZifRepos *repos)
 {
 	repos->priv = ZIF_REPOS_GET_PRIVATE (repos);
 	repos->priv->repos_dir = NULL;
-	repos->priv->list = g_ptr_array_new ();
-	repos->priv->enabled = g_ptr_array_new ();
+	repos->priv->list = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
+	repos->priv->enabled = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	repos->priv->monitor = zif_monitor_new ();
 	g_signal_connect (repos->priv->monitor, "changed", G_CALLBACK (zif_repos_file_monitor_cb), repos);
 }
@@ -576,9 +568,7 @@ zif_repos_test (EggTest *test)
 		store = g_ptr_array_index (array, i);
 		zif_store_print (ZIF_STORE (store));
 	}
-
-	g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
-	g_ptr_array_free (array, TRUE);
+	g_ptr_array_unref (array);
 
 	/************************************************************/
 	egg_test_title (test, "get list of enabled repos");
@@ -597,8 +587,7 @@ zif_repos_test (EggTest *test)
 
 	/* get ref for next test */
 	store = g_object_ref (g_ptr_array_index (array, 0));
-	g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
-	g_ptr_array_free (array, TRUE);
+	g_ptr_array_unref (array);
 
 	/************************************************************/
 	egg_test_title (test, "get name");

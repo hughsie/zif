@@ -334,7 +334,7 @@ zif_package_local_set_from_header (ZifPackageLocal *pkg, Header header, GError *
 		g_ptr_array_unref (depends);
 		g_ptr_array_unref (names);
 		g_ptr_array_unref (versions);
-		g_ptr_array_free (flags, TRUE);
+		g_ptr_array_unref (flags);
 	}
 
 	/* provides */
@@ -351,7 +351,7 @@ zif_package_local_set_from_header (ZifPackageLocal *pkg, Header header, GError *
 		g_ptr_array_unref (depends);
 		g_ptr_array_unref (names);
 		g_ptr_array_unref (versions);
-		g_ptr_array_free (flags, TRUE);
+		g_ptr_array_unref (flags);
 	}
 
 	/* conflicts */
@@ -368,7 +368,7 @@ zif_package_local_set_from_header (ZifPackageLocal *pkg, Header header, GError *
 		g_ptr_array_unref (depends);
 		g_ptr_array_unref (names);
 		g_ptr_array_unref (versions);
-		g_ptr_array_free (flags, TRUE);
+		g_ptr_array_unref (flags);
 	}
 
 	/* obsoletes */
@@ -385,7 +385,7 @@ zif_package_local_set_from_header (ZifPackageLocal *pkg, Header header, GError *
 		g_ptr_array_unref (depends);
 		g_ptr_array_unref (names);
 		g_ptr_array_unref (versions);
-		g_ptr_array_free (flags, TRUE);
+		g_ptr_array_unref (flags);
 	}
 
 	/* files */
@@ -414,7 +414,7 @@ egg_debug ("fi=%i", fileindex->len);
 		/* free, as we have files */
 		g_ptr_array_unref (dirnames);
 		g_ptr_array_unref (basenames);
-		g_ptr_array_free (fileindex, TRUE);
+		g_ptr_array_unref (fileindex);
 	} else {
 		files = g_ptr_array_new_with_free_func (g_free);
 		zif_package_set_files (ZIF_PACKAGE (pkg), files);

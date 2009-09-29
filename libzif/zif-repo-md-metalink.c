@@ -279,7 +279,7 @@ zif_repo_md_metalink_get_uris (ZifRepoMdMetalink *md, guint threshold, GCancella
 	}
 
 	/* get list */
-	array = g_ptr_array_new ();
+	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_free);
 	len = metalink->priv->array->len;
 	for (i=0; i<len; i++) {
 		data = g_ptr_array_index (metalink->priv->array, i);
@@ -296,8 +296,7 @@ zif_repo_md_metalink_get_uris (ZifRepoMdMetalink *md, guint threshold, GCancella
 					*error = g_error_new (1, 0, "failed to expand substitutions: %s", error_local->message);
 				g_error_free (error_local);
 				/* rip apart what we've done already */
-				g_ptr_array_foreach (array, (GFunc) g_free, NULL);
-				g_ptr_array_free (array, TRUE);
+				g_ptr_array_unref (array);
 				array = NULL;
 				goto out;
 			}
@@ -330,8 +329,7 @@ zif_repo_md_metalink_finalize (GObject *object)
 	g_return_if_fail (ZIF_IS_REPO_MD_METALINK (object));
 	md = ZIF_REPO_MD_METALINK (object);
 
-	g_ptr_array_foreach (md->priv->array, (GFunc) zif_repo_md_metalink_free_data, NULL);
-	g_ptr_array_free (md->priv->array, TRUE);
+	g_ptr_array_unref (md->priv->array);
 	g_object_unref (md->priv->config);
 
 	G_OBJECT_CLASS (zif_repo_md_metalink_parent_class)->finalize (object);
@@ -362,7 +360,7 @@ zif_repo_md_metalink_init (ZifRepoMdMetalink *md)
 	md->priv = ZIF_REPO_MD_METALINK_GET_PRIVATE (md);
 	md->priv->loaded = FALSE;
 	md->priv->config = zif_config_new ();
-	md->priv->array = g_ptr_array_new ();
+	md->priv->array = g_ptr_array_new_with_free_func ((GDestroyNotify) zif_repo_md_metalink_free_data);
 }
 
 /**
@@ -472,9 +470,7 @@ zif_repo_md_metalink_test (EggTest *test)
 		egg_test_success (test, NULL);
 	else
 		egg_test_failed (test, "failed to get correct url '%s'", uri);
-
-	g_ptr_array_foreach (array, (GFunc) g_free, NULL);
-	g_ptr_array_free (array, TRUE);
+	g_ptr_array_unref (array);
 
 	g_object_unref (md);
 	g_object_unref (cancellable);

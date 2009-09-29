@@ -133,8 +133,7 @@ zif_monitor_finalize (GObject *object)
 	g_return_if_fail (ZIF_IS_MONITOR (object));
 	monitor = ZIF_MONITOR (object);
 
-	g_ptr_array_foreach (monitor->priv->array, (GFunc) g_object_unref, NULL);
-	g_ptr_array_free (monitor->priv->array, TRUE);
+	g_ptr_array_unref (monitor->priv->array);
 
 	G_OBJECT_CLASS (zif_monitor_parent_class)->finalize (object);
 }
@@ -162,7 +161,7 @@ static void
 zif_monitor_init (ZifMonitor *monitor)
 {
 	monitor->priv = ZIF_MONITOR_GET_PRIVATE (monitor);
-	monitor->priv->array = g_ptr_array_new ();
+	monitor->priv->array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 }
 
 /**

@@ -155,7 +155,7 @@ zif_repo_md_mirrorlist_get_uris (ZifRepoMdMirrorlist *md, GCancellable *cancella
 	}
 
 	/* get list */
-	array = g_ptr_array_new ();
+	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_free);
 	len = mirrorlist->priv->array->len;
 	for (i=0; i<len; i++) {
 		data = g_ptr_array_index (mirrorlist->priv->array, i);
@@ -165,8 +165,7 @@ zif_repo_md_mirrorlist_get_uris (ZifRepoMdMirrorlist *md, GCancellable *cancella
 				*error = g_error_new (1, 0, "failed to expand substitutions: %s", error_local->message);
 			g_error_free (error_local);
 			/* rip apart what we've done already */
-			g_ptr_array_foreach (array, (GFunc) g_free, NULL);
-			g_ptr_array_free (array, TRUE);
+			g_ptr_array_unref (array);
 			array = NULL;
 			goto out;
 		}
@@ -188,8 +187,7 @@ zif_repo_md_mirrorlist_finalize (GObject *object)
 	g_return_if_fail (ZIF_IS_REPO_MD_MIRRORLIST (object));
 	md = ZIF_REPO_MD_MIRRORLIST (object);
 
-	g_ptr_array_foreach (md->priv->array, (GFunc) g_free, NULL);
-	g_ptr_array_free (md->priv->array, TRUE);
+	g_ptr_array_unref (md->priv->array);
 	g_object_unref (md->priv->config);
 
 	G_OBJECT_CLASS (zif_repo_md_mirrorlist_parent_class)->finalize (object);
@@ -220,7 +218,7 @@ zif_repo_md_mirrorlist_init (ZifRepoMdMirrorlist *md)
 	md->priv = ZIF_REPO_MD_MIRRORLIST_GET_PRIVATE (md);
 	md->priv->loaded = FALSE;
 	md->priv->config = zif_config_new ();
-	md->priv->array = g_ptr_array_new ();
+	md->priv->array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_free);
 }
 
 /**
@@ -330,9 +328,7 @@ zif_repo_md_mirrorlist_test (EggTest *test)
 		egg_test_success (test, NULL);
 	else
 		egg_test_failed (test, "failed to get correct url '%s'", uri);
-
-	g_ptr_array_foreach (array, (GFunc) g_free, NULL);
-	g_ptr_array_free (array, TRUE);
+	g_ptr_array_unref (array);
 
 	g_object_unref (md);
 	g_object_unref (cancellable);

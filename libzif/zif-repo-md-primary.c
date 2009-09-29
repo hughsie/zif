@@ -159,7 +159,7 @@ zif_repo_md_primary_search (ZifRepoMdPrimary *md, const gchar *pred, GCancellabl
 	/* create data struct we can pass to the callback */
 	data = g_new0 (ZifRepoMdPrimaryData, 1);
 	data->id = zif_repo_md_get_id (ZIF_REPO_MD (md));
-	data->packages = g_ptr_array_new ();
+	data->packages = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 
 	statement = g_strdup_printf ("SELECT pkgId, name, arch, version, "
 				     "epoch, release, summary, description, url, "
@@ -169,7 +169,7 @@ zif_repo_md_primary_search (ZifRepoMdPrimary *md, const gchar *pred, GCancellabl
 		if (error != NULL)
 			*error = g_error_new (1, 0, "SQL error: %s\n", error_msg);
 		sqlite3_free (error_msg);
-		g_ptr_array_free (data->packages, TRUE);
+		g_ptr_array_unref (data->packages);
 		goto out;
 	}
 	/* list of packages */
@@ -543,9 +543,7 @@ zif_repo_md_primary_test (EggTest *test)
 	else
 		egg_test_failed (test, "failed to get correct summary '%s'", zif_string_get_value (summary));
 	zif_string_unref (summary);
-
-	g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
-	g_ptr_array_free (array, TRUE);
+	g_ptr_array_unref (array);
 
 	g_object_unref (cancellable);
 	g_object_unref (completion);

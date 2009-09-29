@@ -427,7 +427,7 @@ zif_config_set_filename (ZifConfig *config, const gchar *filename, GError **erro
 	}
 
 	/* add valid archs to array */
-	array = g_ptr_array_new ();
+	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_free);
 	g_ptr_array_add (array, g_strdup (basearch));
 	g_ptr_array_add (array, g_strdup ("noarch"));
 	if (g_strcmp0 (basearch, "i386") == 0) {
@@ -442,7 +442,7 @@ zif_config_set_filename (ZifConfig *config, const gchar *filename, GError **erro
 		text = g_ptr_array_index (array, i);
 		config->priv->basearch_list[i] = g_strdup (text);
 	}
-	g_ptr_array_free (array, TRUE);
+	g_ptr_array_unref (array);
 out:
 	g_free (basearch);
 	return ret;

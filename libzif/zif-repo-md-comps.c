@@ -118,7 +118,7 @@ zif_repo_md_comps_group_data_new (void)
 {
 	ZifRepoMdCompsGroupData *data;
 	data = g_new0 (ZifRepoMdCompsGroupData, 1);
-	data->packagelist = g_ptr_array_new ();
+	data->packagelist = g_ptr_array_new_with_free_func ((GDestroyNotify) g_free);
 	return data;
 }
 
@@ -130,7 +130,7 @@ zif_repo_md_comps_category_data_new (void)
 {
 	ZifRepoMdCompsCategoryData *data;
 	data = g_new0 (ZifRepoMdCompsCategoryData, 1);
-	data->grouplist = g_ptr_array_new ();
+	data->grouplist = g_ptr_array_new_with_free_func ((GDestroyNotify) g_free);
 	return data;
 }
 
@@ -169,8 +169,7 @@ zif_repo_md_comps_group_data_free (ZifRepoMdCompsGroupData *data)
 	g_free (data->id);
 	g_free (data->name);
 	g_free (data->description);
-	g_ptr_array_foreach (data->packagelist, (GFunc) g_free, NULL);
-	g_ptr_array_free (data->packagelist, TRUE);
+	g_ptr_array_unref (data->packagelist);
 	g_free (data);
 }
 
@@ -183,8 +182,7 @@ zif_repo_md_comps_category_data_free (ZifRepoMdCompsCategoryData *data)
 	g_free (data->id);
 	g_free (data->name);
 	g_free (data->description);
-	g_ptr_array_foreach (data->grouplist, (GFunc) g_free, NULL);
-	g_ptr_array_free (data->grouplist, TRUE);
+	g_ptr_array_unref (data->grouplist);
 	g_free (data);
 }
 
@@ -544,7 +542,7 @@ zif_repo_md_comps_get_categories (ZifRepoMdComps *md, GCancellable *cancellable,
 	}
 
 	/* get categories */
-	array = g_ptr_array_new ();
+	array = g_ptr_array_new_with_free_func ((GDestroyNotify) zif_repo_md_comps_obj_free);
 	len = md->priv->array_categories->len;
 	for (i=0; i<len; i++) {
 		data = g_ptr_array_index (md->priv->array_categories, i);
@@ -625,7 +623,7 @@ zif_repo_md_comps_get_groups_for_category (ZifRepoMdComps *md, const gchar *cate
 
 		/* category matches */
 		if (g_strcmp0 (category_id, data->id) == 0) {
-			array = g_ptr_array_new ();
+			array = g_ptr_array_new_with_free_func ((GDestroyNotify) zif_repo_md_comps_obj_free);
 			for (j=0; j<data->grouplist->len; j++) {
 				id = g_ptr_array_index (data->grouplist, j);
 				/* find group matching group_id */
@@ -692,7 +690,7 @@ zif_repo_md_comps_get_packages_for_group (ZifRepoMdComps *md, const gchar *group
 
 		/* category matches */
 		if (g_strcmp0 (group_id, data->id) == 0) {
-			array = g_ptr_array_new ();
+			array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_free);
 			for (j=0; j<data->packagelist->len; j++) {
 				packagename = g_ptr_array_index (data->packagelist, j);
 				g_ptr_array_add (array, g_strdup (packagename));
@@ -758,8 +756,8 @@ zif_repo_md_comps_init (ZifRepoMdComps *md)
 	md->priv->section_category = ZIF_REPO_MD_COMPS_SECTION_CATEGORY_UNKNOWN;
 	md->priv->group_data_temp = NULL;
 	md->priv->category_data_temp = NULL;
-	md->priv->array_groups = g_ptr_array_new ();
-	md->priv->array_categories = g_ptr_array_new ();
+	md->priv->array_groups = g_ptr_array_new_with_free_func ((GDestroyNotify) zif_repo_md_comps_group_data_free);
+	md->priv->array_categories = g_ptr_array_new_with_free_func ((GDestroyNotify) zif_repo_md_comps_category_data_free);
 }
 
 /**
@@ -892,8 +890,7 @@ zif_repo_md_comps_test (EggTest *test)
 	else
 		egg_test_failed (test, "failed to get correct description '%s'", obj->description);
 
-	g_ptr_array_foreach (array, (GFunc) zif_repo_md_comps_obj_free, NULL);
-	g_ptr_array_free (array, TRUE);
+	g_ptr_array_unref (array);
 
 	/************************************************************/
 	egg_test_title (test, "get groups for category");
@@ -917,9 +914,7 @@ zif_repo_md_comps_test (EggTest *test)
 		egg_test_success (test, NULL);
 	else
 		egg_test_failed (test, "failed to get correct id '%s'", obj->id);
-
-	g_ptr_array_foreach (array, (GFunc) zif_repo_md_comps_obj_free, NULL);
-	g_ptr_array_free (array, TRUE);
+	g_ptr_array_unref (array);
 
 	/************************************************************/
 	egg_test_title (test, "get packages for group");
@@ -943,9 +938,7 @@ zif_repo_md_comps_test (EggTest *test)
 		egg_test_success (test, NULL);
 	else
 		egg_test_failed (test, "failed to get correct id '%s'", id);
-
-	g_ptr_array_foreach (array, (GFunc) g_free, NULL);
-	g_ptr_array_free (array, TRUE);
+	g_ptr_array_unref (array);
 
 	g_object_unref (md);
 	g_object_unref (cancellable);

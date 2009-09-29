@@ -231,7 +231,7 @@ zif_groups_get_categories (ZifGroups *groups, GError **error)
 		}
 	}
 
-	array = g_ptr_array_new ();
+	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_free);
 	for (i=0; i<groups->priv->categories->len; i++)
 		g_ptr_array_add (array, g_strdup (g_ptr_array_index (groups->priv->categories, i)));
 out:
@@ -288,7 +288,6 @@ zif_groups_file_monitor_cb (ZifMonitor *monitor, ZifGroups *groups)
 {
 	/* free invalid data */
 	groups->priv->loaded = FALSE;
-	g_ptr_array_foreach (groups->priv->categories, (GFunc) g_free, NULL);
 	g_ptr_array_set_size (groups->priv->categories, 0);
 	g_hash_table_remove_all (groups->priv->hash);
 
@@ -305,8 +304,7 @@ zif_groups_finalize (GObject *object)
 	g_return_if_fail (ZIF_IS_GROUPS (object));
 	groups = ZIF_GROUPS (object);
 
-	g_ptr_array_foreach (groups->priv->categories, (GFunc) g_free, NULL);
-	g_ptr_array_free (groups->priv->categories, TRUE);
+	g_ptr_array_unref (groups->priv->categories);
 	g_hash_table_unref (groups->priv->hash);
 	g_free (groups->priv->mapping_file);
 	g_object_unref (groups->priv->monitor);
@@ -335,7 +333,7 @@ zif_groups_init (ZifGroups *groups)
 	groups->priv->mapping_file = NULL;
 	groups->priv->loaded = FALSE;
 	groups->priv->groups = 0;
-	groups->priv->categories = g_ptr_array_new ();
+	groups->priv->categories = g_ptr_array_new_with_free_func ((GDestroyNotify) g_free);
 	groups->priv->hash = g_hash_table_new_full (g_str_hash, g_str_equal, (GDestroyNotify) g_free, NULL);
 	groups->priv->monitor = zif_monitor_new ();
 	g_signal_connect (groups->priv->monitor, "changed", G_CALLBACK (zif_groups_file_monitor_cb), groups);
@@ -419,8 +417,7 @@ zif_groups_test (EggTest *test)
 		egg_test_success (test, NULL);
 	else
 		egg_test_failed (test, "invalid size '%i'", array->len);
-	g_ptr_array_foreach (array, (GFunc) g_free, NULL);
-	g_ptr_array_free (array, TRUE);
+	g_ptr_array_unref (array);
 
 	/************************************************************/
 	egg_test_title (test, "get group for cat");
