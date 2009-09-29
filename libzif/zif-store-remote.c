@@ -164,6 +164,10 @@ zif_store_remote_parser_start_element (GMarkupParseContext *context, const gchar
 					store->priv->parser_type = ZIF_REPO_MD_TYPE_OTHER;
 				else if (g_strcmp0 (attribute_values[i], "group_gz") == 0)
 					store->priv->parser_type = ZIF_REPO_MD_TYPE_COMPS;
+				else {
+					if (error != NULL)
+						*error = g_error_new (1, 0, "unhandled data type '%s', expecting 'primary_db', 'filelists_db', 'other_db' or 'group_gz'", attribute_values[i]);
+				}
 				break;
 			}
 		}
@@ -572,6 +576,13 @@ zif_store_remote_load_metadata (ZifStoreRemote *store, GCancellable *cancellable
 		/* location not set */
 		location = zif_repo_md_get_location (md);
 		if (location == NULL) {
+			/* messed up repo file, this is fatal */
+			if (i == ZIF_REPO_MD_TYPE_PRIMARY) {
+				if (error != NULL)
+					*error = g_error_new (1, 0, "failed to get primary metadata location for %s", store->priv->id);
+				ret = FALSE;
+				goto out;
+			}
 			egg_warning ("no location set for %s with %s", zif_repo_md_type_to_text (i), store->priv->id);
 			continue;
 		}
