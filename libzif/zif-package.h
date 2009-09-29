@@ -32,7 +32,6 @@
 
 #include "zif-string.h"
 #include "zif-completion.h"
-#include "zif-depend-array.h"
 
 G_BEGIN_DECLS
 
@@ -81,9 +80,9 @@ guint64			 zif_package_get_size		(ZifPackage	*package,
 							 GError		**error);
 GPtrArray		*zif_package_get_files		(ZifPackage	*package,
 							 GError		**error);
-ZifDependArray		*zif_package_get_requires	(ZifPackage	*package,
+GPtrArray		*zif_package_get_requires	(ZifPackage	*package,
 							 GError		**error);
-ZifDependArray		*zif_package_get_provides	(ZifPackage	*package,
+GPtrArray		*zif_package_get_provides	(ZifPackage	*package,
 							 GError		**error);
 
 /* internal setters: TODO, in seporate -internal header file */
@@ -110,9 +109,9 @@ gboolean		 zif_package_set_size		(ZifPackage	*package,
 gboolean		 zif_package_set_files		(ZifPackage	*package,
 							 GPtrArray	*files);
 gboolean		 zif_package_set_requires	(ZifPackage	*package,
-							 ZifDependArray	*requires);
+							 GPtrArray	*requires);
 gboolean		 zif_package_set_provides	(ZifPackage	*package,
-							 ZifDependArray	*provides);
+							 GPtrArray	*provides);
 /* actions */
 gboolean		 zif_package_download		(ZifPackage	*package,
 							 const gchar	*directory,

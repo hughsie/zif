@@ -45,7 +45,7 @@
 #include "zif-package-local.h"
 #include "zif-monitor.h"
 #include "zif-string.h"
-#include "zif-depend-array.h"
+#include "zif-depend.h"
 #include "zif-lock.h"
 
 #include "egg-debug.h"
@@ -641,10 +641,9 @@ zif_store_local_what_provides (ZifStore *store, const gchar *search, GCancellabl
 {
 	guint i;
 	guint j;
-	guint len;
 	GPtrArray *array = NULL;
 	ZifPackage *package;
-	ZifDependArray *provides;
+	GPtrArray *provides;
 	GError *error_local = NULL;
 	gboolean ret;
 	const ZifDepend *provide;
@@ -694,9 +693,8 @@ zif_store_local_what_provides (ZifStore *store, const gchar *search, GCancellabl
 	for (i=0;i<local->priv->packages->len;i++) {
 		package = g_ptr_array_index (local->priv->packages, i);
 		provides = zif_package_get_provides (package, NULL);
-		len = zif_depend_array_get_length (provides);
-		for (j=0; j<len; j++) {
-			provide = zif_depend_array_get_value (provides, j);
+		for (j=0; j<provides->len; j++) {
+			provide = g_ptr_array_index (provides, j);
 			if (strcmp (provide->name, search) == 0) {
 				g_ptr_array_add (array, g_object_ref (package));
 				break;

@@ -37,13 +37,13 @@
 
 #include "egg-debug.h"
 
+#include "zif-depend.h"
 #include "zif-utils.h"
 #include "zif-config.h"
 #include "zif-package.h"
 #include "zif-repos.h"
 #include "zif-groups.h"
 #include "zif-string.h"
-#include "zif-depend-array.h"
 
 #define ZIF_PACKAGE_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_PACKAGE, ZifPackagePrivate))
 
@@ -63,8 +63,8 @@ struct _ZifPackagePrivate
 	PkGroupEnum		 group;
 	guint64			 size;
 	GPtrArray		*files;
-	ZifDependArray		*requires;
-	ZifDependArray		*provides;
+	GPtrArray		*requires;
+	GPtrArray		*provides;
 	gboolean		 installed;
 };
 
@@ -224,7 +224,6 @@ zif_package_print (ZifPackage *package)
 {
 	guint i;
 	gchar *text;
-	guint len;
 	const ZifDepend *depend;
 	GPtrArray *array;
 
@@ -249,9 +248,9 @@ zif_package_print (ZifPackage *package)
 	}
 	if (package->priv->requires != NULL) {
 		g_print ("requires:\n");
-		len = zif_depend_array_get_length (package->priv->requires);
-		for (i=0; i<len; i++) {
-			depend = zif_depend_array_get_value (package->priv->requires, i);
+		array = package->priv->requires;
+		for (i=0; i<array->len; i++) {
+			depend = g_ptr_array_index (array, i);
 			text = zif_depend_to_string (depend);
 			g_print ("\t%s\n", text);
 			g_free (text);
@@ -259,9 +258,9 @@ zif_package_print (ZifPackage *package)
 	}
 	if (package->priv->provides != NULL) {
 		g_print ("provides:\n");
-		len = zif_depend_array_get_length (package->priv->provides);
-		for (i=0; i<len; i++) {
-			depend = zif_depend_array_get_value (package->priv->provides, i);
+		array = package->priv->provides;
+		for (i=0; i<array->len; i++) {
+			depend = g_ptr_array_index (array, i);
 			text = zif_depend_to_string (depend);
 			g_print ("\t%s\n", text);
 			g_free (text);
@@ -306,8 +305,8 @@ gboolean
 zif_package_is_gui (ZifPackage *package)
 {
 	guint i;
-	guint len;
 	const ZifDepend *depend;
+	GPtrArray *array;
 
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), FALSE);
 	g_return_val_if_fail (package->priv->id != NULL, FALSE);
@@ -316,12 +315,12 @@ zif_package_is_gui (ZifPackage *package)
 	if (package->priv->requires == NULL)
 		return FALSE;
 
-	len = zif_depend_array_get_length (package->priv->requires);
-	for (i=0; i<len; i++) {
-		depend = zif_depend_array_get_value (package->priv->requires, i);
-		if (strstr (depend->name, "gtk") != NULL)
+	array = package->priv->requires;
+	for (i=0; i<array->len; i++) {
+		depend = g_ptr_array_index (array, i);
+		if (g_strstr_len (depend->name, -1, "gtk") != NULL)
 			return TRUE;
-		if (strstr (depend->name, "kde") != NULL)
+		if (g_strstr_len (depend->name, -1, "kde") != NULL)
 			return TRUE;
 	}
 	return FALSE;
@@ -713,9 +712,9 @@ zif_package_get_files (ZifPackage *package, GError **error)
  *
  * Gets all the package requires.
  *
- * Return value: the reference counted #ZifDependArray, use zif_depend_array_unref() when done
+ * Return value: the reference counted #GPtrArray, use g_ptr_array_unref() when done
  **/
-ZifDependArray *
+GPtrArray *
 zif_package_get_requires (ZifPackage *package, GError **error)
 {
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
@@ -729,7 +728,7 @@ zif_package_get_requires (ZifPackage *package, GError **error)
 	}
 
 	/* return refcounted */
-	return zif_depend_array_ref (package->priv->requires);
+	return g_ptr_array_ref (package->priv->requires);
 }
 
 /**
@@ -739,9 +738,9 @@ zif_package_get_requires (ZifPackage *package, GError **error)
  *
  * Get all the package provides.
  *
- * Return value: the reference counted #ZifDependArray, use zif_depend_array_unref() when done
+ * Return value: the reference counted #GPtrArray, use g_ptr_array_unref() when done
  **/
-ZifDependArray *
+GPtrArray *
 zif_package_get_provides (ZifPackage *package, GError **error)
 {
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
@@ -755,7 +754,7 @@ zif_package_get_provides (ZifPackage *package, GError **error)
 	}
 
 	/* return refcounted */
-	return zif_depend_array_ref (package->priv->provides);
+	return g_ptr_array_ref (package->priv->provides);
 }
 
 /**
@@ -986,13 +985,13 @@ zif_package_set_files (ZifPackage *package, GPtrArray *files)
  * Return value: %TRUE for success, %FALSE for failure
  **/
 gboolean
-zif_package_set_requires (ZifPackage *package, ZifDependArray *requires)
+zif_package_set_requires (ZifPackage *package, GPtrArray *requires)
 {
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), FALSE);
 	g_return_val_if_fail (requires != NULL, FALSE);
 	g_return_val_if_fail (package->priv->requires == NULL, FALSE);
 
-	package->priv->requires = zif_depend_array_ref (requires);
+	package->priv->requires = g_ptr_array_ref (requires);
 	return TRUE;
 }
 
@@ -1006,13 +1005,13 @@ zif_package_set_requires (ZifPackage *package, ZifDependArray *requires)
  * Return value: %TRUE for success, %FALSE for failure
  **/
 gboolean
-zif_package_set_provides (ZifPackage *package, ZifDependArray *provides)
+zif_package_set_provides (ZifPackage *package, GPtrArray *provides)
 {
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), FALSE);
 	g_return_val_if_fail (provides != NULL, FALSE);
 	g_return_val_if_fail (package->priv->provides == NULL, FALSE);
 
-	package->priv->provides = zif_depend_array_ref (provides);
+	package->priv->provides = g_ptr_array_ref (provides);
 	return TRUE;
 }
 
@@ -1045,9 +1044,9 @@ zif_package_finalize (GObject *object)
 	if (package->priv->files != NULL)
 		g_ptr_array_unref (package->priv->files);
 	if (package->priv->requires != NULL)
-		zif_depend_array_unref (package->priv->requires);
+		g_ptr_array_unref (package->priv->requires);
 	if (package->priv->provides != NULL)
-		zif_depend_array_unref (package->priv->provides);
+		g_ptr_array_unref (package->priv->provides);
 	g_object_unref (package->priv->repos);
 	g_object_unref (package->priv->groups);
 	g_object_unref (package->priv->config);

@@ -44,7 +44,6 @@
 #include "zif-groups.h"
 #include "zif-string.h"
 #include "zif-depend.h"
-#include "zif-depend-array.h"
 
 #define ZIF_PACKAGE_LOCAL_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_PACKAGE_LOCAL, ZifPackageLocalPrivate))
 
@@ -132,10 +131,10 @@ out:
 }
 
 /**
- * zif_get_header_strv:
+ * zif_get_header_string_array:
  **/
 static GPtrArray *
-zif_get_header_strv (Header header, rpmTag tag)
+zif_get_header_string_array (Header header, rpmTag tag)
 {
 	gint retval;
 	const gchar *data;
@@ -191,7 +190,7 @@ out:
 /**
  * zif_package_local_get_depends_from_name_flags_version:
  **/
-static ZifDependArray *
+static GPtrArray *
 zif_package_local_get_depends_from_name_flags_version (GPtrArray *names, GPtrArray *flags, GPtrArray *versions)
 {
 	guint i;
@@ -200,10 +199,10 @@ zif_package_local_get_depends_from_name_flags_version (GPtrArray *names, GPtrArr
 	ZifDependFlag flag;
 	const gchar *name;
 	const gchar *version;
-	ZifDependArray *array;
+	GPtrArray *array;
 
 	/* create requires */
-	array = zif_depend_array_new (NULL);
+	array = g_ptr_array_new_with_free_func ((GDestroyNotify) zif_depend_unref);
 	for (i=0; i<names->len; i++) {
 											egg_debug ("i=%i", i);
 		name = g_ptr_array_index (names, i);
@@ -212,7 +211,7 @@ zif_package_local_get_depends_from_name_flags_version (GPtrArray *names, GPtrArr
 		/* no version string */
 		if (version == NULL || version[0] == '\0') {
 			depend = zif_depend_new (name, ZIF_DEPEND_FLAG_ANY, NULL);
-			zif_depend_array_add (array, depend);
+			g_ptr_array_add (array, depend);
 			zif_depend_unref (depend);
 			continue;
 		}
@@ -239,7 +238,7 @@ zif_package_local_get_depends_from_name_flags_version (GPtrArray *names, GPtrArr
 		}
 
 		depend = zif_depend_new (name, flag, version);
-		zif_depend_array_add (array, depend);
+		g_ptr_array_add (array, depend);
 		zif_depend_unref (depend);
 	}
 	return array;
@@ -269,7 +268,7 @@ zif_package_local_set_from_header (ZifPackageLocal *pkg, Header header, GError *
 	GPtrArray *files;
 	GPtrArray *dirnames;
 	GPtrArray *basenames;
-	ZifDependArray *depends;
+	GPtrArray *depends;
 //	GPtrArray *provides;
 
 	GPtrArray *flags;
@@ -322,82 +321,85 @@ zif_package_local_set_from_header (ZifPackageLocal *pkg, Header header, GError *
 	zif_string_unref (tmp);
 
 	/* requires */
-	names = zif_get_header_strv (header, RPMTAG_REQUIRENAME);
+	names = zif_get_header_string_array (header, RPMTAG_REQUIRENAME);
 	if (names == NULL) {
-		depends = zif_depend_array_new (NULL);
+		depends = g_ptr_array_new_with_free_func ((GDestroyNotify) zif_depend_unref);
 		zif_package_set_requires (ZIF_PACKAGE (pkg), depends);
-		zif_depend_array_unref (depends);
+		g_ptr_array_unref (depends);
 	} else {	
-		versions = zif_get_header_strv (header, RPMTAG_REQUIREVERSION);
+		versions = zif_get_header_string_array (header, RPMTAG_REQUIREVERSION);
 		flags = zif_get_header_uint32_index (header, RPMTAG_REQUIREFLAGS, names->len);
 		depends = zif_package_local_get_depends_from_name_flags_version (names, flags, versions);
 		zif_package_set_requires (ZIF_PACKAGE (pkg), depends);
-		zif_depend_array_unref (depends);
+		g_ptr_array_unref (depends);
 		g_ptr_array_unref (names);
 		g_ptr_array_unref (versions);
 		g_ptr_array_free (flags, TRUE);
 	}
 
 	/* provides */
-	names = zif_get_header_strv (header, RPMTAG_PROVIDENAME);
+	names = zif_get_header_string_array (header, RPMTAG_PROVIDENAME);
 	if (names == NULL) {
-		depends = zif_depend_array_new (NULL);
+		depends = g_ptr_array_new_with_free_func ((GDestroyNotify) zif_depend_unref);
 		zif_package_set_provides (ZIF_PACKAGE (pkg), depends);
-		zif_depend_array_unref (depends);
+		g_ptr_array_unref (depends);
 	} else {	
-		versions = zif_get_header_strv (header, RPMTAG_PROVIDEVERSION);
+		versions = zif_get_header_string_array (header, RPMTAG_PROVIDEVERSION);
 		flags = zif_get_header_uint32_index (header, RPMTAG_PROVIDEFLAGS, names->len);
 		depends = zif_package_local_get_depends_from_name_flags_version (names, flags, versions);
 		zif_package_set_provides (ZIF_PACKAGE (pkg), depends);
-		zif_depend_array_unref (depends);
+		g_ptr_array_unref (depends);
 		g_ptr_array_unref (names);
 		g_ptr_array_unref (versions);
 		g_ptr_array_free (flags, TRUE);
 	}
 
 	/* conflicts */
-	names = zif_get_header_strv (header, RPMTAG_CONFLICTNAME);
+	names = zif_get_header_string_array (header, RPMTAG_CONFLICTNAME);
 	if (names == NULL) {
-		depends = zif_depend_array_new (NULL);
+		depends = g_ptr_array_new_with_free_func ((GDestroyNotify) zif_depend_unref);
 		//zif_package_set_conflicts (ZIF_PACKAGE (pkg), depends);
-		zif_depend_array_unref (depends);
+		g_ptr_array_unref (depends);
 	} else {	
-		versions = zif_get_header_strv (header, RPMTAG_CONFLICTVERSION);
+		versions = zif_get_header_string_array (header, RPMTAG_CONFLICTVERSION);
 		flags = zif_get_header_uint32_index (header, RPMTAG_CONFLICTFLAGS, names->len);
 		depends = zif_package_local_get_depends_from_name_flags_version (names, flags, versions);
 		//zif_package_set_conflicts (ZIF_PACKAGE (pkg), depends);
-		zif_depend_array_unref (depends);
+		g_ptr_array_unref (depends);
 		g_ptr_array_unref (names);
 		g_ptr_array_unref (versions);
 		g_ptr_array_free (flags, TRUE);
 	}
 
 	/* obsoletes */
-	names = zif_get_header_strv (header, RPMTAG_OBSOLETENAME);
+	names = zif_get_header_string_array (header, RPMTAG_OBSOLETENAME);
 	if (names == NULL) {
-		depends = zif_depend_array_new (NULL);
+		depends = g_ptr_array_new_with_free_func ((GDestroyNotify) zif_depend_unref);
 		//zif_package_set_obsoletes (ZIF_PACKAGE (pkg), depends);
-		zif_depend_array_unref (depends);
+		g_ptr_array_unref (depends);
 	} else {	
-		versions = zif_get_header_strv (header, RPMTAG_OBSOLETEVERSION);
+		versions = zif_get_header_string_array (header, RPMTAG_OBSOLETEVERSION);
 		flags = zif_get_header_uint32_index (header, RPMTAG_OBSOLETEFLAGS, names->len);
 		depends = zif_package_local_get_depends_from_name_flags_version (names, flags, versions);
 		//zif_package_set_obsoletes (ZIF_PACKAGE (pkg), depends);
-		zif_depend_array_unref (depends);
+		g_ptr_array_unref (depends);
 		g_ptr_array_unref (names);
 		g_ptr_array_unref (versions);
 		g_ptr_array_free (flags, TRUE);
 	}
 
 	/* files */
-	basenames = zif_get_header_strv (header, RPMTAG_BASENAMES);
+	basenames = zif_get_header_string_array (header, RPMTAG_BASENAMES);
 
 	/* create the files */
 	if (basenames != NULL) {
 
 		/* get the mapping */
-		dirnames = zif_get_header_strv (header, RPMTAG_DIRNAMES);
+		dirnames = zif_get_header_string_array (header, RPMTAG_DIRNAMES);
 		fileindex = zif_get_header_uint32_index (header, RPMTAG_DIRINDEXES, basenames->len);
+egg_debug ("d=%i", dirnames->len);
+egg_debug ("bn=%i", basenames->len);
+egg_debug ("fi=%i", fileindex->len);
 
 		files = g_ptr_array_new_with_free_func (g_free);
 		for (i=0; i<fileindex->len; i++) {

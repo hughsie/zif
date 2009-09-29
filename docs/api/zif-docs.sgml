@@ -75,7 +75,6 @@
         This part documents helper funtions in libzif.
       </para>
     </partintro>
-    <xi:include href="xml/zif-depend-array.xml"/>
     <xi:include href="xml/zif-depend.xml"/>
     <xi:include href="xml/zif-string.xml"/>
     <xi:include href="xml/zif-utils.xml"/>

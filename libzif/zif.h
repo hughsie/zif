@@ -28,7 +28,6 @@
 #include <zif-completion.h>
 #include <zif-string.h>
 #include <zif-depend.h>
-#include <zif-depend-array.h>
 #include <zif-package.h>
 #include <zif-package-local.h>
 #include <zif-package-remote.h>

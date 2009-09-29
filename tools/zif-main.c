@@ -164,7 +164,7 @@ zif_cmd_get_depends (const gchar *package_name, ZifCompletion *completion)
 	ZifCompletion *completion_local;
 	ZifCompletion *completion_loop;
 	ZifSack *sack;
-	ZifDependArray *requires = NULL;
+	GPtrArray *requires = NULL;
 	const ZifDepend *require;
 	gchar *require_str;
 	GPtrArray *provides;
@@ -222,15 +222,14 @@ zif_cmd_get_depends (const gchar *package_name, ZifCompletion *completion)
 	}
 
 	/* match a package to each require */
-	len = zif_depend_array_get_length (requires);
 	completion_local = zif_completion_get_child (completion);
 	zif_completion_set_number_steps (completion_local, len);
-	for (i=0; i<len; i++) {
+	for (i=0; i<requires->len; i++) {
 
 		/* setup deeper completion */
 		completion_loop = zif_completion_get_child (completion_local);
 
-		require = zif_depend_array_get_value (requires, i);
+		require = g_ptr_array_index (requires, i);
 		require_str = zif_depend_to_string (require);
 		g_print ("  dependency: %s\n", require_str);
 		g_free (require_str);
@@ -260,7 +259,7 @@ zif_cmd_get_depends (const gchar *package_name, ZifCompletion *completion)
 	zif_completion_done (completion);
 out:
 	if (requires != NULL)
-		zif_depend_array_unref (requires);
+		g_ptr_array_unref (requires);
 	if (array != NULL) {
 		g_ptr_array_foreach (array, (GFunc) g_object_unref, NULL);
 		g_ptr_array_free (array, TRUE);
