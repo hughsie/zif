@@ -137,7 +137,7 @@ zif_config_get_string (ZifConfig *config, const gchar *key, GError **error)
 	/* distro constants */
 	if (g_strcmp0 (key, "releasever") == 0) {
 		//TODO: get from fedora-release
-		value = g_strdup ("11");
+		value = g_strdup ("11.91");
 		goto free_error;
 	}
 
@@ -672,7 +672,7 @@ zif_config_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "do substitutions (both)");
 	value = zif_config_expand_substitutions (config, "http://fedora/$releasever/$basearch/moo.rpm", NULL);
-	if (egg_strequal (value, "http://fedora/11/i386/moo.rpm"))
+	if (egg_strequal (value, "http://fedora/11.91/i386/moo.rpm"))
 		egg_test_success (test, NULL);
 	else
 		egg_test_failed (test, "invalid value '%s'", value);

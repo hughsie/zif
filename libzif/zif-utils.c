@@ -223,7 +223,8 @@ zif_compare_evr (const gchar *a, const gchar *b)
 	/* compare epoch */
 	if (ae != NULL && be != NULL) {
 		val = rpmvercmp (ae, be);
-		goto out;
+		if (val != 0)
+			goto out;
 	} else if (ae != NULL && atol (ae) > 0) {
 		val = 1;
 		goto out;

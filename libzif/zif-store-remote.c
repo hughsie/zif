@@ -530,7 +530,9 @@ zif_store_remote_load_metadata (ZifStoreRemote *store, GCancellable *cancellable
 
 		/* download new file */
 		completion_local = zif_completion_get_child (completion);
+		store->priv->loaded_metadata = TRUE;
 		ret = zif_store_remote_download (store, store->priv->repomd_filename, store->priv->directory, cancellable, completion_local, &error_local);
+		store->priv->loaded_metadata = FALSE;
 		if (!ret) {
 			if (error != NULL)
 				*error = g_error_new (1, 0, "failed to download missing repomd: %s", error_local->message);
@@ -2277,6 +2279,7 @@ static void
 zif_store_remote_init (ZifStoreRemote *store)
 {
 	GError *error = NULL;
+	gchar *cache_dir = NULL;
 
 	store->priv = ZIF_STORE_REMOTE_GET_PRIVATE (store);
 	store->priv->loaded = FALSE;
@@ -2302,12 +2305,23 @@ zif_store_remote_init (ZifStoreRemote *store)
 	store->priv->parser_section = ZIF_STORE_REMOTE_PARSER_SECTION_UNKNOWN;
 	g_signal_connect (store->priv->monitor, "changed", G_CALLBACK (zif_store_remote_file_monitor_cb), store);
 
-	/* name */
-	store->priv->cache_dir = zif_config_get_string (store->priv->config, "cachedir", &error);
-	if (store->priv->cache_dir == NULL) {
-		egg_warning ("failed to get cachedir: %s", error->message);
+	/* get cache */
+	cache_dir = zif_config_get_string (store->priv->config, "cachedir", &error);
+	if (cache_dir == NULL) {
+		egg_error ("failed to get cachedir: %s", error->message);
 		g_error_free (error);
+		goto out;
 	}
+
+	/* expand */
+	store->priv->cache_dir = zif_config_expand_substitutions (store->priv->config, cache_dir, &error);
+	if (store->priv->cache_dir == NULL) {
+		egg_error ("failed to get expand substitutions: %s", error->message);
+		g_error_free (error);
+		goto out;
+	}
+out:
+	g_free (cache_dir);
 }
 
 /**

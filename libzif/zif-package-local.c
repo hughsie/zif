@@ -204,7 +204,6 @@ zif_package_local_get_depends_from_name_flags_version (GPtrArray *names, GPtrArr
 	/* create requires */
 	array = g_ptr_array_new_with_free_func ((GDestroyNotify) zif_depend_unref);
 	for (i=0; i<names->len; i++) {
-											egg_debug ("i=%i", i);
 		name = g_ptr_array_index (names, i);
 		version = g_ptr_array_index (versions, i);
 
@@ -212,7 +211,6 @@ zif_package_local_get_depends_from_name_flags_version (GPtrArray *names, GPtrArr
 		if (version == NULL || version[0] == '\0') {
 			depend = zif_depend_new (name, ZIF_DEPEND_FLAG_ANY, NULL);
 			g_ptr_array_add (array, depend);
-			zif_depend_unref (depend);
 			continue;
 		}
 
@@ -233,13 +231,12 @@ zif_package_local_get_depends_from_name_flags_version (GPtrArray *names, GPtrArr
 
 		/* unknown */
 		if (flag == ZIF_DEPEND_FLAG_UNKNOWN) {
-			egg_debug ("ignoring %s %s %s", name, zif_depend_flag_to_string (flag), version);
+//			egg_debug ("ignoring %s %s %s", name, zif_depend_flag_to_string (flag), version);
 			continue;
 		}
 
 		depend = zif_depend_new (name, flag, version);
 		g_ptr_array_add (array, depend);
-		zif_depend_unref (depend);
 	}
 	return array;
 }
@@ -397,14 +394,22 @@ zif_package_local_set_from_header (ZifPackageLocal *pkg, Header header, GError *
 		/* get the mapping */
 		dirnames = zif_get_header_string_array (header, RPMTAG_DIRNAMES);
 		fileindex = zif_get_header_uint32_index (header, RPMTAG_DIRINDEXES, basenames->len);
-egg_debug ("d=%i", dirnames->len);
-egg_debug ("bn=%i", basenames->len);
-egg_debug ("fi=%i", fileindex->len);
+		if (basenames->len != fileindex->len)
+			egg_error ("internal error, basenames length is not the same as index length, possibly corrupt db?");
+		if (fileindex->len > fileindex->len)
+			egg_error ("internal error, fileindex length is bigger than index length, possibly corrupt db?");
 
 		files = g_ptr_array_new_with_free_func (g_free);
-		for (i=0; i<fileindex->len; i++) {
+		for (i=0; i<basenames->len-2 /* why -1? I'm not sure */; i++) {
 			guint idx;
 			idx = GPOINTER_TO_UINT (g_ptr_array_index (fileindex, i));
+			if (idx > dirnames->len) {
+				egg_warning ("index bigger than dirnames (%i > %i) for package %s [%s], i=%i, dn=%i, bn=%i, fi=%i",
+					     idx, dirnames->len, zif_package_get_package_id (ZIF_PACKAGE(pkg)),
+					     (const gchar *) g_ptr_array_index (basenames, i),
+					     i, dirnames->len, basenames->len, fileindex->len);
+				continue;
+			}
 			filename = g_strconcat (g_ptr_array_index (dirnames, idx), g_ptr_array_index (basenames, i), NULL);
 			g_ptr_array_add (files, filename);
 		}

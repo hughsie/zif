@@ -601,6 +601,9 @@ main (int argc, char *argv[])
 		goto out;
 	}
 
+	/* hardcode for now */
+	zif_config_set_local (config, "network", "1", NULL);
+
 	/* ZifLock */
 	lock = zif_lock_new ();
 	for (i=0; i<ZIF_MAIN_LOCKING_RETRIES; i++) {
