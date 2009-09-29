@@ -33,7 +33,6 @@ libzif_include_HEADERS =					\
 	zif-lock.h						\
 	zif-completion.h					\
 	zif-string.h						\
-	zif-string-array.h					\
 	zif-depend.h						\
 	zif-depend-array.h					\
 	zif-package.h						\
@@ -61,8 +60,6 @@ libzif_la_SOURCES =						\
 	zif-completion.h					\
 	zif-string.c						\
 	zif-string.h						\
-	zif-string-array.c					\
-	zif-string-array.h					\
 	zif-depend.c						\
 	zif-depend.h						\
 	zif-depend-array.c					\

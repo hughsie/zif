@@ -43,7 +43,6 @@
 #include "zif-repos.h"
 #include "zif-groups.h"
 #include "zif-string.h"
-#include "zif-string-array.h"
 #include "zif-depend-array.h"
 
 #define ZIF_PACKAGE_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_PACKAGE, ZifPackagePrivate))
@@ -63,7 +62,7 @@ struct _ZifPackagePrivate
 	ZifString		*location_href;
 	PkGroupEnum		 group;
 	guint64			 size;
-	ZifStringArray		*files;
+	GPtrArray		*files;
 	ZifDependArray		*requires;
 	ZifDependArray		*provides;
 	gboolean		 installed;
@@ -227,6 +226,7 @@ zif_package_print (ZifPackage *package)
 	gchar *text;
 	guint len;
 	const ZifDepend *depend;
+	GPtrArray *array;
 
 	g_return_if_fail (ZIF_IS_PACKAGE (package));
 	g_return_if_fail (package->priv->id != NULL);
@@ -243,9 +243,9 @@ zif_package_print (ZifPackage *package)
 
 	if (package->priv->files != NULL) {
 		g_print ("files:\n");
-		len = zif_string_array_get_length (package->priv->files);
-		for (i=0; i<len; i++)
-			g_print ("\t%s\n", zif_string_array_get_value (package->priv->files, i));
+		array = package->priv->files;
+		for (i=0; i<array->len; i++)
+			g_print ("\t%s\n", (const gchar *) g_ptr_array_index (array, i));
 	}
 	if (package->priv->requires != NULL) {
 		g_print ("requires:\n");
@@ -687,9 +687,9 @@ zif_package_get_size (ZifPackage *package, GError **error)
  *
  * Gets the file list for the package.
  *
- * Return value: the reference counted #ZifStringArray, use zif_string_array_unref() when done
+ * Return value: the reference counted #GPtrArray, use g_ptr_array_unref() when done
  **/
-ZifStringArray *
+GPtrArray *
 zif_package_get_files (ZifPackage *package, GError **error)
 {
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
@@ -703,7 +703,7 @@ zif_package_get_files (ZifPackage *package, GError **error)
 	}
 
 	/* return refcounted */
-	return zif_string_array_ref (package->priv->files);
+	return g_ptr_array_ref (package->priv->files);
 }
 
 /**
@@ -966,13 +966,13 @@ zif_package_set_size (ZifPackage *package, guint64 size)
  * Return value: %TRUE for success, %FALSE for failure
  **/
 gboolean
-zif_package_set_files (ZifPackage *package, ZifStringArray *files)
+zif_package_set_files (ZifPackage *package, GPtrArray *files)
 {
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), FALSE);
 	g_return_val_if_fail (files != NULL, FALSE);
 	g_return_val_if_fail (package->priv->files == NULL, FALSE);
 
-	package->priv->files = zif_string_array_ref (files);
+	package->priv->files = g_ptr_array_ref (files);
 	return TRUE;
 }
 
@@ -1043,7 +1043,7 @@ zif_package_finalize (GObject *object)
 	if (package->priv->location_href != NULL)
 		zif_string_unref (package->priv->location_href);
 	if (package->priv->files != NULL)
-		zif_string_array_unref (package->priv->files);
+		g_ptr_array_unref (package->priv->files);
 	if (package->priv->requires != NULL)
 		zif_depend_array_unref (package->priv->requires);
 	if (package->priv->provides != NULL)

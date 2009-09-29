@@ -32,7 +32,6 @@
 
 #include "zif-string.h"
 #include "zif-completion.h"
-#include "zif-string-array.h"
 #include "zif-depend-array.h"
 
 G_BEGIN_DECLS
@@ -80,7 +79,7 @@ PkGroupEnum		 zif_package_get_group		(ZifPackage	*package,
 							 GError		**error);
 guint64			 zif_package_get_size		(ZifPackage	*package,
 							 GError		**error);
-ZifStringArray		*zif_package_get_files		(ZifPackage	*package,
+GPtrArray		*zif_package_get_files		(ZifPackage	*package,
 							 GError		**error);
 ZifDependArray		*zif_package_get_requires	(ZifPackage	*package,
 							 GError		**error);
@@ -109,7 +108,7 @@ gboolean		 zif_package_set_group		(ZifPackage	*package,
 gboolean		 zif_package_set_size		(ZifPackage	*package,
 							 guint64	 size);
 gboolean		 zif_package_set_files		(ZifPackage	*package,
-							 ZifStringArray	*files);
+							 GPtrArray	*files);
 gboolean		 zif_package_set_requires	(ZifPackage	*package,
 							 ZifDependArray	*requires);
 gboolean		 zif_package_set_provides	(ZifPackage	*package,

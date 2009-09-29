@@ -1032,8 +1032,7 @@ main (int argc, char *argv[])
 		goto out;
 	}
 	if (g_strcmp0 (mode, "getfiles") == 0) {
-		ZifStringArray *files;
-		guint len;
+		GPtrArray *files;
 
 		if (value == NULL) {
 			g_print ("specify a package name\n");
@@ -1085,10 +1084,9 @@ main (int argc, char *argv[])
 		if (array->len > 0) {
 			package = g_ptr_array_index (array, 0);
 			files = zif_package_get_files (package, NULL);
-			len = zif_string_array_get_length (files);
-			for (i=0; i<len; i++)
-				g_print ("%s\n", zif_string_array_get_value (files, i));
-			zif_string_array_unref (files);
+			for (i=0; i<files->len; i++)
+				g_print ("%s\n", (const gchar *) g_ptr_array_index (files, i));
+			g_ptr_array_unref (files);
 		} else {
 			g_print ("Failed to match any packages to '%s'\n", value);
 		}

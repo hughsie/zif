@@ -488,10 +488,9 @@ static GPtrArray *
 zif_store_local_search_file (ZifStore *store, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	guint i, j;
-	guint len;
 	GPtrArray *array = NULL;
 	ZifPackage *package;
-	ZifStringArray *files;
+	GPtrArray *files;
 	GError *error_local = NULL;
 	const gchar *filename;
 	gboolean ret;
@@ -549,13 +548,12 @@ zif_store_local_search_file (ZifStore *store, const gchar *search, GCancellable 
 			array = NULL;
 			break;
 		}
-		len = zif_string_array_get_length (files);
-		for (j=0; j<len; j++) {
-			filename = zif_string_array_get_value (files, j);
+		for (j=0; j<files->len; j++) {
+			filename = g_ptr_array_index (files, j);
 			if (g_strcmp0 (search, filename) == 0)
 				g_ptr_array_add (array, g_object_ref (package));
 		}
-		zif_string_array_unref (files);
+		g_ptr_array_unref (files);
 
 		/* this section done */
 		zif_completion_done (completion_local);
