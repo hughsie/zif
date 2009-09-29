@@ -78,7 +78,7 @@ zif_package_remote_set_from_repo (ZifPackageRemote *pkg, guint length, gchar **t
 	const gchar *version = NULL;
 	const gchar *release = NULL;
 	const gchar *arch = NULL;
-	PkPackageId *id;
+	gchar *package_id;
 	ZifString *string;
 
 	g_return_val_if_fail (ZIF_IS_PACKAGE_REMOTE (pkg), FALSE);
@@ -130,9 +130,9 @@ zif_package_remote_set_from_repo (ZifPackageRemote *pkg, guint length, gchar **t
 		}
 	}
 	zif_package_set_installed (ZIF_PACKAGE (pkg), FALSE);
-	id = zif_package_id_from_nevra (name, epoch, version, release, arch, repo_id);
-	zif_package_set_id (ZIF_PACKAGE (pkg), id);
-	pk_package_id_free (id);
+	package_id = zif_package_id_from_nevra (name, epoch, version, release, arch, repo_id);
+	zif_package_set_id (ZIF_PACKAGE (pkg), package_id);
+	g_free (package_id);
 	return TRUE;
 }
 

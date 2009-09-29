@@ -37,7 +37,7 @@
 #include <rpm/rpmlib.h>
 #include <rpm/rpmdb.h>
 #include <fcntl.h>
-#include <packagekit-glib/packagekit.h>
+#include <packagekit-glib2/packagekit.h>
 
 #include "zif-store.h"
 #include "zif-store-local.h"
@@ -199,7 +199,8 @@ zif_store_local_search_name (ZifStore *store, const gchar *search, GCancellable 
 	guint i;
 	GPtrArray *array = NULL;
 	ZifPackage *package;
-	const PkPackageId *id;
+	const gchar *package_id;
+	gchar **split;
 	GError *error_local = NULL;
 	gboolean ret;
 	ZifCompletion *completion_local = NULL;
@@ -247,9 +248,11 @@ zif_store_local_search_name (ZifStore *store, const gchar *search, GCancellable 
 	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	for (i=0;i<local->priv->packages->len;i++) {
 		package = g_ptr_array_index (local->priv->packages, i);
-		id = zif_package_get_id (package);
-		if (strcasestr (id->name, search) != NULL)
+		package_id = zif_package_get_id (package);
+		split = pk_package_id_split (package_id);
+		if (strcasestr (split[PK_PACKAGE_ID_NAME], search) != NULL)
 			g_ptr_array_add (array, g_object_ref (package));
+		g_strfreev (split);
 
 		/* this section done */
 		zif_completion_done (completion_local);
@@ -342,8 +345,9 @@ zif_store_local_search_details (ZifStore *store, const gchar *search, GCancellab
 	guint i;
 	GPtrArray *array = NULL;
 	ZifPackage *package;
-	const PkPackageId *id;
+	const gchar *package_id;
 	ZifString *description;
+	gchar **split;
 	GError *error_local = NULL;
 	gboolean ret;
 	ZifCompletion *completion_local = NULL;
@@ -391,13 +395,15 @@ zif_store_local_search_details (ZifStore *store, const gchar *search, GCancellab
 	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	for (i=0;i<local->priv->packages->len;i++) {
 		package = g_ptr_array_index (local->priv->packages, i);
-		id = zif_package_get_id (package);
+		package_id = zif_package_get_id (package);
 		description = zif_package_get_description (package, NULL);
-		if (strcasestr (id->name, search) != NULL)
+		split = pk_package_id_split (package_id);
+		if (strcasestr (split[PK_PACKAGE_ID_NAME], search) != NULL)
 			g_ptr_array_add (array, g_object_ref (package));
 		else if (strcasestr (zif_string_get_value (description), search) != NULL)
 			g_ptr_array_add (array, g_object_ref (package));
 		zif_string_unref (description);
+		g_strfreev (split);
 
 		/* this section done */
 		zif_completion_done (completion_local);
@@ -570,9 +576,10 @@ zif_store_local_resolve (ZifStore *store, const gchar *search, GCancellable *can
 	guint i;
 	GPtrArray *array = NULL;
 	ZifPackage *package;
-	const PkPackageId *id;
+	const gchar *package_id;
 	GError *error_local = NULL;
 	gboolean ret;
+	gchar **split;
 	ZifCompletion *completion_local = NULL;
 	ZifStoreLocal *local = ZIF_STORE_LOCAL (store);
 
@@ -618,9 +625,11 @@ zif_store_local_resolve (ZifStore *store, const gchar *search, GCancellable *can
 	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	for (i=0;i<local->priv->packages->len;i++) {
 		package = g_ptr_array_index (local->priv->packages, i);
-		id = zif_package_get_id (package);
-		if (strcmp (id->name, search) == 0)
+		package_id = zif_package_get_id (package);
+		split = pk_package_id_split (package_id);
+		if (strcmp (split[PK_PACKAGE_ID_NAME], search) == 0)
 			g_ptr_array_add (array, g_object_ref (package));
+		g_strfreev (split);
 
 		/* this section done */
 		zif_completion_done (completion_local);
@@ -924,7 +933,8 @@ zif_store_local_test (EggTest *test)
 	guint elapsed;
 	const gchar *text;
 	ZifString *string;
-	const PkPackageId *id;
+	const gchar *package_id;
+	gchar **split;
 
 	if (!egg_test_start (test, "ZifStoreLocal"))
 		return;
@@ -1050,11 +1060,13 @@ zif_store_local_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "get id");
-	id = zif_package_get_id (package);
-	if (egg_strequal (id->name, "PackageKit"))
+	package_id = zif_package_get_id (package);
+	split = pk_package_id_split (package_id);
+	if (egg_strequal (split[PK_PACKAGE_ID_NAME], "PackageKit"))
 		egg_test_success (test, NULL);
 	else
-		egg_test_failed (test, "incorrect name: %s", id->name);
+		egg_test_failed (test, "incorrect name: %s", split[PK_PACKAGE_ID_NAME]);
+	g_strfreev (split);
 
 	/************************************************************/
 	egg_test_title (test, "get package id");

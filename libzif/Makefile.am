@@ -10,6 +10,7 @@ INCLUDES = \
 	-I$(top_srcdir)/libzif					\
 	-I$(top_builddir)/libzif				\
 	-I.							\
+	-DI_KNOW_THE_PACKAGEKIT_GLIB2_API_IS_SUBJECT_TO_CHANGE	\
 	-DZIF_COMPILATION					\
 	-DEGG_LOG_FILE=\""$(PK_LOG_DIR)/zif"\"			\
 	-DEGG_VERBOSE="\"PK_VERBOSE\""				\

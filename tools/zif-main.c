@@ -23,7 +23,7 @@
 
 #include <glib.h>
 #include <glib/gi18n.h>
-#include <packagekit-glib/packagekit.h>
+#include <packagekit-glib2/packagekit.h>
 #include <zif.h>
 
 #include "egg-debug.h"
@@ -42,12 +42,20 @@ static PkProgressBar *progressbar;
 static void
 zif_print_package (ZifPackage *package)
 {
-	const PkPackageId *id;
+	const gchar *package_id;
 	ZifString *summary;
+	gchar **split;
 
-	id = zif_package_get_id (package);
+	package_id = zif_package_get_id (package);
+	split = pk_package_id_split (package_id);
 	summary = zif_package_get_summary (package, NULL);
-	g_print ("%s-%s.%s (%s)\t%s\n", id->name, id->version, id->arch, id->data, zif_string_get_value (summary));
+	g_print ("%s-%s.%s (%s)\t%s\n",
+		 split[PK_PACKAGE_ID_NAME],
+		 split[PK_PACKAGE_ID_VERSION],
+		 split[PK_PACKAGE_ID_ARCH],
+		 split[PK_PACKAGE_ID_DATA],
+		 zif_string_get_value (summary));
+	g_strfreev (split);
 	zif_string_unref (summary);
 }
 
@@ -167,9 +175,10 @@ zif_cmd_get_depends (const gchar *package_name, ZifCompletion *completion)
 	const ZifDepend *require;
 	gchar *require_str;
 	GPtrArray *provides;
-	const PkPackageId *id;
+	const gchar *package_id;
 	guint i, j;
 	guint len;
+	gchar **split;
 
 	/* setup completion */
 	zif_completion_set_number_steps (completion, 2);
@@ -244,8 +253,10 @@ zif_cmd_get_depends (const gchar *package_name, ZifCompletion *completion)
 		/* print all of them */
 		for (j=0;j<provides->len;j++) {
 			package = g_ptr_array_index (provides, j);
-			id = zif_package_get_id (package);
-			g_print ("   provider: %s-%s.%s (%s)\n", id->name, id->version, id->arch, id->data);
+			package_id = zif_package_get_id (package);
+			split = pk_package_id_split (package_id);
+			g_print ("   provider: %s-%s.%s (%s)\n", split[PK_PACKAGE_ID_NAME], split[PK_PACKAGE_ID_VERSION], split[PK_PACKAGE_ID_ARCH], split[PK_PACKAGE_ID_DATA]);
+			g_strfreev (split);
 		}
 		g_ptr_array_unref (provides);
 
@@ -519,6 +530,7 @@ main (int argc, char *argv[])
 	gboolean profile = FALSE;
 	gchar *config_file = NULL;
 	gchar *repos_dir = NULL;
+	gchar **split;
 
 	const GOptionEntry options[] = {
 		{ "verbose", 'v', 0, G_OPTION_ARG_NONE, &verbose,
@@ -890,7 +902,7 @@ main (int argc, char *argv[])
 		goto out;
 	}
 	if (g_strcmp0 (mode, "getcategories") == 0) {
-		const PkCategoryObj *obj;
+		const PkItemCategory *obj;
 
 		pk_progress_bar_start (progressbar, "Getting categories");
 
@@ -1099,7 +1111,7 @@ main (int argc, char *argv[])
 		goto out;
 	}
 	if (g_strcmp0 (mode, "getdetails") == 0 || g_strcmp0 (mode, "info") == 0) {
-		const PkPackageId *id;
+		const gchar *package_id;
 		ZifString *summary;
 		ZifString *description;
 		ZifString *license;
@@ -1156,18 +1168,19 @@ main (int argc, char *argv[])
 		}
 		package = g_ptr_array_index (array, 0);
 
-		id = zif_package_get_id (package);
+		package_id = zif_package_get_id (package);
+		split = pk_package_id_split (package_id);
 		summary = zif_package_get_summary (package, NULL);
 		description = zif_package_get_description (package, NULL);
 		license = zif_package_get_license (package, NULL);
 		url = zif_package_get_url (package, NULL);
 		size = zif_package_get_size (package, NULL);
 
-		g_print ("Name\t : %s\n", id->name);
-		g_print ("Version\t : %s\n", id->version);
-		g_print ("Arch\t : %s\n", id->arch);
+		g_print ("Name\t : %s\n", split[PK_PACKAGE_ID_NAME]);
+		g_print ("Version\t : %s\n", split[PK_PACKAGE_ID_VERSION]);
+		g_print ("Arch\t : %s\n", split[PK_PACKAGE_ID_ARCH]);
 		g_print ("Size\t : %" G_GUINT64_FORMAT " bytes\n", size);
-		g_print ("Repo\t : %s\n", id->data);
+		g_print ("Repo\t : %s\n", split[PK_PACKAGE_ID_DATA]);
 		g_print ("Summary\t : %s\n", zif_string_get_value (summary));
 		g_print ("URL\t : %s\n", zif_string_get_value (url));
 		g_print ("License\t : %s\n", zif_string_get_value (license));
@@ -1177,6 +1190,7 @@ main (int argc, char *argv[])
 		zif_string_unref (url);
 		zif_string_unref (license);
 		zif_string_unref (description);
+		g_strfreev (split);
 
 		g_ptr_array_unref (array);
 		goto out;
@@ -1344,8 +1358,6 @@ main (int argc, char *argv[])
 		goto out;
 	}
 	if (g_strcmp0 (mode, "findpackage") == 0) {
-		PkPackageId *id;
-
 		if (value == NULL) {
 			g_print ("specify a package_id\n");
 			goto out;
@@ -1381,16 +1393,14 @@ main (int argc, char *argv[])
 		zif_completion_done (completion);
 
 		/* get id */
-		id = pk_package_id_new_from_string (value);
-		if (id == NULL) {
+		if (!pk_package_id_check (value)) {
 			g_print ("failed to parse ID: %s\n", value);
 			goto out;
 		}
 
 		/* find package id */
 		completion_local = zif_completion_get_child (completion);
-		package = zif_sack_find_package (sack, id, NULL, completion_local, &error);
-		pk_package_id_free (id);
+		package = zif_sack_find_package (sack, value, NULL, completion_local, &error);
 		if (package == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);

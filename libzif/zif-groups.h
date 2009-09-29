@@ -27,7 +27,7 @@
 #define __ZIF_GROUPS_H
 
 #include <glib-object.h>
-#include <packagekit-glib/packagekit.h>
+#include <packagekit-glib2/packagekit.h>
 
 G_BEGIN_DECLS
 

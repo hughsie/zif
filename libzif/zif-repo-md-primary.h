@@ -27,7 +27,7 @@
 #define __ZIF_REPO_MD_PRIMARY_H
 
 #include <glib-object.h>
-#include <packagekit-glib/packagekit.h>
+#include <packagekit-glib2/packagekit.h>
 
 #include "zif-repo-md.h"
 
@@ -92,7 +92,7 @@ GPtrArray	*zif_repo_md_primary_get_packages	(ZifRepoMdPrimary	*md,
 							 ZifCompletion		*completion,
 							 GError			**error);
 GPtrArray	*zif_repo_md_primary_find_package	(ZifRepoMdPrimary	*md,
-							 const PkPackageId	*id,
+							 const gchar		*package_id,
 							 GCancellable		*cancellable,
 							 ZifCompletion		*completion,
 							 GError			**error);

@@ -28,7 +28,7 @@
 
 #include <glib-object.h>
 #include <gio/gio.h>
-#include <packagekit-glib/packagekit.h>
+#include <packagekit-glib2/packagekit.h>
 
 #include "zif-string.h"
 #include "zif-completion.h"
@@ -61,7 +61,7 @@ GType			 zif_package_get_type		(void);
 ZifPackage		*zif_package_new		(void);
 
 /* public getters */
-const PkPackageId	*zif_package_get_id		(ZifPackage	*package);
+const gchar		*zif_package_get_id		(ZifPackage	*package);
 ZifString		*zif_package_get_summary	(ZifPackage	*package,
 							 GError		**error);
 ZifString		*zif_package_get_description	(ZifPackage	*package,
@@ -89,7 +89,7 @@ GPtrArray		*zif_package_get_provides	(ZifPackage	*package,
 gboolean		 zif_package_set_installed	(ZifPackage	*package,
 							 gboolean	 installed);
 gboolean		 zif_package_set_id		(ZifPackage	*package,
-							 const PkPackageId *id);
+							 const gchar	*package_id);
 gboolean		 zif_package_set_summary	(ZifPackage	*package,
 							 ZifString	*summary);
 gboolean		 zif_package_set_description	(ZifPackage	*package,

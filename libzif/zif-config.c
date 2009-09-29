@@ -37,7 +37,7 @@
 #include <string.h>
 
 #include <glib.h>
-#include <packagekit-glib/packagekit.h>
+#include <packagekit-glib2/packagekit.h>
 #include <rpm/rpmlib.h>
 
 #include "zif-config.h"

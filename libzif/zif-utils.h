@@ -28,7 +28,7 @@
 
 #include <gio/gio.h>
 #include <glib-object.h>
-#include <packagekit-glib/packagekit.h>
+#include <packagekit-glib2/packagekit.h>
 
 #include "zif-completion.h"
 
@@ -37,7 +37,7 @@ G_BEGIN_DECLS
 gboolean	 zif_init			(void);
 void		 zif_debug_crash		(void);
 void		 zif_list_print_array		(GPtrArray	*array);
-PkPackageId	*zif_package_id_from_nevra	(const gchar	*name,
+gchar		*zif_package_id_from_nevra	(const gchar	*name,
 						 const gchar	*epoch,
 						 const gchar	*version,
 						 const gchar	*release,

@@ -1525,7 +1525,7 @@ out:
  * zif_store_remote_find_package:
  **/
 static ZifPackage *
-zif_store_remote_find_package (ZifStore *store, const PkPackageId *id, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+zif_store_remote_find_package (ZifStore *store, const gchar *package_id, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	gboolean ret;
 	GPtrArray *array = NULL;
@@ -1569,7 +1569,7 @@ zif_store_remote_find_package (ZifStore *store, const PkPackageId *id, GCancella
 
 	/* search with predicate, TODO: search version (epoch+release) */
 	completion_local = zif_completion_get_child (completion);
-	array = zif_repo_md_primary_find_package (ZIF_REPO_MD_PRIMARY (remote->priv->md_primary), id, cancellable, completion_local, &error_local);
+	array = zif_repo_md_primary_find_package (ZIF_REPO_MD_PRIMARY (remote->priv->md_primary), package_id, cancellable, completion_local, &error_local);
 	if (array == NULL) {
 		if (error != NULL)
 			*error = g_error_new (1, 0, "failed to search: %s", error_local->message);
@@ -1673,7 +1673,7 @@ zif_store_remote_get_categories (ZifStore *store, GCancellable *cancellable, Zif
 	ZifCompletion *completion_loop;
 	const ZifRepoMdCompsObj *category;
 	const ZifRepoMdCompsObj *group;
-	PkCategoryObj *obj;
+	PkItemCategory *obj;
 
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), FALSE);
 	g_return_val_if_fail (remote->priv->id != NULL, FALSE);
@@ -1712,7 +1712,7 @@ zif_store_remote_get_categories (ZifStore *store, GCancellable *cancellable, Zif
 	location = zif_repo_md_get_location (remote->priv->md_comps);
 	if (location == NULL) {
 		/* empty array, as we want success */
-		array = g_ptr_array_new_with_free_func ((GDestroyNotify) pk_category_obj_free);
+		array = g_ptr_array_new_with_free_func ((GDestroyNotify) pk_item_category_unref);
 		goto out;
 	}
 
@@ -1730,7 +1730,7 @@ zif_store_remote_get_categories (ZifStore *store, GCancellable *cancellable, Zif
 	zif_completion_done (completion);
 
 	/* results array */
-	array = g_ptr_array_new_with_free_func ((GDestroyNotify) pk_category_obj_free);
+	array = g_ptr_array_new_with_free_func ((GDestroyNotify) pk_item_category_unref);
 
 	/* no results */
 	if (array_cats->len == 0)
@@ -1763,13 +1763,13 @@ zif_store_remote_get_categories (ZifStore *store, GCancellable *cancellable, Zif
 		if (array_groups->len > 0) {
 
 			/* first, add the parent */
-			obj = pk_category_obj_new_from_data (NULL, category->id, category->name, category->description, NULL);
+			obj = pk_item_category_new (NULL, category->id, category->name, category->description, NULL);
 			g_ptr_array_add (array, obj);
 
 			/* second, add the groups belonging to this parent */
 			for (j=0; j<array_groups->len; j++) {
 				group = g_ptr_array_index (array_groups, j);
-				obj = pk_category_obj_new_from_data (category->id, group->id, group->name, group->description, NULL);
+				obj = pk_item_category_new (category->id, group->id, group->name, group->description, NULL);
 				g_ptr_array_add (array, obj);
 			}
 		}
@@ -1802,10 +1802,12 @@ zif_store_remote_get_updates (ZifStore *store, GCancellable *cancellable, ZifCom
 	GError *error_local = NULL;
 	guint i, j;
 	gint val;
-	const PkPackageId *id_package;
-	const PkPackageId *id_update;
+	const gchar *package_id;
+	const gchar *package_id_update;
 	ZifStoreRemote *remote = ZIF_STORE_REMOTE (store);
 	ZifCompletion *completion_local;
+	gchar **split;
+	gchar **split_update;
 
 	/* not locked */
 	ret = zif_lock_is_locked (remote->priv->lock, NULL);
@@ -1858,13 +1860,15 @@ zif_store_remote_get_updates (ZifStore *store, GCancellable *cancellable, ZifCom
 	/* find each one in a remote repo */
 	for (i=0; i<packages->len; i++) {
 		package = ZIF_PACKAGE (g_ptr_array_index (packages, i));
-		id_package = zif_package_get_id (package);
+		package_id = zif_package_get_id (package);
 
 		/* find package name in repo */
 		completion_local = zif_completion_get_child (completion);
-		updates = zif_repo_md_primary_resolve (ZIF_REPO_MD_PRIMARY (remote->priv->md_primary), id_package->name, cancellable, completion_local, NULL);
+		split = pk_package_id_split (package_id);
+		updates = zif_repo_md_primary_resolve (ZIF_REPO_MD_PRIMARY (remote->priv->md_primary), split[PK_PACKAGE_ID_NAME], cancellable, completion_local, NULL);
+		g_strfreev (split);
 		if (updates == NULL) {
-			egg_debug ("not found %s", id_package->name);
+			egg_debug ("not found %s", split[PK_PACKAGE_ID_NAME]);
 			continue;
 		}
 
@@ -1875,8 +1879,12 @@ zif_store_remote_get_updates (ZifStore *store, GCancellable *cancellable, ZifCom
 			/* newer? */
 			val = zif_package_compare (update, package);
 			if (val > 0) {
-				id_update = zif_package_get_id (update);
-				egg_debug ("*** update %s from %s to %s", id_package->name, id_package->version, id_update->version);
+				package_id_update = zif_package_get_id (update);
+				split = pk_package_id_split (package_id);
+				split_update = pk_package_id_split (package_id_update);
+				egg_debug ("*** update %s from %s to %s", split[PK_PACKAGE_ID_NAME], split[PK_PACKAGE_ID_VERSION], split_update[PK_PACKAGE_ID_VERSION]);
+				g_strfreev (split);
+				g_strfreev (split_update);
 				g_ptr_array_add (array, g_object_ref (update));
 			}
 		}
@@ -2357,7 +2365,7 @@ zif_store_remote_test (EggTest *test)
 	gboolean ret;
 	GError *error = NULL;
 	const gchar *id;
-	const PkCategoryObj *obj;
+	const PkItemCategory *obj;
 	guint i;
 
 	if (!egg_test_start (test, "ZifStoreRemote"))
@@ -2433,7 +2441,7 @@ zif_store_remote_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "get name");
 	id = zif_store_remote_get_name (store, NULL, completion, NULL);
-	if (egg_strequal (id, "Fedora 11 - i386"))
+	if (egg_strequal (id, "Fedora 11.91 - i386"))
 		egg_test_success (test, NULL);
 	else
 		egg_test_failed (test, "invalid name '%s'", id);

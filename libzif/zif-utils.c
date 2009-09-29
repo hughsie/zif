@@ -37,7 +37,7 @@
 #include <archive_entry.h>
 #include <bzlib.h>
 #include <zlib.h>
-#include <packagekit-glib/packagekit.h>
+#include <packagekit-glib2/packagekit.h>
 
 #include "egg-debug.h"
 #include "egg-string.h"
@@ -128,15 +128,15 @@ zif_list_print_array (GPtrArray *array)
  * @arch: The package architecture, e.g. "i386"
  * @data: The package data, typically the repo name, or "installed"
  *
- * Formats a #PkPackageId structure from a NEVRA.
+ * Formats a PackageId structure from a NEVRA.
  *
- * Return value: The #PkPackageId value, or %NULL if invalid
+ * Return value: The PackageId value, or %NULL if invalid
  **/
-PkPackageId *
+gchar *
 zif_package_id_from_nevra (const gchar *name, const gchar *epoch, const gchar *version, const gchar *release, const gchar *arch, const gchar *data)
 {
 	gchar *version_compound;
-	PkPackageId *id;
+	gchar *package_id;
 
 	/* do we include an epoch? */
 	if (epoch == NULL || epoch[0] == '0')
@@ -144,9 +144,9 @@ zif_package_id_from_nevra (const gchar *name, const gchar *epoch, const gchar *v
 	else
 		version_compound = g_strdup_printf ("%s:%s-%s", epoch, version, release);
 
-	id = pk_package_id_new_from_list (name, version_compound, arch, data);
+	package_id = pk_package_id_build (name, version_compound, arch, data);
 	g_free (version_compound);
-	return id;
+	return package_id;
 }
 
 /**
@@ -591,7 +591,6 @@ zif_file_is_compressed_name (const gchar *filename)
 void
 zif_utils_test (EggTest *test)
 {
-	PkPackageId *id;
 	gchar *package_id;
 	gboolean ret;
 	gchar *evr;
@@ -614,36 +613,30 @@ zif_utils_test (EggTest *test)
 	 ****************           NEVRA          ******************
 	 ************************************************************/
 	egg_test_title (test, "no epoch");
-	id = zif_package_id_from_nevra ("kernel", NULL, "0.0.1", "1", "i386", "fedora");
-	package_id = pk_package_id_to_string (id);
+	package_id = zif_package_id_from_nevra ("kernel", NULL, "0.0.1", "1", "i386", "fedora");
 	if (egg_strequal (package_id, "kernel;0.0.1-1;i386;fedora"))
 		egg_test_success (test, NULL);
 	else
 		egg_test_failed (test, "incorrect package_id '%s'", package_id);
 	g_free (package_id);
-	pk_package_id_free (id);
 
 	/************************************************************/
 	egg_test_title (test, "epoch zero");
-	id = zif_package_id_from_nevra ("kernel", "0", "0.0.1", "1", "i386", "fedora");
-	package_id = pk_package_id_to_string (id);
+	package_id = zif_package_id_from_nevra ("kernel", "0", "0.0.1", "1", "i386", "fedora");
 	if (egg_strequal (package_id, "kernel;0.0.1-1;i386;fedora"))
 		egg_test_success (test, NULL);
 	else
 		egg_test_failed (test, "incorrect package_id '%s'", package_id);
 	g_free (package_id);
-	pk_package_id_free (id);
 
 	/************************************************************/
 	egg_test_title (test, "epoch value");
-	id = zif_package_id_from_nevra ("kernel", "2", "0.0.1", "1", "i386", "fedora");
-	package_id = pk_package_id_to_string (id);
+	package_id = zif_package_id_from_nevra ("kernel", "2", "0.0.1", "1", "i386", "fedora");
 	if (egg_strequal (package_id, "kernel;2:0.0.1-1;i386;fedora"))
 		egg_test_success (test, NULL);
 	else
 		egg_test_failed (test, "incorrect package_id '%s'", package_id);
 	g_free (package_id);
-	pk_package_id_free (id);
 
 	/************************************************************/
 	egg_test_title (test, "init");

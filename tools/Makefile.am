@@ -2,6 +2,7 @@ INCLUDES =						\
 	$(GLIB_CFLAGS)					\
 	$(SQLITE_CFLAGS)				\
 	$(PACKAGEKIT_CFLAGS)				\
+	-DI_KNOW_THE_PACKAGEKIT_GLIB2_API_IS_SUBJECT_TO_CHANGE	\
 	-DBINDIR=\"$(bindir)\"			 	\
 	-DDATADIR=\"$(datadir)\"			\
 	-DPREFIX=\""$(prefix)"\" 			\

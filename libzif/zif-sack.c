@@ -32,7 +32,7 @@
 #endif
 
 #include <glib.h>
-#include <packagekit-glib/packagekit.h>
+#include <packagekit-glib2/packagekit.h>
 
 #include "zif-config.h"
 #include "zif-completion.h"
@@ -297,7 +297,7 @@ out:
 /**
  * zif_sack_find_package:
  * @sack: the #ZifSack object
- * @id: the #PkPackageId which defines the package
+ * @package_id: the PackageId which defines the package
  * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @completion: a #ZifCompletion to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
@@ -307,7 +307,7 @@ out:
  * Return value: A single #ZifPackage or %NULL
  **/
 ZifPackage *
-zif_sack_find_package (ZifSack *sack, const PkPackageId *id, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+zif_sack_find_package (ZifSack *sack, const gchar *package_id, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	guint i;
 	GPtrArray *stores;
@@ -334,7 +334,7 @@ zif_sack_find_package (ZifSack *sack, const PkPackageId *id, GCancellable *cance
 		store = g_ptr_array_index (stores, i);
 
 		completion_local = zif_completion_get_child (completion);
-		package = zif_store_find_package (store, id, cancellable, completion_local, NULL);
+		package = zif_store_find_package (store, package_id, cancellable, completion_local, NULL);
 		if (package != NULL)
 			break;
 
@@ -554,8 +554,9 @@ zif_sack_search_category (ZifSack *sack, const gchar *group_id, GCancellable *ca
 	guint i, j;
 	GPtrArray *array;
 	ZifPackage *package;
-	const PkPackageId *id;
-	const PkPackageId *id_tmp;
+	const gchar *package_id;
+	const gchar *package_id_tmp;
+	gchar **split;
 
 	g_return_val_if_fail (ZIF_IS_SACK (sack), NULL);
 
@@ -565,15 +566,17 @@ zif_sack_search_category (ZifSack *sack, const gchar *group_id, GCancellable *ca
 	/* remove duplicate package_ids */
 	for (i=0; i<array->len; i++) {
 		package = g_ptr_array_index (array, i);
-		id = zif_package_get_id (package);
+		package_id = zif_package_get_id (package);
 		for (j=0; j<array->len; j++) {
 			if (i == j)
 				continue;
 			package = g_ptr_array_index (array, j);
-			id_tmp = zif_package_get_id (package);
-			if (pk_package_id_equal (id, id_tmp)) {
-				egg_warning ("duplicate %s-%s", id->name, id->version);
+			package_id_tmp = zif_package_get_id (package);
+			if (g_strcmp0 (package_id, package_id_tmp) == 0) {
+				split = pk_package_id_split (package_id);
+				egg_warning ("duplicate %s-%s", split[PK_PACKAGE_ID_NAME], split[PK_PACKAGE_ID_VERSION]);
 				g_ptr_array_remove_index (array, j);
+				g_strfreev (split);
 			}
 		}
 	}
@@ -668,15 +671,15 @@ zif_sack_what_provides (ZifSack *sack, const gchar *search, GCancellable *cancel
  *
  * Return a list of custom categories from all repos.
  *
- * Return value: an array of #PkCategoryObj's
+ * Return value: an array of #PkItemCategory's
  **/
 GPtrArray *
 zif_sack_get_categories (ZifSack *sack, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	guint i, j;
 	GPtrArray *array;
-	PkCategoryObj *obj;
-	PkCategoryObj *obj_tmp;
+	PkItemCategory *obj;
+	PkItemCategory *obj_tmp;
 
 	g_return_val_if_fail (ZIF_IS_SACK (sack), NULL);
 
@@ -693,7 +696,7 @@ zif_sack_get_categories (ZifSack *sack, GCancellable *cancellable, ZifCompletion
 			if (g_strcmp0 (obj_tmp->parent_id, obj->parent_id) == 0 &&
 			    g_strcmp0 (obj_tmp->cat_id, obj->cat_id) == 0) {
 				egg_warning ("duplicate %s-%s", obj->parent_id, obj->cat_id);
-				pk_category_obj_free (obj_tmp);
+				pk_item_category_unref (obj_tmp);
 				g_ptr_array_remove_index (array, j);
 			}
 		}

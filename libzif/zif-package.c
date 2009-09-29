@@ -33,7 +33,7 @@
 #include <glib.h>
 #include <string.h>
 #include <stdlib.h>
-#include <packagekit-glib/packagekit.h>
+#include <packagekit-glib2/packagekit.h>
 
 #include "egg-debug.h"
 
@@ -52,8 +52,8 @@ struct _ZifPackagePrivate
 	ZifConfig		*config;
 	ZifGroups		*groups;
 	ZifRepos		*repos;
-	PkPackageId		*id;
-	gchar			*id_txt;
+	gchar			**package_id_split;
+	gchar			*package_id;
 	ZifString		*summary;
 	ZifString		*description;
 	ZifString		*license;
@@ -82,26 +82,32 @@ G_DEFINE_TYPE (ZifPackage, zif_package, G_TYPE_OBJECT)
 gint
 zif_package_compare (ZifPackage *a, ZifPackage *b)
 {
-	const PkPackageId *ida;
-	const PkPackageId *idb;
+	const gchar *package_ida;
+	const gchar *package_idb;
+	gchar **splita;
+	gchar **splitb;
 	gint val = 0;
 
 	g_return_val_if_fail (ZIF_IS_PACKAGE (a), 0);
 	g_return_val_if_fail (ZIF_IS_PACKAGE (b), 0);
 
 	/* shallow copy */
-	ida = zif_package_get_id (a);
-	idb = zif_package_get_id (b);
+	package_ida = zif_package_get_id (a);
+	package_idb = zif_package_get_id (b);
+	splita = pk_package_id_split (package_ida);
+	splitb = pk_package_id_split (package_idb);
 
 	/* check name the same */
-	if (g_strcmp0 (ida->name, idb->name) != 0) {
-		egg_warning ("comparing between %s and %s", ida->name, idb->name);
+	if (g_strcmp0 (splita[PK_PACKAGE_ID_NAME], splitb[PK_PACKAGE_ID_NAME]) != 0) {
+		egg_warning ("comparing between %s and %s", package_ida, package_idb);
 		goto out;
 	}
 
 	/* do a version compare */
-	val = zif_compare_evr (ida->version, idb->version);
+	val = zif_compare_evr (splita[PK_PACKAGE_ID_VERSION], splitb[PK_PACKAGE_ID_VERSION]);
 out:
+	g_strfreev (splita);
+	g_strfreev (splitb);
 	return val;
 }
 
@@ -168,7 +174,7 @@ zif_package_download (ZifPackage *package, const gchar *directory, GCancellable 
 
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), FALSE);
 	g_return_val_if_fail (directory != NULL, FALSE);
-	g_return_val_if_fail (package->priv->id != NULL, FALSE);
+	g_return_val_if_fail (package->priv->package_id_split != NULL, FALSE);
 
 	/* check we are not installed */
 	if (package->priv->installed) {
@@ -182,7 +188,7 @@ zif_package_download (ZifPackage *package, const gchar *directory, GCancellable 
 
 	/* find correct repo */
 	completion_local = zif_completion_get_child (completion);
-	repo = zif_repos_get_store (package->priv->repos, package->priv->id->data, cancellable, completion_local, &error_local);
+	repo = zif_repos_get_store (package->priv->repos, package->priv->package_id_split[PK_PACKAGE_ID_DATA], cancellable, completion_local, &error_local);
 	if (repo == NULL) {
 		if (error != NULL)
 			*error = g_error_new (1, 0, "cannot find remote repo: %s", error_local->message);
@@ -228,9 +234,9 @@ zif_package_print (ZifPackage *package)
 	GPtrArray *array;
 
 	g_return_if_fail (ZIF_IS_PACKAGE (package));
-	g_return_if_fail (package->priv->id != NULL);
+	g_return_if_fail (package->priv->package_id_split != NULL);
 
-	g_print ("id=%s\n", package->priv->id_txt);
+	g_print ("id=%s\n", package->priv->package_id);
 	g_print ("summary=%s\n", zif_string_get_value (package->priv->summary));
 	g_print ("description=%s\n", zif_string_get_value (package->priv->description));
 	g_print ("license=%s\n", zif_string_get_value (package->priv->license));
@@ -280,15 +286,15 @@ gboolean
 zif_package_is_devel (ZifPackage *package)
 {
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), FALSE);
-	g_return_val_if_fail (package->priv->id != NULL, FALSE);
+	g_return_val_if_fail (package->priv->package_id_split != NULL, FALSE);
 
-	if (g_str_has_suffix (package->priv->id->name, "-debuginfo"))
+	if (g_str_has_suffix (package->priv->package_id_split[PK_PACKAGE_ID_NAME], "-debuginfo"))
 		return TRUE;
-	if (g_str_has_suffix (package->priv->id->name, "-devel"))
+	if (g_str_has_suffix (package->priv->package_id_split[PK_PACKAGE_ID_NAME], "-devel"))
 		return TRUE;
-	if (g_str_has_suffix (package->priv->id->name, "-static"))
+	if (g_str_has_suffix (package->priv->package_id_split[PK_PACKAGE_ID_NAME], "-static"))
 		return TRUE;
-	if (g_str_has_suffix (package->priv->id->name, "-libs"))
+	if (g_str_has_suffix (package->priv->package_id_split[PK_PACKAGE_ID_NAME], "-libs"))
 		return TRUE;
 	return FALSE;
 }
@@ -309,7 +315,7 @@ zif_package_is_gui (ZifPackage *package)
 	GPtrArray *array;
 
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), FALSE);
-	g_return_val_if_fail (package->priv->id != NULL, FALSE);
+	g_return_val_if_fail (package->priv->package_id_split != NULL, FALSE);
 
 	/* trivial */
 	if (package->priv->requires == NULL)
@@ -338,7 +344,7 @@ gboolean
 zif_package_is_installed (ZifPackage *package)
 {
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), FALSE);
-	g_return_val_if_fail (package->priv->id != NULL, FALSE);
+	g_return_val_if_fail (package->priv->package_id_split != NULL, FALSE);
 	return package->priv->installed;
 }
 
@@ -359,10 +365,10 @@ zif_package_is_native (ZifPackage *package)
 	gboolean ret = FALSE;
 
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), FALSE);
-	g_return_val_if_fail (package->priv->id != NULL, FALSE);
+	g_return_val_if_fail (package->priv->package_id_split != NULL, FALSE);
 
 	/* is package in arch array */
-	arch = package->priv->id->arch;
+	arch = package->priv->package_id_split[PK_PACKAGE_ID_ARCH];
 	array = zif_config_get_basearch_array (package->priv->config);
 	for (i=0; array[i] != NULL; i++) {
 		if (g_strcmp0 (array[i], arch) == 0) {
@@ -413,7 +419,7 @@ zif_package_is_free (ZifPackage *package)
 	guint j;
 
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), FALSE);
-	g_return_val_if_fail (package->priv->id != NULL, FALSE);
+	g_return_val_if_fail (package->priv->package_id_split != NULL, FALSE);
 
 	/* split AND clase */
 	groups = g_strsplit (zif_string_get_value (package->priv->license), " and ", 0);
@@ -461,14 +467,14 @@ zif_package_is_free (ZifPackage *package)
  *
  * Gets the id uniquely identifying the package in all repos.
  *
- * Return value: the #PkPackageId representing the package.
+ * Return value: the PackageId representing the package.
  **/
-const PkPackageId *
+const gchar *
 zif_package_get_id (ZifPackage *package)
 {
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
-	g_return_val_if_fail (package->priv->id != NULL, NULL);
-	return package->priv->id;
+	g_return_val_if_fail (package->priv->package_id != NULL, NULL);
+	return package->priv->package_id;
 }
 
 /**
@@ -483,8 +489,8 @@ const gchar *
 zif_package_get_package_id (ZifPackage *package)
 {
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
-	g_return_val_if_fail (package->priv->id != NULL, NULL);
-	return package->priv->id_txt;
+	g_return_val_if_fail (package->priv->package_id_split != NULL, NULL);
+	return package->priv->package_id;
 }
 
 /**
@@ -500,12 +506,12 @@ ZifString *
 zif_package_get_summary (ZifPackage *package, GError **error)
 {
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
-	g_return_val_if_fail (package->priv->id != NULL, NULL);
+	g_return_val_if_fail (package->priv->package_id_split != NULL, NULL);
 
 	/* not exists */
 	if (package->priv->summary == NULL) {
 		if (error != NULL)
-			*error = g_error_new (1, 0, "no data for %s", package->priv->id->name);
+			*error = g_error_new (1, 0, "no data for %s", package->priv->package_id_split[PK_PACKAGE_ID_NAME]);
 		return NULL;
 	}
 
@@ -526,12 +532,12 @@ ZifString *
 zif_package_get_description (ZifPackage *package, GError **error)
 {
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
-	g_return_val_if_fail (package->priv->id != NULL, NULL);
+	g_return_val_if_fail (package->priv->package_id_split != NULL, NULL);
 
 	/* not exists */
 	if (package->priv->description == NULL) {
 		if (error != NULL)
-			*error = g_error_new (1, 0, "no data for %s", package->priv->id->name);
+			*error = g_error_new (1, 0, "no data for %s", package->priv->package_id_split[PK_PACKAGE_ID_NAME]);
 		return NULL;
 	}
 
@@ -552,12 +558,12 @@ ZifString *
 zif_package_get_license (ZifPackage *package, GError **error)
 {
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
-	g_return_val_if_fail (package->priv->id != NULL, NULL);
+	g_return_val_if_fail (package->priv->package_id_split != NULL, NULL);
 
 	/* not exists */
 	if (package->priv->license == NULL) {
 		if (error != NULL)
-			*error = g_error_new (1, 0, "no data for %s", package->priv->id->name);
+			*error = g_error_new (1, 0, "no data for %s", package->priv->package_id_split[PK_PACKAGE_ID_NAME]);
 		return NULL;
 	}
 
@@ -578,12 +584,12 @@ ZifString *
 zif_package_get_url (ZifPackage *package, GError **error)
 {
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
-	g_return_val_if_fail (package->priv->id != NULL, NULL);
+	g_return_val_if_fail (package->priv->package_id_split != NULL, NULL);
 
 	/* not exists */
 	if (package->priv->url == NULL) {
 		if (error != NULL)
-			*error = g_error_new (1, 0, "no data for %s", package->priv->id->name);
+			*error = g_error_new (1, 0, "no data for %s", package->priv->package_id_split[PK_PACKAGE_ID_NAME]);
 		return NULL;
 	}
 
@@ -604,12 +610,12 @@ ZifString *
 zif_package_get_filename (ZifPackage *package, GError **error)
 {
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
-	g_return_val_if_fail (package->priv->id != NULL, NULL);
+	g_return_val_if_fail (package->priv->package_id_split != NULL, NULL);
 
 	/* not exists */
 	if (package->priv->location_href == NULL) {
 		if (error != NULL)
-			*error = g_error_new (1, 0, "no data for %s", package->priv->id->name);
+			*error = g_error_new (1, 0, "no data for %s", package->priv->package_id_split[PK_PACKAGE_ID_NAME]);
 		return NULL;
 	}
 
@@ -630,12 +636,12 @@ ZifString *
 zif_package_get_category (ZifPackage *package, GError **error)
 {
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
-	g_return_val_if_fail (package->priv->id != NULL, NULL);
+	g_return_val_if_fail (package->priv->package_id_split != NULL, NULL);
 
 	/* not exists */
 	if (package->priv->category == NULL) {
 		if (error != NULL)
-			*error = g_error_new (1, 0, "no data for %s", package->priv->id->name);
+			*error = g_error_new (1, 0, "no data for %s", package->priv->package_id_split[PK_PACKAGE_ID_NAME]);
 		return NULL;
 	}
 
@@ -656,7 +662,7 @@ PkGroupEnum
 zif_package_get_group (ZifPackage *package, GError **error)
 {
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), PK_GROUP_ENUM_UNKNOWN);
-	g_return_val_if_fail (package->priv->id != NULL, PK_GROUP_ENUM_UNKNOWN);
+	g_return_val_if_fail (package->priv->package_id_split != NULL, PK_GROUP_ENUM_UNKNOWN);
 	return package->priv->group;
 }
 
@@ -675,7 +681,7 @@ guint64
 zif_package_get_size (ZifPackage *package, GError **error)
 {
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), 0);
-	g_return_val_if_fail (package->priv->id != NULL, 0);
+	g_return_val_if_fail (package->priv->package_id_split != NULL, 0);
 	return package->priv->size;
 }
 
@@ -692,12 +698,12 @@ GPtrArray *
 zif_package_get_files (ZifPackage *package, GError **error)
 {
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
-	g_return_val_if_fail (package->priv->id != NULL, NULL);
+	g_return_val_if_fail (package->priv->package_id_split != NULL, NULL);
 
 	/* not exists */
 	if (package->priv->files == NULL) {
 		if (error != NULL)
-			*error = g_error_new (1, 0, "no data for %s", package->priv->id->name);
+			*error = g_error_new (1, 0, "no data for %s", package->priv->package_id_split[PK_PACKAGE_ID_NAME]);
 		return NULL;
 	}
 
@@ -718,12 +724,12 @@ GPtrArray *
 zif_package_get_requires (ZifPackage *package, GError **error)
 {
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
-	g_return_val_if_fail (package->priv->id != NULL, NULL);
+	g_return_val_if_fail (package->priv->package_id_split != NULL, NULL);
 
 	/* not exists */
 	if (package->priv->requires == NULL) {
 		if (error != NULL)
-			*error = g_error_new (1, 0, "no data for %s", package->priv->id->name);
+			*error = g_error_new (1, 0, "no data for %s", package->priv->package_id_split[PK_PACKAGE_ID_NAME]);
 		return NULL;
 	}
 
@@ -744,12 +750,12 @@ GPtrArray *
 zif_package_get_provides (ZifPackage *package, GError **error)
 {
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
-	g_return_val_if_fail (package->priv->id != NULL, NULL);
+	g_return_val_if_fail (package->priv->package_id_split != NULL, NULL);
 
 	/* not exists */
 	if (package->priv->requires == NULL) {
 		if (error != NULL)
-			*error = g_error_new (1, 0, "no data for %s", package->priv->id->name);
+			*error = g_error_new (1, 0, "no data for %s", package->priv->package_id_split[PK_PACKAGE_ID_NAME]);
 		return NULL;
 	}
 
@@ -777,21 +783,21 @@ zif_package_set_installed (ZifPackage *package, gboolean installed)
 /**
  * zif_package_set_id:
  * @package: the #ZifPackage object
- * @id: A #PkPackageId defining the object
+ * @package_id: A PackageId defining the object
  *
  * Sets the unique id for the package.
  *
  * Return value: %TRUE for success, %FALSE for failure
  **/
 gboolean
-zif_package_set_id (ZifPackage *package, const PkPackageId *id)
+zif_package_set_id (ZifPackage *package, const gchar *package_id)
 {
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), FALSE);
-	g_return_val_if_fail (id != NULL, FALSE);
-	g_return_val_if_fail (package->priv->id == NULL, FALSE);
+	g_return_val_if_fail (package_id != NULL, FALSE);
+	g_return_val_if_fail (package->priv->package_id == NULL, FALSE);
 
-	package->priv->id = pk_package_id_copy (id);
-	package->priv->id_txt = pk_package_id_to_string (package->priv->id);
+	package->priv->package_id = g_strdup (package_id);
+	package->priv->package_id_split = pk_package_id_split (package_id);
 	return TRUE;
 }
 
@@ -1027,8 +1033,8 @@ zif_package_finalize (GObject *object)
 	g_return_if_fail (ZIF_IS_PACKAGE (object));
 	package = ZIF_PACKAGE (object);
 
-	pk_package_id_free (package->priv->id);
-	g_free (package->priv->id_txt);
+	g_free (package->priv->package_id_split);
+	g_free (package->priv->package_id);
 	if (package->priv->summary != NULL)
 		zif_string_unref (package->priv->summary);
 	if (package->priv->description != NULL)
@@ -1072,8 +1078,8 @@ static void
 zif_package_init (ZifPackage *package)
 {
 	package->priv = ZIF_PACKAGE_GET_PRIVATE (package);
-	package->priv->id = NULL;
-	package->priv->id_txt = NULL;
+	package->priv->package_id_split = NULL;
+	package->priv->package_id = NULL;
 	package->priv->summary = NULL;
 	package->priv->description = NULL;
 	package->priv->license = NULL;

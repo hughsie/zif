@@ -31,7 +31,7 @@
 #endif
 
 #include <glib.h>
-#include <packagekit-glib/packagekit.h>
+#include <packagekit-glib2/packagekit.h>
 
 #include "zif-store.h"
 #include "zif-package.h"
@@ -395,7 +395,7 @@ zif_store_get_updates (ZifStore *store, GCancellable *cancellable, ZifCompletion
 /**
  * zif_store_find_package:
  * @store: the #ZifStore object
- * @id: the #PkPackageId which defines the package
+ * @package_id: the package ID which defines the package
  * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @completion: a #ZifCompletion to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
@@ -405,12 +405,12 @@ zif_store_get_updates (ZifStore *store, GCancellable *cancellable, ZifCompletion
  * Return value: A single #ZifPackage or %NULL
  **/
 ZifPackage *
-zif_store_find_package (ZifStore *store, const PkPackageId *id, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+zif_store_find_package (ZifStore *store, const gchar *package_id, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	ZifStoreClass *klass = ZIF_STORE_GET_CLASS (store);
 
 	g_return_val_if_fail (ZIF_IS_STORE (store), FALSE);
-	g_return_val_if_fail (id != NULL, NULL);
+	g_return_val_if_fail (package_id != NULL, NULL);
 
 	/* no support */
 	if (klass->find_package == NULL) {
@@ -419,7 +419,7 @@ zif_store_find_package (ZifStore *store, const PkPackageId *id, GCancellable *ca
 		return FALSE;
 	}
 
-	return klass->find_package (store, id, cancellable, completion, error);
+	return klass->find_package (store, package_id, cancellable, completion, error);
 }
 
 /**
@@ -431,7 +431,7 @@ zif_store_find_package (ZifStore *store, const PkPackageId *id, GCancellable *ca
  *
  * Return a list of custom categories.
  *
- * Return value: an array of #PkCategoryObj's
+ * Return value: an array of #PkItemCategory's
  **/
 GPtrArray *
 zif_store_get_categories (ZifStore *store, GCancellable *cancellable, ZifCompletion *completion, GError **error)

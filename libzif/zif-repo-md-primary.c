@@ -323,27 +323,30 @@ zif_repo_md_primary_search_pkgid (ZifRepoMdPrimary *md, const gchar *search, GCa
 /**
  * zif_repo_md_primary_find_package:
  * @md: the #ZifRepoMdPrimary object
- * @id: the #PkPackageId to match
+ * @package_id: the PackageId to match
  * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @completion: a #ZifCompletion to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
- * Finds all packages that match #PkPackageId.
+ * Finds all packages that match PackageId.
  *
  * Return value: an array of #ZifPackageRemote's
  **/
 GPtrArray *
-zif_repo_md_primary_find_package (ZifRepoMdPrimary *md, const PkPackageId *id, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+zif_repo_md_primary_find_package (ZifRepoMdPrimary *md, const gchar *package_id, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	gchar *pred;
 	GPtrArray *array;
+	gchar **split;
 
 	g_return_val_if_fail (ZIF_IS_REPO_MD_PRIMARY (md), FALSE);
 
 	/* search with predicate, TODO: search version (epoch+release) */
-	pred = g_strdup_printf ("WHERE name = '%s' AND arch = '%s'", id->name, id->arch);
+	split = pk_package_id_split (package_id);
+	pred = g_strdup_printf ("WHERE name = '%s' AND arch = '%s'", split[PK_PACKAGE_ID_NAME], split[PK_PACKAGE_ID_ARCH]);
 	array = zif_repo_md_primary_search (md, pred, cancellable, completion, error);
 	g_free (pred);
+	g_strfreev (split);
 
 	return array;
 }

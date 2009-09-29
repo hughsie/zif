@@ -31,7 +31,7 @@
 #endif
 
 #include <glib.h>
-#include <packagekit-glib/packagekit.h>
+#include <packagekit-glib2/packagekit.h>
 #include <rpm/rpmlib.h>
 #include <rpm/rpmdb.h>
 #include <rpm/rpmts.h>
@@ -160,10 +160,10 @@ out:
 /**
  * zif_package_local_id_from_header:
  **/
-static PkPackageId *
+static gchar *
 zif_package_local_id_from_header (Header header)
 {
-	PkPackageId *id;
+	gchar *package_id;
 	const gchar *name;
 	gchar *epoch;
 	const gchar *version;
@@ -176,15 +176,15 @@ zif_package_local_id_from_header (Header header)
 
 	/* trivial */
 	if (epoch_p == NULL) {
-		id = zif_package_id_from_nevra (name, NULL, version, release, arch, "installed");
+		package_id = zif_package_id_from_nevra (name, NULL, version, release, arch, "installed");
 		goto out;
 	}
 
 	epoch = g_strdup_printf ("%i", *epoch_p);
-	id = zif_package_id_from_nevra (name, epoch, version, release, arch, "installed");
+	package_id = zif_package_id_from_nevra (name, epoch, version, release, arch, "installed");
 	g_free (epoch);
 out:
-	return id;
+	return package_id;
 }
 
 /**
@@ -258,7 +258,7 @@ zif_package_local_set_from_header (ZifPackageLocal *pkg, Header header, GError *
 	guint size;
 	gchar *filename;
 	ZifString *tmp;
-	PkPackageId *id;
+	gchar *package_id;
 	PkGroupEnum group;
 	GPtrArray *fileindex;
 //	GPtrArray *tmparray;
@@ -278,9 +278,9 @@ zif_package_local_set_from_header (ZifPackageLocal *pkg, Header header, GError *
 	zif_package_set_installed (ZIF_PACKAGE (pkg), TRUE);
 
 	/* id */
-	id = zif_package_local_id_from_header (header);
-	zif_package_set_id (ZIF_PACKAGE (pkg), id);
-	pk_package_id_free (id);
+	package_id = zif_package_local_id_from_header (header);
+	zif_package_set_id (ZIF_PACKAGE (pkg), package_id);
+	g_free (package_id);
 
 	/* summary */
 	tmp = zif_get_header_string (header, RPMTAG_SUMMARY);

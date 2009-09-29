@@ -28,7 +28,7 @@
 
 #include <glib-object.h>
 #include <gio/gio.h>
-#include <packagekit-glib/packagekit.h>
+#include <packagekit-glib2/packagekit.h>
 
 #include "zif-package.h"
 #include "zif-completion.h"
@@ -113,7 +113,7 @@ struct _ZifStoreClass
 						 ZifCompletion		*completion,
 						 GError			**error);
 	ZifPackage	*(*find_package)	(ZifStore		*store,
-						 const PkPackageId	*id,
+						 const gchar		*package_id,
 						 GCancellable		*cancellable,
 						 ZifCompletion		*completion,
 						 GError			**error);
@@ -184,7 +184,7 @@ GPtrArray	*zif_store_get_updates		(ZifStore		*store,
 						 ZifCompletion		*completion,
 						 GError			**error);
 ZifPackage	*zif_store_find_package		(ZifStore		*store,
-						 const PkPackageId	*id,
+						 const gchar		*package_id,
 						 GCancellable		*cancellable,
 						 ZifCompletion		*completion,
 						 GError			**error);

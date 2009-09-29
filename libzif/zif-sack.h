@@ -131,7 +131,7 @@ GPtrArray	*zif_sack_get_updates		(ZifSack		*sack,
 						 ZifCompletion		*completion,
 						 GError			**error);
 ZifPackage	*zif_sack_find_package		(ZifSack		*sack,
-						 const PkPackageId	*id,
+						 const gchar		*package_id,
 						 GCancellable		*cancellable,
 						 ZifCompletion		*completion,
 						 GError			**error);
