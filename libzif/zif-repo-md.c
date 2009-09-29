@@ -672,7 +672,6 @@ zif_repo_md_file_check (ZifRepoMd *md, gboolean use_uncompressed, GError **error
 	gsize length;
 
 	g_return_val_if_fail (ZIF_IS_REPO_MD (md), FALSE);
-	g_return_val_if_fail (md->priv->id != NULL, FALSE);
 
 	/* metalink has no checksum... */
 	if (md->priv->type == ZIF_REPO_MD_TYPE_METALINK ||
