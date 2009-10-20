@@ -179,7 +179,6 @@ zif_cmd_get_depends (const gchar *package_name, ZifCompletion *completion)
 	GPtrArray *provides;
 	const gchar *package_id;
 	guint i, j;
-	guint len;
 	gchar **split;
 
 	/* setup completion */
@@ -233,7 +232,7 @@ zif_cmd_get_depends (const gchar *package_name, ZifCompletion *completion)
 
 	/* match a package to each require */
 	completion_local = zif_completion_get_child (completion);
-	zif_completion_set_number_steps (completion_local, len);
+	zif_completion_set_number_steps (completion_local, requires->len);
 	for (i=0; i<requires->len; i++) {
 
 		/* setup deeper completion */
@@ -271,9 +270,8 @@ zif_cmd_get_depends (const gchar *package_name, ZifCompletion *completion)
 out:
 	if (requires != NULL)
 		g_ptr_array_unref (requires);
-	if (array != NULL) {
+	if (array != NULL)
 		g_ptr_array_unref (array);
-	}
 	g_object_unref (completion_local);
 	g_object_unref (sack);
 	return ret;
@@ -1028,6 +1026,9 @@ main (int argc, char *argv[])
 		}
 		pk_progress_bar_start (progressbar, "Getting depends");
 		zif_cmd_get_depends (value, completion);
+
+		/* no more progressbar */
+		pk_progress_bar_end (progressbar);
 		goto out;
 	}
 	if (g_strcmp0 (mode, "download") == 0) {
@@ -1037,6 +1038,9 @@ main (int argc, char *argv[])
 		}
 		pk_progress_bar_start (progressbar, "Downloading");
 		zif_cmd_download (value, completion);
+
+		/* no more progressbar */
+		pk_progress_bar_end (progressbar);
 		goto out;
 	}
 	if (g_strcmp0 (mode, "erase") == 0) {
@@ -1102,6 +1106,9 @@ main (int argc, char *argv[])
 		} else {
 			g_print ("Failed to match any packages to '%s'\n", value);
 		}
+
+		/* no more progressbar */
+		pk_progress_bar_end (progressbar);
 
 		/* free results */
 		g_ptr_array_unref (array);
@@ -1219,6 +1226,10 @@ main (int argc, char *argv[])
 		}
 		pk_progress_bar_start (progressbar, "Installing");
 		zif_cmd_install (value, completion);
+
+		/* no more progressbar */
+		pk_progress_bar_end (progressbar);
+
 		g_print ("not yet supported\n");
 		goto out;
 	}
@@ -1284,6 +1295,10 @@ main (int argc, char *argv[])
 			egg_error ("failed: %s", error->message);
 		zif_package_print (package);
 		g_object_unref (package);
+
+		/* no more progressbar */
+		pk_progress_bar_end (progressbar);
+
 		g_print ("not yet supported\n");
 		goto out;
 	}
@@ -1291,6 +1306,10 @@ main (int argc, char *argv[])
 
 		pk_progress_bar_start (progressbar, "Refreshing cache");
 		zif_cmd_refresh_cache (completion, FALSE);
+
+		/* no more progressbar */
+		pk_progress_bar_end (progressbar);
+
 		g_print ("not yet supported\n");
 		goto out;
 	}
@@ -1308,6 +1327,9 @@ main (int argc, char *argv[])
 			g_error_free (error);
 			goto out;
 		}
+
+		/* no more progressbar */
+		pk_progress_bar_end (progressbar);
 
 		/* print */
 		for (i=0; i<array->len; i++) {
@@ -1366,6 +1388,9 @@ main (int argc, char *argv[])
 
 		/* this section done */
 		zif_completion_done (completion);
+
+		/* no more progressbar */
+		pk_progress_bar_end (progressbar);
 
 		/* no more progressbar */
 		pk_progress_bar_end (progressbar);

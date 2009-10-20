@@ -240,6 +240,14 @@ zif_store_local_search_name (ZifStore *store, const gchar *search, GCancellable 
 		zif_completion_done (completion);
 	}
 
+	/* check we have packages */
+	if (local->priv->packages->len == 0) {
+		egg_warning ("no packages in sack, so nothing to do!");
+		if (error != NULL)
+			*error = g_error_new (1, 0, "no packages in local sack");
+		goto out;
+	}
+
 	/* setup completion with the correct number of steps */
 	completion_local = zif_completion_get_child (completion);
 	zif_completion_set_number_steps (completion_local, local->priv->packages->len);
@@ -311,6 +319,14 @@ zif_store_local_search_category (ZifStore *store, const gchar *search, GCancella
 
 		/* this section done */
 		zif_completion_done (completion);
+	}
+
+	/* check we have packages */
+	if (local->priv->packages->len == 0) {
+		egg_warning ("no packages in sack, so nothing to do!");
+		if (error != NULL)
+			*error = g_error_new (1, 0, "no packages in local sack");
+		goto out;
 	}
 
 	/* setup completion with the correct number of steps */
@@ -385,6 +401,14 @@ zif_store_local_search_details (ZifStore *store, const gchar *search, GCancellab
 
 		/* this section done */
 		zif_completion_done (completion);
+	}
+
+	/* check we have packages */
+	if (local->priv->packages->len == 0) {
+		egg_warning ("no packages in sack, so nothing to do!");
+		if (error != NULL)
+			*error = g_error_new (1, 0, "no packages in local sack");
+		goto out;
 	}
 
 	/* setup completion with the correct number of steps */
@@ -464,6 +488,14 @@ zif_store_local_search_group (ZifStore *store, const gchar *search, GCancellable
 		zif_completion_done (completion);
 	}
 
+	/* check we have packages */
+	if (local->priv->packages->len == 0) {
+		egg_warning ("no packages in sack, so nothing to do!");
+		if (error != NULL)
+			*error = g_error_new (1, 0, "no packages in local sack");
+		goto out;
+	}
+
 	/* setup completion with the correct number of steps */
 	completion_local = zif_completion_get_child (completion);
 	zif_completion_set_number_steps (completion_local, local->priv->packages->len);
@@ -534,6 +566,14 @@ zif_store_local_search_file (ZifStore *store, const gchar *search, GCancellable 
 
 		/* this section done */
 		zif_completion_done (completion);
+	}
+
+	/* check we have packages */
+	if (local->priv->packages->len == 0) {
+		egg_warning ("no packages in sack, so nothing to do!");
+		if (error != NULL)
+			*error = g_error_new (1, 0, "no packages in local sack");
+		goto out;
 	}
 
 	/* setup completion with the correct number of steps */
@@ -617,6 +657,14 @@ zif_store_local_resolve (ZifStore *store, const gchar *search, GCancellable *can
 		zif_completion_done (completion);
 	}
 
+	/* check we have packages */
+	if (local->priv->packages->len == 0) {
+		egg_warning ("no packages in sack, so nothing to do!");
+		if (error != NULL)
+			*error = g_error_new (1, 0, "no packages in local sack");
+		goto out;
+	}
+
 	/* setup completion with the correct number of steps */
 	completion_local = zif_completion_get_child (completion);
 	zif_completion_set_number_steps (completion_local, local->priv->packages->len);
@@ -692,6 +740,14 @@ zif_store_local_what_provides (ZifStore *store, const gchar *search, GCancellabl
 		zif_completion_done (completion);
 	}
 
+	/* check we have packages */
+	if (local->priv->packages->len == 0) {
+		egg_warning ("no packages in sack, so nothing to do!");
+		if (error != NULL)
+			*error = g_error_new (1, 0, "no packages in local sack");
+		goto out;
+	}
+
 	/* setup completion with the correct number of steps */
 	completion_local = zif_completion_get_child (completion);
 	zif_completion_set_number_steps (completion_local, local->priv->packages->len);
@@ -764,6 +820,14 @@ zif_store_local_get_packages (ZifStore *store, GCancellable *cancellable, ZifCom
 
 		/* this section done */
 		zif_completion_done (completion);
+	}
+
+	/* check we have packages */
+	if (local->priv->packages->len == 0) {
+		egg_warning ("no packages in sack, so nothing to do!");
+		if (error != NULL)
+			*error = g_error_new (1, 0, "no packages in local sack");
+		goto out;
 	}
 
 	/* setup completion with the correct number of steps */
