@@ -332,7 +332,7 @@ zif_completion_set_number_steps (ZifCompletion *completion, guint steps)
 		return FALSE;
 	}
 
-	egg_debug ("setting up %i steps on %p", steps, completion);
+//	egg_debug ("setting up %i steps on %p", steps, completion);
 
 	/* imply reset */
 	zif_completion_reset (completion);
