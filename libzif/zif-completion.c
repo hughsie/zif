@@ -95,13 +95,13 @@ struct _ZifCompletionPrivate
 	gulong			 subpercentage_child_id;
 };
 
-typedef enum {
-	PERCENTAGE_CHANGED,
-	SUBPERCENTAGE_CHANGED,
-	LAST_SIGNAL
-} PkSignals;
+enum {
+	SIGNAL_PERCENTAGE_CHANGED,
+	SIGNAL_SUBPERCENTAGE_CHANGED,
+	SIGNAL_LAST
+};
 
-static guint signals [LAST_SIGNAL] = { 0 };
+static guint signals [SIGNAL_LAST] = { 0 };
 
 G_DEFINE_TYPE (ZifCompletion, zif_completion, G_TYPE_OBJECT)
 
@@ -153,7 +153,7 @@ zif_completion_set_percentage (ZifCompletion *completion, guint percentage)
 
 	/* emit and save */
 //	egg_debug ("emitting percentage=%i on %p", percentage, completion);
-	g_signal_emit (completion, signals [PERCENTAGE_CHANGED], 0, percentage);
+	g_signal_emit (completion, signals [SIGNAL_PERCENTAGE_CHANGED], 0, percentage);
 	completion->priv->last_percentage = percentage;
 out:
 	return TRUE;
@@ -167,7 +167,7 @@ zif_completion_set_subpercentage (ZifCompletion *completion, guint percentage)
 {
 	/* emit and save */
 //	egg_debug ("emitting subpercentage=%i on %p", percentage, completion);
-	g_signal_emit (completion, signals [SUBPERCENTAGE_CHANGED], 0, percentage);
+	g_signal_emit (completion, signals [SIGNAL_SUBPERCENTAGE_CHANGED], 0, percentage);
 	return TRUE;
 }
 
@@ -412,14 +412,14 @@ zif_completion_class_init (ZifCompletionClass *klass)
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 	object_class->finalize = zif_completion_finalize;
 
-	signals [PERCENTAGE_CHANGED] =
+	signals [SIGNAL_PERCENTAGE_CHANGED] =
 		g_signal_new ("percentage-changed",
 			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,
 			      G_STRUCT_OFFSET (ZifCompletionClass, percentage_changed),
 			      NULL, NULL, g_cclosure_marshal_VOID__UINT,
 			      G_TYPE_NONE, 1, G_TYPE_UINT);
 
-	signals [SUBPERCENTAGE_CHANGED] =
+	signals [SIGNAL_SUBPERCENTAGE_CHANGED] =
 		g_signal_new ("subpercentage-changed",
 			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,
 			      G_STRUCT_OFFSET (ZifCompletionClass, subpercentage_changed),
