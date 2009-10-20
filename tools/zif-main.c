@@ -25,6 +25,8 @@
 #include <glib/gi18n.h>
 #include <packagekit-glib2/packagekit.h>
 #include <zif.h>
+#include <unistd.h>
+#include <sys/types.h>
 
 #include "egg-debug.h"
 #include "egg-string.h"
@@ -507,6 +509,7 @@ main (int argc, char *argv[])
 {
 	GPtrArray *array;
 	gboolean ret;
+	gboolean offline;
 //	const gchar *id;
 	ZifRepos *repos = NULL;
 	ZifSack *sack = NULL;
@@ -517,9 +520,10 @@ main (int argc, char *argv[])
 	ZifGroups *groups = NULL;
 	ZifCompletion *completion = NULL;
 	ZifCompletion *completion_local = NULL;
-	ZifLock *lock;
+	ZifLock *lock = NULL;
 	guint i;
 	guint pid;
+	guint uid;
 	GError *error = NULL;
 	ZifPackage *package;
 	const gchar *mode;
@@ -535,6 +539,8 @@ main (int argc, char *argv[])
 	const GOptionEntry options[] = {
 		{ "verbose", 'v', 0, G_OPTION_ARG_NONE, &verbose,
 			_("Show extra debugging information"), NULL },
+		{ "offline", 'o', 0, G_OPTION_ARG_NONE, &offline,
+			_("Work offline when possible"), NULL },
 		{ "profile", 'p', 0, G_OPTION_ARG_NONE, &profile,
 			_("Profile ZIF"), NULL },
 		{ "config", 'c', 0, G_OPTION_ARG_STRING, &config_file,
@@ -613,8 +619,16 @@ main (int argc, char *argv[])
 		goto out;
 	}
 
-	/* hardcode for now */
-	zif_config_set_local (config, "network", "1", NULL);
+	/* are we allowed to access the repos */
+	if (!offline)
+		zif_config_set_local (config, "network", "1", NULL);
+
+	/* are we root? */
+	uid = getuid ();
+	if (uid != 0) {
+		g_print ("This program has to be run as the root user.\n");
+		goto out;
+	}
 
 	/* ZifLock */
 	lock = zif_lock_new ();
