@@ -507,7 +507,7 @@ main (int argc, char *argv[])
 {
 	GPtrArray *array;
 	gboolean ret;
-	gboolean offline;
+	gboolean offline = FALSE;
 //	const gchar *id;
 	ZifRepos *repos = NULL;
 	ZifSack *sack = NULL;
