@@ -912,6 +912,7 @@ zif_store_remote_clean (ZifStore *store, GCancellable *cancellable, ZifCompletio
 	GError *error_local = NULL;
 	GFile *file;
 	ZifStoreRemote *remote = ZIF_STORE_REMOTE (store);
+	ZifCompletion *completion_local;
 
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), FALSE);
 	g_return_val_if_fail (remote->priv->id != NULL, FALSE);
@@ -926,7 +927,25 @@ zif_store_remote_clean (ZifStore *store, GCancellable *cancellable, ZifCompletio
 	}
 
 	/* setup completion with the correct number of steps */
-	zif_completion_set_number_steps (completion, 4);
+	if (remote->priv->loaded_metadata)
+		zif_completion_set_number_steps (completion, 4);
+	else
+		zif_completion_set_number_steps (completion, 5);
+
+	/* load metadata */
+	if (!remote->priv->loaded_metadata) {
+		completion_local = zif_completion_get_child (completion);
+		ret = zif_store_remote_load_metadata (remote, cancellable, completion_local, &error_local);
+		if (!ret) {
+			if (error != NULL)
+				*error = g_error_new (1, 0, "failed to load xml: %s", error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+
+		/* this section done */
+		zif_completion_done (completion);
+	}
 
 	/* clean primary */
 	ret = zif_repo_md_clean (remote->priv->md_primary, &error_local);
