@@ -851,6 +851,103 @@ out:
 }
 
 /**
+ * zif_store_local_find_package:
+ **/
+static ZifPackage *
+zif_store_local_find_package (ZifStore *store, const gchar *package_id, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+{
+	guint i;
+	GPtrArray *array = NULL;
+	ZifPackage *package = NULL;
+	ZifPackage *package_tmp = NULL;
+	GError *error_local = NULL;
+	gboolean ret;
+	const gchar *package_id_tmp;
+	ZifCompletion *completion_local = NULL;
+	ZifStoreLocal *local = ZIF_STORE_LOCAL (store);
+
+	g_return_val_if_fail (ZIF_IS_STORE_LOCAL (store), NULL);
+	g_return_val_if_fail (local->priv->prefix != NULL, NULL);
+
+	/* not locked */
+	ret = zif_lock_is_locked (local->priv->lock, NULL);
+	if (!ret) {
+		egg_warning ("not locked");
+		if (error != NULL)
+			*error = g_error_new (1, 0, "not locked");
+		goto out;
+	}
+
+	/* we have a different number of steps depending if we are loaded or not */
+	if (local->priv->loaded)
+		zif_completion_set_number_steps (completion, 1);
+	else
+		zif_completion_set_number_steps (completion, 2);
+
+	/* if not already loaded, load */
+	if (!local->priv->loaded) {
+		completion_local = zif_completion_get_child (completion);
+		ret = zif_store_local_load (store, cancellable, completion_local, &error_local);
+		if (!ret) {
+			if (error != NULL)
+				*error = g_error_new (1, 0, "failed to load package store: %s", error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+
+		/* this section done */
+		zif_completion_done (completion);
+	}
+
+	/* check we have packages */
+	if (local->priv->packages->len == 0) {
+		egg_warning ("no packages in sack, so nothing to do!");
+		if (error != NULL)
+			*error = g_error_new (1, 0, "no packages in local sack");
+		goto out;
+	}
+
+	/* setup completion with the correct number of steps */
+	completion_local = zif_completion_get_child (completion);
+	zif_completion_set_number_steps (completion_local, local->priv->packages->len);
+
+	/* iterate list */
+	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
+	for (i=0;i<local->priv->packages->len;i++) {
+		package_tmp = g_ptr_array_index (local->priv->packages, i);
+		package_id_tmp = zif_package_get_id (package);
+		if (g_strcmp0 (package_id_tmp, package_id) == 0)
+			g_ptr_array_add (array, g_object_ref (package_tmp));
+
+		/* this section done */
+		zif_completion_done (completion_local);
+	}
+
+	/* nothing */
+	if (array->len == 0) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "failed to find package");
+		goto out;
+	}
+
+	/* more than one match */
+	if (array->len > 1) {
+		if (error != NULL)
+			*error = g_error_new (1, 0, "more than one match");
+		goto out;
+	}
+
+	/* return ref to package */
+	package = g_object_ref (g_ptr_array_index (array, 0));
+
+	/* this section done */
+	zif_completion_done (completion);
+out:
+	g_ptr_array_unref (array);
+	return package;
+}
+
+/**
  * zif_store_local_get_id:
  **/
 static const gchar *
@@ -934,7 +1031,7 @@ zif_store_local_class_init (ZifStoreLocalClass *klass)
 	store_class->resolve = zif_store_local_resolve;
 	store_class->what_provides = zif_store_local_what_provides;
 	store_class->get_packages = zif_store_local_get_packages;
-//	store_class->find_package = zif_store_local_find_package;
+	store_class->find_package = zif_store_local_find_package;
 	store_class->get_id = zif_store_local_get_id;
 	store_class->print = zif_store_local_print;
 
