@@ -442,6 +442,23 @@ zif_store_remote_add_metalink (ZifStoreRemote *store, GCancellable *cancellable,
 	GPtrArray *array;
 	GError *error_local = NULL;
 	const gchar *uri;
+	const gchar *filename;
+	gboolean ret;
+	ZifCompletion *completion_local;
+
+	/* if we're loading the metadata with an empty cache, the file won't yet exist. So download it */
+	filename = zif_repo_md_get_filename_uncompressed (store->priv->md_metalink);
+	ret = g_file_test (filename, G_FILE_TEST_EXISTS);
+	if (!ret) {
+		completion_local = zif_completion_get_child (completion);
+		ret = zif_store_remote_download (store, store->priv->mirrorlist, store->priv->directory, cancellable, completion_local, &error_local);
+		if (!ret) {
+			if (error != NULL)
+				*error = g_error_new (1, 0, "failed to download missing mirrorlist: %s", error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+	}
 
 	/* get mirrors */
 	array = zif_repo_md_metalink_get_uris (ZIF_REPO_MD_METALINK (store->priv->md_metalink), 50, cancellable, completion, &error_local);
@@ -474,6 +491,23 @@ zif_store_remote_add_mirrorlist (ZifStoreRemote *store, GCancellable *cancellabl
 	GPtrArray *array;
 	GError *error_local = NULL;
 	const gchar *uri;
+	const gchar *filename;
+	gboolean ret;
+	ZifCompletion *completion_local;
+
+	/* if we're loading the metadata with an empty cache, the file won't yet exist. So download it */
+	filename = zif_repo_md_get_filename_uncompressed (store->priv->md_mirrorlist);
+	ret = g_file_test (filename, G_FILE_TEST_EXISTS);
+	if (!ret) {
+		completion_local = zif_completion_get_child (completion);
+		ret = zif_store_remote_download (store, store->priv->mirrorlist, store->priv->directory, cancellable, completion_local, &error_local);
+		if (!ret) {
+			if (error != NULL)
+				*error = g_error_new (1, 0, "failed to download missing mirrorlist: %s", error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+	}
 
 	/* get mirrors */
 	array = zif_repo_md_mirrorlist_get_uris (ZIF_REPO_MD_MIRRORLIST (store->priv->md_mirrorlist), cancellable, completion, &error_local);
