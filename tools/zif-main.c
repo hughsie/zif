@@ -907,8 +907,8 @@ main (int argc, char *argv[])
 		/* this section done */
 		zif_completion_done (completion);
 
-		/* newline for output */
-		g_print ("\n");
+		/* no more progressbar */
+		pk_progress_bar_end (progressbar);
 
 		zif_print_packages (array);
 		g_ptr_array_unref (array);
@@ -948,8 +948,8 @@ main (int argc, char *argv[])
 		/* this section done */
 		zif_completion_done (completion);
 
-		/* newline for output */
-		g_print ("\n");
+		/* no more progressbar */
+		pk_progress_bar_end (progressbar);
 
 		/* dump to console */
 		for (i=0; i<array->len; i++) {
@@ -1014,6 +1014,9 @@ main (int argc, char *argv[])
 
 		/* this section done */
 		zif_completion_done (completion);
+
+		/* no more progressbar */
+		pk_progress_bar_end (progressbar);
 
 		goto out;
 	}
@@ -1261,8 +1264,8 @@ main (int argc, char *argv[])
 		/* this section done */
 		zif_completion_done (completion);
 
-		/* newline for output */
-		g_print ("\n");
+		/* no more progressbar */
+		pk_progress_bar_end (progressbar);
 
 		zif_print_packages (array);
 		g_ptr_array_unref (array);
@@ -1364,8 +1367,8 @@ main (int argc, char *argv[])
 		/* this section done */
 		zif_completion_done (completion);
 
-		/* newline for output */
-		g_print ("\n");
+		/* no more progressbar */
+		pk_progress_bar_end (progressbar);
 
 		zif_print_packages (array);
 		g_ptr_array_unref (array);
@@ -1424,8 +1427,8 @@ main (int argc, char *argv[])
 		/* this section done */
 		zif_completion_done (completion);
 
-		/* newline for output */
-		g_print ("\n");
+		/* no more progressbar */
+		pk_progress_bar_end (progressbar);
 
 		zif_print_package (package);
 		g_object_unref (package);
@@ -1529,8 +1532,8 @@ main (int argc, char *argv[])
 		/* this section done */
 		zif_completion_done (completion);
 
-		/* newline for output */
-		g_print ("\n");
+		/* no more progressbar */
+		pk_progress_bar_end (progressbar);
 
 		zif_print_packages (array);
 		g_ptr_array_unref (array);
@@ -1582,8 +1585,8 @@ main (int argc, char *argv[])
 		/* this section done */
 		zif_completion_done (completion);
 
-		/* newline for output */
-		g_print ("\n");
+		/* no more progressbar */
+		pk_progress_bar_end (progressbar);
 
 		zif_print_packages (array);
 		g_ptr_array_unref (array);
@@ -1635,8 +1638,8 @@ main (int argc, char *argv[])
 		/* this section done */
 		zif_completion_done (completion);
 
-		/* newline for output */
-		g_print ("\n");
+		/* no more progressbar */
+		pk_progress_bar_end (progressbar);
 
 		zif_print_packages (array);
 		g_ptr_array_unref (array);
@@ -1677,8 +1680,8 @@ main (int argc, char *argv[])
 		/* this section done */
 		zif_completion_done (completion);
 
-		/* newline for output */
-		g_print ("\n");
+		/* no more progressbar */
+		pk_progress_bar_end (progressbar);
 
 		zif_print_packages (array);
 		g_ptr_array_unref (array);
@@ -1730,8 +1733,8 @@ main (int argc, char *argv[])
 		/* this section done */
 		zif_completion_done (completion);
 
-		/* newline for output */
-		g_print ("\n");
+		/* no more progressbar */
+		pk_progress_bar_end (progressbar);
 
 		zif_print_packages (array);
 		g_ptr_array_unref (array);
@@ -1744,6 +1747,7 @@ main (int argc, char *argv[])
 		}
 		pk_progress_bar_start (progressbar, "Updating");
 		zif_cmd_update (value, completion);
+		pk_progress_bar_end (progressbar);
 		g_print ("not yet supported\n");
 		goto out;
 	}

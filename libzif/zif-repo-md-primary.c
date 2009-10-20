@@ -475,7 +475,7 @@ zif_repo_md_primary_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "set type");
-	ret = zif_repo_md_set_mdtype (ZIF_REPO_MD (md), ZIF_REPO_MD_TYPE_PRIMARY);
+	ret = zif_repo_md_set_mdtype (ZIF_REPO_MD (md), ZIF_REPO_MD_TYPE_PRIMARY_DB);
 	if (ret)
 		egg_test_success (test, NULL);
 	else

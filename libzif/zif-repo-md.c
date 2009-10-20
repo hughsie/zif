@@ -277,7 +277,7 @@ zif_repo_md_set_checksum_type (ZifRepoMd *md, GChecksumType checksum_type)
  * @md: the #ZifRepoMd object
  * @type: the metadata type
  *
- * Sets the type of the metadata, e.g. ZIF_REPO_MD_TYPE_FILELISTS.
+ * Sets the type of the metadata, e.g. ZIF_REPO_MD_TYPE_FILELISTS_DB.
  *
  * Return value: %TRUE for success, %FALSE for failure
  **/
@@ -637,16 +637,28 @@ zif_repo_md_type_to_text (ZifRepoMdType type)
 {
 	if (type == ZIF_REPO_MD_TYPE_FILELISTS)
 		return "filelists";
+	if (type == ZIF_REPO_MD_TYPE_FILELISTS_DB)
+		return "filelists_db";
 	if (type == ZIF_REPO_MD_TYPE_PRIMARY)
 		return "primary";
+	if (type == ZIF_REPO_MD_TYPE_PRIMARY_DB)
+		return "primary_db";
 	if (type == ZIF_REPO_MD_TYPE_OTHER)
 		return "other";
+	if (type == ZIF_REPO_MD_TYPE_OTHER_DB)
+		return "other_db";
 	if (type == ZIF_REPO_MD_TYPE_COMPS)
-		return "comps";
+		return "group";
+	if (type == ZIF_REPO_MD_TYPE_COMPS_XML)
+		return "group_gz";
 	if (type == ZIF_REPO_MD_TYPE_METALINK)
 		return "metalink";
 	if (type == ZIF_REPO_MD_TYPE_MIRRORLIST)
 		return "mirrorlist";
+	if (type == ZIF_REPO_MD_TYPE_PRESTODELTA)
+		return "prestodelta";
+	if (type == ZIF_REPO_MD_TYPE_UPDATEINFO)
+		return "updateinfo";
 	return "unknown";
 }
 

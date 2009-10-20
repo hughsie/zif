@@ -120,13 +120,13 @@ zif_store_remote_get_md_from_type (ZifStoreRemote *store, ZifRepoMdType type)
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), NULL);
 	g_return_val_if_fail (type != ZIF_REPO_MD_TYPE_UNKNOWN, NULL);
 
-	if (type == ZIF_REPO_MD_TYPE_FILELISTS)
+	if (type == ZIF_REPO_MD_TYPE_FILELISTS_DB)
 		return store->priv->md_filelists;
-	if (type == ZIF_REPO_MD_TYPE_PRIMARY)
+	if (type == ZIF_REPO_MD_TYPE_PRIMARY_DB)
 		return store->priv->md_primary;
-	if (type == ZIF_REPO_MD_TYPE_OTHER)
+	if (type == ZIF_REPO_MD_TYPE_OTHER_DB)
 		return NULL;
-	if (type == ZIF_REPO_MD_TYPE_COMPS)
+	if (type == ZIF_REPO_MD_TYPE_COMPS_XML)
 		return store->priv->md_comps;
 	if (type == ZIF_REPO_MD_TYPE_METALINK)
 		return store->priv->md_metalink;
@@ -143,9 +143,10 @@ zif_store_remote_parser_start_element (GMarkupParseContext *context, const gchar
 				       const gchar **attribute_names, const gchar **attribute_values,
 				       gpointer user_data, GError **error)
 {
-	guint i;
+	guint i, j;
 	ZifRepoMd *md;
 	ZifStoreRemote *store = user_data;
+	GString *string;
 
 	/* data */
 	if (g_strcmp0 (element_name, "data") == 0) {
@@ -156,17 +157,43 @@ zif_store_remote_parser_start_element (GMarkupParseContext *context, const gchar
 		/* find type */
 		for (i=0; attribute_names[i] != NULL; i++) {
 			if (g_strcmp0 (attribute_names[i], "type") == 0) {
-				if (g_strcmp0 (attribute_values[i], "primary_db") == 0)
+				if (g_strcmp0 (attribute_values[i], "primary") == 0)
 					store->priv->parser_type = ZIF_REPO_MD_TYPE_PRIMARY;
-				else if (g_strcmp0 (attribute_values[i], "filelists_db") == 0)
+				else if (g_strcmp0 (attribute_values[i], "primary_db") == 0)
+					store->priv->parser_type = ZIF_REPO_MD_TYPE_PRIMARY_DB;
+				else if (g_strcmp0 (attribute_values[i], "filelists") == 0)
 					store->priv->parser_type = ZIF_REPO_MD_TYPE_FILELISTS;
-				else if (g_strcmp0 (attribute_values[i], "other_db") == 0)
+				else if (g_strcmp0 (attribute_values[i], "filelists_db") == 0)
+					store->priv->parser_type = ZIF_REPO_MD_TYPE_FILELISTS_DB;
+				else if (g_strcmp0 (attribute_values[i], "other") == 0)
 					store->priv->parser_type = ZIF_REPO_MD_TYPE_OTHER;
-				else if (g_strcmp0 (attribute_values[i], "group_gz") == 0)
+				else if (g_strcmp0 (attribute_values[i], "other_db") == 0)
+					store->priv->parser_type = ZIF_REPO_MD_TYPE_OTHER_DB;
+				else if (g_strcmp0 (attribute_values[i], "group") == 0)
 					store->priv->parser_type = ZIF_REPO_MD_TYPE_COMPS;
+				else if (g_strcmp0 (attribute_values[i], "group_gz") == 0)
+					store->priv->parser_type = ZIF_REPO_MD_TYPE_COMPS_XML;
+				else if (g_strcmp0 (attribute_values[i], "prestodelta") == 0)
+					store->priv->parser_type = ZIF_REPO_MD_TYPE_PRESTODELTA;
+				else if (g_strcmp0 (attribute_values[i], "updateinfo") == 0)
+					store->priv->parser_type = ZIF_REPO_MD_TYPE_UPDATEINFO;
 				else {
-					if (error != NULL)
-						*error = g_error_new (1, 0, "unhandled data type '%s', expecting 'primary_db', 'filelists_db', 'other_db' or 'group_gz'", attribute_values[i]);
+					if (error != NULL) {
+						/* we didn't recognise the file type */
+						string = g_string_new ("");
+						g_string_append_printf (string, "unhandled data type '%s', expecting ", attribute_values[i]);
+
+						/* list all the types we support */
+						for (j=0; j<ZIF_REPO_MD_TYPE_UNKNOWN; j++)
+							g_string_append_printf (string, "%s, ", zif_repo_md_type_to_text (j));
+
+						/* remove triling comma and space */
+						g_string_set_size (string, string->len - 2);
+
+						/* return error */
+						*error = g_error_new (1, 0, "%s", string->str);
+						g_string_free (string, TRUE);
+					}
 				}
 				break;
 			}
@@ -577,7 +604,7 @@ zif_store_remote_load_metadata (ZifStoreRemote *store, GCancellable *cancellable
 		location = zif_repo_md_get_location (md);
 		if (location == NULL) {
 			/* messed up repo file, this is fatal */
-			if (i == ZIF_REPO_MD_TYPE_PRIMARY) {
+			if (i == ZIF_REPO_MD_TYPE_PRIMARY_DB) {
 				if (error != NULL)
 					*error = g_error_new (1, 0, "failed to get primary metadata location for %s", store->priv->id);
 				ret = FALSE;
