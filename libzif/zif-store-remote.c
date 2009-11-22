@@ -344,6 +344,7 @@ zif_store_remote_download (ZifStoreRemote *store, const gchar *filename, const g
 	GError *error_local = NULL;
 	gchar *filename_local = NULL;
 	gchar *basename = NULL;
+	gchar *dirname = NULL;
 	const gchar *baseurl;
 	ZifCompletion *completion_local;
 
@@ -392,6 +393,13 @@ zif_store_remote_download (ZifStoreRemote *store, const gchar *filename, const g
 	basename = g_path_get_basename (filename);
 	filename_local = g_build_filename (directory, basename, NULL);
 
+	/* ensure path is valid */
+	dirname = g_path_get_dirname (filename);
+	if (!g_file_test (dirname, G_FILE_TEST_EXISTS)) {
+		egg_debug ("creating directory %s", dirname);
+		g_mkdir_with_parents (dirname, 0777);
+	}
+
 	/* try to use all uris */
 	len = store->priv->baseurls->len;
 	for (i=0; i<len; i++) {
@@ -428,6 +436,7 @@ zif_store_remote_download (ZifStoreRemote *store, const gchar *filename, const g
 	}
 out:
 	g_free (basename);
+	g_free (dirname);
 	g_free (filename_local);
 	return ret;
 }
@@ -628,6 +637,16 @@ zif_store_remote_load_metadata (ZifStoreRemote *store, GCancellable *cancellable
 			continue;
 		}
 
+		/* no metalink? */
+		if (i == ZIF_REPO_MD_TYPE_METALINK &&
+		    store->priv->metalink == NULL)
+			continue;
+
+		/* no mirrorlist? */
+		if (i == ZIF_REPO_MD_TYPE_MIRRORLIST &&
+		    store->priv->mirrorlist == NULL)
+			continue;
+
 		/* set parent reference */
 		zif_repo_md_set_store_remote (md, store);
 
@@ -795,7 +814,7 @@ zif_store_remote_refresh (ZifStore *store, gboolean force, GCancellable *cancell
 	for (i=0; i<ZIF_REPO_MD_TYPE_UNKNOWN; i++) {
 		md = zif_store_remote_get_md_from_type (remote, i);
 		if (md == NULL) {
-			egg_warning ("failed to get local store for %s", zif_repo_md_type_to_text (i));
+			egg_debug ("failed to get local store for %s", zif_repo_md_type_to_text (i));
 			continue;
 		}
 
@@ -806,18 +825,19 @@ zif_store_remote_refresh (ZifStore *store, gboolean force, GCancellable *cancell
 			continue;
 		}
 
-		/* TODO: use force information to miss some */
-		/* TODO: does current uncompressed file equal what repomd says it should be */
-//		filename = zif_repo_md_get_filename_uncompressed (md);
-//		egg_error ("filename = %s", filename);
-//		ret = zif_repo_md_file_check (md, TRUE, &error_local);
+		/* does current uncompressed file equal what repomd says it should be */
+		ret = zif_repo_md_file_check (md, TRUE, &error_local);
+		if (ret && !force) {
+			egg_debug ("%s is okay", zif_repo_md_type_to_text (i));
+			continue;
+		}
 
 		/* download new file */
 		completion_local = zif_completion_get_child (completion);
 		ret = zif_store_remote_download (remote, filename, remote->priv->directory, cancellable, completion_local, &error_local);
 		if (!ret) {
 			if (error != NULL)
-				*error = g_error_new (1, 0, "failed to refresh %s: %s", zif_repo_md_type_to_text (i), error_local->message);
+				*error = g_error_new (1, 0, "failed to refresh %s (%s): %s", zif_repo_md_type_to_text (i), filename, error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
@@ -974,6 +994,9 @@ zif_store_remote_clean (ZifStore *store, GCancellable *cancellable, ZifCompletio
 	GFile *file;
 	ZifStoreRemote *remote = ZIF_STORE_REMOTE (store);
 	ZifCompletion *completion_local;
+	ZifRepoMd *md;
+	guint i;
+	const gchar *location;
 
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), FALSE);
 	g_return_val_if_fail (remote->priv->id != NULL, FALSE);
@@ -989,18 +1012,21 @@ zif_store_remote_clean (ZifStore *store, GCancellable *cancellable, ZifCompletio
 
 	/* setup completion with the correct number of steps */
 	if (remote->priv->loaded_metadata)
-		zif_completion_set_number_steps (completion, 4);
+		zif_completion_set_number_steps (completion, 1+ZIF_REPO_MD_TYPE_UNKNOWN);
 	else
-		zif_completion_set_number_steps (completion, 5);
+		zif_completion_set_number_steps (completion, 2+ZIF_REPO_MD_TYPE_UNKNOWN);
 
 	/* load metadata */
 	if (!remote->priv->loaded_metadata) {
 		completion_local = zif_completion_get_child (completion);
 		ret = zif_store_remote_load_metadata (remote, cancellable, completion_local, &error_local);
 		if (!ret) {
-			if (error != NULL)
-				*error = g_error_new (1, 0, "failed to load xml: %s", error_local->message);
+//			if (error != NULL)
+//				*error = g_error_new (1, 0, "failed to load xml: %s", error_local->message);
+			/* ignore this error */
+			g_print ("failed to load xml: %s\n", error_local->message);
 			g_error_free (error_local);
+			ret = TRUE;
 			goto out;
 		}
 
@@ -1008,41 +1034,34 @@ zif_store_remote_clean (ZifStore *store, GCancellable *cancellable, ZifCompletio
 		zif_completion_done (completion);
 	}
 
-	/* clean primary */
-	ret = zif_repo_md_clean (remote->priv->md_primary, &error_local);
-	if (!ret) {
-		if (error != NULL)
-			*error = g_error_new (1, 0, "failed to clean primary: %s", error_local->message);
-		g_error_free (error_local);
-		goto out;
+	/* set MD id and filename for each repo type */
+	for (i=0; i<ZIF_REPO_MD_TYPE_UNKNOWN; i++) {
+		md = zif_store_remote_get_md_from_type (remote, i);
+		if (md == NULL) {
+			/* TODO: until we've created ZifRepoMdComps and ZifRepoMdOther we'll get warnings here */
+			egg_warning ("failed to get local store for %s with %s", zif_repo_md_type_to_text (i), remote->priv->id);
+			goto skip;
+		}
+
+		/* location not set */
+		location = zif_repo_md_get_location (md);
+		if (location == NULL) {
+			egg_warning ("no location set for %s with %s", zif_repo_md_type_to_text (i), remote->priv->id);
+			goto skip;
+		}
+
+		/* clean md */
+		ret = zif_repo_md_clean (md, &error_local);
+		if (!ret) {
+			if (error != NULL)
+				*error = g_error_new (1, 0, "failed to clean %s: %s", zif_repo_md_type_to_text (i), error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+skip:
+		/* this section done */
+		zif_completion_done (completion);
 	}
-
-	/* this section done */
-	zif_completion_done (completion);
-
-	/* clean filelists */
-	ret = zif_repo_md_clean (remote->priv->md_filelists, &error_local);
-	if (!ret) {
-		if (error != NULL)
-			*error = g_error_new (1, 0, "failed to clean filelists: %s", error_local->message);
-		g_error_free (error_local);
-		goto out;
-	}
-
-	/* this section done */
-	zif_completion_done (completion);
-
-	/* clean comps */
-	ret = zif_repo_md_clean (remote->priv->md_comps, &error_local);
-	if (!ret) {
-		if (error != NULL)
-			*error = g_error_new (1, 0, "failed to clean comps: %s", error_local->message);
-		g_error_free (error_local);
-		goto out;
-	}
-
-	/* this section done */
-	zif_completion_done (completion);
 
 	/* clean master (last) */
 	exists = g_file_test (remote->priv->repomd_filename, G_FILE_TEST_EXISTS);
@@ -1764,7 +1783,7 @@ zif_store_remote_get_categories (ZifStore *store, GCancellable *cancellable, Zif
 	ZifCompletion *completion_loop;
 	const ZifRepoMdCompsObj *category;
 	const ZifRepoMdCompsObj *group;
-	PkItemCategory *obj;
+	PkCategory *obj;
 
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), FALSE);
 	g_return_val_if_fail (remote->priv->id != NULL, FALSE);
@@ -1803,7 +1822,7 @@ zif_store_remote_get_categories (ZifStore *store, GCancellable *cancellable, Zif
 	location = zif_repo_md_get_location (remote->priv->md_comps);
 	if (location == NULL) {
 		/* empty array, as we want success */
-		array = g_ptr_array_new_with_free_func ((GDestroyNotify) pk_item_category_unref);
+		array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 		goto out;
 	}
 
@@ -1821,7 +1840,7 @@ zif_store_remote_get_categories (ZifStore *store, GCancellable *cancellable, Zif
 	zif_completion_done (completion);
 
 	/* results array */
-	array = g_ptr_array_new_with_free_func ((GDestroyNotify) pk_item_category_unref);
+	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 
 	/* no results */
 	if (array_cats->len == 0)
@@ -1854,13 +1873,24 @@ zif_store_remote_get_categories (ZifStore *store, GCancellable *cancellable, Zif
 		if (array_groups->len > 0) {
 
 			/* first, add the parent */
-			obj = pk_item_category_new (NULL, category->id, category->name, category->description, NULL);
+			obj = pk_category_new ();
+			g_object_set (obj,
+				      "cat-id", category->id,
+				      "name", category->name,
+				      "summary", category->description,
+				      NULL);
 			g_ptr_array_add (array, obj);
 
 			/* second, add the groups belonging to this parent */
 			for (j=0; j<array_groups->len; j++) {
 				group = g_ptr_array_index (array_groups, j);
-				obj = pk_item_category_new (category->id, group->id, group->name, group->description, NULL);
+				obj = pk_category_new ();
+				g_object_set (obj,
+					      "parent-id", category->id,
+					      "cat-id", group->id,
+					      "name", group->name,
+					      "summary", group->description,
+					      NULL);
 				g_ptr_array_add (array, obj);
 			}
 		}
@@ -2456,7 +2486,7 @@ zif_store_remote_test (EggTest *test)
 	gboolean ret;
 	GError *error = NULL;
 	const gchar *id;
-	const PkItemCategory *obj;
+	const PkCategory *obj;
 	guint i;
 
 	if (!egg_test_start (test, "ZifStoreRemote"))

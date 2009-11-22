@@ -565,6 +565,7 @@ main (int argc, char *argv[])
 		"  getpackages    List all packages\n"
 		"  getupdates     Check for available package updates\n"
 		"  help           Display a helpful usage message\n"
+		"  refreshcache   Generate the metadata cache\n"
 		"  repolist       Display the configured software repositories\n"
 		"  resolve        Find a given package name\n"
 		"  searchcategory Search package details for the given category\n"
@@ -582,13 +583,12 @@ main (int argc, char *argv[])
 		"  provides       Alias to whatprovides\n"
 		"  resolvedep     Alias to whatprovides\n"
 		"  search         Alias to searchdetails\n"
+		"  makecache      Alias to refreshcache\n"
 		/* not even started yet */
 		"\nThese won't work just yet...\n"
 		"  erase          Remove a package or packages from your system\n"
 		"  install        Install a package or packages on your system\n"
 		"  localinstall   Install a local RPM\n"
-		"  makecache      Alias to refreshcache\n" /* backwards */
-		"  refreshcache   Generate the metadata cache\n" /* new */
 		"  reinstall      Reinstall a package\n"
 		"  update         Update a package or packages on your system\n"
 		"  upgrade        Alias to update\n" /* backwards */
@@ -1323,8 +1323,6 @@ main (int argc, char *argv[])
 
 		/* no more progressbar */
 		pk_progress_bar_end (progressbar);
-
-		g_print ("not yet supported\n");
 		goto out;
 	}
 	if (g_strcmp0 (mode, "reinstall") == 0) {
@@ -1536,7 +1534,7 @@ main (int argc, char *argv[])
 		/* setup completion with the correct number of steps */
 		zif_completion_set_number_steps (completion, 3);
 
-		/* add both local and remote packages */
+		/* add local packages */
 		sack = zif_sack_new ();
 		completion_local = zif_completion_get_child (completion);
 		ret = zif_sack_add_local (sack, NULL, completion_local, &error);
@@ -1549,6 +1547,7 @@ main (int argc, char *argv[])
 		/* this section done */
 		zif_completion_done (completion);
 
+		/* add remote packages */
 		completion_local = zif_completion_get_child (completion);
 		ret = zif_sack_add_remote_enabled (sack, NULL, completion_local, &error);
 		if (!ret) {
@@ -1589,12 +1588,12 @@ main (int argc, char *argv[])
 		/* setup completion with the correct number of steps */
 		zif_completion_set_number_steps (completion, 3);
 
-		/* add both local and remote packages */
+		/* add local packages */
 		sack = zif_sack_new ();
 		completion_local = zif_completion_get_child (completion);
 		ret = zif_sack_add_local (sack, NULL, completion_local, &error);
 		if (!ret) {
-			g_print ("failed to add remote: %s\n", error->message);
+			g_print ("failed to add local: %s\n", error->message);
 			g_error_free (error);
 			goto out;
 		}
@@ -1602,6 +1601,7 @@ main (int argc, char *argv[])
 		/* this section done */
 		zif_completion_done (completion);
 
+		/* add remote packages */
 		completion_local = zif_completion_get_child (completion);
 		ret = zif_sack_add_remote_enabled (sack, NULL, completion_local, &error);
 		if (!ret) {
