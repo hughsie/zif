@@ -108,7 +108,8 @@ zif_repo_md_mirrorlist_load (ZifRepoMd *md, GCancellable *cancellable, ZifComple
 		if (lines[i][0] == '\0' ||
 		    lines[i][0] == '#')
 			continue;
-		g_ptr_array_add (mirrorlist->priv->array, g_strdup (lines[i]));
+		if (g_str_has_prefix (lines[i], "http://"))
+			g_ptr_array_add (mirrorlist->priv->array, g_strdup (lines[i]));
 	}
 
 	mirrorlist->priv->loaded = TRUE;
