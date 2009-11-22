@@ -671,37 +671,55 @@ zif_sack_what_provides (ZifSack *sack, const gchar *search, GCancellable *cancel
  *
  * Return a list of custom categories from all repos.
  *
- * Return value: an array of #PkItemCategory's
+ * Return value: an array of #PkCategory's
  **/
 GPtrArray *
 zif_sack_get_categories (ZifSack *sack, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	guint i, j;
 	GPtrArray *array;
-	PkItemCategory *obj;
-	PkItemCategory *obj_tmp;
+	PkCategory *obj;
+	PkCategory *obj_tmp;
+	gchar *parent_id;
+	gchar *parent_id_tmp;
+	gchar *cat_id;
+	gchar *cat_id_tmp;
 
 	g_return_val_if_fail (ZIF_IS_SACK (sack), NULL);
 
 	/* get all results from all repos */
 	array = zif_sack_repos_search (sack, PK_ROLE_ENUM_GET_CATEGORIES, NULL, cancellable, completion, error);
+	if (array == NULL)
+		goto out;
 
 	/* remove duplicate parents and groups */
 	for (i=0; i<array->len; i++) {
 		obj = g_ptr_array_index (array, i);
+		g_object_get (obj,
+			      "parent-id", &parent_id,
+			      "cat-id", &cat_id,
+			      NULL);
 		for (j=0; j<array->len; j++) {
 			if (i == j)
 				continue;
 			obj_tmp = g_ptr_array_index (array, j);
-			if (g_strcmp0 (obj_tmp->parent_id, obj->parent_id) == 0 &&
-			    g_strcmp0 (obj_tmp->cat_id, obj->cat_id) == 0) {
-				egg_warning ("duplicate %s-%s", obj->parent_id, obj->cat_id);
-				pk_item_category_unref (obj_tmp);
+			g_object_get (obj_tmp,
+				      "parent-id", &parent_id_tmp,
+				      "cat-id", &cat_id_tmp,
+				      NULL);
+			if (g_strcmp0 (parent_id_tmp, parent_id) == 0 &&
+			    g_strcmp0 (cat_id_tmp, cat_id) == 0) {
+				egg_warning ("duplicate %s-%s", parent_id, cat_id);
+				g_object_unref (obj_tmp);
 				g_ptr_array_remove_index (array, j);
 			}
+			g_free (parent_id);
+			g_free (cat_id);
 		}
+		g_free (parent_id);
+		g_free (cat_id);
 	}
-
+out:
 	return array;
 }
 

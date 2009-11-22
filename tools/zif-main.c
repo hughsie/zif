@@ -914,7 +914,7 @@ main (int argc, char *argv[])
 		goto out;
 	}
 	if (g_strcmp0 (mode, "getcategories") == 0) {
-		const PkItemCategory *obj;
+		PkCategory *obj;
 
 		pk_progress_bar_start (progressbar, "Getting categories");
 
@@ -951,9 +951,23 @@ main (int argc, char *argv[])
 
 		/* dump to console */
 		for (i=0; i<array->len; i++) {
+			gchar *parent_id;
+			gchar *cat_id;
+			gchar *name;
+			gchar *summary;
 			obj = g_ptr_array_index (array, i);
+			g_object_get (obj,
+				      "parent-id", &parent_id,
+				      "cat-id", &cat_id,
+				      "name", &name,
+				      "summary", &summary,
+				      NULL);
 			g_print ("parent_id='%s', cat_id='%s', name='%s', summary='%s'\n",
-				 obj->parent_id, obj->cat_id, obj->name, obj->summary);
+				 parent_id, cat_id, name, summary);
+			g_free (parent_id);
+			g_free (cat_id);
+			g_free (name);
+			g_free (summary);
 		}
 		g_ptr_array_unref (array);
 		goto out;
