@@ -234,7 +234,9 @@ zif_sack_repos_search (ZifSack *sack, PkRoleEnum role, const gchar *search, GCan
 
 	/* nothing to do */
 	if (stores->len == 0) {
-		egg_debug ("nothing to do");
+		egg_warning ("nothing to do");
+		if (error != NULL)
+			*error = g_error_new (1, 0, "nothing to do as no stores in sack");
 		goto out;
 	}
 
@@ -447,10 +449,14 @@ zif_sack_refresh (ZifSack *sack, gboolean force, GCancellable *cancellable, ZifC
 		completion_local = zif_completion_get_child (completion);
 		ret = zif_store_refresh (store, force, cancellable, completion_local, &error_local);
 		if (!ret) {
-			if (error != NULL)
-				*error = g_error_new (1, 0, "failed to refresh %s: %s", zif_store_get_id (store), error_local->message);
-			g_error_free (error_local);
-			goto out;
+			//if (error != NULL)
+			//	*error = g_error_new (1, 0, "failed to refresh %s: %s", zif_store_get_id (store), error_local->message);
+			//g_error_free (error_local);
+			//goto out;
+			/* non-fatal */
+			g_print ("failed to refresh %s: %s\n", zif_store_get_id (store), error_local->message);
+			g_clear_error (&error_local);
+			ret = TRUE;
 		}
 
 		/* this section done */
@@ -562,6 +568,8 @@ zif_sack_search_category (ZifSack *sack, const gchar *group_id, GCancellable *ca
 
 	/* get all results from all repos */
 	array = zif_sack_repos_search (sack, PK_ROLE_ENUM_SEARCH_CATEGORY, group_id, cancellable, completion, error);
+	if (array == NULL)
+		goto out;
 
 	/* remove duplicate package_ids */
 	for (i=0; i<array->len; i++) {
@@ -580,7 +588,7 @@ zif_sack_search_category (ZifSack *sack, const gchar *group_id, GCancellable *ca
 			}
 		}
 	}
-
+out:
 	return array;
 }
 

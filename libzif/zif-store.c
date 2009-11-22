@@ -431,7 +431,7 @@ zif_store_find_package (ZifStore *store, const gchar *package_id, GCancellable *
  *
  * Return a list of custom categories.
  *
- * Return value: an array of #PkItemCategory's
+ * Return value: an array of #PkCategory's
  **/
 GPtrArray *
 zif_store_get_categories (ZifStore *store, GCancellable *cancellable, ZifCompletion *completion, GError **error)
