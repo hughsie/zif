@@ -33,6 +33,7 @@
 #include <glib.h>
 #include <libsoup/soup.h>
 
+#include "zif-config.h"
 #include "zif-download.h"
 #include "zif-completion.h"
 
@@ -51,6 +52,7 @@ struct _ZifDownloadPrivate
 	SoupSession		*session;
 	SoupMessage		*msg;
 	ZifCompletion		*completion;
+	ZifConfig		*config;
 };
 
 static gpointer zif_download_object = NULL;
@@ -216,12 +218,20 @@ zif_download_set_proxy (ZifDownload *download, const gchar *http_proxy, GError *
 {
 	gboolean ret = FALSE;
 	SoupURI *proxy = NULL;
+	guint connection_timeout;
 
 	g_return_val_if_fail (ZIF_IS_DOWNLOAD (download), FALSE);
 
+	/* get default value from the config file */
+	connection_timeout = zif_config_get_uint (download->priv->config, "connection_timeout", NULL);
+	if (connection_timeout == G_MAXUINT)
+		connection_timeout = 5;
+
 	/* setup the session */
 	download->priv->session = soup_session_async_new_with_options (SOUP_SESSION_PROXY_URI, proxy,
-								       SOUP_SESSION_USER_AGENT, "zif", NULL);
+								       SOUP_SESSION_USER_AGENT, "zif",
+								       SOUP_SESSION_TIMEOUT, connection_timeout,
+								       NULL);
 	if (download->priv->session == NULL) {
 		if (error != NULL)
 			*error = g_error_new (1, 0, "could not setup session");
@@ -249,6 +259,7 @@ zif_download_finalize (GObject *object)
 		g_object_unref (download->priv->msg);
 	if (download->priv->session != NULL)
 		g_object_unref (download->priv->session);
+	g_object_unref (download->priv->config);
 
 	G_OBJECT_CLASS (zif_download_parent_class)->finalize (object);
 }
@@ -276,6 +287,7 @@ zif_download_init (ZifDownload *download)
 	download->priv->session = NULL;
 	download->priv->proxy = NULL;
 	download->priv->completion = NULL;
+	download->priv->config = zif_config_new ();
 }
 
 /**

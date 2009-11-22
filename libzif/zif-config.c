@@ -134,13 +134,6 @@ zif_config_get_string (ZifConfig *config, const gchar *key, GError **error)
 		goto free_error;
 	}
 
-	/* distro constants */
-	if (g_strcmp0 (key, "releasever") == 0) {
-		//TODO: get from fedora-release
-		value = g_strdup ("11");
-		goto free_error;
-	}
-
 	/* nothing matched */
 	if (error != NULL)
 		*error = g_error_new (1, 0, "failed to read %s: %s", key, error_local->message);
@@ -190,17 +183,17 @@ out:
  *
  * Gets a unsigned integer value from a local setting, falling back to the config file.
  *
- * Return value: the data value
+ * Return value: the data value, or %G_MAXUINT for error
  **/
 guint
 zif_config_get_uint (ZifConfig *config, const gchar *key, GError **error)
 {
 	gchar *value;
 	gboolean ret;
-	guint retval = 0;
+	guint retval = G_MAXUINT;
 
-	g_return_val_if_fail (ZIF_IS_CONFIG (config), FALSE);
-	g_return_val_if_fail (key != NULL, FALSE);
+	g_return_val_if_fail (ZIF_IS_CONFIG (config), G_MAXUINT);
+	g_return_val_if_fail (key != NULL, G_MAXUINT);
 
 	/* get string value */
 	value = zif_config_get_string (config, key, error);
@@ -308,7 +301,7 @@ out:
 }
 
 /**
- * zif_config_expand_substitutions:
+ * zif_config_expand_substitutions:"
  * @config: the #ZifConfig object
  * @text: string to scan, e.g. "http://fedora/$releasever/$basearch/moo.rpm"
  * @error: a #GError which is used on failure, or %NULL
@@ -379,6 +372,7 @@ zif_config_set_filename (ZifConfig *config, const gchar *filename, GError **erro
 	gboolean ret;
 	GError *error_local = NULL;
 	gchar *basearch = NULL;
+	gchar *releasever = NULL;
 	const gchar *text;
 	GPtrArray *array;
 	guint i;
@@ -416,6 +410,31 @@ zif_config_set_filename (ZifConfig *config, const gchar *filename, GError **erro
 	/* done */
 	config->priv->loaded = TRUE;
 
+	/* calculate the release version if not specified in the config file */
+	releasever = zif_config_get_string (config, "releasever", NULL);
+	if (releasever == NULL) {
+		/* get distro constants from fedora-release */
+		ret = g_file_get_contents ("/etc/fedora-release", &releasever, NULL, &error_local);
+		if (!ret) {
+			if (error != NULL)
+				*error = g_error_new (1, 0, "failed to get distro release version: %s", error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+
+		/* get the value from 'Fedora release 11.92 (Rawhide)' */
+		g_strdelimit (releasever, " ", '\0');
+
+		/* set local */
+		ret = zif_config_set_local (config, "releasever", releasever+15, &error_local);
+		if (!ret) {
+			if (error != NULL)
+				*error = g_error_new (1, 0, "failed to set distro release version: %s", error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+	}
+
 	/* calculate the valid basearchs */
 	basearch = zif_config_get_string (config, "basearch", &error_local);
 	if (basearch == NULL) {
@@ -445,6 +464,7 @@ zif_config_set_filename (ZifConfig *config, const gchar *filename, GError **erro
 	g_ptr_array_unref (array);
 out:
 	g_free (basearch);
+	g_free (releasever);
 	return ret;
 }
 
