@@ -1,9 +1,9 @@
-AC_PREREQ(2.52)
+AC_PREREQ(2.65)
 
-AC_INIT(zif, 0.0.1)
+AC_INIT([zif],[0.0.1])
 AC_CONFIG_SRCDIR(libzif)
 AM_INIT_AUTOMAKE(AC_PACKAGE_NAME, AC_PACKAGE_VERSION)
-AM_CONFIG_HEADER(config.h)
+AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
 
 # libtool versioning - this applies to libzif
@@ -25,9 +25,9 @@ AC_SUBST(LT_AGE)
 AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_INSTALL
-AC_ISC_POSIX
+AC_SEARCH_LIBS([strerror],[cposix])
 AC_HEADER_STDC
-AC_PROG_LIBTOOL
+LT_INIT
 AM_PROG_CC_C_O
 
 # set up gtk-doc
@@ -170,7 +170,7 @@ fi
 dnl ---------------------------------------------------------------------------
 dnl - Makefiles, etc.
 dnl ---------------------------------------------------------------------------
-AC_OUTPUT([
+AC_CONFIG_FILES([
 Makefile
 libzif/Makefile
 libzif/zif.pc
@@ -179,6 +179,7 @@ docs/Makefile
 docs/api/Makefile
 docs/api/version.xml
 ])
+AC_OUTPUT
 
 dnl ==========================================================================
 echo "
