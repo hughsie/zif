@@ -33,6 +33,7 @@ void zif_monitor_test (EggTest *test);
 void zif_config_test (EggTest *test);
 void zif_utils_test (EggTest *test);
 void zif_package_test (EggTest *test);
+void zif_package_local_test (EggTest *test);
 void zif_store_local_test (EggTest *test);
 void zif_groups_test (EggTest *test);
 void zif_store_remote_test (EggTest *test);
@@ -70,6 +71,7 @@ main (int argc, char **argv)
 	zif_monitor_test (test);
 	zif_package_test (test);
 	zif_store_local_test (test);
+	zif_package_local_test (test);
 	zif_groups_test (test);
 	zif_store_remote_test (test);
 	zif_repos_test (test);
