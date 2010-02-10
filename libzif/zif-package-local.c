@@ -164,25 +164,33 @@ static gchar *
 zif_package_local_id_from_header (Header header)
 {
 	gchar *package_id;
-	const gchar *name;
-	gchar *epoch;
-	const gchar *version;
-	const gchar *release;
-	const gchar *arch;
-	uint32_t *epoch_p;
+	const gchar *name = NULL;
+	const gchar *epoch = NULL;
+	const gchar *version = NULL;
+	const gchar *release = NULL;
+	const gchar *arch = NULL;
+	struct rpmtd_s value;
 
-	/* get NEVRA, cannot fail */
-	headerNEVRA (header, &name, &epoch_p, &version, &release, &arch);
+	/* get NEVRA */
+	if (headerGet(header, RPMTAG_NAME, &value, HEADERGET_DEFAULT))
+		name = rpmtdGetString (&value);
+	if (headerGet(header, RPMTAG_EPOCH, &value, HEADERGET_DEFAULT))
+		epoch = rpmtdGetString (&value);
+	if (headerGet(header, RPMTAG_VERSION, &value, HEADERGET_DEFAULT))
+		version = rpmtdGetString (&value);
+	if (headerGet(header, RPMTAG_RELEASE, &value, HEADERGET_DEFAULT))
+		release = rpmtdGetString (&value);
+	if (headerGet(header, RPMTAG_ARCH, &value, HEADERGET_DEFAULT))
+		arch = rpmtdGetString (&value);
 
 	/* trivial */
-	if (epoch_p == NULL) {
+	if (epoch == NULL) {
 		package_id = zif_package_id_from_nevra (name, NULL, version, release, arch, "installed");
 		goto out;
 	}
 
-	epoch = g_strdup_printf ("%i", *epoch_p);
+	/* with epoch */
 	package_id = zif_package_id_from_nevra (name, epoch, version, release, arch, "installed");
-	g_free (epoch);
 out:
 	return package_id;
 }

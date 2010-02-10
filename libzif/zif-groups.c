@@ -400,7 +400,7 @@ zif_groups_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "get groups");
 	groups_bit = zif_groups_get_groups (groups, NULL);
-	text = pk_group_bitfield_to_text (groups_bit);
+	text = pk_group_bitfield_to_string (groups_bit);
 	if (egg_strequal (text, "admin-tools;desktop-gnome;desktop-kde;desktop-other;"
 				"education;fonts;games;graphics;internet;"
 				"legacy;localization;multimedia;office;other;programming;"

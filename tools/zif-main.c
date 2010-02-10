@@ -986,7 +986,7 @@ main (int argc, char *argv[])
 		}
 
 		/* convert to text */
-		text = pk_group_bitfield_to_text (group_bitfield);
+		text = pk_group_bitfield_to_string (group_bitfield);
 		g_strdelimit (text, ";", '\n');
 
 		/* print it */

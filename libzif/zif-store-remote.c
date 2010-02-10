@@ -1781,9 +1781,9 @@ zif_store_remote_get_categories (ZifStore *store, GCancellable *cancellable, Zif
 	ZifStoreRemote *remote = ZIF_STORE_REMOTE (store);
 	ZifCompletion *completion_local;
 	ZifCompletion *completion_loop;
-	const ZifRepoMdCompsObj *category;
+//	const ZifRepoMdCompsObj *comps_category;
 	const ZifRepoMdCompsObj *group;
-	PkCategory *obj;
+	PkCategory *category;
 
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), FALSE);
 	g_return_val_if_fail (remote->priv->id != NULL, FALSE);
@@ -1857,10 +1857,10 @@ zif_store_remote_get_categories (ZifStore *store, GCancellable *cancellable, Zif
 		/* get the groups for this category */
 		completion_loop = zif_completion_get_child (completion_local);
 		array_groups = zif_repo_md_comps_get_groups_for_category (ZIF_REPO_MD_COMPS (remote->priv->md_comps),
-									  category->id, cancellable, completion_loop, &error_local);
+									  pk_category_get_id (category), cancellable, completion_loop, &error_local);
 		if (array_groups == NULL) {
 			if (error != NULL)
-				*error = g_error_new (1, 0, "failed to get groups for %s: %s", category->id, error_local->message);
+				*error = g_error_new (1, 0, "failed to get groups for %s: %s", pk_category_get_id (category), error_local->message);
 			g_error_free (error_local);
 
 			/* undo the work we've already done */
@@ -1873,25 +1873,25 @@ zif_store_remote_get_categories (ZifStore *store, GCancellable *cancellable, Zif
 		if (array_groups->len > 0) {
 
 			/* first, add the parent */
-			obj = pk_category_new ();
-			g_object_set (obj,
-				      "cat-id", category->id,
-				      "name", category->name,
-				      "summary", category->description,
+			category = pk_category_new ();
+			g_object_set (category,
+				      "cat-id", pk_category_get_id (category),
+				      "name", pk_category_get_name (category),
+				      "summary", pk_category_get_summary (category),
 				      NULL);
-			g_ptr_array_add (array, obj);
+			g_ptr_array_add (array, category);
 
 			/* second, add the groups belonging to this parent */
 			for (j=0; j<array_groups->len; j++) {
 				group = g_ptr_array_index (array_groups, j);
-				obj = pk_category_new ();
-				g_object_set (obj,
-					      "parent-id", category->id,
+				category = pk_category_new ();
+				g_object_set (category,
+					      "parent-id", pk_category_get_id (category),
 					      "cat-id", group->id,
 					      "name", group->name,
 					      "summary", group->description,
 					      NULL);
-				g_ptr_array_add (array, obj);
+				g_ptr_array_add (array, category);
 			}
 		}
 
@@ -2486,7 +2486,7 @@ zif_store_remote_test (EggTest *test)
 	gboolean ret;
 	GError *error = NULL;
 	const gchar *id;
-	const PkCategory *obj;
+	PkCategory *category;
 	guint i;
 
 	if (!egg_test_start (test, "ZifStoreRemote"))
@@ -2703,36 +2703,29 @@ zif_store_remote_test (EggTest *test)
 	else
 		egg_test_failed (test, "no categories"); //TODO: failure
 
-	/* dump to console */
-	for (i=0; i<array->len; i++) {
-		obj = g_ptr_array_index (array, i);
-		g_print ("parent_id='%s', cat_id='%s', name='%s', summary='%s', icon='%s'\n",
-			 obj->parent_id, obj->cat_id, obj->name, obj->summary, obj->icon);
-	}
-
 	/* get first object */
-	obj = g_ptr_array_index (array, 0);
+	category = g_ptr_array_index (array, 0);
 
 	/************************************************************/
 	egg_test_title (test, "test parent_id");
-	if (obj->parent_id == NULL)
+	if (pk_category_get_parent_id (category) == NULL)
 		egg_test_success (test, NULL);
 	else
-		egg_test_failed (test, "incorrect data: %s", obj->parent_id);
+		egg_test_failed (test, "incorrect data: %s", pk_category_get_parent_id (category));
 
 	/************************************************************/
 	egg_test_title (test, "test cat_id");
-	if (g_strcmp0 (obj->cat_id, "language-support") == 0)
+	if (g_strcmp0 (pk_category_get_id (category), "language-support") == 0)
 		egg_test_success (test, NULL);
 	else
-		egg_test_failed (test, "incorrect data: %s", obj->cat_id);
+		egg_test_failed (test, "incorrect data: %s", pk_category_get_id (category));
 
 	/************************************************************/
 	egg_test_title (test, "test name");
-	if (g_strcmp0 (obj->name, "Languages") == 0)
+	if (g_strcmp0 (pk_category_get_name (category), "Languages") == 0)
 		egg_test_success (test, NULL);
 	else
-		egg_test_failed (test, "incorrect data: %s", obj->name);
+		egg_test_failed (test, "incorrect data: %s", pk_category_get_name (category));
 
 	g_ptr_array_unref (array);
 
