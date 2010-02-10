@@ -124,12 +124,17 @@ zif_groups_load (ZifGroups *groups, GError **error)
 	GError *error_local = NULL;
 
 	g_return_val_if_fail (ZIF_IS_GROUPS (groups), FALSE);
-	g_return_val_if_fail (groups->priv->mapping_file != NULL, FALSE);
 	g_return_val_if_fail (groups->priv->categories->len == 0, FALSE);
 
 	/* already loaded */
 	if (groups->priv->loaded)
 		goto out;
+
+	/* no mapping file */
+	if (groups->priv->mapping_file == NULL) {
+		egg_warning ("no mapping file, so cannot load group lists");
+		goto out;
+	}
 
 	/* get data */
 	ret = g_file_get_contents (groups->priv->mapping_file, &data, NULL, &error_local);
