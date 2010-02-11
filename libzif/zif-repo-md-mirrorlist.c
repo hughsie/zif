@@ -317,7 +317,7 @@ zif_repo_md_mirrorlist_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "correct number");
-	if (array->len == 4)
+	if (array->len == 3)
 		egg_test_success (test, NULL);
 	else
 		egg_test_failed (test, "incorrect value %i", array->len);
@@ -325,7 +325,7 @@ zif_repo_md_mirrorlist_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "correct value");
 	uri = g_ptr_array_index (array, 0);
-	if (g_strcmp0 (uri, "http://rpm.livna.org/repo/11.91/i386/") == 0)
+	if (g_strcmp0 (uri, "http://rpm.livna.org/repo/11/i386/") == 0)
 		egg_test_success (test, NULL);
 	else
 		egg_test_failed (test, "failed to get correct url '%s'", uri);

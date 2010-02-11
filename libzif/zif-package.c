@@ -317,11 +317,10 @@ zif_package_is_gui (ZifPackage *package)
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), FALSE);
 	g_return_val_if_fail (package->priv->package_id_split != NULL, FALSE);
 
-	/* trivial */
-	if (package->priv->requires == NULL)
-		return FALSE;
-
-	array = package->priv->requires;
+	/* get list of requires */
+	array = zif_package_get_requires (package, NULL);
+	if (array == NULL)
+		goto out;
 	for (i=0; i<array->len; i++) {
 		depend = g_ptr_array_index (array, i);
 		if (g_strstr_len (depend->name, -1, "gtk") != NULL)
@@ -329,6 +328,8 @@ zif_package_is_gui (ZifPackage *package)
 		if (g_strstr_len (depend->name, -1, "kde") != NULL)
 			return TRUE;
 	}
+	g_ptr_array_unref (array);
+out:
 	return FALSE;
 }
 
@@ -494,6 +495,23 @@ zif_package_get_package_id (ZifPackage *package)
 }
 
 /**
+ * zif_package_ensure_data:
+ **/
+static gboolean
+zif_package_ensure_data (ZifPackage *package, ZifPackageEnsureType type, GError **error)
+{
+	ZifPackageClass *klass = ZIF_PACKAGE_GET_CLASS (package);
+
+	g_return_val_if_fail (ZIF_IS_PACKAGE (package), FALSE);
+
+	/* no support */
+	if (klass->ensure_data == NULL)
+		return TRUE;
+
+	return klass->ensure_data (package, type, error);
+}
+
+/**
  * zif_package_get_summary:
  * @package: the #ZifPackage object
  * @error: a #GError which is used on failure, or %NULL
@@ -505,14 +523,16 @@ zif_package_get_package_id (ZifPackage *package)
 ZifString *
 zif_package_get_summary (ZifPackage *package, GError **error)
 {
+	gboolean ret;
+
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
 	g_return_val_if_fail (package->priv->package_id_split != NULL, NULL);
 
 	/* not exists */
 	if (package->priv->summary == NULL) {
-		if (error != NULL)
-			*error = g_error_new (1, 0, "no data for %s", package->priv->package_id_split[PK_PACKAGE_ID_NAME]);
-		return NULL;
+		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_SUMMARY, error);
+		if (!ret)
+			return NULL;
 	}
 
 	/* return refcounted */
@@ -531,14 +551,16 @@ zif_package_get_summary (ZifPackage *package, GError **error)
 ZifString *
 zif_package_get_description (ZifPackage *package, GError **error)
 {
+	gboolean ret;
+
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
 	g_return_val_if_fail (package->priv->package_id_split != NULL, NULL);
 
 	/* not exists */
 	if (package->priv->description == NULL) {
-		if (error != NULL)
-			*error = g_error_new (1, 0, "no data for %s", package->priv->package_id_split[PK_PACKAGE_ID_NAME]);
-		return NULL;
+		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_DESCRIPTION, error);
+		if (!ret)
+			return NULL;
 	}
 
 	/* return refcounted */
@@ -557,14 +579,16 @@ zif_package_get_description (ZifPackage *package, GError **error)
 ZifString *
 zif_package_get_license (ZifPackage *package, GError **error)
 {
+	gboolean ret;
+
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
 	g_return_val_if_fail (package->priv->package_id_split != NULL, NULL);
 
 	/* not exists */
 	if (package->priv->license == NULL) {
-		if (error != NULL)
-			*error = g_error_new (1, 0, "no data for %s", package->priv->package_id_split[PK_PACKAGE_ID_NAME]);
-		return NULL;
+		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_LICENCE, error);
+		if (!ret)
+			return NULL;
 	}
 
 	/* return refcounted */
@@ -583,14 +607,16 @@ zif_package_get_license (ZifPackage *package, GError **error)
 ZifString *
 zif_package_get_url (ZifPackage *package, GError **error)
 {
+	gboolean ret;
+
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
 	g_return_val_if_fail (package->priv->package_id_split != NULL, NULL);
 
 	/* not exists */
 	if (package->priv->url == NULL) {
-		if (error != NULL)
-			*error = g_error_new (1, 0, "no data for %s", package->priv->package_id_split[PK_PACKAGE_ID_NAME]);
-		return NULL;
+		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_URL, error);
+		if (!ret)
+			return NULL;
 	}
 
 	/* return refcounted */
@@ -635,14 +661,16 @@ zif_package_get_filename (ZifPackage *package, GError **error)
 ZifString *
 zif_package_get_category (ZifPackage *package, GError **error)
 {
+	gboolean ret;
+
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
 	g_return_val_if_fail (package->priv->package_id_split != NULL, NULL);
 
 	/* not exists */
 	if (package->priv->category == NULL) {
-		if (error != NULL)
-			*error = g_error_new (1, 0, "no data for %s", package->priv->package_id_split[PK_PACKAGE_ID_NAME]);
-		return NULL;
+		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_GROUP, error);
+		if (!ret)
+			return NULL;
 	}
 
 	/* return refcounted */
@@ -661,6 +689,15 @@ zif_package_get_category (ZifPackage *package, GError **error)
 PkGroupEnum
 zif_package_get_group (ZifPackage *package, GError **error)
 {
+	gboolean ret;
+
+	/* not exists */
+	if (package->priv->group == PK_GROUP_ENUM_UNKNOWN) {
+		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_FILES, error);
+		if (!ret)
+			return PK_GROUP_ENUM_UNKNOWN;
+	}
+
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), PK_GROUP_ENUM_UNKNOWN);
 	g_return_val_if_fail (package->priv->package_id_split != NULL, PK_GROUP_ENUM_UNKNOWN);
 	return package->priv->group;
@@ -680,6 +717,14 @@ zif_package_get_group (ZifPackage *package, GError **error)
 guint64
 zif_package_get_size (ZifPackage *package, GError **error)
 {
+	gboolean ret;
+
+	if (package->priv->size == 0) {
+		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_SIZE, error);
+		if (!ret)
+			return 0;
+	}
+
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), 0);
 	g_return_val_if_fail (package->priv->package_id_split != NULL, 0);
 	return package->priv->size;
@@ -697,14 +742,16 @@ zif_package_get_size (ZifPackage *package, GError **error)
 GPtrArray *
 zif_package_get_files (ZifPackage *package, GError **error)
 {
+	gboolean ret;
+
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
 	g_return_val_if_fail (package->priv->package_id_split != NULL, NULL);
 
 	/* not exists */
 	if (package->priv->files == NULL) {
-		if (error != NULL)
-			*error = g_error_new (1, 0, "no data for %s", package->priv->package_id_split[PK_PACKAGE_ID_NAME]);
-		return NULL;
+		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_FILES, error);
+		if (!ret)
+			return NULL;
 	}
 
 	/* return refcounted */
@@ -723,14 +770,16 @@ zif_package_get_files (ZifPackage *package, GError **error)
 GPtrArray *
 zif_package_get_requires (ZifPackage *package, GError **error)
 {
+	gboolean ret;
+
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
 	g_return_val_if_fail (package->priv->package_id_split != NULL, NULL);
 
 	/* not exists */
 	if (package->priv->requires == NULL) {
-		if (error != NULL)
-			*error = g_error_new (1, 0, "no data for %s", package->priv->package_id_split[PK_PACKAGE_ID_NAME]);
-		return NULL;
+		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_REQUIRES, error);
+		if (!ret)
+			return NULL;
 	}
 
 	/* return refcounted */
@@ -749,14 +798,16 @@ zif_package_get_requires (ZifPackage *package, GError **error)
 GPtrArray *
 zif_package_get_provides (ZifPackage *package, GError **error)
 {
+	gboolean ret;
+
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
 	g_return_val_if_fail (package->priv->package_id_split != NULL, NULL);
 
 	/* not exists */
 	if (package->priv->requires == NULL) {
-		if (error != NULL)
-			*error = g_error_new (1, 0, "no data for %s", package->priv->package_id_split[PK_PACKAGE_ID_NAME]);
-		return NULL;
+		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_PROVIDES, error);
+		if (!ret)
+			return NULL;
 	}
 
 	/* return refcounted */

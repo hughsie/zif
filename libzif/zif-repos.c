@@ -592,7 +592,7 @@ zif_repos_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "get name");
 	value = zif_store_remote_get_name (store, NULL, completion, NULL);
-	if (egg_strequal (value, "Fedora 11.91 - i386"))
+	if (egg_strequal (value, "Fedora 11 - i386"))
 		egg_test_success (test, NULL);
 	else
 		egg_test_failed (test, "invalid name '%s'", value);

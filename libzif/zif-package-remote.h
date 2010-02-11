@@ -51,7 +51,7 @@ struct _ZifPackageRemote
 
 struct _ZifPackageRemoteClass
 {
-	GObjectClass		 parent_class;
+	ZifPackageClass		 parent_class;
 };
 
 GType			 zif_package_remote_get_type		(void);

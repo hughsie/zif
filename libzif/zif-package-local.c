@@ -55,6 +55,7 @@
 struct _ZifPackageLocalPrivate
 {
 	ZifGroups		*groups;
+	Header			 header;
 };
 
 G_DEFINE_TYPE (ZifPackageLocal, zif_package_local, ZIF_TYPE_PACKAGE)
@@ -71,6 +72,7 @@ zif_get_header_string (Header header, rpmTag tag)
 
 	td = rpmtdNew ();
 	retval = headerGet (header, tag, td, HEADERGET_MINMEM);
+
 	if (retval != 1)
 		goto out;
 	data = zif_string_new (rpmtdGetString (td));
@@ -249,6 +251,199 @@ zif_package_local_get_depends_from_name_flags_version (GPtrArray *names, GPtrArr
 	return array;
 }
 
+/*
+ * zif_package_local_ensure_data:
+ */
+static gboolean
+zif_package_local_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, GError **error)
+{
+	GPtrArray *files;
+	GPtrArray *dirnames;
+	GPtrArray *basenames;
+	GPtrArray *fileindex;
+	guint i;
+	gchar *filename;
+	guint size;
+	ZifString *tmp;
+	PkGroupEnum group;
+//	GPtrArray *tmparray;
+	GPtrArray *depends;
+//	GPtrArray *provides;
+	GPtrArray *flags;
+	GPtrArray *names;
+	GPtrArray *versions;
+	gboolean ret = TRUE;
+	Header header = ZIF_PACKAGE_LOCAL(pkg)->priv->header;
+
+	/* eigh? */
+	if (header == NULL) {
+		g_set_error (error, 1, 0, "no header for %s", zif_package_get_id (pkg));
+		ret = FALSE;
+		goto out;
+	}
+
+	if (type == ZIF_PACKAGE_ENSURE_TYPE_FILES) {
+		/* files */
+		basenames = zif_get_header_string_array (header, RPMTAG_BASENAMES);
+
+		/* create the files */
+		if (basenames != NULL) {
+
+			/* get the mapping */
+			dirnames = zif_get_header_string_array (header, RPMTAG_DIRNAMES);
+			fileindex = zif_get_header_uint32_index (header, RPMTAG_DIRINDEXES, basenames->len);
+			if (basenames->len != fileindex->len)
+				egg_error ("internal error, basenames length is not the same as index length, possibly corrupt db?");
+			if (fileindex->len > fileindex->len)
+				egg_error ("internal error, fileindex length is bigger than index length, possibly corrupt db?");
+
+			files = g_ptr_array_new_with_free_func (g_free);
+			for (i=0; i<basenames->len-2 /* why -1? I'm not sure */; i++) {
+				guint idx;
+				idx = GPOINTER_TO_UINT (g_ptr_array_index (fileindex, i));
+				if (idx > dirnames->len) {
+					egg_warning ("index bigger than dirnames (%i > %i) for package %s [%s], i=%i, dn=%i, bn=%i, fi=%i",
+						     idx, dirnames->len, zif_package_get_package_id (pkg),
+						     (const gchar *) g_ptr_array_index (basenames, i),
+						     i, dirnames->len, basenames->len, fileindex->len);
+					continue;
+				}
+				filename = g_strconcat (g_ptr_array_index (dirnames, idx), g_ptr_array_index (basenames, i), NULL);
+				g_ptr_array_add (files, filename);
+			}
+			zif_package_set_files (pkg, files);
+			g_ptr_array_unref (files);
+
+			/* free, as we have files */
+			g_ptr_array_unref (dirnames);
+			g_ptr_array_unref (basenames);
+			g_ptr_array_unref (fileindex);
+		} else {
+			files = g_ptr_array_new_with_free_func (g_free);
+			zif_package_set_files (pkg, files);
+			g_ptr_array_unref (files);
+		}
+	} else if (type == ZIF_PACKAGE_ENSURE_TYPE_SUMMARY) {
+		/* summary */
+		tmp = zif_get_header_string (header, RPMTAG_SUMMARY);
+		zif_package_set_summary (pkg, tmp);
+		zif_string_unref (tmp);
+
+	} else if (type == ZIF_PACKAGE_ENSURE_TYPE_LICENCE) {
+		/* license */
+		tmp = zif_get_header_string (header, RPMTAG_LICENSE);
+		zif_package_set_license (pkg, tmp);
+		zif_string_unref (tmp);
+
+	} else if (type == ZIF_PACKAGE_ENSURE_TYPE_DESCRIPTION) {
+		/* description */
+		tmp = zif_get_header_string (header, RPMTAG_DESCRIPTION);
+		if (tmp == NULL) {
+			egg_warning ("no description for %s", zif_package_get_id (pkg));
+			tmp = zif_string_new ("");
+		}
+		zif_package_set_description (pkg, tmp);
+		zif_string_unref (tmp);
+
+	} else if (type == ZIF_PACKAGE_ENSURE_TYPE_URL) {
+		/* url */
+		tmp = zif_get_header_string (header, RPMTAG_URL);
+		if (tmp != NULL) {
+			zif_package_set_url (pkg, tmp);
+			zif_string_unref (tmp);
+		}
+
+	} else if (type == ZIF_PACKAGE_ENSURE_TYPE_SIZE) {
+		/* size */
+		size = zif_get_header_u32 (header, RPMTAG_SIZE);
+		if (size != 0)
+			zif_package_set_size (pkg, size);
+
+	} else if (type == ZIF_PACKAGE_ENSURE_TYPE_GROUP) {
+		/* category && group */
+		tmp = zif_get_header_string (header, RPMTAG_GROUP);
+		zif_package_set_category (pkg, tmp);
+		group = zif_groups_get_group_for_cat (ZIF_PACKAGE_LOCAL (pkg)->priv->groups, zif_string_get_value (tmp), NULL);
+		if (group != PK_GROUP_ENUM_UNKNOWN)
+			zif_package_set_group (pkg, group);
+		zif_string_unref (tmp);
+
+	} else if (type == ZIF_PACKAGE_ENSURE_TYPE_REQUIRES) {
+		/* requires */
+		names = zif_get_header_string_array (header, RPMTAG_REQUIRENAME);
+		if (names == NULL) {
+			depends = g_ptr_array_new_with_free_func ((GDestroyNotify) zif_depend_unref);
+			zif_package_set_requires (pkg, depends);
+			g_ptr_array_unref (depends);
+		} else {
+			versions = zif_get_header_string_array (header, RPMTAG_REQUIREVERSION);
+			flags = zif_get_header_uint32_index (header, RPMTAG_REQUIREFLAGS, names->len);
+			depends = zif_package_local_get_depends_from_name_flags_version (names, flags, versions);
+			zif_package_set_requires (pkg, depends);
+			g_ptr_array_unref (depends);
+			g_ptr_array_unref (names);
+			g_ptr_array_unref (versions);
+			g_ptr_array_unref (flags);
+		}
+
+	} else if (type == ZIF_PACKAGE_ENSURE_TYPE_PROVIDES) {
+		/* provides */
+		names = zif_get_header_string_array (header, RPMTAG_PROVIDENAME);
+		if (names == NULL) {
+			depends = g_ptr_array_new_with_free_func ((GDestroyNotify) zif_depend_unref);
+			zif_package_set_provides (pkg, depends);
+			g_ptr_array_unref (depends);
+		} else {
+			versions = zif_get_header_string_array (header, RPMTAG_PROVIDEVERSION);
+			flags = zif_get_header_uint32_index (header, RPMTAG_PROVIDEFLAGS, names->len);
+			depends = zif_package_local_get_depends_from_name_flags_version (names, flags, versions);
+			zif_package_set_provides (pkg, depends);
+			g_ptr_array_unref (depends);
+			g_ptr_array_unref (names);
+			g_ptr_array_unref (versions);
+			g_ptr_array_unref (flags);
+		}
+
+	} else if (type == ZIF_PACKAGE_ENSURE_TYPE_CONFLICTS) {
+		/* conflicts */
+		names = zif_get_header_string_array (header, RPMTAG_CONFLICTNAME);
+		if (names == NULL) {
+			depends = g_ptr_array_new_with_free_func ((GDestroyNotify) zif_depend_unref);
+			//zif_package_set_conflicts (pkg, depends);
+			g_ptr_array_unref (depends);
+		} else {
+			versions = zif_get_header_string_array (header, RPMTAG_CONFLICTVERSION);
+			flags = zif_get_header_uint32_index (header, RPMTAG_CONFLICTFLAGS, names->len);
+			depends = zif_package_local_get_depends_from_name_flags_version (names, flags, versions);
+			//zif_package_set_conflicts (pkg, depends);
+			g_ptr_array_unref (depends);
+			g_ptr_array_unref (names);
+			g_ptr_array_unref (versions);
+			g_ptr_array_unref (flags);
+		}
+
+	} else if (type == ZIF_PACKAGE_ENSURE_TYPE_OBSOLETES) {
+		/* obsoletes */
+		names = zif_get_header_string_array (header, RPMTAG_OBSOLETENAME);
+		if (names == NULL) {
+			depends = g_ptr_array_new_with_free_func ((GDestroyNotify) zif_depend_unref);
+			//zif_package_set_obsoletes (pkg, depends);
+			g_ptr_array_unref (depends);
+		} else {
+			versions = zif_get_header_string_array (header, RPMTAG_OBSOLETEVERSION);
+			flags = zif_get_header_uint32_index (header, RPMTAG_OBSOLETEFLAGS, names->len);
+			depends = zif_package_local_get_depends_from_name_flags_version (names, flags, versions);
+			//zif_package_set_obsoletes (pkg, depends);
+			g_ptr_array_unref (depends);
+			g_ptr_array_unref (names);
+			g_ptr_array_unref (versions);
+			g_ptr_array_unref (flags);
+		}
+	}
+out:
+	return ret;
+}
+
 /**
  * zif_package_local_set_from_header:
  * @pkg: the #ZifPackageLocal object
@@ -262,177 +457,20 @@ zif_package_local_get_depends_from_name_flags_version (GPtrArray *names, GPtrArr
 gboolean
 zif_package_local_set_from_header (ZifPackageLocal *pkg, Header header, GError **error)
 {
-	guint i;
-	guint size;
-	gchar *filename;
-	ZifString *tmp;
 	gchar *package_id;
-	PkGroupEnum group;
-	GPtrArray *fileindex;
-//	GPtrArray *tmparray;
-	GPtrArray *files;
-	GPtrArray *dirnames;
-	GPtrArray *basenames;
-	GPtrArray *depends;
-//	GPtrArray *provides;
-
-	GPtrArray *flags;
-	GPtrArray *names;
-	GPtrArray *versions;
 
 	g_return_val_if_fail (ZIF_IS_PACKAGE_LOCAL (pkg), FALSE);
 	g_return_val_if_fail (header != NULL, FALSE);
 
 	zif_package_set_installed (ZIF_PACKAGE (pkg), TRUE);
 
+	/* save header so we can read when required */
+	pkg->priv->header = headerLink (header);
+
 	/* id */
 	package_id = zif_package_local_id_from_header (header);
 	zif_package_set_id (ZIF_PACKAGE (pkg), package_id);
 	g_free (package_id);
-
-	/* summary */
-	tmp = zif_get_header_string (header, RPMTAG_SUMMARY);
-	zif_package_set_summary (ZIF_PACKAGE (pkg), tmp);
-	zif_string_unref (tmp);
-
-	/* license */
-	tmp = zif_get_header_string (header, RPMTAG_LICENSE);
-	zif_package_set_license (ZIF_PACKAGE (pkg), tmp);
-	zif_string_unref (tmp);
-
-	/* description */
-	tmp = zif_get_header_string (header, RPMTAG_DESCRIPTION);
-	zif_package_set_description (ZIF_PACKAGE (pkg), tmp);
-	zif_string_unref (tmp);
-
-	/* url */
-	tmp = zif_get_header_string (header, RPMTAG_URL);
-	if (tmp != NULL) {
-		zif_package_set_url (ZIF_PACKAGE (pkg), tmp);
-		zif_string_unref (tmp);
-	}
-
-	/* size */
-	size = zif_get_header_u32 (header, RPMTAG_SIZE);
-	if (size != 0)
-		zif_package_set_size (ZIF_PACKAGE (pkg), size);
-
-	/* category && group */
-	tmp = zif_get_header_string (header, RPMTAG_GROUP);
-	zif_package_set_category (ZIF_PACKAGE (pkg), tmp);
-	group = zif_groups_get_group_for_cat (pkg->priv->groups, zif_string_get_value (tmp), NULL);
-	if (group != PK_GROUP_ENUM_UNKNOWN)
-		zif_package_set_group (ZIF_PACKAGE (pkg), group);
-	zif_string_unref (tmp);
-
-	/* requires */
-	names = zif_get_header_string_array (header, RPMTAG_REQUIRENAME);
-	if (names == NULL) {
-		depends = g_ptr_array_new_with_free_func ((GDestroyNotify) zif_depend_unref);
-		zif_package_set_requires (ZIF_PACKAGE (pkg), depends);
-		g_ptr_array_unref (depends);
-	} else {	
-		versions = zif_get_header_string_array (header, RPMTAG_REQUIREVERSION);
-		flags = zif_get_header_uint32_index (header, RPMTAG_REQUIREFLAGS, names->len);
-		depends = zif_package_local_get_depends_from_name_flags_version (names, flags, versions);
-		zif_package_set_requires (ZIF_PACKAGE (pkg), depends);
-		g_ptr_array_unref (depends);
-		g_ptr_array_unref (names);
-		g_ptr_array_unref (versions);
-		g_ptr_array_unref (flags);
-	}
-
-	/* provides */
-	names = zif_get_header_string_array (header, RPMTAG_PROVIDENAME);
-	if (names == NULL) {
-		depends = g_ptr_array_new_with_free_func ((GDestroyNotify) zif_depend_unref);
-		zif_package_set_provides (ZIF_PACKAGE (pkg), depends);
-		g_ptr_array_unref (depends);
-	} else {	
-		versions = zif_get_header_string_array (header, RPMTAG_PROVIDEVERSION);
-		flags = zif_get_header_uint32_index (header, RPMTAG_PROVIDEFLAGS, names->len);
-		depends = zif_package_local_get_depends_from_name_flags_version (names, flags, versions);
-		zif_package_set_provides (ZIF_PACKAGE (pkg), depends);
-		g_ptr_array_unref (depends);
-		g_ptr_array_unref (names);
-		g_ptr_array_unref (versions);
-		g_ptr_array_unref (flags);
-	}
-
-	/* conflicts */
-	names = zif_get_header_string_array (header, RPMTAG_CONFLICTNAME);
-	if (names == NULL) {
-		depends = g_ptr_array_new_with_free_func ((GDestroyNotify) zif_depend_unref);
-		//zif_package_set_conflicts (ZIF_PACKAGE (pkg), depends);
-		g_ptr_array_unref (depends);
-	} else {	
-		versions = zif_get_header_string_array (header, RPMTAG_CONFLICTVERSION);
-		flags = zif_get_header_uint32_index (header, RPMTAG_CONFLICTFLAGS, names->len);
-		depends = zif_package_local_get_depends_from_name_flags_version (names, flags, versions);
-		//zif_package_set_conflicts (ZIF_PACKAGE (pkg), depends);
-		g_ptr_array_unref (depends);
-		g_ptr_array_unref (names);
-		g_ptr_array_unref (versions);
-		g_ptr_array_unref (flags);
-	}
-
-	/* obsoletes */
-	names = zif_get_header_string_array (header, RPMTAG_OBSOLETENAME);
-	if (names == NULL) {
-		depends = g_ptr_array_new_with_free_func ((GDestroyNotify) zif_depend_unref);
-		//zif_package_set_obsoletes (ZIF_PACKAGE (pkg), depends);
-		g_ptr_array_unref (depends);
-	} else {	
-		versions = zif_get_header_string_array (header, RPMTAG_OBSOLETEVERSION);
-		flags = zif_get_header_uint32_index (header, RPMTAG_OBSOLETEFLAGS, names->len);
-		depends = zif_package_local_get_depends_from_name_flags_version (names, flags, versions);
-		//zif_package_set_obsoletes (ZIF_PACKAGE (pkg), depends);
-		g_ptr_array_unref (depends);
-		g_ptr_array_unref (names);
-		g_ptr_array_unref (versions);
-		g_ptr_array_unref (flags);
-	}
-
-	/* files */
-	basenames = zif_get_header_string_array (header, RPMTAG_BASENAMES);
-
-	/* create the files */
-	if (basenames != NULL) {
-
-		/* get the mapping */
-		dirnames = zif_get_header_string_array (header, RPMTAG_DIRNAMES);
-		fileindex = zif_get_header_uint32_index (header, RPMTAG_DIRINDEXES, basenames->len);
-		if (basenames->len != fileindex->len)
-			egg_error ("internal error, basenames length is not the same as index length, possibly corrupt db?");
-		if (fileindex->len > fileindex->len)
-			egg_error ("internal error, fileindex length is bigger than index length, possibly corrupt db?");
-
-		files = g_ptr_array_new_with_free_func (g_free);
-		for (i=0; i<basenames->len-2 /* why -1? I'm not sure */; i++) {
-			guint idx;
-			idx = GPOINTER_TO_UINT (g_ptr_array_index (fileindex, i));
-			if (idx > dirnames->len) {
-				egg_warning ("index bigger than dirnames (%i > %i) for package %s [%s], i=%i, dn=%i, bn=%i, fi=%i",
-					     idx, dirnames->len, zif_package_get_package_id (ZIF_PACKAGE(pkg)),
-					     (const gchar *) g_ptr_array_index (basenames, i),
-					     i, dirnames->len, basenames->len, fileindex->len);
-				continue;
-			}
-			filename = g_strconcat (g_ptr_array_index (dirnames, idx), g_ptr_array_index (basenames, i), NULL);
-			g_ptr_array_add (files, filename);
-		}
-		zif_package_set_files (ZIF_PACKAGE (pkg), files);
-		g_ptr_array_unref (files);
-
-		/* free, as we have files */
-		g_ptr_array_unref (dirnames);
-		g_ptr_array_unref (basenames);
-		g_ptr_array_unref (fileindex);
-	} else {
-		files = g_ptr_array_new_with_free_func (g_free);
-		zif_package_set_files (ZIF_PACKAGE (pkg), files);
-		g_ptr_array_unref (files);
-	}
 
 	return TRUE;
 }
@@ -545,6 +583,8 @@ zif_package_local_finalize (GObject *object)
 	pkg = ZIF_PACKAGE_LOCAL (object);
 
 	g_object_unref (pkg->priv->groups);
+	if (pkg->priv->header != NULL)
+		headerUnlink (pkg->priv->header);
 
 	G_OBJECT_CLASS (zif_package_local_parent_class)->finalize (object);
 }
@@ -556,7 +596,11 @@ static void
 zif_package_local_class_init (ZifPackageLocalClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
+	ZifPackageClass *package_class = ZIF_PACKAGE_CLASS (klass);
 	object_class->finalize = zif_package_local_finalize;
+
+	package_class->ensure_data = zif_package_local_ensure_data;
+
 	g_type_class_add_private (klass, sizeof (ZifPackageLocalPrivate));
 }
 
@@ -568,6 +612,7 @@ zif_package_local_init (ZifPackageLocal *pkg)
 {
 	pkg->priv = ZIF_PACKAGE_LOCAL_GET_PRIVATE (pkg);
 	pkg->priv->groups = zif_groups_new ();
+	pkg->priv->header = NULL;
 }
 
 /**

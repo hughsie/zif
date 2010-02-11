@@ -53,7 +53,7 @@ struct _ZifPackageLocal
 
 struct _ZifPackageLocalClass
 {
-	GObjectClass		 parent_class;
+	ZifPackageClass		 parent_class;
 };
 
 GType			 zif_package_local_get_type		(void);

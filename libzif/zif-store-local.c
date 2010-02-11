@@ -172,8 +172,8 @@ zif_store_local_load (ZifStore *store, GCancellable *cancellable, ZifCompletion 
 		if (!ret) {
 			if (error != NULL)
 				*error = g_error_new (1, 0, "failed to set from header: %s", error_local->message);
-			g_error_free (error_local);	
-			g_object_unref (package);		
+			g_error_free (error_local);
+			g_object_unref (package);
 			break;
 		}
 		g_ptr_array_add (local->priv->packages, package);
@@ -1146,8 +1146,8 @@ zif_store_local_test (EggTest *test)
 		egg_test_failed (test, "failed to load '%s'", error->message);
 
 	/************************************************************/
-	egg_test_title (test, "check time < 10s");
-	if (elapsed < 10000)
+	egg_test_title (test, "check time < 1000ms");
+	if (elapsed < 1000)
 		egg_test_success (test, "time to load = %ims", elapsed);
 	else
 		egg_test_failed (test, "time to load = %ims", elapsed);
@@ -1164,7 +1164,7 @@ zif_store_local_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "check time < 10ms");
-	if (elapsed < 1000) /* TODO: reduce back down to 10ms */
+	if (elapsed < 10)
 		egg_test_success (test, "time to load = %ims", elapsed);
 	else
 		egg_test_failed (test, "time to load = %ims", elapsed);

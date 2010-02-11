@@ -54,12 +54,6 @@ struct _ZifRepoMdCompsClass
 	ZifRepoMdClass			 parent_class;
 };
 
-typedef struct {
-	gchar				*id;
-	gchar				*name;
-	gchar				*description;
-} ZifRepoMdCompsObj;
-
 GType		 zif_repo_md_comps_get_type		(void);
 ZifRepoMdComps	*zif_repo_md_comps_new			(void);
 
@@ -77,7 +71,6 @@ GPtrArray	*zif_repo_md_comps_get_packages_for_group	(ZifRepoMdComps		*md,
 								 GCancellable		*cancellable,
 								 ZifCompletion		*completion,
 								 GError			**error);
-void		 zif_repo_md_comps_obj_free			(ZifRepoMdCompsObj	*obj);
 
 G_END_DECLS
 

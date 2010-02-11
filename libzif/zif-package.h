@@ -44,7 +44,22 @@ G_BEGIN_DECLS
 
 typedef struct _ZifPackage		ZifPackage;
 typedef struct _ZifPackagePrivate	ZifPackagePrivate;
-typedef struct _ZifPackageClass	ZifPackageClass;
+typedef struct _ZifPackageClass		ZifPackageClass;
+
+typedef enum {
+	ZIF_PACKAGE_ENSURE_TYPE_FILES,
+	ZIF_PACKAGE_ENSURE_TYPE_SUMMARY,
+	ZIF_PACKAGE_ENSURE_TYPE_LICENCE,
+	ZIF_PACKAGE_ENSURE_TYPE_DESCRIPTION,
+	ZIF_PACKAGE_ENSURE_TYPE_URL,
+	ZIF_PACKAGE_ENSURE_TYPE_SIZE,
+	ZIF_PACKAGE_ENSURE_TYPE_GROUP,
+	ZIF_PACKAGE_ENSURE_TYPE_REQUIRES,
+	ZIF_PACKAGE_ENSURE_TYPE_PROVIDES,
+	ZIF_PACKAGE_ENSURE_TYPE_CONFLICTS,
+	ZIF_PACKAGE_ENSURE_TYPE_OBSOLETES,
+	ZIF_PACKAGE_ENSURE_TYPE_LAST
+} ZifPackageEnsureType;
 
 struct _ZifPackage
 {
@@ -55,6 +70,11 @@ struct _ZifPackage
 struct _ZifPackageClass
 {
 	GObjectClass	parent_class;
+
+	/* vtable */
+	gboolean	 (*ensure_data)			(ZifPackage	*package,
+							 ZifPackageEnsureType type,
+							 GError		**error);
 };
 
 GType			 zif_package_get_type		(void);

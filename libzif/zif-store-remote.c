@@ -1781,9 +1781,10 @@ zif_store_remote_get_categories (ZifStore *store, GCancellable *cancellable, Zif
 	ZifStoreRemote *remote = ZIF_STORE_REMOTE (store);
 	ZifCompletion *completion_local;
 	ZifCompletion *completion_loop;
-//	const ZifRepoMdCompsObj *comps_category;
-	const ZifRepoMdCompsObj *group;
+//	PkCategory *comps_category;
+	PkCategory *group;
 	PkCategory *category;
+	PkCategory *category_tmp;
 
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), FALSE);
 	g_return_val_if_fail (remote->priv->id != NULL, FALSE);
@@ -1878,14 +1879,14 @@ zif_store_remote_get_categories (ZifStore *store, GCancellable *cancellable, Zif
 			/* second, add the groups belonging to this parent */
 			for (j=0; j<array_groups->len; j++) {
 				group = g_ptr_array_index (array_groups, j);
-				category = pk_category_new ();
-				g_object_set (category,
+				category_tmp = pk_category_new ();
+				g_object_set (category_tmp,
 					      "parent-id", pk_category_get_id (category),
-					      "cat-id", group->id,
-					      "name", group->name,
-					      "summary", group->description,
+					      "cat-id", pk_category_get_id (group),
+					      "name", pk_category_get_name (group),
+					      "summary", pk_category_get_summary (group),
 					      NULL);
-				g_ptr_array_add (array, category);
+				g_ptr_array_add (array, category_tmp);
 			}
 		}
 
@@ -2556,7 +2557,7 @@ zif_store_remote_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "get name");
 	id = zif_store_remote_get_name (store, NULL, completion, NULL);
-	if (egg_strequal (id, "Fedora 11.91 - i386"))
+	if (egg_strequal (id, "Fedora 11 - i386"))
 		egg_test_success (test, NULL);
 	else
 		egg_test_failed (test, "invalid name '%s'", id);
@@ -2599,7 +2600,7 @@ zif_store_remote_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "search name correct number");
-	if (array->len == 2)
+	if (array->len == 3)
 		egg_test_success (test, NULL);
 	else
 		egg_test_failed (test, "incorrect length %i", array->len);
