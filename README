@@ -1,0 +1,115 @@
+Zif
+
+When designing PackageKit, I coded a framework for a distro-specific backend to
+be coupled with a distro-agnostic service that listened for user requests to
+create a package manager daemon.
+
+In doing so, I've become very familiar with about a dozen (!) package systems,
+with all their specific nuances and peculiarities. It also became bewildering
+obvious to me that most of these package systems were not a good fit, as much of
+the package system functionality was not used and usually what PackageKit was
+using had to hide some pretty hideous hacks.
+
+For instance, PackageKit only exercises less that 5% of the yum external API.
+Another example, is that a good chunk of the yum backend is just making sure
+that we send and receive text as Unicode.
+
+The yum backend itself is pretty complex python (4k lines). This, is coupled
+with a fair bit of common python code (2.5k lines). This is all sitting on the
+yum core (20k lines). This is then using the rpm python bindings (2k lines) to
+talk to librpm (40k lines). What we're actually asking the package manager to do
+just isn't that complicated, and the layers, on layers, on layers just
+introduces bugs and demolishes our performance.
+
+It seems obvious, that instead of looking at the bottom-up approach, where you
+have an existing "fat" solution that is shoehorned into working with PackageKit,
+you design a top-down solution. This means that you essentially design a library
+for the sole use of PackageKit, and only code the parts that PackageKit will use.
+The fact that PackageKit doesn't support plugins means you can leave out a chunk
+of code from this new mythical library.
+
+As we're only designing the library to be used by one thing, we can optimize
+things in the right places. We can do all operations with the assumption that
+the user wants an accurate time remaining, and doesn't want to be bothered with
+the low level details. If we're designing it for situations that only PackageKit
+cares about, we can do a lot of things a lot nicer than a generic solution.
+This would include working with offline copies of metadata whenever possible,
+and erring on returning results quickly rather than checking the metadata is out
+of date. We'll aim to do as much as we can without bothering the user.
+
+So, if we're writing a shim library, it makes sense to be in the same language
+as PackageKit itself (C), to avoid all the spawning and watching of processes.
+This was all the backend actions can be run in threads, which are managed by the
+daemon. It also makes sense to make it distribution specific. SMART does a
+wonderful job of trying to join all the distros together, but because of it's
+genericness means we loose all the top-down way of thinking.
+
+So, in the Christmas holidays of 2008, and since in a few evenings of spare time
+since then, I wrote Zif. Zif is designed to work on Fedora, and only Fedora.
+It's not designed to be run by the end user, it's only designed to be run as part
+of a program using libzif.
+
+PackageKit has a tiny zif backend, and it seems to work basically as well as the
+yum backend ever did. It's certainly not feature complete, but of the methods
+that I have written, all of them are faster than yum, and all of them are a lot
+kinder to the user. Zif is designed to only do what the user wants, and not do
+lots of cleverness in the background. To solve the difficult desktop problems
+we need answers to questions like "what package owns /usr/bin/totem" in
+milliseconds, not tens of seconds.
+
+So far:
+
+Zif features:
+• Modern GObject library with GCancellation and GError
+• Full completion support for accurate progress reporting
+• Downloads using libsoup
+• Internally ref-counted strings for speed
+• Remote, installed and local packages handled as abstract packages
+• Local and remote sources handled using an abstract sack
+• Self test program (224 tests)
+• Zif has a test binary, but it's not shipped in the tarball
+
+Zif is compatible with rpm, yum and the Fedora infrastructure, specifically:
+• Shares the yum lock
+• Uses librpm to get data from rpm
+• Reads and updates sqlite yum metadata (primary and filelists)
+• Reads standard yum repo files
+• Reads a subset of comps for distro-specific groups
+• Uses optional metalink/mirrorlist repository handling
+• Still uses yum.conf main config file
+• Uses the PackageKit categories->group mapping file
+
+What doesn't work:
+• Depsolving (leave to libsatsolver?)
+• Installing using librpm
+• Checking of signed repodata
+• Multiarch
+• Updateinfo support
+• YumDB of storing where packages come from
+• Old style yum metadata (ZifRepoMdFilelistsXml and ZifRepoMdPrimaryXml)
+• Other sqlite data (required for the mime/fonts/mime auto-installing feature)
+
+And there's a zif PackageKit backend which does all the read-only operations
+(searching, dependencies, getting files, etc) in C, not python. The C backend
+is much simpler, and does not have the python interpreter startup or runtime cost.
+
+Comparisons:
+• Zif is about 40% quicker for queries than using the yum API
+• Zif is comparable to yum for cold startup time
+• Zif uses existing fedora metadata, rather than razor which replaces everything
+• Zif is much slower than razor when reading from the package database
+• Zif is much faster (>400%?) for warm startup time
+• Zif has sane error reporting
+• Zif does not have random runtime exceptions (no DivisionByZero...)
+• Zif has no "write" support for rpm yet
+• Zif is threadsafe (but rpm still isn't, obviously)
+• Zif has no plugins (both an advantage and a regression)
+• Zif was designed as a shared library, not a python module
+• Zif is more clever when downloading the minimum number of metadata files
+• Zif can work offline and skip repos if they do not exist
+• Zif has no user or developer community
+• Zif compiles on FreeBSD and for Windows
+
+If this zif experiment goes well for read-only, maybe we can think about writing
+some of the rpmdb stuff. Until then it's just a library born out of curiosity.
+
