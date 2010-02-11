@@ -1873,13 +1873,7 @@ zif_store_remote_get_categories (ZifStore *store, GCancellable *cancellable, Zif
 		if (array_groups->len > 0) {
 
 			/* first, add the parent */
-			category = pk_category_new ();
-			g_object_set (category,
-				      "cat-id", pk_category_get_id (category),
-				      "name", pk_category_get_name (category),
-				      "summary", pk_category_get_summary (category),
-				      NULL);
-			g_ptr_array_add (array, category);
+			g_ptr_array_add (array, g_object_ref (category));
 
 			/* second, add the groups belonging to this parent */
 			for (j=0; j<array_groups->len; j++) {
