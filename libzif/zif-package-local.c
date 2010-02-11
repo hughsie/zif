@@ -438,6 +438,25 @@ zif_package_local_set_from_header (ZifPackageLocal *pkg, Header header, GError *
 }
 
 /**
+ * zif_package_local_rpmrc_to_string:
+ **/
+static const gchar *
+zif_package_local_rpmrc_to_string (rpmRC rc)
+{
+	if (rc == RPMRC_OK)
+		return "Generic success";
+	if (rc == RPMRC_NOTFOUND)
+		return "Generic not found";
+	if (rc == RPMRC_FAIL)
+		return "Generic failure";
+	if (rc == RPMRC_NOTTRUSTED)
+		return "Signature is OK, but key is not trusted";
+	if (rc == RPMRC_NOKEY)
+		return "Public key is unavailable";
+	return "Unknown error";
+}
+
+/**
  * zif_package_local_set_from_filename:
  * @pkg: the #ZifPackageLocal object
  * @filename: the local filename
@@ -450,7 +469,7 @@ zif_package_local_set_from_header (ZifPackageLocal *pkg, Header header, GError *
 gboolean
 zif_package_local_set_from_filename (ZifPackageLocal *pkg, const gchar *filename, GError **error)
 {
-	int rc;
+	rpmRC rc;
 	FD_t fd = NULL;
 	Header hdr = NULL;
 	rpmts ts;
@@ -473,16 +492,19 @@ zif_package_local_set_from_filename (ZifPackageLocal *pkg, const gchar *filename
 	/* create an empty transaction set */
 	ts = rpmtsCreate ();
 
+	/* we don't want to abort on missing keys */
+	rpmtsSetVSFlags (ts, _RPMVSF_NOSIGNATURES);
+
 	/* read in the file */
-	rc = rpmReadPackageFile(ts, fd, "zif", &hdr);
+	rc = rpmReadPackageFile (ts, fd, filename, &hdr);
 	if (rc != RPMRC_OK) {
 		if (error != NULL)
-			*error = g_error_new (1, 0, "failed to read %s", filename);
+			*error = g_error_new (1, 0, "failed to read %s: %s", filename, zif_package_local_rpmrc_to_string (rc));
 		goto out;
 	}
 
 	/* convert and upscale */
-	headerConvert(hdr, HEADERCONV_RETROFIT_V3);
+	headerConvert (hdr, HEADERCONV_RETROFIT_V3);
 
 	/* set from header */
 	ret = zif_package_local_set_from_header (pkg, hdr, &error_local);
@@ -495,9 +517,9 @@ zif_package_local_set_from_filename (ZifPackageLocal *pkg, const gchar *filename
 
 	/* close the database used by the transaction */
 	rc = rpmtsCloseDB (ts);
-	if (rc != 0) {
+	if (rc != RPMRC_OK) {
 		if (error != NULL)
-			*error = g_error_new (1, 0, "failed to close");
+			*error = g_error_new (1, 0, "failed to close: %s", zif_package_local_rpmrc_to_string (rc));
 		ret = FALSE;
 		goto out;
 	}
@@ -571,6 +593,9 @@ void
 zif_package_local_test (EggTest *test)
 {
 	ZifPackageLocal *pkg;
+	gboolean ret;
+	GError *error = NULL;
+	gchar *filename;
 
 	if (!egg_test_start (test, "ZifPackageLocal"))
 		return;
@@ -579,6 +604,17 @@ zif_package_local_test (EggTest *test)
 	egg_test_title (test, "get package_local");
 	pkg = zif_package_local_new ();
 	egg_test_assert (test, pkg != NULL);
+
+	/************************************************************/
+	egg_test_title (test, "load file");
+	filename = egg_test_get_data_file ("accountsdialog-0.4.1-1.fc13.i686.rpm");
+	ret = zif_package_local_set_from_filename (pkg, filename, &error);
+	if (!ret) {
+		egg_test_failed (test, "failed to set from filename: %s", error->message);
+		g_error_free (error);
+	}
+	g_free (filename);
+	egg_test_success (test, NULL);
 
 	g_object_unref (pkg);
 
