@@ -149,21 +149,7 @@ TESTS = zif-self-test
 endif
 
 EXTRA_DIST =							\
-	zif.pc.in						\
-	zif-marshal.list
-
-BUILT_SOURCES = 						\
-	zif-marshal.c						\
-	zif-marshal.h
-
-zif-marshal.c: zif-marshal.list
-	echo "#include \"zif-marshal.h\"" > $@ && \
-	@GLIB_GENMARSHAL@ $< --prefix=zif_marshal --body >> $@
-
-zif-marshal.h: zif-marshal.list
-	@GLIB_GENMARSHAL@ $< --prefix=zif_marshal --header > $@
-
-CLEANFILES = $(BUILT_SOURCES)
+	zif.pc.in
 
 clean-local:
 	rm -f *~
