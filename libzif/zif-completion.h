@@ -69,6 +69,7 @@ gboolean	 zif_completion_set_number_steps	(ZifCompletion		*completion,
 							 guint			 steps);
 gboolean	 zif_completion_set_percentage		(ZifCompletion		*completion,
 							 guint			 percentage);
+guint		 zif_completion_get_percentage		(ZifCompletion		*completion);
 gboolean	 zif_completion_done			(ZifCompletion		*completion);
 gboolean	 zif_completion_reset			(ZifCompletion		*completion);
 
