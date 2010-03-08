@@ -44,9 +44,26 @@ CPPFLAGS="$CPPFLAGS -DG_DISABLE_DEPRECATED -DGTK_DISABLE_DEPRECATED -DGDK_DISABL
 CPPFLAGS="$CPPFLAGS -DGDK_MULTIHEAD_SAFE -DGTK_MULTIHEAD_SAFE"
 CPPFLAGS="$CPPFLAGS -DGSEAL_ENABLE"
 
+dnl ---------------------------------------------------------------------------
+dnl - Use strict options (default enabled for devs, disabled in releases)
+dnl ---------------------------------------------------------------------------
+dnl if .git directory is present, considering we are working in the repository
+if test -d ".git"; then
+	default_strict=yes
+else
+	default_strict=no
+fi
+
+AC_ARG_ENABLE(strict, AS_HELP_STRING([--enable-strict],[Enable strict compilation options]), enable_strict=$enableval,
+							enable_strict=$default_strict)
+if test x$enable_strict != xno; then
+	if test "$GCC" = "yes"; then
+		WARNINGFLAGS_C="$WARNINGFLAGS_C -Werror"
+	fi
+fi
+
 if test "$GCC" = "yes"; then
 	WARNINGFLAGS_C="$WARNINGFLAGS_C -Wall"
-	WARNINGFLAGS_C="$WARNINGFLAGS_C -Werror"
 	WARNINGFLAGS_C="$WARNINGFLAGS_C -Wcast-align -Wno-uninitialized"
 	WARNINGFLAGS_C="$WARNINGFLAGS_C -Wmissing-declarations"
 	WARNINGFLAGS_C="$WARNINGFLAGS_C -Wredundant-decls"
