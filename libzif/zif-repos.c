@@ -427,6 +427,7 @@ zif_repos_file_monitor_cb (ZifMonitor *monitor, ZifRepos *repos)
 {
 	g_ptr_array_set_size (repos->priv->list, 0);
 	g_ptr_array_set_size (repos->priv->enabled, 0);
+	repos->priv->loaded = FALSE;
 	egg_debug ("repo file changed");
 }
 
