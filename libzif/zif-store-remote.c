@@ -191,7 +191,7 @@ zif_store_remote_parser_start_element (GMarkupParseContext *context, const gchar
 						g_string_set_size (string, string->len - 2);
 
 						/* return error */
-						*error = g_error_new (1, 0, "%s", string->str);
+						g_set_error (error, 1, 0, "%s", string->str);
 						g_string_free (string, TRUE);
 					}
 				}
@@ -1081,8 +1081,6 @@ zif_store_remote_clean (ZifStore *store, GCancellable *cancellable, ZifCompletio
 		completion_local = zif_completion_get_child (completion);
 		ret = zif_store_remote_load_metadata (remote, cancellable, completion_local, &error_local);
 		if (!ret) {
-//			if (error != NULL)
-//				*error = g_error_new (1, 0, "failed to load xml: %s", error_local->message);
 			/* ignore this error */
 			g_print ("failed to load xml: %s\n", error_local->message);
 			g_error_free (error_local);
@@ -1495,8 +1493,7 @@ zif_store_remote_search_category_resolve (ZifStore *store, const gchar *name, GC
 		goto out;
 
 	/* we suck */
-	if (error != NULL)
-		*error = g_error_new (1, 0, "failed to resolve installed package %s installed or in this repo", name);
+	g_set_error (error, 1, 0, "failed to resolve installed package %s installed or in this repo", name);
 out:
 	if (array != NULL)
 		g_ptr_array_unref (array);
