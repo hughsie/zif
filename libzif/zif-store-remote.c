@@ -307,7 +307,7 @@ zif_store_remote_download_try (ZifStoreRemote *store, const gchar *uri, const gc
 
 	/* download object */
 	download = zif_download_new ();
-	egg_debug ("trying to download %s", uri);
+	egg_debug ("trying to download %s and save to %s", uri, filename);
 	ret = zif_download_file (download, uri, filename, cancellable, completion, &error_local);
 	if (!ret) {
 		g_set_error (error, 1, 0, "failed to download %s from %s: %s", filename, uri, error_local->message);
@@ -453,7 +453,7 @@ zif_store_remote_download (ZifStoreRemote *store, const gchar *filename, const g
 
 	/* nothing */
 	if (!ret) {
-		g_set_error_literal (error, 1, 0, "failed to download from any sources");
+		g_set_error (error, 1, 0, "failed to download %s from any sources", filename);
 		goto out;
 	}
 out:
@@ -474,7 +474,7 @@ zif_store_remote_add_metalink (ZifStoreRemote *store, GCancellable *cancellable,
 	GError *error_local = NULL;
 	const gchar *uri_tmp;
 	const gchar *filename;
-	gboolean ret;
+	gboolean ret = FALSE;
 	ZifCompletion *completion_local;
 	ZifDownload *download = NULL;
 
@@ -514,6 +514,13 @@ zif_store_remote_add_metalink (ZifStoreRemote *store, GCancellable *cancellable,
 		goto out;
 	}
 
+	/* nothing here? */
+	if (array->len == 0) {
+		ret = FALSE;
+		g_set_error (error, 1, 0, "failed to get any mirrors from metalink: %s", filename);
+		goto out;
+	}
+
 	zif_completion_done (completion);
 
 	/* add array */
@@ -525,7 +532,7 @@ zif_store_remote_add_metalink (ZifStoreRemote *store, GCancellable *cancellable,
 out:
 	if (array != NULL)
 		g_ptr_array_unref (array);
-	return (array != NULL);
+	return ret;
 }
 
 /**
@@ -537,7 +544,6 @@ zif_store_remote_add_mirrorlist (ZifStoreRemote *store, GCancellable *cancellabl
 	guint i;
 	GPtrArray *array = NULL;
 	GError *error_local = NULL;
-	gchar *uri = NULL;
 	const gchar *uri_tmp;
 	const gchar *filename;
 	gboolean ret = FALSE;
@@ -560,8 +566,7 @@ zif_store_remote_add_mirrorlist (ZifStoreRemote *store, GCancellable *cancellabl
 
 		/* download object directly, as we don't have the repo setup yet */
 		download = zif_download_new ();
-		uri = g_build_filename (store->priv->mirrorlist, filename, NULL);
-		ret = zif_download_file (download, uri, filename, cancellable, completion_local, &error_local);
+		ret = zif_download_file (download, store->priv->mirrorlist, filename, cancellable, completion_local, &error_local);
 		if (!ret) {
 			g_set_error (error, 1, 0, "failed to download %s from %s: %s", filename, store->priv->mirrorlist, error_local->message);
 			g_error_free (error_local);
@@ -580,6 +585,13 @@ zif_store_remote_add_mirrorlist (ZifStoreRemote *store, GCancellable *cancellabl
 		goto out;
 	}
 
+	/* nothing here? */
+	if (array->len == 0) {
+		ret = FALSE;
+		g_set_error (error, 1, 0, "failed to get any mirrors from mirrorlist: %s", filename);
+		goto out;
+	}
+
 	zif_completion_done (completion);
 
 	/* add array */
@@ -588,12 +600,11 @@ zif_store_remote_add_mirrorlist (ZifStoreRemote *store, GCancellable *cancellabl
 		g_ptr_array_add (store->priv->baseurls, g_strdup (uri_tmp));
 	}
 out:
-	g_free (uri);
 	if (download != NULL)
 		g_object_unref (download);
 	if (array != NULL)
 		g_ptr_array_unref (array);
-	return (array != NULL);
+	return ret;
 
 }
 
