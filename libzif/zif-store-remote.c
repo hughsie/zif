@@ -642,19 +642,12 @@ zif_store_remote_load_metadata (ZifStoreRemote *store, GCancellable *cancellable
 		    store->priv->mirrorlist == NULL)
 			continue;
 
-		/* set parent reference */
-		zif_repo_md_set_store_remote (md, store);
-
-		/* set MD type */
-		zif_repo_md_set_mdtype (md, i);
-
 		/* location not set */
 		location = zif_repo_md_get_location (md);
 		if (location == NULL) {
 			/* messed up repo file, this is fatal */
 			if (i == ZIF_REPO_MD_TYPE_PRIMARY_DB) {
-				if (error != NULL)
-					*error = g_error_new (1, 0, "failed to get primary metadata location for %s", store->priv->id);
+				g_set_error (error, 1, 0, "failed to get primary metadata location for %s", store->priv->id);
 				ret = FALSE;
 				goto out;
 			}
@@ -665,7 +658,6 @@ zif_store_remote_load_metadata (ZifStoreRemote *store, GCancellable *cancellable
 		/* set MD id and filename */
 		basename = g_path_get_basename (location);
 		filename = g_build_filename (store->priv->directory, basename, NULL);
-		zif_repo_md_set_id (md, store->priv->id);
 		zif_repo_md_set_filename (md, filename);
 		g_free (basename);
 		g_free (filename);
@@ -760,8 +752,7 @@ zif_store_remote_refresh (ZifStore *store, gboolean force, GCancellable *cancell
 	/* if not online, then this is fatal */
 	ret = zif_config_get_boolean (remote->priv->config, "network", NULL);
 	if (!ret) {
-		if (error != NULL)
-			*error = g_error_new (1, 0, "failed to refresh as offline");
+		g_set_error (error, 1, 0, "failed to refresh as offline");
 		goto out;
 	}
 
@@ -1082,8 +1073,10 @@ gboolean
 zif_store_remote_set_from_file (ZifStoreRemote *store, const gchar *repo_filename, const gchar *id,
 				GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
-	GError *error_local = NULL;
 	gboolean ret = TRUE;
+	guint i;
+	GError *error_local = NULL;
+	ZifRepoMd *md;
 
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), FALSE);
 	g_return_val_if_fail (repo_filename != NULL, FALSE);
@@ -1107,6 +1100,14 @@ zif_store_remote_set_from_file (ZifStoreRemote *store, const gchar *repo_filenam
 
 	/* repomd location */
 	store->priv->repomd_filename = g_build_filename (store->priv->cache_dir, store->priv->id, "repomd.xml", NULL);
+
+	/* set MD id for each repo type */
+	for (i=0; i<ZIF_REPO_MD_TYPE_UNKNOWN; i++) {
+		md = zif_store_remote_get_md_from_type (store, i);
+		if (md == NULL)
+			continue;
+		zif_repo_md_set_id (md, store->priv->id);
+	}
 
 	/* setup watch */
 	ret = zif_monitor_add_watch (store->priv->monitor, repo_filename, &error_local);
@@ -2356,8 +2357,10 @@ zif_store_remote_class_init (ZifStoreRemoteClass *klass)
 static void
 zif_store_remote_init (ZifStoreRemote *store)
 {
-	GError *error = NULL;
 	gchar *cache_dir = NULL;
+	guint i;
+	GError *error = NULL;
+	ZifRepoMd *md;
 
 	store->priv = ZIF_STORE_REMOTE_GET_PRIVATE (store);
 	store->priv->loaded = FALSE;
@@ -2397,6 +2400,19 @@ zif_store_remote_init (ZifStoreRemote *store)
 		egg_error ("failed to get expand substitutions: %s", error->message);
 		g_error_free (error);
 		goto out;
+	}
+
+	/* set MD type on each repo */
+	for (i=0; i<ZIF_REPO_MD_TYPE_UNKNOWN; i++) {
+		md = zif_store_remote_get_md_from_type (store, i);
+		if (md == NULL)
+			continue;
+
+		/* set parent reference */
+		zif_repo_md_set_store_remote (md, store);
+
+		/* set MD type */
+		zif_repo_md_set_mdtype (md, i);
 	}
 out:
 	g_free (cache_dir);
