@@ -425,6 +425,7 @@ zif_store_remote_download (ZifStoreRemote *store, const gchar *filename, const g
 
 	/* try to use all uris */
 	len = store->priv->baseurls->len;
+	completion_local = zif_completion_get_child (completion);
 	for (i=0; i<len; i++) {
 
 		/* build url */
@@ -432,8 +433,12 @@ zif_store_remote_download (ZifStoreRemote *store, const gchar *filename, const g
 		uri = g_build_filename (baseurl, "repodata", basename, NULL);
 
 		/* try download */
-		completion_local = zif_completion_get_child (completion);
+		zif_completion_reset (completion_local);
 		ret = zif_store_remote_download_try (store, uri, filename_local, cancellable, completion_local, &error_local);
+		if (!ret) {
+			egg_debug ("failed to download (non-fatal): %s", error_local->message);
+			g_clear_error (&error_local);
+		}
 
 		/* free */
 		g_free (uri);
@@ -441,11 +446,6 @@ zif_store_remote_download (ZifStoreRemote *store, const gchar *filename, const g
 		/* succeeded, otherwise retry with new mirrors */
 		if (ret)
 			break;
-
-		/* free error */
-		zif_completion_reset (completion_local);
-		egg_debug ("failed to download (non-fatal): %s", error_local->message);
-		g_error_free (error_local);
 	}
 
 	/* this section done */
@@ -470,44 +470,61 @@ static gboolean
 zif_store_remote_add_metalink (ZifStoreRemote *store, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	guint i;
-	GPtrArray *array;
+	GPtrArray *array = NULL;
 	GError *error_local = NULL;
-	const gchar *uri;
+	const gchar *uri_tmp;
 	const gchar *filename;
 	gboolean ret;
 	ZifCompletion *completion_local;
+	ZifDownload *download = NULL;
 
 	/* if we're loading the metadata with an empty cache, the file won't yet exist. So download it */
 	filename = zif_repo_md_get_filename_uncompressed (store->priv->md_metalink);
+	if (filename == NULL) {
+		egg_error ("Moo: %s", zif_repo_md_get_filename (store->priv->md_metalink));
+		g_set_error (error, 1, 0, "metalink filename not set for %s", store->priv->id);
+		goto out;
+	}
+
+	zif_completion_set_number_steps (completion, 2);
+
+	/* find if the file already exists */
 	ret = g_file_test (filename, G_FILE_TEST_EXISTS);
 	if (!ret) {
 		completion_local = zif_completion_get_child (completion);
-		ret = zif_store_remote_download (store, store->priv->mirrorlist, store->priv->directory, cancellable, completion_local, &error_local);
+
+		/* download object directly, as we don't have the repo setup yet */
+		download = zif_download_new ();
+		ret = zif_download_file (download, store->priv->metalink, filename, cancellable, completion_local, &error_local);
 		if (!ret) {
-			if (error != NULL)
-				*error = g_error_new (1, 0, "failed to download missing mirrorlist: %s", error_local->message);
+			g_set_error (error, 1, 0, "failed to download %s from %s: %s", filename, store->priv->metalink, error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
 	}
 
+	zif_completion_done (completion);
+
 	/* get mirrors */
-	array = zif_repo_md_metalink_get_uris (ZIF_REPO_MD_METALINK (store->priv->md_metalink), 50, cancellable, completion, &error_local);
+	completion_local = zif_completion_get_child (completion);
+	array = zif_repo_md_metalink_get_uris (ZIF_REPO_MD_METALINK (store->priv->md_metalink), 50, cancellable, completion_local, &error_local);
 	if (array == NULL) {
-		g_set_error (error, 1, 0, "failed to add mirrors: %s", error_local->message);
+		g_set_error (error, 1, 0, "failed to add mirrors from metalink: %s", error_local->message);
 		g_error_free (error_local);
 		goto out;
 	}
 
+	zif_completion_done (completion);
+
 	/* add array */
 	for (i=0; i<array->len; i++) {
-		uri = g_ptr_array_index (array, i);
-		g_ptr_array_add (store->priv->baseurls, g_strdup (uri));
+		uri_tmp = g_ptr_array_index (array, i);
+		egg_warning ("uri_tmp=%s", uri_tmp);
+		g_ptr_array_add (store->priv->baseurls, g_strdup (uri_tmp));
 	}
-
-	/* free */
-	g_ptr_array_unref (array);
 out:
+	if (array != NULL)
+		g_ptr_array_unref (array);
 	return (array != NULL);
 }
 
@@ -518,45 +535,64 @@ static gboolean
 zif_store_remote_add_mirrorlist (ZifStoreRemote *store, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	guint i;
-	GPtrArray *array;
+	GPtrArray *array = NULL;
 	GError *error_local = NULL;
-	const gchar *uri;
+	gchar *uri = NULL;
+	const gchar *uri_tmp;
 	const gchar *filename;
-	gboolean ret;
+	gboolean ret = FALSE;
 	ZifCompletion *completion_local;
+	ZifDownload *download = NULL;
 
 	/* if we're loading the metadata with an empty cache, the file won't yet exist. So download it */
 	filename = zif_repo_md_get_filename_uncompressed (store->priv->md_mirrorlist);
+	if (filename == NULL) {
+		g_set_error (error, 1, 0, "mirrorlist filename not set for %s", store->priv->id);
+		goto out;
+	}
+
+	zif_completion_set_number_steps (completion, 2);
+
+	/* find if the file already exists */
 	ret = g_file_test (filename, G_FILE_TEST_EXISTS);
 	if (!ret) {
 		completion_local = zif_completion_get_child (completion);
-		ret = zif_store_remote_download (store, store->priv->mirrorlist, store->priv->directory, cancellable, completion_local, &error_local);
+
+		/* download object directly, as we don't have the repo setup yet */
+		download = zif_download_new ();
+		uri = g_build_filename (store->priv->mirrorlist, filename, NULL);
+		ret = zif_download_file (download, uri, filename, cancellable, completion_local, &error_local);
 		if (!ret) {
-			if (error != NULL)
-				*error = g_error_new (1, 0, "failed to download missing mirrorlist: %s", error_local->message);
+			g_set_error (error, 1, 0, "failed to download %s from %s: %s", filename, store->priv->mirrorlist, error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
 	}
 
+	zif_completion_done (completion);
+
 	/* get mirrors */
-	array = zif_repo_md_mirrorlist_get_uris (ZIF_REPO_MD_MIRRORLIST (store->priv->md_mirrorlist), cancellable, completion, &error_local);
+	completion_local = zif_completion_get_child (completion);
+	array = zif_repo_md_mirrorlist_get_uris (ZIF_REPO_MD_MIRRORLIST (store->priv->md_mirrorlist), cancellable, completion_local, &error_local);
 	if (array == NULL) {
-		if (error != NULL)
-			*error = g_error_new (1, 0, "failed to add mirrors: %s", error_local->message);
+		g_set_error (error, 1, 0, "failed to add mirrors from mirrorlist: %s", error_local->message);
 		g_error_free (error_local);
 		goto out;
 	}
 
+	zif_completion_done (completion);
+
 	/* add array */
 	for (i=0; i<array->len; i++) {
-		uri = g_ptr_array_index (array, i);
-		g_ptr_array_add (store->priv->baseurls, g_strdup (uri));
+		uri_tmp = g_ptr_array_index (array, i);
+		g_ptr_array_add (store->priv->baseurls, g_strdup (uri_tmp));
 	}
-
-	/* free */
-	g_ptr_array_unref (array);
 out:
+	g_free (uri);
+	if (download != NULL)
+		g_object_unref (download);
+	if (array != NULL)
+		g_ptr_array_unref (array);
 	return (array != NULL);
 
 }
@@ -609,7 +645,43 @@ zif_store_remote_load_metadata (ZifStoreRemote *store, GCancellable *cancellable
 		goto out;
 
 	/* setup completion */
-	zif_completion_set_number_steps (completion, 3);
+	zif_completion_set_number_steps (completion, 4);
+
+	/* extract details from mirrorlist */
+	if (store->priv->mirrorlist != NULL) {
+		completion_local = zif_completion_get_child (completion);
+		ret = zif_store_remote_add_mirrorlist (store, cancellable, completion_local, &error_local);
+		if (!ret) {
+			g_set_error (error, 1, 0, "failed to add mirrorlist: %s", error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+	}
+
+	/* this section done */
+	zif_completion_done (completion);
+
+	/* extract details from metalink */
+	if (store->priv->metalink != NULL) {
+		completion_local = zif_completion_get_child (completion);
+		ret = zif_store_remote_add_metalink (store, cancellable, completion_local, &error_local);
+		if (!ret) {
+			g_set_error (error, 1, 0, "failed to add metalink: %s", error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+	}
+
+	/* check we got something */
+	if (store->priv->baseurls->len == 0) {
+		g_set_error (error, 1, 0, "no baseurls for %s, so can't download anything! [meta:%s, mirror:%s]",
+			     store->priv->id, store->priv->metalink, store->priv->mirrorlist);
+		ret = FALSE;
+		goto out;
+	}
+
+	/* this section done */
+	zif_completion_done (completion);
 
 	/* repomd file does not exist */
 	ret = g_file_test (store->priv->repomd_filename, G_FILE_TEST_EXISTS);
@@ -627,12 +699,14 @@ zif_store_remote_load_metadata (ZifStoreRemote *store, GCancellable *cancellable
 		ret = zif_store_remote_download (store, store->priv->repomd_filename, store->priv->directory, cancellable, completion_local, &error_local);
 		store->priv->loaded_metadata = FALSE;
 		if (!ret) {
-			if (error != NULL)
-				*error = g_error_new (1, 0, "failed to download missing repomd: %s", error_local->message);
+			g_set_error (error, 1, 0, "failed to download missing repomd: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
 	}
+
+	/* this section done */
+	zif_completion_done (completion);
 
 	/* get repo contents */
 	ret = g_file_get_contents (store->priv->repomd_filename, &contents, &size, error);
@@ -652,18 +726,16 @@ zif_store_remote_load_metadata (ZifStoreRemote *store, GCancellable *cancellable
 		md = zif_store_remote_get_md_from_type (store, i);
 		if (md == NULL) {
 			/* TODO: until we've created ZifRepoMdComps and ZifRepoMdOther we'll get warnings here */
-			egg_warning ("failed to get local store for %s with %s", zif_repo_md_type_to_text (i), store->priv->id);
+			egg_debug ("failed to get local store for %s with %s", zif_repo_md_type_to_text (i), store->priv->id);
 			continue;
 		}
 
 		/* no metalink? */
-		if (i == ZIF_REPO_MD_TYPE_METALINK &&
-		    store->priv->metalink == NULL)
+		if (i == ZIF_REPO_MD_TYPE_METALINK)
 			continue;
 
 		/* no mirrorlist? */
-		if (i == ZIF_REPO_MD_TYPE_MIRRORLIST &&
-		    store->priv->mirrorlist == NULL)
+		if (i == ZIF_REPO_MD_TYPE_MIRRORLIST)
 			continue;
 
 		/* location not set */
@@ -675,7 +747,7 @@ zif_store_remote_load_metadata (ZifStoreRemote *store, GCancellable *cancellable
 				ret = FALSE;
 				goto out;
 			}
-			egg_warning ("no location set for %s with %s", zif_repo_md_type_to_text (i), store->priv->id);
+			egg_debug ("no location set for %s with %s", zif_repo_md_type_to_text (i), store->priv->id);
 			continue;
 		}
 
@@ -685,36 +757,6 @@ zif_store_remote_load_metadata (ZifStoreRemote *store, GCancellable *cancellable
 		zif_repo_md_set_filename (md, filename);
 		g_free (basename);
 		g_free (filename);
-	}
-
-	/* this section done */
-	zif_completion_done (completion);
-
-	/* extract details from mirrorlist */
-	if (store->priv->mirrorlist != NULL) {
-		completion_local = zif_completion_get_child (completion);
-		ret = zif_store_remote_add_mirrorlist (store, cancellable, completion_local, &error_local);
-		if (!ret) {
-			if (error != NULL)
-				*error = g_error_new (1, 0, "failed to add mirrorlist: %s", error_local->message);
-			g_error_free (error_local);
-			goto out;
-		}
-	}
-
-	/* this section done */
-	zif_completion_done (completion);
-
-	/* extract details from metalink */
-	if (store->priv->metalink != NULL) {
-		completion_local = zif_completion_get_child (completion);
-		ret = zif_store_remote_add_metalink (store, cancellable, completion_local, &error_local);
-		if (!ret) {
-			if (error != NULL)
-				*error = g_error_new (1, 0, "failed to add metalink: %s", error_local->message);
-			g_error_free (error_local);
-			goto out;
-		}
 	}
 
 	/* all okay */
@@ -883,6 +925,8 @@ zif_store_remote_load (ZifStore *store, GCancellable *cancellable, ZifCompletion
 	gchar *enabled = NULL;
 	GError *error_local = NULL;
 	gchar *temp;
+	gchar *filename;
+//	ZifCompletion *completion_local;
 	ZifStoreRemote *remote = ZIF_STORE_REMOTE (store);
 
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), FALSE);
@@ -966,9 +1010,23 @@ zif_store_remote_load (ZifStore *store, GCancellable *cancellable, ZifCompletion
 		remote->priv->mirrorlist = NULL;
 	}
 
+	/* we have to set this here in case we are using the metalink to download repodata.xml */
+	if (remote->priv->metalink != NULL) {
+		filename = g_build_filename (remote->priv->directory, "metalink.xml", NULL);
+		zif_repo_md_set_filename (remote->priv->md_metalink, filename);
+		g_free (filename);
+	}
+
+	/* we have to set this here in case we are using the mirrorlist to download repodata.xml */
+	if (remote->priv->mirrorlist != NULL) {
+		filename = g_build_filename (remote->priv->directory, "mirrorlist.txt", NULL);
+		zif_repo_md_set_filename (remote->priv->md_mirrorlist, filename);
+		g_free (filename);
+	}
+
 	/* we need either a base url or mirror list for an enabled store */
 	if (remote->priv->enabled && remote->priv->baseurls->len == 0 && remote->priv->metalink == NULL && remote->priv->mirrorlist == NULL) {
-		g_set_error (error, 1, 0, "baseurl, metalink or mirrorlist required");
+		g_set_error_literal (error, 1, 0, "baseurl, metalink or mirrorlist required");
 		ret = FALSE;
 		goto out;
 	}
@@ -1257,7 +1315,7 @@ zif_store_remote_resolve (ZifStore *store, const gchar *search, GCancellable *ca
 		completion_local = zif_completion_get_child (completion);
 		ret = zif_store_remote_load_metadata (remote, cancellable, completion_local, &error_local);
 		if (!ret) {
-			g_set_error (error, 1, 0, "failed to load xml: %s", error_local->message);
+			g_set_error (error, 1, 0, "failed to load metadata for %s: %s", remote->priv->id, error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
@@ -1309,7 +1367,7 @@ zif_store_remote_search_name (ZifStore *store, const gchar *search, GCancellable
 		completion_local = zif_completion_get_child (completion);
 		ret = zif_store_remote_load_metadata (remote, cancellable, completion_local, &error_local);
 		if (!ret) {
-			g_set_error (error, 1, 0, "failed to load metadata for %s: %s", remote->priv->id, error_local->message);
+			g_set_error (error, 1, 0, "failed to load xml: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
