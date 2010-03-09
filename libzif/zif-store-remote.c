@@ -302,6 +302,8 @@ zif_store_remote_download_try (ZifStoreRemote *store, const gchar *uri, const gc
 	gboolean ret = FALSE;
 	GError *error_local = NULL;
 	ZifDownload *download = NULL;
+	gchar *contents = NULL;
+	gsize length;
 
 	/* download object */
 	download = zif_download_new ();
@@ -312,7 +314,31 @@ zif_store_remote_download_try (ZifStoreRemote *store, const gchar *uri, const gc
 		g_error_free (error_local);
 		goto out;
 	}
+
+	/* try to read it */
+	ret = g_file_get_contents (filename, &contents, &length, &error_local);
+	if (!ret) {
+		g_set_error (error, 1, 0, "failed to download %s from %s: %s (unable to read file)", filename, uri, error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* check we have some data */
+	if (length == 0) {
+		g_set_error (error, 1, 0, "failed to download %s from %s: no data", filename, uri);
+		ret = FALSE;
+		goto out;
+	}
+
+	/* check this really isn't a fancy 404 page */
+	if (g_str_has_prefix (contents, "<html>")) {
+		g_set_error (error, 1, 0, "failed to download %s from %s: invalid file", filename, uri);
+		ret = FALSE;
+		goto out;
+	}
+
 out:
+	g_free (contents);
 	g_object_unref (download);
 	return ret;
 }
