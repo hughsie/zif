@@ -370,8 +370,7 @@ zif_store_remote_download (ZifStoreRemote *store, const gchar *filename, const g
 		completion_local = zif_completion_get_child (completion);
 		ret = zif_store_remote_load_metadata (store, cancellable, completion_local, &error_local);
 		if (!ret) {
-			if (error != NULL)
-				*error = g_error_new (1, 0, "failed to load metadata: %s", error_local->message);
+			g_set_error (error, 1, 0, "failed to load metadata: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
@@ -428,7 +427,7 @@ zif_store_remote_download (ZifStoreRemote *store, const gchar *filename, const g
 
 	/* nothing */
 	if (!ret) {
-		g_set_error (error, 1, 0, "failed to download from any sources");
+		g_set_error_literal (error, 1, 0, "failed to download from any sources");
 		goto out;
 	}
 out:
@@ -575,7 +574,7 @@ zif_store_remote_load_metadata (ZifStoreRemote *store, GCancellable *cancellable
 	ret = zif_lock_is_locked (store->priv->lock, NULL);
 	if (!ret) {
 		egg_warning ("not locked");
-		g_set_error (error, 1, 0, "not locked");
+		g_set_error_literal (error, 1, 0, "not locked");
 		goto out;
 	}
 
@@ -592,8 +591,7 @@ zif_store_remote_load_metadata (ZifStoreRemote *store, GCancellable *cancellable
 		/* if not online, then this is fatal */
 		ret = zif_config_get_boolean (store->priv->config, "network", NULL);
 		if (!ret) {
-			if (error != NULL)
-				*error = g_error_new (1, 0, "failed to download repomd as offline");
+			g_set_error (error, 1, 0, "failed to download repomd as offline");
 			goto out;
 		}
 
@@ -752,7 +750,7 @@ zif_store_remote_refresh (ZifStore *store, gboolean force, GCancellable *cancell
 	/* if not online, then this is fatal */
 	ret = zif_config_get_boolean (remote->priv->config, "network", NULL);
 	if (!ret) {
-		g_set_error (error, 1, 0, "failed to refresh as offline");
+		g_set_error_literal (error, 1, 0, "failed to refresh as offline");
 		goto out;
 	}
 
@@ -763,7 +761,7 @@ zif_store_remote_refresh (ZifStore *store, gboolean force, GCancellable *cancell
 	ret = zif_lock_is_locked (remote->priv->lock, NULL);
 	if (!ret) {
 		egg_warning ("not locked");
-		g_set_error (error, 1, 0, "not locked");
+		g_set_error_literal (error, 1, 0, "not locked");
 		goto out;
 	}
 
@@ -819,8 +817,7 @@ zif_store_remote_refresh (ZifStore *store, gboolean force, GCancellable *cancell
 		completion_local = zif_completion_get_child (completion);
 		ret = zif_store_remote_download (remote, filename, remote->priv->directory, cancellable, completion_local, &error_local);
 		if (!ret) {
-			if (error != NULL)
-				*error = g_error_new (1, 0, "failed to refresh %s (%s): %s", zif_repo_md_type_to_text (i), filename, error_local->message);
+			g_set_error (error, 1, 0, "failed to refresh %s (%s): %s", zif_repo_md_type_to_text (i), filename, error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
@@ -832,9 +829,8 @@ zif_store_remote_refresh (ZifStore *store, gboolean force, GCancellable *cancell
 		completion_local = zif_completion_get_child (completion);
 		ret = zif_store_file_decompress (filename, cancellable, completion_local, &error_local);
 		if (!ret) {
-			if (error != NULL)
-				*error = g_error_new (1, 0, "failed to decompress %s for %s: %s",
-						      filename, zif_repo_md_type_to_text (i), error_local->message);
+			g_set_error (error, 1, 0, "failed to decompress %s for %s: %s",
+				     filename, zif_repo_md_type_to_text (i), error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
@@ -871,7 +867,7 @@ zif_store_remote_load (ZifStore *store, GCancellable *cancellable, ZifCompletion
 	ret = zif_lock_is_locked (remote->priv->lock, NULL);
 	if (!ret) {
 		egg_warning ("not locked");
-		g_set_error (error, 1, 0, "not locked");
+		g_set_error_literal (error, 1, 0, "not locked");
 		goto out;
 	}
 
@@ -986,7 +982,7 @@ zif_store_remote_clean (ZifStore *store, GCancellable *cancellable, ZifCompletio
 	ret = zif_lock_is_locked (remote->priv->lock, NULL);
 	if (!ret) {
 		egg_warning ("not locked");
-		g_set_error (error, 1, 0, "not locked");
+		g_set_error_literal (error, 1, 0, "not locked");
 		goto out;
 	}
 
@@ -1019,22 +1015,21 @@ zif_store_remote_clean (ZifStore *store, GCancellable *cancellable, ZifCompletio
 		md = zif_store_remote_get_md_from_type (remote, i);
 		if (md == NULL) {
 			/* TODO: until we've created ZifRepoMdComps and ZifRepoMdOther we'll get warnings here */
-			egg_warning ("failed to get local store for %s with %s", zif_repo_md_type_to_text (i), remote->priv->id);
+			egg_debug ("failed to get local store for %s with %s", zif_repo_md_type_to_text (i), remote->priv->id);
 			goto skip;
 		}
 
 		/* location not set */
 		location = zif_repo_md_get_location (md);
 		if (location == NULL) {
-			egg_warning ("no location set for %s with %s", zif_repo_md_type_to_text (i), remote->priv->id);
+			egg_debug ("no location set for %s with %s", zif_repo_md_type_to_text (i), remote->priv->id);
 			goto skip;
 		}
 
 		/* clean md */
 		ret = zif_repo_md_clean (md, &error_local);
 		if (!ret) {
-			if (error != NULL)
-				*error = g_error_new (1, 0, "failed to clean %s: %s", zif_repo_md_type_to_text (i), error_local->message);
+			g_set_error (error, 1, 0, "failed to clean %s: %s", zif_repo_md_type_to_text (i), error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
@@ -1050,9 +1045,8 @@ skip:
 		ret = g_file_delete (file, NULL, &error_local);
 		g_object_unref (file);
 		if (!ret) {
-			if (error != NULL)
-				*error = g_error_new (1, 0, "failed to delete metadata file %s: %s",
-						      remote->priv->repomd_filename, error_local->message);
+			g_set_error (error, 1, 0, "failed to delete metadata file %s: %s",
+				     remote->priv->repomd_filename, error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
@@ -1088,7 +1082,7 @@ zif_store_remote_set_from_file (ZifStoreRemote *store, const gchar *repo_filenam
 	ret = zif_lock_is_locked (store->priv->lock, NULL);
 	if (!ret) {
 		egg_warning ("not locked");
-		g_set_error (error, 1, 0, "not locked");
+		g_set_error_literal (error, 1, 0, "not locked");
 		goto out;
 	}
 
@@ -1154,7 +1148,7 @@ zif_store_remote_set_enabled (ZifStoreRemote *store, gboolean enabled, GError **
 	ret = zif_lock_is_locked (store->priv->lock, NULL);
 	if (!ret) {
 		egg_warning ("not locked");
-		g_set_error (error, 1, 0, "not locked");
+		g_set_error_literal (error, 1, 0, "not locked");
 		goto out;
 	}
 
@@ -1222,7 +1216,7 @@ zif_store_remote_resolve (ZifStore *store, const gchar *search, GCancellable *ca
 	ret = zif_lock_is_locked (remote->priv->lock, NULL);
 	if (!ret) {
 		egg_warning ("not locked");
-		g_set_error (error, 1, 0, "not locked");
+		g_set_error_literal (error, 1, 0, "not locked");
 		goto out;
 	}
 
@@ -1237,8 +1231,7 @@ zif_store_remote_resolve (ZifStore *store, const gchar *search, GCancellable *ca
 		completion_local = zif_completion_get_child (completion);
 		ret = zif_store_remote_load_metadata (remote, cancellable, completion_local, &error_local);
 		if (!ret) {
-			if (error != NULL)
-				*error = g_error_new (1, 0, "failed to load xml: %s", error_local->message);
+			g_set_error (error, 1, 0, "failed to load xml: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
@@ -1275,7 +1268,7 @@ zif_store_remote_search_name (ZifStore *store, const gchar *search, GCancellable
 	ret = zif_lock_is_locked (remote->priv->lock, NULL);
 	if (!ret) {
 		egg_warning ("not locked");
-		g_set_error (error, 1, 0, "not locked");
+		g_set_error_literal (error, 1, 0, "not locked");
 		goto out;
 	}
 
@@ -1290,8 +1283,7 @@ zif_store_remote_search_name (ZifStore *store, const gchar *search, GCancellable
 		completion_local = zif_completion_get_child (completion);
 		ret = zif_store_remote_load_metadata (remote, cancellable, completion_local, &error_local);
 		if (!ret) {
-			if (error != NULL)
-				*error = g_error_new (1, 0, "failed to load xml: %s", error_local->message);
+			g_set_error (error, 1, 0, "failed to load metadata for %s: %s", remote->priv->id, error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
@@ -1328,7 +1320,7 @@ zif_store_remote_search_details (ZifStore *store, const gchar *search, GCancella
 	ret = zif_lock_is_locked (remote->priv->lock, NULL);
 	if (!ret) {
 		egg_warning ("not locked");
-		g_set_error (error, 1, 0, "not locked");
+		g_set_error_literal (error, 1, 0, "not locked");
 		goto out;
 	}
 
@@ -1343,8 +1335,7 @@ zif_store_remote_search_details (ZifStore *store, const gchar *search, GCancella
 		completion_local = zif_completion_get_child (completion);
 		ret = zif_store_remote_load_metadata (remote, cancellable, completion_local, &error_local);
 		if (!ret) {
-			if (error != NULL)
-				*error = g_error_new (1, 0, "failed to load xml: %s", error_local->message);
+			g_set_error (error, 1, 0, "failed to load xml: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
@@ -1455,7 +1446,7 @@ zif_store_remote_search_category (ZifStore *store, const gchar *group_id, GCance
 	ret = zif_lock_is_locked (remote->priv->lock, NULL);
 	if (!ret) {
 		egg_warning ("not locked");
-		g_set_error (error, 1, 0, "not locked");
+		g_set_error_literal (error, 1, 0, "not locked");
 		goto out;
 	}
 
@@ -1470,8 +1461,7 @@ zif_store_remote_search_category (ZifStore *store, const gchar *group_id, GCance
 		completion_local = zif_completion_get_child (completion);
 		ret = zif_store_remote_load_metadata (remote, cancellable, completion_local, &error_local);
 		if (!ret) {
-			if (error != NULL)
-				*error = g_error_new (1, 0, "failed to load xml: %s", error_local->message);
+			g_set_error (error, 1, 0, "failed to load xml: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
@@ -1529,8 +1519,7 @@ zif_store_remote_search_category (ZifStore *store, const gchar *group_id, GCance
 				goto ignore_error;
 			}
 
-			if (error != NULL)
-				*error = g_error_new (1, 0, "failed to get resolve %s for %s: %s", name, group_id, error_local->message);
+			g_set_error (error, 1, 0, "failed to get resolve %s for %s: %s", name, group_id, error_local->message);
 			g_error_free (error_local);
 
 			/* undo all our hard work */
@@ -1573,7 +1562,7 @@ zif_store_remote_search_group (ZifStore *store, const gchar *search, GCancellabl
 	ret = zif_lock_is_locked (remote->priv->lock, NULL);
 	if (!ret) {
 		egg_warning ("not locked");
-		g_set_error (error, 1, 0, "not locked");
+		g_set_error_literal (error, 1, 0, "not locked");
 		goto out;
 	}
 
@@ -1588,8 +1577,7 @@ zif_store_remote_search_group (ZifStore *store, const gchar *search, GCancellabl
 		completion_local = zif_completion_get_child (completion);
 		ret = zif_store_remote_load_metadata (remote, cancellable, completion_local, &error_local);
 		if (!ret) {
-			if (error != NULL)
-				*error = g_error_new (1, 0, "failed to load xml: %s", error_local->message);
+			g_set_error (error, 1, 0, "failed to load xml: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
@@ -1627,7 +1615,7 @@ zif_store_remote_find_package (ZifStore *store, const gchar *package_id, GCancel
 	ret = zif_lock_is_locked (remote->priv->lock, NULL);
 	if (!ret) {
 		egg_warning ("not locked");
-		g_set_error (error, 1, 0, "not locked");
+		g_set_error_literal (error, 1, 0, "not locked");
 		goto out;
 	}
 
@@ -1642,8 +1630,7 @@ zif_store_remote_find_package (ZifStore *store, const gchar *package_id, GCancel
 		completion_local = zif_completion_get_child (completion);
 		ret = zif_store_remote_load_metadata (remote, cancellable, completion_local, &error_local);
 		if (!ret) {
-			if (error != NULL)
-				*error = g_error_new (1, 0, "failed to load xml: %s", error_local->message);
+			g_set_error (error, 1, 0, "failed to load xml: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
@@ -1666,13 +1653,13 @@ zif_store_remote_find_package (ZifStore *store, const gchar *package_id, GCancel
 
 	/* nothing */
 	if (array->len == 0) {
-		g_set_error (error, 1, 0, "failed to find package");
+		g_set_error_literal (error, 1, 0, "failed to find package");
 		goto out;
 	}
 
 	/* more than one match */
 	if (array->len > 1) {
-		g_set_error (error, 1, 0, "more than one match");
+		g_set_error_literal (error, 1, 0, "more than one match");
 		goto out;
 	}
 
@@ -1702,7 +1689,7 @@ zif_store_remote_get_packages (ZifStore *store, GCancellable *cancellable, ZifCo
 	ret = zif_lock_is_locked (remote->priv->lock, NULL);
 	if (!ret) {
 		egg_warning ("not locked");
-		g_set_error (error, 1, 0, "not locked");
+		g_set_error_literal (error, 1, 0, "not locked");
 		goto out;
 	}
 
@@ -1717,8 +1704,7 @@ zif_store_remote_get_packages (ZifStore *store, GCancellable *cancellable, ZifCo
 		completion_local = zif_completion_get_child (completion);
 		ret = zif_store_remote_load_metadata (remote, cancellable, completion_local, &error_local);
 		if (!ret) {
-			if (error != NULL)
-				*error = g_error_new (1, 0, "failed to load xml: %s", error_local->message);
+			g_set_error (error, 1, 0, "failed to load xml: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
@@ -1764,7 +1750,7 @@ zif_store_remote_get_categories (ZifStore *store, GCancellable *cancellable, Zif
 	ret = zif_lock_is_locked (remote->priv->lock, NULL);
 	if (!ret) {
 		egg_warning ("not locked");
-		g_set_error (error, 1, 0, "not locked");
+		g_set_error_literal (error, 1, 0, "not locked");
 		goto out;
 	}
 
@@ -1779,8 +1765,7 @@ zif_store_remote_get_categories (ZifStore *store, GCancellable *cancellable, Zif
 		completion_local = zif_completion_get_child (completion);
 		ret = zif_store_remote_load_metadata (remote, cancellable, completion_local, &error_local);
 		if (!ret) {
-			if (error != NULL)
-				*error = g_error_new (1, 0, "failed to load xml: %s", error_local->message);
+			g_set_error (error, 1, 0, "failed to load xml: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
@@ -1829,8 +1814,7 @@ zif_store_remote_get_categories (ZifStore *store, GCancellable *cancellable, Zif
 		array_groups = zif_repo_md_comps_get_groups_for_category (ZIF_REPO_MD_COMPS (remote->priv->md_comps),
 									  pk_category_get_id (category), cancellable, completion_loop, &error_local);
 		if (array_groups == NULL) {
-			if (error != NULL)
-				*error = g_error_new (1, 0, "failed to get groups for %s: %s", pk_category_get_id (category), error_local->message);
+			g_set_error (error, 1, 0, "failed to get groups for %s: %s", pk_category_get_id (category), error_local->message);
 			g_error_free (error_local);
 
 			/* undo the work we've already done */
@@ -1892,7 +1876,7 @@ zif_store_remote_get_updates (ZifStore *store, GCancellable *cancellable, ZifCom
 	ret = zif_lock_is_locked (remote->priv->lock, NULL);
 	if (!ret) {
 		egg_warning ("not locked");
-		g_set_error (error, 1, 0, "not locked");
+		g_set_error_literal (error, 1, 0, "not locked");
 		goto out;
 	}
 
@@ -1907,8 +1891,7 @@ zif_store_remote_get_updates (ZifStore *store, GCancellable *cancellable, ZifCom
 		completion_local = zif_completion_get_child (completion);
 		ret = zif_store_remote_load_metadata (remote, cancellable, completion_local, &error_local);
 		if (!ret) {
-			if (error != NULL)
-				*error = g_error_new (1, 0, "failed to load xml: %s", error_local->message);
+			g_set_error (error, 1, 0, "failed to load xml: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
@@ -1991,7 +1974,7 @@ zif_store_remote_what_provides (ZifStore *store, const gchar *search, GCancellab
 	ret = zif_lock_is_locked (remote->priv->lock, NULL);
 	if (!ret) {
 		egg_warning ("not locked");
-		g_set_error (error, 1, 0, "not locked");
+		g_set_error_literal (error, 1, 0, "not locked");
 		goto out;
 	}
 
@@ -1999,8 +1982,7 @@ zif_store_remote_what_provides (ZifStore *store, const gchar *search, GCancellab
 	if (!remote->priv->loaded_metadata) {
 		ret = zif_store_remote_load_metadata (remote, cancellable, completion, &error_local);
 		if (!ret) {
-			if (error != NULL)
-				*error = g_error_new (1, 0, "failed to load xml: %s", error_local->message);
+			g_set_error (error, 1, 0, "failed to load xml: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
@@ -2031,7 +2013,7 @@ zif_store_remote_search_file (ZifStore *store, const gchar *search, GCancellable
 	ret = zif_lock_is_locked (remote->priv->lock, NULL);
 	if (!ret) {
 		egg_warning ("not locked");
-		g_set_error (error, 1, 0, "not locked");
+		g_set_error_literal (error, 1, 0, "not locked");
 		goto out;
 	}
 
@@ -2046,8 +2028,7 @@ zif_store_remote_search_file (ZifStore *store, const gchar *search, GCancellable
 		completion_local = zif_completion_get_child (completion);
 		ret = zif_store_remote_load_metadata (remote, cancellable, completion_local, &error_local);
 		if (!ret) {
-			if (error != NULL)
-				*error = g_error_new (1, 0, "failed to load xml: %s", error_local->message);
+			g_set_error (error, 1, 0, "failed to load xml: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
@@ -2077,8 +2058,7 @@ zif_store_remote_search_file (ZifStore *store, const gchar *search, GCancellable
 		completion_local = zif_completion_get_child (completion);
 		tmp = zif_repo_md_primary_search_pkgid (ZIF_REPO_MD_PRIMARY (remote->priv->md_primary), pkgid, cancellable, completion_local, &error_local);
 		if (tmp == NULL) {
-			if (error != NULL)
-				*error = g_error_new (1, 0, "failed to resolve pkgId to package: %s", error_local->message);
+			g_set_error (error, 1, 0, "failed to resolve pkgId to package: %s", error_local->message);
 			g_error_free (error_local);
 			/* free what we've collected already */
 			g_ptr_array_unref (array);
@@ -2126,7 +2106,7 @@ zif_store_remote_is_devel (ZifStoreRemote *store, GCancellable *cancellable, Zif
 	ret = zif_lock_is_locked (store->priv->lock, NULL);
 	if (!ret) {
 		egg_warning ("not locked");
-		g_set_error (error, 1, 0, "not locked");
+		g_set_error_literal (error, 1, 0, "not locked");
 		goto out;
 	}
 
@@ -2134,8 +2114,7 @@ zif_store_remote_is_devel (ZifStoreRemote *store, GCancellable *cancellable, Zif
 	if (!store->priv->loaded) {
 		ret = zif_store_remote_load (ZIF_STORE (store), cancellable, completion, &error_local);
 		if (!ret) {
-			if (error != NULL)
-				*error = g_error_new (1, 0, "failed to load store file: %s", error_local->message);
+			g_set_error (error, 1, 0, "failed to load store file: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
@@ -2196,7 +2175,7 @@ zif_store_remote_get_name (ZifStoreRemote *store, GCancellable *cancellable, Zif
 	ret = zif_lock_is_locked (store->priv->lock, NULL);
 	if (!ret) {
 		egg_warning ("not locked");
-		g_set_error (error, 1, 0, "not locked");
+		g_set_error_literal (error, 1, 0, "not locked");
 		goto out;
 	}
 
@@ -2204,8 +2183,7 @@ zif_store_remote_get_name (ZifStoreRemote *store, GCancellable *cancellable, Zif
 	if (!store->priv->loaded) {
 		ret = zif_store_remote_load (ZIF_STORE (store), cancellable, completion, &error_local);
 		if (!ret) {
-			if (error != NULL)
-				*error = g_error_new (1, 0, "failed to load store file: %s", error_local->message);
+			g_set_error (error, 1, 0, "failed to load store file: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
@@ -2238,7 +2216,7 @@ zif_store_remote_get_enabled (ZifStoreRemote *store, GCancellable *cancellable, 
 	ret = zif_lock_is_locked (store->priv->lock, NULL);
 	if (!ret) {
 		egg_warning ("not locked");
-		g_set_error (error, 1, 0, "not locked");
+		g_set_error_literal (error, 1, 0, "not locked");
 		goto out;
 	}
 
@@ -2246,8 +2224,7 @@ zif_store_remote_get_enabled (ZifStoreRemote *store, GCancellable *cancellable, 
 	if (!store->priv->loaded) {
 		ret = zif_store_remote_load (ZIF_STORE (store), cancellable, completion, &error_local);
 		if (!ret) {
-			if (error != NULL)
-				*error = g_error_new (1, 0, "failed to load store file: %s", error_local->message);
+			g_set_error (error, 1, 0, "failed to load store file: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
