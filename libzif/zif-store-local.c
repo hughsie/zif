@@ -832,6 +832,7 @@ zif_store_local_find_package (ZifStore *store, const gchar *package_id, GCancell
 	ZifPackage *package_tmp = NULL;
 	GError *error_local = NULL;
 	gboolean ret;
+	guint jump;
 	const gchar *package_id_tmp;
 	ZifCompletion *completion_local = NULL;
 	ZifStoreLocal *local = ZIF_STORE_LOCAL (store);
@@ -876,7 +877,11 @@ zif_store_local_find_package (ZifStore *store, const gchar *package_id, GCancell
 
 	/* setup completion with the correct number of steps */
 	completion_local = zif_completion_get_child (completion);
-	zif_completion_set_number_steps (completion_local, local->priv->packages->len);
+
+	/* we only do a few jumps as there could be thousands of packages, and
+	 * this makes up an inner loop of possibly deep notifications */
+	jump = local->priv->packages->len / 10;
+	zif_completion_set_number_steps (completion_local, jump);
 
 	/* iterate list */
 	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
@@ -887,7 +892,8 @@ zif_store_local_find_package (ZifStore *store, const gchar *package_id, GCancell
 			g_ptr_array_add (array, g_object_ref (package_tmp));
 
 		/* this section done */
-		zif_completion_done (completion_local);
+		if (i % jump == 0)
+			zif_completion_done (completion_local);
 	}
 
 	/* nothing */
