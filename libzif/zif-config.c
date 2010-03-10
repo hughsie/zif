@@ -62,6 +62,20 @@ G_DEFINE_TYPE (ZifConfig, zif_config, G_TYPE_OBJECT)
 static gpointer zif_config_object = NULL;
 
 /**
+ * zif_config_error_quark:
+ *
+ * Return value: Our personal error quark.
+ **/
+GQuark
+zif_config_error_quark (void)
+{
+	static GQuark quark = 0;
+	if (!quark)
+		quark = g_quark_from_static_string ("zif_config_error");
+	return quark;
+}
+
+/**
  * zif_config_get_string:
  * @config: the #ZifConfig object
  * @key: the key name to retrieve, e.g. "cachedir"
@@ -84,7 +98,8 @@ zif_config_get_string (ZifConfig *config, const gchar *key, GError **error)
 
 	/* not loaded yet */
 	if (!config->priv->loaded) {
-		g_set_error_literal (error, 1, 0, "config not loaded");
+		g_set_error_literal (error, ZIF_CONFIG_ERROR, ZIF_CONFIG_ERROR_FAILED,
+				     "config not loaded");
 		goto out;
 	}
 
@@ -134,7 +149,8 @@ zif_config_get_string (ZifConfig *config, const gchar *key, GError **error)
 	}
 
 	/* nothing matched */
-	g_set_error (error, 1, 0, "failed to read %s: %s", key, error_local->message);
+	g_set_error (error, ZIF_CONFIG_ERROR, ZIF_CONFIG_ERROR_FAILED,
+		     "failed to read %s: %s", key, error_local->message);
 free_error:
 	g_error_free (error_local);
 out:
@@ -201,7 +217,8 @@ zif_config_get_uint (ZifConfig *config, const gchar *key, GError **error)
 	/* convert to int */
 	ret = egg_strtouint (value, &retval);
 	if (!ret) {
-		g_set_error (error, 1, 0, "failed to convert '%s' to unsigned integer", value);
+		g_set_error (error, ZIF_CONFIG_ERROR, ZIF_CONFIG_ERROR_FAILED,
+			     "failed to convert '%s' to unsigned integer", value);
 		goto out;
 	}
 
@@ -381,14 +398,16 @@ zif_config_set_filename (ZifConfig *config, const gchar *filename, GError **erro
 	/* check file exists */
 	ret = g_file_test (filename, G_FILE_TEST_IS_REGULAR);
 	if (!ret) {
-		g_set_error (error, 1, 0, "config file %s does not exist", filename);
+		g_set_error (error, ZIF_CONFIG_ERROR, ZIF_CONFIG_ERROR_FAILED,
+			     "config file %s does not exist", filename);
 		goto out;
 	}
 
 	/* setup watch */
 	ret = zif_monitor_add_watch (config->priv->monitor, filename, &error_local);
 	if (!ret) {
-		g_set_error (error, 1, 0, "failed to setup watch: %s", error_local->message);
+		g_set_error (error, ZIF_CONFIG_ERROR, ZIF_CONFIG_ERROR_FAILED,
+			     "failed to setup watch: %s", error_local->message);
 		g_error_free (error_local);
 		goto out;
 	}
@@ -396,7 +415,8 @@ zif_config_set_filename (ZifConfig *config, const gchar *filename, GError **erro
 	/* load file */
 	ret = g_key_file_load_from_file (config->priv->keyfile, filename, G_KEY_FILE_NONE, &error_local);
 	if (!ret) {
-		g_set_error (error, 1, 0, "failed to load config file: %s", error_local->message);
+		g_set_error (error, ZIF_CONFIG_ERROR, ZIF_CONFIG_ERROR_FAILED,
+			     "failed to load config file: %s", error_local->message);
 		g_error_free (error_local);
 		goto out;
 	}
@@ -410,7 +430,8 @@ zif_config_set_filename (ZifConfig *config, const gchar *filename, GError **erro
 		/* get distro constants from fedora-release */
 		ret = g_file_get_contents ("/etc/fedora-release", &releasever, NULL, &error_local);
 		if (!ret) {
-			g_set_error (error, 1, 0, "failed to get distro release version: %s", error_local->message);
+			g_set_error (error, ZIF_CONFIG_ERROR, ZIF_CONFIG_ERROR_FAILED,
+				     "failed to get distro release version: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
@@ -421,7 +442,8 @@ zif_config_set_filename (ZifConfig *config, const gchar *filename, GError **erro
 		/* set local */
 		ret = zif_config_set_local (config, "releasever", releasever+15, &error_local);
 		if (!ret) {
-			g_set_error (error, 1, 0, "failed to set distro release version: %s", error_local->message);
+			g_set_error (error, ZIF_CONFIG_ERROR, ZIF_CONFIG_ERROR_FAILED,
+				     "failed to set distro release version: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
@@ -430,7 +452,8 @@ zif_config_set_filename (ZifConfig *config, const gchar *filename, GError **erro
 	/* calculate the valid basearchs */
 	basearch = zif_config_get_string (config, "basearch", &error_local);
 	if (basearch == NULL) {
-		g_set_error (error, 1, 0, "failed to get basearch: %s", error_local->message);
+		g_set_error (error, ZIF_CONFIG_ERROR, ZIF_CONFIG_ERROR_FAILED,
+			     "failed to get basearch: %s", error_local->message);
 		g_error_free (error_local);
 		ret = FALSE;
 		goto out;
@@ -499,7 +522,8 @@ zif_config_set_local (ZifConfig *config, const gchar *key, const gchar *value, G
 	/* already exists? */
 	value_tmp = g_hash_table_lookup (config->priv->hash, key);
 	if (value_tmp != NULL) {
-		g_set_error (error, 1, 0, "already set key %s to %s, cannot overwrite with %s", key, value_tmp, value);
+		g_set_error (error, ZIF_CONFIG_ERROR, ZIF_CONFIG_ERROR_FAILED,
+			     "already set key %s to %s, cannot overwrite with %s", key, value_tmp, value);
 		ret = FALSE;
 		goto out;
 	}

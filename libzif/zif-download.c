@@ -60,6 +60,20 @@ static gpointer zif_download_object = NULL;
 G_DEFINE_TYPE (ZifDownload, zif_download, G_TYPE_OBJECT)
 
 /**
+ * zif_download_error_quark:
+ *
+ * Return value: Our personal error quark.
+ **/
+GQuark
+zif_download_error_quark (void)
+{
+	static GQuark quark = 0;
+	if (!quark)
+		quark = g_quark_from_static_string ("zif_download_error");
+	return quark;
+}
+
+/**
  * zif_download_file_got_chunk_cb:
  **/
 static void
@@ -162,14 +176,16 @@ zif_download_file (ZifDownload *download, const gchar *uri, const gchar *filenam
 
 	base_uri = soup_uri_new (uri);
 	if (base_uri == NULL) {
-		g_set_error (error, 1, 0, "could not parse uri: %s", uri);
+		g_set_error (error, ZIF_DOWNLOAD_ERROR, ZIF_DOWNLOAD_ERROR_FAILED,
+			     "could not parse uri: %s", uri);
 		goto out;
 	}
 
 	/* GET package */
 	msg = soup_message_new_from_uri (SOUP_METHOD_GET, base_uri);
 	if (msg == NULL) {
-		g_set_error_literal (error, 1, 0, "could not setup message");
+		g_set_error_literal (error, ZIF_DOWNLOAD_ERROR, ZIF_DOWNLOAD_ERROR_FAILED,
+				     "could not setup message");
 		goto out;
 	}
 
@@ -188,14 +204,16 @@ zif_download_file (ZifDownload *download, const gchar *uri, const gchar *filenam
 
 	/* find length */
 	if (!SOUP_STATUS_IS_SUCCESSFUL (msg->status_code)) {
-		g_set_error (error, 1, 0, "failed to get valid response for %s: %s", uri, soup_status_get_phrase (msg->status_code));
+		g_set_error (error, ZIF_DOWNLOAD_ERROR, ZIF_DOWNLOAD_ERROR_FAILED,
+			     "failed to get valid response for %s: %s", uri, soup_status_get_phrase (msg->status_code));
 		goto out;
 	}
 
 	/* write file */
 	ret = g_file_set_contents (filename, msg->response_body->data, msg->response_body->length, &error_local);
 	if (!ret) {
-		g_set_error (error, 1, 0, "failed to write file: %s",  error_local->message);
+		g_set_error (error, ZIF_DOWNLOAD_ERROR, ZIF_DOWNLOAD_ERROR_FAILED,
+			     "failed to write file: %s",  error_local->message);
 		g_error_free (error_local);
 		goto out;
 	}
@@ -234,7 +252,8 @@ zif_download_set_proxy (ZifDownload *download, const gchar *http_proxy, GError *
 								      SOUP_SESSION_TIMEOUT, connection_timeout,
 								      NULL);
 	if (download->priv->session == NULL) {
-		g_set_error_literal (error, 1, 0, "could not setup session");
+		g_set_error_literal (error, ZIF_DOWNLOAD_ERROR, ZIF_DOWNLOAD_ERROR_FAILED,
+				     "could not setup session");
 		goto out;
 	}
 	ret = TRUE;

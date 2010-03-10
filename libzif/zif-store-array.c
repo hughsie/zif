@@ -144,7 +144,8 @@ zif_store_array_add_remote (GPtrArray *store_array, GCancellable *cancellable, Z
 	repos = zif_repos_new ();
 	array = zif_repos_get_stores (repos, cancellable, completion, &error_local);
 	if (array == NULL) {
-		g_set_error (error, 1, 0, "failed to get enabled stores: %s", error_local->message);
+		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+			     "failed to get enabled stores: %s", error_local->message);
 		g_error_free (error_local);
 		ret = FALSE;
 		goto out;
@@ -183,7 +184,8 @@ zif_store_array_add_remote_enabled (GPtrArray *store_array, GCancellable *cancel
 	repos = zif_repos_new ();
 	array = zif_repos_get_stores_enabled (repos, cancellable, completion, &error_local);
 	if (array == NULL) {
-		g_set_error (error, 1, 0, "failed to get enabled stores: %s", error_local->message);
+		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+			     "failed to get enabled stores: %s", error_local->message);
 		g_error_free (error_local);
 		ret = FALSE;
 		goto out;
@@ -216,7 +218,8 @@ zif_store_array_repos_search (GPtrArray *store_array, PkRoleEnum role, const gch
 	/* nothing to do */
 	if (store_array->len == 0) {
 		egg_warning ("nothing to do");
-		g_set_error (error, 1, 0, "nothing to do as no stores in store_array");
+		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_ARRAY_IS_EMPTY,
+			     "nothing to do as no stores in store_array");
 		goto out;
 	}
 
@@ -255,7 +258,8 @@ zif_store_array_repos_search (GPtrArray *store_array, PkRoleEnum role, const gch
 		else
 			egg_error ("internal error: %s", pk_role_enum_to_text (role));
 		if (part == NULL) {
-			g_set_error (error, 1, 0, "failed to %s in %s: %s", pk_role_enum_to_text (role), zif_store_get_id (store), error_local->message);
+			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+				     "failed to %s in %s: %s", pk_role_enum_to_text (role), zif_store_get_id (store), error_local->message);
 			g_error_free (error_local);
 			g_ptr_array_unref (array);
 			array = NULL;
@@ -297,7 +301,8 @@ zif_store_array_find_package (GPtrArray *store_array, const gchar *package_id, G
 
 	/* nothing to do */
 	if (store_array->len == 0) {
-		g_set_error_literal (error, 1, 0, "package cannot be found as the store array is empty");
+		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_ARRAY_IS_EMPTY,
+				     "package cannot be found as the store array is empty");
 		goto out;
 	}
 
@@ -319,7 +324,8 @@ zif_store_array_find_package (GPtrArray *store_array, const gchar *package_id, G
 
 	/* nothing to do */
 	if (package == NULL) {
-		g_set_error_literal (error, 1, 0, "package cannot be found");
+		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+				     "package cannot be found");
 		goto out;
 	}
 out:
@@ -363,7 +369,8 @@ zif_store_array_clean (GPtrArray *store_array, GCancellable *cancellable, ZifCom
 		completion_local = zif_completion_get_child (completion);
 		ret = zif_store_clean (store, cancellable, completion_local, &error_local);
 		if (!ret) {
-			g_set_error (error, 1, 0, "failed to clean %s: %s", zif_store_get_id (store), error_local->message);
+			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+				     "failed to clean %s: %s", zif_store_get_id (store), error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}

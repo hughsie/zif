@@ -71,6 +71,20 @@ struct _ZifPackagePrivate
 G_DEFINE_TYPE (ZifPackage, zif_package, G_TYPE_OBJECT)
 
 /**
+ * zif_package_error_quark:
+ *
+ * Return value: Our personal error quark.
+ **/
+GQuark
+zif_package_error_quark (void)
+{
+	static GQuark quark = 0;
+	if (!quark)
+		quark = g_quark_from_static_string ("zif_package_error");
+	return quark;
+}
+
+/**
  * zif_package_compare:
  * @a: the first package to compare
  * @b: the second package to compare
@@ -130,7 +144,8 @@ zif_package_array_get_newest (GPtrArray *array, GError **error)
 
 	/* no results */
 	if (array->len == 0) {
-		g_set_error_literal (error, 1, 0, "nothing in array");
+		g_set_error_literal (error, ZIF_PACKAGE_ERROR, ZIF_PACKAGE_ERROR_FAILED,
+				     "nothing in array");
 		goto out;
 	}
 
@@ -177,7 +192,8 @@ zif_package_download (ZifPackage *package, const gchar *directory, GCancellable 
 
 	/* check we are not installed */
 	if (package->priv->installed) {
-		g_set_error_literal (error, 1, 0, "cannot download installed packages");
+		g_set_error_literal (error, ZIF_PACKAGE_ERROR, ZIF_PACKAGE_ERROR_FAILED,
+				     "cannot download installed packages");
 		goto out;
 	}
 
@@ -188,7 +204,8 @@ zif_package_download (ZifPackage *package, const gchar *directory, GCancellable 
 	completion_local = zif_completion_get_child (completion);
 	repo = zif_repos_get_store (package->priv->repos, package->priv->package_id_split[PK_PACKAGE_ID_DATA], cancellable, completion_local, &error_local);
 	if (repo == NULL) {
-		g_set_error (error, 1, 0, "cannot find remote repo: %s", error_local->message);
+		g_set_error (error, ZIF_PACKAGE_ERROR, ZIF_PACKAGE_ERROR_FAILED,
+			     "cannot find remote repo: %s", error_local->message);
 		g_error_free (error_local);
 		goto out;
 	}
@@ -202,7 +219,8 @@ zif_package_download (ZifPackage *package, const gchar *directory, GCancellable 
 	/* download from the repo */
 	ret = zif_store_remote_download (repo, zif_string_get_value (package->priv->location_href), directory, cancellable, completion_local, &error_local);
 	if (!ret) {
-		g_set_error (error, 1, 0, "cannot download from repo: %s", error_local->message);
+		g_set_error (error, ZIF_PACKAGE_ERROR, ZIF_PACKAGE_ERROR_FAILED,
+			     "cannot download from repo: %s", error_local->message);
 		g_error_free (error_local);
 		goto out;
 	}
@@ -539,7 +557,8 @@ zif_package_ensure_data (ZifPackage *package, ZifPackageEnsureType type, GError 
 
 	/* no support */
 	if (klass->ensure_data == NULL) {
-		g_set_error (error, 1, 0, "cannot ensure data for %s data", zif_package_ensure_type_to_string (type));
+		g_set_error (error, ZIF_PACKAGE_ERROR, ZIF_PACKAGE_ERROR_FAILED,
+			     "cannot ensure data for %s data", zif_package_ensure_type_to_string (type));
 		goto out;
 	}
 
@@ -677,7 +696,8 @@ zif_package_get_filename (ZifPackage *package, GError **error)
 
 	/* not exists */
 	if (package->priv->location_href == NULL) {
-		g_set_error (error, 1, 0, "no data for %s", package->priv->package_id_split[PK_PACKAGE_ID_NAME]);
+		g_set_error (error, ZIF_PACKAGE_ERROR, ZIF_PACKAGE_ERROR_FAILED,
+			     "no data for %s", package->priv->package_id_split[PK_PACKAGE_ID_NAME]);
 		return NULL;
 	}
 

@@ -42,6 +42,20 @@
 G_DEFINE_TYPE (ZifStore, zif_store, G_TYPE_OBJECT)
 
 /**
+ * zif_store_error_quark:
+ *
+ * Return value: Our personal error quark.
+ **/
+GQuark
+zif_store_error_quark (void)
+{
+	static GQuark quark = 0;
+	if (!quark)
+		quark = g_quark_from_static_string ("zif_store_error");
+	return quark;
+}
+
+/**
  * zif_store_load:
  * @store: the #ZifStore object
  * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
@@ -61,7 +75,8 @@ zif_store_load (ZifStore *store, GCancellable *cancellable, ZifCompletion *compl
 
 	/* no support */
 	if (klass->load == NULL) {
-		g_set_error_literal (error, 1, 0, "operation cannot be performed on this store");
+		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_NO_SUPPORT,
+				     "operation cannot be performed on this store");
 		return FALSE;
 	}
 
@@ -88,7 +103,8 @@ zif_store_clean (ZifStore *store, GCancellable *cancellable, ZifCompletion *comp
 
 	/* no support */
 	if (klass->clean == NULL) {
-		g_set_error_literal (error, 1, 0, "operation cannot be performed on this store");
+		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_NO_SUPPORT,
+				     "operation cannot be performed on this store");
 		return FALSE;
 	}
 
@@ -116,7 +132,8 @@ zif_store_refresh (ZifStore *store, gboolean force, GCancellable *cancellable, Z
 
 	/* no support */
 	if (klass->refresh == NULL) {
-		g_set_error_literal (error, 1, 0, "operation cannot be performed on this store");
+		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_NO_SUPPORT,
+				     "operation cannot be performed on this store");
 		return FALSE;
 	}
 
@@ -145,7 +162,8 @@ zif_store_search_name (ZifStore *store, const gchar *search, GCancellable *cance
 
 	/* no support */
 	if (klass->search_name == NULL) {
-		g_set_error_literal (error, 1, 0, "operation cannot be performed on this store");
+		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_NO_SUPPORT,
+				     "operation cannot be performed on this store");
 		return FALSE;
 	}
 
@@ -174,7 +192,8 @@ zif_store_search_category (ZifStore *store, const gchar *search, GCancellable *c
 
 	/* no support */
 	if (klass->search_category == NULL) {
-		g_set_error_literal (error, 1, 0, "operation cannot be performed on this store");
+		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_NO_SUPPORT,
+				     "operation cannot be performed on this store");
 		return FALSE;
 	}
 
@@ -203,7 +222,8 @@ zif_store_search_details (ZifStore *store, const gchar *search, GCancellable *ca
 
 	/* no support */
 	if (klass->search_details == NULL) {
-		g_set_error_literal (error, 1, 0, "operation cannot be performed on this store");
+		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_NO_SUPPORT,
+				     "operation cannot be performed on this store");
 		return FALSE;
 	}
 
@@ -232,7 +252,8 @@ zif_store_search_group (ZifStore *store, const gchar *search, GCancellable *canc
 
 	/* no support */
 	if (klass->search_group == NULL) {
-		g_set_error_literal (error, 1, 0, "operation cannot be performed on this store");
+		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_NO_SUPPORT,
+				     "operation cannot be performed on this store");
 		return FALSE;
 	}
 
@@ -261,7 +282,8 @@ zif_store_search_file (ZifStore *store, const gchar *search, GCancellable *cance
 
 	/* no support */
 	if (klass->search_file == NULL) {
-		g_set_error_literal (error, 1, 0, "operation cannot be performed on this store");
+		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_NO_SUPPORT,
+				     "operation cannot be performed on this store");
 		return FALSE;
 	}
 
@@ -290,7 +312,8 @@ zif_store_resolve (ZifStore *store, const gchar *search, GCancellable *cancellab
 
 	/* no support */
 	if (klass->resolve == NULL) {
-		g_set_error_literal (error, 1, 0, "operation cannot be performed on this store");
+		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_NO_SUPPORT,
+				     "operation cannot be performed on this store");
 		return FALSE;
 	}
 
@@ -319,7 +342,8 @@ zif_store_what_provides (ZifStore *store, const gchar *search, GCancellable *can
 
 	/* no support */
 	if (klass->search_name == NULL) {
-		g_set_error_literal (error, 1, 0, "operation cannot be performed on this store");
+		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_NO_SUPPORT,
+				     "operation cannot be performed on this store");
 		return FALSE;
 	}
 
@@ -346,7 +370,8 @@ zif_store_get_packages (ZifStore *store, GCancellable *cancellable, ZifCompletio
 
 	/* no support */
 	if (klass->get_packages == NULL) {
-		g_set_error_literal (error, 1, 0, "operation cannot be performed on this store");
+		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_NO_SUPPORT,
+				     "operation cannot be performed on this store");
 		return FALSE;
 	}
 
@@ -373,7 +398,8 @@ zif_store_get_updates (ZifStore *store, GCancellable *cancellable, ZifCompletion
 
 	/* no support */
 	if (klass->get_updates == NULL) {
-		g_set_error_literal (error, 1, 0, "operation cannot be performed on this store");
+		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_NO_SUPPORT,
+				     "operation cannot be performed on this store");
 		return FALSE;
 	}
 
@@ -402,7 +428,8 @@ zif_store_find_package (ZifStore *store, const gchar *package_id, GCancellable *
 
 	/* no support */
 	if (klass->find_package == NULL) {
-		g_set_error_literal (error, 1, 0, "operation cannot be performed on this store");
+		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_NO_SUPPORT,
+				     "operation cannot be performed on this store");
 		return FALSE;
 	}
 
@@ -429,7 +456,8 @@ zif_store_get_categories (ZifStore *store, GCancellable *cancellable, ZifComplet
 
 	/* no support */
 	if (klass->get_categories == NULL) {
-		g_set_error_literal (error, 1, 0, "operation cannot be performed on this store");
+		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_NO_SUPPORT,
+				     "operation cannot be performed on this store");
 		return FALSE;
 	}
 

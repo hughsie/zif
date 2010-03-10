@@ -64,6 +64,20 @@ static guint signals [ZIF_MONITOR_SIGNAL_LAST_SIGNAL] = { 0 };
 G_DEFINE_TYPE (ZifMonitor, zif_monitor, G_TYPE_OBJECT)
 
 /**
+ * zif_monitor_error_quark:
+ *
+ * Return value: Our personal error quark.
+ **/
+GQuark
+zif_monitor_error_quark (void)
+{
+	static GQuark quark = 0;
+	if (!quark)
+		quark = g_quark_from_static_string ("zif_monitor_error");
+	return quark;
+}
+
+/**
  * zif_monitor_file_monitor_cb:
  **/
 static void
@@ -102,7 +116,8 @@ zif_monitor_add_watch (ZifMonitor *monitor, const gchar *filename, GError **erro
 	file = g_file_new_for_path (filename);
 	file_monitor = g_file_monitor (file, G_FILE_MONITOR_NONE, NULL, &error_local);
 	if (file_monitor == NULL) {
-		g_set_error (error, 1, 0, "failed to add monitor: %s", error_local->message);
+		g_set_error (error, ZIF_MONITOR_ERROR, ZIF_MONITOR_ERROR_FAILED,
+			     "failed to add monitor: %s", error_local->message);
 		g_error_free (error_local);
 		g_object_unref (file_monitor);
 		ret = FALSE;

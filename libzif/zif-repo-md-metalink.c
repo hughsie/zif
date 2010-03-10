@@ -227,7 +227,8 @@ zif_repo_md_metalink_load (ZifRepoMd *md, GCancellable *cancellable, ZifCompleti
 	/* get filename */
 	filename = zif_repo_md_get_filename_uncompressed (md);
 	if (filename == NULL) {
-		g_set_error_literal (error, 1, 0, "failed to get filename for metalink");
+		g_set_error_literal (error, ZIF_REPO_MD_ERROR, ZIF_REPO_MD_ERROR_FAILED,
+				     "failed to get filename for metalink");
 		goto out;
 	}
 
@@ -285,7 +286,8 @@ zif_repo_md_metalink_get_uris (ZifRepoMdMetalink *md, guint threshold, GCancella
 	if (!metalink->priv->loaded) {
 		ret = zif_repo_md_load (ZIF_REPO_MD (md), cancellable, completion, &error_local);
 		if (!ret) {
-			g_set_error (error, 1, 0, "failed to get mirrors from metalink: %s", error_local->message);
+			g_set_error (error, ZIF_REPO_MD_ERROR, ZIF_REPO_MD_ERROR_FAILED_TO_LOAD,
+				     "failed to get mirrors from metalink: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
@@ -305,7 +307,8 @@ zif_repo_md_metalink_get_uris (ZifRepoMdMetalink *md, guint threshold, GCancella
 		if (data->preference >= threshold) {
 			uri = zif_config_expand_substitutions (md->priv->config, data->uri, &error_local);
 			if (uri == NULL) {
-				g_set_error (error, 1, 0, "failed to expand substitutions: %s", error_local->message);
+				g_set_error (error, ZIF_REPO_MD_ERROR, ZIF_REPO_MD_ERROR_FAILED,
+					     "failed to expand substitutions: %s", error_local->message);
 				g_error_free (error_local);
 				/* rip apart what we've done already */
 				g_ptr_array_unref (array);

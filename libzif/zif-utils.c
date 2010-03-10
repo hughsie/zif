@@ -48,6 +48,20 @@
 #define ZIF_CRASH_DEBUG
 
 /**
+ * zif_utils_error_quark:
+ *
+ * Return value: Our personal error quark.
+ **/
+GQuark
+zif_utils_error_quark (void)
+{
+	static GQuark quark = 0;
+	if (!quark)
+		quark = g_quark_from_static_string ("zif_utils_error");
+	return quark;
+}
+
+/**
  * zif_init:
  *
  * This must be called before any of the zif_* functions are called.
@@ -269,14 +283,16 @@ zif_file_decompress_zlib (const gchar *in, const gchar *out, GCancellable *cance
 	/* open file for reading */
 	f_in = gzopen (in, "rb");
 	if (f_in == NULL) {
-		g_set_error (error, 1, 0, "cannot open %s for reading", in);
+		g_set_error (error, ZIF_UTILS_ERROR, ZIF_UTILS_ERROR_FAILED_TO_READ,
+			     "cannot open %s for reading", in);
 		goto out;
 	}
 
 	/* open file for writing */
 	f_out = fopen (out, "w");
 	if (f_out == NULL) {
-		g_set_error (error, 1, 0, "cannot open %s for writing", out);
+		g_set_error (error, ZIF_UTILS_ERROR, ZIF_UTILS_ERROR_FAILED_TO_WRITE,
+			     "cannot open %s for writing", out);
 		goto out;
 	}
 
@@ -289,21 +305,23 @@ zif_file_decompress_zlib (const gchar *in, const gchar *out, GCancellable *cance
 
 		/* error */
 		if (size < 0) {
-			g_set_error_literal (error, 1, 0, "failed read");
+			g_set_error_literal (error, ZIF_UTILS_ERROR, ZIF_UTILS_ERROR_FAILED_TO_READ,
+					     "failed read");
 			goto out;
 		}
 
 		/* write data */
 		written = fwrite (buf, 1, size, f_out);
 		if (written != size) {
-			g_set_error (error, 1, 0, "only wrote %i/%i bytes", written, size);
+			g_set_error (error, ZIF_UTILS_ERROR, ZIF_UTILS_ERROR_FAILED_TO_WRITE,
+				     "only wrote %i/%i bytes", written, size);
 			goto out;
 		}
 
 		/* is cancelled */
 		ret = !g_cancellable_is_cancelled (cancellable);
 		if (!ret) {
-			g_set_error_literal (error, 1, 0, "cancelled");
+			g_set_error_literal (error, ZIF_UTILS_ERROR, ZIF_UTILS_ERROR_CANCELLED, "cancelled");
 			goto out;
 		}
 	}
@@ -339,21 +357,24 @@ zif_file_decompress_bz2 (const gchar *in, const gchar *out, GCancellable *cancel
 	/* open file for reading */
 	f_in = fopen (in, "r");
 	if (f_in == NULL) {
-		g_set_error (error, 1, 0, "cannot open %s for reading", in);
+		g_set_error (error, ZIF_UTILS_ERROR, ZIF_UTILS_ERROR_FAILED_TO_READ,
+			     "cannot open %s for reading", in);
 		goto out;
 	}
 
 	/* open file for writing */
 	f_out = fopen (out, "w");
 	if (f_out == NULL) {
-		g_set_error (error, 1, 0, "cannot open %s for writing", out);
+		g_set_error (error, ZIF_UTILS_ERROR, ZIF_UTILS_ERROR_FAILED_TO_WRITE,
+			     "cannot open %s for writing", out);
 		goto out;
 	}
 
 	/* read in file */
 	b = BZ2_bzReadOpen (&bzerror, f_in, 0, 0, NULL, 0);
 	if (bzerror != BZ_OK) {
-		g_set_error (error, 1, 0, "cannot open %s for bz2 reading", in);
+		g_set_error (error, ZIF_UTILS_ERROR, ZIF_UTILS_ERROR_FAILED_TO_READ,
+			     "cannot open %s for bz2 reading", in);
 		goto out;
 	}
 
@@ -362,28 +383,32 @@ zif_file_decompress_bz2 (const gchar *in, const gchar *out, GCancellable *cancel
 		/* read data */
 		size = BZ2_bzRead (&bzerror, b, buf, ZIF_BUFFER_SIZE);
 		if (bzerror != BZ_OK && bzerror != BZ_STREAM_END) {
-			g_set_error_literal (error, 1, 0, "failed to decompress");
+			g_set_error_literal (error, ZIF_UTILS_ERROR, ZIF_UTILS_ERROR_FAILED,
+					     "failed to decompress");
 			goto out;
 		}
 
 		/* write data */
 		written = fwrite (buf, 1, size, f_out);
 		if (written != size) {
-			g_set_error (error, 1, 0, "only wrote %i/%i bytes", written, size);
+			g_set_error (error, ZIF_UTILS_ERROR, ZIF_UTILS_ERROR_FAILED_TO_WRITE,
+				     "only wrote %i/%i bytes", written, size);
 			goto out;
 		}
 
 		/* is cancelled */
 		ret = !g_cancellable_is_cancelled (cancellable);
 		if (!ret) {
-			g_set_error_literal (error, 1, 0, "cancelled");
+			g_set_error_literal (error, ZIF_UTILS_ERROR, ZIF_UTILS_ERROR_CANCELLED,
+					     "cancelled");
 			goto out;
 		}
 	}
 
 	/* failed to read */
 	if (bzerror != BZ_STREAM_END) {
-		g_set_error (error, 1, 0, "did not decompress file: %s", in);
+		g_set_error (error, ZIF_UTILS_ERROR, ZIF_UTILS_ERROR_FAILED,
+			     "did not decompress file: %s", in);
 		goto out;
 	}
 
@@ -432,7 +457,8 @@ zif_file_decompress (const gchar *in, const gchar *out, GCancellable *cancellabl
 	}
 
 	/* no support */
-	g_set_error (error, 1, 0, "no support to decompress file: %s", in);
+	g_set_error (error, ZIF_UTILS_ERROR, ZIF_UTILS_ERROR_FAILED,
+		     "no support to decompress file: %s", in);
 out:
 	return ret;
 }
@@ -464,7 +490,8 @@ zif_file_untar (const gchar *filename, const gchar *directory, GError **error)
 	/* save the PWD as we chdir to extract */
 	retcwd = getcwd (buf, PATH_MAX);
 	if (retcwd == NULL) {
-		g_set_error_literal (error, 1, 0, "failed to get cwd");
+		g_set_error_literal (error, ZIF_UTILS_ERROR, ZIF_UTILS_ERROR_FAILED,
+				     "failed to get cwd");
 		goto out;
 	}
 
@@ -476,14 +503,16 @@ zif_file_untar (const gchar *filename, const gchar *directory, GError **error)
 	/* open the tar file */
 	r = archive_read_open_file (arch, filename, ZIF_BUFFER_SIZE);
 	if (r) {
-		g_set_error (error, 1, 0, "cannot open: %s", archive_error_string (arch));
+		g_set_error (error, ZIF_UTILS_ERROR, ZIF_UTILS_ERROR_FAILED_TO_READ,
+			     "cannot open: %s", archive_error_string (arch));
 		goto out;
 	}
 
 	/* switch to our destination directory */
 	retval = chdir (directory);
 	if (retval != 0) {
-		g_set_error (error, 1, 0, "failed chdir to %s", directory);
+		g_set_error (error, ZIF_UTILS_ERROR, ZIF_UTILS_ERROR_FAILED,
+			     "failed chdir to %s", directory);
 		goto out;
 	}
 
@@ -493,12 +522,14 @@ zif_file_untar (const gchar *filename, const gchar *directory, GError **error)
 		if (r == ARCHIVE_EOF)
 			break;
 		if (r != ARCHIVE_OK) {
-			g_set_error (error, 1, 0, "cannot read header: %s", archive_error_string (arch));
+			g_set_error (error, ZIF_UTILS_ERROR, ZIF_UTILS_ERROR_FAILED,
+				     "cannot read header: %s", archive_error_string (arch));
 			goto out;
 		}
 		r = archive_read_extract (arch, entry, 0);
 		if (r != ARCHIVE_OK) {
-			g_set_error (error, 1, 0, "cannot extract: %s", archive_error_string (arch));
+			g_set_error (error, ZIF_UTILS_ERROR, ZIF_UTILS_ERROR_FAILED,
+				     "cannot extract: %s", archive_error_string (arch));
 			goto out;
 		}
 	}
