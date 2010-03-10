@@ -882,7 +882,7 @@ zif_store_local_find_package (ZifStore *store, const gchar *package_id, GCancell
 	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	for (i=0;i<local->priv->packages->len;i++) {
 		package_tmp = g_ptr_array_index (local->priv->packages, i);
-		package_id_tmp = zif_package_get_id (package);
+		package_id_tmp = zif_package_get_id (package_tmp);
 		if (g_strcmp0 (package_id_tmp, package_id) == 0)
 			g_ptr_array_add (array, g_object_ref (package_tmp));
 
