@@ -1113,7 +1113,12 @@ main (int argc, char *argv[])
 		/* at least one result */
 		if (array->len > 0) {
 			package = g_ptr_array_index (array, 0);
-			files = zif_package_get_files (package, NULL);
+			files = zif_package_get_files (package, &error);
+			if (files == NULL) {
+				g_print ("failed to get files: %s\n", error->message);
+				g_error_free (error);
+				goto out;
+			}
 			for (i=0; i<files->len; i++)
 				g_print ("%s\n", (const gchar *) g_ptr_array_index (files, i));
 			g_ptr_array_unref (files);
