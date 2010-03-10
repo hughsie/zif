@@ -526,7 +526,6 @@ zif_store_remote_add_metalink (ZifStoreRemote *store, GCancellable *cancellable,
 	/* add array */
 	for (i=0; i<array->len; i++) {
 		uri_tmp = g_ptr_array_index (array, i);
-		egg_warning ("uri_tmp=%s", uri_tmp);
 		g_ptr_array_add (store->priv->baseurls, g_strdup (uri_tmp));
 	}
 out:
@@ -646,7 +645,6 @@ zif_store_remote_load_metadata (ZifStoreRemote *store, GCancellable *cancellable
 	/* not locked */
 	ret = zif_lock_is_locked (store->priv->lock, NULL);
 	if (!ret) {
-		egg_warning ("not locked");
 		g_set_error_literal (error, 1, 0, "not locked");
 		goto out;
 	}
@@ -839,7 +837,6 @@ zif_store_remote_refresh (ZifStore *store, gboolean force, GCancellable *cancell
 	/* not locked */
 	ret = zif_lock_is_locked (remote->priv->lock, NULL);
 	if (!ret) {
-		egg_warning ("not locked");
 		g_set_error_literal (error, 1, 0, "not locked");
 		goto out;
 	}
@@ -947,7 +944,6 @@ zif_store_remote_load (ZifStore *store, GCancellable *cancellable, ZifCompletion
 	/* not locked */
 	ret = zif_lock_is_locked (remote->priv->lock, NULL);
 	if (!ret) {
-		egg_warning ("not locked");
 		g_set_error_literal (error, 1, 0, "not locked");
 		goto out;
 	}
@@ -1076,7 +1072,6 @@ zif_store_remote_clean (ZifStore *store, GCancellable *cancellable, ZifCompletio
 	/* not locked */
 	ret = zif_lock_is_locked (remote->priv->lock, NULL);
 	if (!ret) {
-		egg_warning ("not locked");
 		g_set_error_literal (error, 1, 0, "not locked");
 		goto out;
 	}
@@ -1174,7 +1169,6 @@ zif_store_remote_set_from_file (ZifStoreRemote *store, const gchar *repo_filenam
 	/* not locked */
 	ret = zif_lock_is_locked (store->priv->lock, NULL);
 	if (!ret) {
-		egg_warning ("not locked");
 		g_set_error_literal (error, 1, 0, "not locked");
 		goto out;
 	}
@@ -1240,7 +1234,6 @@ zif_store_remote_set_enabled (ZifStoreRemote *store, gboolean enabled, GError **
 	/* not locked */
 	ret = zif_lock_is_locked (store->priv->lock, NULL);
 	if (!ret) {
-		egg_warning ("not locked");
 		g_set_error_literal (error, 1, 0, "not locked");
 		goto out;
 	}
@@ -1308,7 +1301,6 @@ zif_store_remote_resolve (ZifStore *store, const gchar *search, GCancellable *ca
 	/* not locked */
 	ret = zif_lock_is_locked (remote->priv->lock, NULL);
 	if (!ret) {
-		egg_warning ("not locked");
 		g_set_error_literal (error, 1, 0, "not locked");
 		goto out;
 	}
@@ -1360,7 +1352,6 @@ zif_store_remote_search_name (ZifStore *store, const gchar *search, GCancellable
 	/* not locked */
 	ret = zif_lock_is_locked (remote->priv->lock, NULL);
 	if (!ret) {
-		egg_warning ("not locked");
 		g_set_error_literal (error, 1, 0, "not locked");
 		goto out;
 	}
@@ -1412,7 +1403,6 @@ zif_store_remote_search_details (ZifStore *store, const gchar *search, GCancella
 	/* not locked */
 	ret = zif_lock_is_locked (remote->priv->lock, NULL);
 	if (!ret) {
-		egg_warning ("not locked");
 		g_set_error_literal (error, 1, 0, "not locked");
 		goto out;
 	}
@@ -1537,7 +1527,6 @@ zif_store_remote_search_category (ZifStore *store, const gchar *group_id, GCance
 	/* not locked */
 	ret = zif_lock_is_locked (remote->priv->lock, NULL);
 	if (!ret) {
-		egg_warning ("not locked");
 		g_set_error_literal (error, 1, 0, "not locked");
 		goto out;
 	}
@@ -1653,7 +1642,6 @@ zif_store_remote_search_group (ZifStore *store, const gchar *search, GCancellabl
 	/* not locked */
 	ret = zif_lock_is_locked (remote->priv->lock, NULL);
 	if (!ret) {
-		egg_warning ("not locked");
 		g_set_error_literal (error, 1, 0, "not locked");
 		goto out;
 	}
@@ -1706,7 +1694,6 @@ zif_store_remote_find_package (ZifStore *store, const gchar *package_id, GCancel
 	/* not locked */
 	ret = zif_lock_is_locked (remote->priv->lock, NULL);
 	if (!ret) {
-		egg_warning ("not locked");
 		g_set_error_literal (error, 1, 0, "not locked");
 		goto out;
 	}
@@ -1780,7 +1767,6 @@ zif_store_remote_get_packages (ZifStore *store, GCancellable *cancellable, ZifCo
 	/* not locked */
 	ret = zif_lock_is_locked (remote->priv->lock, NULL);
 	if (!ret) {
-		egg_warning ("not locked");
 		g_set_error_literal (error, 1, 0, "not locked");
 		goto out;
 	}
@@ -1841,7 +1827,6 @@ zif_store_remote_get_categories (ZifStore *store, GCancellable *cancellable, Zif
 	/* not locked */
 	ret = zif_lock_is_locked (remote->priv->lock, NULL);
 	if (!ret) {
-		egg_warning ("not locked");
 		g_set_error_literal (error, 1, 0, "not locked");
 		goto out;
 	}
@@ -1967,7 +1952,6 @@ zif_store_remote_get_updates (ZifStore *store, GCancellable *cancellable, ZifCom
 	/* not locked */
 	ret = zif_lock_is_locked (remote->priv->lock, NULL);
 	if (!ret) {
-		egg_warning ("not locked");
 		g_set_error_literal (error, 1, 0, "not locked");
 		goto out;
 	}
@@ -2065,7 +2049,6 @@ zif_store_remote_what_provides (ZifStore *store, const gchar *search, GCancellab
 	/* not locked */
 	ret = zif_lock_is_locked (remote->priv->lock, NULL);
 	if (!ret) {
-		egg_warning ("not locked");
 		g_set_error_literal (error, 1, 0, "not locked");
 		goto out;
 	}
@@ -2104,7 +2087,6 @@ zif_store_remote_search_file (ZifStore *store, const gchar *search, GCancellable
 	/* not locked */
 	ret = zif_lock_is_locked (remote->priv->lock, NULL);
 	if (!ret) {
-		egg_warning ("not locked");
 		g_set_error_literal (error, 1, 0, "not locked");
 		goto out;
 	}
@@ -2197,7 +2179,6 @@ zif_store_remote_is_devel (ZifStoreRemote *store, GCancellable *cancellable, Zif
 	/* not locked */
 	ret = zif_lock_is_locked (store->priv->lock, NULL);
 	if (!ret) {
-		egg_warning ("not locked");
 		g_set_error_literal (error, 1, 0, "not locked");
 		goto out;
 	}
@@ -2266,7 +2247,6 @@ zif_store_remote_get_name (ZifStoreRemote *store, GCancellable *cancellable, Zif
 	/* not locked */
 	ret = zif_lock_is_locked (store->priv->lock, NULL);
 	if (!ret) {
-		egg_warning ("not locked");
 		g_set_error_literal (error, 1, 0, "not locked");
 		goto out;
 	}
@@ -2307,7 +2287,6 @@ zif_store_remote_get_enabled (ZifStoreRemote *store, GCancellable *cancellable, 
 	/* not locked */
 	ret = zif_lock_is_locked (store->priv->lock, NULL);
 	if (!ret) {
-		egg_warning ("not locked");
 		g_set_error_literal (error, 1, 0, "not locked");
 		goto out;
 	}
