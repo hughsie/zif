@@ -481,7 +481,7 @@ zif_repo_md_metalink_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "correct value");
 	uri = g_ptr_array_index (array, 0);
-	if (g_strcmp0 (uri, "http://www.mirrorservice.org/sites/download.fedora.redhat.com/pub/fedora/linux/releases/12/Everything/i386/os/repodata/repomd.xml") == 0)
+	if (g_strcmp0 (uri, "http://www.mirrorservice.org/sites/download.fedora.redhat.com/pub/fedora/linux/releases/12/Everything/i386/os/") == 0)
 		egg_test_success (test, NULL);
 	else
 		egg_test_failed (test, "failed to get correct url '%s'", uri);

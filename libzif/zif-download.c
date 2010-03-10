@@ -333,6 +333,7 @@ zif_download_new (void)
 #include "egg-test.h"
 
 static guint _updates = 0;
+static GMainLoop *_loop = NULL;
 
 static void
 zif_download_progress_changed (ZifDownload *download, guint value, gpointer data)
@@ -345,7 +346,19 @@ zif_download_cancel_cb (GCancellable *cancellable)
 {
 	egg_debug ("sending cancel");
 	g_cancellable_cancel (cancellable);
+	g_main_loop_quit (_loop);
 	return FALSE;
+}
+
+static gpointer
+zif_download_cancel_thread_cb (GCancellable *cancellable)
+{
+	egg_debug ("thread running");
+	g_timeout_add (50, (GSourceFunc) zif_download_cancel_cb, cancellable);
+	_loop = g_main_loop_new (NULL, FALSE);
+	g_main_loop_run (_loop);
+	g_main_loop_unref (_loop);
+	return NULL;
 }
 
 void
@@ -381,7 +394,8 @@ zif_download_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "download file");
-	ret = zif_download_file (download, "http://people.freedesktop.org/~hughsient/temp/Screenshot.png", "../test/downloads", cancellable, completion, &error);
+	ret = zif_download_file (download, "http://people.freedesktop.org/~hughsient/temp/Screenshot.png",
+				 "../test/downloads", cancellable, completion, &error);
 	if (ret)
 		egg_test_success (test, NULL);
 	else
@@ -395,12 +409,13 @@ zif_download_test (EggTest *test)
 		egg_test_failed (test, "got %i updates", _updates);
 
 	/* setup cancel */
-	g_timeout_add (50, (GSourceFunc) zif_download_cancel_cb, cancellable);
+	g_thread_create (zif_download_cancel_thread_cb, cancellable, FALSE, NULL);
 
 	/************************************************************/
 	egg_test_title (test, "download second file (should be cancelled)");
 	zif_completion_reset (completion);
-	ret = zif_download_file (download, "http://people.freedesktop.org/~hughsient/temp/Screenshot.png", "../test/downloads", cancellable, completion, &error);
+	ret = zif_download_file (download, "http://people.freedesktop.org/~hughsient/temp/Screenshot.png",
+				 "../test/downloads", cancellable, completion, &error);
 	if (!ret)
 		egg_test_success (test, NULL);
 	else
