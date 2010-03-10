@@ -63,6 +63,8 @@ G_DEFINE_TYPE (ZifDownload, zif_download, G_TYPE_OBJECT)
  * zif_download_error_quark:
  *
  * Return value: Our personal error quark.
+ *
+ * Since: 0.0.1
  **/
 GQuark
 zif_download_error_quark (void)
@@ -149,6 +151,8 @@ zif_download_cancelled_cb (GCancellable *cancellable, ZifDownload *download)
  * Downloads a file.
  *
  * Return value: %TRUE for success, %FALSE for failure
+ *
+ * Since: 0.0.1
  **/
 gboolean
 zif_download_file (ZifDownload *download, const gchar *uri, const gchar *filename, GCancellable *cancellable, ZifCompletion *completion, GError **error)
@@ -231,6 +235,8 @@ out:
 
 /**
  * zif_download_set_proxy:
+ *
+ * Since: 0.0.1
  **/
 gboolean
 zif_download_set_proxy (ZifDownload *download, const gchar *http_proxy, GError **error)
@@ -313,6 +319,8 @@ zif_download_init (ZifDownload *download)
  * zif_download_new:
  *
  * Return value: A new download class instance.
+ *
+ * Since: 0.0.1
  **/
 ZifDownload *
 zif_download_new (void)

@@ -51,6 +51,8 @@
  * zif_utils_error_quark:
  *
  * Return value: Our personal error quark.
+ *
+ * Since: 0.0.1
  **/
 GQuark
 zif_utils_error_quark (void)
@@ -67,6 +69,8 @@ zif_utils_error_quark (void)
  * This must be called before any of the zif_* functions are called.
  *
  * Return value: %TRUE if we initialised correctly
+ *
+ * Since: 0.0.1
  **/
 gboolean
 zif_init (void)
@@ -86,6 +90,8 @@ zif_init (void)
  * zif_debug_crash:
  *
  * Does a null dereference, useful for debugging.
+ *
+ * Since: 0.0.1
  **/
 void
 zif_debug_crash (void)
@@ -103,6 +109,8 @@ zif_debug_crash (void)
  * Convert a text boolean into it's enumerated boolean state
  *
  * Return value: %TRUE for positive, %FALSE for negative
+ *
+ * Since: 0.0.1
  **/
 gboolean
 zif_boolean_from_text (const gchar *text)
@@ -120,6 +128,8 @@ zif_boolean_from_text (const gchar *text)
  * @array: The string array to print
  *
  * Print an array of strings to %STDOUT.
+ *
+ * Since: 0.0.1
  **/
 void
 zif_list_print_array (GPtrArray *array)
@@ -145,6 +155,8 @@ zif_list_print_array (GPtrArray *array)
  * Formats a PackageId structure from a NEVRA.
  *
  * Return value: The PackageId value, or %NULL if invalid
+ *
+ * Since: 0.0.1
  **/
 gchar *
 zif_package_id_from_nevra (const gchar *name, const gchar *epoch, const gchar *version, const gchar *release, const gchar *arch, const gchar *data)
@@ -209,6 +221,8 @@ zif_package_convert_evr (gchar *evr, const gchar **epoch, const gchar **version,
  * Compare two [epoch:]version[-release] strings
  *
  * Return value: 1 for a>b, 0 for a==b, -1 for b>a
+ *
+ * Since: 0.0.1
  **/
 gint
 zif_compare_evr (const gchar *a, const gchar *b)
@@ -435,6 +449,8 @@ out:
  * Decompress files into a directory
  *
  * Return value: %TRUE if the file was decompressed
+ *
+ * Since: 0.0.1
  **/
 gboolean
 zif_file_decompress (const gchar *in, const gchar *out, GCancellable *cancellable, ZifCompletion *completion, GError **error)
@@ -472,6 +488,8 @@ out:
  * Untar files into a directory
  *
  * Return value: %TRUE if the file was decompressed
+ *
+ * Since: 0.0.1
  **/
 gboolean
 zif_file_untar (const gchar *filename, const gchar *directory, GError **error)
@@ -558,6 +576,8 @@ out:
  * Finds the uncompressed filename.
  *
  * Return value: the uncompressed file name, e.g. /lib/dave.tar, use g_free() to free.
+ *
+ * Since: 0.0.1
  **/
 gchar *
 zif_file_get_uncompressed_name (const gchar *filename)
@@ -586,6 +606,8 @@ zif_file_get_uncompressed_name (const gchar *filename)
  * Finds out if the filename is compressed
  *
  * Return value: %TRUE if the file needs decompression
+ *
+ * Since: 0.0.1
  **/
 gboolean
 zif_file_is_compressed_name (const gchar *filename)

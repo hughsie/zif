@@ -520,6 +520,8 @@ out:
  * Gets the available list of categories.
  *
  * Return value: %PkCategory array of categories, with parent_id set to %NULL
+ *
+ * Since: 0.0.1
  **/
 GPtrArray *
 zif_repo_md_comps_get_categories (ZifRepoMdComps *md, GCancellable *cancellable,
@@ -599,6 +601,8 @@ zif_repo_md_comps_get_category_for_group (ZifRepoMdComps *md, const gchar *group
  * Gets the list of groups for a specific category.
  *
  * Return value: %PkCategory array of groups
+ *
+ * Since: 0.0.1
  **/
 GPtrArray *
 zif_repo_md_comps_get_groups_for_category (ZifRepoMdComps *md, const gchar *category_id,
@@ -672,6 +676,8 @@ out:
  * Gets the package names for a group.
  *
  * Return value: gchar pointer array of package names (not %ZifPackage's)
+ *
+ * Since: 0.0.1
  **/
 GPtrArray *
 zif_repo_md_comps_get_packages_for_group (ZifRepoMdComps *md, const gchar *group_id,
@@ -781,6 +787,8 @@ zif_repo_md_comps_init (ZifRepoMdComps *md)
  * zif_repo_md_comps_new:
  *
  * Return value: A new #ZifRepoMdComps class instance.
+ *
+ * Since: 0.0.1
  **/
 ZifRepoMdComps *
 zif_repo_md_comps_new (void)

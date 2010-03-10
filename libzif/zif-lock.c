@@ -62,6 +62,8 @@ G_DEFINE_TYPE (ZifLock, zif_lock, G_TYPE_OBJECT)
  * zif_lock_error_quark:
  *
  * Return value: Our personal error quark.
+ *
+ * Since: 0.0.1
  **/
 GQuark
 zif_lock_error_quark (void)
@@ -129,6 +131,8 @@ out:
  * Gets the lock state.
  *
  * Return value: %TRUE if we are already locked
+ *
+ * Since: 0.0.1
  **/
 gboolean
 zif_lock_is_locked (ZifLock *lock, guint *pid)
@@ -175,6 +179,8 @@ out:
  * Tries to lock the packaging system.
  *
  * Return value: %TRUE if we locked, else %FALSE and the error is set
+ *
+ * Since: 0.0.1
  **/
 gboolean
 zif_lock_set_locked (ZifLock *lock, guint *pid, GError **error)
@@ -235,6 +241,8 @@ out:
  * Unlocks the packaging system.
  *
  * Return value: %TRUE for success, %FALSE for failure
+ *
+ * Since: 0.0.1
  **/
 gboolean
 zif_lock_set_unlocked (ZifLock *lock, GError **error)
@@ -341,6 +349,8 @@ zif_lock_init (ZifLock *lock)
  * zif_lock_new:
  *
  * Return value: A new lock class instance.
+ *
+ * Since: 0.0.1
  **/
 ZifLock *
 zif_lock_new (void)

@@ -65,6 +65,8 @@ static gpointer zif_config_object = NULL;
  * zif_config_error_quark:
  *
  * Return value: Our personal error quark.
+ *
+ * Since: 0.0.1
  **/
 GQuark
 zif_config_error_quark (void)
@@ -84,6 +86,8 @@ zif_config_error_quark (void)
  * Gets a string value from a local setting, falling back to the config file.
  *
  * Return value: the allocated value, or %NULL
+ *
+ * Since: 0.0.1
  **/
 gchar *
 zif_config_get_string (ZifConfig *config, const gchar *key, GError **error)
@@ -166,6 +170,8 @@ out:
  * Gets a boolean value from a local setting, falling back to the config file.
  *
  * Return value: %TRUE or %FALSE
+ *
+ * Since: 0.0.1
  **/
 gboolean
 zif_config_get_boolean (ZifConfig *config, const gchar *key, GError **error)
@@ -198,6 +204,8 @@ out:
  * Gets a unsigned integer value from a local setting, falling back to the config file.
  *
  * Return value: the data value, or %G_MAXUINT for error
+ *
+ * Since: 0.0.1
  **/
 guint
 zif_config_get_uint (ZifConfig *config, const gchar *key, GError **error)
@@ -292,6 +300,8 @@ out:
  * Gets a time value from a local setting, falling back to the config file.
  *
  * Return value: the data value
+ *
+ * Since: 0.0.1
  **/
 guint
 zif_config_get_time (ZifConfig *config, const gchar *key, GError **error)
@@ -315,7 +325,7 @@ out:
 }
 
 /**
- * zif_config_expand_substitutions:"
+ * zif_config_expand_substitutions:
  * @config: the #ZifConfig object
  * @text: string to scan, e.g. "http://fedora/$releasever/$basearch/moo.rpm"
  * @error: a #GError which is used on failure, or %NULL
@@ -323,6 +333,8 @@ out:
  * Replaces substitutions in text with the actual values of the running system.
  *
  * Return value: A new allocated string or %NULL for error, free with g_free()
+ *
+ * Since: 0.0.1
  **/
 gchar *
 zif_config_expand_substitutions (ZifConfig *config, const gchar *text, GError **error)
@@ -362,6 +374,8 @@ out:
  * Gets the list of architectures that packages are native on for this machine.
  *
  * Return value: A array of strings, do not free, e.g. [ "i386", "i486", "noarch" ]
+ *
+ * Since: 0.0.1
  **/
 gchar **
 zif_config_get_basearch_array (ZifConfig *config)
@@ -379,6 +393,8 @@ zif_config_get_basearch_array (ZifConfig *config)
  * Sets the filename to use as the system wide config file.
  *
  * Return value: %TRUE for success, %FALSE for failure
+ *
+ * Since: 0.0.1
  **/
 gboolean
 zif_config_set_filename (ZifConfig *config, const gchar *filename, GError **error)
@@ -490,6 +506,8 @@ out:
  * Removes any local settings previously set.
  *
  * Return value: %TRUE for success, %FALSE for failure
+ *
+ * Since: 0.0.1
  **/
 gboolean
 zif_config_reset_default (ZifConfig *config, GError **error)
@@ -509,6 +527,8 @@ zif_config_reset_default (ZifConfig *config, GError **error)
  * Sets a local value which is used in preference to the config value.
  *
  * Return value: %TRUE for success, %FALSE for failure
+ *
+ * Since: 0.0.1
  **/
 gboolean
 zif_config_set_local (ZifConfig *config, const gchar *key, const gchar *value, GError **error)
@@ -592,6 +612,8 @@ zif_config_init (ZifConfig *config)
  * zif_config_new:
  *
  * Return value: A new #ZifConfig class instance.
+ *
+ * Since: 0.0.1
  **/
 ZifConfig *
 zif_config_new (void)

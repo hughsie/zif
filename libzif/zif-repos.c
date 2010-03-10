@@ -62,6 +62,8 @@ static gpointer zif_repos_object = NULL;
  * zif_repos_error_quark:
  *
  * Return value: Our personal error quark.
+ *
+ * Since: 0.0.1
  **/
 GQuark
 zif_repos_error_quark (void)
@@ -81,6 +83,8 @@ zif_repos_error_quark (void)
  * Set the repository directory.
  *
  * Return value: %TRUE for success, %FALSE for failure
+ *
+ * Since: 0.0.1
  **/
 gboolean
 zif_repos_set_repos_dir (ZifRepos *repos, const gchar *repos_dir, GError **error)
@@ -180,6 +184,8 @@ out:
  * Load the repository, and parse it's config file.
  *
  * Return value: %TRUE for success, %FALSE for failure
+ *
+ * Since: 0.0.1
  **/
 gboolean
 zif_repos_load (ZifRepos *repos, GCancellable *cancellable, ZifCompletion *completion, GError **error)
@@ -299,6 +305,8 @@ out:
  * Gets the enabled and disabled remote stores.
  *
  * Return value: a list of #ZifStore's
+ *
+ * Since: 0.0.1
  **/
 GPtrArray *
 zif_repos_get_stores (ZifRepos *repos, GCancellable *cancellable, ZifCompletion *completion, GError **error)
@@ -336,6 +344,8 @@ out:
  * Gets the enabled remote stores.
  *
  * Return value: a list of #ZifStore's
+ *
+ * Since: 0.0.1
  **/
 GPtrArray *
 zif_repos_get_stores_enabled (ZifRepos *repos, GCancellable *cancellable, ZifCompletion *completion, GError **error)
@@ -380,6 +390,8 @@ out:
  * Gets the store matching the ID.
  *
  * Return value: A #ZifStoreRemote object, or %NULL
+ *
+ * Since: 0.0.1
  **/
 ZifStoreRemote *
 zif_repos_get_store (ZifRepos *repos, const gchar *id, GCancellable *cancellable, ZifCompletion *completion, GError **error)
@@ -489,6 +501,8 @@ zif_repos_init (ZifRepos *repos)
  * zif_repos_new:
  *
  * Return value: A new #ZifRepos class instance.
+ *
+ * Since: 0.0.1
  **/
 ZifRepos *
 zif_repos_new (void)

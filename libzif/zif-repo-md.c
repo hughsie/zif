@@ -72,6 +72,8 @@ G_DEFINE_TYPE (ZifRepoMd, zif_repo_md, G_TYPE_OBJECT)
  * zif_repo_md_error_quark:
  *
  * Return value: Our personal error quark.
+ *
+ * Since: 0.0.1
  **/
 GQuark
 zif_repo_md_error_quark (void)
@@ -89,6 +91,8 @@ zif_repo_md_error_quark (void)
  * Gets the md identifier, usually the repo name.
  *
  * Return value: the repo id.
+ *
+ * Since: 0.0.1
  **/
 const gchar *
 zif_repo_md_get_id (ZifRepoMd *md)
@@ -104,6 +108,8 @@ zif_repo_md_get_id (ZifRepoMd *md)
  * Gets the compressed filename of the repo.
  *
  * Return value: the filename
+ *
+ * Since: 0.0.1
  **/
 const gchar *
 zif_repo_md_get_filename (ZifRepoMd *md)
@@ -119,6 +125,8 @@ zif_repo_md_get_filename (ZifRepoMd *md)
  * Gets the location of the repo.
  *
  * Return value: the location
+ *
+ * Since: 0.0.1
  **/
 const gchar *
 zif_repo_md_get_location (ZifRepoMd *md)
@@ -134,6 +142,8 @@ zif_repo_md_get_location (ZifRepoMd *md)
  * Gets the type of the repo.
  *
  * Return value: the type
+ *
+ * Since: 0.0.1
  **/
 ZifRepoMdType
 zif_repo_md_get_mdtype (ZifRepoMd *md)
@@ -149,6 +159,8 @@ zif_repo_md_get_mdtype (ZifRepoMd *md)
  * Gets the uncompressed filename of the repo.
  *
  * Return value: the filename
+ *
+ * Since: 0.0.1
  **/
 const gchar *
 zif_repo_md_get_filename_uncompressed (ZifRepoMd *md)
@@ -165,6 +177,8 @@ zif_repo_md_get_filename_uncompressed (ZifRepoMd *md)
  * Sets the filename of the compressed file.
  *
  * Return value: %TRUE for success, %FALSE for failure
+ *
+ * Since: 0.0.1
  **/
 gboolean
 zif_repo_md_set_filename (ZifRepoMd *md, const gchar *filename)
@@ -190,6 +204,8 @@ zif_repo_md_set_filename (ZifRepoMd *md, const gchar *filename)
  * Sets the timestamp of the compressed file.
  *
  * Return value: %TRUE for success, %FALSE for failure
+ *
+ * Since: 0.0.1
  **/
 gboolean
 zif_repo_md_set_timestamp (ZifRepoMd *md, guint timestamp)
@@ -211,6 +227,8 @@ zif_repo_md_set_timestamp (ZifRepoMd *md, guint timestamp)
  * Sets the location of the compressed file, e.g. "repodata/35d817e-primary.sqlite.bz2"
  *
  * Return value: %TRUE for success, %FALSE for failure
+ *
+ * Since: 0.0.1
  **/
 gboolean
 zif_repo_md_set_location (ZifRepoMd *md, const gchar *location)
@@ -232,6 +250,8 @@ zif_repo_md_set_location (ZifRepoMd *md, const gchar *location)
  * Sets the checksum of the compressed file.
  *
  * Return value: %TRUE for success, %FALSE for failure
+ *
+ * Since: 0.0.1
  **/
 gboolean
 zif_repo_md_set_checksum (ZifRepoMd *md, const gchar *checksum)
@@ -253,6 +273,8 @@ zif_repo_md_set_checksum (ZifRepoMd *md, const gchar *checksum)
  * Sets the checksum of the uncompressed file.
  *
  * Return value: %TRUE for success, %FALSE for failure
+ *
+ * Since: 0.0.1
  **/
 gboolean
 zif_repo_md_set_checksum_uncompressed (ZifRepoMd *md, const gchar *checksum_uncompressed)
@@ -274,6 +296,8 @@ zif_repo_md_set_checksum_uncompressed (ZifRepoMd *md, const gchar *checksum_unco
  * Sets the checksum_type of the files.
  *
  * Return value: %TRUE for success, %FALSE for failure
+ *
+ * Since: 0.0.1
  **/
 gboolean
 zif_repo_md_set_checksum_type (ZifRepoMd *md, GChecksumType checksum_type)
@@ -294,6 +318,8 @@ zif_repo_md_set_checksum_type (ZifRepoMd *md, GChecksumType checksum_type)
  * Sets the type of the metadata, e.g. ZIF_REPO_MD_TYPE_FILELISTS_DB.
  *
  * Return value: %TRUE for success, %FALSE for failure
+ *
+ * Since: 0.0.1
  **/
 gboolean
 zif_repo_md_set_mdtype (ZifRepoMd *md, ZifRepoMdType type)
@@ -339,6 +365,8 @@ out:
  * Sets the repository ID for this metadata.
  *
  * Return value: %TRUE for success, %FALSE for failure
+ *
+ * Since: 0.0.1
  **/
 gboolean
 zif_repo_md_set_id (ZifRepoMd *md, const gchar *id)
@@ -359,6 +387,8 @@ zif_repo_md_set_id (ZifRepoMd *md, const gchar *id)
  * Sets the repository ID for this metadata.
  *
  * Return value: %TRUE for success, %FALSE for failure
+ *
+ * Since: 0.0.1
  **/
 gboolean
 zif_repo_md_set_store_remote (ZifRepoMd *md, ZifStoreRemote *remote)
@@ -431,6 +461,8 @@ out:
  *           abort
  *
  * Return value: %TRUE for success, %FALSE for failure
+ *
+ * Since: 0.0.1
  **/
 gboolean
 zif_repo_md_load (ZifRepoMd *md, GCancellable *cancellable, ZifCompletion *completion, GError **error)
@@ -557,6 +589,8 @@ out:
  * Unload the metadata store.
  *
  * Return value: %TRUE for success, %FALSE for failure
+ *
+ * Since: 0.0.1
  **/
 gboolean
 zif_repo_md_unload (ZifRepoMd *md, GCancellable *cancellable, ZifCompletion *completion, GError **error)
@@ -583,6 +617,8 @@ zif_repo_md_unload (ZifRepoMd *md, GCancellable *cancellable, ZifCompletion *com
  * Clean the metadata store.
  *
  * Return value: %TRUE for success, %FALSE for failure
+ *
+ * Since: 0.0.1
  **/
 gboolean
 zif_repo_md_clean (ZifRepoMd *md, GError **error)
@@ -649,6 +685,8 @@ out:
 
 /**
  * zif_repo_md_type_to_text:
+ *
+ * Since: 0.0.1
  **/
 const gchar *
 zif_repo_md_type_to_text (ZifRepoMdType type)
@@ -689,6 +727,8 @@ zif_repo_md_type_to_text (ZifRepoMdType type)
  * Check the metadata files to make sure they are valid.
  *
  * Return value: %TRUE for success, %FALSE for failure
+ *
+ * Since: 0.0.1
  **/
 gboolean
 zif_repo_md_file_check (ZifRepoMd *md, gboolean use_uncompressed, GError **error)
@@ -816,6 +856,8 @@ zif_repo_md_init (ZifRepoMd *md)
  * zif_repo_md_new:
  *
  * Return value: A new #ZifRepoMd class instance.
+ *
+ * Since: 0.0.1
  **/
 ZifRepoMd *
 zif_repo_md_new (void)

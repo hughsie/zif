@@ -461,6 +461,8 @@ out:
  * Sets the local package from an RPM header object.
  *
  * Return value: %TRUE for success, %FALSE for failure
+ *
+ * Since: 0.0.1
  **/
 gboolean
 zif_package_local_set_from_header (ZifPackageLocal *pkg, Header header, GError **error)
@@ -511,6 +513,8 @@ zif_package_local_rpmrc_to_string (rpmRC rc)
  * Sets a local package object from a local file.
  *
  * Return value: %TRUE for success, %FALSE for failure
+ *
+ * Since: 0.0.1
  **/
 gboolean
 zif_package_local_set_from_filename (ZifPackageLocal *pkg, const gchar *filename, GError **error)
@@ -627,6 +631,8 @@ zif_package_local_init (ZifPackageLocal *pkg)
  * zif_package_local_new:
  *
  * Return value: A new #ZifPackageLocal class instance.
+ *
+ * Since: 0.0.1
  **/
 ZifPackageLocal *
 zif_package_local_new (void)

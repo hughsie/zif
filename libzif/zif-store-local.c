@@ -76,6 +76,8 @@ static gpointer zif_store_local_object = NULL;
  * Sets the prefix to use for the install root.
  *
  * Return value: %TRUE for success, %FALSE for failure
+ *
+ * Since: 0.0.1
  **/
 gboolean
 zif_store_local_set_prefix (ZifStoreLocal *store, const gchar *prefix, GError **error)
@@ -1045,6 +1047,8 @@ zif_store_local_init (ZifStoreLocal *store)
  * zif_store_local_new:
  *
  * Return value: A new #ZifStoreLocal class instance.
+ *
+ * Since: 0.0.1
  **/
 ZifStoreLocal *
 zif_store_local_new (void)

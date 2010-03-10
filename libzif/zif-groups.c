@@ -63,6 +63,8 @@ static gpointer zif_groups_object = NULL;
  * zif_groups_error_quark:
  *
  * Return value: Our personal error quark.
+ *
+ * Since: 0.0.1
  **/
 GQuark
 zif_groups_error_quark (void)
@@ -82,6 +84,8 @@ zif_groups_error_quark (void)
  * This sets up the file that is used to map categories to group enums.
  *
  * Return value: %TRUE for success, %FALSE for failure
+ *
+ * Since: 0.0.1
  **/
 gboolean
 zif_groups_set_mapping_file (ZifGroups *groups, const gchar *mapping_file, GError **error)
@@ -124,6 +128,8 @@ out:
  * Loads the mapping file from disk into memory.
  *
  * Return value: %TRUE for success, %FALSE for failure
+ *
+ * Since: 0.0.1
  **/
 gboolean
 zif_groups_load (ZifGroups *groups, GError **error)
@@ -197,6 +203,8 @@ out:
  * Gets the groups supported by the packaging system.
  *
  * Return value: A #PkBitfield of the groups that are supported
+ *
+ * Since: 0.0.1
  **/
 PkBitfield
 zif_groups_get_groups (ZifGroups *groups, GError **error)
@@ -228,6 +236,8 @@ out:
  * Gets the categories supported by the packaging system.
  *
  * Return value: category list as an array of strings
+ *
+ * Since: 0.0.1
  **/
 GPtrArray *
 zif_groups_get_categories (ZifGroups *groups, GError **error)
@@ -266,6 +276,8 @@ out:
  * Returns the group enumerated type for the category.
  *
  * Return value: the specific #PkGroupEnum or %PK_GROUP_ENUM_UNKNOWN
+ *
+ * Since: 0.0.1
  **/
 PkGroupEnum
 zif_groups_get_group_for_cat (ZifGroups *groups, const gchar *cat, GError **error)
@@ -362,6 +374,8 @@ zif_groups_init (ZifGroups *groups)
  * zif_groups_new:
  *
  * Return value: A new #ZifGroups class instance.
+ *
+ * Since: 0.0.1
  **/
 ZifGroups *
 zif_groups_new (void)

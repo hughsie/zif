@@ -129,6 +129,8 @@ out:
  * Finds all mirrors we should use.
  *
  * Return value: the uris to use as an array of strings
+ *
+ * Since: 0.0.1
  **/
 GPtrArray *
 zif_repo_md_mirrorlist_get_uris (ZifRepoMdMirrorlist *md, GCancellable *cancellable, ZifCompletion *completion, GError **error)
@@ -226,6 +228,8 @@ zif_repo_md_mirrorlist_init (ZifRepoMdMirrorlist *md)
  * zif_repo_md_mirrorlist_new:
  *
  * Return value: A new #ZifRepoMdMirrorlist class instance.
+ *
+ * Since: 0.0.1
  **/
 ZifRepoMdMirrorlist *
 zif_repo_md_mirrorlist_new (void)

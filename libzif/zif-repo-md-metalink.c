@@ -267,6 +267,8 @@ out:
  * Finds all mirrors we should use.
  *
  * Return value: the uris to use as an array of strings
+ *
+ * Since: 0.0.1
  **/
 GPtrArray *
 zif_repo_md_metalink_get_uris (ZifRepoMdMetalink *md, guint threshold, GCancellable *cancellable, ZifCompletion *completion, GError **error)
@@ -382,6 +384,8 @@ zif_repo_md_metalink_init (ZifRepoMdMetalink *md)
  * zif_repo_md_metalink_new:
  *
  * Return value: A new #ZifRepoMdMetalink class instance.
+ *
+ * Since: 0.0.1
  **/
 ZifRepoMdMetalink *
 zif_repo_md_metalink_new (void)

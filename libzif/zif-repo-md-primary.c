@@ -191,6 +191,8 @@ out:
  * Finds all remote packages that match the name exactly.
  *
  * Return value: an array of #ZifPackageRemote's
+ *
+ * Since: 0.0.1
  **/
 GPtrArray *
 zif_repo_md_primary_resolve (ZifRepoMdPrimary *md, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
@@ -219,6 +221,8 @@ zif_repo_md_primary_resolve (ZifRepoMdPrimary *md, const gchar *search, GCancell
  * Finds all packages that match the name.
  *
  * Return value: an array of #ZifPackageRemote's
+ *
+ * Since: 0.0.1
  **/
 GPtrArray *
 zif_repo_md_primary_search_name (ZifRepoMdPrimary *md, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
@@ -247,6 +251,8 @@ zif_repo_md_primary_search_name (ZifRepoMdPrimary *md, const gchar *search, GCan
  * Finds all packages that match the name or description.
  *
  * Return value: an array of #ZifPackageRemote's
+ *
+ * Since: 0.0.1
  **/
 GPtrArray *
 zif_repo_md_primary_search_details (ZifRepoMdPrimary *md, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
@@ -275,6 +281,8 @@ zif_repo_md_primary_search_details (ZifRepoMdPrimary *md, const gchar *search, G
  * Finds all packages that match the group.
  *
  * Return value: an array of #ZifPackageRemote's
+ *
+ * Since: 0.0.1
  **/
 GPtrArray *
 zif_repo_md_primary_search_group (ZifRepoMdPrimary *md, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
@@ -303,6 +311,8 @@ zif_repo_md_primary_search_group (ZifRepoMdPrimary *md, const gchar *search, GCa
  * Finds all packages that match the given pkgId.
  *
  * Return value: an array of #ZifPackageRemote's
+ *
+ * Since: 0.0.1
  **/
 GPtrArray *
 zif_repo_md_primary_search_pkgid (ZifRepoMdPrimary *md, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
@@ -331,6 +341,8 @@ zif_repo_md_primary_search_pkgid (ZifRepoMdPrimary *md, const gchar *search, GCa
  * Finds all packages that match PackageId.
  *
  * Return value: an array of #ZifPackageRemote's
+ *
+ * Since: 0.0.1
  **/
 GPtrArray *
 zif_repo_md_primary_find_package (ZifRepoMdPrimary *md, const gchar *package_id, GCancellable *cancellable, ZifCompletion *completion, GError **error)
@@ -361,6 +373,8 @@ zif_repo_md_primary_find_package (ZifRepoMdPrimary *md, const gchar *package_id,
  * Returns all packages in the repo.
  *
  * Return value: an array of #ZifPackageRemote's
+ *
+ * Since: 0.0.1
  **/
 GPtrArray *
 zif_repo_md_primary_get_packages (ZifRepoMdPrimary *md, GCancellable *cancellable, ZifCompletion *completion, GError **error)
@@ -422,6 +436,8 @@ zif_repo_md_primary_init (ZifRepoMdPrimary *md)
  * zif_repo_md_primary_new:
  *
  * Return value: A new #ZifRepoMdPrimary class instance.
+ *
+ * Since: 0.0.1
  **/
 ZifRepoMdPrimary *
 zif_repo_md_primary_new (void)

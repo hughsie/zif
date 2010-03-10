@@ -313,6 +313,8 @@ zif_repo_md_filelists_init (ZifRepoMdFilelists *md)
  * zif_repo_md_filelists_new:
  *
  * Return value: A new #ZifRepoMdFilelists class instance.
+ *
+ * Since: 0.0.1
  **/
 ZifRepoMdFilelists *
 zif_repo_md_filelists_new (void)

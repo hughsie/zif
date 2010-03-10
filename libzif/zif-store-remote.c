@@ -362,6 +362,8 @@ out:
  * then the downloaded file will "/var/cache/zif/hal-0.0.1.rpm"
  *
  * Return value: %TRUE for success, %FALSE for failure
+ *
+ * Since: 0.0.1
  **/
 gboolean
 zif_store_remote_download (ZifStoreRemote *store, const gchar *filename, const gchar *directory,
@@ -1187,6 +1189,8 @@ out:
  * zif_store_remote_set_from_file:
  * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @completion: a #ZifCompletion to use for progress reporting
+ *
+ * Since: 0.0.1
  **/
 gboolean
 zif_store_remote_set_from_file (ZifStoreRemote *store, const gchar *repo_filename, const gchar *id,
@@ -1259,6 +1263,8 @@ out:
  * Enable or disable a remote repository.
  *
  * Return value: %TRUE for success, %FALSE for failure
+ *
+ * Since: 0.0.1
  **/
 gboolean
 zif_store_remote_set_enabled (ZifStoreRemote *store, gboolean enabled, GError **error)
@@ -2244,6 +2250,8 @@ out:
  * Finds out if the repository is a development repository.
  *
  * Return value: %TRUE or %FALSE
+ *
+ * Since: 0.0.1
  **/
 gboolean
 zif_store_remote_is_devel (ZifStoreRemote *store, GCancellable *cancellable, ZifCompletion *completion, GError **error)
@@ -2314,6 +2322,8 @@ zif_store_remote_get_id (ZifStore *store)
  * Get the name of this repository.
  *
  * Return value: The repository name, e.g. "Fedora"
+ *
+ * Since: 0.0.1
  **/
 const gchar *
 zif_store_remote_get_name (ZifStoreRemote *store, GCancellable *cancellable, ZifCompletion *completion, GError **error)
@@ -2356,6 +2366,8 @@ out:
  * Find out if this repository is enabled or not.
  *
  * Return value: %TRUE or %FALSE
+ *
+ * Since: 0.0.1
  **/
 gboolean
 zif_store_remote_get_enabled (ZifStoreRemote *store, GCancellable *cancellable, ZifCompletion *completion, GError **error)
@@ -2554,6 +2566,8 @@ out:
  * zif_store_remote_new:
  *
  * Return value: A new #ZifStoreRemote class instance.
+ *
+ * Since: 0.0.1
  **/
 ZifStoreRemote *
 zif_store_remote_new (void)

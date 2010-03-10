@@ -20,8 +20,8 @@
  */
 
 /**
- * SECTION:zif-store_array
- * @short_description: A store_array is a container that holds one or more stores
+ * SECTION:zif-store-array
+ * @short_description: A store-array is a container that holds one or more stores
  *
  * A #GPtrArray is the container where #ZifStore's are kept. Global operations can
  * be done on the array and not the indervidual stores.
@@ -61,6 +61,8 @@
  * Add a single #ZifStore to the #GPtrArray.
  *
  * Return value: %TRUE for success, %FALSE for failure
+ *
+ * Since: 0.0.1
  **/
 gboolean
 zif_store_array_add_store (GPtrArray *store_array, ZifStore *store)
@@ -79,6 +81,8 @@ zif_store_array_add_store (GPtrArray *store_array, ZifStore *store)
  * Add an array of #ZifStore's to the #GPtrArray.
  *
  * Return value: %TRUE for success, %FALSE for failure
+ *
+ * Since: 0.0.1
  **/
 gboolean
 zif_store_array_add_stores (GPtrArray *store_array, GPtrArray *stores)
@@ -108,6 +112,8 @@ zif_store_array_add_stores (GPtrArray *store_array, GPtrArray *stores)
  * Convenience function to add local store to the #GPtrArray.
  *
  * Return value: %TRUE for success, %FALSE for failure
+ *
+ * Since: 0.0.1
  **/
 gboolean
 zif_store_array_add_local (GPtrArray *store_array, GCancellable *cancellable, ZifCompletion *completion, GError **error)
@@ -131,6 +137,8 @@ zif_store_array_add_local (GPtrArray *store_array, GCancellable *cancellable, Zi
  * Convenience function to add remote stores to the #GPtrArray.
  *
  * Return value: %TRUE for success, %FALSE for failure
+ *
+ * Since: 0.0.1
  **/
 gboolean
 zif_store_array_add_remote (GPtrArray *store_array, GCancellable *cancellable, ZifCompletion *completion, GError **error)
@@ -171,6 +179,8 @@ out:
  * Convenience function to add enabled remote stores to the #GPtrArray.
  *
  * Return value: %TRUE for success, %FALSE for failure
+ *
+ * Since: 0.0.1
  **/
 gboolean
 zif_store_array_add_remote_enabled (GPtrArray *store_array, GCancellable *cancellable, ZifCompletion *completion, GError **error)
@@ -290,6 +300,8 @@ out:
  * Find a single package in the #GPtrArray.
  *
  * Return value: A single #ZifPackage or %NULL
+ *
+ * Since: 0.0.1
  **/
 ZifPackage *
 zif_store_array_find_package (GPtrArray *store_array, const gchar *package_id, GCancellable *cancellable, ZifCompletion *completion, GError **error)
@@ -342,6 +354,8 @@ out:
  * Cleans the #ZifStoreRemote objects by deleting cache.
  *
  * Return value: %TRUE for success, %FALSE for failure
+ *
+ * Since: 0.0.1
  **/
 gboolean
 zif_store_array_clean (GPtrArray *store_array, GCancellable *cancellable, ZifCompletion *completion, GError **error)
@@ -393,6 +407,8 @@ out:
  * Refreshs the #ZifStoreRemote objects by downloading new data
  *
  * Return value: %TRUE for success, %FALSE for failure
+ *
+ * Since: 0.0.1
  **/
 gboolean
 zif_store_array_refresh (GPtrArray *store_array, gboolean force, GCancellable *cancellable, ZifCompletion *completion, GError **error)
@@ -446,6 +462,8 @@ out:
  * Finds packages matching the package name exactly.
  *
  * Return value: an array of #ZifPackage's
+ *
+ * Since: 0.0.1
  **/
 GPtrArray *
 zif_store_array_resolve (GPtrArray *store_array, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
@@ -464,6 +482,8 @@ zif_store_array_resolve (GPtrArray *store_array, const gchar *search, GCancellab
  * Find packages that match the package name in some part.
  *
  * Return value: an array of #ZifPackage's
+ *
+ * Since: 0.0.1
  **/
 GPtrArray *
 zif_store_array_search_name (GPtrArray *store_array, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
@@ -482,6 +502,8 @@ zif_store_array_search_name (GPtrArray *store_array, const gchar *search, GCance
  * Find packages that match some detail about the package.
  *
  * Return value: an array of #ZifPackage's
+ *
+ * Since: 0.0.1
  **/
 GPtrArray *
 zif_store_array_search_details (GPtrArray *store_array, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
@@ -500,6 +522,8 @@ zif_store_array_search_details (GPtrArray *store_array, const gchar *search, GCa
  * Find packages that belong in a specific group.
  *
  * Return value: an array of #ZifPackage's
+ *
+ * Since: 0.0.1
  **/
 GPtrArray *
 zif_store_array_search_group (GPtrArray *store_array, const gchar *group_enum, GCancellable *cancellable, ZifCompletion *completion, GError **error)
@@ -518,6 +542,8 @@ zif_store_array_search_group (GPtrArray *store_array, const gchar *group_enum, G
  * Find packages that belong in a specific category.
  *
  * Return value: an array of #ZifPackage's
+ *
+ * Since: 0.0.1
  **/
 GPtrArray *
 zif_store_array_search_category (GPtrArray *store_array, const gchar *group_id, GCancellable *cancellable, ZifCompletion *completion, GError **error)
@@ -567,6 +593,8 @@ out:
  * Find packages that provide the specified file.
  *
  * Return value: an array of #ZifPackage's
+ *
+ * Since: 0.0.1
  **/
 GPtrArray *
 zif_store_array_search_file (GPtrArray *store_array, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
@@ -584,6 +612,8 @@ zif_store_array_search_file (GPtrArray *store_array, const gchar *search, GCance
  * Return all packages in the #GPtrArray's.
  *
  * Return value: an array of #ZifPackage's
+ *
+ * Since: 0.0.1
  **/
 GPtrArray *
 zif_store_array_get_packages (GPtrArray *store_array, GCancellable *cancellable, ZifCompletion *completion, GError **error)
@@ -601,6 +631,8 @@ zif_store_array_get_packages (GPtrArray *store_array, GCancellable *cancellable,
  * Return a list of packages that are updatable.
  *
  * Return value: an array of #ZifPackage's
+ *
+ * Since: 0.0.1
  **/
 GPtrArray *
 zif_store_array_get_updates (GPtrArray *store_array, GCancellable *cancellable, ZifCompletion *completion, GError **error)
@@ -619,6 +651,8 @@ zif_store_array_get_updates (GPtrArray *store_array, GCancellable *cancellable, 
  * Find packages that provide a specific string.
  *
  * Return value: an array of #ZifPackage's
+ *
+ * Since: 0.0.1
  **/
 GPtrArray *
 zif_store_array_what_provides (GPtrArray *store_array, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
@@ -640,6 +674,8 @@ zif_store_array_what_provides (GPtrArray *store_array, const gchar *search, GCan
  * Return a list of custom categories from all repos.
  *
  * Return value: an array of #PkCategory's
+ *
+ * Since: 0.0.1
  **/
 GPtrArray *
 zif_store_array_get_categories (GPtrArray *store_array, GCancellable *cancellable, ZifCompletion *completion, GError **error)
@@ -694,6 +730,8 @@ out:
  * zif_store_array_new:
  *
  * Return value: A new #GPtrArray class instance.
+ *
+ * Since: 0.0.1
  **/
 GPtrArray *
 zif_store_array_new (void)
