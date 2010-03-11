@@ -1551,7 +1551,7 @@ zif_store_remote_search_category_resolve (ZifStore *store, const gchar *name, GC
 		goto out;
 
 	/* we suck */
-	g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+	g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED_TO_FIND,
 		     "failed to resolve installed package %s installed or in this repo", name);
 out:
 	if (array != NULL)
@@ -1654,10 +1654,10 @@ zif_store_remote_search_category (ZifStore *store, const gchar *group_id, GCance
 		completion_loop = zif_completion_get_child (completion_local);
 		package = zif_store_remote_search_category_resolve (store, name, cancellable, completion_loop, &error_local);
 		if (package == NULL) {
-			/* ignore when package isn't present, TODO: use GError code */
-			if (g_str_has_prefix (error_local->message, "failed to resolve")) {
-				g_error_free (error_local);
-				egg_warning ("Failed to find %s installed or in repo %s", name, remote->priv->id);
+			/* ignore when package isn't present */
+			if (error_local->code == ZIF_STORE_ERROR_FAILED_TO_FIND) {
+				g_clear_error (&error_local);
+				egg_debug ("Failed to find %s installed or in repo %s", name, remote->priv->id);
 				goto ignore_error;
 			}
 
