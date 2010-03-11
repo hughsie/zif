@@ -271,8 +271,8 @@ zif_store_array_repos_search (GPtrArray *store_array, PkRoleEnum role, const gch
 				     "internal error, no such role: %s", pk_role_enum_to_text (role));
 			g_ptr_array_unref (array);
 			array = NULL;
- 			goto out;
- 		}
+			goto out;
+		}
 		if (part == NULL) {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 				     "failed to %s in %s: %s", pk_role_enum_to_text (role), zif_store_get_id (store), error_local->message);
