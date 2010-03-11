@@ -384,6 +384,7 @@ zif_store_remote_download (ZifStoreRemote *store, const gchar *filename, const g
 	g_return_val_if_fail (store->priv->id != NULL, FALSE);
 	g_return_val_if_fail (filename != NULL, FALSE);
 	g_return_val_if_fail (directory != NULL, FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
 	/* if not online, then this is fatal */
 	ret = zif_config_get_boolean (store->priv->config, "network", NULL);
@@ -529,6 +530,7 @@ zif_store_remote_add_metalink (ZifStoreRemote *store, GCancellable *cancellable,
 	completion_local = zif_completion_get_child (completion);
 	array = zif_repo_md_metalink_get_uris (ZIF_REPO_MD_METALINK (store->priv->md_metalink), 50, cancellable, completion_local, &error_local);
 	if (array == NULL) {
+		ret = FALSE;
 		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 			     "failed to add mirrors from metalink: %s", error_local->message);
 		g_error_free (error_local);
@@ -603,6 +605,7 @@ zif_store_remote_add_mirrorlist (ZifStoreRemote *store, GCancellable *cancellabl
 	completion_local = zif_completion_get_child (completion);
 	array = zif_repo_md_mirrorlist_get_uris (ZIF_REPO_MD_MIRRORLIST (store->priv->md_mirrorlist), cancellable, completion_local, &error_local);
 	if (array == NULL) {
+		ret = FALSE;
 		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 			     "failed to add mirrors from mirrorlist: %s", error_local->message);
 		g_error_free (error_local);
@@ -921,8 +924,12 @@ zif_store_remote_refresh (ZifStore *store, gboolean force, GCancellable *cancell
 
 		/* does current uncompressed file equal what repomd says it should be */
 		ret = zif_repo_md_file_check (md, TRUE, &error_local);
+		if (!ret) {
+			egg_warning ("failed to verify md: %s", error_local->message);
+			g_clear_error (&error_local);
+		}
 		if (ret && !force) {
-			egg_debug ("%s is okay", zif_repo_md_type_to_text (i));
+			egg_debug ("%s is okay, and we're not forcing", zif_repo_md_type_to_text (i));
 			continue;
 		}
 
@@ -1215,6 +1222,7 @@ zif_store_remote_set_from_file (ZifStoreRemote *store, const gchar *repo_filenam
 	g_return_val_if_fail (id != NULL, FALSE);
 	g_return_val_if_fail (store->priv->id == NULL, FALSE);
 	g_return_val_if_fail (!store->priv->loaded, FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
 	/* not locked */
 	ret = zif_lock_is_locked (store->priv->lock, NULL);
@@ -1285,6 +1293,7 @@ zif_store_remote_set_enabled (ZifStoreRemote *store, gboolean enabled, GError **
 
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), FALSE);
 	g_return_val_if_fail (store->priv->id != NULL, FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
 	/* not locked */
 	ret = zif_lock_is_locked (store->priv->lock, NULL);
@@ -1353,8 +1362,8 @@ zif_store_remote_resolve (ZifStore *store, const gchar *search, GCancellable *ca
 	ZifStoreRemote *remote = ZIF_STORE_REMOTE (store);
 	ZifCompletion *completion_local;
 
-	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), FALSE);
-	g_return_val_if_fail (remote->priv->id != NULL, FALSE);
+	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), NULL);
+	g_return_val_if_fail (remote->priv->id != NULL, NULL);
 
 	/* not locked */
 	ret = zif_lock_is_locked (remote->priv->lock, NULL);
@@ -1406,8 +1415,8 @@ zif_store_remote_search_name (ZifStore *store, const gchar *search, GCancellable
 	ZifStoreRemote *remote = ZIF_STORE_REMOTE (store);
 	ZifCompletion *completion_local;
 
-	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), FALSE);
-	g_return_val_if_fail (remote->priv->id != NULL, FALSE);
+	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), NULL);
+	g_return_val_if_fail (remote->priv->id != NULL, NULL);
 
 	/* not locked */
 	ret = zif_lock_is_locked (remote->priv->lock, NULL);
@@ -1459,8 +1468,8 @@ zif_store_remote_search_details (ZifStore *store, const gchar *search, GCancella
 	ZifStoreRemote *remote = ZIF_STORE_REMOTE (store);
 	ZifCompletion *completion_local;
 
-	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), FALSE);
-	g_return_val_if_fail (remote->priv->id != NULL, FALSE);
+	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), NULL);
+	g_return_val_if_fail (remote->priv->id != NULL, NULL);
 
 	/* not locked */
 	ret = zif_lock_is_locked (remote->priv->lock, NULL);
@@ -1588,8 +1597,8 @@ zif_store_remote_search_category (ZifStore *store, const gchar *group_id, GCance
 	const gchar *location;
 	guint i;
 
-	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), FALSE);
-	g_return_val_if_fail (remote->priv->id != NULL, FALSE);
+	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), NULL);
+	g_return_val_if_fail (remote->priv->id != NULL, NULL);
 
 	/* not locked */
 	ret = zif_lock_is_locked (remote->priv->lock, NULL);
@@ -1707,8 +1716,8 @@ zif_store_remote_search_group (ZifStore *store, const gchar *search, GCancellabl
 	ZifStoreRemote *remote = ZIF_STORE_REMOTE (store);
 	ZifCompletion *completion_local;
 
-	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), FALSE);
-	g_return_val_if_fail (remote->priv->id != NULL, FALSE);
+	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), NULL);
+	g_return_val_if_fail (remote->priv->id != NULL, NULL);
 
 	/* not locked */
 	ret = zif_lock_is_locked (remote->priv->lock, NULL);
@@ -1761,8 +1770,8 @@ zif_store_remote_find_package (ZifStore *store, const gchar *package_id, GCancel
 	ZifStoreRemote *remote = ZIF_STORE_REMOTE (store);
 	ZifCompletion *completion_local;
 
-	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), FALSE);
-	g_return_val_if_fail (remote->priv->id != NULL, FALSE);
+	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), NULL);
+	g_return_val_if_fail (remote->priv->id != NULL, NULL);
 
 	/* not locked */
 	ret = zif_lock_is_locked (remote->priv->lock, NULL);
@@ -1839,8 +1848,8 @@ zif_store_remote_get_packages (ZifStore *store, GCancellable *cancellable, ZifCo
 	ZifStoreRemote *remote = ZIF_STORE_REMOTE (store);
 	ZifCompletion *completion_local;
 
-	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), FALSE);
-	g_return_val_if_fail (remote->priv->id != NULL, FALSE);
+	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), NULL);
+	g_return_val_if_fail (remote->priv->id != NULL, NULL);
 
 	/* not locked */
 	ret = zif_lock_is_locked (remote->priv->lock, NULL);
@@ -1901,8 +1910,8 @@ zif_store_remote_get_categories (ZifStore *store, GCancellable *cancellable, Zif
 	PkCategory *category;
 	PkCategory *category_tmp;
 
-	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), FALSE);
-	g_return_val_if_fail (remote->priv->id != NULL, FALSE);
+	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), NULL);
+	g_return_val_if_fail (remote->priv->id != NULL, NULL);
 
 	/* not locked */
 	ret = zif_lock_is_locked (remote->priv->lock, NULL);
