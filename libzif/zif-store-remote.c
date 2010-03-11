@@ -393,6 +393,14 @@ zif_store_remote_download (ZifStoreRemote *store, const gchar *filename, const g
 		goto out;
 	}
 
+	/* check this isn't an absolute path */
+	if (g_str_has_prefix (filename, "/")) {
+		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED_AS_OFFLINE,
+			     "filename %s' should not be an absolute path", filename);
+		ret = FALSE;
+		goto out;
+	}
+
 	/* setup completion */
 	if (store->priv->loaded_metadata)
 		zif_completion_set_number_steps (completion, 1);
@@ -440,7 +448,7 @@ zif_store_remote_download (ZifStoreRemote *store, const gchar *filename, const g
 
 		/* build url */
 		baseurl = g_ptr_array_index (store->priv->baseurls, i);
-		uri = g_build_filename (baseurl, "repodata", basename, NULL);
+		uri = g_build_filename (baseurl, filename, NULL);
 
 		/* try download */
 		zif_completion_reset (completion_local);
@@ -871,8 +879,8 @@ zif_store_remote_refresh (ZifStore *store, gboolean force, GCancellable *cancell
 	/* get local completion object */
 	completion_local = zif_completion_get_child (completion);
 
-	/* download new file */
-	ret = zif_store_remote_download (remote, remote->priv->repomd_filename, remote->priv->directory, cancellable, completion_local, &error_local);
+	/* download new repomd file */
+	ret = zif_store_remote_download (remote, "repodata/repomd.xml", remote->priv->directory, cancellable, completion_local, &error_local);
 	if (!ret) {
 		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 			     "failed to download repomd: %s", error_local->message);
@@ -905,7 +913,7 @@ zif_store_remote_refresh (ZifStore *store, gboolean force, GCancellable *cancell
 		}
 
 		/* get filename */
-		filename = zif_repo_md_get_filename (md);
+		filename = zif_repo_md_get_location (md);
 		if (filename == NULL) {
 			egg_warning ("no filename set for %s", zif_repo_md_type_to_text (i));
 			continue;
@@ -933,6 +941,7 @@ zif_store_remote_refresh (ZifStore *store, gboolean force, GCancellable *cancell
 
 		/* decompress */
 		completion_local = zif_completion_get_child (completion);
+		filename = zif_repo_md_get_filename (md);
 		ret = zif_store_file_decompress (filename, cancellable, completion_local, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
@@ -2261,6 +2270,7 @@ zif_store_remote_is_devel (ZifStoreRemote *store, GCancellable *cancellable, Zif
 
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), FALSE);
 	g_return_val_if_fail (store->priv->id != NULL, FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
 	/* not locked */
 	ret = zif_lock_is_locked (store->priv->lock, NULL);
@@ -2333,6 +2343,7 @@ zif_store_remote_get_name (ZifStoreRemote *store, GCancellable *cancellable, Zif
 
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), NULL);
 	g_return_val_if_fail (store->priv->id != NULL, NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* not locked */
 	ret = zif_lock_is_locked (store->priv->lock, NULL);
@@ -2377,6 +2388,7 @@ zif_store_remote_get_enabled (ZifStoreRemote *store, GCancellable *cancellable, 
 
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), FALSE);
 	g_return_val_if_fail (store->priv->id != NULL, FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
 	/* not locked */
 	ret = zif_lock_is_locked (store->priv->lock, NULL);
