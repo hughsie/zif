@@ -34,6 +34,10 @@
  * zif_config_set_filename() and any reads prior to that will fail.
  */
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #include <string.h>
 
 #include <glib.h>

@@ -29,6 +29,10 @@
  * set using zif_groups_set_mapping_file() before any queries are done.
  */
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #include <string.h>
 
 #include <glib.h>
