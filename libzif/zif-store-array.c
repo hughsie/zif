@@ -21,7 +21,9 @@
 
 /**
  * SECTION:zif-store-array
- * @short_description: A store-array is a container that holds one or more stores
+ * @short_description: A store-			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+				     "failed to %s in %s: %s", pk_role_enum_to_text (role), zif_store_get_id (store), error_local->message);
+array is a container that holds one or more stores
  *
  * A #GPtrArray is the container where #ZifStore's are kept. Global operations can
  * be done on the array and not the indervidual stores.
@@ -265,8 +267,13 @@ zif_store_array_repos_search (GPtrArray *store_array, PkRoleEnum role, const gch
 			part = zif_store_what_provides (store, search, cancellable, completion_local, &error_local);
 		else if (role == PK_ROLE_ENUM_GET_CATEGORIES)
 			part = zif_store_get_categories (store, cancellable, completion_local, &error_local);
-		else
-			egg_error ("internal error: %s", pk_role_enum_to_text (role));
+		else {
+			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+				     "internal error, no such role: %s", pk_role_enum_to_text (role));
+			g_ptr_array_unref (array);
+			array = NULL;
+ 			goto out;
+ 		}
 		if (part == NULL) {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 				     "failed to %s in %s: %s", pk_role_enum_to_text (role), zif_store_get_id (store), error_local->message);

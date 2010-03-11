@@ -2533,7 +2533,7 @@ zif_store_remote_init (ZifStoreRemote *store)
 	/* get cache */
 	cache_dir = zif_config_get_string (store->priv->config, "cachedir", &error);
 	if (cache_dir == NULL) {
-		egg_error ("failed to get cachedir: %s", error->message);
+ 		egg_warning ("failed to get cachedir: %s", error->message);
 		g_error_free (error);
 		goto out;
 	}
@@ -2541,7 +2541,7 @@ zif_store_remote_init (ZifStoreRemote *store)
 	/* expand */
 	store->priv->cache_dir = zif_config_expand_substitutions (store->priv->config, cache_dir, &error);
 	if (store->priv->cache_dir == NULL) {
-		egg_error ("failed to get expand substitutions: %s", error->message);
+		egg_warning ("failed to get expand substitutions: %s", error->message);
 		g_error_free (error);
 		goto out;
 	}

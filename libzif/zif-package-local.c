@@ -293,10 +293,18 @@ zif_package_local_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, GErro
 			/* get the mapping */
 			dirnames = zif_get_header_string_array (header, RPMTAG_DIRNAMES);
 			fileindex = zif_get_header_uint32_index (header, RPMTAG_DIRINDEXES, basenames->len);
-			if (basenames->len != fileindex->len)
-				egg_error ("internal error, basenames length is not the same as index length, possibly corrupt db?");
-			if (fileindex->len > fileindex->len)
-				egg_error ("internal error, fileindex length is bigger than index length, possibly corrupt db?");
+			if (basenames->len != fileindex->len) {
+				ret = FALSE;
+ 				g_set_error_literal (error, ZIF_PACKAGE_ERROR, ZIF_PACKAGE_ERROR_FAILED,
+						     "internal error, basenames length is not the same as index length, possibly corrupt db?");
+				goto out;
+ 			}
+			if (fileindex->len > fileindex->len) {
+				ret = FALSE;
+ 				g_set_error_literal (error, ZIF_PACKAGE_ERROR, ZIF_PACKAGE_ERROR_FAILED,
+						     "internal error, fileindex length is bigger than index length, possibly corrupt db?");
+				goto out;
+			}
 
 			files = g_ptr_array_new_with_free_func (g_free);
 			for (i=0; i<basenames->len-2 /* why -1? I'm not sure */; i++) {
