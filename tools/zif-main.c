@@ -1737,7 +1737,7 @@ main (int argc, char *argv[])
 			goto out;
 		}
 
-		pk_progress_bar_start (progressbar, "Resolving");
+		pk_progress_bar_start (progressbar, "Provides");
 
 		/* setup completion with the correct number of steps */
 		zif_completion_set_number_steps (completion, 3);
