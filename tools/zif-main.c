@@ -1811,10 +1811,11 @@ out:
 	if (completion != NULL)
 		g_object_unref (completion);
 	if (lock != NULL) {
-		ret = zif_lock_set_unlocked (lock, &error);
+		GError *error_local = NULL;
+		ret = zif_lock_set_unlocked (lock, &error_local);
 		if (!ret) {
-			egg_warning ("failed to unlock: %s", error->message);
-			g_error_free (error);
+			egg_warning ("failed to unlock: %s", error_local->message);
+			g_error_free (error_local);
 		}
 		g_object_unref (lock);
 	}
