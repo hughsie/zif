@@ -761,7 +761,7 @@ zif_store_remote_load_metadata (ZifStoreRemote *store, GCancellable *cancellable
 		/* download new file */
 		completion_local = zif_completion_get_child (completion);
 		store->priv->loaded_metadata = TRUE;
-		ret = zif_store_remote_download (store, store->priv->repomd_filename, store->priv->directory, cancellable, completion_local, &error_local);
+		ret = zif_store_remote_download (store, "repodata/repomd.xml", store->priv->directory, cancellable, completion_local, &error_local);
 		store->priv->loaded_metadata = FALSE;
 		if (!ret) {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
