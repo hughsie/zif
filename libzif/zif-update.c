@@ -218,7 +218,7 @@ zif_update_set_state (ZifUpdate *update, PkUpdateStateEnum state)
 /**
  * zif_update_set_kind:
  * @update: the #ZifUpdate object
- * @state: If the update kind, e.g. %PK_INFO_ENUM_SECURITY.
+ * @kind: If the update kind, e.g. %PK_INFO_ENUM_SECURITY.
  *
  * Sets the kind of update.
  *

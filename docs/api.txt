@@ -1,19 +1,19 @@
 
-[RepoMd]
+[Md]
  | * set_mdtype
  | * refresh
  | * get_filename
  | * ...
  |
- |- [RepoMdMaster]
+ |- [MdMaster]
  |   * get_info
  |
- |- [RepoMdPrimary]
+ |- [MdPrimary]
  |   * search_name
  |   * search_pkgid
  |   * ...
  |
- \- [RepoMdFilelists]
+ \- [MdFilelists]
      * search_file
 
 [Store]

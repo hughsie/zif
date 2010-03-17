@@ -74,20 +74,20 @@ libzif_la_SOURCES =						\
 	zif-store-local.h					\
 	zif-store-remote.c					\
 	zif-store-remote.h					\
-	zif-repo-md.c						\
-	zif-repo-md.h						\
-	zif-repo-md-filelists.c					\
-	zif-repo-md-filelists.h					\
-	zif-repo-md-primary.c					\
-	zif-repo-md-primary.h					\
-	zif-repo-md-metalink.c					\
-	zif-repo-md-metalink.h					\
-	zif-repo-md-mirrorlist.c				\
-	zif-repo-md-mirrorlist.h				\
-	zif-repo-md-comps.c					\
-	zif-repo-md-comps.h					\
-	zif-repo-md-updateinfo.c				\
-	zif-repo-md-updateinfo.h				\
+	zif-md.c						\
+	zif-md.h						\
+	zif-md-filelists.c					\
+	zif-md-filelists.h					\
+	zif-md-primary.c					\
+	zif-md-primary.h					\
+	zif-md-metalink.c					\
+	zif-md-metalink.h					\
+	zif-md-mirrorlist.c					\
+	zif-md-mirrorlist.h					\
+	zif-md-comps.c						\
+	zif-md-comps.h						\
+	zif-md-updateinfo.c					\
+	zif-md-updateinfo.h					\
 	zif-store-array.c					\
 	zif-store-array.h					\
 	zif-repos.c						\

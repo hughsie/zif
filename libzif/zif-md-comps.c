@@ -20,11 +20,11 @@
  */
 
 /**
- * SECTION:zif-repo-md-comps
+ * SECTION:zif-md-comps
  * @short_description: Comps metadata functionality
  *
  * Provide access to the comps repo metadata.
- * This object is a subclass of #ZifRepoMd
+ * This object is a subclass of #ZifMd
  */
 
 #ifdef HAVE_CONFIG_H
@@ -34,45 +34,45 @@
 #include <stdlib.h>
 #include <glib.h>
 
-#include "zif-repo-md.h"
-#include "zif-repo-md-comps.h"
+#include "zif-md.h"
+#include "zif-md-comps.h"
 
 #include "egg-debug.h"
 #include "egg-string.h"
 
-#define ZIF_REPO_MD_COMPS_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_REPO_MD_COMPS, ZifRepoMdCompsPrivate))
+#define ZIF_MD_COMPS_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_MD_COMPS, ZifMdCompsPrivate))
 
 typedef enum {
-	ZIF_REPO_MD_COMPS_SECTION_GROUP,
-	ZIF_REPO_MD_COMPS_SECTION_CATEGORY,
-	ZIF_REPO_MD_COMPS_SECTION_UNKNOWN
-} ZifRepoMdCompsSection;
+	ZIF_MD_COMPS_SECTION_GROUP,
+	ZIF_MD_COMPS_SECTION_CATEGORY,
+	ZIF_MD_COMPS_SECTION_UNKNOWN
+} ZifMdCompsSection;
 
 typedef enum {
-	ZIF_REPO_MD_COMPS_SECTION_GROUP_ID,
-	ZIF_REPO_MD_COMPS_SECTION_GROUP_NAME,
-	ZIF_REPO_MD_COMPS_SECTION_GROUP_DESCRIPTION,
-	ZIF_REPO_MD_COMPS_SECTION_GROUP_VISIBLE,
-	ZIF_REPO_MD_COMPS_SECTION_GROUP_PACKAGELIST,
-	ZIF_REPO_MD_COMPS_SECTION_GROUP_PACKAGE,
-	ZIF_REPO_MD_COMPS_SECTION_GROUP_UNKNOWN
-} ZifRepoMdCompsSectionGroup;
+	ZIF_MD_COMPS_SECTION_GROUP_ID,
+	ZIF_MD_COMPS_SECTION_GROUP_NAME,
+	ZIF_MD_COMPS_SECTION_GROUP_DESCRIPTION,
+	ZIF_MD_COMPS_SECTION_GROUP_VISIBLE,
+	ZIF_MD_COMPS_SECTION_GROUP_PACKAGELIST,
+	ZIF_MD_COMPS_SECTION_GROUP_PACKAGE,
+	ZIF_MD_COMPS_SECTION_GROUP_UNKNOWN
+} ZifMdCompsSectionGroup;
 
 typedef enum {
-	ZIF_REPO_MD_COMPS_SECTION_GROUP_TYPE_DEFAULT,
-	ZIF_REPO_MD_COMPS_SECTION_GROUP_TYPE_OPTIONAL,
-	ZIF_REPO_MD_COMPS_SECTION_GROUP_TYPE_CONDITIONAL,
-	ZIF_REPO_MD_COMPS_SECTION_GROUP_TYPE_UNKNOWN
-} ZifRepoMdCompsSectionGroupType;
+	ZIF_MD_COMPS_SECTION_GROUP_TYPE_DEFAULT,
+	ZIF_MD_COMPS_SECTION_GROUP_TYPE_OPTIONAL,
+	ZIF_MD_COMPS_SECTION_GROUP_TYPE_CONDITIONAL,
+	ZIF_MD_COMPS_SECTION_GROUP_TYPE_UNKNOWN
+} ZifMdCompsSectionGroupType;
 
 typedef enum {
-	ZIF_REPO_MD_COMPS_SECTION_CATEGORY_ID,
-	ZIF_REPO_MD_COMPS_SECTION_CATEGORY_NAME,
-	ZIF_REPO_MD_COMPS_SECTION_CATEGORY_DESCRIPTION,
-	ZIF_REPO_MD_COMPS_SECTION_CATEGORY_GROUPLIST,
-	ZIF_REPO_MD_COMPS_SECTION_CATEGORY_GROUP,
-	ZIF_REPO_MD_COMPS_SECTION_CATEGORY_UNKNOWN
-} ZifRepoMdCompsSectionCategory;
+	ZIF_MD_COMPS_SECTION_CATEGORY_ID,
+	ZIF_MD_COMPS_SECTION_CATEGORY_NAME,
+	ZIF_MD_COMPS_SECTION_CATEGORY_DESCRIPTION,
+	ZIF_MD_COMPS_SECTION_CATEGORY_GROUPLIST,
+	ZIF_MD_COMPS_SECTION_CATEGORY_GROUP,
+	ZIF_MD_COMPS_SECTION_CATEGORY_UNKNOWN
+} ZifMdCompsSectionCategory;
 
 typedef struct {
 	gchar				*id;
@@ -80,65 +80,65 @@ typedef struct {
 	gchar				*description;
 	gboolean			 visible;
 	GPtrArray			*packagelist;		/* stored as gchar */
-} ZifRepoMdCompsGroupData;
+} ZifMdCompsGroupData;
 
 typedef struct {
 	gchar				*id;
 	gchar				*name;
 	gchar				*description;
 	GPtrArray			*grouplist;		/* stored as gchar */
-} ZifRepoMdCompsCategoryData;
+} ZifMdCompsCategoryData;
 
 /**
- * ZifRepoMdCompsPrivate:
+ * ZifMdCompsPrivate:
  *
- * Private #ZifRepoMdComps data
+ * Private #ZifMdComps data
  **/
-struct _ZifRepoMdCompsPrivate
+struct _ZifMdCompsPrivate
 {
 	gboolean			 loaded;
-	GPtrArray			*array_groups;		/* stored as ZifRepoMdCompsGroupData */
-	GPtrArray			*array_categories;	/* stored as ZifRepoMdCompsCategoryData */
+	GPtrArray			*array_groups;		/* stored as ZifMdCompsGroupData */
+	GPtrArray			*array_categories;	/* stored as ZifMdCompsCategoryData */
 	/* for parser */
-	ZifRepoMdCompsSection		 section;
-	ZifRepoMdCompsSectionGroup	 section_group;
-	ZifRepoMdCompsSectionGroupType	 section_group_type;
-	ZifRepoMdCompsSectionCategory	 section_category;
-	ZifRepoMdCompsGroupData		*group_data_temp;
-	ZifRepoMdCompsCategoryData	*category_data_temp;
+	ZifMdCompsSection		 section;
+	ZifMdCompsSectionGroup		 section_group;
+	ZifMdCompsSectionGroupType	 section_group_type;
+	ZifMdCompsSectionCategory	 section_category;
+	ZifMdCompsGroupData		*group_data_temp;
+	ZifMdCompsCategoryData		*category_data_temp;
 };
 
-G_DEFINE_TYPE (ZifRepoMdComps, zif_repo_md_comps, ZIF_TYPE_REPO_MD)
+G_DEFINE_TYPE (ZifMdComps, zif_md_comps, ZIF_TYPE_MD)
 
 /**
- * zif_repo_md_comps_group_data_new:
+ * zif_md_comps_group_data_new:
  **/
-static ZifRepoMdCompsGroupData *
-zif_repo_md_comps_group_data_new (void)
+static ZifMdCompsGroupData *
+zif_md_comps_group_data_new (void)
 {
-	ZifRepoMdCompsGroupData *data;
-	data = g_new0 (ZifRepoMdCompsGroupData, 1);
+	ZifMdCompsGroupData *data;
+	data = g_new0 (ZifMdCompsGroupData, 1);
 	data->packagelist = g_ptr_array_new_with_free_func ((GDestroyNotify) g_free);
 	return data;
 }
 
 /**
- * zif_repo_md_comps_category_data_new:
+ * zif_md_comps_category_data_new:
  **/
-static ZifRepoMdCompsCategoryData *
-zif_repo_md_comps_category_data_new (void)
+static ZifMdCompsCategoryData *
+zif_md_comps_category_data_new (void)
 {
-	ZifRepoMdCompsCategoryData *data;
-	data = g_new0 (ZifRepoMdCompsCategoryData, 1);
+	ZifMdCompsCategoryData *data;
+	data = g_new0 (ZifMdCompsCategoryData, 1);
 	data->grouplist = g_ptr_array_new_with_free_func ((GDestroyNotify) g_free);
 	return data;
 }
 
 /**
- * zif_repo_md_comps_group_data_free:
+ * zif_md_comps_group_data_free:
  **/
 static void
-zif_repo_md_comps_group_data_free (ZifRepoMdCompsGroupData *data)
+zif_md_comps_group_data_free (ZifMdCompsGroupData *data)
 {
 	g_free (data->id);
 	g_free (data->name);
@@ -148,10 +148,10 @@ zif_repo_md_comps_group_data_free (ZifRepoMdCompsGroupData *data)
 }
 
 /**
- * zif_repo_md_comps_category_data_free:
+ * zif_md_comps_category_data_free:
  **/
 static void
-zif_repo_md_comps_category_data_free (ZifRepoMdCompsCategoryData *data)
+zif_md_comps_category_data_free (ZifMdCompsCategoryData *data)
 {
 	g_free (data->id);
 	g_free (data->name);
@@ -160,50 +160,33 @@ zif_repo_md_comps_category_data_free (ZifRepoMdCompsCategoryData *data)
 	g_free (data);
 }
 
-#if 0
 /**
- * zif_repo_md_comps_protocol_type_from_text:
- **/
-static ZifRepoMdCompsProtocolType
-zif_repo_md_comps_protocol_type_from_text (const gchar *type_text)
-{
-	if (g_strcmp0 (type_text, "ftp") == 0)
-		return ZIF_REPO_MD_COMPS_PROTOCOL_TYPE_FTP;
-	if (g_strcmp0 (type_text, "http") == 0)
-		return ZIF_REPO_MD_COMPS_PROTOCOL_TYPE_HTTP;
-	if (g_strcmp0 (type_text, "rsync") == 0)
-		return ZIF_REPO_MD_COMPS_PROTOCOL_TYPE_RSYNC;
-	return ZIF_REPO_MD_COMPS_PROTOCOL_TYPE_UNKNOWN;
-}
-#endif
-
-/**
- * zif_repo_md_comps_parser_start_element:
+ * zif_md_comps_parser_start_element:
  **/
 static void
-zif_repo_md_comps_parser_start_element (GMarkupParseContext *context, const gchar *element_name,
-					const gchar **attribute_names, const gchar **attribute_values,
-					gpointer user_data, GError **error)
+zif_md_comps_parser_start_element (GMarkupParseContext *context, const gchar *element_name,
+				   const gchar **attribute_names, const gchar **attribute_values,
+				   gpointer user_data, GError **error)
 {
 	guint i;
-	ZifRepoMdComps *comps = user_data;
+	ZifMdComps *comps = user_data;
 
-	g_return_if_fail (ZIF_IS_REPO_MD_COMPS (comps));
+	g_return_if_fail (ZIF_IS_MD_COMPS (comps));
 
 	/* group element */
-	if (comps->priv->section == ZIF_REPO_MD_COMPS_SECTION_UNKNOWN) {
+	if (comps->priv->section == ZIF_MD_COMPS_SECTION_UNKNOWN) {
 
 		/* start of group */
 		if (g_strcmp0 (element_name, "group") == 0) {
-			comps->priv->section = ZIF_REPO_MD_COMPS_SECTION_GROUP;
-			comps->priv->group_data_temp = zif_repo_md_comps_group_data_new ();
+			comps->priv->section = ZIF_MD_COMPS_SECTION_GROUP;
+			comps->priv->group_data_temp = zif_md_comps_group_data_new ();
 			goto out;
 		}
 
 		/* start of category */
 		if (g_strcmp0 (element_name, "category") == 0) {
-			comps->priv->section = ZIF_REPO_MD_COMPS_SECTION_CATEGORY;
-			comps->priv->category_data_temp = zif_repo_md_comps_category_data_new ();
+			comps->priv->section = ZIF_MD_COMPS_SECTION_CATEGORY;
+			comps->priv->category_data_temp = zif_md_comps_category_data_new ();
 			goto out;
 		}
 
@@ -211,37 +194,37 @@ zif_repo_md_comps_parser_start_element (GMarkupParseContext *context, const gcha
 	}
 
 	/* group element */
-	if (comps->priv->section == ZIF_REPO_MD_COMPS_SECTION_GROUP) {
+	if (comps->priv->section == ZIF_MD_COMPS_SECTION_GROUP) {
 		/* id */
 		if (g_strcmp0 (element_name, "id") == 0) {
-			comps->priv->section_group = ZIF_REPO_MD_COMPS_SECTION_GROUP_ID;
+			comps->priv->section_group = ZIF_MD_COMPS_SECTION_GROUP_ID;
 			goto out;
 		}
 		if (g_strcmp0 (element_name, "name") == 0) {
-			comps->priv->section_group = ZIF_REPO_MD_COMPS_SECTION_GROUP_NAME;
+			comps->priv->section_group = ZIF_MD_COMPS_SECTION_GROUP_NAME;
 			goto out;
 		}
 		if (g_strcmp0 (element_name, "description") == 0) {
-			comps->priv->section_group = ZIF_REPO_MD_COMPS_SECTION_GROUP_DESCRIPTION;
+			comps->priv->section_group = ZIF_MD_COMPS_SECTION_GROUP_DESCRIPTION;
 			goto out;
 		}
 		if (g_strcmp0 (element_name, "uservisible") == 0) {
-			comps->priv->section_group = ZIF_REPO_MD_COMPS_SECTION_GROUP_VISIBLE;
+			comps->priv->section_group = ZIF_MD_COMPS_SECTION_GROUP_VISIBLE;
 			goto out;
 		}
 		if (g_strcmp0 (element_name, "packagelist") == 0) {
-			comps->priv->section_group = ZIF_REPO_MD_COMPS_SECTION_GROUP_PACKAGELIST;
+			comps->priv->section_group = ZIF_MD_COMPS_SECTION_GROUP_PACKAGELIST;
 			goto out;
 		}
 		if (g_strcmp0 (element_name, "packagereq") == 0) {
-			comps->priv->section_group = ZIF_REPO_MD_COMPS_SECTION_GROUP_PACKAGE;
+			comps->priv->section_group = ZIF_MD_COMPS_SECTION_GROUP_PACKAGE;
 
 			/* find the package type as a bonus */
-			comps->priv->section_group_type = ZIF_REPO_MD_COMPS_SECTION_GROUP_TYPE_UNKNOWN;
+			comps->priv->section_group_type = ZIF_MD_COMPS_SECTION_GROUP_TYPE_UNKNOWN;
 			for (i=0; attribute_names[i] != NULL; i++) {
 				if (g_strcmp0 (element_name, "type") == 0) {
 					if (g_strcmp0 (attribute_values[i], "default"))
-						comps->priv->section_group_type = ZIF_REPO_MD_COMPS_SECTION_GROUP_TYPE_DEFAULT;
+						comps->priv->section_group_type = ZIF_MD_COMPS_SECTION_GROUP_TYPE_DEFAULT;
 					break;
 				}
 			}
@@ -250,26 +233,26 @@ zif_repo_md_comps_parser_start_element (GMarkupParseContext *context, const gcha
 	}
 
 	/* category element */
-	if (comps->priv->section == ZIF_REPO_MD_COMPS_SECTION_CATEGORY) {
+	if (comps->priv->section == ZIF_MD_COMPS_SECTION_CATEGORY) {
 		/* id */
 		if (g_strcmp0 (element_name, "id") == 0) {
-			comps->priv->section_category = ZIF_REPO_MD_COMPS_SECTION_CATEGORY_ID;
+			comps->priv->section_category = ZIF_MD_COMPS_SECTION_CATEGORY_ID;
 			goto out;
 		}
 		if (g_strcmp0 (element_name, "name") == 0) {
-			comps->priv->section_category = ZIF_REPO_MD_COMPS_SECTION_CATEGORY_NAME;
+			comps->priv->section_category = ZIF_MD_COMPS_SECTION_CATEGORY_NAME;
 			goto out;
 		}
 		if (g_strcmp0 (element_name, "description") == 0) {
-			comps->priv->section_category = ZIF_REPO_MD_COMPS_SECTION_CATEGORY_DESCRIPTION;
+			comps->priv->section_category = ZIF_MD_COMPS_SECTION_CATEGORY_DESCRIPTION;
 			goto out;
 		}
 		if (g_strcmp0 (element_name, "grouplist") == 0) {
-			comps->priv->section_category = ZIF_REPO_MD_COMPS_SECTION_CATEGORY_GROUPLIST;
+			comps->priv->section_category = ZIF_MD_COMPS_SECTION_CATEGORY_GROUPLIST;
 			goto out;
 		}
 		if (g_strcmp0 (element_name, "groupid") == 0) {
-			comps->priv->section_category = ZIF_REPO_MD_COMPS_SECTION_CATEGORY_GROUP;
+			comps->priv->section_category = ZIF_MD_COMPS_SECTION_CATEGORY_GROUP;
 			goto out;
 		}
 	}
@@ -278,17 +261,17 @@ out:
 }
 
 /**
- * zif_repo_md_comps_parser_end_element:
+ * zif_md_comps_parser_end_element:
  **/
 static void
-zif_repo_md_comps_parser_end_element (GMarkupParseContext *context, const gchar *element_name,
-				      gpointer user_data, GError **error)
+zif_md_comps_parser_end_element (GMarkupParseContext *context, const gchar *element_name,
+				 gpointer user_data, GError **error)
 {
-	ZifRepoMdComps *comps = user_data;
+	ZifMdComps *comps = user_data;
 
 	/* end of group */
 	if (g_strcmp0 (element_name, "group") == 0) {
-		comps->priv->section = ZIF_REPO_MD_COMPS_SECTION_UNKNOWN;
+		comps->priv->section = ZIF_MD_COMPS_SECTION_UNKNOWN;
 
 		/* add to array */
 		g_ptr_array_add (comps->priv->array_groups, comps->priv->group_data_temp);
@@ -307,7 +290,7 @@ zif_repo_md_comps_parser_end_element (GMarkupParseContext *context, const gchar 
 
 	/* start of group */
 	if (g_strcmp0 (element_name, "category") == 0) {
-		comps->priv->section = ZIF_REPO_MD_COMPS_SECTION_UNKNOWN;
+		comps->priv->section = ZIF_MD_COMPS_SECTION_UNKNOWN;
 
 		/* add to array */
 		g_ptr_array_add (comps->priv->array_categories, comps->priv->category_data_temp);
@@ -327,82 +310,82 @@ out:
 }
 
 /**
- * zif_repo_md_comps_parser_text:
+ * zif_md_comps_parser_text:
  **/
 static void
-zif_repo_md_comps_parser_text (GMarkupParseContext *context, const gchar *text, gsize text_len,
-			       gpointer user_data, GError **error)
+zif_md_comps_parser_text (GMarkupParseContext *context, const gchar *text, gsize text_len,
+			  gpointer user_data, GError **error)
 
 {
-	ZifRepoMdComps *comps = user_data;
+	ZifMdComps *comps = user_data;
 
 	/* skip whitespace */
 	if (text_len < 1 || text[0] == ' ' || text[0] == '\t' || text[0] == '\n')
 		goto out;
 
 	/* group section */
-	if (comps->priv->section == ZIF_REPO_MD_COMPS_SECTION_GROUP) {
-		if (comps->priv->section_group == ZIF_REPO_MD_COMPS_SECTION_GROUP_ID) {
+	if (comps->priv->section == ZIF_MD_COMPS_SECTION_GROUP) {
+		if (comps->priv->section_group == ZIF_MD_COMPS_SECTION_GROUP_ID) {
 			comps->priv->group_data_temp->id = g_strdup (text);
-			comps->priv->section_group = ZIF_REPO_MD_COMPS_SECTION_GROUP_UNKNOWN;
+			comps->priv->section_group = ZIF_MD_COMPS_SECTION_GROUP_UNKNOWN;
 			goto out;
 		}
-		if (comps->priv->section_group == ZIF_REPO_MD_COMPS_SECTION_GROUP_NAME) {
+		if (comps->priv->section_group == ZIF_MD_COMPS_SECTION_GROUP_NAME) {
 			/* ignore translated versions for now */
 			if (comps->priv->group_data_temp->name != NULL)
 				goto out;
 			comps->priv->group_data_temp->name = g_strdup (text);
-			comps->priv->section_group = ZIF_REPO_MD_COMPS_SECTION_GROUP_UNKNOWN;
+			comps->priv->section_group = ZIF_MD_COMPS_SECTION_GROUP_UNKNOWN;
 			goto out;
 		}
-		if (comps->priv->section_group == ZIF_REPO_MD_COMPS_SECTION_GROUP_DESCRIPTION) {
+		if (comps->priv->section_group == ZIF_MD_COMPS_SECTION_GROUP_DESCRIPTION) {
 			/* ignore translated versions for now */
 			if (comps->priv->group_data_temp->description != NULL)
 				goto out;
 			comps->priv->group_data_temp->description = g_strdup (text);
-			comps->priv->section_group = ZIF_REPO_MD_COMPS_SECTION_GROUP_UNKNOWN;
+			comps->priv->section_group = ZIF_MD_COMPS_SECTION_GROUP_UNKNOWN;
 			goto out;
 		}
-		if (comps->priv->section_group == ZIF_REPO_MD_COMPS_SECTION_GROUP_VISIBLE) {
+		if (comps->priv->section_group == ZIF_MD_COMPS_SECTION_GROUP_VISIBLE) {
 			/* TODO: parse true and false */
 			comps->priv->group_data_temp->visible = atoi (text);
-			comps->priv->section_group = ZIF_REPO_MD_COMPS_SECTION_GROUP_UNKNOWN;
+			comps->priv->section_group = ZIF_MD_COMPS_SECTION_GROUP_UNKNOWN;
 			goto out;
 		}
-		if (comps->priv->section_group == ZIF_REPO_MD_COMPS_SECTION_GROUP_PACKAGE) {
+		if (comps->priv->section_group == ZIF_MD_COMPS_SECTION_GROUP_PACKAGE) {
 			g_ptr_array_add (comps->priv->group_data_temp->packagelist, g_strdup (text));
-			comps->priv->section_group = ZIF_REPO_MD_COMPS_SECTION_GROUP_UNKNOWN;
+			comps->priv->section_group = ZIF_MD_COMPS_SECTION_GROUP_UNKNOWN;
 			goto out;
 		}
 		goto out;
 	}
 
 	/* category section */
-	if (comps->priv->section == ZIF_REPO_MD_COMPS_SECTION_CATEGORY) {
-		if (comps->priv->section_category == ZIF_REPO_MD_COMPS_SECTION_CATEGORY_ID) {
+	if (comps->priv->section == ZIF_MD_COMPS_SECTION_CATEGORY) {
+		if (comps->priv->section_category == ZIF_MD_COMPS_SECTION_CATEGORY_ID) {
 			comps->priv->category_data_temp->id = g_strdup (text);
-			comps->priv->section_category = ZIF_REPO_MD_COMPS_SECTION_CATEGORY_UNKNOWN;
+			comps->priv->section_category = ZIF_MD_COMPS_SECTION_CATEGORY_UNKNOWN;
 			goto out;
 		}
-		if (comps->priv->section_category == ZIF_REPO_MD_COMPS_SECTION_CATEGORY_NAME) {
+		if (comps->priv->section_category == ZIF_MD_COMPS_SECTION_CATEGORY_NAME) {
 			/* ignore translated versions for now */
 			if (comps->priv->category_data_temp->name != NULL)
 				goto out;
 			comps->priv->category_data_temp->name = g_strdup (text);
-			comps->priv->section_category = ZIF_REPO_MD_COMPS_SECTION_CATEGORY_UNKNOWN;
+			comps->priv->section_category = ZIF_MD_COMPS_SECTION_CATEGORY_UNKNOWN;
 			goto out;
 		}
-		if (comps->priv->section_category == ZIF_REPO_MD_COMPS_SECTION_CATEGORY_DESCRIPTION) {
+		if (comps->priv->section_category == ZIF_MD_COMPS_SECTION_CATEGORY_DESCRIPTION) {
 			/* ignore translated versions for now */
 			if (comps->priv->category_data_temp->description != NULL)
 				goto out;
 			comps->priv->category_data_temp->description = g_strdup (text);
-			comps->priv->section_category = ZIF_REPO_MD_COMPS_SECTION_CATEGORY_UNKNOWN;
+			comps->priv->section_category = ZIF_MD_COMPS_SECTION_CATEGORY_UNKNOWN;
 			goto out;
 		}
-		if (comps->priv->section_category == ZIF_REPO_MD_COMPS_SECTION_CATEGORY_GROUP) {
+		if (comps->priv->section_category == ZIF_MD_COMPS_SECTION_CATEGORY_GROUP) {
 			g_ptr_array_add (comps->priv->category_data_temp->grouplist, g_strdup (text));
-			comps->priv->section_category = ZIF_REPO_MD_COMPS_SECTION_CATEGORY_UNKNOWN;
+			comps->priv->section_category = ZIF_MD_COMPS_SECTION_CATEGORY_UNKNOWN;
 			goto out;
 		}
 		goto out;
@@ -412,45 +395,45 @@ out:
 }
 
 /**
- * zif_repo_md_comps_unload:
+ * zif_md_comps_unload:
  **/
 static gboolean
-zif_repo_md_comps_unload (ZifRepoMd *md, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+zif_md_comps_unload (ZifMd *md, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	gboolean ret = FALSE;
 	return ret;
 }
 
 /**
- * zif_repo_md_comps_load:
+ * zif_md_comps_load:
  **/
 static gboolean
-zif_repo_md_comps_load (ZifRepoMd *md, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+zif_md_comps_load (ZifMd *md, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	gboolean ret = TRUE;
 	gchar *contents = NULL;
 	const gchar *filename;
 	gsize size;
 	GMarkupParseContext *context = NULL;
-	const GMarkupParser gpk_repo_md_comps_markup_parser = {
-		zif_repo_md_comps_parser_start_element,
-		zif_repo_md_comps_parser_end_element,
-		zif_repo_md_comps_parser_text,
+	const GMarkupParser gpk_md_comps_markup_parser = {
+		zif_md_comps_parser_start_element,
+		zif_md_comps_parser_end_element,
+		zif_md_comps_parser_text,
 		NULL, /* passthrough */
 		NULL /* error */
 	};
-	ZifRepoMdComps *comps = ZIF_REPO_MD_COMPS (md);
+	ZifMdComps *comps = ZIF_MD_COMPS (md);
 
-	g_return_val_if_fail (ZIF_IS_REPO_MD_COMPS (md), FALSE);
+	g_return_val_if_fail (ZIF_IS_MD_COMPS (md), FALSE);
 
 	/* already loaded */
 	if (comps->priv->loaded)
 		goto out;
 
 	/* get filename */
-	filename = zif_repo_md_get_filename_uncompressed (md);
+	filename = zif_md_get_filename_uncompressed (md);
 	if (filename == NULL) {
-		g_set_error_literal (error, ZIF_REPO_MD_ERROR, ZIF_REPO_MD_ERROR_FAILED,
+		g_set_error_literal (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED,
 				     "failed to get filename for comps");
 		goto out;
 	}
@@ -464,7 +447,7 @@ zif_repo_md_comps_load (ZifRepoMd *md, GCancellable *cancellable, ZifCompletion 
 		goto out;
 
 	/* create parser */
-	context = g_markup_parse_context_new (&gpk_repo_md_comps_markup_parser, G_MARKUP_PREFIX_ERROR_POSITION, comps, NULL);
+	context = g_markup_parse_context_new (&gpk_md_comps_markup_parser, G_MARKUP_PREFIX_ERROR_POSITION, comps, NULL);
 
 	/* parse data */
 	ret = g_markup_parse_context_parse (context, contents, (gssize) size, error);
@@ -480,13 +463,13 @@ out:
 }
 
 /**
- * zif_repo_md_comps_category_set_icon:
+ * zif_md_comps_category_set_icon:
  *
  * Check the icon exists, otherwise fallback to the parent ID, and then
  * something sane.
  **/
 static void
-zif_repo_md_comps_category_set_icon (PkCategory *category)
+zif_md_comps_category_set_icon (PkCategory *category)
 {
 	const gchar *icon;
 	GString *filename = g_string_new ("");
@@ -511,8 +494,8 @@ out:
 }
 
 /**
- * zif_repo_md_comps_get_categories:
- * @md: the #ZifRepoMdComps object
+ * zif_md_comps_get_categories:
+ * @md: the #ZifMdComps object
  * @cancellable: the %GCancellable, or %NULL
  * @completion: the %ZifCompletion object
  * @error: a #GError which is used on failure, or %NULL
@@ -524,24 +507,24 @@ out:
  * Since: 0.0.1
  **/
 GPtrArray *
-zif_repo_md_comps_get_categories (ZifRepoMdComps *md, GCancellable *cancellable,
-				  ZifCompletion *completion, GError **error)
+zif_md_comps_get_categories (ZifMdComps *md, GCancellable *cancellable,
+			     ZifCompletion *completion, GError **error)
 {
 	GPtrArray *array = NULL;
 	guint i;
 	guint len;
 	gboolean ret;
 	GError *error_local = NULL;
-	const ZifRepoMdCompsCategoryData *data;
+	const ZifMdCompsCategoryData *data;
 	PkCategory *category;
 
-	g_return_val_if_fail (ZIF_IS_REPO_MD_COMPS (md), NULL);
+	g_return_val_if_fail (ZIF_IS_MD_COMPS (md), NULL);
 
 	/* if not already loaded, load */
 	if (!md->priv->loaded) {
-		ret = zif_repo_md_load (ZIF_REPO_MD (md), cancellable, completion, &error_local);
+		ret = zif_md_load (ZIF_MD (md), cancellable, completion, &error_local);
 		if (!ret) {
-			g_set_error (error, ZIF_REPO_MD_ERROR, ZIF_REPO_MD_ERROR_FAILED_TO_LOAD,
+			g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED_TO_LOAD,
 				     "failed to get load comps: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
@@ -557,7 +540,7 @@ zif_repo_md_comps_get_categories (ZifRepoMdComps *md, GCancellable *cancellable,
 		pk_category_set_id (category, data->id);
 		pk_category_set_name (category, data->name);
 		pk_category_set_summary (category, data->description);
-		zif_repo_md_comps_category_set_icon (category);
+		zif_md_comps_category_set_icon (category);
 		g_ptr_array_add (array, category);
 	}
 out:
@@ -565,15 +548,15 @@ out:
 }
 
 /**
- * zif_repo_md_comps_get_category_for_group:
+ * zif_md_comps_get_category_for_group:
  **/
 static PkCategory *
-zif_repo_md_comps_get_category_for_group (ZifRepoMdComps *md, const gchar *group_id)
+zif_md_comps_get_category_for_group (ZifMdComps *md, const gchar *group_id)
 {
 	guint i;
 	guint len;
 	PkCategory *category = NULL;
-	ZifRepoMdCompsGroupData *data;
+	ZifMdCompsGroupData *data;
 
 	/* find group matching group_id */
 	len = md->priv->array_groups->len;
@@ -591,8 +574,8 @@ zif_repo_md_comps_get_category_for_group (ZifRepoMdComps *md, const gchar *group
 }
 
 /**
- * zif_repo_md_comps_get_groups_for_category:
- * @md: the #ZifRepoMdComps object
+ * zif_md_comps_get_groups_for_category:
+ * @md: the #ZifMdComps object
  * @category_id: the category to search for
  * @cancellable: the %GCancellable, or %NULL
  * @completion: the %ZifCompletion object
@@ -605,8 +588,8 @@ zif_repo_md_comps_get_category_for_group (ZifRepoMdComps *md, const gchar *group
  * Since: 0.0.1
  **/
 GPtrArray *
-zif_repo_md_comps_get_groups_for_category (ZifRepoMdComps *md, const gchar *category_id,
-					   GCancellable *cancellable, ZifCompletion *completion, GError **error)
+zif_md_comps_get_groups_for_category (ZifMdComps *md, const gchar *category_id,
+				      GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	GPtrArray *array = NULL;
 	guint i;
@@ -614,19 +597,19 @@ zif_repo_md_comps_get_groups_for_category (ZifRepoMdComps *md, const gchar *cate
 	guint len;
 	gboolean ret;
 	GError *error_local = NULL;
-	const ZifRepoMdCompsCategoryData *data;
+	const ZifMdCompsCategoryData *data;
 	const gchar *id;
 	PkCategory *category;
 
-	g_return_val_if_fail (ZIF_IS_REPO_MD_COMPS (md), NULL);
+	g_return_val_if_fail (ZIF_IS_MD_COMPS (md), NULL);
 	g_return_val_if_fail (category_id != NULL, NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* if not already loaded, load */
 	if (!md->priv->loaded) {
-		ret = zif_repo_md_load (ZIF_REPO_MD (md), cancellable, completion, &error_local);
+		ret = zif_md_load (ZIF_MD (md), cancellable, completion, &error_local);
 		if (!ret) {
-			g_set_error (error, ZIF_REPO_MD_ERROR, ZIF_REPO_MD_ERROR_FAILED_TO_LOAD,
+			g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED_TO_LOAD,
 				     "failed to get load comps: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
@@ -644,13 +627,13 @@ zif_repo_md_comps_get_groups_for_category (ZifRepoMdComps *md, const gchar *cate
 			for (j=0; j<data->grouplist->len; j++) {
 				id = g_ptr_array_index (data->grouplist, j);
 				/* find group matching group_id */
-				category = zif_repo_md_comps_get_category_for_group (md, id);
+				category = zif_md_comps_get_category_for_group (md, id);
 				if (category == NULL)
 					continue;
 
 				/* add */
 				pk_category_set_parent_id (category, category_id);
-				zif_repo_md_comps_category_set_icon (category);
+				zif_md_comps_category_set_icon (category);
 				g_ptr_array_add (array, category);
 			}
 			break;
@@ -659,7 +642,7 @@ zif_repo_md_comps_get_groups_for_category (ZifRepoMdComps *md, const gchar *cate
 
 	/* nothing found */
 	if (array == NULL) {
-		g_set_error (error, ZIF_REPO_MD_ERROR, ZIF_REPO_MD_ERROR_FAILED,
+		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED,
 			     "could not find category: %s", category_id);
 	}
 out:
@@ -667,8 +650,8 @@ out:
 }
 
 /**
- * zif_repo_md_comps_get_packages_for_group:
- * @md: the #ZifRepoMdComps object
+ * zif_md_comps_get_packages_for_group:
+ * @md: the #ZifMdComps object
  * @group_id: the group to search for
  * @cancellable: the %GCancellable, or %NULL
  * @completion: the %ZifCompletion object
@@ -681,8 +664,8 @@ out:
  * Since: 0.0.1
  **/
 GPtrArray *
-zif_repo_md_comps_get_packages_for_group (ZifRepoMdComps *md, const gchar *group_id,
-					  GCancellable *cancellable, ZifCompletion *completion, GError **error)
+zif_md_comps_get_packages_for_group (ZifMdComps *md, const gchar *group_id,
+				     GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	GPtrArray *array = NULL;
 	guint i;
@@ -690,18 +673,18 @@ zif_repo_md_comps_get_packages_for_group (ZifRepoMdComps *md, const gchar *group
 	guint len;
 	gboolean ret;
 	GError *error_local = NULL;
-	const ZifRepoMdCompsGroupData *data;
+	const ZifMdCompsGroupData *data;
 	const gchar *packagename;
 
-	g_return_val_if_fail (ZIF_IS_REPO_MD_COMPS (md), NULL);
+	g_return_val_if_fail (ZIF_IS_MD_COMPS (md), NULL);
 	g_return_val_if_fail (group_id != NULL, NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* if not already loaded, load */
 	if (!md->priv->loaded) {
-		ret = zif_repo_md_load (ZIF_REPO_MD (md), cancellable, completion, &error_local);
+		ret = zif_md_load (ZIF_MD (md), cancellable, completion, &error_local);
 		if (!ret) {
-			g_set_error (error, ZIF_REPO_MD_ERROR, ZIF_REPO_MD_ERROR_FAILED_TO_LOAD,
+			g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED_TO_LOAD,
 				     "failed to get load comps: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
@@ -726,7 +709,7 @@ zif_repo_md_comps_get_packages_for_group (ZifRepoMdComps *md, const gchar *group
 
 	/* nothing found */
 	if (array == NULL) {
-		g_set_error (error, ZIF_REPO_MD_ERROR, ZIF_REPO_MD_ERROR_FAILED,
+		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED,
 			     "could not find group: %s", group_id);
 	}
 out:
@@ -734,70 +717,70 @@ out:
 }
 
 /**
- * zif_repo_md_comps_finalize:
+ * zif_md_comps_finalize:
  **/
 static void
-zif_repo_md_comps_finalize (GObject *object)
+zif_md_comps_finalize (GObject *object)
 {
-	ZifRepoMdComps *md;
+	ZifMdComps *md;
 
 	g_return_if_fail (object != NULL);
-	g_return_if_fail (ZIF_IS_REPO_MD_COMPS (object));
-	md = ZIF_REPO_MD_COMPS (object);
+	g_return_if_fail (ZIF_IS_MD_COMPS (object));
+	md = ZIF_MD_COMPS (object);
 
 	g_ptr_array_unref (md->priv->array_groups);
 	g_ptr_array_unref (md->priv->array_categories);
 
-	G_OBJECT_CLASS (zif_repo_md_comps_parent_class)->finalize (object);
+	G_OBJECT_CLASS (zif_md_comps_parent_class)->finalize (object);
 }
 
 /**
- * zif_repo_md_comps_class_init:
+ * zif_md_comps_class_init:
  **/
 static void
-zif_repo_md_comps_class_init (ZifRepoMdCompsClass *klass)
+zif_md_comps_class_init (ZifMdCompsClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
-	ZifRepoMdClass *repo_md_class = ZIF_REPO_MD_CLASS (klass);
-	object_class->finalize = zif_repo_md_comps_finalize;
+	ZifMdClass *md_class = ZIF_MD_CLASS (klass);
+	object_class->finalize = zif_md_comps_finalize;
 
 	/* map */
-	repo_md_class->load = zif_repo_md_comps_load;
-	repo_md_class->unload = zif_repo_md_comps_unload;
-	g_type_class_add_private (klass, sizeof (ZifRepoMdCompsPrivate));
+	md_class->load = zif_md_comps_load;
+	md_class->unload = zif_md_comps_unload;
+	g_type_class_add_private (klass, sizeof (ZifMdCompsPrivate));
 }
 
 /**
- * zif_repo_md_comps_init:
+ * zif_md_comps_init:
  **/
 static void
-zif_repo_md_comps_init (ZifRepoMdComps *md)
+zif_md_comps_init (ZifMdComps *md)
 {
-	md->priv = ZIF_REPO_MD_COMPS_GET_PRIVATE (md);
+	md->priv = ZIF_MD_COMPS_GET_PRIVATE (md);
 	md->priv->loaded = FALSE;
-	md->priv->section = ZIF_REPO_MD_COMPS_SECTION_UNKNOWN;
-	md->priv->section_group = ZIF_REPO_MD_COMPS_SECTION_GROUP_UNKNOWN;
-	md->priv->section_group_type = ZIF_REPO_MD_COMPS_SECTION_GROUP_TYPE_UNKNOWN;
-	md->priv->section_category = ZIF_REPO_MD_COMPS_SECTION_CATEGORY_UNKNOWN;
+	md->priv->section = ZIF_MD_COMPS_SECTION_UNKNOWN;
+	md->priv->section_group = ZIF_MD_COMPS_SECTION_GROUP_UNKNOWN;
+	md->priv->section_group_type = ZIF_MD_COMPS_SECTION_GROUP_TYPE_UNKNOWN;
+	md->priv->section_category = ZIF_MD_COMPS_SECTION_CATEGORY_UNKNOWN;
 	md->priv->group_data_temp = NULL;
 	md->priv->category_data_temp = NULL;
-	md->priv->array_groups = g_ptr_array_new_with_free_func ((GDestroyNotify) zif_repo_md_comps_group_data_free);
-	md->priv->array_categories = g_ptr_array_new_with_free_func ((GDestroyNotify) zif_repo_md_comps_category_data_free);
+	md->priv->array_groups = g_ptr_array_new_with_free_func ((GDestroyNotify) zif_md_comps_group_data_free);
+	md->priv->array_categories = g_ptr_array_new_with_free_func ((GDestroyNotify) zif_md_comps_category_data_free);
 }
 
 /**
- * zif_repo_md_comps_new:
+ * zif_md_comps_new:
  *
- * Return value: A new #ZifRepoMdComps class instance.
+ * Return value: A new #ZifMdComps class instance.
  *
  * Since: 0.0.1
  **/
-ZifRepoMdComps *
-zif_repo_md_comps_new (void)
+ZifMdComps *
+zif_md_comps_new (void)
 {
-	ZifRepoMdComps *md;
-	md = g_object_new (ZIF_TYPE_REPO_MD_COMPS, NULL);
-	return ZIF_REPO_MD_COMPS (md);
+	ZifMdComps *md;
+	md = g_object_new (ZIF_TYPE_MD_COMPS, NULL);
+	return ZIF_MD_COMPS (md);
 }
 
 /***************************************************************************
@@ -807,9 +790,9 @@ zif_repo_md_comps_new (void)
 #include "egg-test.h"
 
 void
-zif_repo_md_comps_test (EggTest *test)
+zif_md_comps_test (EggTest *test)
 {
-	ZifRepoMdComps *md;
+	ZifMdComps *md;
 	gboolean ret;
 	GError *error = NULL;
 	GPtrArray *array;
@@ -818,7 +801,7 @@ zif_repo_md_comps_test (EggTest *test)
 	ZifCompletion *completion;
 	PkCategory *category;
 
-	if (!egg_test_start (test, "ZifRepoMdComps"))
+	if (!egg_test_start (test, "ZifMdComps"))
 		return;
 
 	/* use */
@@ -826,8 +809,8 @@ zif_repo_md_comps_test (EggTest *test)
 	completion = zif_completion_new ();
 
 	/************************************************************/
-	egg_test_title (test, "get repo_md_comps md");
-	md = zif_repo_md_comps_new ();
+	egg_test_title (test, "get md_comps md");
+	md = zif_md_comps_new ();
 	egg_test_assert (test, md != NULL);
 
 	/************************************************************/
@@ -836,7 +819,7 @@ zif_repo_md_comps_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "set id");
-	ret = zif_repo_md_set_id (ZIF_REPO_MD (md), "fedora");
+	ret = zif_md_set_id (ZIF_MD (md), "fedora");
 	if (ret)
 		egg_test_success (test, NULL);
 	else
@@ -844,7 +827,7 @@ zif_repo_md_comps_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "set type");
-	ret = zif_repo_md_set_mdtype (ZIF_REPO_MD (md), ZIF_REPO_MD_TYPE_COMPS_XML);
+	ret = zif_md_set_mdtype (ZIF_MD (md), ZIF_MD_TYPE_COMPS_XML);
 	if (ret)
 		egg_test_success (test, NULL);
 	else
@@ -852,7 +835,7 @@ zif_repo_md_comps_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "set filename");
-	ret = zif_repo_md_set_filename (ZIF_REPO_MD (md), "../test/cache/comps-rawhide.xml");
+	ret = zif_md_set_filename (ZIF_MD (md), "../test/cache/comps-rawhide.xml");
 	if (ret)
 		egg_test_success (test, NULL);
 	else
@@ -860,7 +843,7 @@ zif_repo_md_comps_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "set checksum type");
-	ret = zif_repo_md_set_checksum_type (ZIF_REPO_MD (md), G_CHECKSUM_SHA256);
+	ret = zif_md_set_checksum_type (ZIF_MD (md), G_CHECKSUM_SHA256);
 	if (ret)
 		egg_test_success (test, NULL);
 	else
@@ -868,7 +851,7 @@ zif_repo_md_comps_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "set checksum uncompressed");
-	ret = zif_repo_md_set_checksum_uncompressed (ZIF_REPO_MD (md), "14f17b894303b4dc9683511104848f75d98cea8f76c107bf25e1b4db5741f6a8");
+	ret = zif_md_set_checksum_uncompressed (ZIF_MD (md), "14f17b894303b4dc9683511104848f75d98cea8f76c107bf25e1b4db5741f6a8");
 	if (ret)
 		egg_test_success (test, NULL);
 	else
@@ -876,7 +859,7 @@ zif_repo_md_comps_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "get categories");
-	array = zif_repo_md_comps_get_categories (md, cancellable, completion, &error);
+	array = zif_md_comps_get_categories (md, cancellable, completion, &error);
 	if (array != NULL)
 		egg_test_success (test, NULL);
 	else
@@ -921,7 +904,7 @@ zif_repo_md_comps_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "get groups for category");
-	array = zif_repo_md_comps_get_groups_for_category (md, "apps", cancellable, completion, &error);
+	array = zif_md_comps_get_groups_for_category (md, "apps", cancellable, completion, &error);
 	if (array != NULL)
 		egg_test_success (test, NULL);
 	else
@@ -945,7 +928,7 @@ zif_repo_md_comps_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "get packages for group");
-	array = zif_repo_md_comps_get_packages_for_group (md, "admin-tools", cancellable, completion, &error);
+	array = zif_md_comps_get_packages_for_group (md, "admin-tools", cancellable, completion, &error);
 	if (array != NULL)
 		egg_test_success (test, NULL);
 	else

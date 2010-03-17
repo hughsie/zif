@@ -86,7 +86,7 @@ What doesn't work:
 • Multiarch
 • Updateinfo support
 • YumDB of storing where packages come from
-• Old style yum metadata (ZifRepoMdFilelistsXml and ZifRepoMdPrimaryXml)
+• Old style yum metadata (ZifMdFilelistsXml and ZifMdPrimaryXml)
 • Other sqlite data (required for the mime/fonts/mime auto-installing feature)
 
 And there's a zif PackageKit backend which does all the read-only operations

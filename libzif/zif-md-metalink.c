@@ -20,11 +20,11 @@
  */
 
 /**
- * SECTION:zif-repo-md-metalink
+ * SECTION:zif-md-metalink
  * @short_description: Metalink metadata functionality
  *
  * Provide access to the metalink repo metadata.
- * This object is a subclass of #ZifRepoMd
+ * This object is a subclass of #ZifMd
  */
 
 #ifdef HAVE_CONFIG_H
@@ -35,94 +35,94 @@
 #include <glib.h>
 #include <string.h>
 
-#include "zif-repo-md.h"
-#include "zif-repo-md-metalink.h"
+#include "zif-md.h"
+#include "zif-md-metalink.h"
 #include "zif-config.h"
 
 #include "egg-debug.h"
 #include "egg-string.h"
 
-#define ZIF_REPO_MD_METALINK_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_REPO_MD_METALINK, ZifRepoMdMetalinkPrivate))
+#define ZIF_MD_METALINK_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_MD_METALINK, ZifMdMetalinkPrivate))
 
 typedef enum {
-	ZIF_REPO_MD_METALINK_PARSER_SECTION_URL,
-	ZIF_REPO_MD_METALINK_PARSER_SECTION_UNKNOWN
-} ZifRepoMdMetalinkParserSection;
+	ZIF_MD_METALINK_PARSER_SECTION_URL,
+	ZIF_MD_METALINK_PARSER_SECTION_UNKNOWN
+} ZifMdMetalinkParserSection;
 
 typedef enum {
-	ZIF_REPO_MD_METALINK_PROTOCOL_TYPE_FTP,
-	ZIF_REPO_MD_METALINK_PROTOCOL_TYPE_HTTP,
-	ZIF_REPO_MD_METALINK_PROTOCOL_TYPE_RSYNC,
-	ZIF_REPO_MD_METALINK_PROTOCOL_TYPE_UNKNOWN
-} ZifRepoMdMetalinkProtocolType;
+	ZIF_MD_METALINK_PROTOCOL_TYPE_FTP,
+	ZIF_MD_METALINK_PROTOCOL_TYPE_HTTP,
+	ZIF_MD_METALINK_PROTOCOL_TYPE_RSYNC,
+	ZIF_MD_METALINK_PROTOCOL_TYPE_UNKNOWN
+} ZifMdMetalinkProtocolType;
 
 typedef struct {
-	ZifRepoMdMetalinkProtocolType	 protocol;
+	ZifMdMetalinkProtocolType	 protocol;
 	gchar				*uri;
 	guint				 preference;
-} ZifRepoMdMetalinkData;
+} ZifMdMetalinkData;
 
 /**
- * ZifRepoMdMetalinkPrivate:
+ * ZifMdMetalinkPrivate:
  *
- * Private #ZifRepoMdMetalink data
+ * Private #ZifMdMetalink data
  **/
-struct _ZifRepoMdMetalinkPrivate
+struct _ZifMdMetalinkPrivate
 {
 	gboolean			 loaded;
 	GPtrArray			*array;
 	ZifConfig			*config;
 	/* for parser */
-	ZifRepoMdMetalinkParserSection	 section;
-	ZifRepoMdMetalinkData		*temp;
+	ZifMdMetalinkParserSection	 section;
+	ZifMdMetalinkData		*temp;
 };
 
-G_DEFINE_TYPE (ZifRepoMdMetalink, zif_repo_md_metalink, ZIF_TYPE_REPO_MD)
+G_DEFINE_TYPE (ZifMdMetalink, zif_md_metalink, ZIF_TYPE_MD)
 
 /**
- * zif_repo_md_metalink_protocol_type_from_text:
+ * zif_md_metalink_protocol_type_from_text:
  **/
-static ZifRepoMdMetalinkProtocolType
-zif_repo_md_metalink_protocol_type_from_text (const gchar *type_text)
+static ZifMdMetalinkProtocolType
+zif_md_metalink_protocol_type_from_text (const gchar *type_text)
 {
 	if (g_strcmp0 (type_text, "ftp") == 0)
-		return ZIF_REPO_MD_METALINK_PROTOCOL_TYPE_FTP;
+		return ZIF_MD_METALINK_PROTOCOL_TYPE_FTP;
 	if (g_strcmp0 (type_text, "http") == 0)
-		return ZIF_REPO_MD_METALINK_PROTOCOL_TYPE_HTTP;
+		return ZIF_MD_METALINK_PROTOCOL_TYPE_HTTP;
 	if (g_strcmp0 (type_text, "rsync") == 0)
-		return ZIF_REPO_MD_METALINK_PROTOCOL_TYPE_RSYNC;
-	return ZIF_REPO_MD_METALINK_PROTOCOL_TYPE_UNKNOWN;
+		return ZIF_MD_METALINK_PROTOCOL_TYPE_RSYNC;
+	return ZIF_MD_METALINK_PROTOCOL_TYPE_UNKNOWN;
 }
 
 /**
- * zif_repo_md_metalink_parser_start_element:
+ * zif_md_metalink_parser_start_element:
  **/
 static void
-zif_repo_md_metalink_parser_start_element (GMarkupParseContext *context, const gchar *element_name,
-					   const gchar **attribute_names, const gchar **attribute_values,
-					   gpointer user_data, GError **error)
+zif_md_metalink_parser_start_element (GMarkupParseContext *context, const gchar *element_name,
+				      const gchar **attribute_names, const gchar **attribute_values,
+				      gpointer user_data, GError **error)
 {
 	guint i;
-	ZifRepoMdMetalink *metalink = user_data;
+	ZifMdMetalink *metalink = user_data;
 
-	g_return_if_fail (ZIF_IS_REPO_MD_METALINK (metalink));
+	g_return_if_fail (ZIF_IS_MD_METALINK (metalink));
 	g_return_if_fail (metalink->priv->temp == NULL);
 
 	/* just ignore non url entries */
 	if (g_strcmp0 (element_name, "url") != 0) {
 		metalink->priv->temp = NULL;
-		metalink->priv->section = ZIF_REPO_MD_METALINK_PARSER_SECTION_UNKNOWN;
+		metalink->priv->section = ZIF_MD_METALINK_PARSER_SECTION_UNKNOWN;
 		goto out;
 	}
 
 	/* create new element */
-	metalink->priv->section = ZIF_REPO_MD_METALINK_PARSER_SECTION_URL;
-	metalink->priv->temp = g_new0 (ZifRepoMdMetalinkData, 1);
+	metalink->priv->section = ZIF_MD_METALINK_PARSER_SECTION_URL;
+	metalink->priv->temp = g_new0 (ZifMdMetalinkData, 1);
 
 	/* read keys */
 	for (i=0; attribute_names[i] != NULL; i++) {
 		if (g_strcmp0 (attribute_names[i], "protocol") == 0)
-			metalink->priv->temp->protocol = zif_repo_md_metalink_protocol_type_from_text (attribute_values[i]);
+			metalink->priv->temp->protocol = zif_md_metalink_protocol_type_from_text (attribute_values[i]);
 		if (g_strcmp0 (attribute_names[i], "preference") == 0)
 			metalink->priv->temp->preference = atoi (attribute_values[i]);
 	}
@@ -134,30 +134,30 @@ out:
 }
 
 /**
- * zif_repo_md_metalink_parser_end_element:
+ * zif_md_metalink_parser_end_element:
  **/
 static void
-zif_repo_md_metalink_parser_end_element (GMarkupParseContext *context, const gchar *element_name,
-					 gpointer user_data, GError **error)
+zif_md_metalink_parser_end_element (GMarkupParseContext *context, const gchar *element_name,
+				    gpointer user_data, GError **error)
 {
-	ZifRepoMdMetalink *metalink = user_data;
+	ZifMdMetalink *metalink = user_data;
 	metalink->priv->temp = NULL;
-	metalink->priv->section = ZIF_REPO_MD_METALINK_PARSER_SECTION_UNKNOWN;
+	metalink->priv->section = ZIF_MD_METALINK_PARSER_SECTION_UNKNOWN;
 }
 
 /**
- * zif_repo_md_metalink_parser_text:
+ * zif_md_metalink_parser_text:
  **/
 static void
-zif_repo_md_metalink_parser_text (GMarkupParseContext *context, const gchar *text, gsize text_len,
-				  gpointer user_data, GError **error)
+zif_md_metalink_parser_text (GMarkupParseContext *context, const gchar *text, gsize text_len,
+			     gpointer user_data, GError **error)
 
 {
-	ZifRepoMdMetalink *metalink = user_data;
+	ZifMdMetalink *metalink = user_data;
 	gchar *uri = NULL;
 	guint len;
 
-	if (metalink->priv->section != ZIF_REPO_MD_METALINK_PARSER_SECTION_URL)
+	if (metalink->priv->section != ZIF_MD_METALINK_PARSER_SECTION_URL)
 		goto out;
 
 	/* shouldn't happen */
@@ -189,45 +189,45 @@ out:
 }
 
 /**
- * zif_repo_md_metalink_unload:
+ * zif_md_metalink_unload:
  **/
 static gboolean
-zif_repo_md_metalink_unload (ZifRepoMd *md, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+zif_md_metalink_unload (ZifMd *md, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	gboolean ret = FALSE;
 	return ret;
 }
 
 /**
- * zif_repo_md_metalink_load:
+ * zif_md_metalink_load:
  **/
 static gboolean
-zif_repo_md_metalink_load (ZifRepoMd *md, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+zif_md_metalink_load (ZifMd *md, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	gboolean ret = TRUE;
 	gchar *contents = NULL;
 	const gchar *filename;
 	gsize size;
 	GMarkupParseContext *context = NULL;
-	const GMarkupParser gpk_repo_md_metalink_markup_parser = {
-		zif_repo_md_metalink_parser_start_element,
-		zif_repo_md_metalink_parser_end_element,
-		zif_repo_md_metalink_parser_text,
+	const GMarkupParser gpk_md_metalink_markup_parser = {
+		zif_md_metalink_parser_start_element,
+		zif_md_metalink_parser_end_element,
+		zif_md_metalink_parser_text,
 		NULL, /* passthrough */
 		NULL /* error */
 	};
-	ZifRepoMdMetalink *metalink = ZIF_REPO_MD_METALINK (md);
+	ZifMdMetalink *metalink = ZIF_MD_METALINK (md);
 
-	g_return_val_if_fail (ZIF_IS_REPO_MD_METALINK (md), FALSE);
+	g_return_val_if_fail (ZIF_IS_MD_METALINK (md), FALSE);
 
 	/* already loaded */
 	if (metalink->priv->loaded)
 		goto out;
 
 	/* get filename */
-	filename = zif_repo_md_get_filename_uncompressed (md);
+	filename = zif_md_get_filename_uncompressed (md);
 	if (filename == NULL) {
-		g_set_error_literal (error, ZIF_REPO_MD_ERROR, ZIF_REPO_MD_ERROR_FAILED,
+		g_set_error_literal (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED,
 				     "failed to get filename for metalink");
 		goto out;
 	}
@@ -241,7 +241,7 @@ zif_repo_md_metalink_load (ZifRepoMd *md, GCancellable *cancellable, ZifCompleti
 		goto out;
 
 	/* create parser */
-	context = g_markup_parse_context_new (&gpk_repo_md_metalink_markup_parser, G_MARKUP_PREFIX_ERROR_POSITION, metalink, NULL);
+	context = g_markup_parse_context_new (&gpk_md_metalink_markup_parser, G_MARKUP_PREFIX_ERROR_POSITION, metalink, NULL);
 
 	/* parse data */
 	ret = g_markup_parse_context_parse (context, contents, (gssize) size, error);
@@ -257,8 +257,8 @@ out:
 }
 
 /**
- * zif_repo_md_metalink_get_uris:
- * @md: the #ZifRepoMdMetalink object
+ * zif_md_metalink_get_uris:
+ * @md: the #ZifMdMetalink object
  * @threshold: the threshold in percent
  * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @completion: a #ZifCompletion to use for progress reporting
@@ -271,25 +271,26 @@ out:
  * Since: 0.0.1
  **/
 GPtrArray *
-zif_repo_md_metalink_get_uris (ZifRepoMdMetalink *md, guint threshold, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+zif_md_metalink_get_uris (ZifMdMetalink *md, guint threshold,
+			  GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	gboolean ret;
 	guint len;
 	gchar *uri;
 	GPtrArray *array = NULL;
 	GError *error_local = NULL;
-	ZifRepoMdMetalinkData *data;
+	ZifMdMetalinkData *data;
 	guint i;
-	ZifRepoMdMetalink *metalink = ZIF_REPO_MD_METALINK (md);
+	ZifMdMetalink *metalink = ZIF_MD_METALINK (md);
 
-	g_return_val_if_fail (ZIF_IS_REPO_MD_METALINK (md), NULL);
+	g_return_val_if_fail (ZIF_IS_MD_METALINK (md), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* if not already loaded, load */
 	if (!metalink->priv->loaded) {
-		ret = zif_repo_md_load (ZIF_REPO_MD (md), cancellable, completion, &error_local);
+		ret = zif_md_load (ZIF_MD (md), cancellable, completion, &error_local);
 		if (!ret) {
-			g_set_error (error, ZIF_REPO_MD_ERROR, ZIF_REPO_MD_ERROR_FAILED_TO_LOAD,
+			g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED_TO_LOAD,
 				     "failed to get mirrors from metalink: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
@@ -303,14 +304,14 @@ zif_repo_md_metalink_get_uris (ZifRepoMdMetalink *md, guint threshold, GCancella
 		data = g_ptr_array_index (metalink->priv->array, i);
 
 		/* ignore not http mirrors */
-		if (data->protocol != ZIF_REPO_MD_METALINK_PROTOCOL_TYPE_HTTP)
+		if (data->protocol != ZIF_MD_METALINK_PROTOCOL_TYPE_HTTP)
 			continue;
 
 		/* ignore low priority */
 		if (data->preference >= threshold) {
 			uri = zif_config_expand_substitutions (md->priv->config, data->uri, &error_local);
 			if (uri == NULL) {
-				g_set_error (error, ZIF_REPO_MD_ERROR, ZIF_REPO_MD_ERROR_FAILED,
+				g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED,
 					     "failed to expand substitutions: %s", error_local->message);
 				g_error_free (error_local);
 				/* rip apart what we've done already */
@@ -326,74 +327,74 @@ out:
 }
 
 /**
- * zif_repo_md_metalink_free_data:
+ * zif_md_metalink_free_data:
  **/
 static void
-zif_repo_md_metalink_free_data (ZifRepoMdMetalinkData *data)
+zif_md_metalink_free_data (ZifMdMetalinkData *data)
 {
 	g_free (data->uri);
 	g_free (data);
 }
 
 /**
- * zif_repo_md_metalink_finalize:
+ * zif_md_metalink_finalize:
  **/
 static void
-zif_repo_md_metalink_finalize (GObject *object)
+zif_md_metalink_finalize (GObject *object)
 {
-	ZifRepoMdMetalink *md;
+	ZifMdMetalink *md;
 
 	g_return_if_fail (object != NULL);
-	g_return_if_fail (ZIF_IS_REPO_MD_METALINK (object));
-	md = ZIF_REPO_MD_METALINK (object);
+	g_return_if_fail (ZIF_IS_MD_METALINK (object));
+	md = ZIF_MD_METALINK (object);
 
 	g_ptr_array_unref (md->priv->array);
 	g_object_unref (md->priv->config);
 
-	G_OBJECT_CLASS (zif_repo_md_metalink_parent_class)->finalize (object);
+	G_OBJECT_CLASS (zif_md_metalink_parent_class)->finalize (object);
 }
 
 /**
- * zif_repo_md_metalink_class_init:
+ * zif_md_metalink_class_init:
  **/
 static void
-zif_repo_md_metalink_class_init (ZifRepoMdMetalinkClass *klass)
+zif_md_metalink_class_init (ZifMdMetalinkClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
-	ZifRepoMdClass *repo_md_class = ZIF_REPO_MD_CLASS (klass);
-	object_class->finalize = zif_repo_md_metalink_finalize;
+	ZifMdClass *md_class = ZIF_MD_CLASS (klass);
+	object_class->finalize = zif_md_metalink_finalize;
 
 	/* map */
-	repo_md_class->load = zif_repo_md_metalink_load;
-	repo_md_class->unload = zif_repo_md_metalink_unload;
-	g_type_class_add_private (klass, sizeof (ZifRepoMdMetalinkPrivate));
+	md_class->load = zif_md_metalink_load;
+	md_class->unload = zif_md_metalink_unload;
+	g_type_class_add_private (klass, sizeof (ZifMdMetalinkPrivate));
 }
 
 /**
- * zif_repo_md_metalink_init:
+ * zif_md_metalink_init:
  **/
 static void
-zif_repo_md_metalink_init (ZifRepoMdMetalink *md)
+zif_md_metalink_init (ZifMdMetalink *md)
 {
-	md->priv = ZIF_REPO_MD_METALINK_GET_PRIVATE (md);
+	md->priv = ZIF_MD_METALINK_GET_PRIVATE (md);
 	md->priv->loaded = FALSE;
 	md->priv->config = zif_config_new ();
-	md->priv->array = g_ptr_array_new_with_free_func ((GDestroyNotify) zif_repo_md_metalink_free_data);
+	md->priv->array = g_ptr_array_new_with_free_func ((GDestroyNotify) zif_md_metalink_free_data);
 }
 
 /**
- * zif_repo_md_metalink_new:
+ * zif_md_metalink_new:
  *
- * Return value: A new #ZifRepoMdMetalink class instance.
+ * Return value: A new #ZifMdMetalink class instance.
  *
  * Since: 0.0.1
  **/
-ZifRepoMdMetalink *
-zif_repo_md_metalink_new (void)
+ZifMdMetalink *
+zif_md_metalink_new (void)
 {
-	ZifRepoMdMetalink *md;
-	md = g_object_new (ZIF_TYPE_REPO_MD_METALINK, NULL);
-	return ZIF_REPO_MD_METALINK (md);
+	ZifMdMetalink *md;
+	md = g_object_new (ZIF_TYPE_MD_METALINK, NULL);
+	return ZIF_MD_METALINK (md);
 }
 
 /***************************************************************************
@@ -403,9 +404,9 @@ zif_repo_md_metalink_new (void)
 #include "egg-test.h"
 
 void
-zif_repo_md_metalink_test (EggTest *test)
+zif_md_metalink_test (EggTest *test)
 {
-	ZifRepoMdMetalink *md;
+	ZifMdMetalink *md;
 	gboolean ret;
 	GError *error = NULL;
 	GPtrArray *array;
@@ -414,7 +415,7 @@ zif_repo_md_metalink_test (EggTest *test)
 	ZifCompletion *completion;
 	ZifConfig *config;
 
-	if (!egg_test_start (test, "ZifRepoMdMetalink"))
+	if (!egg_test_start (test, "ZifMdMetalink"))
 		return;
 
 	/* use */
@@ -424,8 +425,8 @@ zif_repo_md_metalink_test (EggTest *test)
 	zif_config_set_filename (config, "../test/etc/yum.conf", NULL);
 
 	/************************************************************/
-	egg_test_title (test, "get repo_md_metalink md");
-	md = zif_repo_md_metalink_new ();
+	egg_test_title (test, "get md_metalink md");
+	md = zif_md_metalink_new ();
 	egg_test_assert (test, md != NULL);
 
 	/************************************************************/
@@ -434,7 +435,7 @@ zif_repo_md_metalink_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "set id");
-	ret = zif_repo_md_set_id (ZIF_REPO_MD (md), "fedora");
+	ret = zif_md_set_id (ZIF_MD (md), "fedora");
 	if (ret)
 		egg_test_success (test, NULL);
 	else
@@ -442,7 +443,7 @@ zif_repo_md_metalink_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "set type");
-	ret = zif_repo_md_set_mdtype (ZIF_REPO_MD (md), ZIF_REPO_MD_TYPE_METALINK);
+	ret = zif_md_set_mdtype (ZIF_MD (md), ZIF_MD_TYPE_METALINK);
 	if (ret)
 		egg_test_success (test, NULL);
 	else
@@ -450,7 +451,7 @@ zif_repo_md_metalink_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "set filename");
-	ret = zif_repo_md_set_filename (ZIF_REPO_MD (md), "../test/cache/fedora/metalink.xml");
+	ret = zif_md_set_filename (ZIF_MD (md), "../test/cache/fedora/metalink.xml");
 	if (ret)
 		egg_test_success (test, NULL);
 	else
@@ -458,7 +459,7 @@ zif_repo_md_metalink_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "load");
-	ret = zif_repo_md_load (ZIF_REPO_MD (md), cancellable, completion, &error);
+	ret = zif_md_load (ZIF_MD (md), cancellable, completion, &error);
 	if (ret)
 		egg_test_success (test, NULL);
 	else
@@ -470,7 +471,7 @@ zif_repo_md_metalink_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "get uris");
-	array = zif_repo_md_metalink_get_uris (md, 50, cancellable, completion, &error);
+	array = zif_md_metalink_get_uris (md, 50, cancellable, completion, &error);
 	if (array != NULL)
 		egg_test_success (test, NULL);
 	else

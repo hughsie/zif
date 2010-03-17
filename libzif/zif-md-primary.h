@@ -23,85 +23,85 @@
 #error "Only <zif.h> can be included directly."
 #endif
 
-#ifndef __ZIF_REPO_MD_PRIMARY_H
-#define __ZIF_REPO_MD_PRIMARY_H
+#ifndef __ZIF_MD_PRIMARY_H
+#define __ZIF_MD_PRIMARY_H
 
 #include <glib-object.h>
 #include <packagekit-glib2/packagekit.h>
 
-#include "zif-repo-md.h"
+#include "zif-md.h"
 
 G_BEGIN_DECLS
 
-#define ZIF_TYPE_REPO_MD_PRIMARY		(zif_repo_md_primary_get_type ())
-#define ZIF_REPO_MD_PRIMARY(o)			(G_TYPE_CHECK_INSTANCE_CAST ((o), ZIF_TYPE_REPO_MD_PRIMARY, ZifRepoMdPrimary))
-#define ZIF_REPO_MD_PRIMARY_CLASS(k)		(G_TYPE_CHECK_CLASS_CAST((k), ZIF_TYPE_REPO_MD_PRIMARY, ZifRepoMdPrimaryClass))
-#define ZIF_IS_REPO_MD_PRIMARY(o)		(G_TYPE_CHECK_INSTANCE_TYPE ((o), ZIF_TYPE_REPO_MD_PRIMARY))
-#define ZIF_IS_REPO_MD_PRIMARY_CLASS(k)		(G_TYPE_CHECK_CLASS_TYPE ((k), ZIF_TYPE_REPO_MD_PRIMARY))
-#define ZIF_REPO_MD_PRIMARY_GET_CLASS(o)	(G_TYPE_INSTANCE_GET_CLASS ((o), ZIF_TYPE_REPO_MD_PRIMARY, ZifRepoMdPrimaryClass))
+#define ZIF_TYPE_MD_PRIMARY		(zif_md_primary_get_type ())
+#define ZIF_MD_PRIMARY(o)		(G_TYPE_CHECK_INSTANCE_CAST ((o), ZIF_TYPE_MD_PRIMARY, ZifMdPrimary))
+#define ZIF_MD_PRIMARY_CLASS(k)		(G_TYPE_CHECK_CLASS_CAST((k), ZIF_TYPE_MD_PRIMARY, ZifMdPrimaryClass))
+#define ZIF_IS_MD_PRIMARY(o)		(G_TYPE_CHECK_INSTANCE_TYPE ((o), ZIF_TYPE_MD_PRIMARY))
+#define ZIF_IS_MD_PRIMARY_CLASS(k)	(G_TYPE_CHECK_CLASS_TYPE ((k), ZIF_TYPE_MD_PRIMARY))
+#define ZIF_MD_PRIMARY_GET_CLASS(o)	(G_TYPE_INSTANCE_GET_CLASS ((o), ZIF_TYPE_MD_PRIMARY, ZifMdPrimaryClass))
 
-typedef struct _ZifRepoMdPrimary		ZifRepoMdPrimary;
-typedef struct _ZifRepoMdPrimaryPrivate		ZifRepoMdPrimaryPrivate;
-typedef struct _ZifRepoMdPrimaryClass		ZifRepoMdPrimaryClass;
+typedef struct _ZifMdPrimary		ZifMdPrimary;
+typedef struct _ZifMdPrimaryPrivate	ZifMdPrimaryPrivate;
+typedef struct _ZifMdPrimaryClass	ZifMdPrimaryClass;
 
-struct _ZifRepoMdPrimary
+struct _ZifMdPrimary
 {
-	ZifRepoMd			 parent;
-	ZifRepoMdPrimaryPrivate		*priv;
+	ZifMd				 parent;
+	ZifMdPrimaryPrivate		*priv;
 };
 
-struct _ZifRepoMdPrimaryClass
+struct _ZifMdPrimaryClass
 {
-	ZifRepoMdClass			 parent_class;
+	ZifMdClass			 parent_class;
 };
 
-GType		 zif_repo_md_primary_get_type		(void);
-ZifRepoMdPrimary *zif_repo_md_primary_new		(void);
-GPtrArray	*zif_repo_md_primary_search_file	(ZifRepoMdPrimary	*md,
+GType		 zif_md_primary_get_type		(void);
+ZifMdPrimary	*zif_md_primary_new			(void);
+GPtrArray	*zif_md_primary_search_file		(ZifMdPrimary		*md,
 							 const gchar		*search,
 							 GCancellable		*cancellable,
 							 ZifCompletion		*completion,
 							 GError			**error);
-GPtrArray	*zif_repo_md_primary_search_name	(ZifRepoMdPrimary	*md,
+GPtrArray	*zif_md_primary_search_name		(ZifMdPrimary		*md,
 							 const gchar		*search,
 							 GCancellable		*cancellable,
 							 ZifCompletion		*completion,
 							 GError			**error);
-GPtrArray	*zif_repo_md_primary_search_details	(ZifRepoMdPrimary	*md,
+GPtrArray	*zif_md_primary_search_details		(ZifMdPrimary		*md,
 							 const gchar		*search,
 							 GCancellable		*cancellable,
 							 ZifCompletion		*completion,
 							 GError			**error);
-GPtrArray	*zif_repo_md_primary_search_group	(ZifRepoMdPrimary	*md,
+GPtrArray	*zif_md_primary_search_group		(ZifMdPrimary		*md,
 							 const gchar		*search,
 							 GCancellable		*cancellable,
 							 ZifCompletion		*completion,
 							 GError			**error);
-GPtrArray	*zif_repo_md_primary_search_pkgid	(ZifRepoMdPrimary	*md,
+GPtrArray	*zif_md_primary_search_pkgid		(ZifMdPrimary		*md,
 							 const gchar		*search,
 							 GCancellable		*cancellable,
 							 ZifCompletion		*completion,
 							 GError			**error);
-GPtrArray	*zif_repo_md_primary_search_pkgkey	(ZifRepoMdPrimary	*md,
+GPtrArray	*zif_md_primary_search_pkgkey		(ZifMdPrimary		*md,
 							 guint			 pkgkey,
 							 GCancellable		*cancellable,
 							 ZifCompletion		*completion,
 							 GError			**error);
-GPtrArray	*zif_repo_md_primary_what_provides	(ZifRepoMdPrimary	*md,
+GPtrArray	*zif_md_primary_what_provides		(ZifMdPrimary		*md,
 							 const gchar		*search,
 							 GCancellable		*cancellable,
 							 ZifCompletion		*completion,
 							 GError			**error);
-GPtrArray	*zif_repo_md_primary_resolve		(ZifRepoMdPrimary	*md,
+GPtrArray	*zif_md_primary_resolve			(ZifMdPrimary		*md,
 							 const gchar		*search,
 							 GCancellable		*cancellable,
 							 ZifCompletion		*completion,
 							 GError			**error);
-GPtrArray	*zif_repo_md_primary_get_packages	(ZifRepoMdPrimary	*md,
+GPtrArray	*zif_md_primary_get_packages		(ZifMdPrimary		*md,
 							 GCancellable		*cancellable,
 							 ZifCompletion		*completion,
 							 GError			**error);
-GPtrArray	*zif_repo_md_primary_find_package	(ZifRepoMdPrimary	*md,
+GPtrArray	*zif_md_primary_find_package		(ZifMdPrimary		*md,
 							 const gchar		*package_id,
 							 GCancellable		*cancellable,
 							 ZifCompletion		*completion,
@@ -109,5 +109,5 @@ GPtrArray	*zif_repo_md_primary_find_package	(ZifRepoMdPrimary	*md,
 
 G_END_DECLS
 
-#endif /* __ZIF_REPO_MD_PRIMARY_H */
+#endif /* __ZIF_MD_PRIMARY_H */
 
