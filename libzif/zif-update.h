@@ -68,13 +68,13 @@ const gchar		*zif_update_get_id		(ZifUpdate		*update);
 const gchar		*zif_update_get_title		(ZifUpdate		*update);
 const gchar		*zif_update_get_description	(ZifUpdate		*update);
 const gchar		*zif_update_get_issued		(ZifUpdate		*update);
-GPtrArray		*zif_update_get_update_info	(ZifUpdate		*update);
+GPtrArray		*zif_update_get_update_infos	(ZifUpdate		*update);
 GPtrArray		*zif_update_get_packages	(ZifUpdate		*update);
 
 /* internal setters: TODO, in seporate -internal header file */
 void			 zif_update_set_state		(ZifUpdate		*update,
 							 PkUpdateStateEnum	 state);
-void			 zif_update_set_type		(ZifUpdate		*update,
+void			 zif_update_set_kind		(ZifUpdate		*update,
 							 PkInfoEnum		 type);
 void			 zif_update_set_id		(ZifUpdate		*update,
 							 const gchar		*id);

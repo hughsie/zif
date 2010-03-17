@@ -45,7 +45,7 @@ typedef struct _ZifUpdateInfoClass	ZifUpdateInfoClass;
 
 typedef enum {
 	ZIF_UPDATE_INFO_KIND_CVE,
-	ZIF_UPDATE_INFO_KIND_BZ,
+	ZIF_UPDATE_INFO_KIND_BUGZILLA,
 	ZIF_UPDATE_INFO_KIND_LAST
 } ZifUpdateInfoKind;
 
@@ -78,6 +78,7 @@ void			 zif_update_info_set_title	(ZifUpdateInfo		*update_info,
 
 /* utility functions */
 const gchar		*zif_update_info_kind_to_string	(ZifUpdateInfoKind	 type);
+ZifUpdateInfoKind	 zif_update_info_kind_from_string	(const gchar	*type);
 
 G_END_DECLS
 

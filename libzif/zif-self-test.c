@@ -45,6 +45,7 @@ void zif_repos_test (EggTest *test);
 void zif_download_test (EggTest *test);
 void zif_string_test (EggTest *test);
 void zif_lock_test (EggTest *test);
+void zif_update_info_test (EggTest *test);
 
 int
 main (int argc, char **argv)
@@ -58,6 +59,9 @@ main (int argc, char **argv)
 	zif_init ();
 
 	/* tests go here */
+	zif_update_test (test);
+	zif_update_info_test (test);
+	zif_repo_md_updateinfo_test (test);
 	zif_lock_test (test);
 	zif_completion_test (test);
 	zif_config_test (test);

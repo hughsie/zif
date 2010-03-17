@@ -86,6 +86,8 @@ libzif_la_SOURCES =						\
 	zif-repo-md-mirrorlist.h				\
 	zif-repo-md-comps.c					\
 	zif-repo-md-comps.h					\
+	zif-repo-md-updateinfo.c				\
+	zif-repo-md-updateinfo.h				\
 	zif-store-array.c					\
 	zif-store-array.h					\
 	zif-repos.c						\

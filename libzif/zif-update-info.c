@@ -109,7 +109,7 @@ zif_update_info_get_title (ZifUpdateInfo *update_info)
 /**
  * zif_update_info_set_kind:
  * @update_info: the #ZifUpdateInfo object
- * @kind: the kind of update info, e.g. %ZIF_UPDATE_INFO_KIND_BZ
+ * @kind: the kind of update info, e.g. %ZIF_UPDATE_INFO_KIND_BUGZILLA
  *
  * Sets the update_info kind status.
  *
@@ -161,7 +161,7 @@ zif_update_info_set_title (ZifUpdateInfo *update_info, const gchar *title)
 }
 
 /**
- * zif_update_info_ensure_type_to_string:
+ * zif_update_info_kind_to_string:
  * @type: the #ZifUpdateInfoKind enumerated value
  *
  * Gets the string representation of a #ZifUpdateInfoKind
@@ -173,9 +173,27 @@ zif_update_info_kind_to_string (ZifUpdateInfoKind kind)
 {
 	if (kind == ZIF_UPDATE_INFO_KIND_CVE)
 		return "cve";
-	if (kind == ZIF_UPDATE_INFO_KIND_BZ)
-		return "bz";
+	if (kind == ZIF_UPDATE_INFO_KIND_BUGZILLA)
+		return "bugzilla";
 	return "unknown";
+}
+
+/**
+ * zif_update_info_kind_from_string:
+ * @type: the #ZifUpdateInfoKind enumerated value
+ *
+ * Gets the string representation of a #ZifUpdateInfoKind
+ *
+ * Return value: The #ZifUpdateInfoKind represented as a string
+ **/
+ZifUpdateInfoKind
+zif_update_info_kind_from_string (const gchar *type)
+{
+	if (g_strcmp0 (type, "cve") == 0)
+		return ZIF_UPDATE_INFO_KIND_CVE;
+	if (g_strcmp0 (type, "bz") == 0)
+		return ZIF_UPDATE_INFO_KIND_BUGZILLA;
+	return ZIF_UPDATE_INFO_KIND_LAST;
 }
 
 /**

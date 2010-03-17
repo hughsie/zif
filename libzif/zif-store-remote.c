@@ -42,6 +42,7 @@
 #include "zif-package.h"
 #include "zif-package-remote.h"
 #include "zif-repo-md-comps.h"
+#include "zif-repo-md-updateinfo.h"
 #include "zif-repo-md-filelists.h"
 #include "zif-repo-md-metalink.h"
 #include "zif-repo-md-mirrorlist.h"
@@ -83,9 +84,10 @@ struct _ZifStoreRemotePrivate
 	ZifRepoMd		*md_metalink;
 	ZifRepoMd		*md_mirrorlist;
 	ZifRepoMd		*md_comps;
+	ZifRepoMd		*md_updateinfo;
 	ZifConfig		*config;
 	ZifMonitor		*monitor;
-	ZifLock			*lock;
+	ZifLock		*lock;
 	GPtrArray		*packages;
 	/* temp data for the xml parser */
 	ZifRepoMdType		 parser_type;
@@ -128,6 +130,8 @@ zif_store_remote_get_md_from_type (ZifStoreRemote *store, ZifRepoMdType type)
 		return NULL;
 	if (type == ZIF_REPO_MD_TYPE_COMPS_XML)
 		return store->priv->md_comps;
+	if (type == ZIF_REPO_MD_TYPE_UPDATEINFO)
+		return store->priv->md_updateinfo;
 	if (type == ZIF_REPO_MD_TYPE_METALINK)
 		return store->priv->md_metalink;
 	if (type == ZIF_REPO_MD_TYPE_MIRRORLIST)
@@ -2563,6 +2567,7 @@ zif_store_remote_finalize (GObject *object)
 	g_object_unref (store->priv->md_primary);
 	g_object_unref (store->priv->md_filelists);
 	g_object_unref (store->priv->md_comps);
+	g_object_unref (store->priv->md_updateinfo);
 	g_object_unref (store->priv->md_metalink);
 	g_object_unref (store->priv->md_mirrorlist);
 	g_object_unref (store->priv->config);
@@ -2636,6 +2641,7 @@ zif_store_remote_init (ZifStoreRemote *store)
 	store->priv->md_metalink = ZIF_REPO_MD (zif_repo_md_metalink_new ());
 	store->priv->md_mirrorlist = ZIF_REPO_MD (zif_repo_md_mirrorlist_new ());
 	store->priv->md_comps = ZIF_REPO_MD (zif_repo_md_comps_new ());
+	store->priv->md_updateinfo = ZIF_REPO_MD (zif_repo_md_updateinfo_new ());
 	store->priv->parser_type = ZIF_REPO_MD_TYPE_UNKNOWN;
 	store->priv->parser_section = ZIF_STORE_REMOTE_PARSER_SECTION_UNKNOWN;
 	g_signal_connect (store->priv->monitor, "changed", G_CALLBACK (zif_store_remote_file_monitor_cb), store);
