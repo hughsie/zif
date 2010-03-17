@@ -500,6 +500,75 @@ out:
 }
 
 /**
+ * zif_store_remote_get_update_detail:
+ * @store: the #ZifStoreRemote object
+ * @package_id: the package_id of the package to find
+ * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Gets the update detail for a package.
+ *
+ * Return value: a %ZifUpdate, or %NULL for failure
+ *
+ * Since: 0.0.1
+ **/
+ZifUpdate *
+zif_store_remote_get_update_detail (ZifStoreRemote *store, const gchar *package_id,
+				    GCancellable *cancellable, ZifCompletion *completion, GError **error)
+{
+	ZifUpdate *update = NULL;
+	ZifCompletion *completion_local;
+	GPtrArray *array = NULL;
+	GError *error_local = NULL;
+	gboolean ret;
+
+	/* setup completion */
+	if (store->priv->loaded_metadata)
+		zif_completion_set_number_steps (completion, 1);
+	else
+		zif_completion_set_number_steps (completion, 2);
+
+	/* if not already loaded, load */
+	if (!store->priv->loaded_metadata) {
+		completion_local = zif_completion_get_child (completion);
+		ret = zif_store_remote_load_metadata (store, cancellable, completion_local, &error_local);
+		if (!ret) {
+			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+				     "failed to load metadata: %s", error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+
+		/* this section done */
+		zif_completion_done (completion);
+	}
+
+	/* actually get the data */
+	completion_local = zif_completion_get_child (completion);
+	array = zif_md_updateinfo_get_detail_for_package (ZIF_MD_UPDATEINFO (store->priv->md_updateinfo), package_id,
+							  cancellable, completion_local, &error_local);
+	if (array == NULL) {
+		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+			     "failed to find any details: %s", error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+	if (array->len == 1) {
+		update = g_object_ref (g_ptr_array_index (array, 0));
+		goto out;
+	}
+
+	/* FIXME: is this valid? */
+	g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+		     "invalid number of update entries: %i", array->len);
+out:
+	if (array != NULL)
+		g_ptr_array_unref (array);
+	return update;
+}
+
+/**
  * zif_store_remote_add_metalink:
  **/
 static gboolean

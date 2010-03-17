@@ -173,6 +173,18 @@ out:
 }
 
 /**
+ * zif_package_get_store_for_package:
+ **/
+static ZifStoreRemote *
+zif_package_get_store_for_package (ZifPackage *package, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+{
+	ZifStoreRemote *store_remote;
+	store_remote = zif_repos_get_store (package->priv->repos, package->priv->package_id_split[PK_PACKAGE_ID_DATA],
+					    cancellable, completion, error);
+	return store_remote;
+}
+
+/**
  * zif_package_download:
  * @package: the #ZifPackage object
  * @directory: the local directory to save to
@@ -190,7 +202,7 @@ gboolean
 zif_package_download (ZifPackage *package, const gchar *directory, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	gboolean ret = FALSE;
-	ZifStoreRemote *repo = NULL;
+	ZifStoreRemote *store_remote = NULL;
 	GError *error_local = NULL;
 	ZifCompletion *completion_local = NULL;
 
@@ -210,10 +222,10 @@ zif_package_download (ZifPackage *package, const gchar *directory, GCancellable 
 
 	/* find correct repo */
 	completion_local = zif_completion_get_child (completion);
-	repo = zif_repos_get_store (package->priv->repos, package->priv->package_id_split[PK_PACKAGE_ID_DATA], cancellable, completion_local, &error_local);
-	if (repo == NULL) {
+	store_remote = zif_package_get_store_for_package (package, cancellable, completion_local, &error_local);
+	if (store_remote == NULL) {
 		g_set_error (error, ZIF_PACKAGE_ERROR, ZIF_PACKAGE_ERROR_FAILED,
-			     "cannot find remote repo: %s", error_local->message);
+			     "cannot find remote store: %s", error_local->message);
 		g_error_free (error_local);
 		goto out;
 	}
@@ -224,11 +236,11 @@ zif_package_download (ZifPackage *package, const gchar *directory, GCancellable 
 	/* create a chain of completions */
 	completion_local = zif_completion_get_child (completion);
 
-	/* download from the repo */
-	ret = zif_store_remote_download (repo, zif_string_get_value (package->priv->location_href), directory, cancellable, completion_local, &error_local);
+	/* download from the store */
+	ret = zif_store_remote_download (store_remote, zif_string_get_value (package->priv->location_href), directory, cancellable, completion_local, &error_local);
 	if (!ret) {
 		g_set_error (error, ZIF_PACKAGE_ERROR, ZIF_PACKAGE_ERROR_FAILED,
-			     "cannot download from repo: %s", error_local->message);
+			     "cannot download from store: %s", error_local->message);
 		g_error_free (error_local);
 		goto out;
 	}
@@ -236,9 +248,74 @@ zif_package_download (ZifPackage *package, const gchar *directory, GCancellable 
 	/* this section done */
 	zif_completion_done (completion);
 out:
-	if (repo != NULL)
-		g_object_unref (repo);
+	if (store_remote != NULL)
+		g_object_unref (store_remote);
 	return ret;
+}
+
+/**
+ * zif_package_get_update_detail:
+ * @package: the #ZifPackage object
+ * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Gets the update detail for a package.
+ *
+ * Return value: a %ZifUpdate, or %NULL for failure
+ *
+ * Since: 0.0.1
+ **/
+ZifUpdate *
+zif_package_get_update_detail (ZifPackage *package, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+{
+	ZifUpdate *update = NULL;
+	ZifStoreRemote *store_remote = NULL;
+	GError *error_local = NULL;
+	ZifCompletion *completion_local = NULL;
+
+	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
+	g_return_val_if_fail (package->priv->package_id_split != NULL, NULL);
+
+	/* check we are not installed */
+	if (package->priv->installed) {
+		g_set_error_literal (error, ZIF_PACKAGE_ERROR, ZIF_PACKAGE_ERROR_FAILED,
+				     "cannot get details for installed packages");
+		goto out;
+	}
+
+	/* two steps */
+	zif_completion_set_number_steps (completion, 2);
+
+	/* find correct repo */
+	completion_local = zif_completion_get_child (completion);
+	store_remote = zif_package_get_store_for_package (package, cancellable, completion_local, &error_local);
+	if (store_remote == NULL) {
+		g_set_error (error, ZIF_PACKAGE_ERROR, ZIF_PACKAGE_ERROR_FAILED,
+			     "cannot find remote store: %s", error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* this section done */
+	zif_completion_done (completion);
+
+	/* download from the store */
+	completion_local = zif_completion_get_child (completion);
+	update = zif_store_remote_get_update_detail (store_remote, package->priv->package_id, cancellable, completion_local, &error_local);
+	if (update == NULL) {
+		g_set_error (error, ZIF_PACKAGE_ERROR, ZIF_PACKAGE_ERROR_FAILED,
+			     "cannot get update detail from store: %s", error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* this section done */
+	zif_completion_done (completion);
+out:
+	if (store_remote != NULL)
+		g_object_unref (store_remote);
+	return update;
 }
 
 /**

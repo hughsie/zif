@@ -31,7 +31,6 @@
 #include <packagekit-glib2/packagekit.h>
 
 #include "zif-update-info.h"
-#include "zif-package.h"
 
 G_BEGIN_DECLS
 
@@ -46,6 +45,8 @@ G_BEGIN_DECLS
 typedef struct _ZifUpdate	 ZifUpdate;
 typedef struct _ZifUpdatePrivate ZifUpdatePrivate;
 typedef struct _ZifUpdateClass	 ZifUpdateClass;
+
+#include "zif-package.h"
 
 struct _ZifUpdate
 {

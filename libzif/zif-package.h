@@ -47,6 +47,8 @@ typedef struct _ZifPackage		ZifPackage;
 typedef struct _ZifPackagePrivate	ZifPackagePrivate;
 typedef struct _ZifPackageClass		ZifPackageClass;
 
+#include "zif-update.h"
+
 typedef enum {
 	ZIF_PACKAGE_ENSURE_TYPE_FILES,
 	ZIF_PACKAGE_ENSURE_TYPE_SUMMARY,
@@ -144,6 +146,10 @@ gboolean		 zif_package_set_provides	(ZifPackage	*package,
 /* actions */
 gboolean		 zif_package_download		(ZifPackage	*package,
 							 const gchar	*directory,
+							 GCancellable	*cancellable,
+							 ZifCompletion	*completion,
+							 GError		**error);
+ZifUpdate		*zif_package_get_update_detail	(ZifPackage	*package,
 							 GCancellable	*cancellable,
 							 ZifCompletion	*completion,
 							 GError		**error);
