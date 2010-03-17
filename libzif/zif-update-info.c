@@ -109,7 +109,7 @@ zif_update_info_get_title (ZifUpdateInfo *update_info)
 /**
  * zif_update_info_set_kind:
  * @update_info: the #ZifUpdateInfo object
- * @kind: If the update_info is kind
+ * @kind: the kind of update info, e.g. %ZIF_UPDATE_INFO_KIND_BZ
  *
  * Sets the update_info kind status.
  *
@@ -244,7 +244,7 @@ zif_update_info_class_init (ZifUpdateInfoClass *klass)
 	/**
 	 * ZifUpdateInfo:kind:
 	 *
-	 * Since: 0.5.4
+	 * Since: 0.0.1
 	 */
 	pspec = g_param_spec_uint ("kind", NULL, NULL,
 				   0, G_MAXUINT, 0,
@@ -254,7 +254,7 @@ zif_update_info_class_init (ZifUpdateInfoClass *klass)
 	/**
 	 * ZifUpdateInfo:url:
 	 *
-	 * Since: 0.5.4
+	 * Since: 0.0.1
 	 */
 	pspec = g_param_spec_string ("url", NULL, NULL,
 				     NULL,
@@ -264,7 +264,7 @@ zif_update_info_class_init (ZifUpdateInfoClass *klass)
 	/**
 	 * ZifUpdateInfo:title:
 	 *
-	 * Since: 0.5.4
+	 * Since: 0.0.1
 	 */
 	pspec = g_param_spec_string ("title", NULL, NULL,
 				     NULL,

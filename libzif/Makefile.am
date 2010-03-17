@@ -96,6 +96,8 @@ libzif_la_SOURCES =						\
 	zif-groups.h						\
 	zif-config.c						\
 	zif-config.h						\
+	zif-update.c						\
+	zif-update.h						\
 	zif-update-info.c					\
 	zif-update-info.h					\
 	zif-monitor.c						\
