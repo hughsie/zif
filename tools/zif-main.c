@@ -529,7 +529,6 @@ main (int argc, char *argv[])
 	GOptionContext *context;
 	gchar *options_help;
 	gboolean verbose = FALSE;
-	gboolean profile = FALSE;
 	gchar *config_file = NULL;
 	gchar *repos_dir = NULL;
 	gchar **split;
@@ -539,8 +538,6 @@ main (int argc, char *argv[])
 			_("Show extra debugging information"), NULL },
 		{ "offline", 'o', 0, G_OPTION_ARG_NONE, &offline,
 			_("Work offline when possible"), NULL },
-		{ "profile", 'p', 0, G_OPTION_ARG_NONE, &profile,
-			_("Profile ZIF"), NULL },
 		{ "config", 'c', 0, G_OPTION_ARG_STRING, &config_file,
 			_("Use different config file"), NULL },
 		{ NULL}
@@ -691,176 +688,6 @@ main (int argc, char *argv[])
 	completion = zif_completion_new ();
 	g_signal_connect (completion, "percentage-changed", G_CALLBACK (zif_completion_percentage_changed_cb), NULL);
 	g_signal_connect (completion, "subpercentage-changed", G_CALLBACK (zif_completion_subpercentage_changed_cb), NULL);
-
-	if (profile) {
-		GTimer *timer;
-		gdouble time_s;
-		gdouble global = 0.0f;
-		timer = g_timer_new ();
-
-		/* load local store_array */
-		g_print ("load store_array local... ");
-		store_array = zif_store_array_new ();
-		zif_store_array_add_local (store_array, NULL, completion, NULL);
-		time_s = g_timer_elapsed (timer, NULL);
-		g_print ("\t\t : %lf\n", time_s);
-		g_timer_reset (timer);
-		global += time_s;
-
-		/* resolve local store_array */
-		g_print ("resolve local store_array... ");
-		array = zif_store_array_resolve (store_array, "gnome-power-manager", NULL, NULL, NULL, NULL, &error);
-		if (array == NULL) {
-			g_print ("failed to get results: %s\n", error->message);
-			g_error_free (error);
-			goto out;
-		}
-		if (array->len == 0) {
-			g_print ("no package found\n");
-			goto out;
-		}
-		g_ptr_array_unref (array);
-		time_s = g_timer_elapsed (timer, NULL);
-		g_print ("\t\t : %lf\n", time_s);
-		g_timer_reset (timer);
-		global += time_s;
-
-		/* resolve2 local store_array */
-		g_print ("resolve2 local store_array... ");
-		array = zif_store_array_resolve (store_array, "gnome-power-manager", NULL, NULL, NULL, NULL, &error);
-		if (array == NULL) {
-			g_print ("failed to get results: %s\n", error->message);
-			g_error_free (error);
-			goto out;
-		}
-		if (array->len == 0) {
-			g_print ("no package found\n");
-			goto out;
-		}
-		g_ptr_array_unref (array);
-		time_s = g_timer_elapsed (timer, NULL);
-		g_print ("\t\t : %lf\n", time_s);
-		g_timer_reset (timer);
-		global += time_s;
-
-		/* searchfile local store_array */
-		g_print ("searchfile local store_array... ");
-		array = zif_store_array_search_file (store_array, "/usr/bin/gnome-power-manager", NULL, NULL, NULL, NULL, &error);
-		if (array == NULL) {
-			g_error ("failed to get results: %s\n", error->message);
-			g_error_free (error);
-			goto out;
-		}
-		g_ptr_array_unref (array);
-		time_s = g_timer_elapsed (timer, NULL);
-		g_print ("\t\t : %lf\n", time_s);
-		g_timer_reset (timer);
-		global += time_s;
-
-		/* whatprovides local store_array */
-		g_print ("whatprovides local store_array... ");
-		array = zif_store_array_what_provides (store_array, "kernel", NULL, NULL, NULL, NULL, &error);
-		if (array == NULL) {
-			g_print ("failed to get results: %s\n", error->message);
-			g_error_free (error);
-			goto out;
-		}
-		if (array->len == 0) {
-			g_print ("no package found\n");
-			goto out;
-		}
-		g_ptr_array_unref (array);
-		time_s = g_timer_elapsed (timer, NULL);
-		g_print ("\t\t : %lf\n", time_s);
-		g_timer_reset (timer);
-		global += time_s;
-
-		/* unref local store_array */
-		g_print ("unref store_array local... ");
-		g_ptr_array_unref (store_array);
-		time_s = g_timer_elapsed (timer, NULL);
-		g_print ("\t\t : %lf\n", time_s);
-		g_timer_reset (timer);
-		global += time_s;
-
-		/* load remote store_array */
-		g_print ("load store_array remote... ");
-		store_array = zif_store_array_new ();
-		zif_store_array_add_remote_enabled (store_array, NULL, completion, NULL);
-		time_s = g_timer_elapsed (timer, NULL);
-		g_print ("\t\t : %lf\n", time_s);
-		g_timer_reset (timer);
-		global += time_s;
-
-		/* resolve remote store_array */
-		g_print ("resolve remote store_array... ");
-		array = zif_store_array_resolve (store_array, "gnome-power-manager", NULL, NULL, NULL, NULL, &error);
-		if (array == NULL) {
-			g_print ("failed to get results: %s\n", error->message);
-			g_error_free (error);
-			goto out;
-		}
-		g_ptr_array_unref (array);
-		time_s = g_timer_elapsed (timer, NULL);
-		g_print ("\t\t : %lf\n", time_s);
-		g_timer_reset (timer);
-		global += time_s;
-
-		/* resolve2 remote store_array */
-		g_print ("resolve2 remote store_array... ");
-		array = zif_store_array_resolve (store_array, "gnome-power-manager", NULL, NULL, NULL, NULL, &error);
-		if (array == NULL) {
-			g_print ("failed to get results: %s\n", error->message);
-			g_error_free (error);
-			goto out;
-		}
-		g_ptr_array_unref (array);
-		time_s = g_timer_elapsed (timer, NULL);
-		g_print ("\t\t : %lf\n", time_s);
-		g_timer_reset (timer);
-		global += time_s;
-
-		/* searchfile remote store_array */
-		g_print ("searchfile remote store_array... ");
-		array = zif_store_array_search_file (store_array, "/usr/bin/gnome-power-manager", NULL, NULL, NULL, NULL, &error);
-		if (array == NULL) {
-			g_print ("failed to get results: %s\n", error->message);
-			g_error_free (error);
-			goto out;
-		}
-		g_ptr_array_unref (array);
-		time_s = g_timer_elapsed (timer, NULL);
-		g_print ("\t\t : %lf\n", time_s);
-		g_timer_reset (timer);
-		global += time_s;
-
-		/* whatprovides remote store_array */
-		g_print ("whatprovides remote store_array... ");
-		array = zif_store_array_what_provides (store_array, "kernel", NULL, NULL, NULL, NULL, &error);
-		if (array == NULL) {
-			g_print ("failed to get results: %s\n", error->message);
-			g_error_free (error);
-			goto out;
-		}
-		g_ptr_array_unref (array);
-		time_s = g_timer_elapsed (timer, NULL);
-		g_print ("\t\t : %lf\n", time_s);
-		g_timer_reset (timer);
-		global += time_s;
-
-		/* unref remote store_array */
-		g_print ("unref store_array remote... ");
-		g_ptr_array_unref (store_array);
-		time_s = g_timer_elapsed (timer, NULL);
-		g_print ("\t\t : %lf\n", time_s);
-		g_timer_reset (timer);
-		global += time_s;
-
-		/* total time */
-		g_print ("total time \t : %lf\n", global);
-		store_array = NULL;
-		goto out;
-	}
 
 	if (argc < 2) {
 		g_print ("%s", options_help);
