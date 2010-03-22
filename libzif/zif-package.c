@@ -123,6 +123,10 @@ zif_package_compare (ZifPackage *a, ZifPackage *b)
 
 	/* do a version compare */
 	val = zif_compare_evr (splita[PK_PACKAGE_ID_VERSION], splitb[PK_PACKAGE_ID_VERSION]);
+
+	/* if the packages are equal, prefer the same architecture */
+	if (val == 0)
+		val = g_strcmp0 (splitb[PK_PACKAGE_ID_ARCH], splita[PK_PACKAGE_ID_ARCH]);
 out:
 	g_strfreev (splita);
 	g_strfreev (splitb);
