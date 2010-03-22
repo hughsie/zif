@@ -2185,6 +2185,9 @@ zif_store_remote_get_updates (ZifStore *store, GPtrArray *packages,
 			continue;
 		}
 
+		/* some repos contain lots of versions of one package */
+		zif_package_array_filter_newest (updates);
+
 		/* find updates */
 		for (j=0; j<updates->len; j++) {
 			update = ZIF_PACKAGE (g_ptr_array_index (updates, j));
