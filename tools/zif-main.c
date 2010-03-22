@@ -513,6 +513,7 @@ main (int argc, char *argv[])
 	GPtrArray *store_array = NULL;
 	ZifDownload *download = NULL;
 	ZifConfig *config = NULL;
+	GPtrArray *packages;
 	ZifStoreLocal *store_local = NULL;
 	ZifStoreRemote *store_remote = NULL;
 	ZifGroups *groups = NULL;
@@ -705,7 +706,26 @@ main (int argc, char *argv[])
 		pk_progress_bar_start (progressbar, "Getting updates");
 
 		/* setup completion with the correct number of steps */
-		zif_completion_set_number_steps (completion, 2);
+		zif_completion_set_number_steps (completion, 4);
+
+		/* get the installed packages */
+		completion_local = zif_completion_get_child (completion);
+		packages = zif_store_get_packages (ZIF_STORE (store_local), NULL, completion_local, &error);
+		if (packages == NULL) {
+			g_print ("failed to get local store: %s", error->message);
+			g_error_free (error);
+			goto out;
+		}
+		egg_debug ("searching with %i packages", packages->len);
+
+		/* this section done */
+		zif_completion_done (completion);
+
+		/* remove any packages that are not newest (think kernel) */
+		zif_package_array_filter_newest (packages);
+
+		/* this section done */
+		zif_completion_done (completion);
 
 		/* get a store_array of remote stores */
 		store_array = zif_store_array_new ();
@@ -722,7 +742,7 @@ main (int argc, char *argv[])
 
 		/* get updates */
 		completion_local = zif_completion_get_child (completion);
-		array = zif_store_array_get_updates (store_array, NULL, NULL, NULL, completion_local, &error);
+		array = zif_store_array_get_updates (store_array, packages, NULL, NULL, NULL, completion_local, &error);
 		if (array == NULL) {
 			g_print ("failed to get updates: %s\n", error->message);
 			g_error_free (error);
@@ -737,6 +757,7 @@ main (int argc, char *argv[])
 
 		zif_print_packages (array);
 		g_ptr_array_unref (array);
+		g_ptr_array_unref (packages);
 
 		goto out;
 	}

@@ -2115,58 +2115,13 @@ out:
 }
 
 /**
- * zif_store_remote_filter_newest:
- **/
-static void
-zif_store_remote_filter_newest (GPtrArray *packages)
-{
-	guint i;
-	GHashTable *hash;
-	ZifPackage *package;
-	ZifPackage *package_tmp;
-	const gchar *name;
-
-	/* use a hash so it's O(n) not O(n^2) */
-	hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_object_unref);
-	for (i=0; i<packages->len; i++) {
-		package = ZIF_PACKAGE (g_ptr_array_index (packages, i));
-		name = zif_package_get_name (package);
-		package_tmp = g_hash_table_lookup (hash, name);
-
-		/* does not already exist */
-		if (package_tmp == NULL) {
-			g_hash_table_insert (hash, g_strdup (name), g_object_ref (package));
-			continue;
-		}
-
-		/* the new package is older */
-		if (zif_package_compare (package, package_tmp) < 0) {
-			egg_debug ("%s is older than %s, so ignoring it",
-				   zif_package_get_id (package), zif_package_get_id (package_tmp));
-			g_ptr_array_remove_index_fast (packages, i);
-			continue;
-		}
-
-		egg_debug ("removing %s", zif_package_get_id (package_tmp));
-		egg_debug ("adding %s", zif_package_get_id (package));
-
-		/* remove the old one */
-		g_hash_table_remove (hash, zif_package_get_name (package_tmp));
-		g_hash_table_insert (hash, g_strdup (name), g_object_ref (package));
-		g_ptr_array_remove_fast (packages, package_tmp);
-	}
-	g_hash_table_unref (hash);
-}
-
-/**
  * zif_store_remote_get_updates:
  **/
 static GPtrArray *
-zif_store_remote_get_updates (ZifStore *store, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+zif_store_remote_get_updates (ZifStore *store, GPtrArray *packages,
+			      GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	gboolean ret;
-	ZifStore *store_local;
-	GPtrArray *packages;
 	GPtrArray *updates;
 	GPtrArray *array = NULL;
 	ZifPackage *package;
@@ -2191,9 +2146,9 @@ zif_store_remote_get_updates (ZifStore *store, GCancellable *cancellable, ZifCom
 
 	/* setup completion */
 	if (remote->priv->loaded_metadata)
-		zif_completion_set_number_steps (completion, 2);
+		zif_completion_set_number_steps (completion, 1);
 	else
-		zif_completion_set_number_steps (completion, 3);
+		zif_completion_set_number_steps (completion, 2);
 
 	/* load metadata */
 	if (!remote->priv->loaded_metadata) {
@@ -2210,28 +2165,11 @@ zif_store_remote_get_updates (ZifStore *store, GCancellable *cancellable, ZifCom
 		zif_completion_done (completion);
 	}
 
-	/* get list of local packages */
-	store_local = ZIF_STORE (zif_store_local_new ());
-	completion_local = zif_completion_get_child (completion);
-	packages = zif_store_get_packages (store_local, cancellable, completion_local, &error_local);
-	if (packages == NULL) {
-		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
-			     "failed to get local store: %s", error_local->message);
-		g_error_free (error_local);
-		goto out;
-	}
-	egg_debug ("searching with %i packages", packages->len);
-
-	/* remove any packages that are not newest (think kernel) */
-	zif_store_remote_filter_newest (packages);
-
-	/* this section done */
-	zif_completion_done (completion);
-
 	/* create array for packages to update */
 	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 
 	/* find each one in a remote repo */
+	egg_debug ("searching with %i packages", packages->len);
 	for (i=0; i<packages->len; i++) {
 		package = ZIF_PACKAGE (g_ptr_array_index (packages, i));
 		package_id = zif_package_get_id (package);
@@ -2239,7 +2177,8 @@ zif_store_remote_get_updates (ZifStore *store, GCancellable *cancellable, ZifCom
 		/* find package name in repo */
 		completion_local = zif_completion_get_child (completion);
 		split = pk_package_id_split (package_id);
-		updates = zif_md_primary_resolve (ZIF_MD_PRIMARY (remote->priv->md_primary), split[PK_PACKAGE_ID_NAME], cancellable, completion_local, NULL);
+		updates = zif_md_primary_resolve (ZIF_MD_PRIMARY (remote->priv->md_primary), split[PK_PACKAGE_ID_NAME],
+						  cancellable, completion_local, NULL);
 		g_strfreev (split);
 		if (updates == NULL) {
 			egg_debug ("not found %s", split[PK_PACKAGE_ID_NAME]);
@@ -2267,9 +2206,6 @@ zif_store_remote_get_updates (ZifStore *store, GCancellable *cancellable, ZifCom
 
 	/* this section done */
 	zif_completion_done (completion);
-
-	g_ptr_array_unref (packages);
-	g_object_unref (store_local);
 out:
 	return array;
 }
@@ -2775,6 +2711,7 @@ zif_store_remote_test (EggTest *test)
 	ZifGroups *groups;
 	ZifStoreRemote *store;
 	ZifStoreLocal *store_local;
+	GPtrArray *packages;
 	ZifConfig *config;
 	ZifLock *lock;
 	ZifCompletion *completion;
@@ -2828,7 +2765,12 @@ zif_store_remote_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "get updates");
 	zif_completion_reset (completion);
-	array = zif_store_remote_get_updates (ZIF_STORE (store), NULL, completion, &error);
+	packages = zif_store_get_packages (ZIF_STORE (store_local), NULL, completion, &error);
+	if (packages == NULL)
+		egg_test_failed (test, "failed to get local store: %s", error->message);
+	zif_package_array_filter_newest (packages);
+	zif_completion_reset (completion);
+	array = zif_store_remote_get_updates (ZIF_STORE (store), packages, NULL, completion, &error);
 	if (array == NULL)
 		egg_test_failed (test, "no data: %s", error->message);
 	else if (array->len > 0)
@@ -2836,6 +2778,7 @@ zif_store_remote_test (EggTest *test)
 	else
 		egg_test_success (test, "no updates"); //TODO: failure
 	g_ptr_array_unref (array);
+	g_ptr_array_unref (packages);
 
 	/************************************************************/
 	egg_test_title (test, "is devel");

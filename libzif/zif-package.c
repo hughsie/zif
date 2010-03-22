@@ -173,6 +173,61 @@ out:
 }
 
 /**
+ * zif_package_array_filter_newest:
+ * @packages: array of %ZifPackage's
+ *
+ * Filters the list so that only the newest version of a package remains.
+ *
+ * Return value: %TRUE if the array was modified
+ *
+ * Since: 0.0.1
+ **/
+gboolean
+zif_package_array_filter_newest (GPtrArray *packages)
+{
+	guint i;
+	GHashTable *hash;
+	ZifPackage *package;
+	ZifPackage *package_tmp;
+	const gchar *name;
+	gboolean ret = FALSE;
+
+	/* use a hash so it's O(n) not O(n^2) */
+	hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_object_unref);
+	for (i=0; i<packages->len; i++) {
+		package = ZIF_PACKAGE (g_ptr_array_index (packages, i));
+		name = zif_package_get_name (package);
+		package_tmp = g_hash_table_lookup (hash, name);
+
+		/* does not already exist */
+		if (package_tmp == NULL) {
+			g_hash_table_insert (hash, g_strdup (name), g_object_ref (package));
+			continue;
+		}
+
+		/* the new package is older */
+		if (zif_package_compare (package, package_tmp) < 0) {
+			egg_debug ("%s is older than %s, so ignoring it",
+				   zif_package_get_id (package), zif_package_get_id (package_tmp));
+			g_ptr_array_remove_index_fast (packages, i);
+			ret = TRUE;
+			continue;
+		}
+
+		ret = TRUE;
+		egg_debug ("removing %s", zif_package_get_id (package_tmp));
+		egg_debug ("adding %s", zif_package_get_id (package));
+
+		/* remove the old one */
+		g_hash_table_remove (hash, zif_package_get_name (package_tmp));
+		g_hash_table_insert (hash, g_strdup (name), g_object_ref (package));
+		g_ptr_array_remove_fast (packages, package_tmp);
+	}
+	g_hash_table_unref (hash);
+	return  ret;
+}
+
+/**
  * zif_package_get_store_for_package:
  **/
 static ZifStoreRemote *
