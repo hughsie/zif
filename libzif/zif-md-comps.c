@@ -827,7 +827,7 @@ zif_md_comps_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "set type");
-	ret = zif_md_set_mdtype (ZIF_MD (md), ZIF_MD_TYPE_COMPS_XML);
+	ret = zif_md_set_mdtype (ZIF_MD (md), ZIF_MD_TYPE_COMPS);
 	if (ret)
 		egg_test_success (test, NULL);
 	else

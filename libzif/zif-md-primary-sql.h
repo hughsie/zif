@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*-
  *
- * Copyright (C) 2009 Richard Hughes <richard@hughsie.com>
+ * Copyright (C) 2009-2010 Richard Hughes <richard@hughsie.com>
  *
  * Licensed under the GNU General Public License Version 2
  *
@@ -23,8 +23,8 @@
 #error "Only <zif.h> can be included directly."
 #endif
 
-#ifndef __ZIF_MD_PRIMARY_H
-#define __ZIF_MD_PRIMARY_H
+#ifndef __ZIF_MD_PRIMARY_SQL_H
+#define __ZIF_MD_PRIMARY_SQL_H
 
 #include <glib-object.h>
 #include <packagekit-glib2/packagekit.h>
@@ -33,32 +33,32 @@
 
 G_BEGIN_DECLS
 
-#define ZIF_TYPE_MD_PRIMARY		(zif_md_primary_get_type ())
-#define ZIF_MD_PRIMARY(o)		(G_TYPE_CHECK_INSTANCE_CAST ((o), ZIF_TYPE_MD_PRIMARY, ZifMdPrimary))
-#define ZIF_MD_PRIMARY_CLASS(k)		(G_TYPE_CHECK_CLASS_CAST((k), ZIF_TYPE_MD_PRIMARY, ZifMdPrimaryClass))
-#define ZIF_IS_MD_PRIMARY(o)		(G_TYPE_CHECK_INSTANCE_TYPE ((o), ZIF_TYPE_MD_PRIMARY))
-#define ZIF_IS_MD_PRIMARY_CLASS(k)	(G_TYPE_CHECK_CLASS_TYPE ((k), ZIF_TYPE_MD_PRIMARY))
-#define ZIF_MD_PRIMARY_GET_CLASS(o)	(G_TYPE_INSTANCE_GET_CLASS ((o), ZIF_TYPE_MD_PRIMARY, ZifMdPrimaryClass))
+#define ZIF_TYPE_MD_PRIMARY_SQL		(zif_md_primary_sql_get_type ())
+#define ZIF_MD_PRIMARY_SQL(o)		(G_TYPE_CHECK_INSTANCE_CAST ((o), ZIF_TYPE_MD_PRIMARY_SQL, ZifMdPrimarySql))
+#define ZIF_MD_PRIMARY_SQL_CLASS(k)	(G_TYPE_CHECK_CLASS_CAST((k), ZIF_TYPE_MD_PRIMARY_SQL, ZifMdPrimarySqlClass))
+#define ZIF_IS_MD_PRIMARY_SQL(o)	(G_TYPE_CHECK_INSTANCE_TYPE ((o), ZIF_TYPE_MD_PRIMARY_SQL))
+#define ZIF_IS_MD_PRIMARY_SQL_CLASS(k)	(G_TYPE_CHECK_CLASS_TYPE ((k), ZIF_TYPE_MD_PRIMARY_SQL))
+#define ZIF_MD_PRIMARY_SQL_GET_CLASS(o)	(G_TYPE_INSTANCE_GET_CLASS ((o), ZIF_TYPE_MD_PRIMARY_SQL, ZifMdPrimarySqlClass))
 
-typedef struct _ZifMdPrimary		ZifMdPrimary;
-typedef struct _ZifMdPrimaryPrivate	ZifMdPrimaryPrivate;
-typedef struct _ZifMdPrimaryClass	ZifMdPrimaryClass;
+typedef struct _ZifMdPrimarySql		ZifMdPrimarySql;
+typedef struct _ZifMdPrimarySqlPrivate	ZifMdPrimarySqlPrivate;
+typedef struct _ZifMdPrimarySqlClass	ZifMdPrimarySqlClass;
 
-struct _ZifMdPrimary
+struct _ZifMdPrimarySql
 {
 	ZifMd				 parent;
-	ZifMdPrimaryPrivate		*priv;
+	ZifMdPrimarySqlPrivate		*priv;
 };
 
-struct _ZifMdPrimaryClass
+struct _ZifMdPrimarySqlClass
 {
 	ZifMdClass			 parent_class;
 };
 
-GType		 zif_md_primary_get_type		(void);
-ZifMdPrimary	*zif_md_primary_new			(void);
+GType		 zif_md_primary_sql_get_type		(void);
+ZifMdPrimarySql	*zif_md_primary_sql_new			(void);
 
 G_END_DECLS
 
-#endif /* __ZIF_MD_PRIMARY_H */
+#endif /* __ZIF_MD_PRIMARY_SQL_H */
 

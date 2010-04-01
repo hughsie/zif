@@ -315,7 +315,7 @@ zif_md_set_checksum_type (ZifMd *md, GChecksumType checksum_type)
  * @md: the #ZifMd object
  * @type: the metadata type
  *
- * Sets the type of the metadata, e.g. ZIF_MD_TYPE_FILELISTS_DB.
+ * Sets the type of the metadata, e.g. ZIF_MD_TYPE_FILELISTS_SQL.
  *
  * Return value: %TRUE for success, %FALSE for failure
  *
@@ -998,19 +998,19 @@ zif_md_type_to_text (ZifMdType type)
 {
 	if (type == ZIF_MD_TYPE_FILELISTS_XML)
 		return "filelists";
-	if (type == ZIF_MD_TYPE_FILELISTS_DB)
+	if (type == ZIF_MD_TYPE_FILELISTS_SQL)
 		return "filelists_db";
 	if (type == ZIF_MD_TYPE_PRIMARY_XML)
 		return "primary";
-	if (type == ZIF_MD_TYPE_PRIMARY_DB)
+	if (type == ZIF_MD_TYPE_PRIMARY_SQL)
 		return "primary_db";
 	if (type == ZIF_MD_TYPE_OTHER_XML)
 		return "other";
-	if (type == ZIF_MD_TYPE_OTHER_DB)
+	if (type == ZIF_MD_TYPE_OTHER_SQL)
 		return "other_db";
 	if (type == ZIF_MD_TYPE_COMPS)
 		return "group";
-	if (type == ZIF_MD_TYPE_COMPS_XML)
+	if (type == ZIF_MD_TYPE_COMPS)
 		return "group_gz";
 	if (type == ZIF_MD_TYPE_METALINK)
 		return "metalink";

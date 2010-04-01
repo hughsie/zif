@@ -369,7 +369,7 @@ zif_md_filelists_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "set type");
-	ret = zif_md_set_mdtype (ZIF_MD (md), ZIF_MD_TYPE_FILELISTS_DB);
+	ret = zif_md_set_mdtype (ZIF_MD (md), ZIF_MD_TYPE_FILELISTS_SQL);
 	if (ret)
 		egg_test_success (test, NULL);
 	else

@@ -46,7 +46,7 @@
 #include "zif-md-filelists.h"
 #include "zif-md-metalink.h"
 #include "zif-md-mirrorlist.h"
-#include "zif-md-primary.h"
+#include "zif-md-primary-sql.h"
 #include "zif-md-primary-xml.h"
 #include "zif-store.h"
 #include "zif-store-local.h"
@@ -141,15 +141,15 @@ zif_store_remote_get_md_from_type (ZifStoreRemote *store, ZifMdType type)
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), NULL);
 	g_return_val_if_fail (type != ZIF_MD_TYPE_UNKNOWN, NULL);
 
-	if (type == ZIF_MD_TYPE_FILELISTS_DB)
+	if (type == ZIF_MD_TYPE_FILELISTS_SQL)
 		return store->priv->md_filelists;
-	if (type == ZIF_MD_TYPE_PRIMARY_DB)
+	if (type == ZIF_MD_TYPE_PRIMARY_SQL)
 		return store->priv->md_primary_db;
 	if (type == ZIF_MD_TYPE_PRIMARY_XML)
 		return store->priv->md_primary_xml;
-	if (type == ZIF_MD_TYPE_OTHER_DB)
+	if (type == ZIF_MD_TYPE_OTHER_SQL)
 		return NULL;
-	if (type == ZIF_MD_TYPE_COMPS_XML)
+	if (type == ZIF_MD_TYPE_COMPS)
 		return store->priv->md_comps;
 	if (type == ZIF_MD_TYPE_UPDATEINFO)
 		return store->priv->md_updateinfo;
@@ -185,19 +185,19 @@ zif_store_remote_parser_start_element (GMarkupParseContext *context, const gchar
 				if (g_strcmp0 (attribute_values[i], "primary") == 0)
 					store->priv->parser_type = ZIF_MD_TYPE_PRIMARY_XML;
 				else if (g_strcmp0 (attribute_values[i], "primary_db") == 0)
-					store->priv->parser_type = ZIF_MD_TYPE_PRIMARY_DB;
+					store->priv->parser_type = ZIF_MD_TYPE_PRIMARY_SQL;
 				else if (g_strcmp0 (attribute_values[i], "filelists") == 0)
 					store->priv->parser_type = ZIF_MD_TYPE_FILELISTS_XML;
 				else if (g_strcmp0 (attribute_values[i], "filelists_db") == 0)
-					store->priv->parser_type = ZIF_MD_TYPE_FILELISTS_DB;
+					store->priv->parser_type = ZIF_MD_TYPE_FILELISTS_SQL;
 				else if (g_strcmp0 (attribute_values[i], "other") == 0)
 					store->priv->parser_type = ZIF_MD_TYPE_OTHER_XML;
 				else if (g_strcmp0 (attribute_values[i], "other_db") == 0)
-					store->priv->parser_type = ZIF_MD_TYPE_OTHER_DB;
+					store->priv->parser_type = ZIF_MD_TYPE_OTHER_SQL;
 				else if (g_strcmp0 (attribute_values[i], "group") == 0)
 					store->priv->parser_type = ZIF_MD_TYPE_COMPS;
 				else if (g_strcmp0 (attribute_values[i], "group_gz") == 0)
-					store->priv->parser_type = ZIF_MD_TYPE_COMPS_XML;
+					store->priv->parser_type = ZIF_MD_TYPE_COMPS;
 				else if (g_strcmp0 (attribute_values[i], "prestodelta") == 0)
 					store->priv->parser_type = ZIF_MD_TYPE_PRESTODELTA;
 				else if (g_strcmp0 (attribute_values[i], "updateinfo") == 0)
@@ -902,7 +902,7 @@ zif_store_remote_load_metadata (ZifStoreRemote *store, GCancellable *cancellable
 		/* ensure we have at least one primary */
 		location = zif_md_get_location (md);
 		if (location != NULL &&
-		    (i == ZIF_MD_TYPE_PRIMARY_DB ||
+		    (i == ZIF_MD_TYPE_PRIMARY_SQL ||
 		     i == ZIF_MD_TYPE_PRIMARY_XML)) {
 			primary_okay = TRUE;
 		}
@@ -2678,7 +2678,7 @@ zif_store_remote_init (ZifStoreRemote *store)
 	store->priv->monitor = zif_monitor_new ();
 	store->priv->lock = zif_lock_new ();
 	store->priv->md_filelists = ZIF_MD (zif_md_filelists_new ());
-	store->priv->md_primary_db = ZIF_MD (zif_md_primary_new ());
+	store->priv->md_primary_db = ZIF_MD (zif_md_primary_sql_new ());
 	store->priv->md_primary_xml = ZIF_MD (zif_md_primary_xml_new ());
 	store->priv->md_metalink = ZIF_MD (zif_md_metalink_new ());
 	store->priv->md_mirrorlist = ZIF_MD (zif_md_mirrorlist_new ());
