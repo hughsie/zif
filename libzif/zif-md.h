@@ -65,6 +65,50 @@ struct _ZifMdClass
 						 GCancellable		*cancellable,
 						 ZifCompletion		*completion,
 						 GError			**error);
+	GPtrArray	*(*search_file)		(ZifMd			*md,
+						 const gchar		*search,
+						 GCancellable		*cancellable,
+						 ZifCompletion		*completion,
+						 GError			**error);
+	GPtrArray	*(*search_name)		(ZifMd			*md,
+						 const gchar		*search,
+						 GCancellable		*cancellable,
+						 ZifCompletion		*completion,
+						 GError			**error);
+	GPtrArray	*(*search_details)	(ZifMd			*md,
+						 const gchar		*search,
+						 GCancellable		*cancellable,
+						 ZifCompletion		*completion,
+						 GError			**error);
+	GPtrArray	*(*search_group)	(ZifMd			*md,
+						 const gchar		*search,
+						 GCancellable		*cancellable,
+						 ZifCompletion		*completion,
+						 GError			**error);
+	GPtrArray	*(*search_pkgid)	(ZifMd			*md,
+						 const gchar		*search,
+						 GCancellable		*cancellable,
+						 ZifCompletion		*completion,
+						 GError			**error);
+	GPtrArray	*(*what_provides)	(ZifMd			*md,
+						 const gchar		*search,
+						 GCancellable		*cancellable,
+						 ZifCompletion		*completion,
+						 GError			**error);
+	GPtrArray	*(*resolve)		(ZifMd			*md,
+						 const gchar		*search,
+						 GCancellable		*cancellable,
+						 ZifCompletion		*completion,
+						 GError			**error);
+	GPtrArray	*(*get_packages)	(ZifMd			*md,
+						 GCancellable		*cancellable,
+						 ZifCompletion		*completion,
+						 GError			**error);
+	GPtrArray	*(*find_package)	(ZifMd			*md,
+						 const gchar		*package_id,
+						 GCancellable		*cancellable,
+						 ZifCompletion		*completion,
+						 GError			**error);
 };
 
 /* types of metadata */
@@ -141,6 +185,50 @@ gboolean	 zif_md_clean				(ZifMd		*md,
 							 GError		**error);
 gboolean	 zif_md_file_check			(ZifMd		*md,
 							 gboolean	 use_uncompressed,
+							 GError		**error);
+GPtrArray	*zif_md_search_file			(ZifMd		*md,
+							 const gchar	*search,
+							 GCancellable	*cancellable,
+							 ZifCompletion	*completion,
+							 GError		**error);
+GPtrArray	*zif_md_search_name			(ZifMd		*md,
+							 const gchar	*search,
+							 GCancellable	*cancellable,
+							 ZifCompletion	*completion,
+							 GError		**error);
+GPtrArray	*zif_md_search_details			(ZifMd		*md,
+							 const gchar	*search,
+							 GCancellable	*cancellable,
+							 ZifCompletion	*completion,
+							 GError		**error);
+GPtrArray	*zif_md_search_group			(ZifMd		*md,
+							 const gchar	*search,
+							 GCancellable	*cancellable,
+							 ZifCompletion	*completion,
+							 GError		**error);
+GPtrArray	*zif_md_search_pkgid			(ZifMd		*md,
+							 const gchar	*search,
+							 GCancellable	*cancellable,
+							 ZifCompletion	*completion,
+							 GError		**error);
+GPtrArray	*zif_md_what_provides			(ZifMd		*md,
+							 const gchar	*search,
+							 GCancellable	*cancellable,
+							 ZifCompletion	*completion,
+							 GError		**error);
+GPtrArray	*zif_md_resolve				(ZifMd		*md,
+							 const gchar	*search,
+							 GCancellable	*cancellable,
+							 ZifCompletion	*completion,
+							 GError		**error);
+GPtrArray	*zif_md_get_packages			(ZifMd		*md,
+							 GCancellable	*cancellable,
+							 ZifCompletion	*completion,
+							 GError		**error);
+GPtrArray	*zif_md_find_package			(ZifMd		*md,
+							 const gchar	*package_id,
+							 GCancellable	*cancellable,
+							 ZifCompletion	*completion,
 							 GError		**error);
 
 G_END_DECLS

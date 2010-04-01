@@ -136,7 +136,7 @@ zif_md_primary_sqlite_create_package_cb (void *data, gint argc, gchar **argv, gc
  **/
 static GPtrArray *
 zif_md_primary_search (ZifMdPrimary *md, const gchar *pred,
-			    GCancellable *cancellable, ZifCompletion *completion, GError **error)
+		       GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	gchar *statement = NULL;
 	gchar *error_msg = NULL;
@@ -183,30 +183,20 @@ out:
 
 /**
  * zif_md_primary_resolve:
- * @md: the #ZifMdPrimary object
- * @search: the search term, e.g. "gnome-power-manager"
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
- * @completion: a #ZifCompletion to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
- *
- * Finds all remote packages that match the name exactly.
- *
- * Return value: an array of #ZifPackageRemote's
- *
- * Since: 0.0.1
  **/
-GPtrArray *
-zif_md_primary_resolve (ZifMdPrimary *md, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+static GPtrArray *
+zif_md_primary_resolve (ZifMd *md, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	gchar *pred;
 	GPtrArray *array;
+	ZifMdPrimary *md_primary = ZIF_MD_PRIMARY (md);
 
 	g_return_val_if_fail (ZIF_IS_MD_PRIMARY (md), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* search with predicate */
 	pred = g_strdup_printf ("WHERE name = '%s'", search);
-	array = zif_md_primary_search (md, pred, cancellable, completion, error);
+	array = zif_md_primary_search (md_primary, pred, cancellable, completion, error);
 	g_free (pred);
 
 	return array;
@@ -214,30 +204,20 @@ zif_md_primary_resolve (ZifMdPrimary *md, const gchar *search, GCancellable *can
 
 /**
  * zif_md_primary_search_name:
- * @md: the #ZifMdPrimary object
- * @search: the search term, e.g. "power"
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
- * @completion: a #ZifCompletion to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
- *
- * Finds all packages that match the name.
- *
- * Return value: an array of #ZifPackageRemote's
- *
- * Since: 0.0.1
  **/
-GPtrArray *
-zif_md_primary_search_name (ZifMdPrimary *md, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+static GPtrArray *
+zif_md_primary_search_name (ZifMd *md, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	gchar *pred;
 	GPtrArray *array;
+	ZifMdPrimary *md_primary = ZIF_MD_PRIMARY (md);
 
 	g_return_val_if_fail (ZIF_IS_MD_PRIMARY (md), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* search with predicate */
 	pred = g_strdup_printf ("WHERE name LIKE '%%%s%%'", search);
-	array = zif_md_primary_search (md, pred, cancellable, completion, error);
+	array = zif_md_primary_search (md_primary, pred, cancellable, completion, error);
 	g_free (pred);
 
 	return array;
@@ -245,30 +225,20 @@ zif_md_primary_search_name (ZifMdPrimary *md, const gchar *search, GCancellable 
 
 /**
  * zif_md_primary_search_details:
- * @md: the #ZifMdPrimary object
- * @search: the search term, e.g. "advanced"
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
- * @completion: a #ZifCompletion to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
- *
- * Finds all packages that match the name or description.
- *
- * Return value: an array of #ZifPackageRemote's
- *
- * Since: 0.0.1
  **/
-GPtrArray *
-zif_md_primary_search_details (ZifMdPrimary *md, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+static GPtrArray *
+zif_md_primary_search_details (ZifMd *md, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	gchar *pred;
 	GPtrArray *array;
+	ZifMdPrimary *md_primary = ZIF_MD_PRIMARY (md);
 
 	g_return_val_if_fail (ZIF_IS_MD_PRIMARY (md), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* search with predicate */
 	pred = g_strdup_printf ("WHERE name LIKE '%%%s%%' OR summary LIKE '%%%s%%' OR description LIKE '%%%s%%'", search, search, search);
-	array = zif_md_primary_search (md, pred, cancellable, completion, error);
+	array = zif_md_primary_search (md_primary, pred, cancellable, completion, error);
 	g_free (pred);
 
 	return array;
@@ -276,30 +246,20 @@ zif_md_primary_search_details (ZifMdPrimary *md, const gchar *search, GCancellab
 
 /**
  * zif_md_primary_search_group:
- * @md: the #ZifMdPrimary object
- * @search: the search term, e.g. "games/console"
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
- * @completion: a #ZifCompletion to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
- *
- * Finds all packages that match the group.
- *
- * Return value: an array of #ZifPackageRemote's
- *
- * Since: 0.0.1
  **/
-GPtrArray *
-zif_md_primary_search_group (ZifMdPrimary *md, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+static GPtrArray *
+zif_md_primary_search_group (ZifMd *md, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	gchar *pred;
 	GPtrArray *array;
+	ZifMdPrimary *md_primary = ZIF_MD_PRIMARY (md);
 
 	g_return_val_if_fail (ZIF_IS_MD_PRIMARY (md), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* search with predicate */
 	pred = g_strdup_printf ("WHERE rpm_group = '%s'", search);
-	array = zif_md_primary_search (md, pred, cancellable, completion, error);
+	array = zif_md_primary_search (md_primary, pred, cancellable, completion, error);
 	g_free (pred);
 
 	return array;
@@ -307,30 +267,20 @@ zif_md_primary_search_group (ZifMdPrimary *md, const gchar *search, GCancellable
 
 /**
  * zif_md_primary_search_pkgid:
- * @md: the #ZifMdPrimary object
- * @search: the search term as a 64 bit hash
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
- * @completion: a #ZifCompletion to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
- *
- * Finds all packages that match the given pkgId.
- *
- * Return value: an array of #ZifPackageRemote's
- *
- * Since: 0.0.1
  **/
-GPtrArray *
-zif_md_primary_search_pkgid (ZifMdPrimary *md, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+static GPtrArray *
+zif_md_primary_search_pkgid (ZifMd *md, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	gchar *pred;
 	GPtrArray *array;
+	ZifMdPrimary *md_primary = ZIF_MD_PRIMARY (md);
 
 	g_return_val_if_fail (ZIF_IS_MD_PRIMARY (md), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* search with predicate */
 	pred = g_strdup_printf ("WHERE pkgid = '%s'", search);
-	array = zif_md_primary_search (md, pred, cancellable, completion, error);
+	array = zif_md_primary_search (md_primary, pred, cancellable, completion, error);
 	g_free (pred);
 
 	return array;
@@ -338,31 +288,21 @@ zif_md_primary_search_pkgid (ZifMdPrimary *md, const gchar *search, GCancellable
 
 /**
  * zif_md_primary_search_pkgkey:
- * @md: the #ZifMdPrimary object
- * @pkgkey: the package key, unique to this sqlite file
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
- * @completion: a #ZifCompletion to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
- *
- * Finds all packages that match the given pkgId.
- *
- * Return value: an array of #ZifPackageRemote's
- *
- * Since: 0.0.1
  **/
 static GPtrArray *
-zif_md_primary_search_pkgkey (ZifMdPrimary *md, guint pkgkey,
+zif_md_primary_search_pkgkey (ZifMd *md, guint pkgkey,
 			      GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	gchar *pred;
 	GPtrArray *array;
+	ZifMdPrimary *md_primary = ZIF_MD_PRIMARY (md);
 
 	g_return_val_if_fail (ZIF_IS_MD_PRIMARY (md), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* search with predicate */
 	pred = g_strdup_printf ("WHERE pkgKey = '%i'", pkgkey);
-	array = zif_md_primary_search (md, pred, cancellable, completion, error);
+	array = zif_md_primary_search (md_primary, pred, cancellable, completion, error);
 	g_free (pred);
 
 	return array;
@@ -396,20 +336,9 @@ zif_md_primary_sqlite_pkgkey_cb (void *data, gint argc, gchar **argv, gchar **co
 
 /**
  * zif_md_primary_what_provides:
- * @md: the #ZifMdPrimary object
- * @search: the provide, e.g. "mimehandler(application/ogg)"
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
- * @completion: a #ZifCompletion to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
- *
- * Finds all packages that match the given provide.
- *
- * Return value: an array of #ZifPackageRemote's
- *
- * Since: 0.0.1
  **/
-GPtrArray *
-zif_md_primary_what_provides (ZifMdPrimary *md, const gchar *search,
+static GPtrArray *
+zif_md_primary_what_provides (ZifMd *md, const gchar *search,
 			      GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	gchar *statement = NULL;
@@ -425,17 +354,18 @@ zif_md_primary_what_provides (ZifMdPrimary *md, const gchar *search,
 	ZifCompletion *completion_local;
 	ZifCompletion *completion_loop;
 	ZifPackage *package;
+	ZifMdPrimary *md_primary = ZIF_MD_PRIMARY (md);
 
 	/* setup completion */
-	if (md->priv->loaded)
+	if (md_primary->priv->loaded)
 		zif_completion_set_number_steps (completion, 2);
 	else
 		zif_completion_set_number_steps (completion, 3);
 
 	/* if not already loaded, load */
-	if (!md->priv->loaded) {
+	if (!md_primary->priv->loaded) {
 		completion_local = zif_completion_get_child (completion);
-		ret = zif_md_load (ZIF_MD (md), cancellable, completion_local, &error_local);
+		ret = zif_md_load (md, cancellable, completion_local, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED_TO_LOAD,
 				     "failed to load md_primary file: %s", error_local->message);
@@ -450,7 +380,7 @@ zif_md_primary_what_provides (ZifMdPrimary *md, const gchar *search,
 	/* create data struct we can pass to the callback */
 	pkgkey_array = g_ptr_array_new ();
 	statement = g_strdup_printf ("SELECT pkgKey FROM provides WHERE name = '%s'", search);
-	rc = sqlite3_exec (md->priv->db, statement, zif_md_primary_sqlite_pkgkey_cb, pkgkey_array, &error_msg);
+	rc = sqlite3_exec (md_primary->priv->db, statement, zif_md_primary_sqlite_pkgkey_cb, pkgkey_array, &error_msg);
 	if (rc != SQLITE_OK) {
 		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_BAD_SQL,
 			     "SQL error: %s\n", error_msg);
@@ -505,24 +435,14 @@ out:
 
 /**
  * zif_md_primary_find_package:
- * @md: the #ZifMdPrimary object
- * @package_id: the PackageId to match
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
- * @completion: a #ZifCompletion to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
- *
- * Finds all packages that match PackageId.
- *
- * Return value: an array of #ZifPackageRemote's
- *
- * Since: 0.0.1
  **/
-GPtrArray *
-zif_md_primary_find_package (ZifMdPrimary *md, const gchar *package_id, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+static GPtrArray *
+zif_md_primary_find_package (ZifMd *md, const gchar *package_id, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	gchar *pred;
 	GPtrArray *array;
 	gchar **split;
+	ZifMdPrimary *md_primary = ZIF_MD_PRIMARY (md);
 
 	g_return_val_if_fail (ZIF_IS_MD_PRIMARY (md), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
@@ -530,7 +450,7 @@ zif_md_primary_find_package (ZifMdPrimary *md, const gchar *package_id, GCancell
 	/* search with predicate, TODO: search version (epoch+release) */
 	split = pk_package_id_split (package_id);
 	pred = g_strdup_printf ("WHERE name = '%s' AND arch = '%s'", split[PK_PACKAGE_ID_NAME], split[PK_PACKAGE_ID_ARCH]);
-	array = zif_md_primary_search (md, pred, cancellable, completion, error);
+	array = zif_md_primary_search (md_primary, pred, cancellable, completion, error);
 	g_free (pred);
 	g_strfreev (split);
 
@@ -539,27 +459,18 @@ zif_md_primary_find_package (ZifMdPrimary *md, const gchar *package_id, GCancell
 
 /**
  * zif_md_primary_get_packages:
- * @md: the #ZifMdPrimary object
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
- * @completion: a #ZifCompletion to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
- *
- * Returns all packages in the repo.
- *
- * Return value: an array of #ZifPackageRemote's
- *
- * Since: 0.0.1
  **/
-GPtrArray *
-zif_md_primary_get_packages (ZifMdPrimary *md, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+static GPtrArray *
+zif_md_primary_get_packages (ZifMd *md, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	GPtrArray *array;
+	ZifMdPrimary *md_primary = ZIF_MD_PRIMARY (md);
 
 	g_return_val_if_fail (ZIF_IS_MD_PRIMARY (md), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* search with predicate */
-	array = zif_md_primary_search (md, "", cancellable, completion, error);
+	array = zif_md_primary_search (md_primary, "", cancellable, completion, error);
 	return array;
 }
 
@@ -593,6 +504,14 @@ zif_md_primary_class_init (ZifMdPrimaryClass *klass)
 	/* map */
 	md_class->load = zif_md_primary_load;
 	md_class->unload = zif_md_primary_unload;
+	md_class->search_name = zif_md_primary_search_name;
+	md_class->search_details = zif_md_primary_search_details;
+	md_class->search_group = zif_md_primary_search_group;
+	md_class->search_pkgid = zif_md_primary_search_pkgid;
+	md_class->what_provides = zif_md_primary_what_provides;
+	md_class->resolve = zif_md_primary_resolve;
+	md_class->get_packages = zif_md_primary_get_packages;
+	md_class->find_package = zif_md_primary_find_package;
 	g_type_class_add_private (klass, sizeof (ZifMdPrimaryPrivate));
 }
 

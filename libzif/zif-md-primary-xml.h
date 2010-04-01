@@ -35,8 +35,8 @@ G_BEGIN_DECLS
 
 #define ZIF_TYPE_MD_PRIMARY_XML		(zif_md_primary_xml_get_type ())
 #define ZIF_MD_PRIMARY_XML(o)		(G_TYPE_CHECK_INSTANCE_CAST ((o), ZIF_TYPE_MD_PRIMARY_XML, ZifMdPrimaryXml))
-#define ZIF_MD_PRIMARY_XML_CLASS(k)		(G_TYPE_CHECK_CLASS_CAST((k), ZIF_TYPE_MD_PRIMARY_XML, ZifMdPrimaryXmlClass))
-#define ZIF_IS_MD_PRIMARY_XML(o)		(G_TYPE_CHECK_INSTANCE_TYPE ((o), ZIF_TYPE_MD_PRIMARY_XML))
+#define ZIF_MD_PRIMARY_XML_CLASS(k)	(G_TYPE_CHECK_CLASS_CAST((k), ZIF_TYPE_MD_PRIMARY_XML, ZifMdPrimaryXmlClass))
+#define ZIF_IS_MD_PRIMARY_XML(o)	(G_TYPE_CHECK_INSTANCE_TYPE ((o), ZIF_TYPE_MD_PRIMARY_XML))
 #define ZIF_IS_MD_PRIMARY_XML_CLASS(k)	(G_TYPE_CHECK_CLASS_TYPE ((k), ZIF_TYPE_MD_PRIMARY_XML))
 #define ZIF_MD_PRIMARY_XML_GET_CLASS(o)	(G_TYPE_INSTANCE_GET_CLASS ((o), ZIF_TYPE_MD_PRIMARY_XML, ZifMdPrimaryXmlClass))
 
@@ -57,55 +57,6 @@ struct _ZifMdPrimaryXmlClass
 
 GType		 zif_md_primary_xml_get_type		(void);
 ZifMdPrimaryXml	*zif_md_primary_xml_new			(void);
-GPtrArray	*zif_md_primary_xml_search_file		(ZifMdPrimaryXml	*md,
-							 const gchar		*search,
-							 GCancellable		*cancellable,
-							 ZifCompletion		*completion,
-							 GError			**error);
-GPtrArray	*zif_md_primary_xml_search_name		(ZifMdPrimaryXml	*md,
-							 const gchar		*search,
-							 GCancellable		*cancellable,
-							 ZifCompletion		*completion,
-							 GError			**error);
-GPtrArray	*zif_md_primary_xml_search_details	(ZifMdPrimaryXml	*md,
-							 const gchar		*search,
-							 GCancellable		*cancellable,
-							 ZifCompletion		*completion,
-							 GError			**error);
-GPtrArray	*zif_md_primary_xml_search_group	(ZifMdPrimaryXml	*md,
-							 const gchar		*search,
-							 GCancellable		*cancellable,
-							 ZifCompletion		*completion,
-							 GError			**error);
-GPtrArray	*zif_md_primary_xml_search_pkgid	(ZifMdPrimaryXml	*md,
-							 const gchar		*search,
-							 GCancellable		*cancellable,
-							 ZifCompletion		*completion,
-							 GError			**error);
-GPtrArray	*zif_md_primary_xml_search_pkgkey	(ZifMdPrimaryXml	*md,
-							 guint			 pkgkey,
-							 GCancellable		*cancellable,
-							 ZifCompletion		*completion,
-							 GError			**error);
-GPtrArray	*zif_md_primary_xml_what_provides	(ZifMdPrimaryXml	*md,
-							 const gchar		*search,
-							 GCancellable		*cancellable,
-							 ZifCompletion		*completion,
-							 GError			**error);
-GPtrArray	*zif_md_primary_xml_resolve		(ZifMdPrimaryXml	*md,
-							 const gchar		*search,
-							 GCancellable		*cancellable,
-							 ZifCompletion		*completion,
-							 GError			**error);
-GPtrArray	*zif_md_primary_xml_get_packages	(ZifMdPrimaryXml	*md,
-							 GCancellable		*cancellable,
-							 ZifCompletion		*completion,
-							 GError			**error);
-GPtrArray	*zif_md_primary_xml_find_package	(ZifMdPrimaryXml	*md,
-							 const gchar		*package_id,
-							 GCancellable		*cancellable,
-							 ZifCompletion		*completion,
-							 GError			**error);
 
 G_END_DECLS
 

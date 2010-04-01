@@ -447,20 +447,9 @@ out:
 
 /**
  * zif_md_primary_xml_resolve:
- * @md: the #ZifMdPrimaryXml object
- * @search: the search term, e.g. "gnome-power-manager"
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
- * @completion: a #ZifCompletion to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
- *
- * Finds all remote packages that match the name exactly.
- *
- * Return value: an array of #ZifPackageRemote's
- *
- * Since: 0.0.1
  **/
-GPtrArray *
-zif_md_primary_xml_resolve (ZifMdPrimaryXml *md, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+static GPtrArray *
+zif_md_primary_xml_resolve (ZifMd *md, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	GPtrArray *array = NULL;
 
@@ -473,20 +462,9 @@ zif_md_primary_xml_resolve (ZifMdPrimaryXml *md, const gchar *search, GCancellab
 
 /**
  * zif_md_primary_xml_search_name:
- * @md: the #ZifMdPrimaryXml object
- * @search: the search term, e.g. "power"
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
- * @completion: a #ZifCompletion to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
- *
- * Finds all packages that match the name.
- *
- * Return value: an array of #ZifPackageRemote's
- *
- * Since: 0.0.1
  **/
-GPtrArray *
-zif_md_primary_xml_search_name (ZifMdPrimaryXml *md, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+static GPtrArray *
+zif_md_primary_xml_search_name (ZifMd *md, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	GPtrArray *array = NULL;
 	GPtrArray *packages;
@@ -496,18 +474,19 @@ zif_md_primary_xml_search_name (ZifMdPrimaryXml *md, const gchar *search, GCance
 	gboolean ret;
 	GError *error_local = NULL;
 	ZifCompletion *completion_local;
+	ZifMdPrimaryXml *md_primary = ZIF_MD_PRIMARY_XML (md);
 
 	g_return_val_if_fail (ZIF_IS_MD_PRIMARY_XML (md), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* setup completion */
-	if (md->priv->loaded)
+	if (md_primary->priv->loaded)
 		zif_completion_set_number_steps (completion, 2);
 	else
 		zif_completion_set_number_steps (completion, 3);
 
 	/* if not already loaded, load */
-	if (!md->priv->loaded) {
+	if (!md_primary->priv->loaded) {
 		completion_local = zif_completion_get_child (completion);
 		ret = zif_md_load (ZIF_MD (md), cancellable, completion_local, &error_local);
 		if (!ret) {
@@ -523,7 +502,7 @@ zif_md_primary_xml_search_name (ZifMdPrimaryXml *md, const gchar *search, GCance
 
 	/* search array */
 	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
-	packages = md->priv->array;
+	packages = md_primary->priv->array;
 	for (i=0; i<packages->len; i++) {
 		package = g_ptr_array_index (packages, i);
 		name = zif_package_get_name (package);
@@ -539,20 +518,9 @@ out:
 
 /**
  * zif_md_primary_xml_search_details:
- * @md: the #ZifMdPrimaryXml object
- * @search: the search term, e.g. "advanced"
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
- * @completion: a #ZifCompletion to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
- *
- * Finds all packages that match the name or description.
- *
- * Return value: an array of #ZifPackageRemote's
- *
- * Since: 0.0.1
  **/
-GPtrArray *
-zif_md_primary_xml_search_details (ZifMdPrimaryXml *md, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+static GPtrArray *
+zif_md_primary_xml_search_details (ZifMd *md, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	GPtrArray *array = NULL;
 
@@ -565,20 +533,9 @@ zif_md_primary_xml_search_details (ZifMdPrimaryXml *md, const gchar *search, GCa
 
 /**
  * zif_md_primary_xml_search_group:
- * @md: the #ZifMdPrimaryXml object
- * @search: the search term, e.g. "games/console"
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
- * @completion: a #ZifCompletion to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
- *
- * Finds all packages that match the group.
- *
- * Return value: an array of #ZifPackageRemote's
- *
- * Since: 0.0.1
  **/
-GPtrArray *
-zif_md_primary_xml_search_group (ZifMdPrimaryXml *md, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+static GPtrArray *
+zif_md_primary_xml_search_group (ZifMd *md, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	GPtrArray *array = NULL;
 
@@ -591,47 +548,9 @@ zif_md_primary_xml_search_group (ZifMdPrimaryXml *md, const gchar *search, GCanc
 
 /**
  * zif_md_primary_xml_search_pkgid:
- * @md: the #ZifMdPrimaryXml object
- * @search: the search term as a 64 bit hash
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
- * @completion: a #ZifCompletion to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
- *
- * Finds all packages that match the given pkgId.
- *
- * Return value: an array of #ZifPackageRemote's
- *
- * Since: 0.0.1
  **/
-GPtrArray *
-zif_md_primary_xml_search_pkgid (ZifMdPrimaryXml *md, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
-{
-	GPtrArray *array = NULL;
-
-	g_return_val_if_fail (ZIF_IS_MD_PRIMARY_XML (md), NULL);
-	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
-
-	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
-	return array;
-}
-
-/**
- * zif_md_primary_xml_search_pkgkey:
- * @md: the #ZifMdPrimaryXml object
- * @pkgkey: the package key, unique to this sqlite file
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
- * @completion: a #ZifCompletion to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
- *
- * Finds all packages that match the given pkgId.
- *
- * Return value: an array of #ZifPackageRemote's
- *
- * Since: 0.0.1
- **/
-GPtrArray *
-zif_md_primary_xml_search_pkgkey (ZifMdPrimaryXml *md, guint pkgkey,
-			      GCancellable *cancellable, ZifCompletion *completion, GError **error)
+static GPtrArray *
+zif_md_primary_xml_search_pkgid (ZifMd *md, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	GPtrArray *array = NULL;
 
@@ -644,35 +563,25 @@ zif_md_primary_xml_search_pkgkey (ZifMdPrimaryXml *md, guint pkgkey,
 
 /**
  * zif_md_primary_xml_what_provides:
- * @md: the #ZifMdPrimaryXml object
- * @search: the provide, e.g. "mimehandler(application/ogg)"
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
- * @completion: a #ZifCompletion to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
- *
- * Finds all packages that match the given provide.
- *
- * Return value: an array of #ZifPackageRemote's
- *
- * Since: 0.0.1
  **/
-GPtrArray *
-zif_md_primary_xml_what_provides (ZifMdPrimaryXml *md, const gchar *search,
-			      GCancellable *cancellable, ZifCompletion *completion, GError **error)
+static GPtrArray *
+zif_md_primary_xml_what_provides (ZifMd *md, const gchar *search,
+				  GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	GPtrArray *array = NULL;
 	gboolean ret;
 	GError *error_local = NULL;
 	ZifCompletion *completion_local;
+	ZifMdPrimaryXml *md_primary = ZIF_MD_PRIMARY_XML (md);
 
 	/* setup completion */
-	if (md->priv->loaded)
+	if (md_primary->priv->loaded)
 		zif_completion_set_number_steps (completion, 2);
 	else
 		zif_completion_set_number_steps (completion, 3);
 
 	/* if not already loaded, load */
-	if (!md->priv->loaded) {
+	if (!md_primary->priv->loaded) {
 		completion_local = zif_completion_get_child (completion);
 		ret = zif_md_load (ZIF_MD (md), cancellable, completion_local, &error_local);
 		if (!ret) {
@@ -696,20 +605,9 @@ out:
 
 /**
  * zif_md_primary_xml_find_package:
- * @md: the #ZifMdPrimaryXml object
- * @package_id: the PackageId to match
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
- * @completion: a #ZifCompletion to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
- *
- * Finds all packages that match PackageId.
- *
- * Return value: an array of #ZifPackageRemote's
- *
- * Since: 0.0.1
  **/
-GPtrArray *
-zif_md_primary_xml_find_package (ZifMdPrimaryXml *md, const gchar *package_id, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+static GPtrArray *
+zif_md_primary_xml_find_package (ZifMd *md, const gchar *package_id, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	GPtrArray *array = NULL;
 
@@ -722,19 +620,9 @@ zif_md_primary_xml_find_package (ZifMdPrimaryXml *md, const gchar *package_id, G
 
 /**
  * zif_md_primary_xml_get_packages:
- * @md: the #ZifMdPrimaryXml object
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
- * @completion: a #ZifCompletion to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
- *
- * Returns all packages in the repo.
- *
- * Return value: an array of #ZifPackageRemote's
- *
- * Since: 0.0.1
  **/
-GPtrArray *
-zif_md_primary_xml_get_packages (ZifMdPrimaryXml *md, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+static GPtrArray *
+zif_md_primary_xml_get_packages (ZifMd *md, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	GPtrArray *array = NULL;
 
@@ -775,6 +663,15 @@ zif_md_primary_xml_class_init (ZifMdPrimaryXmlClass *klass)
 	/* map */
 	md_class->load = zif_md_primary_xml_load;
 	md_class->unload = zif_md_primary_xml_unload;
+	md_class->search_name = zif_md_primary_xml_search_name;
+	md_class->search_details = zif_md_primary_xml_search_details;
+	md_class->search_group = zif_md_primary_xml_search_group;
+	md_class->search_pkgid = zif_md_primary_xml_search_pkgid;
+	md_class->what_provides = zif_md_primary_xml_what_provides;
+	md_class->resolve = zif_md_primary_xml_resolve;
+	md_class->get_packages = zif_md_primary_xml_get_packages;
+	md_class->find_package = zif_md_primary_xml_find_package;
+
 	g_type_class_add_private (klass, sizeof (ZifMdPrimaryXmlPrivate));
 }
 

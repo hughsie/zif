@@ -57,50 +57,6 @@ struct _ZifMdPrimaryClass
 
 GType		 zif_md_primary_get_type		(void);
 ZifMdPrimary	*zif_md_primary_new			(void);
-GPtrArray	*zif_md_primary_search_file		(ZifMdPrimary		*md,
-							 const gchar		*search,
-							 GCancellable		*cancellable,
-							 ZifCompletion		*completion,
-							 GError			**error);
-GPtrArray	*zif_md_primary_search_name		(ZifMdPrimary		*md,
-							 const gchar		*search,
-							 GCancellable		*cancellable,
-							 ZifCompletion		*completion,
-							 GError			**error);
-GPtrArray	*zif_md_primary_search_details		(ZifMdPrimary		*md,
-							 const gchar		*search,
-							 GCancellable		*cancellable,
-							 ZifCompletion		*completion,
-							 GError			**error);
-GPtrArray	*zif_md_primary_search_group		(ZifMdPrimary		*md,
-							 const gchar		*search,
-							 GCancellable		*cancellable,
-							 ZifCompletion		*completion,
-							 GError			**error);
-GPtrArray	*zif_md_primary_search_pkgid		(ZifMdPrimary		*md,
-							 const gchar		*search,
-							 GCancellable		*cancellable,
-							 ZifCompletion		*completion,
-							 GError			**error);
-GPtrArray	*zif_md_primary_what_provides		(ZifMdPrimary		*md,
-							 const gchar		*search,
-							 GCancellable		*cancellable,
-							 ZifCompletion		*completion,
-							 GError			**error);
-GPtrArray	*zif_md_primary_resolve			(ZifMdPrimary		*md,
-							 const gchar		*search,
-							 GCancellable		*cancellable,
-							 ZifCompletion		*completion,
-							 GError			**error);
-GPtrArray	*zif_md_primary_get_packages		(ZifMdPrimary		*md,
-							 GCancellable		*cancellable,
-							 ZifCompletion		*completion,
-							 GError			**error);
-GPtrArray	*zif_md_primary_find_package		(ZifMdPrimary		*md,
-							 const gchar		*package_id,
-							 GCancellable		*cancellable,
-							 ZifCompletion		*completion,
-							 GError			**error);
 
 G_END_DECLS
 
