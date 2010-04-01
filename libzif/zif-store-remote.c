@@ -149,7 +149,7 @@ zif_store_remote_get_md_from_type (ZifStoreRemote *store, ZifMdType type)
 		return store->priv->md_primary_xml;
 	if (type == ZIF_MD_TYPE_OTHER_SQL)
 		return NULL;
-	if (type == ZIF_MD_TYPE_COMPS)
+	if (type == ZIF_MD_TYPE_COMPS_GZ)
 		return store->priv->md_comps;
 	if (type == ZIF_MD_TYPE_UPDATEINFO)
 		return store->priv->md_updateinfo;
@@ -197,7 +197,7 @@ zif_store_remote_parser_start_element (GMarkupParseContext *context, const gchar
 				else if (g_strcmp0 (attribute_values[i], "group") == 0)
 					store->priv->parser_type = ZIF_MD_TYPE_COMPS;
 				else if (g_strcmp0 (attribute_values[i], "group_gz") == 0)
-					store->priv->parser_type = ZIF_MD_TYPE_COMPS;
+					store->priv->parser_type = ZIF_MD_TYPE_COMPS_GZ;
 				else if (g_strcmp0 (attribute_values[i], "prestodelta") == 0)
 					store->priv->parser_type = ZIF_MD_TYPE_PRESTODELTA;
 				else if (g_strcmp0 (attribute_values[i], "updateinfo") == 0)
@@ -1594,6 +1594,7 @@ zif_store_remote_search_details (ZifStore *store, const gchar *search, GCancella
 	GPtrArray *array = NULL;
 	ZifStoreRemote *remote = ZIF_STORE_REMOTE (store);
 	ZifCompletion *completion_local;
+	ZifMd *md;
 
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), NULL);
 	g_return_val_if_fail (remote->priv->id != NULL, NULL);
@@ -1628,7 +1629,8 @@ zif_store_remote_search_details (ZifStore *store, const gchar *search, GCancella
 	}
 
 	completion_local = zif_completion_get_child (completion);
-	array = zif_md_search_details (remote->priv->md_primary_db, search, cancellable, completion_local, error);
+	md = zif_store_remote_get_primary (remote);
+	array = zif_md_search_details (md, search, cancellable, completion_local, error);
 
 	/* this section done */
 	zif_completion_done (completion);

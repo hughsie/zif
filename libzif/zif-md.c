@@ -1010,7 +1010,7 @@ zif_md_type_to_text (ZifMdType type)
 		return "other_db";
 	if (type == ZIF_MD_TYPE_COMPS)
 		return "group";
-	if (type == ZIF_MD_TYPE_COMPS)
+	if (type == ZIF_MD_TYPE_COMPS_GZ)
 		return "group_gz";
 	if (type == ZIF_MD_TYPE_METALINK)
 		return "metalink";

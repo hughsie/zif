@@ -68,7 +68,7 @@ main (int argc, char **argv)
 	zif_md_metalink_test (test);
 	zif_md_mirrorlist_test (test);
 	zif_md_filelists_test (test);
-	zif_md_primary_test (test);
+	zif_md_primary_sql_test (test);
 	zif_md_comps_test (test);
 	zif_md_updateinfo_test (test);
 	zif_download_test (test);

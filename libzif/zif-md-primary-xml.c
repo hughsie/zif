@@ -445,31 +445,19 @@ out:
 	return primary_xml->priv->loaded;
 }
 
-/**
- * zif_md_primary_xml_resolve:
- **/
-static GPtrArray *
-zif_md_primary_xml_resolve (ZifMd *md, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
-{
-	GPtrArray *array = NULL;
-
-	g_return_val_if_fail (ZIF_IS_MD_PRIMARY_XML (md), NULL);
-	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
-
-	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
-	return array;
-}
+typedef gboolean (*ZifPackageFilterFunc)		(ZifPackage		*package,
+							 gpointer		 user_data);
 
 /**
- * zif_md_primary_xml_search_name:
+ * zif_md_primary_xml_filter:
  **/
 static GPtrArray *
-zif_md_primary_xml_search_name (ZifMd *md, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+zif_md_primary_xml_filter (ZifMd *md, ZifPackageFilterFunc filter_func, gpointer user_data,
+			   GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	GPtrArray *array = NULL;
 	GPtrArray *packages;
 	ZifPackage *package;
-	const gchar *name;
 	guint i;
 	gboolean ret;
 	GError *error_local = NULL;
@@ -505,8 +493,7 @@ zif_md_primary_xml_search_name (ZifMd *md, const gchar *search, GCancellable *ca
 	packages = md_primary->priv->array;
 	for (i=0; i<packages->len; i++) {
 		package = g_ptr_array_index (packages, i);
-		name = zif_package_get_name (package);
-		if (g_strstr_len (name, -1, search) != NULL)
+		if (filter_func (package, user_data))
 			g_ptr_array_add (array, g_object_ref (package));
 	}
 
@@ -517,18 +504,100 @@ out:
 }
 
 /**
+ * zif_md_primary_xml_resolve_cb:
+ **/
+static gboolean
+zif_md_primary_xml_resolve_cb (ZifPackage *package, gpointer user_data)
+{
+	const gchar *value;
+	const gchar *search = (const gchar *) user_data;
+	value = zif_package_get_name (package);
+	return (g_strcmp0 (value, search) == 0);
+}
+
+/**
+ * zif_md_primary_xml_resolve:
+ **/
+static GPtrArray *
+zif_md_primary_xml_resolve (ZifMd *md, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+{
+	return zif_md_primary_xml_filter (md, zif_md_primary_xml_resolve_cb, (gpointer) search,
+					  cancellable, completion, error);
+}
+
+/**
+ * zif_md_primary_xml_search_name_cb:
+ **/
+static gboolean
+zif_md_primary_xml_search_name_cb (ZifPackage *package, gpointer user_data)
+{
+	const gchar *value;
+	const gchar *search = (const gchar *) user_data;
+	value = zif_package_get_name (package);
+	return (g_strstr_len (value, -1, search) != NULL);
+}
+
+/**
+ * zif_md_primary_xml_search_name:
+ **/
+static GPtrArray *
+zif_md_primary_xml_search_name (ZifMd *md, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+{
+	return zif_md_primary_xml_filter (md, zif_md_primary_xml_search_name_cb, (gpointer) search,
+					  cancellable, completion, error);
+}
+
+/**
+ * zif_md_primary_xml_search_details_cb:
+ **/
+static gboolean
+zif_md_primary_xml_search_details_cb (ZifPackage *package, gpointer user_data)
+{
+	gboolean ret;
+	const gchar *value;
+	ZifString *string;
+	const gchar *search = (const gchar *) user_data;
+	value = zif_package_get_name (package);
+	ret = (g_strstr_len (value, -1, search) != NULL);
+	if (ret)
+		goto out;
+	string = zif_package_get_summary (package, NULL);
+	ret = (g_strstr_len (zif_string_get_value (string), -1, search) != NULL);
+	zif_string_unref (string);
+	if (ret)
+		goto out;
+	string = zif_package_get_description (package, NULL);
+	ret = (g_strstr_len (zif_string_get_value (string), -1, search) != NULL);
+	zif_string_unref (string);
+	if (ret)
+		goto out;
+out:
+	return ret;
+}
+
+/**
  * zif_md_primary_xml_search_details:
  **/
 static GPtrArray *
 zif_md_primary_xml_search_details (ZifMd *md, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
-	GPtrArray *array = NULL;
+	return zif_md_primary_xml_filter (md, zif_md_primary_xml_search_details_cb, (gpointer) search,
+					  cancellable, completion, error);
+}
 
-	g_return_val_if_fail (ZIF_IS_MD_PRIMARY_XML (md), NULL);
-	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
-
-	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
-	return array;
+/**
+ * zif_md_primary_xml_search_group_cb:
+ **/
+static gboolean
+zif_md_primary_xml_search_group_cb (ZifPackage *package, gpointer user_data)
+{
+	gboolean ret;
+	ZifString *value;
+	const gchar *search = (const gchar *) user_data;
+	value = zif_package_get_category (package, NULL);
+	ret = (g_strstr_len (zif_string_get_value (value), -1, search) != NULL);
+	zif_string_unref (value);
+	return ret;
 }
 
 /**
@@ -537,13 +606,20 @@ zif_md_primary_xml_search_details (ZifMd *md, const gchar *search, GCancellable 
 static GPtrArray *
 zif_md_primary_xml_search_group (ZifMd *md, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
-	GPtrArray *array = NULL;
+	return zif_md_primary_xml_filter (md, zif_md_primary_xml_search_group_cb, (gpointer) search,
+					  cancellable, completion, error);
+}
 
-	g_return_val_if_fail (ZIF_IS_MD_PRIMARY_XML (md), NULL);
-	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
-
-	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
-	return array;
+/**
+ * zif_md_primary_xml_search_pkgid_cb:
+ **/
+static gboolean
+zif_md_primary_xml_search_pkgid_cb (ZifPackage *package, gpointer user_data)
+{
+	const gchar *value;
+	const gchar *search = (const gchar *) user_data;
+	value = (const gchar *) g_object_get_data (G_OBJECT (package), "pkgid");
+	return (g_strcmp0 (value, search) == 0);
 }
 
 /**
@@ -552,13 +628,24 @@ zif_md_primary_xml_search_group (ZifMd *md, const gchar *search, GCancellable *c
 static GPtrArray *
 zif_md_primary_xml_search_pkgid (ZifMd *md, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
-	GPtrArray *array = NULL;
+	return zif_md_primary_xml_filter (md, zif_md_primary_xml_search_pkgid_cb, (gpointer) search,
+					  cancellable, completion, error);
+}
 
-	g_return_val_if_fail (ZIF_IS_MD_PRIMARY_XML (md), NULL);
-	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
-
-	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
-	return array;
+/**
+ * zif_md_primary_xml_what_provides_cb:
+ **/
+static gboolean
+zif_md_primary_xml_what_provides_cb (ZifPackage *package, gpointer user_data)
+{
+	gboolean ret;
+	GPtrArray *array;
+//	const gchar *search = (const gchar *) user_data;
+	array = zif_package_get_provides (package, NULL);
+	/* TODO: do something with the ZifDepend objects */
+	ret = FALSE;
+	g_ptr_array_unref (array);
+	return ret;
 }
 
 /**
@@ -568,39 +655,20 @@ static GPtrArray *
 zif_md_primary_xml_what_provides (ZifMd *md, const gchar *search,
 				  GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
-	GPtrArray *array = NULL;
-	gboolean ret;
-	GError *error_local = NULL;
-	ZifCompletion *completion_local;
-	ZifMdPrimaryXml *md_primary = ZIF_MD_PRIMARY_XML (md);
+	return zif_md_primary_xml_filter (md, zif_md_primary_xml_what_provides_cb, (gpointer) search,
+					  cancellable, completion, error);
+}
 
-	/* setup completion */
-	if (md_primary->priv->loaded)
-		zif_completion_set_number_steps (completion, 2);
-	else
-		zif_completion_set_number_steps (completion, 3);
-
-	/* if not already loaded, load */
-	if (!md_primary->priv->loaded) {
-		completion_local = zif_completion_get_child (completion);
-		ret = zif_md_load (ZIF_MD (md), cancellable, completion_local, &error_local);
-		if (!ret) {
-			g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED_TO_LOAD,
-				     "failed to load md_primary_xml file: %s", error_local->message);
-			g_error_free (error_local);
-			goto out;
-		}
-
-		/* this section done */
-		zif_completion_done (completion);
-	}
-
-	/* this section done */
-	zif_completion_done (completion);
-	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
-
-out:
-	return array;
+/**
+ * zif_md_primary_xml_find_package_cb:
+ **/
+static gboolean
+zif_md_primary_xml_find_package_cb (ZifPackage *package, gpointer user_data)
+{
+	const gchar *value;
+	const gchar *search = (const gchar *) user_data;
+	value = zif_package_get_id (package);
+	return (g_strcmp0 (value, search) == 0);
 }
 
 /**
@@ -609,13 +677,8 @@ out:
 static GPtrArray *
 zif_md_primary_xml_find_package (ZifMd *md, const gchar *package_id, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
-	GPtrArray *array = NULL;
-
-	g_return_val_if_fail (ZIF_IS_MD_PRIMARY_XML (md), NULL);
-	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
-
-	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
-	return array;
+	return zif_md_primary_xml_filter (md, zif_md_primary_xml_find_package_cb, (gpointer) package_id,
+					  cancellable, completion, error);
 }
 
 /**
@@ -624,13 +687,8 @@ zif_md_primary_xml_find_package (ZifMd *md, const gchar *package_id, GCancellabl
 static GPtrArray *
 zif_md_primary_xml_get_packages (ZifMd *md, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
-	GPtrArray *array = NULL;
-
-	g_return_val_if_fail (ZIF_IS_MD_PRIMARY_XML (md), NULL);
-	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
-
-	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
-	return array;
+	ZifMdPrimaryXml *primary_xml = ZIF_MD_PRIMARY_XML (md);
+	return g_ptr_array_ref (primary_xml->priv->array);
 }
 
 /**
@@ -748,7 +806,7 @@ zif_md_primary_xml_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "set type");
-	ret = zif_md_set_mdtype (ZIF_MD (md), ZIF_MD_TYPE_PRIMARY_XML_DB);
+	ret = zif_md_set_mdtype (ZIF_MD (md), ZIF_MD_TYPE_PRIMARY_XML);
 	if (ret)
 		egg_test_success (test, NULL);
 	else

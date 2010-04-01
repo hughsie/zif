@@ -585,7 +585,7 @@ zif_md_primary_sql_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "set type");
-	ret = zif_md_set_mdtype (ZIF_MD (md), ZIF_MD_TYPE_PRIMARY_SQL_SQL);
+	ret = zif_md_set_mdtype (ZIF_MD (md), ZIF_MD_TYPE_PRIMARY_SQL);
 	if (ret)
 		egg_test_success (test, NULL);
 	else
@@ -617,7 +617,7 @@ zif_md_primary_sql_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "set filename");
-	ret = zif_md_set_filename (ZIF_MD (md), "../test/cache/fedora/35d817e2bac701525fa72cec57387a2e3457bf32642adeee1e345cc180044c86-primary_sql.sqlite.bz2");
+	ret = zif_md_set_filename (ZIF_MD (md), "../test/cache/fedora/35d817e2bac701525fa72cec57387a2e3457bf32642adeee1e345cc180044c86-primary.sqlite.bz2");
 	if (ret)
 		egg_test_success (test, NULL);
 	else
