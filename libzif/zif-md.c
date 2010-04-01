@@ -500,6 +500,13 @@ zif_md_load (ZifMd *md, GCancellable *cancellable, ZifCompletion *completion, GE
 	/* check compressed file */
 	ret = zif_md_file_check (md, FALSE, &error_local);
 	if (!ret) {
+
+		/* this one really is fatal */
+		if (g_strstr_len (error_local->message, -1, "no filename") != NULL) {
+			g_propagate_error (error, error_local);
+			goto out;
+		}
+
 		egg_warning ("failed checksum for compressed: %s", error_local->message);
 		g_clear_error (&error_local);
 
@@ -693,15 +700,15 @@ out:
 const gchar *
 zif_md_type_to_text (ZifMdType type)
 {
-	if (type == ZIF_MD_TYPE_FILELISTS)
+	if (type == ZIF_MD_TYPE_FILELISTS_XML)
 		return "filelists";
 	if (type == ZIF_MD_TYPE_FILELISTS_DB)
 		return "filelists_db";
-	if (type == ZIF_MD_TYPE_PRIMARY)
+	if (type == ZIF_MD_TYPE_PRIMARY_XML)
 		return "primary";
 	if (type == ZIF_MD_TYPE_PRIMARY_DB)
 		return "primary_db";
-	if (type == ZIF_MD_TYPE_OTHER)
+	if (type == ZIF_MD_TYPE_OTHER_XML)
 		return "other";
 	if (type == ZIF_MD_TYPE_OTHER_DB)
 		return "other_db";
@@ -760,6 +767,14 @@ zif_md_file_check (ZifMd *md, gboolean use_uncompressed, GError **error)
 		filename = md->priv->filename_uncompressed;
 	else
 		filename = md->priv->filename;
+
+	/* no checksum set */
+	if (filename == NULL) {
+		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED,
+			     "no filename for %s [%s]", md->priv->id, zif_md_type_to_text (md->priv->type));
+		ret = FALSE;
+		goto out;
+	}
 
 	/* get contents */
 	ret = g_file_get_contents (filename, &data, &length, &error_local);

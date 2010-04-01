@@ -80,6 +80,8 @@ libzif_la_SOURCES =						\
 	zif-md-filelists.h					\
 	zif-md-primary.c					\
 	zif-md-primary.h					\
+	zif-md-primary-xml.c					\
+	zif-md-primary-xml.h					\
 	zif-md-metalink.c					\
 	zif-md-metalink.h					\
 	zif-md-mirrorlist.c					\

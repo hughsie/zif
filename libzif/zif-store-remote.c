@@ -47,6 +47,7 @@
 #include "zif-md-metalink.h"
 #include "zif-md-mirrorlist.h"
 #include "zif-md-primary.h"
+#include "zif-md-primary-xml.h"
 #include "zif-store.h"
 #include "zif-store-local.h"
 #include "zif-store-remote.h"
@@ -79,7 +80,8 @@ struct _ZifStoreRemotePrivate
 	gboolean		 enabled;
 	gboolean		 loaded;
 	gboolean		 loaded_metadata;
-	ZifMd			*md_primary;
+	ZifMd			*md_primary_db;
+	ZifMd			*md_primary_xml;
 	ZifMd			*md_filelists;
 	ZifMd			*md_metalink;
 	ZifMd			*md_mirrorlist;
@@ -114,6 +116,23 @@ zif_store_remote_checksum_type_from_text (const gchar *type)
 }
 
 /**
+ * zif_store_remote_get_primary:
+ **/
+static ZifMd *
+zif_store_remote_get_primary (ZifStoreRemote *store)
+{
+	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), NULL);
+
+	if (zif_md_get_location (store->priv->md_primary_db) != NULL)
+		return store->priv->md_primary_db;
+	if (zif_md_get_location (store->priv->md_primary_xml) != NULL)
+		return store->priv->md_primary_xml;
+
+	/* this should never happen */
+	return NULL;
+}
+
+/**
  * zif_store_remote_get_md_from_type:
  **/
 static ZifMd *
@@ -125,7 +144,9 @@ zif_store_remote_get_md_from_type (ZifStoreRemote *store, ZifMdType type)
 	if (type == ZIF_MD_TYPE_FILELISTS_DB)
 		return store->priv->md_filelists;
 	if (type == ZIF_MD_TYPE_PRIMARY_DB)
-		return store->priv->md_primary;
+		return store->priv->md_primary_db;
+	if (type == ZIF_MD_TYPE_PRIMARY_XML)
+		return store->priv->md_primary_xml;
 	if (type == ZIF_MD_TYPE_OTHER_DB)
 		return NULL;
 	if (type == ZIF_MD_TYPE_COMPS_XML)
@@ -162,15 +183,15 @@ zif_store_remote_parser_start_element (GMarkupParseContext *context, const gchar
 		for (i=0; attribute_names[i] != NULL; i++) {
 			if (g_strcmp0 (attribute_names[i], "type") == 0) {
 				if (g_strcmp0 (attribute_values[i], "primary") == 0)
-					store->priv->parser_type = ZIF_MD_TYPE_PRIMARY;
+					store->priv->parser_type = ZIF_MD_TYPE_PRIMARY_XML;
 				else if (g_strcmp0 (attribute_values[i], "primary_db") == 0)
 					store->priv->parser_type = ZIF_MD_TYPE_PRIMARY_DB;
 				else if (g_strcmp0 (attribute_values[i], "filelists") == 0)
-					store->priv->parser_type = ZIF_MD_TYPE_FILELISTS;
+					store->priv->parser_type = ZIF_MD_TYPE_FILELISTS_XML;
 				else if (g_strcmp0 (attribute_values[i], "filelists_db") == 0)
 					store->priv->parser_type = ZIF_MD_TYPE_FILELISTS_DB;
 				else if (g_strcmp0 (attribute_values[i], "other") == 0)
-					store->priv->parser_type = ZIF_MD_TYPE_OTHER;
+					store->priv->parser_type = ZIF_MD_TYPE_OTHER_XML;
 				else if (g_strcmp0 (attribute_values[i], "other_db") == 0)
 					store->priv->parser_type = ZIF_MD_TYPE_OTHER_DB;
 				else if (g_strcmp0 (attribute_values[i], "group") == 0)
@@ -752,6 +773,7 @@ zif_store_remote_load_metadata (ZifStoreRemote *store, GCancellable *cancellable
 	gchar *contents = NULL;
 	gchar *basename;
 	gchar *filename;
+	gboolean primary_okay = FALSE;
 	gsize size;
 	GError *error_local = NULL;
 	ZifMd *md;
@@ -877,16 +899,16 @@ zif_store_remote_load_metadata (ZifStoreRemote *store, GCancellable *cancellable
 		if (i == ZIF_MD_TYPE_MIRRORLIST)
 			continue;
 
-		/* location not set */
+		/* ensure we have at least one primary */
 		location = zif_md_get_location (md);
+		if (location != NULL &&
+		    (i == ZIF_MD_TYPE_PRIMARY_DB ||
+		     i == ZIF_MD_TYPE_PRIMARY_XML)) {
+			primary_okay = TRUE;
+		}
+
+		/* location not set */
 		if (location == NULL) {
-			/* messed up repo file, this is fatal */
-			if (i == ZIF_MD_TYPE_PRIMARY_DB) {
-				g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
-					     "failed to get primary metadata location for %s", store->priv->id);
-				ret = FALSE;
-				goto out;
-			}
 			egg_debug ("no location set for %s with %s", zif_md_type_to_text (i), store->priv->id);
 			continue;
 		}
@@ -897,6 +919,14 @@ zif_store_remote_load_metadata (ZifStoreRemote *store, GCancellable *cancellable
 		zif_md_set_filename (md, filename);
 		g_free (basename);
 		g_free (filename);
+	}
+
+	/* messed up repo file, this is fatal */
+	if (!primary_okay) {
+		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+			     "failed to get primary metadata location for %s", store->priv->id);
+		ret = FALSE;
+		goto out;
 	}
 
 	/* all okay */
@@ -1490,7 +1520,7 @@ zif_store_remote_resolve (ZifStore *store, const gchar *search, GCancellable *ca
 	}
 
 	completion_local = zif_completion_get_child (completion);
-	array = zif_md_primary_resolve (ZIF_MD_PRIMARY (remote->priv->md_primary), search, cancellable, completion_local, error);
+	array = zif_md_primary_resolve (ZIF_MD_PRIMARY (remote->priv->md_primary_db), search, cancellable, completion_local, error);
 
 	/* this section done */
 	zif_completion_done (completion);
@@ -1509,6 +1539,7 @@ zif_store_remote_search_name (ZifStore *store, const gchar *search, GCancellable
 	GPtrArray *array = NULL;
 	ZifStoreRemote *remote = ZIF_STORE_REMOTE (store);
 	ZifCompletion *completion_local;
+	ZifMd *md;
 
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), NULL);
 	g_return_val_if_fail (remote->priv->id != NULL, NULL);
@@ -1543,7 +1574,11 @@ zif_store_remote_search_name (ZifStore *store, const gchar *search, GCancellable
 	}
 
 	completion_local = zif_completion_get_child (completion);
-	array = zif_md_primary_search_name (ZIF_MD_PRIMARY (remote->priv->md_primary), search, cancellable, completion_local, error);
+	md = zif_store_remote_get_primary (remote);
+	if (ZIF_IS_MD_PRIMARY_XML (md))
+		array = zif_md_primary_xml_search_name (ZIF_MD_PRIMARY_XML (md), search, cancellable, completion_local, error);
+	else
+		array = zif_md_primary_search_name (ZIF_MD_PRIMARY (md), search, cancellable, completion_local, error);
 
 	/* this section done */
 	zif_completion_done (completion);
@@ -1596,7 +1631,7 @@ zif_store_remote_search_details (ZifStore *store, const gchar *search, GCancella
 	}
 
 	completion_local = zif_completion_get_child (completion);
-	array = zif_md_primary_search_details (ZIF_MD_PRIMARY (remote->priv->md_primary), search, cancellable, completion_local, error);
+	array = zif_md_primary_search_details (ZIF_MD_PRIMARY (remote->priv->md_primary_db), search, cancellable, completion_local, error);
 
 	/* this section done */
 	zif_completion_done (completion);
@@ -1844,7 +1879,7 @@ zif_store_remote_search_group (ZifStore *store, const gchar *search, GCancellabl
 	}
 
 	completion_local = zif_completion_get_child (completion);
-	array = zif_md_primary_search_group (ZIF_MD_PRIMARY (remote->priv->md_primary), search, cancellable, completion_local, error);
+	array = zif_md_primary_search_group (ZIF_MD_PRIMARY (remote->priv->md_primary_db), search, cancellable, completion_local, error);
 
 	/* this section done */
 	zif_completion_done (completion);
@@ -1899,7 +1934,7 @@ zif_store_remote_find_package (ZifStore *store, const gchar *package_id, GCancel
 
 	/* search with predicate, TODO: search version (epoch+release) */
 	completion_local = zif_completion_get_child (completion);
-	array = zif_md_primary_find_package (ZIF_MD_PRIMARY (remote->priv->md_primary), package_id, cancellable, completion_local, &error_local);
+	array = zif_md_primary_find_package (ZIF_MD_PRIMARY (remote->priv->md_primary_db), package_id, cancellable, completion_local, &error_local);
 	if (array == NULL) {
 		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 			     "failed to search: %s", error_local->message);
@@ -1976,7 +2011,7 @@ zif_store_remote_get_packages (ZifStore *store, GCancellable *cancellable, ZifCo
 	}
 
 	completion_local = zif_completion_get_child (completion);
-	array = zif_md_primary_get_packages (ZIF_MD_PRIMARY (remote->priv->md_primary), cancellable, completion_local, error);
+	array = zif_md_primary_get_packages (ZIF_MD_PRIMARY (remote->priv->md_primary_db), cancellable, completion_local, error);
 
 	/* this section done */
 	zif_completion_done (completion);
@@ -2177,7 +2212,7 @@ zif_store_remote_get_updates (ZifStore *store, GPtrArray *packages,
 		/* find package name in repo */
 		completion_local = zif_completion_get_child (completion);
 		split = pk_package_id_split (package_id);
-		updates = zif_md_primary_resolve (ZIF_MD_PRIMARY (remote->priv->md_primary), split[PK_PACKAGE_ID_NAME],
+		updates = zif_md_primary_resolve (ZIF_MD_PRIMARY (remote->priv->md_primary_db), split[PK_PACKAGE_ID_NAME],
 						  cancellable, completion_local, NULL);
 		g_strfreev (split);
 		if (updates == NULL) {
@@ -2257,7 +2292,7 @@ zif_store_remote_what_provides (ZifStore *store, const gchar *search,
 
 	/* get details */
 	completion_local = zif_completion_get_child (completion);
-	array = zif_md_primary_what_provides (ZIF_MD_PRIMARY (remote->priv->md_primary), search,
+	array = zif_md_primary_what_provides (ZIF_MD_PRIMARY (remote->priv->md_primary_db), search,
 						   cancellable, completion_local, error);
 
 	/* this section done */
@@ -2332,7 +2367,7 @@ zif_store_remote_search_file (ZifStore *store, const gchar *search, GCancellable
 
 		/* get the results (should just be one) */
 		completion_local = zif_completion_get_child (completion);
-		tmp = zif_md_primary_search_pkgid (ZIF_MD_PRIMARY (remote->priv->md_primary), pkgid, cancellable, completion_local, &error_local);
+		tmp = zif_md_primary_search_pkgid (ZIF_MD_PRIMARY (remote->priv->md_primary_db), pkgid, cancellable, completion_local, &error_local);
 		if (tmp == NULL) {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED_TO_FIND,
 				     "failed to resolve pkgId to package: %s", error_local->message);
@@ -2572,7 +2607,8 @@ zif_store_remote_finalize (GObject *object)
 	g_free (store->priv->repomd_filename);
 	g_free (store->priv->directory);
 
-	g_object_unref (store->priv->md_primary);
+	g_object_unref (store->priv->md_primary_db);
+	g_object_unref (store->priv->md_primary_xml);
 	g_object_unref (store->priv->md_filelists);
 	g_object_unref (store->priv->md_comps);
 	g_object_unref (store->priv->md_updateinfo);
@@ -2645,7 +2681,8 @@ zif_store_remote_init (ZifStoreRemote *store)
 	store->priv->monitor = zif_monitor_new ();
 	store->priv->lock = zif_lock_new ();
 	store->priv->md_filelists = ZIF_MD (zif_md_filelists_new ());
-	store->priv->md_primary = ZIF_MD (zif_md_primary_new ());
+	store->priv->md_primary_db = ZIF_MD (zif_md_primary_new ());
+	store->priv->md_primary_xml = ZIF_MD (zif_md_primary_xml_new ());
 	store->priv->md_metalink = ZIF_MD (zif_md_metalink_new ());
 	store->priv->md_mirrorlist = ZIF_MD (zif_md_mirrorlist_new ());
 	store->priv->md_comps = ZIF_MD (zif_md_comps_new ());
