@@ -59,6 +59,7 @@ main (int argc, char **argv)
 	zif_init ();
 
 	/* tests go here */
+	zif_md_primary_xml_test (test);
 	zif_lock_test (test);
 	zif_completion_test (test);
 	zif_config_test (test);

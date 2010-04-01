@@ -822,7 +822,7 @@ zif_md_primary_xml_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "set checksum compressed");
-	ret = zif_md_set_checksum (ZIF_MD (md), "35d817e2bac701525fa72cec57387a2e3457bf32642adeee1e345cc180044c86");
+	ret = zif_md_set_checksum (ZIF_MD (md), "33a0eed8e12f445618756b18aa49d05ee30069d280d37b03a7a15d1ec954f833");
 	if (ret)
 		egg_test_success (test, NULL);
 	else
@@ -830,7 +830,7 @@ zif_md_primary_xml_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "set checksum uncompressed");
-	ret = zif_md_set_checksum_uncompressed (ZIF_MD (md), "9b2b072a83b5175bc88d03ee64b52b39c0d40fec1516baa62dba81eea73cc645");
+	ret = zif_md_set_checksum_uncompressed (ZIF_MD (md), "52e4c37b13b4b23ae96432962186e726550b19e93cf3cbf7bf55c2a673a20086");
 	if (ret)
 		egg_test_success (test, NULL);
 	else
@@ -838,7 +838,7 @@ zif_md_primary_xml_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "set filename");
-	ret = zif_md_set_filename (ZIF_MD (md), "../test/cache/fedora/35d817e2bac701525fa72cec57387a2e3457bf32642adeee1e345cc180044c86-primary_xml.sqlite.bz2");
+	ret = zif_md_set_filename (ZIF_MD (md), "../test/cache/fedora/primary.xml.gz");
 	if (ret)
 		egg_test_success (test, NULL);
 	else
@@ -858,6 +858,7 @@ zif_md_primary_xml_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "search for files");
+	zif_completion_reset (completion);
 	array = zif_md_primary_xml_resolve (md, "gnome-power-manager", cancellable, completion, &error);
 	if (array != NULL)
 		egg_test_success (test, NULL);
@@ -872,7 +873,7 @@ zif_md_primary_xml_test (EggTest *test)
 	egg_test_title (test, "correct value");
 	package = g_ptr_array_index (array, 0);
 	summary = zif_package_get_summary (package, NULL);
-	if (g_strcmp0 (zif_string_get_value (summary), "GNOME Power Manager") == 0)
+	if (g_strcmp0 (zif_string_get_value (summary), "GNOME power management service") == 0)
 		egg_test_success (test, NULL);
 	else
 		egg_test_failed (test, "failed to get correct summary '%s'", zif_string_get_value (summary));
