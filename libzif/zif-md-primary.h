@@ -82,11 +82,6 @@ GPtrArray	*zif_md_primary_search_pkgid		(ZifMdPrimary		*md,
 							 GCancellable		*cancellable,
 							 ZifCompletion		*completion,
 							 GError			**error);
-GPtrArray	*zif_md_primary_search_pkgkey		(ZifMdPrimary		*md,
-							 guint			 pkgkey,
-							 GCancellable		*cancellable,
-							 ZifCompletion		*completion,
-							 GError			**error);
 GPtrArray	*zif_md_primary_what_provides		(ZifMdPrimary		*md,
 							 const gchar		*search,
 							 GCancellable		*cancellable,

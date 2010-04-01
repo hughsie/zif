@@ -350,7 +350,7 @@ zif_md_primary_search_pkgid (ZifMdPrimary *md, const gchar *search, GCancellable
  *
  * Since: 0.0.1
  **/
-GPtrArray *
+static GPtrArray *
 zif_md_primary_search_pkgkey (ZifMdPrimary *md, guint pkgkey,
 			      GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
