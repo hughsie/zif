@@ -66,7 +66,7 @@ Zif features:
 • Internally ref-counted strings for speed
 • Remote, installed and local packages handled as abstract packages
 • Local and remote sources handled using an abstract sack
-• Self test program (224 tests)
+• Self test program (248 tests)
 • Zif has a test binary, but it's not shipped in the tarball
 
 Zif is compatible with rpm, yum and the Fedora infrastructure, specifically:
@@ -84,14 +84,8 @@ What doesn't work:
 • Installing using librpm
 • Checking of signed repodata
 • Multiarch
-• Updateinfo support
 • YumDB of storing where packages come from
-• Old style yum metadata (ZifMdFilelistsXml and ZifMdPrimaryXml)
-• Other sqlite data (required for the mime/fonts/mime auto-installing feature)
-
-And there's a zif PackageKit backend which does all the read-only operations
-(searching, dependencies, getting files, etc) in C, not python. The C backend
-is much simpler, and does not have the python interpreter startup or runtime cost.
+• Some old style yum metadata (ZifMdFilelistsXml and ZifMdOtherXml)
 
 Comparisons:
 • Zif is about 40% quicker for queries than using the yum API
