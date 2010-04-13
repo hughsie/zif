@@ -1,7 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*-
  *
  * Copyright (C) 2008 Richard Hughes <richard@hughsie.com>
- * Copyright (C) 2008 Shishir Goel <crazyontheedge@gmail.com>
  *
  * Licensed under the GNU General Public License Version 2
  *
@@ -29,6 +28,7 @@
 
 /* prototypes */
 void zif_completion_test (EggTest *test);
+void zif_changeset_test (EggTest *test);
 void zif_monitor_test (EggTest *test);
 void zif_config_test (EggTest *test);
 void zif_utils_test (EggTest *test);
@@ -59,6 +59,7 @@ main (int argc, char **argv)
 	zif_init ();
 
 	/* tests go here */
+	zif_changeset_test (test);
 	zif_md_primary_xml_test (test);
 	zif_lock_test (test);
 	zif_completion_test (test);

@@ -38,6 +38,7 @@ libzif_include_HEADERS =					\
 	zif-package.h						\
 	zif-package-local.h					\
 	zif-package-remote.h					\
+	zif-changeset.h						\
 	zif-store.h						\
 	zif-store-local.h					\
 	zif-store-remote.h					\
@@ -58,6 +59,8 @@ libzif_la_SOURCES =						\
 	zif-lock.h						\
 	zif-completion.c					\
 	zif-completion.h					\
+	zif-changeset.c						\
+	zif-changeset.h						\
 	zif-string.c						\
 	zif-string.h						\
 	zif-depend.c						\

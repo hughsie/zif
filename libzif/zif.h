@@ -24,21 +24,22 @@
 
 #define __ZIF_H_INSIDE__
 
-#include <zif-config.h>
+#include <zif-changeset.h>
 #include <zif-completion.h>
-#include <zif-string.h>
+#include <zif-config.h>
 #include <zif-depend.h>
+#include <zif-download.h>
+#include <zif-groups.h>
+#include <zif-lock.h>
 #include <zif-package.h>
-#include <zif-store-array.h>
 #include <zif-package-local.h>
 #include <zif-package-remote.h>
+#include <zif-repos.h>
+#include <zif-store-array.h>
 #include <zif-store-local.h>
 #include <zif-store-remote.h>
-#include <zif-repos.h>
+#include <zif-string.h>
 #include <zif-utils.h>
-#include <zif-groups.h>
-#include <zif-download.h>
-#include <zif-lock.h>
 
 #undef __ZIF_H_INSIDE__
 
