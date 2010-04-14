@@ -140,7 +140,7 @@ out:
  *
  * Returns the newest package from a list.
  *
- * Return value: a single %ZifPackage, or %NULL in the case of an error
+ * Return value: a single %ZifPackage, or %NULL in the case of an error. Use g_object_unref() when done.
  *
  * Since: 0.0.1
  **/

@@ -768,9 +768,12 @@ main (int argc, char *argv[])
 			completion_loop = zif_completion_get_child (completion_local);
 			update = zif_package_get_update_detail (package, NULL, completion_loop, &error);
 			if (update == NULL) {
-				g_print ("failed to get update detail: %s\n", error->message);
-				g_error_free (error);
-				goto out;
+				g_print ("failed to get update detail for %s: %s\n",
+					 zif_package_get_id (package), error->message);
+				g_clear_error (&error);
+
+				/* non-fatal */
+				continue;
 			}
 			g_print ("\t%s\t%s\n", "kind", pk_update_state_enum_to_string (zif_update_get_kind (update)));
 			g_print ("\t%s\t%s\n", "id", zif_update_get_id (update));

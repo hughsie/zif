@@ -545,18 +545,24 @@ zif_store_remote_get_update_detail (ZifStoreRemote *store, const gchar *package_
 	guint i;
 	GError *error_local = NULL;
 	GPtrArray *array = NULL;
+	GPtrArray *array_installed = NULL;
 	GPtrArray *changelog = NULL;
 	GPtrArray *packages = NULL;
 	ZifChangeset *changeset;
 	ZifCompletion *completion_local;
 	ZifMd *md;
+	ZifPackage *package_installed = NULL;
 	ZifUpdate *update = NULL;
+	gchar **split = NULL;
+	gchar **split_installed = NULL;
+	ZifStoreLocal *store_local = NULL;
+	const gchar *version;
 
 	/* setup completion */
 	if (store->priv->loaded_metadata)
-		zif_completion_set_number_steps (completion, 1);
+		zif_completion_set_number_steps (completion, 4);
 	else
-		zif_completion_set_number_steps (completion, 2);
+		zif_completion_set_number_steps (completion, 5);
 
 	/* if not already loaded, load */
 	if (!store->priv->loaded_metadata) {
@@ -578,8 +584,9 @@ zif_store_remote_get_update_detail (ZifStoreRemote *store, const gchar *package_
 	array = zif_md_updateinfo_get_detail_for_package (ZIF_MD_UPDATEINFO (store->priv->md_updateinfo), package_id,
 							  cancellable, completion_local, &error_local);
 	if (array == NULL) {
+		/* lets try this again with fresh metadata */
 		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
-			     "failed to find any details: %s", error_local->message);
+			     "failed to find any details in updateinfo (but referenced in primary): %s", error_local->message);
 		g_error_free (error_local);
 		goto out;
 	}
@@ -606,6 +613,9 @@ zif_store_remote_get_update_detail (ZifStoreRemote *store, const gchar *package_
 		goto out;
 	}
 
+	/* this section done */
+	zif_completion_done (completion);
+
 	/* get pkgid */
 	pkgid = zif_package_remote_get_pkgid (ZIF_PACKAGE_REMOTE (g_ptr_array_index (packages, 0)));
 
@@ -619,20 +629,58 @@ zif_store_remote_get_update_detail (ZifStoreRemote *store, const gchar *package_
 		goto out;
 	}
 
+	/* this section done */
+	zif_completion_done (completion);
+
+	/* get the newest installed package with this name */
+	completion_local = zif_completion_get_child (completion);
+	split = pk_package_id_split (package_id);
+	store_local = zif_store_local_new ();
+	array_installed = zif_store_resolve (ZIF_STORE (store_local), split[PK_PACKAGE_ID_NAME], cancellable, completion_local, &error_local);
+	if (array_installed == NULL) {
+		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+			     "failed to resolve installed package for update: %s", error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* this section done */
+	zif_completion_done (completion);
+
+	/* get newest, ignore error */
+	package_installed = zif_package_array_get_newest (array_installed, NULL);
+	split_installed = pk_package_id_split (zif_package_get_package_id (package_installed));
+
 	/* add the changesets (the changelog) to the update */
 	update = g_object_ref (g_ptr_array_index (array, 0));
 	for (i=0; i<changelog->len; i++) {
 		changeset = g_ptr_array_index (changelog, i);
-		//FIXME: only add if never than what we have installed
 		zif_update_add_changeset (update, changeset);
+
+		/* abort when the changeset is older than what we have installed */
+		version = zif_changeset_get_version (changeset);
+		if (version != NULL &&
+		    zif_compare_evr (split_installed[PK_PACKAGE_ID_VERSION], version) >= 0)
+			break;
 	}
+
+	/* this section done */
+	zif_completion_done (completion);
 out:
+	g_strfreev (split);
+	g_strfreev (split_installed);
 	if (changelog != NULL)
 		g_ptr_array_unref (changelog);
 	if (array != NULL)
 		g_ptr_array_unref (array);
+	if (array_installed != NULL)
+		g_ptr_array_unref (array_installed);
 	if (packages != NULL)
 		g_ptr_array_unref (packages);
+	if (package_installed != NULL)
+		g_object_unref (package_installed);
+	if (store_local != NULL)
+		g_object_unref (store_local);
 	return update;
 }
 
