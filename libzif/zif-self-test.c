@@ -27,6 +27,7 @@
 #include "egg-debug.h"
 
 /* prototypes */
+void zif_md_other_sql_test (EggTest *test);
 void zif_completion_test (EggTest *test);
 void zif_changeset_test (EggTest *test);
 void zif_monitor_test (EggTest *test);
@@ -59,6 +60,7 @@ main (int argc, char **argv)
 	zif_init ();
 
 	/* tests go here */
+	zif_md_other_sql_test (test);
 	zif_changeset_test (test);
 	zif_md_primary_xml_test (test);
 	zif_lock_test (test);

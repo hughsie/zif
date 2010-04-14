@@ -83,6 +83,8 @@ libzif_la_SOURCES =						\
 	zif-md-filelists.h					\
 	zif-md-primary-sql.c					\
 	zif-md-primary-sql.h					\
+	zif-md-other-sql.c					\
+	zif-md-other-sql.h					\
 	zif-md-primary-xml.c					\
 	zif-md-primary-xml.h					\
 	zif-md-metalink.c					\
