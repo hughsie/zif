@@ -66,7 +66,6 @@ typedef enum {
 #include "zif-package-remote.h"
 
 #include "egg-debug.h"
-#include "egg-string.h"
 
 #define ZIF_MD_PRIMARY_XML_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_MD_PRIMARY_XML, ZifMdPrimaryXmlPrivate))
 

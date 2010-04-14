@@ -53,8 +53,6 @@ libzif_include_HEADERS =					\
 libzif_la_SOURCES =						\
 	egg-debug.c						\
 	egg-debug.h						\
-	egg-string.c						\
-	egg-string.h						\
 	zif-lock.c						\
 	zif-lock.h						\
 	zif-completion.c					\

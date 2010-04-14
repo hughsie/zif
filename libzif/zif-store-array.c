@@ -47,7 +47,6 @@
 #include "zif-repos.h"
 
 #include "egg-debug.h"
-#include "egg-string.h"
 
 /* in PackageKit we split categories from groups using a special @ prefix (bodge) */
 #define PK_ROLE_ENUM_SEARCH_CATEGORY	(PK_ROLE_ENUM_UNKNOWN + 1)

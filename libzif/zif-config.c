@@ -49,7 +49,6 @@
 #include "zif-monitor.h"
 
 #include "egg-debug.h"
-#include "egg-string.h"
 
 #define ZIF_CONFIG_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_CONFIG, ZifConfigPrivate))
 
@@ -216,8 +215,8 @@ guint
 zif_config_get_uint (ZifConfig *config, const gchar *key, GError **error)
 {
 	gchar *value;
-	gboolean ret;
 	guint retval = G_MAXUINT;
+	gchar *endptr = NULL;
 
 	g_return_val_if_fail (ZIF_IS_CONFIG (config), G_MAXUINT);
 	g_return_val_if_fail (key != NULL, G_MAXUINT);
@@ -229,8 +228,8 @@ zif_config_get_uint (ZifConfig *config, const gchar *key, GError **error)
 		goto out;
 
 	/* convert to int */
-	ret = egg_strtouint (value, &retval);
-	if (!ret) {
+	retval = g_ascii_strtoull (value, &endptr, 10);
+	if (value == endptr) {
 		g_set_error (error, ZIF_CONFIG_ERROR, ZIF_CONFIG_ERROR_FAILED,
 			     "failed to convert '%s' to unsigned integer", value);
 		goto out;
@@ -252,16 +251,16 @@ out:
 static guint
 zif_config_string_to_time (const gchar *value)
 {
-	gboolean ret;
 	guint len;
 	guint timeval = 0;
 	gchar suffix;
 	gchar *value_copy = NULL;
+	gchar *endptr = NULL;
 
 	g_return_val_if_fail (value != NULL, FALSE);
 
 	/* long enough */
-	len = egg_strlen (value, 10);
+	len = strlen (value);
 	if (len < 2)
 		goto out;
 
@@ -273,8 +272,8 @@ zif_config_string_to_time (const gchar *value)
 	value_copy[len-1] = '\0';
 
 	/* convert to number */
-	ret = egg_strtouint (value_copy, &timeval);
-	if (!ret) {
+	timeval = g_ascii_strtoull (value_copy, &endptr, 10);
+	if (value_copy == endptr) {
 		egg_warning ("failed to convert %s", value_copy);
 		goto out;
 	}
@@ -332,6 +331,27 @@ out:
 }
 
 /**
+ * zif_config_strreplace:
+ **/
+static gchar *
+zif_config_strreplace (const gchar *text, const gchar *find, const gchar *replace)
+{
+	gchar **array;
+	gchar *retval;
+
+	/* common case, not found */
+	if (g_strstr_len (text, -1, find) == NULL) {
+		return g_strdup (text);
+	}
+
+	/* split apart and rejoin with new delimiter */
+	array = g_strsplit (text, find, 0);
+	retval = g_strjoinv (replace, array);
+	g_strfreev (array);
+	return retval;
+}
+
+/**
  * zif_config_expand_substitutions:
  * @config: the #ZifConfig object
  * @text: string to scan, e.g. "http://fedora/$releasever/$basearch/moo.rpm"
@@ -364,8 +384,8 @@ zif_config_expand_substitutions (ZifConfig *config, const gchar *text, GError **
 		goto out;
 
 	/* do the replacements */
-	name1 = egg_strreplace (text, "$releasever", releasever);
-	name2 = egg_strreplace (name1, "$basearch", basearch);
+	name1 = zif_config_strreplace (text, "$releasever", releasever);
+	name2 = zif_config_strreplace (name1, "$basearch", basearch);
 
 out:
 	g_free (basearch);

@@ -42,7 +42,6 @@
 #include "zif-package-remote.h"
 
 #include "egg-debug.h"
-#include "egg-string.h"
 
 #define ZIF_MD_PRIMARY_SQL_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_MD_PRIMARY_SQL, ZifMdPrimarySqlPrivate))
 
@@ -316,17 +315,17 @@ zif_md_primary_sql_sqlite_pkgkey_cb (void *data, gint argc, gchar **argv, gchar 
 {
 	gint i;
 	guint pkgkey;
-	gboolean ret;
+	gchar *endptr = NULL;
 	GPtrArray *array = (GPtrArray *) data;
 
 	/* get the ID */
 	for (i=0; i<argc; i++) {
 		if (g_strcmp0 (col_name[i], "pkgKey") == 0) {
-			ret = egg_strtouint (argv[i], &pkgkey);
-			if (ret)
-				g_ptr_array_add (array, GUINT_TO_POINTER (pkgkey));
+			pkgkey = g_ascii_strtoull (argv[i], &endptr, 10);
+			if (argv[i] == endptr)
+				egg_warning ("failed to parse pkgKey %s", argv[i]);
 			else
-				egg_warning ("could not parse pkgKey '%s'", argv[i]);
+				g_ptr_array_add (array, GUINT_TO_POINTER (pkgkey));
 		} else {
 			egg_warning ("unrecognized: %s=%s", col_name[i], argv[i]);
 		}

@@ -37,7 +37,6 @@
 #include "zif-package.h"
 
 #include "egg-debug.h"
-#include "egg-string.h"
 
 G_DEFINE_TYPE (ZifStore, zif_store, G_TYPE_OBJECT)
 

@@ -41,7 +41,6 @@
 #include "zif-monitor.h"
 
 #include "egg-debug.h"
-#include "egg-string.h"
 
 #define ZIF_GROUPS_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_GROUPS, ZifGroupsPrivate))
 

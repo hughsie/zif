@@ -29,7 +29,6 @@
 #include <sys/types.h>
 
 #include "egg-debug.h"
-#include "egg-string.h"
 
 #include "pk-progress-bar.h"
 

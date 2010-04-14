@@ -40,7 +40,6 @@
 #include <packagekit-glib2/packagekit.h>
 
 #include "egg-debug.h"
-#include "egg-string.h"
 
 #include "zif-utils.h"
 #include "zif-package.h"

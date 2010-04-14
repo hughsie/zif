@@ -43,7 +43,6 @@
 #include "zif-package-remote.h"
 
 #include "egg-debug.h"
-#include "egg-string.h"
 
 #define ZIF_MD_OTHER_SQL_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_MD_OTHER_SQL, ZifMdOtherSqlPrivate))
 
@@ -120,18 +119,19 @@ zif_md_other_sql_sqlite_create_changelog_cb (void *data, gint argc, gchar **argv
 	GPtrArray *array = (GPtrArray *) data;
 	ZifChangeset *changeset;
 	gint i;
-	guint date = 0;
+	guint64 date = 0;
 	const gchar *author = NULL;
 	const gchar *changelog = NULL;
 	gboolean ret;
 	GError *error = NULL;
+	gchar *endptr = NULL;
 
 	/* get the ID */
 	for (i=0; i<argc; i++) {
 		if (g_strcmp0 (col_name[i], "date") == 0) {
-			ret = egg_strtouint (argv[i], &date);
-			if (!ret)
-				egg_warning ("could not parse date '%s'", argv[i]);
+			date = g_ascii_strtoull (argv[i], &endptr, 10);
+			if (argv[i] == endptr)
+				egg_warning ("failed to parse date %s", argv[i]);
 		} else if (g_strcmp0 (col_name[i], "author") == 0) {
 			author = argv[i];
 		} else if (g_strcmp0 (col_name[i], "changelog") == 0) {
@@ -195,17 +195,17 @@ zif_md_other_sql_sqlite_pkgkey_cb (void *data, gint argc, gchar **argv, gchar **
 {
 	gint i;
 	guint pkgkey;
-	gboolean ret;
+	gchar *endptr = NULL;
 	GPtrArray *array = (GPtrArray *) data;
 
 	/* get the ID */
 	for (i=0; i<argc; i++) {
 		if (g_strcmp0 (col_name[i], "pkgKey") == 0) {
-			ret = egg_strtouint (argv[i], &pkgkey);
-			if (ret)
-				g_ptr_array_add (array, GUINT_TO_POINTER (pkgkey));
-			else
+			pkgkey = g_ascii_strtoull (argv[i], &endptr, 10);
+			if (argv[i] == endptr)
 				egg_warning ("could not parse pkgKey '%s'", argv[i]);
+			else
+				g_ptr_array_add (array, GUINT_TO_POINTER (pkgkey));
 		} else {
 			egg_warning ("unrecognized: %s=%s", col_name[i], argv[i]);
 		}

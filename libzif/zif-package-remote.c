@@ -35,7 +35,6 @@
 #include <stdlib.h>
 
 #include "egg-debug.h"
-#include "egg-string.h"
 
 #include "zif-utils.h"
 #include "zif-package-remote.h"
@@ -83,7 +82,7 @@ zif_package_remote_set_from_repo (ZifPackageRemote *pkg, guint length, gchar **t
 	const gchar *arch = NULL;
 	gchar *package_id;
 	ZifString *string;
-	gboolean ret;
+	gchar *endptr = NULL;
 
 	g_return_val_if_fail (ZIF_IS_PACKAGE_REMOTE (pkg), FALSE);
 	g_return_val_if_fail (type != NULL, FALSE);
@@ -95,8 +94,8 @@ zif_package_remote_set_from_repo (ZifPackageRemote *pkg, guint length, gchar **t
 		if (g_strcmp0 (type[i], "name") == 0) {
 			name = data[i];
 		} else if (g_strcmp0 (type[i], "epoch") == 0) {
-			ret = egg_strtouint (data[i], &epoch);
-			if (!ret)
+			epoch = g_ascii_strtoull (data[i], &endptr, 10);
+			if (data[i] == endptr)
 				egg_warning ("failed to parse epoch %s", data[i]);
 		} else if (g_strcmp0 (type[i], "version") == 0) {
 			version = data[i];

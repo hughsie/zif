@@ -42,7 +42,6 @@
 #include "zif-monitor.h"
 
 #include "egg-debug.h"
-#include "egg-string.h"
 
 #define ZIF_REPOS_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_REPOS, ZifReposPrivate))
 
