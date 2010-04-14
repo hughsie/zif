@@ -52,7 +52,7 @@
 struct _ZifPackageRemotePrivate
 {
 	ZifGroups		*groups;
-	gchar			*sql_id;
+	gchar			*pkgid;
 };
 
 G_DEFINE_TYPE (ZifPackageRemote, zif_package_remote, ZIF_TYPE_PACKAGE)
@@ -127,7 +127,7 @@ zif_package_remote_set_from_repo (ZifPackageRemote *pkg, guint length, gchar **t
 		} else if (g_strcmp0 (type[i], "size_package") == 0) {
 			zif_package_set_size (ZIF_PACKAGE (pkg), atoi (data[i]));
 		} else if (g_strcmp0 (type[i], "pkgId") == 0) {
-			pkg->priv->sql_id = g_strdup (data[i]);
+			pkg->priv->pkgid = g_strdup (data[i]);
 		} else if (g_strcmp0 (type[i], "location_href") == 0) {
 			string = zif_string_new (data[i]);
 			zif_package_set_location_href (ZIF_PACKAGE (pkg), string);
@@ -145,6 +145,23 @@ zif_package_remote_set_from_repo (ZifPackageRemote *pkg, guint length, gchar **t
 }
 
 /**
+ * zif_package_remote_get_pkgid:
+ * @pkg: the #ZifPackageRemote object
+ *
+ * Gets the pkgid used internally to track the package item.
+ *
+ * Return value: the pkgid hash.
+ *
+ * Since: 0.0.1
+ **/
+const gchar *
+zif_package_remote_get_pkgid (ZifPackageRemote *pkg)
+{
+	g_return_val_if_fail (ZIF_IS_PACKAGE_REMOTE (pkg), NULL);
+	return pkg->priv->pkgid;
+}
+
+/**
  * zif_package_remote_finalize:
  **/
 static void
@@ -156,7 +173,7 @@ zif_package_remote_finalize (GObject *object)
 	g_return_if_fail (ZIF_IS_PACKAGE_REMOTE (object));
 	pkg = ZIF_PACKAGE_REMOTE (object);
 
-	g_free (pkg->priv->sql_id);
+	g_free (pkg->priv->pkgid);
 	g_object_unref (pkg->priv->groups);
 
 	G_OBJECT_CLASS (zif_package_remote_parent_class)->finalize (object);
@@ -180,7 +197,7 @@ static void
 zif_package_remote_init (ZifPackageRemote *pkg)
 {
 	pkg->priv = ZIF_PACKAGE_REMOTE_GET_PRIVATE (pkg);
-	pkg->priv->sql_id = NULL;
+	pkg->priv->pkgid = NULL;
 	pkg->priv->groups = zif_groups_new ();
 }
 
