@@ -540,11 +540,17 @@ ZifUpdate *
 zif_store_remote_get_update_detail (ZifStoreRemote *store, const gchar *package_id,
 				    GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
-	ZifUpdate *update = NULL;
-	ZifCompletion *completion_local;
-	GPtrArray *array = NULL;
-	GError *error_local = NULL;
+	const gchar *pkgid;
 	gboolean ret;
+	guint i;
+	GError *error_local = NULL;
+	GPtrArray *array = NULL;
+	GPtrArray *changelog = NULL;
+	GPtrArray *packages = NULL;
+	ZifChangeset *changeset;
+	ZifCompletion *completion_local;
+	ZifMd *md;
+	ZifUpdate *update = NULL;
 
 	/* setup completion */
 	if (store->priv->loaded_metadata)
@@ -577,17 +583,56 @@ zif_store_remote_get_update_detail (ZifStoreRemote *store, const gchar *package_
 		g_error_free (error_local);
 		goto out;
 	}
-	if (array->len == 1) {
-		update = g_object_ref (g_ptr_array_index (array, 0));
+	if (array->len != 1) {
+		/* FIXME: is this valid? */
+		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+			     "invalid number of update entries: %i", array->len);
 		goto out;
 	}
 
-	/* FIXME: is this valid? */
-	g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
-		     "invalid number of update entries: %i", array->len);
+	/* get ZifPackage for package-id */
+	md = zif_store_remote_get_primary (store);
+	packages = zif_md_find_package (md, package_id, cancellable, completion_local, &error_local);
+	if (packages == NULL) {
+		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+			     "cannot find package in primary repo: %s", error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+	/* FIXME: non-fatal? */
+	if (packages->len == 0) {
+		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+			     "cannot find package in primary repo: %s", package_id);
+		goto out;
+	}
+
+	/* get pkgid */
+	pkgid = zif_package_remote_get_pkgid (ZIF_PACKAGE_REMOTE (g_ptr_array_index (packages, 0)));
+
+	/* get changelog and add to ZifUpdate */
+	completion_local = zif_completion_get_child (completion);
+	changelog = zif_md_get_changelog (ZIF_MD (store->priv->md_other_db), pkgid, cancellable, completion_local, &error_local);
+	if (changelog == NULL) {
+		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+			     "failed to get changelog: %s", error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* add the changesets (the changelog) to the update */
+	update = g_object_ref (g_ptr_array_index (array, 0));
+	for (i=0; i<changelog->len; i++) {
+		changeset = g_ptr_array_index (changelog, i);
+		//FIXME: only add if never than what we have installed
+		zif_update_add_changeset (update, changeset);
+	}
 out:
+	if (changelog != NULL)
+		g_ptr_array_unref (changelog);
 	if (array != NULL)
 		g_ptr_array_unref (array);
+	if (packages != NULL)
+		g_ptr_array_unref (packages);
 	return update;
 }
 

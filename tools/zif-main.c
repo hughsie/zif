@@ -706,7 +706,7 @@ main (int argc, char *argv[])
 		pk_progress_bar_start (progressbar, "Getting updates");
 
 		/* setup completion with the correct number of steps */
-		zif_completion_set_number_steps (completion, 4);
+		zif_completion_set_number_steps (completion, 5);
 
 		/* get the installed packages */
 		completion_local = zif_completion_get_child (completion);
@@ -747,6 +747,59 @@ main (int argc, char *argv[])
 			g_print ("failed to get updates: %s\n", error->message);
 			g_error_free (error);
 			goto out;
+		}
+
+		/* this section done */
+		zif_completion_done (completion);
+
+		/* get update details */
+		completion_local = zif_completion_get_child (completion);
+		zif_completion_set_number_steps (completion_local, array->len);
+		for (i=0; i<array->len; i++) {
+			ZifUpdate *update;
+			ZifUpdateInfo *info;
+			ZifChangeset *changeset;
+			GPtrArray *update_infos;
+			GPtrArray *changelog;
+			ZifCompletion *completion_loop;
+			guint j;
+
+			package = g_ptr_array_index (array, i);
+			completion_loop = zif_completion_get_child (completion_local);
+			update = zif_package_get_update_detail (package, NULL, completion_loop, &error);
+			if (update == NULL) {
+				g_print ("failed to get update detail: %s\n", error->message);
+				g_error_free (error);
+				goto out;
+			}
+			g_print ("\t%s\t%s\n", "kind", pk_update_state_enum_to_string (zif_update_get_kind (update)));
+			g_print ("\t%s\t%s\n", "id", zif_update_get_id (update));
+			g_print ("\t%s\t%s\n", "title", zif_update_get_title (update));
+			g_print ("\t%s\t%s\n", "description", zif_update_get_description (update));
+			g_print ("\t%s\t%s\n", "issued", zif_update_get_issued (update));
+			update_infos = zif_update_get_update_infos (update);
+			for (j=0; j<update_infos->len; j++) {
+				info = g_ptr_array_index (update_infos, j);
+				g_print ("\tupdateinfo[%i]:kind\t%s\n", j,
+					 zif_update_info_kind_to_string (zif_update_info_get_kind (info)));
+				g_print ("\tupdateinfo[%i]:title\t%s\n", j,
+					 zif_update_info_get_title (info));
+				g_print ("\tupdateinfo[%i]:url\t%s\n", j,
+					 zif_update_info_get_url (info));
+			}
+			changelog = zif_update_get_changelog (update);
+			for (j=0; j<changelog->len; j++) {
+				changeset = g_ptr_array_index (changelog, j);
+				g_print ("\tchangelog[%i]:author\t%s\n", j,
+					 zif_changeset_get_author (changeset));
+				g_print ("\tchangelog[%i]:version\t%s\n", j,
+					 zif_changeset_get_version (changeset));
+				g_print ("\tchangelog[%i]:description\t%s\n", j,
+					 zif_changeset_get_description (changeset));
+			}
+
+			/* this section done */
+			zif_completion_done (completion_local);
 		}
 
 		/* this section done */
