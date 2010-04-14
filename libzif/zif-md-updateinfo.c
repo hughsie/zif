@@ -307,7 +307,7 @@ zif_md_updateinfo_parser_end_element (GMarkupParseContext *context, const gchar 
 
 		if (updateinfo->priv->section_group == ZIF_MD_UPDATEINFO_SECTION_UPDATE_REBOOT) {
 
-			/* FIXME: add property */
+			/* add property */
 			if (g_strcmp0 (element_name, "reboot_suggested") == 0) {
 				zif_update_set_reboot (updateinfo->priv->update_temp, TRUE);
 				updateinfo->priv->section_group = ZIF_MD_UPDATEINFO_SECTION_UPDATE_UNKNOWN;

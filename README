@@ -72,7 +72,8 @@ Zif features:
 Zif is compatible with rpm, yum and the Fedora infrastructure, specifically:
 • Shares the yum lock
 • Uses librpm to get data from rpm
-• Reads and updates sqlite yum metadata (primary and filelists)
+• Reads and updates yum metadata (primary, filelists, updateinfo, other,
+  metalink, mirrorlist, comps)
 • Reads standard yum repo files
 • Reads a subset of comps for distro-specific groups
 • Uses optional metalink/mirrorlist repository handling
