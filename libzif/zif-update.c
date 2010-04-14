@@ -46,6 +46,7 @@ struct _ZifUpdatePrivate
 	gchar			*title;
 	gchar			*description;
 	gchar			*issued;
+	gboolean		 reboot;
 	GPtrArray		*update_infos;
 	GPtrArray		*packages;
 	GPtrArray		*changelog;
@@ -59,6 +60,7 @@ enum {
 	PROP_TITLE,
 	PROP_DESCRIPTION,
 	PROP_ISSUED,
+	PROP_REBOOT,
 	PROP_LAST
 };
 
@@ -164,6 +166,23 @@ zif_update_get_issued (ZifUpdate *update)
 {
 	g_return_val_if_fail (ZIF_IS_UPDATE (update), NULL);
 	return update->priv->issued;
+}
+
+/**
+ * zif_update_get_reboot:
+ * @update: the #ZifUpdate object
+ *
+ * Gets if the update requires a reboot.
+ *
+ * Return value: %TRUE for a reboot.
+ *
+ * Since: 0.0.1
+ **/
+gboolean
+zif_update_get_reboot (ZifUpdate *update)
+{
+	g_return_val_if_fail (ZIF_IS_UPDATE (update), FALSE);
+	return update->priv->reboot;
 }
 
 /**
@@ -326,6 +345,23 @@ zif_update_set_issued (ZifUpdate *update, const gchar *issued)
 }
 
 /**
+ * zif_update_set_reboot:
+ * @update: the #ZifUpdate object
+ * @reboot: if the update requires a reboot
+ *
+ * Sets the update reboot status
+ *
+ * Since: 0.0.1
+ **/
+void
+zif_update_set_reboot (ZifUpdate *update, gboolean reboot)
+{
+	g_return_if_fail (ZIF_IS_UPDATE (update));
+
+	update->priv->reboot = reboot;
+}
+
+/**
  * zif_update_add_update_info:
  * @update: the #ZifUpdate object
  * @update_info: the #ZifUpdateInfo
@@ -403,6 +439,9 @@ zif_update_get_property (GObject *object, guint prop_id, GValue *value, GParamSp
 		break;
 	case PROP_ISSUED:
 		g_value_set_string (value, priv->issued);
+		break;
+	case PROP_REBOOT:
+		g_value_set_boolean (value, priv->reboot);
 		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -513,6 +552,16 @@ zif_update_class_init (ZifUpdateClass *klass)
 				     G_PARAM_READABLE);
 	g_object_class_install_property (object_class, PROP_ISSUED, pspec);
 
+	/**
+	 * ZifUpdate:reboot:
+	 *
+	 * Since: 0.0.1
+	 */
+	pspec = g_param_spec_boolean ("reboot", NULL, NULL,
+				      FALSE,
+				      G_PARAM_READABLE);
+	g_object_class_install_property (object_class, PROP_REBOOT, pspec);
+
 	g_type_class_add_private (klass, sizeof (ZifUpdatePrivate));
 }
 
@@ -529,6 +578,7 @@ zif_update_init (ZifUpdate *update)
 	update->priv->title = NULL;
 	update->priv->description = NULL;
 	update->priv->issued = NULL;
+	update->priv->reboot = FALSE;
 	update->priv->update_infos = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	update->priv->packages = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	update->priv->changelog = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
