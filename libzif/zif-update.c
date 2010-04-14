@@ -48,6 +48,7 @@ struct _ZifUpdatePrivate
 	gchar			*issued;
 	GPtrArray		*update_infos;
 	GPtrArray		*packages;
+	GPtrArray		*changelog;
 };
 
 enum {
@@ -200,6 +201,23 @@ zif_update_get_packages (ZifUpdate *update)
 }
 
 /**
+ * zif_update_get_changelog:
+ * @update: the #ZifUpdate object
+ *
+ * Gets the changelog for this update.
+ *
+ * Return value: A #GPtrArray of #ZifChangeset's, or %NULL.
+ *
+ * Since: 0.0.1
+ **/
+GPtrArray *
+zif_update_get_changelog (ZifUpdate *update)
+{
+	g_return_val_if_fail (ZIF_IS_UPDATE (update), NULL);
+	return update->priv->changelog;
+}
+
+/**
  * zif_update_set_state:
  * @update: the #ZifUpdate object
  * @state: If the update is state
@@ -342,6 +360,23 @@ zif_update_add_package (ZifUpdate *update, ZifPackage *package)
 }
 
 /**
+ * zif_update_add_changeset:
+ * @update: the #ZifUpdate object
+ * @package: the #ZifPackage
+ *
+ * Adds a changeset to the update.
+ *
+ * Since: 0.0.1
+ **/
+void
+zif_update_add_changeset (ZifUpdate *update, ZifChangeset *changeset)
+{
+	g_return_if_fail (ZIF_IS_UPDATE (update));
+	g_return_if_fail (changeset != NULL);
+	g_ptr_array_add (update->priv->changelog, g_object_ref (changeset));
+}
+
+/**
  * zif_update_get_property:
  **/
 static void
@@ -401,6 +436,7 @@ zif_update_finalize (GObject *object)
 	g_free (update->priv->issued);
 	g_ptr_array_unref (update->priv->update_infos);
 	g_ptr_array_unref (update->priv->packages);
+	g_ptr_array_unref (update->priv->changelog);
 
 	G_OBJECT_CLASS (zif_update_parent_class)->finalize (object);
 }
@@ -495,6 +531,7 @@ zif_update_init (ZifUpdate *update)
 	update->priv->issued = NULL;
 	update->priv->update_infos = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	update->priv->packages = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
+	update->priv->changelog = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 }
 
 /**

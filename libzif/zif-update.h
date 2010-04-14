@@ -47,6 +47,7 @@ typedef struct _ZifUpdatePrivate ZifUpdatePrivate;
 typedef struct _ZifUpdateClass	 ZifUpdateClass;
 
 #include "zif-package.h"
+#include "zif-changeset.h"
 
 struct _ZifUpdate
 {
@@ -71,6 +72,7 @@ const gchar		*zif_update_get_description	(ZifUpdate		*update);
 const gchar		*zif_update_get_issued		(ZifUpdate		*update);
 GPtrArray		*zif_update_get_update_infos	(ZifUpdate		*update);
 GPtrArray		*zif_update_get_packages	(ZifUpdate		*update);
+GPtrArray		*zif_update_get_changelog	(ZifUpdate		*update);
 
 /* internal setters: TODO, in seporate -internal header file */
 void			 zif_update_set_state		(ZifUpdate		*update,
@@ -89,6 +91,8 @@ void			 zif_update_add_update_info	(ZifUpdate		*update,
 							 ZifUpdateInfo		*update_info);
 void			 zif_update_add_package		(ZifUpdate		*update,
 							 ZifPackage		*package);
+void			 zif_update_add_changeset	(ZifUpdate		*update,
+							 ZifChangeset		*changeset);
 
 G_END_DECLS
 
