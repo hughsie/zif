@@ -172,7 +172,7 @@ zif_md_other_sql_search_pkgkey (ZifMdOtherSql *md, guint pkgkey,
 	GPtrArray *array = NULL;
 
 	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
-	statement = g_strdup_printf ("SELECT author, date, changelog FROM changelog WHERE pkgKey = '%i' ORDER BY date", pkgkey);
+	statement = g_strdup_printf ("SELECT author, date, changelog FROM changelog WHERE pkgKey = '%i' ORDER BY date DESC", pkgkey);
 	rc = sqlite3_exec (md->priv->db, statement, zif_md_other_sql_sqlite_create_changelog_cb, array, &error_msg);
 	if (rc != SQLITE_OK) {
 		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_BAD_SQL,
