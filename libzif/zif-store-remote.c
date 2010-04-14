@@ -2949,7 +2949,7 @@ zif_store_remote_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "get id");
 	id = zif_store_get_id (ZIF_STORE (store));
-	if (egg_strequal (id, "fedora"))
+	if (g_strcmp0 (id, "fedora") == 0)
 		egg_test_success (test, NULL);
 	else
 		egg_test_failed (test, "invalid id '%s'", id);
@@ -2957,7 +2957,7 @@ zif_store_remote_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "get name");
 	id = zif_store_remote_get_name (store, NULL, completion, NULL);
-	if (egg_strequal (id, "Fedora 11 - i386"))
+	if (g_strcmp0 (id, "Fedora 11 - i386") == 0)
 		egg_test_success (test, NULL);
 	else
 		egg_test_failed (test, "invalid name '%s'", id);

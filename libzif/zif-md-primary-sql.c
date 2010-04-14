@@ -108,7 +108,8 @@ zif_md_primary_sql_load (ZifMd *md, GCancellable *cancellable, ZifCompletion *co
 	}
 
 	/* we don't need to keep syncing */
-	sqlite3_exec (primary_sql->priv->db, "PRAGMA synchronous=OFF", NULL, NULL, NULL);
+	sqlite3_exec (primary_sql->priv->db, "PRAGMA synchronous=OFF;", NULL, NULL, NULL);
+
 	primary_sql->priv->loaded = TRUE;
 out:
 	return primary_sql->priv->loaded;

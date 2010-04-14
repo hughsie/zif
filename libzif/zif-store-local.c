@@ -1214,7 +1214,7 @@ zif_store_local_test (EggTest *test)
 	egg_test_title (test, "get id");
 	package_id = zif_package_get_id (package);
 	split = pk_package_id_split (package_id);
-	if (egg_strequal (split[PK_PACKAGE_ID_NAME], "PackageKit"))
+	if (g_strcmp0 (split[PK_PACKAGE_ID_NAME], "PackageKit") == 0)
 		egg_test_success (test, NULL);
 	else
 		egg_test_failed (test, "incorrect name: %s", split[PK_PACKAGE_ID_NAME]);
@@ -1231,7 +1231,7 @@ zif_store_local_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "get summary");
 	string = zif_package_get_summary (package, NULL);
-	if (egg_strequal (zif_string_get_value (string), "Package management service"))
+	if (g_strcmp0 (zif_string_get_value(string), "Package management service") == 0)
 		egg_test_success (test, NULL);
 	else
 		egg_test_failed (test, "incorrect summary: %s", zif_string_get_value (string));
@@ -1240,7 +1240,7 @@ zif_store_local_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "get license");
 	string = zif_package_get_license (package, NULL);
-	if (egg_strequal (zif_string_get_value (string), "GPLv2+"))
+	if (g_strcmp0 (zif_string_get_value(string), "GPLv2+") == 0)
 		egg_test_success (test, NULL);
 	else
 		egg_test_failed (test, "incorrect license: %s", zif_string_get_value (string));
@@ -1249,7 +1249,7 @@ zif_store_local_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "get category");
 	string = zif_package_get_category (package, NULL);
-	if (egg_strequal (zif_string_get_value (string), "System Environment/Libraries"))
+	if (g_strcmp0 (zif_string_get_value(string), "System Environment/Libraries") == 0)
 		egg_test_success (test, NULL);
 	else
 		egg_test_failed (test, "incorrect category: %s", zif_string_get_value (string));

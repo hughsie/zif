@@ -693,7 +693,7 @@ zif_config_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "get cachedir");
 	value = zif_config_get_string (config, "cachedir", NULL);
-	if (egg_strequal (value, "../test/cache"))
+	if (g_strcmp0 (value, "../test/cache") == 0)
 		egg_test_success (test, NULL);
 	else
 		egg_test_failed (test, "invalid value '%s'", value);
@@ -726,7 +726,7 @@ zif_config_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "get cachedir");
 	value = zif_config_get_string (config, "cachedir", NULL);
-	if (egg_strequal (value, "/tmp/cache"))
+	if (g_strcmp0 (value, "/tmp/cache") == 0)
 		egg_test_success (test, NULL);
 	else
 		egg_test_failed (test, "invalid value '%s'", value);
@@ -740,7 +740,7 @@ zif_config_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "get cachedir");
 	value = zif_config_get_string (config, "cachedir", NULL);
-	if (egg_strequal (value, "../test/cache"))
+	if (g_strcmp0 (value, "../test/cache") == 0)
 		egg_test_success (test, NULL);
 	else
 		egg_test_failed (test, "invalid value '%s'", value);
@@ -749,7 +749,7 @@ zif_config_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "do substitutions (none)");
 	value = zif_config_expand_substitutions (config, "http://fedora/4/6/moo.rpm", NULL);
-	if (egg_strequal (value, "http://fedora/4/6/moo.rpm"))
+	if (g_strcmp0 (value, "http://fedora/4/6/moo.rpm") == 0)
 		egg_test_success (test, NULL);
 	else
 		egg_test_failed (test, "invalid value '%s'", value);
@@ -758,7 +758,7 @@ zif_config_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "do substitutions (both)");
 	value = zif_config_expand_substitutions (config, "http://fedora/$releasever/$basearch/moo.rpm", NULL);
-	if (egg_strequal (value, "http://fedora/11/i386/moo.rpm"))
+	if (g_strcmp0 (value, "http://fedora/11/i386/moo.rpm") == 0)
 		egg_test_success (test, NULL);
 	else
 		egg_test_failed (test, "invalid value '%s'", value);
@@ -775,7 +775,7 @@ zif_config_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "get basearch array value");
-	if (egg_strequal (array[0], "i386"))
+	if (g_strcmp0 (array[0], "i386") == 0)
 		egg_test_success (test, NULL);
 	else
 		egg_test_failed (test, "invalid value '%s'", array[0]);
@@ -793,11 +793,6 @@ zif_config_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "convert time (invalid suffix)");
 	time = zif_config_string_to_time ("10f");
-	egg_test_assert (test, (time == 0));
-
-	/************************************************************/
-	egg_test_title (test, "convert time (mixture)");
-	time = zif_config_string_to_time ("10d10s");
 	egg_test_assert (test, (time == 0));
 
 	/************************************************************/

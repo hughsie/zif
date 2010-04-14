@@ -383,7 +383,7 @@ zif_md_other_sql_test (EggTest *test)
 	gboolean ret;
 	GError *error = NULL;
 	GPtrArray *array;
-	ZifPackage *changeset;
+	ZifChangeset *changeset;
 	GCancellable *cancellable;
 	ZifCompletion *completion;
 	const gchar *text;
@@ -467,7 +467,8 @@ zif_md_other_sql_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "search for files");
 	zif_completion_reset (completion);
-	array = zif_md_other_sql_get_changelog (md, "42b8d71b303b19c2fcc2b06bb9c764f2902dd72b9376525025ee9ba4a41c38e9",
+	array = zif_md_other_sql_get_changelog (ZIF_MD_OTHER_SQL (md),
+						"42b8d71b303b19c2fcc2b06bb9c764f2902dd72b9376525025ee9ba4a41c38e9",
 						cancellable, completion, &error);
 	if (array != NULL)
 		egg_test_success (test, NULL);
@@ -486,7 +487,7 @@ zif_md_other_sql_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "correct version");
 	text = zif_changeset_get_version (changeset);
-	if (g_strcmp0 (text, "0.9.95-8") == 0)
+	if (g_strcmp0 (text, "1.2-3") == 0)
 		egg_test_success (test, NULL);
 	else
 		egg_test_failed (test, "failed to get correct value '%s'", text);
@@ -494,7 +495,7 @@ zif_md_other_sql_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "correct author");
 	text = zif_changeset_get_author (changeset);
-	if (g_strcmp0 (text, "Rex Dieter <rdieter[AT]fedoraproject.org>") == 0)
+	if (g_strcmp0 (text, "Rex Dieter <rdieter@fedoraproject.org>") == 0)
 		egg_test_success (test, NULL);
 	else
 		egg_test_failed (test, "failed to get correct value '%s'", text);
@@ -502,7 +503,7 @@ zif_md_other_sql_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "correct description");
 	text = zif_changeset_get_description (changeset);
-	if (g_strcmp0 (text, "- ExcludeArch: ppc64 (#253847)") == 0)
+	if (g_strcmp0 (text, "- BR: libfac-devel,factory-devel >= 3.1\n- restore ExcludeArch: ppc64 (#253847)") == 0)
 		egg_test_success (test, NULL);
 	else
 		egg_test_failed (test, "failed to get correct value '%s'", text);
