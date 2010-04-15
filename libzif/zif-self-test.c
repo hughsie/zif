@@ -40,7 +40,7 @@ void zif_groups_test (EggTest *test);
 void zif_store_remote_test (EggTest *test);
 void zif_md_metalink_test (EggTest *test);
 void zif_md_primary_test (EggTest *test);
-void zif_md_filelists_test (EggTest *test);
+void zif_md_filelists_sql_test (EggTest *test);
 void zif_md_comps_test (EggTest *test);
 void zif_repos_test (EggTest *test);
 void zif_download_test (EggTest *test);
@@ -72,7 +72,7 @@ main (int argc, char **argv)
 	zif_update_info_test (test);
 	zif_md_metalink_test (test);
 	zif_md_mirrorlist_test (test);
-	zif_md_filelists_test (test);
+	zif_md_filelists_sql_test (test);
 	zif_md_comps_test (test);
 	zif_md_updateinfo_test (test);
 	zif_download_test (test);

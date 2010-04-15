@@ -43,7 +43,7 @@
 #include "zif-package-remote.h"
 #include "zif-md-comps.h"
 #include "zif-md-updateinfo.h"
-#include "zif-md-filelists.h"
+#include "zif-md-filelists-sql.h"
 #include "zif-md-metalink.h"
 #include "zif-md-mirrorlist.h"
 #include "zif-md-other-sql.h"
@@ -80,10 +80,10 @@ struct _ZifStoreRemotePrivate
 	gboolean		 enabled;
 	gboolean		 loaded;
 	gboolean		 loaded_metadata;
-	ZifMd			*md_other_db;
-	ZifMd			*md_primary_db;
+	ZifMd			*md_other_sql;
+	ZifMd			*md_primary_sql;
 	ZifMd			*md_primary_xml;
-	ZifMd			*md_filelists;
+	ZifMd			*md_filelists_sql;
 	ZifMd			*md_metalink;
 	ZifMd			*md_mirrorlist;
 	ZifMd			*md_comps;
@@ -124,8 +124,8 @@ zif_store_remote_get_primary (ZifStoreRemote *store)
 {
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), NULL);
 
-	if (zif_md_get_location (store->priv->md_primary_db) != NULL)
-		return store->priv->md_primary_db;
+	if (zif_md_get_location (store->priv->md_primary_sql) != NULL)
+		return store->priv->md_primary_sql;
 	if (zif_md_get_location (store->priv->md_primary_xml) != NULL)
 		return store->priv->md_primary_xml;
 
@@ -143,13 +143,15 @@ zif_store_remote_get_md_from_type (ZifStoreRemote *store, ZifMdType type)
 	g_return_val_if_fail (type != ZIF_MD_TYPE_UNKNOWN, NULL);
 
 	if (type == ZIF_MD_TYPE_FILELISTS_SQL)
-		return store->priv->md_filelists;
+		return store->priv->md_filelists_sql;
+	if (type == ZIF_MD_TYPE_FILELISTS_XML)
+		return NULL;
 	if (type == ZIF_MD_TYPE_PRIMARY_SQL)
-		return store->priv->md_primary_db;
+		return store->priv->md_primary_sql;
 	if (type == ZIF_MD_TYPE_PRIMARY_XML)
 		return store->priv->md_primary_xml;
 	if (type == ZIF_MD_TYPE_OTHER_SQL)
-		return store->priv->md_other_db;
+		return store->priv->md_other_sql;
 	if (type == ZIF_MD_TYPE_COMPS_GZ)
 		return store->priv->md_comps;
 	if (type == ZIF_MD_TYPE_UPDATEINFO)
@@ -621,7 +623,7 @@ zif_store_remote_get_update_detail (ZifStoreRemote *store, const gchar *package_
 
 	/* get changelog and add to ZifUpdate */
 	completion_local = zif_completion_get_child (completion);
-	changelog = zif_md_get_changelog (ZIF_MD (store->priv->md_other_db), pkgid, cancellable, completion_local, &error_local);
+	changelog = zif_md_get_changelog (ZIF_MD (store->priv->md_other_sql), pkgid, cancellable, completion_local, &error_local);
 	if (changelog == NULL) {
 		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 			     "failed to get changelog: %s", error_local->message);
@@ -2489,7 +2491,8 @@ zif_store_remote_search_file (ZifStore *store, gchar **search, GCancellable *can
 
 	/* gets a list of pkgId's that match this file */
 	completion_local = zif_completion_get_child (completion);
-	pkgids = zif_md_filelists_search_file (ZIF_MD_FILELISTS (remote->priv->md_filelists), search, cancellable, completion_local, &error_local);
+	pkgids = zif_md_filelists_sql_search_file (ZIF_MD_FILELISTS_SQL (remote->priv->md_filelists_sql),
+						   search, cancellable, completion_local, &error_local);
 	if (pkgids == NULL) {
 		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 			     "failed to load get list of pkgids: %s", error_local->message);
@@ -2751,10 +2754,10 @@ zif_store_remote_finalize (GObject *object)
 	g_free (store->priv->repomd_filename);
 	g_free (store->priv->directory);
 
-	g_object_unref (store->priv->md_other_db);
-	g_object_unref (store->priv->md_primary_db);
+	g_object_unref (store->priv->md_other_sql);
+	g_object_unref (store->priv->md_primary_sql);
 	g_object_unref (store->priv->md_primary_xml);
-	g_object_unref (store->priv->md_filelists);
+	g_object_unref (store->priv->md_filelists_sql);
 	g_object_unref (store->priv->md_comps);
 	g_object_unref (store->priv->md_updateinfo);
 	g_object_unref (store->priv->md_metalink);
@@ -2825,9 +2828,9 @@ zif_store_remote_init (ZifStoreRemote *store)
 	store->priv->config = zif_config_new ();
 	store->priv->monitor = zif_monitor_new ();
 	store->priv->lock = zif_lock_new ();
-	store->priv->md_filelists = ZIF_MD (zif_md_filelists_new ());
-	store->priv->md_other_db = ZIF_MD (zif_md_other_sql_new ());
-	store->priv->md_primary_db = ZIF_MD (zif_md_primary_sql_new ());
+	store->priv->md_filelists_sql = ZIF_MD (zif_md_filelists_sql_new ());
+	store->priv->md_other_sql = ZIF_MD (zif_md_other_sql_new ());
+	store->priv->md_primary_sql = ZIF_MD (zif_md_primary_sql_new ());
 	store->priv->md_primary_xml = ZIF_MD (zif_md_primary_xml_new ());
 	store->priv->md_metalink = ZIF_MD (zif_md_metalink_new ());
 	store->priv->md_mirrorlist = ZIF_MD (zif_md_mirrorlist_new ());
