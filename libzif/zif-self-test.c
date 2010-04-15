@@ -60,9 +60,10 @@ main (int argc, char **argv)
 	zif_init ();
 
 	/* tests go here */
+	zif_md_primary_sql_test (test);
+	zif_md_primary_xml_test (test);
 	zif_md_other_sql_test (test);
 	zif_changeset_test (test);
-	zif_md_primary_xml_test (test);
 	zif_lock_test (test);
 	zif_completion_test (test);
 	zif_config_test (test);
@@ -72,7 +73,6 @@ main (int argc, char **argv)
 	zif_md_metalink_test (test);
 	zif_md_mirrorlist_test (test);
 	zif_md_filelists_test (test);
-	zif_md_primary_sql_test (test);
 	zif_md_comps_test (test);
 	zif_md_updateinfo_test (test);
 	zif_download_test (test);

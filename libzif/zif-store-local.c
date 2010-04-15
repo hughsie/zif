@@ -195,9 +195,9 @@ out:
  * zif_store_local_search_name:
  **/
 static GPtrArray *
-zif_store_local_search_name (ZifStore *store, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+zif_store_local_search_name (ZifStore *store, gchar **search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
-	guint i;
+	guint i, j;
 	GPtrArray *array = NULL;
 	ZifPackage *package;
 	const gchar *package_id;
@@ -257,8 +257,12 @@ zif_store_local_search_name (ZifStore *store, const gchar *search, GCancellable 
 		package = g_ptr_array_index (local->priv->packages, i);
 		package_id = zif_package_get_id (package);
 		split = pk_package_id_split (package_id);
-		if (strcasestr (split[PK_PACKAGE_ID_NAME], search) != NULL)
-			g_ptr_array_add (array, g_object_ref (package));
+		for (j=0; search[j] != NULL; j++) {
+			if (strcasestr (split[PK_PACKAGE_ID_NAME], search[j]) != NULL) {
+				g_ptr_array_add (array, g_object_ref (package));
+				break;
+			}
+		}
 		g_strfreev (split);
 
 		/* this section done */
@@ -275,9 +279,9 @@ out:
  * zif_store_local_search_category:
  **/
 static GPtrArray *
-zif_store_local_search_category (ZifStore *store, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+zif_store_local_search_category (ZifStore *store, gchar **search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
-	guint i;
+	guint i, j;
 	GPtrArray *array = NULL;
 	ZifPackage *package;
 	ZifString *category;
@@ -335,8 +339,12 @@ zif_store_local_search_category (ZifStore *store, const gchar *search, GCancella
 	for (i=0;i<local->priv->packages->len;i++) {
 		package = g_ptr_array_index (local->priv->packages, i);
 		category = zif_package_get_category (package, NULL);
-		if (strcmp (zif_string_get_value (category), search) == 0)
-			g_ptr_array_add (array, g_object_ref (package));
+		for (j=0; search[j] != NULL; j++) {
+			if (g_strcmp0 (zif_string_get_value (category), search[j]) == 0) {
+				g_ptr_array_add (array, g_object_ref (package));
+				break;
+			}
+		}
 		zif_string_unref (category);
 
 		/* this section done */
@@ -353,9 +361,9 @@ out:
  * zif_store_local_earch_details:
  **/
 static GPtrArray *
-zif_store_local_search_details (ZifStore *store, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+zif_store_local_search_details (ZifStore *store, gchar **search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
-	guint i;
+	guint i, j;
 	GPtrArray *array = NULL;
 	ZifPackage *package;
 	const gchar *package_id;
@@ -417,10 +425,15 @@ zif_store_local_search_details (ZifStore *store, const gchar *search, GCancellab
 		package_id = zif_package_get_id (package);
 		description = zif_package_get_description (package, NULL);
 		split = pk_package_id_split (package_id);
-		if (strcasestr (split[PK_PACKAGE_ID_NAME], search) != NULL)
-			g_ptr_array_add (array, g_object_ref (package));
-		else if (strcasestr (zif_string_get_value (description), search) != NULL)
-			g_ptr_array_add (array, g_object_ref (package));
+		for (j=0; search[j] != NULL; j++) {
+			if (strcasestr (split[PK_PACKAGE_ID_NAME], search[j]) != NULL) {
+				g_ptr_array_add (array, g_object_ref (package));
+				break;
+			} else if (strcasestr (zif_string_get_value (description), search[j]) != NULL) {
+				g_ptr_array_add (array, g_object_ref (package));
+				break;
+			}
+		}
 		zif_string_unref (description);
 		g_strfreev (split);
 
@@ -438,9 +451,9 @@ out:
  * zif_store_local_search_group:
  **/
 static GPtrArray *
-zif_store_local_search_group (ZifStore *store, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+zif_store_local_search_group (ZifStore *store, gchar **search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
-	guint i;
+	guint i, j;
 	GPtrArray *array = NULL;
 	ZifPackage *package;
 	PkGroupEnum group_tmp;
@@ -494,13 +507,17 @@ zif_store_local_search_group (ZifStore *store, const gchar *search, GCancellable
 	zif_completion_set_number_steps (completion_local, local->priv->packages->len);
 
 	/* iterate list */
-	group = pk_group_enum_from_text (search);
 	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	for (i=0;i<local->priv->packages->len;i++) {
 		package = g_ptr_array_index (local->priv->packages, i);
-		group_tmp = zif_package_get_group (package, NULL);
-		if (group == group_tmp)
-			g_ptr_array_add (array, g_object_ref (package));
+		for (j=0; search[j] != NULL; j++) {
+			group = pk_group_enum_from_text (search[j]);
+			group_tmp = zif_package_get_group (package, NULL);
+			if (group == group_tmp) {
+				g_ptr_array_add (array, g_object_ref (package));
+				break;
+			}
+		}
 
 		/* this section done */
 		zif_completion_done (completion_local);
@@ -516,9 +533,9 @@ out:
  * zif_store_local_search_file:
  **/
 static GPtrArray *
-zif_store_local_search_file (ZifStore *store, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+zif_store_local_search_file (ZifStore *store, gchar **search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
-	guint i, j;
+	guint i, j, l;
 	GPtrArray *array = NULL;
 	ZifPackage *package;
 	GPtrArray *files;
@@ -586,8 +603,12 @@ zif_store_local_search_file (ZifStore *store, const gchar *search, GCancellable 
 		}
 		for (j=0; j<files->len; j++) {
 			filename = g_ptr_array_index (files, j);
-			if (g_strcmp0 (search, filename) == 0)
-				g_ptr_array_add (array, g_object_ref (package));
+			for (l=0; search[l] != NULL; l++) {
+				if (g_strcmp0 (search[l], filename) == 0) {
+					g_ptr_array_add (array, g_object_ref (package));
+					break;
+				}
+			}
 		}
 		g_ptr_array_unref (files);
 
@@ -602,9 +623,9 @@ out:
  * zif_store_local_resolve:
  **/
 static GPtrArray *
-zif_store_local_resolve (ZifStore *store, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+zif_store_local_resolve (ZifStore *store, gchar **search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
-	guint i;
+	guint i, j;
 	GPtrArray *array = NULL;
 	ZifPackage *package;
 	const gchar *package_id;
@@ -664,8 +685,12 @@ zif_store_local_resolve (ZifStore *store, const gchar *search, GCancellable *can
 		package = g_ptr_array_index (local->priv->packages, i);
 		package_id = zif_package_get_id (package);
 		split = pk_package_id_split (package_id);
-		if (strcmp (split[PK_PACKAGE_ID_NAME], search) == 0)
-			g_ptr_array_add (array, g_object_ref (package));
+		for (j=0; search[j] != NULL; j++) {
+			if (strcmp (split[PK_PACKAGE_ID_NAME], search[j]) == 0) {
+				g_ptr_array_add (array, g_object_ref (package));
+				break;
+			}
+		}
 		g_strfreev (split);
 
 		/* this section done */
@@ -682,10 +707,10 @@ out:
  * zif_store_local_what_provides:
  **/
 static GPtrArray *
-zif_store_local_what_provides (ZifStore *store, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+zif_store_local_what_provides (ZifStore *store, gchar **search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	guint i;
-	guint j;
+	guint j, k;
 	GPtrArray *array = NULL;
 	ZifPackage *package;
 	GPtrArray *provides;
@@ -746,9 +771,11 @@ zif_store_local_what_provides (ZifStore *store, const gchar *search, GCancellabl
 		provides = zif_package_get_provides (package, NULL);
 		for (j=0; j<provides->len; j++) {
 			provide = g_ptr_array_index (provides, j);
-			if (strcmp (provide->name, search) == 0) {
-				g_ptr_array_add (array, g_object_ref (package));
-				break;
+			for (k=0; search[k] != NULL; k++) {
+				if (g_strcmp0 (provide->name, search[k]) == 0) {
+					g_ptr_array_add (array, g_object_ref (package));
+					break;
+				}
 			}
 		}
 

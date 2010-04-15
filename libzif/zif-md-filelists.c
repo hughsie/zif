@@ -178,7 +178,7 @@ out:
  * Return value: a string list of pkgId's
  **/
 GPtrArray *
-zif_md_filelists_search_file (ZifMdFilelists *md, const gchar *search,
+zif_md_filelists_search_file (ZifMdFilelists *md, gchar **search,
 			      GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	GPtrArray *array = NULL;
@@ -207,13 +207,13 @@ zif_md_filelists_search_file (ZifMdFilelists *md, const gchar *search,
 	}
 
 	/* split the search term into directory and filename */
-	dirname = g_path_get_dirname (search);
-	filename = g_path_get_basename (search);
+	dirname = g_path_get_dirname (search[0]);
+	filename = g_path_get_basename (search[0]);
 	egg_debug ("dirname=%s, filename=%s", dirname, filename);
 
 	/* create data struct we can pass to the callback */
 	data = g_new0 (ZifMdFilelistsData, 1);
-	data->filename = g_path_get_basename (search);
+	data->filename = g_path_get_basename (search[0]);
 	data->array = g_ptr_array_new ();
 
 	/* populate _array with guint pkgKey */

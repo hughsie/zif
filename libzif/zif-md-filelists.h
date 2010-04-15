@@ -57,7 +57,7 @@ struct _ZifMdFilelistsClass
 GType		 zif_md_filelists_get_type		(void);
 ZifMdFilelists	*zif_md_filelists_new			(void);
 GPtrArray	*zif_md_filelists_search_file		(ZifMdFilelists	*md,
-							 const gchar		*search,
+							 gchar			**search,
 							 GCancellable		*cancellable,
 							 ZifCompletion		*completion,
 							 GError			**error);

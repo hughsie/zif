@@ -105,6 +105,7 @@ zif_cmd_download (const gchar *package_name, ZifCompletion *completion)
 	ZifPackage *package;
 	ZifCompletion *completion_local;
 	GPtrArray *store_array;
+	const gchar *to_array[] = { NULL, NULL };
 
 	/* setup completion */
 	zif_completion_set_number_steps (completion, 3);
@@ -124,7 +125,8 @@ zif_cmd_download (const gchar *package_name, ZifCompletion *completion)
 
 	/* resolve package name */
 	completion_local = zif_completion_get_child (completion);
-	array = zif_store_array_resolve (store_array, package_name, NULL, NULL, NULL, completion_local, &error);
+	to_array[0] = package_name;
+	array = zif_store_array_resolve (store_array, (gchar **)to_array, NULL, NULL, NULL, completion_local, &error);
 	if (array == NULL) {
 		g_print ("failed to get results: %s\n", error->message);
 		g_error_free (error);
@@ -179,6 +181,7 @@ zif_cmd_get_depends (const gchar *package_name, ZifCompletion *completion)
 	const gchar *package_id;
 	guint i, j;
 	gchar **split;
+	const gchar *to_array[] = { NULL, NULL };
 
 	/* setup completion */
 	zif_completion_set_number_steps (completion, 2);
@@ -206,7 +209,8 @@ zif_cmd_get_depends (const gchar *package_name, ZifCompletion *completion)
 
 	/* resolve package name */
 	completion_local = zif_completion_get_child (completion);
-	array = zif_store_array_resolve (store_array, package_name, NULL, NULL, NULL, completion_local, &error);
+	to_array[0] = package_name;
+	array = zif_store_array_resolve (store_array, (gchar**)to_array, NULL, NULL, NULL, completion_local, &error);
 	if (array == NULL) {
 		g_print ("failed to get results: %s\n", error->message);
 		g_error_free (error);
@@ -243,7 +247,8 @@ zif_cmd_get_depends (const gchar *package_name, ZifCompletion *completion)
 		g_free (require_str);
 
 		/* find the package providing the depend */
-		provides = zif_store_array_what_provides (store_array, require->name, NULL, NULL, NULL, completion_loop, &error);
+		to_array[0] = require->name;
+		provides = zif_store_array_what_provides (store_array, (gchar**)to_array, NULL, NULL, NULL, completion_loop, &error);
 		if (provides == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
@@ -288,6 +293,7 @@ zif_cmd_install (const gchar *package_name, ZifCompletion *completion)
 	ZifPackage *package;
 	ZifCompletion *completion_local;
 	GPtrArray *store_array;
+	const gchar *to_array[] = { NULL, NULL };
 
 	/* setup completion */
 	zif_completion_set_number_steps (completion, 3);
@@ -307,7 +313,8 @@ zif_cmd_install (const gchar *package_name, ZifCompletion *completion)
 
 	/* check not already installed */
 	completion_local = zif_completion_get_child (completion);
-	array = zif_store_array_resolve (store_array, package_name, NULL, NULL, NULL, completion_local, &error);
+	to_array[0] = package_name;
+	array = zif_store_array_resolve (store_array, (gchar**)to_array, NULL, NULL, NULL, completion_local, &error);
 	if (array == NULL) {
 		g_print ("failed to get results: %s\n", error->message);
 		g_error_free (error);
@@ -340,7 +347,8 @@ zif_cmd_install (const gchar *package_name, ZifCompletion *completion)
 	zif_completion_done (completion);
 
 	/* check we can find a package of this name */
-	array = zif_store_array_resolve (store_array, package_name, NULL, NULL, NULL, completion_local, &error);
+	to_array[0] = package_name;
+	array = zif_store_array_resolve (store_array, (gchar**)to_array, NULL, NULL, NULL, completion_local, &error);
 	if (array == NULL) {
 		g_print ("failed to get results: %s\n", error->message);
 		g_error_free (error);
@@ -420,6 +428,7 @@ zif_cmd_update (const gchar *package_name, ZifCompletion *completion)
 	ZifPackage *package;
 	ZifCompletion *completion_local;
 	GPtrArray *store_array;
+	const gchar *to_array[] = { NULL, NULL };
 
 	/* setup completion */
 	zif_completion_set_number_steps (completion, 4);
@@ -439,7 +448,8 @@ zif_cmd_update (const gchar *package_name, ZifCompletion *completion)
 
 	/* check not already installed */
 	completion_local = zif_completion_get_child (completion);
-	array = zif_store_array_resolve (store_array, package_name, NULL, NULL, NULL, completion_local, &error);
+	to_array[0] = package_name;
+	array = zif_store_array_resolve (store_array, (gchar**)to_array, NULL, NULL, NULL, completion_local, &error);
 	if (array == NULL) {
 		g_print ("failed to get results: %s\n", error->message);
 		g_error_free (error);
@@ -473,7 +483,8 @@ zif_cmd_update (const gchar *package_name, ZifCompletion *completion)
 
 	/* check we can find a package of this name */
 	completion_local = zif_completion_get_child (completion);
-	array = zif_store_array_resolve (store_array, package_name, NULL, NULL, NULL, completion_local, &error);
+	to_array[0] = package_name;
+	array = zif_store_array_resolve (store_array, (gchar**)to_array, NULL, NULL, NULL, completion_local, &error);
 	if (array == NULL) {
 		g_print ("failed to get results: %s\n", error->message);
 		g_error_free (error);
@@ -532,6 +543,7 @@ main (int argc, char *argv[])
 	gchar *config_file = NULL;
 	gchar *repos_dir = NULL;
 	gchar **split;
+	const gchar *to_array[] = { NULL, NULL };
 
 	const GOptionEntry options[] = {
 		{ "verbose", 'v', 0, G_OPTION_ARG_NONE, &verbose,
@@ -1003,7 +1015,8 @@ main (int argc, char *argv[])
 
 		/* resolve */
 		completion_local = zif_completion_get_child (completion);
-		array = zif_store_array_resolve (store_array, value, NULL, NULL, NULL, completion_local, &error);
+		to_array[0] = value;
+		array = zif_store_array_resolve (store_array, (gchar**)to_array, NULL, NULL, NULL, completion_local, &error);
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
@@ -1098,7 +1111,8 @@ main (int argc, char *argv[])
 			goto out;
 		}
 		completion_local = zif_completion_get_child (completion);
-		array = zif_store_array_resolve (store_array, value, NULL, NULL, NULL, completion_local, &error);
+		to_array[0] = value;
+		array = zif_store_array_resolve (store_array, (gchar**)to_array, NULL, NULL, NULL, completion_local, &error);
 
 		/* this section done */
 		zif_completion_done (completion);
@@ -1299,7 +1313,8 @@ main (int argc, char *argv[])
 		zif_completion_done (completion);
 
 		completion_local = zif_completion_get_child (completion);
-		array = zif_store_array_resolve (store_array, value, NULL, NULL, NULL, completion_local, &error);
+		to_array[0] = value;
+		array = zif_store_array_resolve (store_array, (gchar**)to_array, NULL, NULL, NULL, completion_local, &error);
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
@@ -1415,7 +1430,8 @@ main (int argc, char *argv[])
 		zif_completion_done (completion);
 
 		completion_local = zif_completion_get_child (completion);
-		array = zif_store_array_search_name (store_array, value, NULL, NULL, NULL, completion_local, &error);
+		to_array[0] = value;
+		array = zif_store_array_search_name (store_array, (gchar**)to_array, NULL, NULL, NULL, completion_local, &error);
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
@@ -1468,7 +1484,8 @@ main (int argc, char *argv[])
 		zif_completion_done (completion);
 
 		completion_local = zif_completion_get_child (completion);
-		array = zif_store_array_search_details (store_array, value, NULL, NULL, NULL, completion_local, &error);
+		to_array[0] = value;
+		array = zif_store_array_search_details (store_array, (gchar**)to_array, NULL, NULL, NULL, completion_local, &error);
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
@@ -1522,7 +1539,8 @@ main (int argc, char *argv[])
 		zif_completion_done (completion);
 
 		completion_local = zif_completion_get_child (completion);
-		array = zif_store_array_search_file (store_array, value, NULL, NULL, NULL, completion_local, &error);
+		to_array[0] = value;
+		array = zif_store_array_search_file (store_array, (gchar**)to_array, NULL, NULL, NULL, completion_local, &error);
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
@@ -1575,7 +1593,8 @@ main (int argc, char *argv[])
 		zif_completion_done (completion);
 
 		completion_local = zif_completion_get_child (completion);
-		array = zif_store_array_search_group (store_array, value, NULL, NULL, NULL, completion_local, &error);
+		to_array[0] = value;
+		array = zif_store_array_search_group (store_array, (gchar**)to_array, NULL, NULL, NULL, completion_local, &error);
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
@@ -1617,7 +1636,8 @@ main (int argc, char *argv[])
 		zif_completion_done (completion);
 
 		completion_local = zif_completion_get_child (completion);
-		array = zif_store_array_search_category (store_array, value, NULL, NULL, NULL, completion_local, &error);
+		to_array[0] = value;
+		array = zif_store_array_search_category (store_array, (gchar**)to_array, NULL, NULL, NULL, completion_local, &error);
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
@@ -1670,7 +1690,8 @@ main (int argc, char *argv[])
 		zif_completion_done (completion);
 
 		completion_local = zif_completion_get_child (completion);
-		array = zif_store_array_what_provides (store_array, value, NULL, NULL, NULL, completion_local, &error);
+		to_array[0] = value;
+		array = zif_store_array_what_provides (store_array, (gchar**)to_array, NULL, NULL, NULL, completion_local, &error);
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);

@@ -631,7 +631,7 @@ zif_md_unload (ZifMd *md, GCancellable *cancellable, ZifCompletion *completion, 
  * Since: 0.0.1
  **/
 GPtrArray *
-zif_md_resolve (ZifMd *md, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+zif_md_resolve (ZifMd *md, gchar **search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	GPtrArray *array = NULL;
 	ZifMdClass *klass = ZIF_MD_GET_CLASS (md);
@@ -667,7 +667,7 @@ out:
  * Since: 0.0.1
  **/
 GPtrArray *
-zif_md_search_name (ZifMd *md, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+zif_md_search_name (ZifMd *md, gchar **search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	GPtrArray *array = NULL;
 	ZifMdClass *klass = ZIF_MD_GET_CLASS (md);
@@ -703,7 +703,7 @@ out:
  * Since: 0.0.1
  **/
 GPtrArray *
-zif_md_search_details (ZifMd *md, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+zif_md_search_details (ZifMd *md, gchar **search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	GPtrArray *array = NULL;
 	ZifMdClass *klass = ZIF_MD_GET_CLASS (md);
@@ -739,7 +739,7 @@ out:
  * Since: 0.0.1
  **/
 GPtrArray *
-zif_md_search_group (ZifMd *md, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+zif_md_search_group (ZifMd *md, gchar **search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	GPtrArray *array = NULL;
 	ZifMdClass *klass = ZIF_MD_GET_CLASS (md);
@@ -775,7 +775,7 @@ out:
  * Since: 0.0.1
  **/
 GPtrArray *
-zif_md_search_pkgid (ZifMd *md, const gchar *search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+zif_md_search_pkgid (ZifMd *md, gchar **search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	GPtrArray *array = NULL;
 	ZifMdClass *klass = ZIF_MD_GET_CLASS (md);
@@ -811,7 +811,7 @@ out:
  * Since: 0.0.1
  **/
 GPtrArray *
-zif_md_what_provides (ZifMd *md, const gchar *search,
+zif_md_what_provides (ZifMd *md, gchar **search,
 		      GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	GPtrArray *array = NULL;
