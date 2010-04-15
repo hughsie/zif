@@ -1325,7 +1325,10 @@ zif_store_remote_load (ZifStore *store, GCancellable *cancellable, ZifCompletion
 	}
 
 	/* we need either a base url or mirror list for an enabled store */
-	if (remote->priv->enabled && remote->priv->baseurls->len == 0 && remote->priv->metalink == NULL && remote->priv->mirrorlist == NULL) {
+	if (remote->priv->enabled &&
+	    remote->priv->baseurls->len == 0 &&
+	    remote->priv->metalink == NULL &&
+	    remote->priv->mirrorlist == NULL) {
 		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 				     "baseurl, metalink or mirrorlist required");
 		ret = FALSE;
@@ -1639,7 +1642,7 @@ zif_store_remote_resolve (ZifStore *store, gchar **search, GCancellable *cancell
 
 	completion_local = zif_completion_get_child (completion);
 	primary = zif_store_remote_get_primary (remote);
-//	array = zif_md_resolve (primary, search, cancellable, completion_local, error);
+	array = zif_md_resolve (primary, search, cancellable, completion_local, error);
 
 	/* this section done */
 	zif_completion_done (completion);
@@ -2162,7 +2165,6 @@ zif_store_remote_get_categories (ZifStore *store, GCancellable *cancellable, Zif
 	ZifStoreRemote *remote = ZIF_STORE_REMOTE (store);
 	ZifCompletion *completion_local;
 	ZifCompletion *completion_loop;
-//	PkCategory *comps_category;
 	PkCategory *group;
 	PkCategory *category;
 	PkCategory *category_tmp;
@@ -2298,6 +2300,7 @@ zif_store_remote_get_updates (ZifStore *store, GPtrArray *packages,
 	gchar **split;
 	gchar **split_update;
 	ZifMd *primary;
+	gchar **resolve_array = NULL;
 
 	/* not locked */
 	ret = zif_lock_is_locked (remote->priv->lock, NULL);
@@ -2334,8 +2337,7 @@ zif_store_remote_get_updates (ZifStore *store, GPtrArray *packages,
 	/* get primary */
 	primary = zif_store_remote_get_primary (remote);
 
-{
-	gchar **resolve_array;
+	/* get the array of packages to resolve */
 	resolve_array = g_new0 (gchar *, packages->len + 1);
 	for (i=0; i<packages->len; i++) {
 		package = ZIF_PACKAGE (g_ptr_array_index (packages, i));
@@ -2345,6 +2347,7 @@ zif_store_remote_get_updates (ZifStore *store, GPtrArray *packages,
 		g_strfreev (split);
 	}
 
+	/* resolve all of them in one fell swoop */
 	completion_local = zif_completion_get_child (completion);
 	updates = zif_md_resolve (primary, resolve_array,
 				  cancellable, completion_local, &error_local);
@@ -2355,24 +2358,11 @@ zif_store_remote_get_updates (ZifStore *store, GPtrArray *packages,
 
 	/* some repos contain lots of versions of one package */
 	zif_package_array_filter_newest (updates);
-}
 
 	/* find each one in a remote repo */
 	for (i=0; i<packages->len; i++) {
 		package = ZIF_PACKAGE (g_ptr_array_index (packages, i));
 		package_id = zif_package_get_id (package);
-
-//		/* find package name in repo */
-//		completion_local = zif_completion_get_child (completion);
-//		split = pk_package_id_split (package_id);
-//		updates = zif_md_resolve (primary, split[PK_PACKAGE_ID_NAME],
-//					  cancellable, completion_local, NULL);
-
-//		g_strfreev (split);
-//		if (updates == NULL) {
-//			egg_debug ("not found %s", package_id);
-//			continue;
-//		}
 
 		/* find updates */
 		for (j=0; j<updates->len; j++) {
@@ -2400,6 +2390,7 @@ zif_store_remote_get_updates (ZifStore *store, GPtrArray *packages,
 	/* this section done */
 	zif_completion_done (completion);
 out:
+	g_strfreev (resolve_array);
 	if (updates != NULL)
 		g_ptr_array_unref (updates);
 	return array;
