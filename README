@@ -86,7 +86,7 @@ What doesn't work:
 • Checking of signed repodata
 • Multiarch
 • YumDB of storing where packages come from
-• Some old style yum metadata (ZifMdFilelistsXml and ZifMdOtherXml)
+• Some old style yum metadata (ZifMdOtherXml)
 
 Comparisons:
 • Zif is about 40% quicker for queries than using the yum API

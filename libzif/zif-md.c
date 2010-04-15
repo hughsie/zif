@@ -660,9 +660,10 @@ out:
  * @completion: a #ZifCompletion to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
- * Finds all packages that contain the filename.
+ * Gets a list of all packages that contain the file.
+ * Results are pkgId's descriptors, i.e. 64 bit hashes as test.
  *
- * Return value: an array of #ZifPackageRemote's FIXME: is this true?
+ * Return value: a string list of pkgId's
  *
  * Since: 0.0.1
  **/

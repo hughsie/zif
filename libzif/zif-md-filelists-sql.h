@@ -56,11 +56,6 @@ struct _ZifMdFilelistsSqlClass
 
 GType			 zif_md_filelists_sql_get_type		(void);
 ZifMdFilelistsSql	*zif_md_filelists_sql_new		(void);
-GPtrArray		*zif_md_filelists_sql_search_file	(ZifMdFilelistsSql	*md,
-								 gchar			**search,
-								 GCancellable		*cancellable,
-								 ZifCompletion		*completion,
-								 GError			**error);
 
 G_END_DECLS
 

@@ -380,7 +380,7 @@ zif_md_primary_xml_parser_text (GMarkupParseContext *context, const gchar *text,
 			g_object_set_data_full (G_OBJECT(primary_xml->priv->package_temp), "pkgid", g_strdup (text), g_free);
 			goto out;
 		}
-		egg_error ("not saving: %s", text);
+		egg_warning ("not saving: %s", text);
 		goto out;
 	}
 out:

@@ -1009,7 +1009,6 @@ zif_package_get_files (ZifPackage *package, GError **error)
 	gboolean ret;
 
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
-	g_return_val_if_fail (package->priv->package_id_split != NULL, NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* not exists */

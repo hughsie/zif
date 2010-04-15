@@ -44,6 +44,7 @@
 #include "zif-md-comps.h"
 #include "zif-md-updateinfo.h"
 #include "zif-md-filelists-sql.h"
+#include "zif-md-filelists-xml.h"
 #include "zif-md-metalink.h"
 #include "zif-md-mirrorlist.h"
 #include "zif-md-other-sql.h"
@@ -84,6 +85,7 @@ struct _ZifStoreRemotePrivate
 	ZifMd			*md_primary_sql;
 	ZifMd			*md_primary_xml;
 	ZifMd			*md_filelists_sql;
+	ZifMd			*md_filelists_xml;
 	ZifMd			*md_metalink;
 	ZifMd			*md_mirrorlist;
 	ZifMd			*md_comps;
@@ -134,6 +136,23 @@ zif_store_remote_get_primary (ZifStoreRemote *store)
 }
 
 /**
+ * zif_store_remote_get_filelists:
+ **/
+static ZifMd *
+zif_store_remote_get_filelists (ZifStoreRemote *store)
+{
+	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), NULL);
+
+	if (zif_md_get_location (store->priv->md_filelists_sql) != NULL)
+		return store->priv->md_filelists_sql;
+	if (zif_md_get_location (store->priv->md_filelists_xml) != NULL)
+		return store->priv->md_filelists_xml;
+
+	/* this should never happen */
+	return NULL;
+}
+
+/**
  * zif_store_remote_get_md_from_type:
  **/
 static ZifMd *
@@ -145,7 +164,7 @@ zif_store_remote_get_md_from_type (ZifStoreRemote *store, ZifMdType type)
 	if (type == ZIF_MD_TYPE_FILELISTS_SQL)
 		return store->priv->md_filelists_sql;
 	if (type == ZIF_MD_TYPE_FILELISTS_XML)
-		return NULL;
+		return store->priv->md_filelists_xml;
 	if (type == ZIF_MD_TYPE_PRIMARY_SQL)
 		return store->priv->md_primary_sql;
 	if (type == ZIF_MD_TYPE_PRIMARY_XML)
@@ -2458,6 +2477,7 @@ zif_store_remote_search_file (ZifStore *store, gchar **search, GCancellable *can
 	guint i, j;
 	ZifStoreRemote *remote = ZIF_STORE_REMOTE (store);
 	ZifMd *primary;
+	ZifMd *filelists;
 	const gchar *to_array[] = { NULL, NULL };
 
 	/* not locked */
@@ -2491,8 +2511,9 @@ zif_store_remote_search_file (ZifStore *store, gchar **search, GCancellable *can
 
 	/* gets a list of pkgId's that match this file */
 	completion_local = zif_completion_get_child (completion);
-	pkgids = zif_md_filelists_sql_search_file (ZIF_MD_FILELISTS_SQL (remote->priv->md_filelists_sql),
-						   search, cancellable, completion_local, &error_local);
+	filelists = zif_store_remote_get_filelists (remote);
+	pkgids = zif_md_search_file (filelists,
+				     search, cancellable, completion_local, &error_local);
 	if (pkgids == NULL) {
 		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 			     "failed to load get list of pkgids: %s", error_local->message);
@@ -2758,6 +2779,7 @@ zif_store_remote_finalize (GObject *object)
 	g_object_unref (store->priv->md_primary_sql);
 	g_object_unref (store->priv->md_primary_xml);
 	g_object_unref (store->priv->md_filelists_sql);
+	g_object_unref (store->priv->md_filelists_xml);
 	g_object_unref (store->priv->md_comps);
 	g_object_unref (store->priv->md_updateinfo);
 	g_object_unref (store->priv->md_metalink);
@@ -2829,6 +2851,7 @@ zif_store_remote_init (ZifStoreRemote *store)
 	store->priv->monitor = zif_monitor_new ();
 	store->priv->lock = zif_lock_new ();
 	store->priv->md_filelists_sql = ZIF_MD (zif_md_filelists_sql_new ());
+	store->priv->md_filelists_xml = ZIF_MD (zif_md_filelists_xml_new ());
 	store->priv->md_other_sql = ZIF_MD (zif_md_other_sql_new ());
 	store->priv->md_primary_sql = ZIF_MD (zif_md_primary_sql_new ());
 	store->priv->md_primary_xml = ZIF_MD (zif_md_primary_xml_new ());
@@ -2910,6 +2933,7 @@ zif_store_remote_test (EggTest *test)
 	const gchar *id;
 	PkCategory *category;
 	guint i;
+	const gchar *in_array[] = { NULL, NULL };
 
 	if (!egg_test_start (test, "ZifStoreRemote"))
 		return;
@@ -3007,7 +3031,8 @@ zif_store_remote_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "resolve");
 	zif_completion_reset (completion);
-	array = zif_store_remote_resolve (ZIF_STORE (store), "kernel", NULL, completion, &error);
+	in_array[0] = "kernel";
+	array = zif_store_remote_resolve (ZIF_STORE (store), (gchar**)in_array, NULL, completion, &error);
 	if (array != NULL)
 		egg_test_success (test, NULL);
 	else
@@ -3025,7 +3050,8 @@ zif_store_remote_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "search name");
 	zif_completion_reset (completion);
-	array = zif_store_remote_search_name (ZIF_STORE (store), "power-manager", NULL, completion, &error);
+	in_array[0] = "power-manager";
+	array = zif_store_remote_search_name (ZIF_STORE (store), (gchar**)in_array, NULL, completion, &error);
 	if (array != NULL)
 		egg_test_success (test, NULL);
 	else
@@ -3043,7 +3069,8 @@ zif_store_remote_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "search details");
 	zif_completion_reset (completion);
-	array = zif_store_remote_search_details (ZIF_STORE (store), "browser plugin", NULL, completion, &error);
+	in_array[0] = "browser plugin";
+	array = zif_store_remote_search_details (ZIF_STORE (store), (gchar**)in_array, NULL, completion, &error);
 	if (array != NULL)
 		egg_test_success (test, NULL);
 	else
@@ -3061,7 +3088,8 @@ zif_store_remote_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "search file");
 	zif_completion_reset (completion);
-	array = zif_store_remote_search_file (ZIF_STORE (store), "/usr/bin/gnome-power-manager", NULL, completion, &error);
+	in_array[0] = "/usr/bin/gnome-power-manager";
+	array = zif_store_remote_search_file (ZIF_STORE (store), (gchar**)in_array, NULL, completion, &error);
 	if (array != NULL)
 		egg_test_success (test, NULL);
 	else
