@@ -1,4 +1,4 @@
-AC_PREREQ(2.65)
+AC_PREREQ(2.63)
 
 AC_INIT([zif],[0.0.1])
 AC_CONFIG_SRCDIR(libzif)
