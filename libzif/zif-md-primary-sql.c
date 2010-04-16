@@ -59,6 +59,7 @@ struct _ZifMdPrimarySqlPrivate
 typedef struct {
 	const gchar		*id;
 	GPtrArray		*packages;
+	ZifMdPrimarySql		*md;
 } ZifMdPrimarySqlData;
 
 G_DEFINE_TYPE (ZifMdPrimarySql, zif_md_primary_sql, ZIF_TYPE_MD)
@@ -123,9 +124,12 @@ zif_md_primary_sql_sqlite_create_package_cb (void *data, gint argc, gchar **argv
 {
 	ZifMdPrimarySqlData *fldata = (ZifMdPrimarySqlData *) data;
 	ZifPackageRemote *package;
+	ZifStoreRemote *store_remote;
 
+	store_remote = zif_md_get_store_remote (ZIF_MD (fldata->md));
 	package = zif_package_remote_new ();
 	zif_package_remote_set_from_repo (package, argc, col_name, argv, fldata->id, NULL);
+	zif_package_remote_set_store_remote (package, store_remote);
 	g_ptr_array_add (fldata->packages, package);
 
 	return 0;
@@ -162,6 +166,7 @@ zif_md_primary_sql_search (ZifMdPrimarySql *md, const gchar *statement,
 
 	/* create data struct we can pass to the callback */
 	data = g_new0 (ZifMdPrimarySqlData, 1);
+	data->md = md;
 	data->id = zif_md_get_id (ZIF_MD (md));
 	data->packages = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	rc = sqlite3_exec (md->priv->db, statement, zif_md_primary_sql_sqlite_create_package_cb, data, &error_msg);

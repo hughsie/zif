@@ -379,11 +379,11 @@ zif_md_set_id (ZifMd *md, const gchar *id)
 }
 
 /**
- * zif_md_set_id:
+ * zif_md_set_store_remote:
  * @md: the #ZifMd object
- * @id: the repository id, e.g. "fedora"
+ * @remote: the #ZifStoreRemote that created this metadata object
  *
- * Sets the repository ID for this metadata.
+ * Sets the remote store for this metadata.
  *
  * Return value: %TRUE for success, %FALSE for failure
  *
@@ -399,6 +399,23 @@ zif_md_set_store_remote (ZifMd *md, ZifStoreRemote *remote)
 	/* do not take a reference, else the parent device never goes away */
 	md->priv->remote = remote;
 	return TRUE;
+}
+
+/**
+ * zif_md_get_store_remote:
+ * @md: the #ZifMd object
+ *
+ * Gets the remote store for this metadata.
+ *
+ * Return value: A #ZifStoreRemote or %NULL for unset
+ *
+ * Since: 0.0.1
+ **/
+ZifStoreRemote *
+zif_md_get_store_remote (ZifMd *md)
+{
+	g_return_val_if_fail (ZIF_IS_MD (md), NULL);
+	return md->priv->remote;
 }
 
 /**

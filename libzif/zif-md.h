@@ -157,6 +157,7 @@ gboolean	 zif_md_set_mdtype			(ZifMd		*md,
 							 ZifMdType	 type);
 gboolean	 zif_md_set_store_remote		(ZifMd		*md,
 							 ZifStoreRemote	*remote);
+ZifStoreRemote	*zif_md_get_store_remote		(ZifMd		*md);
 gboolean	 zif_md_set_id				(ZifMd		*md,
 							 const gchar	*id);
 gboolean	 zif_md_set_filename			(ZifMd		*md,

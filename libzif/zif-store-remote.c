@@ -2717,6 +2717,22 @@ out:
 }
 
 /**
+ * zif_store_remote_get_files:
+ **/
+GPtrArray *
+zif_store_remote_get_files (ZifStoreRemote *store, ZifPackage *package,
+			    GCancellable *cancellable, ZifCompletion *completion, GError **error)
+{
+	ZifMd *filelists;
+
+	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+	filelists = zif_store_remote_get_filelists (store);
+	return zif_md_get_files (filelists, package, cancellable, completion, error);
+}
+
+/**
  * zif_store_remote_file_monitor_cb:
  **/
 static void
