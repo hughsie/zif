@@ -255,6 +255,10 @@ zif_download_set_proxy (ZifDownload *download, const gchar *http_proxy, GError *
 		connection_timeout = 5;
 
 	/* setup the session */
+	if (http_proxy != NULL) {
+		egg_debug ("using proxy %s", http_proxy);
+		proxy = soup_uri_new (http_proxy);
+	}
 	download->priv->session = soup_session_sync_new_with_options (SOUP_SESSION_PROXY_URI, proxy,
 								      SOUP_SESSION_USER_AGENT, "zif",
 								      SOUP_SESSION_TIMEOUT, connection_timeout,
@@ -266,6 +270,8 @@ zif_download_set_proxy (ZifDownload *download, const gchar *http_proxy, GError *
 	}
 	ret = TRUE;
 out:
+	if (proxy != NULL)
+		soup_uri_free (proxy);
 	return ret;
 }
 
