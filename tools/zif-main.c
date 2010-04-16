@@ -541,6 +541,7 @@ main (int argc, char *argv[])
 	gchar *options_help;
 	gboolean verbose = FALSE;
 	gchar *config_file = NULL;
+	gchar *http_proxy = NULL;
 	gchar *repos_dir = NULL;
 	gchar **split;
 	const gchar *to_array[] = { NULL, NULL };
@@ -552,6 +553,8 @@ main (int argc, char *argv[])
 			_("Work offline when possible"), NULL },
 		{ "config", 'c', 0, G_OPTION_ARG_STRING, &config_file,
 			_("Use different config file"), NULL },
+		{ "proxy", 'p', 0, G_OPTION_ARG_STRING, &http_proxy,
+			_("Proxy server setting"), NULL },
 		{ NULL}
 	};
 
@@ -656,7 +659,7 @@ main (int argc, char *argv[])
 
 	/* ZifDownload */
 	download = zif_download_new ();
-	ret = zif_download_set_proxy (download, NULL, &error);
+	ret = zif_download_set_proxy (download, http_proxy, &error);
 	if (!ret) {
 		egg_error ("failed to set proxy: %s", error->message);
 		g_error_free (error);
@@ -1746,6 +1749,7 @@ out:
 
 	g_object_unref (progressbar);
 	g_free (repos_dir);
+	g_free (http_proxy);
 	g_free (config_file);
 	g_free (options_help);
 	return 0;
