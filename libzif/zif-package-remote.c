@@ -163,6 +163,26 @@ zif_package_remote_get_pkgid (ZifPackageRemote *pkg)
 }
 
 /**
+ * zif_package_remote_set_pkgid:
+ * @pkg: the #ZifPackageRemote object
+ * @pkgid: the pkgid hash.
+ *
+ * Sets the pkgid used internally to track the package item.
+ *
+ * Return value: the pkgid hash.
+ *
+ * Since: 0.0.1
+ **/
+void
+zif_package_remote_set_pkgid (ZifPackageRemote *pkg, const gchar *pkgid)
+{
+	g_return_if_fail (ZIF_IS_PACKAGE_REMOTE (pkg));
+	g_return_if_fail (pkgid != NULL);
+	g_return_if_fail (pkg->priv->pkgid == NULL);
+	pkg->priv->pkgid = g_strdup (pkgid);
+}
+
+/**
  * zif_package_remote_set_store_remote:
  * @pkg: the #ZifPackageRemote object
  * @store: the #ZifStoreRemote that created this package
