@@ -124,7 +124,7 @@ zif_md_primary_xml_parser_start_element (GMarkupParseContext *context, const gch
 		/* start of update */
 		if (g_strcmp0 (element_name, "package") == 0) {
 			primary_xml->priv->section = ZIF_MD_PRIMARY_XML_SECTION_PACKAGE;
-			primary_xml->priv->package_temp = zif_package_new ();
+			primary_xml->priv->package_temp = ZIF_PACKAGE (zif_package_remote_new ());
 			goto out;
 		}
 
@@ -376,8 +376,7 @@ zif_md_primary_xml_parser_text (GMarkupParseContext *context, const gchar *text,
 			goto out;
 		}
 		if (primary_xml->priv->section_package == ZIF_MD_PRIMARY_XML_SECTION_PACKAGE_CHECKSUM) {
-			/* TODO: put in to the zif API? */
-			g_object_set_data_full (G_OBJECT(primary_xml->priv->package_temp), "pkgid", g_strdup (text), g_free);
+			zif_package_remote_set_pkgid (ZIF_PACKAGE_REMOTE (primary_xml->priv->package_temp), text);
 			goto out;
 		}
 		egg_warning ("not saving: %s", text);
@@ -639,11 +638,11 @@ static gboolean
 zif_md_primary_xml_search_pkgid_cb (ZifPackage *package, gpointer user_data)
 {
 	guint i;
-	const gchar *value;
+	const gchar *pkgid;
 	gchar **search = (gchar **) user_data;
-	value = (const gchar *) g_object_get_data (G_OBJECT (package), "pkgid");
+	pkgid = zif_package_remote_get_pkgid (ZIF_PACKAGE_REMOTE (package));
 	for (i=0; search[i] != NULL; i++) {
-		if (g_strcmp0 (value, search[i]) == 0)
+		if (g_strcmp0 (pkgid, search[i]) == 0)
 			return TRUE;
 	}
 	return FALSE;
