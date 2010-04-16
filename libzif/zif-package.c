@@ -686,7 +686,7 @@ zif_package_get_package_id (ZifPackage *package)
  *
  * Return value: The #ZifPackageEnsureType represented as a string
  **/
-static const gchar *
+const gchar *
 zif_package_ensure_type_to_string (ZifPackageEnsureType type)
 {
 	if (type == ZIF_PACKAGE_ENSURE_TYPE_FILES)

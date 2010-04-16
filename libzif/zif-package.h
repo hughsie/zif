@@ -165,6 +165,7 @@ gint			 zif_package_compare		(ZifPackage	*a,
 ZifPackage		*zif_package_array_get_newest	(GPtrArray	*array,
 							 GError		**error);
 gboolean		 zif_package_array_filter_newest (GPtrArray	*packages);
+const gchar		*zif_package_ensure_type_to_string (ZifPackageEnsureType type);
 
 G_END_DECLS
 
