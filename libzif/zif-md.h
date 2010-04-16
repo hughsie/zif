@@ -114,6 +114,11 @@ struct _ZifMdClass
 						 GCancellable		*cancellable,
 						 ZifCompletion		*completion,
 						 GError			**error);
+	GPtrArray	*(*get_files)		(ZifMd			*md,
+						 ZifPackage		*package,
+						 GCancellable		*cancellable,
+						 ZifCompletion		*completion,
+						 GError			**error);
 };
 
 /* types of metadata */
@@ -237,6 +242,11 @@ GPtrArray	*zif_md_find_package			(ZifMd		*md,
 							 GError		**error);
 GPtrArray	*zif_md_get_changelog			(ZifMd		*md,
 							 const gchar	*pkgid,
+							 GCancellable	*cancellable,
+							 ZifCompletion	*completion,
+							 GError		**error);
+GPtrArray	*zif_md_get_files			(ZifMd		*md,
+							 ZifPackage	*package,
 							 GCancellable	*cancellable,
 							 ZifCompletion	*completion,
 							 GError		**error);

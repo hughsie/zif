@@ -943,6 +943,42 @@ out:
 }
 
 /**
+ * zif_md_get_files:
+ * @md: the #ZifMd object
+ * @package: the %ZifPackage
+ * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Gets the file list for a specific package.
+ *
+ * Return value: an array of strings, free with g_ptr_array_unref()
+ *
+ * Since: 0.0.1
+ **/
+GPtrArray *
+zif_md_get_files (ZifMd *md, ZifPackage *package, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+{
+	GPtrArray *array = NULL;
+	ZifMdClass *klass = ZIF_MD_GET_CLASS (md);
+
+	g_return_val_if_fail (ZIF_IS_MD (md), NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+	/* no support */
+	if (klass->get_files == NULL) {
+		g_set_error_literal (error, ZIF_MD_ERROR, ZIF_MD_ERROR_NO_SUPPORT,
+				     "operation cannot be performed on this md");
+		goto out;
+	}
+
+	/* do subclassed action */
+	array = klass->get_files (md, package, cancellable, completion, error);
+out:
+	return array;
+}
+
+/**
  * zif_md_get_packages:
  * @md: the #ZifMd object
  * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
