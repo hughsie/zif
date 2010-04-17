@@ -466,27 +466,32 @@ zif_package_is_devel (ZifPackage *package)
 gboolean
 zif_package_is_gui (ZifPackage *package)
 {
+	gboolean ret = FALSE;
 	guint i;
 	const ZifDepend *depend;
 	GPtrArray *array;
+	ZifCompletion *completion_tmp;
 
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), FALSE);
 	g_return_val_if_fail (package->priv->package_id_split != NULL, FALSE);
 
 	/* get list of requires */
-	array = zif_package_get_requires (package, NULL);
+	completion_tmp = zif_completion_new ();
+	array = zif_package_get_requires (package, NULL, completion_tmp, NULL);
 	if (array == NULL)
 		goto out;
 	for (i=0; i<array->len; i++) {
 		depend = g_ptr_array_index (array, i);
-		if (g_strstr_len (depend->name, -1, "gtk") != NULL)
-			return TRUE;
-		if (g_strstr_len (depend->name, -1, "kde") != NULL)
-			return TRUE;
+		if (g_strstr_len (depend->name, -1, "gtk") != NULL ||
+		    g_strstr_len (depend->name, -1, "kde") != NULL) {
+			ret = TRUE;
+			break;
+		}
 	}
 	g_ptr_array_unref (array);
 out:
-	return FALSE;
+	g_object_unref (completion_tmp);
+	return ret;
 }
 
 /**
@@ -718,7 +723,8 @@ zif_package_ensure_type_to_string (ZifPackageEnsureType type)
  * zif_package_ensure_data:
  **/
 static gboolean
-zif_package_ensure_data (ZifPackage *package, ZifPackageEnsureType type, GError **error)
+zif_package_ensure_data (ZifPackage *package, ZifPackageEnsureType type,
+			 GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	gboolean ret = FALSE;
 	ZifPackageClass *klass = ZIF_PACKAGE_GET_CLASS (package);
@@ -733,7 +739,7 @@ zif_package_ensure_data (ZifPackage *package, ZifPackageEnsureType type, GError 
 		goto out;
 	}
 
-	ret = klass->ensure_data (package, type, error);
+	ret = klass->ensure_data (package, type, cancellable, completion, error);
 out:
 	return ret;
 }
@@ -750,7 +756,7 @@ out:
  * Since: 0.0.1
  **/
 ZifString *
-zif_package_get_summary (ZifPackage *package, GError **error)
+zif_package_get_summary (ZifPackage *package, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	gboolean ret;
 
@@ -760,7 +766,7 @@ zif_package_get_summary (ZifPackage *package, GError **error)
 
 	/* not exists */
 	if (package->priv->summary == NULL) {
-		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_SUMMARY, error);
+		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_SUMMARY, cancellable, completion, error);
 		if (!ret)
 			return NULL;
 	}
@@ -781,7 +787,7 @@ zif_package_get_summary (ZifPackage *package, GError **error)
  * Since: 0.0.1
  **/
 ZifString *
-zif_package_get_description (ZifPackage *package, GError **error)
+zif_package_get_description (ZifPackage *package, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	gboolean ret;
 
@@ -791,7 +797,7 @@ zif_package_get_description (ZifPackage *package, GError **error)
 
 	/* not exists */
 	if (package->priv->description == NULL) {
-		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_DESCRIPTION, error);
+		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_DESCRIPTION, cancellable, completion, error);
 		if (!ret)
 			return NULL;
 	}
@@ -812,7 +818,7 @@ zif_package_get_description (ZifPackage *package, GError **error)
  * Since: 0.0.1
  **/
 ZifString *
-zif_package_get_license (ZifPackage *package, GError **error)
+zif_package_get_license (ZifPackage *package, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	gboolean ret;
 
@@ -822,7 +828,7 @@ zif_package_get_license (ZifPackage *package, GError **error)
 
 	/* not exists */
 	if (package->priv->license == NULL) {
-		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_LICENCE, error);
+		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_LICENCE, cancellable, completion, error);
 		if (!ret)
 			return NULL;
 	}
@@ -843,7 +849,7 @@ zif_package_get_license (ZifPackage *package, GError **error)
  * Since: 0.0.1
  **/
 ZifString *
-zif_package_get_url (ZifPackage *package, GError **error)
+zif_package_get_url (ZifPackage *package, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	gboolean ret;
 
@@ -853,7 +859,7 @@ zif_package_get_url (ZifPackage *package, GError **error)
 
 	/* not exists */
 	if (package->priv->url == NULL) {
-		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_URL, error);
+		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_URL, cancellable, completion, error);
 		if (!ret)
 			return NULL;
 	}
@@ -874,7 +880,7 @@ zif_package_get_url (ZifPackage *package, GError **error)
  * Since: 0.0.1
  **/
 ZifString *
-zif_package_get_filename (ZifPackage *package, GError **error)
+zif_package_get_filename (ZifPackage *package, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
 	g_return_val_if_fail (package->priv->package_id_split != NULL, NULL);
@@ -910,7 +916,7 @@ zif_package_get_filename (ZifPackage *package, GError **error)
  * Since: 0.0.1
  **/
 ZifString *
-zif_package_get_category (ZifPackage *package, GError **error)
+zif_package_get_category (ZifPackage *package, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	gboolean ret;
 
@@ -920,7 +926,7 @@ zif_package_get_category (ZifPackage *package, GError **error)
 
 	/* not exists */
 	if (package->priv->category == NULL) {
-		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_CATEGORY, error);
+		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_CATEGORY, cancellable, completion, error);
 		if (!ret)
 			return NULL;
 	}
@@ -941,7 +947,7 @@ zif_package_get_category (ZifPackage *package, GError **error)
  * Since: 0.0.1
  **/
 PkGroupEnum
-zif_package_get_group (ZifPackage *package, GError **error)
+zif_package_get_group (ZifPackage *package, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	gboolean ret;
 
@@ -950,7 +956,7 @@ zif_package_get_group (ZifPackage *package, GError **error)
 
 	/* not exists */
 	if (package->priv->group == PK_GROUP_ENUM_UNKNOWN) {
-		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_GROUP, error);
+		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_GROUP, cancellable, completion, error);
 		if (!ret)
 			return PK_GROUP_ENUM_UNKNOWN;
 	}
@@ -974,7 +980,7 @@ zif_package_get_group (ZifPackage *package, GError **error)
  * Since: 0.0.1
  **/
 guint64
-zif_package_get_size (ZifPackage *package, GError **error)
+zif_package_get_size (ZifPackage *package, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	gboolean ret;
 
@@ -982,7 +988,7 @@ zif_package_get_size (ZifPackage *package, GError **error)
 	g_return_val_if_fail (error == NULL || *error == NULL, 0);
 
 	if (package->priv->size == 0) {
-		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_SIZE, error);
+		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_SIZE, cancellable, completion, error);
 		if (!ret)
 			return 0;
 	}
@@ -1004,7 +1010,7 @@ zif_package_get_size (ZifPackage *package, GError **error)
  * Since: 0.0.1
  **/
 GPtrArray *
-zif_package_get_files (ZifPackage *package, GError **error)
+zif_package_get_files (ZifPackage *package, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	gboolean ret;
 
@@ -1013,7 +1019,7 @@ zif_package_get_files (ZifPackage *package, GError **error)
 
 	/* not exists */
 	if (package->priv->files == NULL) {
-		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_FILES, error);
+		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_FILES, cancellable, completion, error);
 		if (!ret)
 			return NULL;
 	}
@@ -1034,7 +1040,7 @@ zif_package_get_files (ZifPackage *package, GError **error)
  * Since: 0.0.1
  **/
 GPtrArray *
-zif_package_get_requires (ZifPackage *package, GError **error)
+zif_package_get_requires (ZifPackage *package, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	gboolean ret;
 
@@ -1044,7 +1050,7 @@ zif_package_get_requires (ZifPackage *package, GError **error)
 
 	/* not exists */
 	if (package->priv->requires == NULL) {
-		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_REQUIRES, error);
+		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_REQUIRES, cancellable, completion, error);
 		if (!ret)
 			return NULL;
 	}
@@ -1065,7 +1071,7 @@ zif_package_get_requires (ZifPackage *package, GError **error)
  * Since: 0.0.1
  **/
 GPtrArray *
-zif_package_get_provides (ZifPackage *package, GError **error)
+zif_package_get_provides (ZifPackage *package, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	gboolean ret;
 
@@ -1075,7 +1081,7 @@ zif_package_get_provides (ZifPackage *package, GError **error)
 
 	/* not exists */
 	if (package->priv->provides == NULL) {
-		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_PROVIDES, error);
+		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_PROVIDES, cancellable, completion, error);
 		if (!ret)
 			return NULL;
 	}

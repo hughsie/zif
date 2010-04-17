@@ -288,6 +288,7 @@ zif_store_local_search_category (ZifStore *store, gchar **search, GCancellable *
 	GError *error_local = NULL;
 	gboolean ret;
 	ZifCompletion *completion_local = NULL;
+	ZifCompletion *completion_loop = NULL;
 	ZifStoreLocal *local = ZIF_STORE_LOCAL (store);
 
 	g_return_val_if_fail (ZIF_IS_STORE_LOCAL (store), NULL);
@@ -338,7 +339,8 @@ zif_store_local_search_category (ZifStore *store, gchar **search, GCancellable *
 	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	for (i=0;i<local->priv->packages->len;i++) {
 		package = g_ptr_array_index (local->priv->packages, i);
-		category = zif_package_get_category (package, NULL);
+		completion_loop = zif_completion_get_child (completion_local);
+		category = zif_package_get_category (package, cancellable, completion_loop, NULL);
 		for (j=0; search[j] != NULL; j++) {
 			if (g_strcmp0 (zif_string_get_value (category), search[j]) == 0) {
 				g_ptr_array_add (array, g_object_ref (package));
@@ -372,6 +374,7 @@ zif_store_local_search_details (ZifStore *store, gchar **search, GCancellable *c
 	GError *error_local = NULL;
 	gboolean ret;
 	ZifCompletion *completion_local = NULL;
+	ZifCompletion *completion_loop = NULL;
 	ZifStoreLocal *local = ZIF_STORE_LOCAL (store);
 
 	g_return_val_if_fail (ZIF_IS_STORE_LOCAL (store), NULL);
@@ -423,7 +426,8 @@ zif_store_local_search_details (ZifStore *store, gchar **search, GCancellable *c
 	for (i=0;i<local->priv->packages->len;i++) {
 		package = g_ptr_array_index (local->priv->packages, i);
 		package_id = zif_package_get_id (package);
-		description = zif_package_get_description (package, NULL);
+		completion_loop = zif_completion_get_child (completion_local);
+		description = zif_package_get_description (package, cancellable, completion_loop, NULL);
 		split = pk_package_id_split (package_id);
 		for (j=0; search[j] != NULL; j++) {
 			if (strcasestr (split[PK_PACKAGE_ID_NAME], search[j]) != NULL) {
@@ -461,6 +465,7 @@ zif_store_local_search_group (ZifStore *store, gchar **search, GCancellable *can
 	gboolean ret;
 	PkGroupEnum group;
 	ZifCompletion *completion_local = NULL;
+	ZifCompletion *completion_loop = NULL;
 	ZifStoreLocal *local = ZIF_STORE_LOCAL (store);
 
 	g_return_val_if_fail (ZIF_IS_STORE_LOCAL (store), NULL);
@@ -512,7 +517,8 @@ zif_store_local_search_group (ZifStore *store, gchar **search, GCancellable *can
 		package = g_ptr_array_index (local->priv->packages, i);
 		for (j=0; search[j] != NULL; j++) {
 			group = pk_group_enum_from_text (search[j]);
-			group_tmp = zif_package_get_group (package, NULL);
+			completion_loop = zif_completion_get_child (completion_local);
+			group_tmp = zif_package_get_group (package, cancellable, completion_loop, NULL);
 			if (group == group_tmp) {
 				g_ptr_array_add (array, g_object_ref (package));
 				break;
@@ -543,6 +549,7 @@ zif_store_local_search_file (ZifStore *store, gchar **search, GCancellable *canc
 	const gchar *filename;
 	gboolean ret;
 	ZifCompletion *completion_local = NULL;
+	ZifCompletion *completion_loop = NULL;
 	ZifStoreLocal *local = ZIF_STORE_LOCAL (store);
 
 	g_return_val_if_fail (ZIF_IS_STORE_LOCAL (store), NULL);
@@ -592,7 +599,8 @@ zif_store_local_search_file (ZifStore *store, gchar **search, GCancellable *canc
 	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	for (i=0;i<local->priv->packages->len;i++) {
 		package = g_ptr_array_index (local->priv->packages, i);
-		files = zif_package_get_files (package, &error_local);
+		completion_loop = zif_completion_get_child (completion_local);
+		files = zif_package_get_files (package, cancellable, completion_loop, &error_local);
 		if (files == NULL) {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 				     "failed to get file lists: %s", error_local->message);
@@ -718,6 +726,7 @@ zif_store_local_what_provides (ZifStore *store, gchar **search, GCancellable *ca
 	gboolean ret;
 	const ZifDepend *provide;
 	ZifCompletion *completion_local = NULL;
+	ZifCompletion *completion_loop = NULL;
 	ZifStoreLocal *local = ZIF_STORE_LOCAL (store);
 
 	g_return_val_if_fail (ZIF_IS_STORE_LOCAL (store), NULL);
@@ -768,7 +777,8 @@ zif_store_local_what_provides (ZifStore *store, gchar **search, GCancellable *ca
 	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	for (i=0;i<local->priv->packages->len;i++) {
 		package = g_ptr_array_index (local->priv->packages, i);
-		provides = zif_package_get_provides (package, NULL);
+		completion_loop = zif_completion_get_child (completion_local);
+		provides = zif_package_get_provides (package, cancellable, completion_loop, NULL);
 		for (j=0; j<provides->len; j++) {
 			provide = g_ptr_array_index (provides, j);
 			for (k=0; search[k] != NULL; k++) {
@@ -1114,6 +1124,7 @@ zif_store_local_test (EggTest *test)
 	ZifString *string;
 	const gchar *package_id;
 	gchar **split;
+	const gchar *to_array[] = { NULL, NULL };
 
 	if (!egg_test_start (test, "ZifStoreLocal"))
 		return;
@@ -1190,7 +1201,8 @@ zif_store_local_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "resolve");
 	zif_completion_reset (completion);
-	array = zif_store_local_resolve (ZIF_STORE (store), "kernel", NULL, completion, NULL);
+	to_array[0] = "kernel";
+	array = zif_store_local_resolve (ZIF_STORE (store), (gchar**)to_array, NULL, completion, NULL);
 	elapsed = egg_test_elapsed (test);
 	if (array->len >= 1)
 		egg_test_success (test, NULL);
@@ -1208,7 +1220,8 @@ zif_store_local_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "search name");
 	zif_completion_reset (completion);
-	array = zif_store_local_search_name (ZIF_STORE (store), "gnome-p", NULL, completion, NULL);
+	to_array[0] = "gnome-p";
+	array = zif_store_local_search_name (ZIF_STORE (store), (gchar**)to_array, NULL, completion, NULL);
 	if (array->len > 10)
 		egg_test_success (test, NULL);
 	else
@@ -1218,7 +1231,8 @@ zif_store_local_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "search details");
 	zif_completion_reset (completion);
-	array = zif_store_local_search_details (ZIF_STORE (store), "manage packages", NULL, completion, NULL);
+	to_array[0] = "manage packages";
+	array = zif_store_local_search_details (ZIF_STORE (store), (gchar**)to_array, NULL, completion, NULL);
 	if (array->len == 1)
 		egg_test_success (test, NULL);
 	else
@@ -1228,7 +1242,8 @@ zif_store_local_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "what-provides");
 	zif_completion_reset (completion);
-	array = zif_store_local_what_provides (ZIF_STORE (store), "config(PackageKit)", NULL, completion, NULL);
+	to_array[0] = "config(PackageKit)";
+	array = zif_store_local_what_provides (ZIF_STORE (store), (gchar**)to_array, NULL, completion, NULL);
 	if (array->len == 1)
 		egg_test_success (test, NULL);
 	else
@@ -1257,7 +1272,8 @@ zif_store_local_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "get summary");
-	string = zif_package_get_summary (package, NULL);
+	zif_completion_reset (completion);
+	string = zif_package_get_summary (package, NULL, completion, NULL);
 	if (g_strcmp0 (zif_string_get_value(string), "Package management service") == 0)
 		egg_test_success (test, NULL);
 	else
@@ -1266,7 +1282,8 @@ zif_store_local_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "get license");
-	string = zif_package_get_license (package, NULL);
+	zif_completion_reset (completion);
+	string = zif_package_get_license (package, NULL, completion, NULL);
 	if (g_strcmp0 (zif_string_get_value(string), "GPLv2+") == 0)
 		egg_test_success (test, NULL);
 	else
@@ -1275,7 +1292,8 @@ zif_store_local_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "get category");
-	string = zif_package_get_category (package, NULL);
+	zif_completion_reset (completion);
+	string = zif_package_get_category (package, NULL, completion, NULL);
 	if (g_strcmp0 (zif_string_get_value(string), "System Environment/Libraries") == 0)
 		egg_test_success (test, NULL);
 	else
@@ -1290,7 +1308,7 @@ zif_store_local_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "is gui");
 	ret = zif_package_is_gui (package);
-	egg_test_assert (test, ret);
+	egg_test_assert (test, !ret);
 
 	/************************************************************/
 	egg_test_title (test, "is installed");

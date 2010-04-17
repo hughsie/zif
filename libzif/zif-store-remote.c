@@ -3195,7 +3195,8 @@ zif_store_remote_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "search category");
 	zif_completion_reset (completion);
-	array = zif_store_remote_search_category (ZIF_STORE (store), "admin-tools", NULL, completion, &error);
+	in_array[0] = "admin-tools";
+	array = zif_store_remote_search_category (ZIF_STORE (store), (gchar**)in_array, NULL, completion, &error);
 	if (array == NULL)
 		egg_test_failed (test, "no data: %s", error->message);
 	else if (array->len > 0)

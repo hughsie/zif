@@ -513,7 +513,7 @@ zif_md_filelists_sql_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "search for files");
-	array = zif_md_filelists_sql_search_file (md, data, cancellable, completion, &error);
+	array = zif_md_filelists_sql_search_file (ZIF_MD (md), (gchar**)data, cancellable, completion, &error);
 	if (array != NULL)
 		egg_test_success (test, NULL);
 	else

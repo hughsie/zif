@@ -467,7 +467,7 @@ zif_md_other_sql_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "search for files");
 	zif_completion_reset (completion);
-	array = zif_md_other_sql_get_changelog (ZIF_MD_OTHER_SQL (md),
+	array = zif_md_other_sql_get_changelog (ZIF_MD (md),
 						"42b8d71b303b19c2fcc2b06bb9c764f2902dd72b9376525025ee9ba4a41c38e9",
 						cancellable, completion, &error);
 	if (array != NULL)

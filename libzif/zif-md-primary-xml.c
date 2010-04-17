@@ -566,11 +566,13 @@ zif_md_primary_xml_search_details_cb (ZifPackage *package, gpointer user_data)
 	const gchar *name;
 	ZifString *summary;
 	ZifString *description;
+	ZifCompletion *completion_tmp;
 	gchar **search = (gchar **) user_data;
 
+	completion_tmp = zif_completion_new ();
 	name = zif_package_get_name (package);
-	summary = zif_package_get_summary (package, NULL);
-	description = zif_package_get_description (package, NULL);
+	summary = zif_package_get_summary (package, NULL, completion_tmp, NULL);
+	description = zif_package_get_description (package, NULL, completion_tmp, NULL);
 	for (i=0; search[i] != NULL; i++) {
 		if (g_strstr_len (name, -1, search[i]) != NULL) {
 			ret = TRUE;
@@ -587,6 +589,7 @@ zif_md_primary_xml_search_details_cb (ZifPackage *package, gpointer user_data)
 	}
 	zif_string_unref (summary);
 	zif_string_unref (description);
+	g_object_unref (completion_tmp);
 	return ret;
 }
 
@@ -609,14 +612,18 @@ zif_md_primary_xml_search_group_cb (ZifPackage *package, gpointer user_data)
 	guint i;
 	gboolean ret;
 	ZifString *value;
+	ZifCompletion *completion_tmp;
 	gchar **search = (gchar **) user_data;
-	value = zif_package_get_category (package, NULL);
+
+	completion_tmp = zif_completion_new ();
+	value = zif_package_get_category (package, NULL, completion_tmp, NULL);
 	for (i=0; search[i] != NULL; i++) {
 		if (g_strstr_len (zif_string_get_value (value), -1, search[i]) != NULL) {
 			ret = TRUE;
 			break;
 		}
 	}
+	g_object_unref (completion_tmp);
 	zif_string_unref (value);
 	return ret;
 }
@@ -667,10 +674,14 @@ zif_md_primary_xml_what_provides_cb (ZifPackage *package, gpointer user_data)
 //	guint i;
 	gboolean ret;
 	GPtrArray *array;
+	ZifCompletion *completion_tmp;
 //	gchar **search = (gchar **) user_data;
-	array = zif_package_get_provides (package, NULL);
+
+	completion_tmp = zif_completion_new ();
+	array = zif_package_get_provides (package, NULL, completion_tmp, NULL);
 	/* TODO: do something with the ZifDepend objects */
 	ret = FALSE;
+	g_object_unref (completion_tmp);
 	g_ptr_array_unref (array);
 	return ret;
 }
@@ -887,7 +898,7 @@ zif_md_primary_xml_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "search for files");
 	zif_completion_reset (completion);
-	array = zif_md_primary_xml_resolve (md, data, cancellable, completion, &error);
+	array = zif_md_primary_xml_resolve (ZIF_MD (md), data, cancellable, completion, &error);
 	if (array != NULL)
 		egg_test_success (test, NULL);
 	else
@@ -900,7 +911,8 @@ zif_md_primary_xml_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "correct value");
 	package = g_ptr_array_index (array, 0);
-	summary = zif_package_get_summary (package, NULL);
+	zif_completion_reset (completion);
+	summary = zif_package_get_summary (package, NULL, completion, NULL);
 	if (g_strcmp0 (zif_string_get_value (summary), "GNOME power management service") == 0)
 		egg_test_success (test, NULL);
 	else

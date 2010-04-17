@@ -253,7 +253,7 @@ zif_package_local_get_depends_from_name_flags_version (GPtrArray *names, GPtrArr
  * zif_package_local_ensure_data:
  */
 static gboolean
-zif_package_local_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, GError **error)
+zif_package_local_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	GPtrArray *files;
 	GPtrArray *dirnames;
@@ -374,7 +374,7 @@ zif_package_local_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, GErro
 
 	} else if (type == ZIF_PACKAGE_ENSURE_TYPE_GROUP) {
 		/* group */
-		tmp = zif_package_get_category (pkg, error);
+		tmp = zif_package_get_category (pkg, cancellable, completion, error);
 		if (tmp == NULL)
 			goto out;
 		group = zif_groups_get_group_for_cat (ZIF_PACKAGE_LOCAL (pkg)->priv->groups, zif_string_get_value (tmp), NULL);

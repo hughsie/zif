@@ -45,11 +45,13 @@ zif_print_package (ZifPackage *package)
 {
 	const gchar *package_id;
 	ZifString *summary;
+	ZifCompletion *completion_tmp;
 	gchar **split;
 
 	package_id = zif_package_get_id (package);
 	split = pk_package_id_split (package_id);
-	summary = zif_package_get_summary (package, NULL);
+	completion_tmp = zif_completion_new ();
+	summary = zif_package_get_summary (package, NULL, completion_tmp, NULL);
 	g_print ("%s-%s.%s (%s)\t%s\n",
 		 split[PK_PACKAGE_ID_NAME],
 		 split[PK_PACKAGE_ID_VERSION],
@@ -58,6 +60,7 @@ zif_print_package (ZifPackage *package)
 		 zif_string_get_value (summary));
 	g_strfreev (split);
 	zif_string_unref (summary);
+	g_object_unref (completion_tmp);
 }
 
 /**
@@ -184,7 +187,7 @@ zif_cmd_get_depends (const gchar *package_name, ZifCompletion *completion)
 	const gchar *to_array[] = { NULL, NULL };
 
 	/* setup completion */
-	zif_completion_set_number_steps (completion, 2);
+	zif_completion_set_number_steps (completion, 3);
 
 	/* add all stores */
 	store_array = zif_store_array_new ();
@@ -226,12 +229,16 @@ zif_cmd_get_depends (const gchar *package_name, ZifCompletion *completion)
 	zif_completion_done (completion);
 
 	/* get requires */
-	requires = zif_package_get_requires (package, &error);
+	completion_local = zif_completion_get_child (completion);
+	requires = zif_package_get_requires (package, NULL, completion_local, &error);
 	if (requires == NULL) {
 		g_print ("failed to get requires: %s\n", error->message);
 		g_error_free (error);
 		goto out;
 	}
+
+	/* this section done */
+	zif_completion_done (completion);
 
 	/* match a package to each require */
 	completion_local = zif_completion_get_child (completion);
@@ -1032,7 +1039,8 @@ main (int argc, char *argv[])
 		/* at least one result */
 		if (array->len > 0) {
 			package = g_ptr_array_index (array, 0);
-			files = zif_package_get_files (package, &error);
+			completion_local = zif_completion_get_child (completion);
+			files = zif_package_get_files (package, NULL, completion_local, &error);
 			if (files == NULL) {
 				g_print ("failed to get files: %s\n", error->message);
 				g_error_free (error);
@@ -1133,11 +1141,12 @@ main (int argc, char *argv[])
 
 		package_id = zif_package_get_id (package);
 		split = pk_package_id_split (package_id);
-		summary = zif_package_get_summary (package, NULL);
-		description = zif_package_get_description (package, NULL);
-		license = zif_package_get_license (package, NULL);
-		url = zif_package_get_url (package, NULL);
-		size = zif_package_get_size (package, NULL);
+		completion_local = zif_completion_get_child (completion);
+		summary = zif_package_get_summary (package, NULL, completion_local, NULL);
+		description = zif_package_get_description (package, NULL, completion_local, NULL);
+		license = zif_package_get_license (package, NULL, completion_local, NULL);
+		url = zif_package_get_url (package, NULL, completion_local, NULL);
+		size = zif_package_get_size (package, NULL, completion_local, NULL);
 
 		g_print ("Name\t : %s\n", split[PK_PACKAGE_ID_NAME]);
 		g_print ("Version\t : %s\n", split[PK_PACKAGE_ID_VERSION]);

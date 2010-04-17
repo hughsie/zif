@@ -337,6 +337,7 @@ zif_md_filelists_xml_get_files (ZifMd *md, ZifPackage *package,
 	const gchar *pkgid_tmp;
 	GError *error_local = NULL;
 	ZifCompletion *completion_local;
+	ZifCompletion *completion_loop;
 	ZifMdFilelistsXml *md_filelists = ZIF_MD_FILELISTS_XML (md);
 
 	g_return_val_if_fail (ZIF_IS_MD_FILELISTS_XML (md), NULL);
@@ -363,6 +364,10 @@ zif_md_filelists_xml_get_files (ZifMd *md, ZifPackage *package,
 		zif_completion_done (completion);
 	}
 
+	/* setup steps */
+	completion_local = zif_completion_get_child (completion);
+	zif_completion_set_number_steps (completion_local, md_filelists->priv->array->len);
+
 	/* search array */
 	pkgid = zif_package_remote_get_pkgid (ZIF_PACKAGE_REMOTE (package));
 	packages = md_filelists->priv->array;
@@ -370,9 +375,13 @@ zif_md_filelists_xml_get_files (ZifMd *md, ZifPackage *package,
 		package_tmp = g_ptr_array_index (packages, i);
 		pkgid_tmp = zif_package_remote_get_pkgid (ZIF_PACKAGE_REMOTE (package_tmp));
 		if (g_strcmp0 (pkgid, pkgid_tmp) == 0) {
-			array = zif_package_get_files (package_tmp, NULL);
+			completion_loop = zif_completion_get_child (completion_local);
+			array = zif_package_get_files (package_tmp, cancellable, completion_loop, NULL);
 			break;
 		}
+
+		/* this section done */
+		zif_completion_done (completion_local);
 	}
 
 	/* this section done */
@@ -398,6 +407,7 @@ zif_md_filelists_xml_search_file (ZifMd *md, gchar **search,
 	const gchar *pkgid;
 	GError *error_local = NULL;
 	ZifCompletion *completion_local;
+	ZifCompletion *completion_loop;
 	ZifMdFilelistsXml *md_filelists = ZIF_MD_FILELISTS_XML (md);
 
 	g_return_val_if_fail (ZIF_IS_MD_FILELISTS_XML (md), NULL);
@@ -424,13 +434,18 @@ zif_md_filelists_xml_search_file (ZifMd *md, gchar **search,
 		zif_completion_done (completion);
 	}
 
+	/* setup steps */
+	completion_local = zif_completion_get_child (completion);
+	zif_completion_set_number_steps (completion_local, md_filelists->priv->array->len);
+
 	/* search array */
 	array = g_ptr_array_new_with_free_func (g_free);
 	packages = md_filelists->priv->array;
 	for (i=0; i<packages->len; i++) {
 		package = g_ptr_array_index (packages, i);
-		pkgid = g_object_get_data (G_OBJECT (package), "pkgid");
-		files = zif_package_get_files (package, NULL);
+		pkgid = zif_package_remote_get_pkgid (ZIF_PACKAGE_REMOTE (package));
+		completion_loop = zif_completion_get_child (completion_local);
+		files = zif_package_get_files (package, cancellable, completion_loop, NULL);
 		for (k=0; k<files->len; k++) {
 			filename = g_ptr_array_index (files, k);
 			for (j=0; search[j] != NULL; j++) {
@@ -440,6 +455,9 @@ zif_md_filelists_xml_search_file (ZifMd *md, gchar **search,
 				}
 			}
 		}
+
+		/* this section done */
+		zif_completion_done (completion_local);
 	}
 
 	/* this section done */
@@ -631,7 +649,9 @@ zif_md_filelists_xml_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "correct value");
 	pkgid = g_ptr_array_index (array, 0);
-	if (pkgid[0] != '\0' && strlen (pkgid) == 64)
+	if (pkgid == NULL)
+		egg_test_failed (test, "failed to get a pkgId");
+	else if (pkgid[0] != '\0' && strlen (pkgid) == 64)
 		egg_test_success (test, NULL);
 	else
 		egg_test_failed (test, "failed to get a correct pkgId '%s' (%i)", pkgid, strlen (pkgid));
