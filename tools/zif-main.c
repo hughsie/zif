@@ -44,7 +44,7 @@ static void
 zif_print_package (ZifPackage *package)
 {
 	const gchar *package_id;
-	ZifString *summary;
+	const gchar *summary;
 	ZifCompletion *completion_tmp;
 	gchar **split;
 
@@ -57,9 +57,8 @@ zif_print_package (ZifPackage *package)
 		 split[PK_PACKAGE_ID_VERSION],
 		 split[PK_PACKAGE_ID_ARCH],
 		 split[PK_PACKAGE_ID_DATA],
-		 zif_string_get_value (summary));
+		 summary);
 	g_strfreev (split);
-	zif_string_unref (summary);
 	g_object_unref (completion_tmp);
 }
 
@@ -1082,10 +1081,10 @@ main (int argc, char *argv[])
 	}
 	if (g_strcmp0 (mode, "getdetails") == 0 || g_strcmp0 (mode, "info") == 0) {
 		const gchar *package_id;
-		ZifString *summary;
-		ZifString *description;
-		ZifString *license;
-		ZifString *url;
+		const gchar *summary;
+		const gchar *description;
+		const gchar *license;
+		const gchar *url;
 		guint64 size;
 
 		pk_progress_bar_start (progressbar, "Getting details");
@@ -1153,17 +1152,12 @@ main (int argc, char *argv[])
 		g_print ("Arch\t : %s\n", split[PK_PACKAGE_ID_ARCH]);
 		g_print ("Size\t : %" G_GUINT64_FORMAT " bytes\n", size);
 		g_print ("Repo\t : %s\n", split[PK_PACKAGE_ID_DATA]);
-		g_print ("Summary\t : %s\n", zif_string_get_value (summary));
-		g_print ("URL\t : %s\n", zif_string_get_value (url));
-		g_print ("License\t : %s\n", zif_string_get_value (license));
-		g_print ("Description\t : %s\n", zif_string_get_value (description));
+		g_print ("Summary\t : %s\n", summary);
+		g_print ("URL\t : %s\n", url);
+		g_print ("License\t : %s\n", license);
+		g_print ("Description\t : %s\n", description);
 
-		zif_string_unref (summary);
-		zif_string_unref (url);
-		zif_string_unref (license);
-		zif_string_unref (description);
 		g_strfreev (split);
-
 		g_ptr_array_unref (array);
 		goto out;
 	}

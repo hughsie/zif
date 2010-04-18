@@ -564,8 +564,8 @@ zif_md_primary_xml_search_details_cb (ZifPackage *package, gpointer user_data)
 	guint i;
 	gboolean ret = FALSE;
 	const gchar *name;
-	ZifString *summary;
-	ZifString *description;
+	const gchar *summary;
+	const gchar *description;
 	ZifCompletion *completion_tmp;
 	gchar **search = (gchar **) user_data;
 
@@ -578,17 +578,15 @@ zif_md_primary_xml_search_details_cb (ZifPackage *package, gpointer user_data)
 			ret = TRUE;
 			break;
 		}
-		if (g_strstr_len (zif_string_get_value (summary), -1, search[i]) != NULL) {
+		if (g_strstr_len (summary, -1, search[i]) != NULL) {
 			ret = TRUE;
 			break;
 		}
-		if (g_strstr_len (zif_string_get_value (description), -1, search[i]) != NULL) {
+		if (g_strstr_len (description, -1, search[i]) != NULL) {
 			ret = TRUE;
 			break;
 		}
 	}
-	zif_string_unref (summary);
-	zif_string_unref (description);
 	g_object_unref (completion_tmp);
 	return ret;
 }
@@ -611,20 +609,19 @@ zif_md_primary_xml_search_group_cb (ZifPackage *package, gpointer user_data)
 {
 	guint i;
 	gboolean ret;
-	ZifString *value;
+	const gchar *value;
 	ZifCompletion *completion_tmp;
 	gchar **search = (gchar **) user_data;
 
 	completion_tmp = zif_completion_new ();
 	value = zif_package_get_category (package, NULL, completion_tmp, NULL);
 	for (i=0; search[i] != NULL; i++) {
-		if (g_strstr_len (zif_string_get_value (value), -1, search[i]) != NULL) {
+		if (g_strstr_len (value, -1, search[i]) != NULL) {
 			ret = TRUE;
 			break;
 		}
 	}
 	g_object_unref (completion_tmp);
-	zif_string_unref (value);
 	return ret;
 }
 
@@ -814,7 +811,7 @@ zif_md_primary_xml_test (EggTest *test)
 	GError *error = NULL;
 	GPtrArray *array;
 	ZifPackage *package;
-	ZifString *summary;
+	const gchar *summary;
 	GCancellable *cancellable;
 	ZifCompletion *completion;
 	gchar *data[] = { "gnome-power-manager", NULL };
@@ -913,11 +910,10 @@ zif_md_primary_xml_test (EggTest *test)
 	package = g_ptr_array_index (array, 0);
 	zif_completion_reset (completion);
 	summary = zif_package_get_summary (package, NULL, completion, NULL);
-	if (g_strcmp0 (zif_string_get_value (summary), "GNOME power management service") == 0)
+	if (g_strcmp0 (summary, "GNOME power management service") == 0)
 		egg_test_success (test, NULL);
 	else
 		egg_test_failed (test, "failed to get correct summary '%s'", zif_string_get_value (summary));
-	zif_string_unref (summary);
 	g_ptr_array_unref (array);
 
 	g_object_unref (cancellable);

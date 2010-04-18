@@ -284,7 +284,7 @@ zif_store_local_search_category (ZifStore *store, gchar **search, GCancellable *
 	guint i, j;
 	GPtrArray *array = NULL;
 	ZifPackage *package;
-	ZifString *category;
+	const gchar *category;
 	GError *error_local = NULL;
 	gboolean ret;
 	ZifCompletion *completion_local = NULL;
@@ -342,12 +342,11 @@ zif_store_local_search_category (ZifStore *store, gchar **search, GCancellable *
 		completion_loop = zif_completion_get_child (completion_local);
 		category = zif_package_get_category (package, cancellable, completion_loop, NULL);
 		for (j=0; search[j] != NULL; j++) {
-			if (g_strcmp0 (zif_string_get_value (category), search[j]) == 0) {
+			if (g_strcmp0 (category, search[j]) == 0) {
 				g_ptr_array_add (array, g_object_ref (package));
 				break;
 			}
 		}
-		zif_string_unref (category);
 
 		/* this section done */
 		zif_completion_done (completion_local);
@@ -369,7 +368,7 @@ zif_store_local_search_details (ZifStore *store, gchar **search, GCancellable *c
 	GPtrArray *array = NULL;
 	ZifPackage *package;
 	const gchar *package_id;
-	ZifString *description;
+	const gchar *description;
 	gchar **split;
 	GError *error_local = NULL;
 	gboolean ret;
@@ -433,12 +432,11 @@ zif_store_local_search_details (ZifStore *store, gchar **search, GCancellable *c
 			if (strcasestr (split[PK_PACKAGE_ID_NAME], search[j]) != NULL) {
 				g_ptr_array_add (array, g_object_ref (package));
 				break;
-			} else if (strcasestr (zif_string_get_value (description), search[j]) != NULL) {
+			} else if (strcasestr (description, search[j]) != NULL) {
 				g_ptr_array_add (array, g_object_ref (package));
 				break;
 			}
 		}
-		zif_string_unref (description);
 		g_strfreev (split);
 
 		/* this section done */
@@ -1121,7 +1119,7 @@ zif_store_local_test (EggTest *test)
 	GError *error = NULL;
 	guint elapsed;
 	const gchar *text;
-	ZifString *string;
+	const gchar *string;
 	const gchar *package_id;
 	gchar **split;
 	const gchar *to_array[] = { NULL, NULL };
@@ -1274,31 +1272,28 @@ zif_store_local_test (EggTest *test)
 	egg_test_title (test, "get summary");
 	zif_completion_reset (completion);
 	string = zif_package_get_summary (package, NULL, completion, NULL);
-	if (g_strcmp0 (zif_string_get_value(string), "Package management service") == 0)
+	if (g_strcmp0 (string, "Package management service") == 0)
 		egg_test_success (test, NULL);
 	else
-		egg_test_failed (test, "incorrect summary: %s", zif_string_get_value (string));
-	zif_string_unref (string);
+		egg_test_failed (test, "incorrect summary: %s", string);
 
 	/************************************************************/
 	egg_test_title (test, "get license");
 	zif_completion_reset (completion);
 	string = zif_package_get_license (package, NULL, completion, NULL);
-	if (g_strcmp0 (zif_string_get_value(string), "GPLv2+") == 0)
+	if (g_strcmp0 (string, "GPLv2+") == 0)
 		egg_test_success (test, NULL);
 	else
-		egg_test_failed (test, "incorrect license: %s", zif_string_get_value (string));
-	zif_string_unref (string);
+		egg_test_failed (test, "incorrect license: %s", string);
 
 	/************************************************************/
 	egg_test_title (test, "get category");
 	zif_completion_reset (completion);
 	string = zif_package_get_category (package, NULL, completion, NULL);
-	if (g_strcmp0 (zif_string_get_value(string), "System Environment/Libraries") == 0)
+	if (g_strcmp0 (string, "System Environment/Libraries") == 0)
 		egg_test_success (test, NULL);
 	else
-		egg_test_failed (test, "incorrect category: %s", zif_string_get_value (string));
-	zif_string_unref (string);
+		egg_test_failed (test, "incorrect category: %s", string);
 
 	/************************************************************/
 	egg_test_title (test, "is devel");

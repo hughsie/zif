@@ -751,11 +751,11 @@ out:
  *
  * Gets the package summary.
  *
- * Return value: the reference counted #ZifString or %NULL, use zif_string_unref() when done
+ * Return value: the const string or %NULL
  *
  * Since: 0.0.1
  **/
-ZifString *
+const gchar *
 zif_package_get_summary (ZifPackage *package, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	gboolean ret;
@@ -771,8 +771,8 @@ zif_package_get_summary (ZifPackage *package, GCancellable *cancellable, ZifComp
 			return NULL;
 	}
 
-	/* return refcounted */
-	return zif_string_ref (package->priv->summary);
+	/* return const string */
+	return zif_string_get_value (package->priv->summary);
 }
 
 /**
@@ -782,11 +782,11 @@ zif_package_get_summary (ZifPackage *package, GCancellable *cancellable, ZifComp
  *
  * Gets the package description.
  *
- * Return value: the reference counted #ZifString or %NULL, use zif_string_unref() when done
+ * Return value: the const string or %NULL
  *
  * Since: 0.0.1
  **/
-ZifString *
+const gchar *
 zif_package_get_description (ZifPackage *package, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	gboolean ret;
@@ -802,8 +802,8 @@ zif_package_get_description (ZifPackage *package, GCancellable *cancellable, Zif
 			return NULL;
 	}
 
-	/* return refcounted */
-	return zif_string_ref (package->priv->description);
+	/* return const string */
+	return zif_string_get_value (package->priv->description);
 }
 
 /**
@@ -813,11 +813,11 @@ zif_package_get_description (ZifPackage *package, GCancellable *cancellable, Zif
  *
  * Gets the package licence.
  *
- * Return value: the reference counted #ZifString or %NULL, use zif_string_unref() when done
+ * Return value: the const string or %NULL
  *
  * Since: 0.0.1
  **/
-ZifString *
+const gchar *
 zif_package_get_license (ZifPackage *package, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	gboolean ret;
@@ -833,8 +833,8 @@ zif_package_get_license (ZifPackage *package, GCancellable *cancellable, ZifComp
 			return NULL;
 	}
 
-	/* return refcounted */
-	return zif_string_ref (package->priv->license);
+	/* return const string */
+	return zif_string_get_value (package->priv->license);
 }
 
 /**
@@ -844,11 +844,11 @@ zif_package_get_license (ZifPackage *package, GCancellable *cancellable, ZifComp
  *
  * Gets the homepage URL for the package.
  *
- * Return value: the reference counted #ZifString or %NULL, use zif_string_unref() when done
+ * Return value: the const string or %NULL
  *
  * Since: 0.0.1
  **/
-ZifString *
+const gchar *
 zif_package_get_url (ZifPackage *package, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	gboolean ret;
@@ -864,8 +864,8 @@ zif_package_get_url (ZifPackage *package, GCancellable *cancellable, ZifCompleti
 			return NULL;
 	}
 
-	/* return refcounted */
-	return zif_string_ref (package->priv->url);
+	/* return const string */
+	return zif_string_get_value (package->priv->url);
 }
 
 /**
@@ -875,11 +875,11 @@ zif_package_get_url (ZifPackage *package, GCancellable *cancellable, ZifCompleti
  *
  * Gets the remote filename for the package, e.g. Packages/net-snmp-5.4.2-3.fc10.i386.rpm
  *
- * Return value: the reference counted #ZifString or %NULL, use zif_string_unref() when done
+ * Return value: the const string or %NULL
  *
  * Since: 0.0.1
  **/
-ZifString *
+const gchar *
 zif_package_get_filename (ZifPackage *package, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
@@ -900,8 +900,8 @@ zif_package_get_filename (ZifPackage *package, GCancellable *cancellable, ZifCom
 		return NULL;
 	}
 
-	/* return refcounted */
-	return zif_string_ref (package->priv->location_href);
+	/* return const string */
+	return zif_string_get_value (package->priv->location_href);
 }
 
 /**
@@ -911,11 +911,11 @@ zif_package_get_filename (ZifPackage *package, GCancellable *cancellable, ZifCom
  *
  * Gets the category the packag is in.
  *
- * Return value: the reference counted #ZifString or %NULL, use zif_string_unref() when done
+ * Return value: the const string or %NULL
  *
  * Since: 0.0.1
  **/
-ZifString *
+const gchar *
 zif_package_get_category (ZifPackage *package, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	gboolean ret;
@@ -931,8 +931,8 @@ zif_package_get_category (ZifPackage *package, GCancellable *cancellable, ZifCom
 			return NULL;
 	}
 
-	/* return refcounted */
-	return zif_string_ref (package->priv->category);
+	/* return const string */
+	return zif_string_get_value (package->priv->category);
 }
 
 /**

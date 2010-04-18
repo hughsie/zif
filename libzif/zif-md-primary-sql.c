@@ -612,7 +612,7 @@ zif_md_primary_sql_test (EggTest *test)
 	GError *error = NULL;
 	GPtrArray *array;
 	ZifPackage *package;
-	ZifString *summary;
+	const gchar *summary;
 	GCancellable *cancellable;
 	ZifCompletion *completion;
 	gchar *data[] = { "gnome-power-manager", "gnome-color-manager", NULL };
@@ -710,11 +710,10 @@ zif_md_primary_sql_test (EggTest *test)
 	package = g_ptr_array_index (array, 0);
 	zif_completion_reset (completion);
 	summary = zif_package_get_summary (package, NULL, completion, NULL);
-	if (g_strcmp0 (zif_string_get_value (summary), "GNOME Power Manager") == 0)
+	if (g_strcmp0 (summary, "GNOME Power Manager") == 0)
 		egg_test_success (test, NULL);
 	else
 		egg_test_failed (test, "failed to get correct summary '%s'", zif_string_get_value (summary));
-	zif_string_unref (summary);
 	g_ptr_array_unref (array);
 
 	g_object_unref (cancellable);
