@@ -6,6 +6,9 @@ AM_INIT_AUTOMAKE(AC_PACKAGE_NAME, AC_PACKAGE_VERSION)
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
 
+# enable nice build output on automake1.11
+m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
+
 # libtool versioning - this applies to libzif
 #
 # See http://sources.redhat.com/autobook/autobook/autobook_91.html#SEC91 for details
