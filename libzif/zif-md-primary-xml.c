@@ -940,7 +940,7 @@ zif_md_primary_xml_test (EggTest *test)
 	if (g_strcmp0 (summary, "GNOME power management service") == 0)
 		egg_test_success (test, NULL);
 	else
-		egg_test_failed (test, "failed to get correct summary '%s'", zif_string_get_value (summary));
+		egg_test_failed (test, "failed to get correct summary '%s'", summary);
 	g_ptr_array_unref (array);
 
 	g_object_unref (cancellable);

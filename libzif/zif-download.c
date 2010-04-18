@@ -425,7 +425,7 @@ zif_download_test (EggTest *test)
 		egg_test_failed (test, "got %i updates", _updates);
 
 	/* setup cancel */
-	g_thread_create (zif_download_cancel_thread_cb, cancellable, FALSE, NULL);
+	g_thread_create ((GThreadFunc) zif_download_cancel_thread_cb, cancellable, FALSE, NULL);
 
 	/************************************************************/
 	egg_test_title (test, "download second file (should be cancelled)");
