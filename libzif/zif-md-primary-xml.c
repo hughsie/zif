@@ -467,9 +467,9 @@ zif_md_primary_xml_filter (ZifMd *md, ZifPackageFilterFunc filter_func, gpointer
 
 	/* setup completion */
 	if (md_primary->priv->loaded)
-		zif_completion_set_number_steps (completion, 2);
+		zif_completion_set_number_steps (completion, 1);
 	else
-		zif_completion_set_number_steps (completion, 3);
+		zif_completion_set_number_steps (completion, 2);
 
 	/* if not already loaded, load */
 	if (!md_primary->priv->loaded) {
