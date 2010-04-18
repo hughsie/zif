@@ -46,25 +46,33 @@
         This part documents GObjects used in libzif.
       </para>
     </partintro>
+    <xi:include href="xml/zif-changeset.xml"/>
     <xi:include href="xml/zif-completion.xml"/>
     <xi:include href="xml/zif-config.xml"/>
     <xi:include href="xml/zif-download.xml"/>
     <xi:include href="xml/zif-groups.xml"/>
     <xi:include href="xml/zif-lock.xml"/>
+    <xi:include href="xml/zif-md-comps.xml"/>
+    <xi:include href="xml/zif-md-filelists-sql.xml"/>
+    <xi:include href="xml/zif-md-filelists-xml.xml"/>
+    <xi:include href="xml/zif-md-metalink.xml"/>
+    <xi:include href="xml/zif-md-mirrorlist.xml"/>
+    <xi:include href="xml/zif-md-other-sql.xml"/>
+    <xi:include href="xml/zif-md-other-xml.xml"/>
+    <xi:include href="xml/zif-md-primary-sql.xml"/>
+    <xi:include href="xml/zif-md-primary-xml.xml"/>
+    <xi:include href="xml/zif-md-updateinfo.xml"/>
+    <xi:include href="xml/zif-md.xml"/>
     <xi:include href="xml/zif-monitor.xml"/>
     <xi:include href="xml/zif-package-local.xml"/>
     <xi:include href="xml/zif-package-remote.xml"/>
     <xi:include href="xml/zif-package.xml"/>
-    <xi:include href="xml/zif-md-filelists.xml"/>
-    <xi:include href="xml/zif-md-comps.xml"/>
-    <xi:include href="xml/zif-md-mirrorlist.xml"/>
-    <xi:include href="xml/zif-md-primary-sql.xml"/>
-    <xi:include href="xml/zif-md-primary-xml.xml"/>
-    <xi:include href="xml/zif-md.xml"/>
     <xi:include href="xml/zif-repos.xml"/>
     <xi:include href="xml/zif-store-local.xml"/>
     <xi:include href="xml/zif-store-remote.xml"/>
     <xi:include href="xml/zif-store.xml"/>
+    <xi:include href="xml/zif-updateinfo.xml"/>
+    <xi:include href="xml/zif-update.xml"/>
   </reference>
 
   <reference id="libzif-helpers">
