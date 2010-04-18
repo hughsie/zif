@@ -126,10 +126,15 @@ zif_md_primary_sql_sqlite_create_package_cb (void *data, gint argc, gchar **argv
 	ZifPackageRemote *package;
 	ZifStoreRemote *store_remote;
 
-	store_remote = zif_md_get_store_remote (ZIF_MD (fldata->md));
 	package = zif_package_remote_new ();
+	store_remote = zif_md_get_store_remote (ZIF_MD (fldata->md));
+	if (store_remote != NULL) {
+		/* this is not set in a test harness */
+		zif_package_remote_set_store_remote (package, store_remote);
+	} else {
+		egg_warning ("no remote store for %s", argv[1]);
+	}
 	zif_package_remote_set_from_repo (package, argc, col_name, argv, fldata->id, NULL);
-	zif_package_remote_set_store_remote (package, store_remote);
 	g_ptr_array_add (fldata->packages, package);
 
 	return 0;
