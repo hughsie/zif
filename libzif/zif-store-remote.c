@@ -1563,7 +1563,14 @@ zif_store_remote_set_enabled (ZifStoreRemote *store, gboolean enabled, GError **
 	g_key_file_set_boolean (file, store->priv->id, "enabled", store->priv->enabled);
 
 	/* save new data to file */
-	data = g_key_file_to_data (file, NULL, NULL);
+	data = g_key_file_to_data (file, NULL, &error_local);
+	if (data == NULL) {
+		ret = FALSE;
+		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+			     "failed to get save data: %s", error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
 	ret = g_file_set_contents (store->priv->repo_filename, data, -1, &error_local);
 	if (!ret) {
 		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,

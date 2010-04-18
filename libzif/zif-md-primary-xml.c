@@ -567,12 +567,23 @@ zif_md_primary_xml_search_details_cb (ZifPackage *package, gpointer user_data)
 	const gchar *summary;
 	const gchar *description;
 	ZifCompletion *completion_tmp;
+	GError *error = NULL;
 	gchar **search = (gchar **) user_data;
 
 	completion_tmp = zif_completion_new ();
 	name = zif_package_get_name (package);
-	summary = zif_package_get_summary (package, NULL, completion_tmp, NULL);
-	description = zif_package_get_description (package, NULL, completion_tmp, NULL);
+	summary = zif_package_get_summary (package, NULL, completion_tmp, &error);
+	if (summary == NULL) {
+		egg_warning ("failed to get summary: %s", error->message);
+		g_error_free (error);
+		goto out;
+	}
+	description = zif_package_get_description (package, NULL, completion_tmp, &error);
+	if (description == NULL) {
+		egg_warning ("failed to get description: %s", error->message);
+		g_error_free (error);
+		goto out;
+	}
 	for (i=0; search[i] != NULL; i++) {
 		if (g_strstr_len (name, -1, search[i]) != NULL) {
 			ret = TRUE;
@@ -587,6 +598,7 @@ zif_md_primary_xml_search_details_cb (ZifPackage *package, gpointer user_data)
 			break;
 		}
 	}
+out:
 	g_object_unref (completion_tmp);
 	return ret;
 }
@@ -611,16 +623,23 @@ zif_md_primary_xml_search_group_cb (ZifPackage *package, gpointer user_data)
 	gboolean ret = FALSE;
 	const gchar *value;
 	ZifCompletion *completion_tmp;
+	GError *error = NULL;
 	gchar **search = (gchar **) user_data;
 
 	completion_tmp = zif_completion_new ();
-	value = zif_package_get_category (package, NULL, completion_tmp, NULL);
+	value = zif_package_get_category (package, NULL, completion_tmp, &error);
+	if (value == NULL) {
+		egg_warning ("failed to get category: %s", error->message);
+		g_error_free (error);
+		goto out;
+	}
 	for (i=0; search[i] != NULL; i++) {
 		if (g_strstr_len (value, -1, search[i]) != NULL) {
 			ret = TRUE;
-			break;
+			goto out;
 		}
 	}
+out:
 	g_object_unref (completion_tmp);
 	return ret;
 }
@@ -670,16 +689,24 @@ zif_md_primary_xml_what_provides_cb (ZifPackage *package, gpointer user_data)
 {
 //	guint i;
 	gboolean ret;
-	GPtrArray *array;
+	GPtrArray *array = NULL;
 	ZifCompletion *completion_tmp;
+	GError *error = NULL;
 //	gchar **search = (gchar **) user_data;
 
 	completion_tmp = zif_completion_new ();
-	array = zif_package_get_provides (package, NULL, completion_tmp, NULL);
+	array = zif_package_get_provides (package, NULL, completion_tmp, &error);
+	if (array == NULL) {
+		egg_warning ("failed to get provides: %s", error->message);
+		g_error_free (error);
+		goto out;
+	}
 	/* TODO: do something with the ZifDepend objects */
 	ret = FALSE;
 	g_object_unref (completion_tmp);
-	g_ptr_array_unref (array);
+out:
+	if (array != NULL)
+		g_ptr_array_unref (array);
 	return ret;
 }
 
