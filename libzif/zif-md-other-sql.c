@@ -299,6 +299,9 @@ zif_md_other_sql_get_changelog (ZifMd *md, const gchar *pkgid,
 
 		/* clear array */
 		g_ptr_array_unref (array_tmp);
+
+		/* this section done */
+		zif_completion_done (completion_local);
 	}
 
 	/* this section done */

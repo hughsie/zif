@@ -392,6 +392,15 @@ zif_completion_done (ZifCompletion *completion)
 		return FALSE;
 	}
 
+	/* is child not at 100%? */
+	if (completion->priv->child != NULL) {
+		ZifCompletionPrivate *child_priv = completion->priv->child->priv;
+		if (child_priv->current != child_priv->steps) {
+			egg_warning ("child is at %i/%i steps and parent done", child_priv->current, child_priv->steps);
+			zif_debug_crash ();
+		}
+	}
+
 	/* another */
 	completion->priv->current++;
 
