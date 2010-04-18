@@ -84,6 +84,7 @@ static void
 zif_completion_percentage_changed_cb (ZifCompletion *completion, guint percentage, gpointer data)
 {
 	pk_progress_bar_set_value (progressbar, percentage);
+	pk_progress_bar_set_percentage (progressbar, percentage);
 }
 
 /**
@@ -92,7 +93,7 @@ zif_completion_percentage_changed_cb (ZifCompletion *completion, guint percentag
 static void
 zif_completion_subpercentage_changed_cb (ZifCompletion *completion, guint percentage, gpointer data)
 {
-	pk_progress_bar_set_percentage (progressbar, percentage);
+//	pk_progress_bar_set_percentage (progressbar, percentage);
 }
 
 /**
@@ -1329,9 +1330,6 @@ main (int argc, char *argv[])
 
 		/* this section done */
 		zif_completion_done (completion);
-
-		/* no more progressbar */
-		pk_progress_bar_end (progressbar);
 
 		/* no more progressbar */
 		pk_progress_bar_end (progressbar);
