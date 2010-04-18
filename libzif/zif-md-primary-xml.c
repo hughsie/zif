@@ -608,7 +608,7 @@ static gboolean
 zif_md_primary_xml_search_group_cb (ZifPackage *package, gpointer user_data)
 {
 	guint i;
-	gboolean ret;
+	gboolean ret = FALSE;
 	const gchar *value;
 	ZifCompletion *completion_tmp;
 	gchar **search = (gchar **) user_data;

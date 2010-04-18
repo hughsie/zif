@@ -459,7 +459,7 @@ zif_md_primary_sql_what_provides (ZifMd *md, gchar **search,
 
 		/* get packages for pkgKey */
 		completion_loop = zif_completion_get_child (completion_local);
-		array_tmp = zif_md_primary_sql_search_pkgkey (md, pkgkey, cancellable, completion, error);
+		array_tmp = zif_md_primary_sql_search_pkgkey (md, pkgkey, cancellable, completion_loop, error);
 		if (array_tmp == NULL) {
 			g_ptr_array_unref (array);
 			array = NULL;
@@ -478,6 +478,9 @@ zif_md_primary_sql_what_provides (ZifMd *md, gchar **search,
 
 		/* clear array */
 		g_ptr_array_unref (array_tmp);
+
+		/* this section done */
+		zif_completion_done (completion_local);
 	}
 
 	/* this section done */

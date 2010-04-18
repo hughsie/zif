@@ -145,7 +145,7 @@ zif_md_other_sql_sqlite_create_changelog_cb (void *data, gint argc, gchar **argv
 	changeset = zif_changeset_new ();
 	zif_changeset_set_date (changeset, date);
 	zif_changeset_set_description (changeset, changelog);
-	ret = zif_changeset_parse_header (changeset, author, NULL);
+	ret = zif_changeset_parse_header (changeset, author, &error);
 	if (!ret) {
 		egg_warning ("failed to parse header: %s", error->message);
 		g_error_free (error);
