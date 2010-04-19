@@ -47,6 +47,7 @@
 #include "zif-string.h"
 #include "zif-depend.h"
 #include "zif-lock.h"
+#include "zif-utils.h"
 
 #include "egg-debug.h"
 
@@ -256,7 +257,7 @@ zif_store_local_search_name (ZifStore *store, gchar **search, GCancellable *canc
 	for (i=0;i<local->priv->packages->len;i++) {
 		package = g_ptr_array_index (local->priv->packages, i);
 		package_id = zif_package_get_id (package);
-		split = pk_package_id_split (package_id);
+		split = zif_package_id_split (package_id);
 		for (j=0; search[j] != NULL; j++) {
 			if (strcasestr (split[PK_PACKAGE_ID_NAME], search[j]) != NULL) {
 				g_ptr_array_add (array, g_object_ref (package));
@@ -427,7 +428,7 @@ zif_store_local_search_details (ZifStore *store, gchar **search, GCancellable *c
 		package_id = zif_package_get_id (package);
 		completion_loop = zif_completion_get_child (completion_local);
 		description = zif_package_get_description (package, cancellable, completion_loop, NULL);
-		split = pk_package_id_split (package_id);
+		split = zif_package_id_split (package_id);
 		for (j=0; search[j] != NULL; j++) {
 			if (strcasestr (split[PK_PACKAGE_ID_NAME], search[j]) != NULL) {
 				g_ptr_array_add (array, g_object_ref (package));
@@ -690,7 +691,7 @@ zif_store_local_resolve (ZifStore *store, gchar **search, GCancellable *cancella
 	for (i=0;i<local->priv->packages->len;i++) {
 		package = g_ptr_array_index (local->priv->packages, i);
 		package_id = zif_package_get_id (package);
-		split = pk_package_id_split (package_id);
+		split = zif_package_id_split (package_id);
 		for (j=0; search[j] != NULL; j++) {
 			if (strcmp (split[PK_PACKAGE_ID_NAME], search[j]) == 0) {
 				g_ptr_array_add (array, g_object_ref (package));
@@ -1249,7 +1250,7 @@ zif_store_local_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "get id");
 	package_id = zif_package_get_id (package);
-	split = pk_package_id_split (package_id);
+	split = zif_package_id_split (package_id);
 	if (g_strcmp0 (split[PK_PACKAGE_ID_NAME], "PackageKit") == 0)
 		egg_test_success (test, NULL);
 	else

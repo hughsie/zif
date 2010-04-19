@@ -40,6 +40,7 @@
 #include "zif-md.h"
 #include "zif-md-primary-sql.h"
 #include "zif-package-remote.h"
+#include "zif-utils.h"
 
 #include "egg-debug.h"
 
@@ -507,7 +508,7 @@ zif_md_primary_sql_find_package (ZifMd *md, const gchar *package_id, GCancellabl
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* search with predicate, TODO: search version (epoch+release) */
-	split = pk_package_id_split (package_id);
+	split = zif_package_id_split (package_id);
 	statement = g_strdup_printf (ZIF_MD_PRIMARY_SQL_HEADER " WHERE name = '%s' AND arch = '%s'",
 				     split[PK_PACKAGE_ID_NAME], split[PK_PACKAGE_ID_ARCH]);
 	array = zif_md_primary_sql_search (md_primary_sql, statement, cancellable, completion, error);

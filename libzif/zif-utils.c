@@ -622,6 +622,38 @@ zif_file_is_compressed_name (const gchar *filename)
 	return FALSE;
 }
 
+/**
+ * zif_package_id_split:
+ * @package_id: the ; delimited PackageID to split
+ *
+ * Splits a PackageID into the correct number of parts, checking the correct
+ * number of delimiters are present.
+ *
+ * Return value: a GStrv or %NULL if invalid, use g_strfreev() to free
+ *
+ * Since: 0.0.1
+ **/
+gchar **
+zif_package_id_split (const gchar *package_id)
+{
+	gchar **sections = NULL;
+
+	if (package_id == NULL)
+		goto out;
+
+	/* split by delimeter ';' */
+	sections = g_strsplit (package_id, ";", -1);
+	if (g_strv_length (sections) != 4)
+		goto out;
+
+	/* name has to be valid */
+	if (sections[0][0] != '\0')
+		return sections;
+out:
+	g_strfreev (sections);
+	return NULL;
+}
+
 /***************************************************************************
  ***                          MAKE CHECK TESTS                           ***
  ***************************************************************************/

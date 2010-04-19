@@ -1128,7 +1128,7 @@ zif_package_set_id (ZifPackage *package, const gchar *package_id)
 	g_return_val_if_fail (package->priv->package_id == NULL, FALSE);
 
 	package->priv->package_id = g_strdup (package_id);
-	package->priv->package_id_split = pk_package_id_split (package_id);
+	package->priv->package_id_split = zif_package_id_split (package_id);
 	return TRUE;
 }
 

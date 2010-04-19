@@ -67,6 +67,7 @@ gboolean	 zif_file_decompress		(const gchar	*in,
 						 GError		**error);
 gchar		*zif_file_get_uncompressed_name	(const gchar	*filename);
 gboolean	 zif_file_is_compressed_name	(const gchar	*filename);
+gchar		**zif_package_id_split		(const gchar	*package_id);
 
 G_END_DECLS
 

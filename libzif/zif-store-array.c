@@ -652,7 +652,7 @@ zif_store_array_search_category (GPtrArray *store_array, gchar **group_id,
 			package = g_ptr_array_index (array, j);
 			package_id_tmp = zif_package_get_id (package);
 			if (g_strcmp0 (package_id, package_id_tmp) == 0) {
-				split = pk_package_id_split (package_id);
+				split = zif_package_id_split (package_id);
 				/* duplicate */
 				g_ptr_array_remove_index (array, j);
 				g_strfreev (split);

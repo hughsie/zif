@@ -49,7 +49,7 @@ zif_print_package (ZifPackage *package)
 	gchar **split;
 
 	package_id = zif_package_get_id (package);
-	split = pk_package_id_split (package_id);
+	split = zif_package_id_split (package_id);
 	completion_tmp = zif_completion_new ();
 	summary = zif_package_get_summary (package, NULL, completion_tmp, NULL);
 	g_print ("%s-%s.%s (%s)\t%s\n",
@@ -266,7 +266,7 @@ zif_cmd_get_depends (const gchar *package_name, ZifCompletion *completion)
 		for (j=0;j<provides->len;j++) {
 			package = g_ptr_array_index (provides, j);
 			package_id = zif_package_get_id (package);
-			split = pk_package_id_split (package_id);
+			split = zif_package_id_split (package_id);
 			g_print ("   provider: %s-%s.%s (%s)\n", split[PK_PACKAGE_ID_NAME], split[PK_PACKAGE_ID_VERSION], split[PK_PACKAGE_ID_ARCH], split[PK_PACKAGE_ID_DATA]);
 			g_strfreev (split);
 		}
@@ -1138,7 +1138,7 @@ main (int argc, char *argv[])
 		package = g_ptr_array_index (array, 0);
 
 		package_id = zif_package_get_id (package);
-		split = pk_package_id_split (package_id);
+		split = zif_package_id_split (package_id);
 		completion_local = zif_completion_get_child (completion);
 		summary = zif_package_get_summary (package, NULL, completion_local, NULL);
 		description = zif_package_get_description (package, NULL, completion_local, NULL);
