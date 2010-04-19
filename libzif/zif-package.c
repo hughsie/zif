@@ -60,7 +60,7 @@ struct _ZifPackagePrivate
 	ZifString		*url;
 	ZifString		*category;
 	ZifString		*location_href;
-	PkGroupEnum		 group;
+	ZifString		*group;
 	guint64			 size;
 	GPtrArray		*files;
 	GPtrArray		*requires;
@@ -392,7 +392,7 @@ zif_package_print (ZifPackage *package)
 	g_print ("summary=%s\n", zif_string_get_value (package->priv->summary));
 	g_print ("description=%s\n", zif_string_get_value (package->priv->description));
 	g_print ("license=%s\n", zif_string_get_value (package->priv->license));
-	g_print ("group=%s\n", pk_group_enum_to_text (package->priv->group));
+	g_print ("group=%s\n", zif_string_get_value (package->priv->group));
 	g_print ("category=%s\n", zif_string_get_value (package->priv->category));
 	if (package->priv->url != NULL)
 		g_print ("url=%s\n", zif_string_get_value (package->priv->url));
@@ -946,7 +946,7 @@ zif_package_get_category (ZifPackage *package, GCancellable *cancellable, ZifCom
  *
  * Since: 0.0.1
  **/
-PkGroupEnum
+const gchar *
 zif_package_get_group (ZifPackage *package, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	gboolean ret;
@@ -963,7 +963,7 @@ zif_package_get_group (ZifPackage *package, GCancellable *cancellable, ZifComple
 
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), PK_GROUP_ENUM_UNKNOWN);
 	g_return_val_if_fail (package->priv->package_id_split != NULL, PK_GROUP_ENUM_UNKNOWN);
-	return package->priv->group;
+	return zif_string_get_value (package->priv->group);
 }
 
 /**
@@ -1276,13 +1276,13 @@ zif_package_set_category (ZifPackage *package, ZifString *category)
  * Since: 0.0.1
  **/
 gboolean
-zif_package_set_group (ZifPackage *package, PkGroupEnum group)
+zif_package_set_group (ZifPackage *package, ZifString *group)
 {
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), FALSE);
 	g_return_val_if_fail (group != PK_GROUP_ENUM_UNKNOWN, FALSE);
 	g_return_val_if_fail (package->priv->group == PK_GROUP_ENUM_UNKNOWN, FALSE);
 
-	package->priv->group = group;
+	package->priv->group = zif_string_ref (group);
 	return TRUE;
 }
 

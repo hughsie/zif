@@ -264,7 +264,7 @@ zif_package_local_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, GCanc
 	guint size;
 	ZifString *tmp;
 	const gchar *text;
-	PkGroupEnum group;
+	const gchar *group;
 //	GPtrArray *tmparray;
 	GPtrArray *depends;
 //	GPtrArray *provides;
@@ -379,8 +379,11 @@ zif_package_local_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, GCanc
 		if (text == NULL)
 			goto out;
 		group = zif_groups_get_group_for_cat (ZIF_PACKAGE_LOCAL (pkg)->priv->groups, text, NULL);
-		if (group != PK_GROUP_ENUM_UNKNOWN)
-			zif_package_set_group (pkg, group);
+		if (group != NULL) {
+			tmp = zif_string_new (group);
+			zif_package_set_group (pkg, tmp);
+			zif_string_unref (tmp);
+		}
 
 	} else if (type == ZIF_PACKAGE_ENSURE_TYPE_REQUIRES) {
 		/* requires */

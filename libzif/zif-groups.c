@@ -52,7 +52,7 @@
 struct _ZifGroupsPrivate
 {
 	gboolean		 loaded;
-	PkBitfield		 groups;
+	GPtrArray		*groups;
 	GPtrArray		*categories;
 	GHashTable		*hash;
 	gchar			*mapping_file;
@@ -143,7 +143,6 @@ zif_groups_load (ZifGroups *groups, GError **error)
 	gchar **cols;
 	gchar **entries;
 	guint i, j;
-	PkGroupEnum group;
 	GError *error_local = NULL;
 
 	g_return_val_if_fail (ZIF_IS_GROUPS (groups), FALSE);
@@ -176,14 +175,13 @@ zif_groups_load (ZifGroups *groups, GError **error)
 			goto cont;
 
 		/* add to groups list */
-		group = pk_group_enum_from_text (cols[0]);
-		pk_bitfield_add (groups->priv->groups, group);
+		g_ptr_array_add (groups->priv->groups, g_strdup (cols[0]));
 
 		/* add entries to cats list and dist */
 		entries = g_strsplit (cols[1], ",", -1);
 		for (j=0; entries[j] != NULL; j++) {
 			g_ptr_array_add (groups->priv->categories, g_strdup (entries[j]));
-			g_hash_table_insert (groups->priv->hash, g_strdup (entries[j]), GUINT_TO_POINTER(group));
+			g_hash_table_insert (groups->priv->hash, g_strdup (entries[j]), g_strdup (cols[0]));
 		}
 		g_strfreev (entries);
 cont:
@@ -205,11 +203,11 @@ out:
  *
  * Gets the groups supported by the packaging system.
  *
- * Return value: A #PkBitfield of the groups that are supported
+ * Return value: A #GPtrArray of the string groups that are supported
  *
  * Since: 0.0.1
  **/
-PkBitfield
+GPtrArray *
 zif_groups_get_groups (ZifGroups *groups, GError **error)
 {
 	GError *error_local;
@@ -279,21 +277,20 @@ out:
  *
  * Returns the group enumerated type for the category.
  *
- * Return value: the specific #PkGroupEnum or %PK_GROUP_ENUM_UNKNOWN
+ * Return value: the specific group name or %NULL
  *
  * Since: 0.0.1
  **/
-PkGroupEnum
+const gchar *
 zif_groups_get_group_for_cat (ZifGroups *groups, const gchar *cat, GError **error)
 {
-	gpointer data;
-	PkGroupEnum group = PK_GROUP_ENUM_UNKNOWN;
+	const gchar *group = NULL;
 	GError *error_local;
 	gboolean ret;
 
-	g_return_val_if_fail (ZIF_IS_GROUPS (groups), PK_GROUP_ENUM_UNKNOWN);
-	g_return_val_if_fail (cat != NULL, PK_GROUP_ENUM_UNKNOWN);
-	g_return_val_if_fail (error == NULL || *error == NULL, PK_GROUP_ENUM_UNKNOWN);
+	g_return_val_if_fail (ZIF_IS_GROUPS (groups), NULL);
+	g_return_val_if_fail (cat != NULL, NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* if not already loaded, load */
 	if (!groups->priv->loaded) {
@@ -307,11 +304,12 @@ zif_groups_get_group_for_cat (ZifGroups *groups, const gchar *cat, GError **erro
 	}
 
 	/* get cat -> group mapping */
-	data = g_hash_table_lookup (groups->priv->hash, cat);
-	if (data == NULL)
+	group = (const gchar *)g_hash_table_lookup (groups->priv->hash, cat);
+	if (group == NULL) {
+		g_set_error (error, ZIF_GROUPS_ERROR, ZIF_GROUPS_ERROR_FAILED,
+			     "failed to get group for %s", cat);
 		goto out;
-
-	group = GPOINTER_TO_INT(data);
+	}
 out:
 	return group;
 }
@@ -340,6 +338,7 @@ zif_groups_finalize (GObject *object)
 	g_return_if_fail (ZIF_IS_GROUPS (object));
 	groups = ZIF_GROUPS (object);
 
+	g_ptr_array_unref (groups->priv->groups);
 	g_ptr_array_unref (groups->priv->categories);
 	g_hash_table_unref (groups->priv->hash);
 	g_free (groups->priv->mapping_file);
@@ -368,9 +367,9 @@ zif_groups_init (ZifGroups *groups)
 	groups->priv = ZIF_GROUPS_GET_PRIVATE (groups);
 	groups->priv->mapping_file = NULL;
 	groups->priv->loaded = FALSE;
-	groups->priv->groups = 0;
+	groups->priv->groups = g_ptr_array_new_with_free_func ((GDestroyNotify) g_free);;
 	groups->priv->categories = g_ptr_array_new_with_free_func ((GDestroyNotify) g_free);
-	groups->priv->hash = g_hash_table_new_full (g_str_hash, g_str_equal, (GDestroyNotify) g_free, NULL);
+	groups->priv->hash = g_hash_table_new_full (g_str_hash, g_str_equal, (GDestroyNotify) g_free, (GDestroyNotify) g_free);
 	groups->priv->monitor = zif_monitor_new ();
 	g_signal_connect (groups->priv->monitor, "changed", G_CALLBACK (zif_groups_file_monitor_cb), groups);
 }
@@ -407,8 +406,7 @@ zif_groups_test (EggTest *test)
 	gboolean ret;
 	GPtrArray *array;
 	GError *error = NULL;
-	PkGroupEnum group;
-	PkBitfield groups_bit;
+	const gchar *group;
 	gchar *text;
 
 	if (!egg_test_start (test, "ZifGroups"))
@@ -437,16 +435,14 @@ zif_groups_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "get groups");
-	groups_bit = zif_groups_get_groups (groups, NULL);
-	text = pk_group_bitfield_to_string (groups_bit);
-	if (g_strcmp0 (text, "admin-tools;desktop-gnome;desktop-kde;desktop-other;"
-			     "education;fonts;games;graphics;internet;"
-			     "legacy;localization;multimedia;office;other;programming;"
-			     "publishing;servers;system;virtualization") == 0)
+	array = zif_groups_get_groups (groups, NULL);
+	group = g_ptr_array_index (array, 0);
+	if (groups == NULL)
+		egg_test_failed (test, "failed to get groups");
+	else if (g_strcmp0 (group, "admin-tools") == 0)
 		egg_test_success (test, NULL);
 	else
-		egg_test_failed (test, "invalid groups '%s'", text);
-	g_free (text);
+		egg_test_failed (test, "invalid groups[0] '%s'", group);
 
 	/************************************************************/
 	egg_test_title (test, "get categories");
@@ -460,10 +456,10 @@ zif_groups_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "get group for cat");
 	group = zif_groups_get_group_for_cat (groups, "language-support;kashubian-support", NULL);
-	if (g_strcmp0 (pk_group_enum_to_text(group), "localization") == 0)
+	if (g_strcmp0 (group, "localization") == 0)
 		egg_test_success (test, NULL);
 	else
-		egg_test_failed (test, "invalid groups '%s'", pk_group_enum_to_text (group));
+		egg_test_failed (test, "invalid groups '%s'", group);
 
 	g_object_unref (groups);
 

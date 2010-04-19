@@ -899,24 +899,22 @@ main (int argc, char *argv[])
 	}
 
 	if (g_strcmp0 (mode, "getgroups") == 0) {
-		PkBitfield group_bitfield;
-		gchar *text;
+		const gchar *text;
 
 		/* get bitfield */
-		group_bitfield = zif_groups_get_groups (groups, &error);
-		if (group_bitfield == 0) {
+		array = zif_groups_get_groups (groups, &error);
+		if (array == NULL) {
 			g_print ("failed to get groups: %s\n", error->message);
 			g_error_free (error);
 			goto out;
 		}
 
 		/* convert to text */
-		text = pk_group_bitfield_to_string (group_bitfield);
-		g_strdelimit (text, ";", '\n');
-
-		/* print it */
-		g_print ("%s\n", text);
-		g_free (text);
+		for (i=0; i<array->len; i++) {
+			text = g_ptr_array_index (array, i);
+			g_print ("%s\n", text);
+		}
+		g_ptr_array_unref (array);
 		goto out;
 	}
 

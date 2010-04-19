@@ -27,7 +27,6 @@
 #define __ZIF_GROUPS_H
 
 #include <glib-object.h>
-#include <packagekit-glib2/packagekit.h>
 
 G_BEGIN_DECLS
 
@@ -67,11 +66,11 @@ gboolean	 zif_groups_set_mapping_file	(ZifGroups	*groups,
 						 GError		**error);
 gboolean	 zif_groups_load		(ZifGroups	*groups,
 						 GError		**error);
-PkBitfield	 zif_groups_get_groups		(ZifGroups	*groups,
+GPtrArray	*zif_groups_get_groups		(ZifGroups	*groups,
 						 GError		**error);
 GPtrArray	*zif_groups_get_categories	(ZifGroups	*groups,
 						 GError		**error);
-PkGroupEnum	 zif_groups_get_group_for_cat	(ZifGroups	*groups,
+const gchar	*zif_groups_get_group_for_cat	(ZifGroups	*groups,
 						 const gchar	*cat,
 						 GError		**error);
 

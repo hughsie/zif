@@ -458,10 +458,10 @@ zif_store_local_search_group (ZifStore *store, gchar **search, GCancellable *can
 	guint i, j;
 	GPtrArray *array = NULL;
 	ZifPackage *package;
-	PkGroupEnum group_tmp;
 	GError *error_local = NULL;
 	gboolean ret;
-	PkGroupEnum group;
+	const gchar *group;
+	const gchar *group_tmp;
 	ZifCompletion *completion_local = NULL;
 	ZifCompletion *completion_loop = NULL;
 	ZifStoreLocal *local = ZIF_STORE_LOCAL (store);
@@ -514,10 +514,10 @@ zif_store_local_search_group (ZifStore *store, gchar **search, GCancellable *can
 	for (i=0;i<local->priv->packages->len;i++) {
 		package = g_ptr_array_index (local->priv->packages, i);
 		for (j=0; search[j] != NULL; j++) {
-			group = pk_group_enum_from_text (search[j]);
+			group = search[j];
 			completion_loop = zif_completion_get_child (completion_local);
 			group_tmp = zif_package_get_group (package, cancellable, completion_loop, NULL);
-			if (group == group_tmp) {
+			if (g_strcmp0 (group, group_tmp) == 0) {
 				g_ptr_array_add (array, g_object_ref (package));
 				break;
 			}
@@ -1286,7 +1286,7 @@ zif_store_local_test (EggTest *test)
 	egg_test_title (test, "get category");
 	zif_completion_reset (completion);
 	string = zif_package_get_category (package, NULL, completion, NULL);
-	if (g_strcmp0 (string, "System Environment/Libraries") == 0)
+	if (g_strcmp0 (string, "Unspecified") == 0)
 		egg_test_success (test, NULL);
 	else
 		egg_test_failed (test, "incorrect category: %s", string);

@@ -119,7 +119,7 @@ const gchar		*zif_package_get_category	(ZifPackage	*package,
 							 GCancellable	*cancellable,
 							 ZifCompletion	*completion,
 							 GError		**error);
-PkGroupEnum		 zif_package_get_group		(ZifPackage	*package,
+const gchar		*zif_package_get_group		(ZifPackage	*package,
 							 GCancellable	*cancellable,
 							 ZifCompletion	*completion,
 							 GError		**error);
@@ -158,7 +158,7 @@ gboolean		 zif_package_set_location_href	(ZifPackage	*package,
 gboolean		 zif_package_set_category	(ZifPackage	*package,
 							 ZifString	*category);
 gboolean		 zif_package_set_group		(ZifPackage	*package,
-							 PkGroupEnum	 group);
+							 ZifString	*group);
 gboolean		 zif_package_set_size		(ZifPackage	*package,
 							 guint64	 size);
 gboolean		 zif_package_set_files		(ZifPackage	*package,
