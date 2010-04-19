@@ -1895,6 +1895,7 @@ zif_store_remote_search_category (ZifStore *store, gchar **group_id, GCancellabl
 	if (location == NULL) {
 		/* empty array, as we want success */
 		array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
+		zif_completion_finished (completion);
 		goto out;
 	}
 
@@ -1907,6 +1908,7 @@ zif_store_remote_search_category (ZifStore *store, gchar **group_id, GCancellabl
 		if (g_str_has_prefix (error_local->message, "could not find group")) {
 			array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 			g_error_free (error_local);
+			zif_completion_finished (completion);
 			goto out;
 		}
 		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
