@@ -36,6 +36,7 @@
 
 #include "zif-md.h"
 #include "zif-md-comps.h"
+#include "zif-category.h"
 
 #include "egg-debug.h"
 
@@ -468,19 +469,19 @@ out:
  * something sane.
  **/
 static void
-zif_md_comps_category_set_icon (PkCategory *category)
+zif_md_comps_category_set_icon (ZifCategory *category)
 {
 	const gchar *icon;
 	GString *filename = g_string_new ("");
 
 	/* try the proper group icon */
-	icon = pk_category_get_id (category);
+	icon = zif_category_get_id (category);
 	g_string_printf (filename, "/usr/share/pixmaps/comps/%s.png", icon);
 	if (g_file_test (filename->str, G_FILE_TEST_EXISTS))
 		goto out;
 
 	/* fall back to parent icon */
-	icon = pk_category_get_parent_id (category);
+	icon = zif_category_get_parent_id (category);
 	g_string_printf (filename, "/usr/share/pixmaps/comps/%s.png", icon);
 	if (g_file_test (filename->str, G_FILE_TEST_EXISTS))
 		goto out;
@@ -488,7 +489,7 @@ zif_md_comps_category_set_icon (PkCategory *category)
 	/* fall back to the missing icon */
 	icon = "image-missing";
 out:
-	pk_category_set_icon (category, icon);
+	zif_category_set_icon (category, icon);
 	g_string_free (filename, TRUE);
 }
 
@@ -501,7 +502,7 @@ out:
  *
  * Gets the available list of categories.
  *
- * Return value: %PkCategory array of categories, with parent_id set to %NULL
+ * Return value: %ZifCategory array of categories, with parent_id set to %NULL
  *
  * Since: 0.0.1
  **/
@@ -515,7 +516,7 @@ zif_md_comps_get_categories (ZifMdComps *md, GCancellable *cancellable,
 	gboolean ret;
 	GError *error_local = NULL;
 	const ZifMdCompsCategoryData *data;
-	PkCategory *category;
+	ZifCategory *category;
 
 	g_return_val_if_fail (ZIF_IS_MD_COMPS (md), NULL);
 
@@ -535,10 +536,10 @@ zif_md_comps_get_categories (ZifMdComps *md, GCancellable *cancellable,
 	len = md->priv->array_categories->len;
 	for (i=0; i<len; i++) {
 		data = g_ptr_array_index (md->priv->array_categories, i);
-		category = pk_category_new ();
-		pk_category_set_id (category, data->id);
-		pk_category_set_name (category, data->name);
-		pk_category_set_summary (category, data->description);
+		category = zif_category_new ();
+		zif_category_set_id (category, data->id);
+		zif_category_set_name (category, data->name);
+		zif_category_set_summary (category, data->description);
 		zif_md_comps_category_set_icon (category);
 		g_ptr_array_add (array, category);
 	}
@@ -549,12 +550,12 @@ out:
 /**
  * zif_md_comps_get_category_for_group:
  **/
-static PkCategory *
+static ZifCategory *
 zif_md_comps_get_category_for_group (ZifMdComps *md, const gchar *group_id)
 {
 	guint i;
 	guint len;
-	PkCategory *category = NULL;
+	ZifCategory *category = NULL;
 	ZifMdCompsGroupData *data;
 
 	/* find group matching group_id */
@@ -562,10 +563,10 @@ zif_md_comps_get_category_for_group (ZifMdComps *md, const gchar *group_id)
 	for (i=0; i<len; i++) {
 		data = g_ptr_array_index (md->priv->array_groups, i);
 		if (g_strcmp0 (group_id, data->id) == 0) {
-			category = pk_category_new ();
-			pk_category_set_id (category, data->id);
-			pk_category_set_name (category, data->name);
-			pk_category_set_summary (category, data->description);
+			category = zif_category_new ();
+			zif_category_set_id (category, data->id);
+			zif_category_set_name (category, data->name);
+			zif_category_set_summary (category, data->description);
 			break;
 		}
 	}
@@ -582,7 +583,7 @@ zif_md_comps_get_category_for_group (ZifMdComps *md, const gchar *group_id)
  *
  * Gets the list of groups for a specific category.
  *
- * Return value: %PkCategory array of groups
+ * Return value: %ZifCategory array of groups
  *
  * Since: 0.0.1
  **/
@@ -598,7 +599,7 @@ zif_md_comps_get_groups_for_category (ZifMdComps *md, const gchar *category_id,
 	GError *error_local = NULL;
 	const ZifMdCompsCategoryData *data;
 	const gchar *id;
-	PkCategory *category;
+	ZifCategory *category;
 
 	g_return_val_if_fail (ZIF_IS_MD_COMPS (md), NULL);
 	g_return_val_if_fail (category_id != NULL, NULL);
@@ -631,7 +632,7 @@ zif_md_comps_get_groups_for_category (ZifMdComps *md, const gchar *category_id,
 					continue;
 
 				/* add */
-				pk_category_set_parent_id (category, category_id);
+				zif_category_set_parent_id (category, category_id);
 				zif_md_comps_category_set_icon (category);
 				g_ptr_array_add (array, category);
 			}
@@ -798,7 +799,7 @@ zif_md_comps_test (EggTest *test)
 	const gchar *id;
 	GCancellable *cancellable;
 	ZifCompletion *completion;
-	PkCategory *category;
+	ZifCategory *category;
 
 	if (!egg_test_start (test, "ZifMdComps"))
 		return;
@@ -878,26 +879,26 @@ zif_md_comps_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "correct id value");
 	category = g_ptr_array_index (array, 0);
-	if (g_strcmp0 (pk_category_get_id (category), "apps") == 0)
+	if (g_strcmp0 (zif_category_get_id (category), "apps") == 0)
 		egg_test_success (test, NULL);
 	else
-		egg_test_failed (test, "failed to get correct id '%s'", pk_category_get_id (category));
+		egg_test_failed (test, "failed to get correct id '%s'", zif_category_get_id (category));
 
 	/************************************************************/
 	egg_test_title (test, "correct name value");
 	category = g_ptr_array_index (array, 0);
-	if (g_strcmp0 (pk_category_get_name (category), "Applications") == 0)
+	if (g_strcmp0 (zif_category_get_name (category), "Applications") == 0)
 		egg_test_success (test, NULL);
 	else
-		egg_test_failed (test, "failed to get correct name '%s'", pk_category_get_name (category));
+		egg_test_failed (test, "failed to get correct name '%s'", zif_category_get_name (category));
 
 	/************************************************************/
 	egg_test_title (test, "correct summary value");
 	category = g_ptr_array_index (array, 0);
-	if (g_strcmp0 (pk_category_get_summary (category), "Applications to perform a variety of tasks") == 0)
+	if (g_strcmp0 (zif_category_get_summary (category), "Applications to perform a variety of tasks") == 0)
 		egg_test_success (test, NULL);
 	else
-		egg_test_failed (test, "failed to get correct summary '%s'", pk_category_get_summary (category));
+		egg_test_failed (test, "failed to get correct summary '%s'", zif_category_get_summary (category));
 
 	g_ptr_array_unref (array);
 
@@ -919,10 +920,10 @@ zif_md_comps_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "correct id value");
 	category = g_ptr_array_index (array, 0);
-	if (g_strcmp0 (pk_category_get_id (category), "admin-tools") == 0)
+	if (g_strcmp0 (zif_category_get_id (category), "admin-tools") == 0)
 		egg_test_success (test, NULL);
 	else
-		egg_test_failed (test, "failed to get correct id '%s'", pk_category_get_id (category));
+		egg_test_failed (test, "failed to get correct id '%s'", zif_category_get_id (category));
 	g_ptr_array_unref (array);
 
 	/************************************************************/

@@ -487,7 +487,7 @@ zif_store_find_package (ZifStore *store, const gchar *package_id, GCancellable *
  *
  * Return a list of custom categories.
  *
- * Return value: an array of #PkCategory's
+ * Return value: an array of #ZifCategory's
  *
  * Since: 0.0.1
  **/

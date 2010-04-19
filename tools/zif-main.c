@@ -839,7 +839,7 @@ main (int argc, char *argv[])
 		goto out;
 	}
 	if (g_strcmp0 (mode, "getcategories") == 0) {
-		PkCategory *obj;
+		ZifCategory *obj;
 
 		pk_progress_bar_start (progressbar, "Getting categories");
 

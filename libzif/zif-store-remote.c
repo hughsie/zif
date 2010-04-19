@@ -54,6 +54,7 @@
 #include "zif-store-local.h"
 #include "zif-store-remote.h"
 #include "zif-utils.h"
+#include "zif-category.h"
 
 #include "egg-debug.h"
 
@@ -2174,9 +2175,9 @@ zif_store_remote_get_categories (ZifStore *store, GCancellable *cancellable, Zif
 	ZifStoreRemote *remote = ZIF_STORE_REMOTE (store);
 	ZifCompletion *completion_local;
 	ZifCompletion *completion_loop;
-	PkCategory *group;
-	PkCategory *category;
-	PkCategory *category_tmp;
+	ZifCategory *group;
+	ZifCategory *category;
+	ZifCategory *category_tmp;
 
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), NULL);
 	g_return_val_if_fail (remote->priv->id != NULL, NULL);
@@ -2249,10 +2250,10 @@ zif_store_remote_get_categories (ZifStore *store, GCancellable *cancellable, Zif
 		/* get the groups for this category */
 		completion_loop = zif_completion_get_child (completion_local);
 		array_groups = zif_md_comps_get_groups_for_category (ZIF_MD_COMPS (remote->priv->md_comps),
-									  pk_category_get_id (category), cancellable, completion_loop, &error_local);
+									  zif_category_get_id (category), cancellable, completion_loop, &error_local);
 		if (array_groups == NULL) {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
-				     "failed to get groups for %s: %s", pk_category_get_id (category), error_local->message);
+				     "failed to get groups for %s: %s", zif_category_get_id (category), error_local->message);
 			g_error_free (error_local);
 
 			/* undo the work we've already done */
@@ -2947,7 +2948,7 @@ zif_store_remote_test (EggTest *test)
 	gboolean ret;
 	GError *error = NULL;
 	const gchar *id;
-	PkCategory *category;
+	ZifCategory *category;
 	guint i;
 	const gchar *in_array[] = { NULL, NULL };
 
@@ -3180,24 +3181,24 @@ zif_store_remote_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "test parent_id");
-	if (pk_category_get_parent_id (category) == NULL)
+	if (zif_category_get_parent_id (category) == NULL)
 		egg_test_success (test, NULL);
 	else
-		egg_test_failed (test, "incorrect data: %s", pk_category_get_parent_id (category));
+		egg_test_failed (test, "incorrect data: %s", zif_category_get_parent_id (category));
 
 	/************************************************************/
 	egg_test_title (test, "test cat_id");
-	if (g_strcmp0 (pk_category_get_id (category), "language-support") == 0)
+	if (g_strcmp0 (zif_category_get_id (category), "language-support") == 0)
 		egg_test_success (test, NULL);
 	else
-		egg_test_failed (test, "incorrect data: %s", pk_category_get_id (category));
+		egg_test_failed (test, "incorrect data: %s", zif_category_get_id (category));
 
 	/************************************************************/
 	egg_test_title (test, "test name");
-	if (g_strcmp0 (pk_category_get_name (category), "Languages") == 0)
+	if (g_strcmp0 (zif_category_get_name (category), "Languages") == 0)
 		egg_test_success (test, NULL);
 	else
-		egg_test_failed (test, "incorrect data: %s", pk_category_get_name (category));
+		egg_test_failed (test, "incorrect data: %s", zif_category_get_name (category));
 
 	g_ptr_array_unref (array);
 

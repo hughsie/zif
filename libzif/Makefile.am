@@ -63,6 +63,8 @@ libzif_la_SOURCES =						\
 	zif-string.h						\
 	zif-depend.c						\
 	zif-depend.h						\
+	zif-category.c						\
+	zif-category.h						\
 	zif-package.c						\
 	zif-package.h						\
 	zif-package-local.c					\

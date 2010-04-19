@@ -45,6 +45,7 @@
 #include "zif-package.h"
 #include "zif-utils.h"
 #include "zif-repos.h"
+#include "zif-category.h"
 
 #include "egg-debug.h"
 
@@ -782,7 +783,7 @@ zif_store_array_what_provides (GPtrArray *store_array, gchar **search,
  *
  * Return a list of custom categories from all repos.
  *
- * Return value: an array of #PkCategory's
+ * Return value: an array of #ZifCategory's
  *
  * Since: 0.0.1
  **/
@@ -793,8 +794,8 @@ zif_store_array_get_categories (GPtrArray *store_array,
 {
 	guint i, j;
 	GPtrArray *array;
-	PkCategory *obj;
-	PkCategory *obj_tmp;
+	ZifCategory *obj;
+	ZifCategory *obj_tmp;
 	gchar *parent_id;
 	gchar *parent_id_tmp;
 	gchar *cat_id;
