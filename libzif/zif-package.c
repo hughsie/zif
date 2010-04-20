@@ -43,12 +43,14 @@
 #include "zif-repos.h"
 #include "zif-groups.h"
 #include "zif-string.h"
+#include "zif-legal.h"
 
 #define ZIF_PACKAGE_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_PACKAGE, ZifPackagePrivate))
 
 struct _ZifPackagePrivate
 {
 	ZifConfig		*config;
+	ZifLegal		*legal;
 	ZifGroups		*groups;
 	ZifRepos		*repos;
 	gchar			**package_id_split;
@@ -583,54 +585,24 @@ zif_package_is_native (ZifPackage *package)
 gboolean
 zif_package_is_free (ZifPackage *package)
 {
-	gboolean one_free_group = FALSE;
-	gboolean group_is_free;
-	gchar **groups;
-	gchar **licenses;
-	guint i;
-	guint j;
+	GError *error = NULL;
+	gboolean ret;
+	gboolean is_free = FALSE;
 
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), FALSE);
 	g_return_val_if_fail (package->priv->package_id_split != NULL, FALSE);
 
-	/* split AND clase */
-	groups = g_strsplit (zif_string_get_value (package->priv->license), " and ", 0);
-	for (i=0; groups[i] != NULL; i++) {
-		/* remove grouping */
-		g_strdelimit (groups[i], "()", ' ');
-
-		/* split OR clase */
-		licenses = g_strsplit (groups[i], " or ", 0);
-
-		group_is_free = FALSE;
-		for (j=0; licenses[j] != NULL; j++) {
-
-			/* remove 'and later' */
-			g_strdelimit (licenses[j], "+", ' ');
-			g_strstrip (licenses[j]);
-
-			/* nothing to process */
-			if (licenses[j][0] == '\0')
-				continue;
-
-			//FIXME: need to get the list of free licences from a text file
-			if (FALSE /* pk_license_enum_from_text (licenses[j]) != NULL */) {
-				one_free_group = TRUE;
-				group_is_free = TRUE;
-				break;
-			}
-		}
-		g_strfreev (licenses);
-
-		if (!group_is_free)
-			return FALSE;
+	/* see if license is free */
+	ret = zif_legal_is_free (package->priv->legal,
+				 zif_string_get_value (package->priv->license),
+				 &is_free, &error);
+	if (!ret) {
+		egg_warning ("failed to get free status: %s", error->message);
+		g_error_free (error);
+		goto out;
 	}
-	g_strfreev (groups);
-
-	if (!one_free_group)
-		return FALSE;
-
-	return TRUE;
+out:
+	return is_free;
 }
 
 /**
@@ -1418,6 +1390,7 @@ zif_package_finalize (GObject *object)
 	g_object_unref (package->priv->repos);
 	g_object_unref (package->priv->groups);
 	g_object_unref (package->priv->config);
+	g_object_unref (package->priv->legal);
 
 	G_OBJECT_CLASS (zif_package_parent_class)->finalize (object);
 }
@@ -1457,6 +1430,7 @@ zif_package_init (ZifPackage *package)
 	package->priv->repos = zif_repos_new ();
 	package->priv->groups = zif_groups_new ();
 	package->priv->config = zif_config_new ();
+	package->priv->legal = zif_legal_new ();
 }
 
 /**

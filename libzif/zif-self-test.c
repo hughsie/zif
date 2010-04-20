@@ -29,6 +29,7 @@
 /* prototypes */
 void zif_md_other_sql_test (EggTest *test);
 void zif_completion_test (EggTest *test);
+void zif_legal_test (EggTest *test);
 void zif_changeset_test (EggTest *test);
 void zif_monitor_test (EggTest *test);
 void zif_config_test (EggTest *test);
@@ -61,6 +62,7 @@ main (int argc, char **argv)
 	zif_init ();
 
 	/* tests go here */
+	zif_legal_test (test);
 	zif_groups_test (test);
 	zif_md_filelists_xml_test (test);
 	zif_md_primary_sql_test (test);

@@ -1100,6 +1100,7 @@ zif_store_local_new (void)
 #include "egg-test.h"
 
 #include "zif-config.h"
+#include "zif-legal.h"
 
 void
 zif_store_local_test (EggTest *test)
@@ -1110,6 +1111,7 @@ zif_store_local_test (EggTest *test)
 	ZifPackage *package;
 	ZifGroups *groups;
 	ZifLock *lock;
+	ZifLegal *legal;
 	ZifConfig *config;
 	ZifCompletion *completion;
 	GError *error = NULL;
@@ -1123,9 +1125,11 @@ zif_store_local_test (EggTest *test)
 	if (!egg_test_start (test, "ZifStoreLocal"))
 		return;
 
-	/* set this up as dummy */
+	/* set these up as dummy */
 	config = zif_config_new ();
 	zif_config_set_filename (config, "../test/etc/yum.conf", NULL);
+	legal = zif_legal_new ();
+	zif_legal_set_filename (legal, "../test/share/licenses.txt");
 
 	/* use completion object */
 	completion = zif_completion_new ();
@@ -1317,6 +1321,7 @@ zif_store_local_test (EggTest *test)
 	g_object_unref (groups);
 	g_object_unref (config);
 	g_object_unref (lock);
+	g_object_unref (legal);
 	g_object_unref (completion);
 
 	egg_test_end (test);

@@ -46,11 +46,13 @@
         This part documents GObjects used in libzif.
       </para>
     </partintro>
+    <xi:include href="xml/zif-category.xml"/>
     <xi:include href="xml/zif-changeset.xml"/>
     <xi:include href="xml/zif-completion.xml"/>
     <xi:include href="xml/zif-config.xml"/>
     <xi:include href="xml/zif-download.xml"/>
     <xi:include href="xml/zif-groups.xml"/>
+    <xi:include href="xml/zif-legal.xml"/>
     <xi:include href="xml/zif-lock.xml"/>
     <xi:include href="xml/zif-md-comps.xml"/>
     <xi:include href="xml/zif-md-filelists-sql.xml"/>
