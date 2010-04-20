@@ -238,7 +238,9 @@ zif_md_primary_sql_get_statement_for_pred (const gchar *pred, gchar **search)
 			g_string_append (statement, " OR ");
 		g_free (temp);
 	}
-	if (i % max_items != max_items - 1) {
+
+	/* remove trailing OR entry */
+	if (g_str_has_suffix (statement->str, " OR ")) {
 		g_string_set_size (statement, statement->len - 4);
 		g_string_append (statement, ";\n");
 	}
