@@ -95,6 +95,7 @@ zif_md_updateinfo_parser_start_element (GMarkupParseContext *context, const gcha
 					gpointer user_data, GError **error)
 {
 	guint i;
+	gchar *package_id = NULL;
 	ZifMdUpdateinfo *updateinfo = user_data;
 
 	g_return_if_fail (ZIF_IS_MD_UPDATEINFO (updateinfo));
@@ -115,11 +116,11 @@ zif_md_updateinfo_parser_start_element (GMarkupParseContext *context, const gcha
 			for (i=0; attribute_names[i] != NULL; i++) {
 				if (g_strcmp0 (attribute_names[i], "status") == 0) {
 					zif_update_set_state (updateinfo->priv->update_temp,
-							      pk_update_state_enum_from_string (attribute_values[i]));
+							      zif_update_state_from_string (attribute_values[i]));
 				}
 				if (g_strcmp0 (element_name, "type") == 0) {
 					zif_update_set_kind (updateinfo->priv->update_temp,
-							     pk_info_enum_from_string (attribute_values[i]));
+							     zif_update_kind_from_string (attribute_values[i]));
 				}
 			}
 			goto out;
@@ -219,8 +220,8 @@ zif_md_updateinfo_parser_start_element (GMarkupParseContext *context, const gcha
 				const gchar *arch = NULL;
 				const gchar *src = NULL;
 				const gchar *data;
-				gchar *package_id;
 				ZifString *string;
+				gboolean ret;
 
 				updateinfo->priv->package_temp = zif_package_new ();
 
@@ -243,10 +244,13 @@ zif_md_updateinfo_parser_start_element (GMarkupParseContext *context, const gcha
 				/* create a package from what we know */
 				data = zif_md_get_id (ZIF_MD (updateinfo));
 				package_id = zif_package_id_from_nevra (name, epoch, version, release, arch, data);
-				zif_package_set_id (updateinfo->priv->package_temp, package_id);
+				ret = zif_package_set_id (updateinfo->priv->package_temp, package_id);
+				if (!ret) {
+					egg_warning ("failed to set %s", package_id);
+					goto out;
+				}
 				string = zif_string_new (src);
 				zif_package_set_location_href (updateinfo->priv->package_temp, string);
-				g_free (package_id);
 				zif_string_unref (string);
 				goto out;
 			}
@@ -260,6 +264,7 @@ zif_md_updateinfo_parser_start_element (GMarkupParseContext *context, const gcha
 	egg_warning ("unhandled base tag: %s", element_name);
 
 out:
+	g_free (package_id);
 	return;
 }
 

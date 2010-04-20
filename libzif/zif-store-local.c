@@ -37,7 +37,6 @@
 #include <rpm/rpmlib.h>
 #include <rpm/rpmdb.h>
 #include <fcntl.h>
-#include <packagekit-glib2/packagekit.h>
 
 #include "zif-store.h"
 #include "zif-store-local.h"
@@ -259,7 +258,7 @@ zif_store_local_search_name (ZifStore *store, gchar **search, GCancellable *canc
 		package_id = zif_package_get_id (package);
 		split = zif_package_id_split (package_id);
 		for (j=0; search[j] != NULL; j++) {
-			if (strcasestr (split[PK_PACKAGE_ID_NAME], search[j]) != NULL) {
+			if (strcasestr (split[ZIF_PACKAGE_ID_NAME], search[j]) != NULL) {
 				g_ptr_array_add (array, g_object_ref (package));
 				break;
 			}
@@ -430,7 +429,7 @@ zif_store_local_search_details (ZifStore *store, gchar **search, GCancellable *c
 		description = zif_package_get_description (package, cancellable, completion_loop, NULL);
 		split = zif_package_id_split (package_id);
 		for (j=0; search[j] != NULL; j++) {
-			if (strcasestr (split[PK_PACKAGE_ID_NAME], search[j]) != NULL) {
+			if (strcasestr (split[ZIF_PACKAGE_ID_NAME], search[j]) != NULL) {
 				g_ptr_array_add (array, g_object_ref (package));
 				break;
 			} else if (strcasestr (description, search[j]) != NULL) {
@@ -693,7 +692,7 @@ zif_store_local_resolve (ZifStore *store, gchar **search, GCancellable *cancella
 		package_id = zif_package_get_id (package);
 		split = zif_package_id_split (package_id);
 		for (j=0; search[j] != NULL; j++) {
-			if (strcmp (split[PK_PACKAGE_ID_NAME], search[j]) == 0) {
+			if (strcmp (split[ZIF_PACKAGE_ID_NAME], search[j]) == 0) {
 				g_ptr_array_add (array, g_object_ref (package));
 				break;
 			}
@@ -1251,10 +1250,10 @@ zif_store_local_test (EggTest *test)
 	egg_test_title (test, "get id");
 	package_id = zif_package_get_id (package);
 	split = zif_package_id_split (package_id);
-	if (g_strcmp0 (split[PK_PACKAGE_ID_NAME], "PackageKit") == 0)
+	if (g_strcmp0 (split[ZIF_PACKAGE_ID_NAME], "PackageKit") == 0)
 		egg_test_success (test, NULL);
 	else
-		egg_test_failed (test, "incorrect name: %s", split[PK_PACKAGE_ID_NAME]);
+		egg_test_failed (test, "incorrect name: %s", split[ZIF_PACKAGE_ID_NAME]);
 	g_strfreev (split);
 
 	/************************************************************/

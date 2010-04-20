@@ -77,12 +77,13 @@ gboolean
 zif_package_remote_set_from_repo (ZifPackageRemote *pkg, guint length, gchar **type, gchar **data, const gchar *repo_id, GError **error)
 {
 	guint i;
+	gboolean ret;
 	const gchar *name = NULL;
 	guint epoch = 0;
 	const gchar *version = NULL;
 	const gchar *release = NULL;
 	const gchar *arch = NULL;
-	gchar *package_id;
+	gchar *package_id = NULL;
 	ZifString *string;
 	gchar *endptr = NULL;
 
@@ -140,9 +141,14 @@ zif_package_remote_set_from_repo (ZifPackageRemote *pkg, guint length, gchar **t
 
 	zif_package_set_installed (ZIF_PACKAGE (pkg), FALSE);
 	package_id = zif_package_id_from_nevra (name, epoch, version, release, arch, repo_id);
-	zif_package_set_id (ZIF_PACKAGE (pkg), package_id);
+	ret = zif_package_set_id (ZIF_PACKAGE (pkg), package_id);
+	if (!ret) {
+		g_set_error (error, ZIF_PACKAGE_ERROR, ZIF_PACKAGE_ERROR_FAILED, "failed to set package-id: %s", package_id);
+		goto out;
+	}
+out:
 	g_free (package_id);
-	return TRUE;
+	return ret;
 }
 
 /**

@@ -62,7 +62,8 @@ gboolean		 zif_package_remote_set_from_repo	(ZifPackageRemote *pkg,
 								 gchar		**type,
 								 gchar		**data,
 								 const gchar	*repo_id,
-								 GError		**error);
+								 GError		**error)
+								 G_GNUC_WARN_UNUSED_RESULT;
 const gchar		*zif_package_remote_get_pkgid		(ZifPackageRemote *pkg);
 void			 zif_package_remote_set_pkgid		(ZifPackageRemote *pkg,
 								 const gchar	*pkgid);

@@ -253,6 +253,7 @@ zif_md_primary_xml_parser_end_element (GMarkupParseContext *context, const gchar
 {
 	ZifMdPrimaryXml *primary_xml = user_data;
 	gchar *package_id = NULL;
+	gboolean ret;
 
 	/* no element */
 	if (primary_xml->priv->section == ZIF_MD_PRIMARY_XML_SECTION_UNKNOWN) {
@@ -276,8 +277,14 @@ zif_md_primary_xml_parser_end_element (GMarkupParseContext *context, const gchar
 								primary_xml->priv->package_release_temp,
 								primary_xml->priv->package_arch_temp,
 								zif_md_get_id (ZIF_MD (primary_xml)));
-			zif_package_set_id (primary_xml->priv->package_temp, package_id);
-			g_ptr_array_add (primary_xml->priv->array, primary_xml->priv->package_temp);
+			ret = zif_package_set_id (primary_xml->priv->package_temp, package_id);
+			if (ret) {
+				g_ptr_array_add (primary_xml->priv->array, primary_xml->priv->package_temp);
+			} else {
+				egg_warning ("failed to set %s", package_id);
+				g_object_unref (primary_xml->priv->package_temp);
+				goto out;
+			}
 			primary_xml->priv->package_temp = NULL;
 			goto out;
 		}

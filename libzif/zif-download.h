@@ -27,6 +27,8 @@
 #define __ZIF_DOWNLOAD_H
 
 #include <glib-object.h>
+#include <gio/gio.h>
+
 #include "zif-completion.h"
 
 G_BEGIN_DECLS

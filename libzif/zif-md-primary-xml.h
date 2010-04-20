@@ -27,7 +27,6 @@
 #define __ZIF_MD_PRIMARY_XML_H
 
 #include <glib-object.h>
-#include <packagekit-glib2/packagekit.h>
 
 #include "zif-md.h"
 

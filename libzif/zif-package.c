@@ -33,7 +33,6 @@
 #include <glib.h>
 #include <string.h>
 #include <stdlib.h>
-#include <packagekit-glib2/packagekit.h>
 
 #include "egg-debug.h"
 
@@ -111,16 +110,19 @@ zif_package_compare (ZifPackage *a, ZifPackage *b)
 	splita = a->priv->package_id_split;
 	splitb = b->priv->package_id_split;
 
+	g_return_val_if_fail (splita != NULL, G_MAXINT);
+	g_return_val_if_fail (splitb != NULL, G_MAXINT);
+
 	/* check name the same */
-	if (g_strcmp0 (splita[PK_PACKAGE_ID_NAME], splitb[PK_PACKAGE_ID_NAME]) != 0)
+	if (g_strcmp0 (splita[ZIF_PACKAGE_ID_NAME], splitb[ZIF_PACKAGE_ID_NAME]) != 0)
 		goto out;
 
 	/* do a version compare */
-	val = zif_compare_evr (splita[PK_PACKAGE_ID_VERSION], splitb[PK_PACKAGE_ID_VERSION]);
+	val = zif_compare_evr (splita[ZIF_PACKAGE_ID_VERSION], splitb[ZIF_PACKAGE_ID_VERSION]);
 
 	/* if the packages are equal, prefer the same architecture */
 	if (val == 0)
-		val = g_strcmp0 (splitb[PK_PACKAGE_ID_ARCH], splita[PK_PACKAGE_ID_ARCH]);
+		val = g_strcmp0 (splitb[ZIF_PACKAGE_ID_ARCH], splita[ZIF_PACKAGE_ID_ARCH]);
 out:
 	return val;
 }
@@ -193,6 +195,8 @@ zif_package_array_filter_newest (GPtrArray *packages)
 	for (i=0; i<packages->len; i++) {
 		package = ZIF_PACKAGE (g_ptr_array_index (packages, i));
 		name = zif_package_get_name (package);
+		if (name == NULL)
+			continue;
 		package_tmp = g_hash_table_lookup (hash, name);
 
 		/* does not already exist */
@@ -230,7 +234,7 @@ static ZifStoreRemote *
 zif_package_get_store_for_package (ZifPackage *package, GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	ZifStoreRemote *store_remote;
-	store_remote = zif_repos_get_store (package->priv->repos, package->priv->package_id_split[PK_PACKAGE_ID_DATA],
+	store_remote = zif_repos_get_store (package->priv->repos, package->priv->package_id_split[ZIF_PACKAGE_ID_DATA],
 					    cancellable, completion, error);
 	return store_remote;
 }
@@ -442,13 +446,13 @@ zif_package_is_devel (ZifPackage *package)
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), FALSE);
 	g_return_val_if_fail (package->priv->package_id_split != NULL, FALSE);
 
-	if (g_str_has_suffix (package->priv->package_id_split[PK_PACKAGE_ID_NAME], "-debuginfo"))
+	if (g_str_has_suffix (package->priv->package_id_split[ZIF_PACKAGE_ID_NAME], "-debuginfo"))
 		return TRUE;
-	if (g_str_has_suffix (package->priv->package_id_split[PK_PACKAGE_ID_NAME], "-devel"))
+	if (g_str_has_suffix (package->priv->package_id_split[ZIF_PACKAGE_ID_NAME], "-devel"))
 		return TRUE;
-	if (g_str_has_suffix (package->priv->package_id_split[PK_PACKAGE_ID_NAME], "-static"))
+	if (g_str_has_suffix (package->priv->package_id_split[ZIF_PACKAGE_ID_NAME], "-static"))
 		return TRUE;
-	if (g_str_has_suffix (package->priv->package_id_split[PK_PACKAGE_ID_NAME], "-libs"))
+	if (g_str_has_suffix (package->priv->package_id_split[ZIF_PACKAGE_ID_NAME], "-libs"))
 		return TRUE;
 	return FALSE;
 }
@@ -534,7 +538,7 @@ zif_package_is_native (ZifPackage *package)
 	g_return_val_if_fail (package->priv->package_id_split != NULL, FALSE);
 
 	/* is package in arch array */
-	arch = package->priv->package_id_split[PK_PACKAGE_ID_ARCH];
+	arch = package->priv->package_id_split[ZIF_PACKAGE_ID_ARCH];
 	array = zif_config_get_basearch_array (package->priv->config);
 	for (i=0; array[i] != NULL; i++) {
 		if (g_strcmp0 (array[i], arch) == 0) {
@@ -609,8 +613,8 @@ zif_package_is_free (ZifPackage *package)
 			if (licenses[j][0] == '\0')
 				continue;
 
-			/* a valid free license */
-			if (pk_license_enum_from_text (licenses[j]) != PK_LICENSE_ENUM_UNKNOWN) {
+			//FIXME: need to get the list of free licences from a text file
+			if (FALSE /* pk_license_enum_from_text (licenses[j]) != NULL */) {
 				one_free_group = TRUE;
 				group_is_free = TRUE;
 				break;
@@ -661,8 +665,8 @@ const gchar *
 zif_package_get_name (ZifPackage *package)
 {
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
-	g_return_val_if_fail (package->priv->package_id != NULL, NULL);
-	return package->priv->package_id_split[PK_PACKAGE_ID_NAME];
+	g_return_val_if_fail (package->priv->package_id_split != NULL, NULL);
+	return package->priv->package_id_split[ZIF_PACKAGE_ID_NAME];
 }
 
 /**
@@ -896,7 +900,7 @@ zif_package_get_filename (ZifPackage *package, GCancellable *cancellable, ZifCom
 	/* not exists */
 	if (package->priv->location_href == NULL) {
 		g_set_error (error, ZIF_PACKAGE_ERROR, ZIF_PACKAGE_ERROR_FAILED,
-			     "no data for %s", package->priv->package_id_split[PK_PACKAGE_ID_NAME]);
+			     "no data for %s", package->priv->package_id_split[ZIF_PACKAGE_ID_NAME]);
 		return NULL;
 	}
 
@@ -955,14 +959,14 @@ zif_package_get_group (ZifPackage *package, GCancellable *cancellable, ZifComple
 	g_return_val_if_fail (error == NULL || *error == NULL, 0);
 
 	/* not exists */
-	if (package->priv->group == PK_GROUP_ENUM_UNKNOWN) {
+	if (package->priv->group == NULL) {
 		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_GROUP, cancellable, completion, error);
 		if (!ret)
-			return PK_GROUP_ENUM_UNKNOWN;
+			return NULL;
 	}
 
-	g_return_val_if_fail (ZIF_IS_PACKAGE (package), PK_GROUP_ENUM_UNKNOWN);
-	g_return_val_if_fail (package->priv->package_id_split != NULL, PK_GROUP_ENUM_UNKNOWN);
+	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
+	g_return_val_if_fail (package->priv->package_id_split != NULL, NULL);
 	return zif_string_get_value (package->priv->group);
 }
 
@@ -1127,6 +1131,11 @@ zif_package_set_id (ZifPackage *package, const gchar *package_id)
 	g_return_val_if_fail (package_id != NULL, FALSE);
 	g_return_val_if_fail (package->priv->package_id == NULL, FALSE);
 
+	/* not a valid package id */
+	if (!zif_package_id_check (package_id)) {
+		egg_warning ("not a valid package-id: %s", package_id);
+		return FALSE;
+	}
 	package->priv->package_id = g_strdup (package_id);
 	package->priv->package_id_split = zif_package_id_split (package_id);
 	return TRUE;
@@ -1279,8 +1288,8 @@ gboolean
 zif_package_set_group (ZifPackage *package, ZifString *group)
 {
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), FALSE);
-	g_return_val_if_fail (group != PK_GROUP_ENUM_UNKNOWN, FALSE);
-	g_return_val_if_fail (package->priv->group == PK_GROUP_ENUM_UNKNOWN, FALSE);
+	g_return_val_if_fail (group != NULL, FALSE);
+	g_return_val_if_fail (package->priv->group == NULL, FALSE);
 
 	package->priv->group = zif_string_ref (group);
 	return TRUE;
@@ -1443,7 +1452,7 @@ zif_package_init (ZifPackage *package)
 	package->priv->provides = NULL;
 	package->priv->location_href = NULL;
 	package->priv->installed = FALSE;
-	package->priv->group = PK_GROUP_ENUM_UNKNOWN;
+	package->priv->group = NULL;
 	package->priv->size = 0;
 	package->priv->repos = zif_repos_new ();
 	package->priv->groups = zif_groups_new ();

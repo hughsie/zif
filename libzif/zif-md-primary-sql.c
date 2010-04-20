@@ -126,6 +126,7 @@ zif_md_primary_sql_sqlite_create_package_cb (void *data, gint argc, gchar **argv
 	ZifMdPrimarySqlData *fldata = (ZifMdPrimarySqlData *) data;
 	ZifPackageRemote *package;
 	ZifStoreRemote *store_remote;
+	gboolean ret;
 
 	package = zif_package_remote_new ();
 	store_remote = zif_md_get_store_remote (ZIF_MD (fldata->md));
@@ -135,8 +136,15 @@ zif_md_primary_sql_sqlite_create_package_cb (void *data, gint argc, gchar **argv
 	} else {
 		egg_warning ("no remote store for %s", argv[1]);
 	}
-	zif_package_remote_set_from_repo (package, argc, col_name, argv, fldata->id, NULL);
-	g_ptr_array_add (fldata->packages, package);
+
+	/* add */
+	ret = zif_package_remote_set_from_repo (package, argc, col_name, argv, fldata->id, NULL);
+	if (ret) {
+		g_ptr_array_add (fldata->packages, package);
+	} else {
+		egg_error ("failed to add: %s", argv[1]);
+		g_object_unref (package);
+	}
 
 	return 0;
 }
@@ -510,7 +518,7 @@ zif_md_primary_sql_find_package (ZifMd *md, const gchar *package_id, GCancellabl
 	/* search with predicate, TODO: search version (epoch+release) */
 	split = zif_package_id_split (package_id);
 	statement = g_strdup_printf (ZIF_MD_PRIMARY_SQL_HEADER " WHERE name = '%s' AND arch = '%s'",
-				     split[PK_PACKAGE_ID_NAME], split[PK_PACKAGE_ID_ARCH]);
+				     split[ZIF_PACKAGE_ID_NAME], split[ZIF_PACKAGE_ID_ARCH]);
 	array = zif_md_primary_sql_search (md_primary_sql, statement, cancellable, completion, error);
 	g_free (statement);
 	g_strfreev (split);

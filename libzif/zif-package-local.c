@@ -31,7 +31,6 @@
 #endif
 
 #include <glib.h>
-#include <packagekit-glib2/packagekit.h>
 #include <rpm/rpmlib.h>
 #include <rpm/rpmdb.h>
 #include <rpm/rpmts.h>
@@ -476,7 +475,8 @@ out:
 gboolean
 zif_package_local_set_from_header (ZifPackageLocal *pkg, Header header, GError **error)
 {
-	gchar *package_id;
+	gchar *package_id = NULL;
+	gboolean ret;
 
 	g_return_val_if_fail (ZIF_IS_PACKAGE_LOCAL (pkg), FALSE);
 	g_return_val_if_fail (header != NULL, FALSE);
@@ -489,10 +489,14 @@ zif_package_local_set_from_header (ZifPackageLocal *pkg, Header header, GError *
 
 	/* id */
 	package_id = zif_package_local_id_from_header (header);
-	zif_package_set_id (ZIF_PACKAGE (pkg), package_id);
+	ret = zif_package_set_id (ZIF_PACKAGE (pkg), package_id);
+	if (!ret) {
+		g_set_error (error, ZIF_PACKAGE_ERROR, ZIF_PACKAGE_ERROR_FAILED, "failed to set package-id: %s", package_id);
+		goto out;
+	}
+out:
 	g_free (package_id);
-
-	return TRUE;
+	return ret;
 }
 
 /**

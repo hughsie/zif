@@ -658,7 +658,7 @@ zif_store_remote_get_update_detail (ZifStoreRemote *store, const gchar *package_
 	completion_local = zif_completion_get_child (completion);
 	split = zif_package_id_split (package_id);
 	store_local = zif_store_local_new ();
-	to_array[0] = split[PK_PACKAGE_ID_NAME];
+	to_array[0] = split[ZIF_PACKAGE_ID_NAME];
 	array_installed = zif_store_resolve (ZIF_STORE (store_local), to_array, cancellable, completion_local, &error_local);
 	if (array_installed == NULL) {
 		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
@@ -683,7 +683,7 @@ zif_store_remote_get_update_detail (ZifStoreRemote *store, const gchar *package_
 		/* abort when the changeset is older than what we have installed */
 		version = zif_changeset_get_version (changeset);
 		if (version != NULL &&
-		    zif_compare_evr (split_installed[PK_PACKAGE_ID_VERSION], version) >= 0)
+		    zif_compare_evr (split_installed[ZIF_PACKAGE_ID_VERSION], version) >= 0)
 			break;
 	}
 
@@ -2353,7 +2353,11 @@ zif_store_remote_get_updates (ZifStore *store, GPtrArray *packages,
 		package = ZIF_PACKAGE (g_ptr_array_index (packages, i));
 		package_id = zif_package_get_id (package);
 		split = zif_package_id_split (package_id);
-		resolve_array[i] = g_strdup (split[PK_PACKAGE_ID_NAME]);
+		if (split == NULL) {
+			egg_warning ("failed to split %s", package_id);
+			continue;
+		}
+		resolve_array[i] = g_strdup (split[ZIF_PACKAGE_ID_NAME]);
 		g_strfreev (split);
 	}
 
@@ -2387,9 +2391,9 @@ zif_store_remote_get_updates (ZifStore *store, GPtrArray *packages,
 				split = zif_package_id_split (package_id);
 				split_update = zif_package_id_split (package_id_update);
 				egg_debug ("*** update %s from %s to %s",
-					   split[PK_PACKAGE_ID_NAME],
-					   split[PK_PACKAGE_ID_VERSION],
-					   split_update[PK_PACKAGE_ID_VERSION]);
+					   split[ZIF_PACKAGE_ID_NAME],
+					   split[ZIF_PACKAGE_ID_VERSION],
+					   split_update[ZIF_PACKAGE_ID_VERSION]);
 				g_strfreev (split);
 				g_strfreev (split_update);
 				g_ptr_array_add (array, g_object_ref (update));

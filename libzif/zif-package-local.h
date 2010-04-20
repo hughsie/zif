@@ -60,10 +60,12 @@ GType			 zif_package_local_get_type		(void);
 ZifPackageLocal		*zif_package_local_new			(void);
 gboolean		 zif_package_local_set_from_header	(ZifPackageLocal *pkg,
 								 Header		 header,
-								 GError		**error);
+								 GError		**error)
+								 G_GNUC_WARN_UNUSED_RESULT;
 gboolean		 zif_package_local_set_from_filename	(ZifPackageLocal *pkg,
 								 const gchar	*filename,
-								 GError		**error);
+								 GError		**error)
+								 G_GNUC_WARN_UNUSED_RESULT;
 
 G_END_DECLS
 

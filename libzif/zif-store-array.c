@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*-
  *
- * Copyright (C) 2008 Richard Hughes <richard@hughsie.com>
+ * Copyright (C) 2008-2010 Richard Hughes <richard@hughsie.com>
  *
  * Licensed under the GNU General Public License Version 2
  *
@@ -35,7 +35,6 @@
 #endif
 
 #include <glib.h>
-#include <packagekit-glib2/packagekit.h>
 
 #include "zif-config.h"
 #include "zif-completion.h"
@@ -49,8 +48,48 @@
 
 #include "egg-debug.h"
 
-/* in PackageKit we split categories from groups using a special @ prefix (bodge) */
-#define PK_ROLE_ENUM_SEARCH_CATEGORY	(PK_ROLE_ENUM_UNKNOWN + 1)
+typedef enum {
+	ZIF_ROLE_GET_PACKAGES,
+	ZIF_ROLE_GET_UPDATES,
+	ZIF_ROLE_RESOLVE,
+	ZIF_ROLE_SEARCH_DETAILS,
+	ZIF_ROLE_SEARCH_FILE,
+	ZIF_ROLE_SEARCH_GROUP,
+	ZIF_ROLE_SEARCH_NAME,
+	ZIF_ROLE_SEARCH_CATEGORY,
+	ZIF_ROLE_WHAT_PROVIDES,
+	ZIF_ROLE_GET_CATEGORIES,
+	ZIF_ROLE_UNKNOWN
+} ZifRole;
+
+/**
+ * zif_role_to_string:
+ **/
+static const gchar *
+zif_role_to_string (ZifRole role)
+{
+	if (role == ZIF_ROLE_GET_PACKAGES)
+		return "get-packages";
+	if (role == ZIF_ROLE_GET_UPDATES)
+		return "get-updates";
+	if (role == ZIF_ROLE_RESOLVE)
+		return "resolve";
+	if (role == ZIF_ROLE_SEARCH_DETAILS)
+		return "search-details";
+	if (role == ZIF_ROLE_SEARCH_FILE)
+		return "search-file";
+	if (role == ZIF_ROLE_SEARCH_GROUP)
+		return "search-group";
+	if (role == ZIF_ROLE_SEARCH_NAME)
+		return "search-name";
+	if (role == ZIF_ROLE_SEARCH_CATEGORY)
+		return "search-category";
+	if (role == ZIF_ROLE_WHAT_PROVIDES)
+		return "what-provides";
+	if (role == ZIF_ROLE_GET_CATEGORIES)
+		return "get-categories";
+	return NULL;
+}
 
 /**
  * zif_store_array_add_store:
@@ -214,7 +253,7 @@ out:
  * zif_store_array_repos_search:
  **/
 static GPtrArray *
-zif_store_array_repos_search (GPtrArray *store_array, PkRoleEnum role, gchar **search,
+zif_store_array_repos_search (GPtrArray *store_array, ZifRole role, gchar **search,
 			      ZifStoreArrayErrorCb error_cb, gpointer user_data,
 			      GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
@@ -245,29 +284,29 @@ zif_store_array_repos_search (GPtrArray *store_array, PkRoleEnum role, gchar **s
 		completion_local = zif_completion_get_child (completion);
 
 		/* get results for this store */
-		if (role == PK_ROLE_ENUM_RESOLVE)
+		if (role == ZIF_ROLE_RESOLVE)
 			part = zif_store_resolve (store, search, cancellable, completion_local, &error_local);
-		else if (role == PK_ROLE_ENUM_SEARCH_NAME)
+		else if (role == ZIF_ROLE_SEARCH_NAME)
 			part = zif_store_search_name (store, search, cancellable, completion_local, &error_local);
-		else if (role == PK_ROLE_ENUM_SEARCH_DETAILS)
+		else if (role == ZIF_ROLE_SEARCH_DETAILS)
 			part = zif_store_search_details (store, search, cancellable, completion_local, &error_local);
-		else if (role == PK_ROLE_ENUM_SEARCH_GROUP)
+		else if (role == ZIF_ROLE_SEARCH_GROUP)
 			part = zif_store_search_group (store, search, cancellable, completion_local, &error_local);
-		else if (role == PK_ROLE_ENUM_SEARCH_CATEGORY)
+		else if (role == ZIF_ROLE_SEARCH_CATEGORY)
 			part = zif_store_search_category (store, search, cancellable, completion_local, &error_local);
-		else if (role == PK_ROLE_ENUM_SEARCH_FILE)
+		else if (role == ZIF_ROLE_SEARCH_FILE)
 			part = zif_store_search_file (store, search, cancellable, completion_local, &error_local);
-		else if (role == PK_ROLE_ENUM_GET_PACKAGES)
+		else if (role == ZIF_ROLE_GET_PACKAGES)
 			part = zif_store_get_packages (store, cancellable, completion_local, &error_local);
-		else if (role == PK_ROLE_ENUM_GET_UPDATES)
+		else if (role == ZIF_ROLE_GET_UPDATES)
 			part = zif_store_get_updates (store, (GPtrArray *) search, cancellable, completion_local, &error_local);
-		else if (role == PK_ROLE_ENUM_WHAT_PROVIDES)
+		else if (role == ZIF_ROLE_WHAT_PROVIDES)
 			part = zif_store_what_provides (store, search, cancellable, completion_local, &error_local);
-		else if (role == PK_ROLE_ENUM_GET_CATEGORIES)
+		else if (role == ZIF_ROLE_GET_CATEGORIES)
 			part = zif_store_get_categories (store, cancellable, completion_local, &error_local);
 		else {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
-				     "internal error, no such role: %s", pk_role_enum_to_text (role));
+				     "internal error, no such role: %s", zif_role_to_string (role));
 			g_ptr_array_unref (array);
 			array = NULL;
 			goto out;
@@ -280,7 +319,7 @@ zif_store_array_repos_search (GPtrArray *store_array, PkRoleEnum role, gchar **s
 				goto skip_error;
 			}
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
-				     "failed to %s in %s: %s", pk_role_enum_to_text (role), zif_store_get_id (store), error_local->message);
+				     "failed to %s in %s: %s", zif_role_to_string (role), zif_store_get_id (store), error_local->message);
 			g_error_free (error_local);
 			g_ptr_array_unref (array);
 			array = NULL;
@@ -525,7 +564,7 @@ zif_store_array_resolve (GPtrArray *store_array, gchar **search,
 			 GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
-	return zif_store_array_repos_search (store_array, PK_ROLE_ENUM_RESOLVE, search,
+	return zif_store_array_repos_search (store_array, ZIF_ROLE_RESOLVE, search,
 					     error_cb, user_data, cancellable, completion, error);
 }
 
@@ -551,7 +590,7 @@ zif_store_array_search_name (GPtrArray *store_array, gchar **search,
 			     GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
-	return zif_store_array_repos_search (store_array, PK_ROLE_ENUM_SEARCH_NAME, search,
+	return zif_store_array_repos_search (store_array, ZIF_ROLE_SEARCH_NAME, search,
 					     error_cb, user_data, cancellable, completion, error);
 }
 
@@ -577,7 +616,7 @@ zif_store_array_search_details (GPtrArray *store_array, gchar **search,
 				GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
-	return zif_store_array_repos_search (store_array, PK_ROLE_ENUM_SEARCH_DETAILS, search,
+	return zif_store_array_repos_search (store_array, ZIF_ROLE_SEARCH_DETAILS, search,
 					     error_cb, user_data, cancellable, completion, error);
 }
 
@@ -603,7 +642,7 @@ zif_store_array_search_group (GPtrArray *store_array, gchar **group_enum,
 			      GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
-	return zif_store_array_repos_search (store_array, PK_ROLE_ENUM_SEARCH_GROUP, group_enum,
+	return zif_store_array_repos_search (store_array, ZIF_ROLE_SEARCH_GROUP, group_enum,
 					     error_cb, user_data, cancellable, completion, error);
 }
 
@@ -638,7 +677,7 @@ zif_store_array_search_category (GPtrArray *store_array, gchar **group_id,
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* get all results from all repos */
-	array = zif_store_array_repos_search (store_array, PK_ROLE_ENUM_SEARCH_CATEGORY, group_id,
+	array = zif_store_array_repos_search (store_array, ZIF_ROLE_SEARCH_CATEGORY, group_id,
 					      error_cb, user_data, cancellable, completion, error);
 	if (array == NULL)
 		goto out;
@@ -686,7 +725,7 @@ zif_store_array_search_file (GPtrArray *store_array, gchar **search,
 			     GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
-	return zif_store_array_repos_search (store_array, PK_ROLE_ENUM_SEARCH_FILE, search,
+	return zif_store_array_repos_search (store_array, ZIF_ROLE_SEARCH_FILE, search,
 					     error_cb, user_data, cancellable, completion, error);
 }
 
@@ -711,7 +750,7 @@ zif_store_array_get_packages (GPtrArray *store_array,
 			      GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
-	return zif_store_array_repos_search (store_array, PK_ROLE_ENUM_GET_PACKAGES, NULL,
+	return zif_store_array_repos_search (store_array, ZIF_ROLE_GET_PACKAGES, NULL,
 					     error_cb, user_data, cancellable, completion, error);
 }
 
@@ -736,7 +775,7 @@ zif_store_array_get_updates (GPtrArray *store_array, GPtrArray *packages,
 			     GCancellable *cancellable, ZifCompletion *completion, GError **error)
 {
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
-	return zif_store_array_repos_search (store_array, PK_ROLE_ENUM_GET_UPDATES, (gchar **) packages,
+	return zif_store_array_repos_search (store_array, ZIF_ROLE_GET_UPDATES, (gchar **) packages,
 					     error_cb, user_data, cancellable, completion, error);
 }
 
@@ -765,10 +804,10 @@ zif_store_array_what_provides (GPtrArray *store_array, gchar **search,
 
 	/* if this is a path, then we use the file list and treat like a SearchFile */
 	if (g_str_has_prefix (search[0], "/")) {
-		return zif_store_array_repos_search (store_array, PK_ROLE_ENUM_SEARCH_FILE, search,
+		return zif_store_array_repos_search (store_array, ZIF_ROLE_SEARCH_FILE, search,
 						     error_cb, user_data, cancellable, completion, error);
 	}
-	return zif_store_array_repos_search (store_array, PK_ROLE_ENUM_WHAT_PROVIDES, search,
+	return zif_store_array_repos_search (store_array, ZIF_ROLE_WHAT_PROVIDES, search,
 					     error_cb, user_data, cancellable, completion, error);
 }
 
@@ -804,7 +843,7 @@ zif_store_array_get_categories (GPtrArray *store_array,
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* get all results from all repos */
-	array = zif_store_array_repos_search (store_array, PK_ROLE_ENUM_GET_CATEGORIES, NULL,
+	array = zif_store_array_repos_search (store_array, ZIF_ROLE_GET_CATEGORIES, NULL,
 					      error_cb, user_data, cancellable, completion, error);
 	if (array == NULL)
 		goto out;

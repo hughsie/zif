@@ -28,7 +28,6 @@
 
 #include <glib-object.h>
 #include <gio/gio.h>
-#include <packagekit-glib2/packagekit.h>
 
 #include "zif-update-info.h"
 
@@ -45,6 +44,17 @@ G_BEGIN_DECLS
 typedef struct _ZifUpdate	 ZifUpdate;
 typedef struct _ZifUpdatePrivate ZifUpdatePrivate;
 typedef struct _ZifUpdateClass	 ZifUpdateClass;
+
+typedef enum {
+	ZIF_UPDATE_STATE_STABLE,
+	ZIF_UPDATE_STATE_TESTING,
+	ZIF_UPDATE_STATE_UNKNOWN
+} ZifUpdateState;
+
+typedef enum {
+	ZIF_UPDATE_KIND_BUGFIX,
+	ZIF_UPDATE_KIND_UNKNOWN
+} ZifUpdateKind;
 
 #include "zif-package.h"
 #include "zif-changeset.h"
@@ -63,9 +73,15 @@ struct _ZifUpdateClass
 GType			 zif_update_get_type		(void);
 ZifUpdate		*zif_update_new			(void);
 
+/* utility functions */
+ZifUpdateState		 zif_update_state_from_string	(const gchar		*state);
+ZifUpdateState		 zif_update_kind_from_string	(const gchar		*kind);
+const gchar		*zif_update_state_to_string	(ZifUpdateState		 state);
+const gchar		*zif_update_kind_to_string	(ZifUpdateState		 kind);
+
 /* public getters */
-PkUpdateStateEnum	 zif_update_get_state		(ZifUpdate		*update);
-PkInfoEnum		 zif_update_get_kind		(ZifUpdate		*update);
+ZifUpdateState		 zif_update_get_state		(ZifUpdate		*update);
+ZifUpdateKind		 zif_update_get_kind		(ZifUpdate		*update);
 const gchar		*zif_update_get_id		(ZifUpdate		*update);
 const gchar		*zif_update_get_title		(ZifUpdate		*update);
 const gchar		*zif_update_get_description	(ZifUpdate		*update);
@@ -77,9 +93,9 @@ GPtrArray		*zif_update_get_changelog	(ZifUpdate		*update);
 
 /* internal setters: TODO, in seporate -internal header file */
 void			 zif_update_set_state		(ZifUpdate		*update,
-							 PkUpdateStateEnum	 state);
+							 ZifUpdateState	 state);
 void			 zif_update_set_kind		(ZifUpdate		*update,
-							 PkInfoEnum		 type);
+							 ZifUpdateKind		 type);
 void			 zif_update_set_id		(ZifUpdate		*update,
 							 const gchar		*id);
 void			 zif_update_set_title		(ZifUpdate		*update,

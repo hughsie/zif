@@ -28,7 +28,6 @@
 
 #include <glib-object.h>
 #include <gio/gio.h>
-#include <packagekit-glib2/packagekit.h>
 
 #include "zif-string.h"
 #include "zif-completion.h"
@@ -144,7 +143,8 @@ GPtrArray		*zif_package_get_provides	(ZifPackage	*package,
 gboolean		 zif_package_set_installed	(ZifPackage	*package,
 							 gboolean	 installed);
 gboolean		 zif_package_set_id		(ZifPackage	*package,
-							 const gchar	*package_id);
+							 const gchar	*package_id)
+							 G_GNUC_WARN_UNUSED_RESULT;
 gboolean		 zif_package_set_summary	(ZifPackage	*package,
 							 ZifString	*summary);
 gboolean		 zif_package_set_description	(ZifPackage	*package,

@@ -1,8 +1,6 @@
 INCLUDES =						\
 	$(GLIB_CFLAGS)					\
 	$(SQLITE_CFLAGS)				\
-	$(PACKAGEKIT_CFLAGS)				\
-	-DI_KNOW_THE_PACKAGEKIT_GLIB2_API_IS_SUBJECT_TO_CHANGE	\
 	-DBINDIR=\"$(bindir)\"			 	\
 	-DDATADIR=\"$(datadir)\"			\
 	-DPREFIX=\""$(prefix)"\" 			\
@@ -13,9 +11,9 @@ INCLUDES =						\
 	-DPK_DATA=\"$(zifgdatadir)\"			\
 	-DPK_DB_DIR=\""$(PK_DB_DIR)"\" 			\
 	-DEGG_LOG_FILE=\""$(PK_LOG_DIR)/zif"\"		\
-	-DEGG_VERBOSE="\"PK_VERBOSE\""			\
-	-DEGG_LOGGING="\"PK_LOGGING\""			\
-	-DEGG_CONSOLE="\"PK_CONSOLE\""			\
+	-DEGG_VERBOSE="\"ZIF_VERBOSE\""			\
+	-DEGG_LOGGING="\"ZIF_LOGGING\""			\
+	-DEGG_CONSOLE="\"ZIF_CONSOLE\""			\
 	-I$(top_srcdir)/libzif
 
 ZIF_LIBS =						\
@@ -34,7 +32,6 @@ zif_SOURCES =						\
 
 zif_LDADD =						\
 	$(GLIB_LIBS)					\
-	$(PACKAGEKIT_LIBS)				\
 	$(ZIF_LIBS)
 
 zif_CFLAGS =						\

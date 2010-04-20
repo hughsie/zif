@@ -40,8 +40,8 @@
 
 struct _ZifUpdatePrivate
 {
-	PkUpdateStateEnum	 state;
-	PkInfoEnum		 kind;
+	ZifUpdateState		 state;
+	ZifUpdateKind		 kind;
 	gchar			*id;
 	gchar			*title;
 	gchar			*description;
@@ -67,6 +67,56 @@ enum {
 G_DEFINE_TYPE (ZifUpdate, zif_update, G_TYPE_OBJECT)
 
 /**
+ * zif_update_state_from_string:
+ **/
+ZifUpdateState
+zif_update_state_from_string (const gchar *state)
+{
+	if (g_strcmp0 (state, "stable") == 0)
+		return ZIF_UPDATE_STATE_UNKNOWN;
+	if (g_strcmp0 (state, "testing") == 0)
+		return ZIF_UPDATE_STATE_TESTING;
+	egg_warning ("unknown update state: %s", state);
+	return ZIF_UPDATE_STATE_UNKNOWN;
+}
+
+/**
+ * zif_update_kind_from_string:
+ **/
+ZifUpdateState
+zif_update_kind_from_string (const gchar *kind)
+{
+	if (g_strcmp0 (kind, "bugfix") == 0)
+		return ZIF_UPDATE_KIND_BUGFIX;
+	egg_warning ("unknown update kind: %s", kind);
+	return ZIF_UPDATE_KIND_UNKNOWN;
+}
+
+/**
+ * zif_update_state_to_string:
+ **/
+const gchar *
+zif_update_state_to_string (ZifUpdateState state)
+{
+	if (state == ZIF_UPDATE_STATE_STABLE)
+		return "stable";
+	if (state == ZIF_UPDATE_STATE_TESTING)
+		return "testing";
+	return NULL;
+}
+
+/**
+ * zif_update_kind_to_string:
+ **/
+const gchar *
+zif_update_kind_to_string (ZifUpdateState kind)
+{
+	if (kind == ZIF_UPDATE_KIND_BUGFIX)
+		return "bugfix";
+	return NULL;
+}
+
+/**
  * zif_update_get_state:
  * @update: the #ZifUpdate object
  *
@@ -76,10 +126,10 @@ G_DEFINE_TYPE (ZifUpdate, zif_update, G_TYPE_OBJECT)
  *
  * Since: 0.0.1
  **/
-PkUpdateStateEnum
+ZifUpdateState
 zif_update_get_state (ZifUpdate *update)
 {
-	g_return_val_if_fail (ZIF_IS_UPDATE (update), PK_UPDATE_STATE_ENUM_LAST);
+	g_return_val_if_fail (ZIF_IS_UPDATE (update), ZIF_UPDATE_STATE_UNKNOWN);
 	return update->priv->state;
 }
 
@@ -93,10 +143,10 @@ zif_update_get_state (ZifUpdate *update)
  *
  * Since: 0.0.1
  **/
-PkInfoEnum
+ZifUpdateKind
 zif_update_get_kind (ZifUpdate *update)
 {
-	g_return_val_if_fail (ZIF_IS_UPDATE (update), PK_INFO_ENUM_LAST);
+	g_return_val_if_fail (ZIF_IS_UPDATE (update), ZIF_UPDATE_KIND_UNKNOWN);
 	return update->priv->state;
 }
 
@@ -246,7 +296,7 @@ zif_update_get_changelog (ZifUpdate *update)
  * Since: 0.0.1
  **/
 void
-zif_update_set_state (ZifUpdate *update, PkUpdateStateEnum state)
+zif_update_set_state (ZifUpdate *update, ZifUpdateState state)
 {
 	g_return_if_fail (ZIF_IS_UPDATE (update));
 	update->priv->state = state;
@@ -262,7 +312,7 @@ zif_update_set_state (ZifUpdate *update, PkUpdateStateEnum state)
  * Since: 0.0.1
  **/
 void
-zif_update_set_kind (ZifUpdate *update, PkInfoEnum kind)
+zif_update_set_kind (ZifUpdate *update, ZifUpdateKind kind)
 {
 	g_return_if_fail (ZIF_IS_UPDATE (update));
 	update->priv->kind = kind;
@@ -572,8 +622,8 @@ static void
 zif_update_init (ZifUpdate *update)
 {
 	update->priv = ZIF_UPDATE_GET_PRIVATE (update);
-	update->priv->state = PK_UPDATE_STATE_ENUM_LAST;
-	update->priv->kind = PK_INFO_ENUM_LAST;
+	update->priv->state = ZIF_UPDATE_STATE_UNKNOWN;
+	update->priv->kind = ZIF_UPDATE_KIND_UNKNOWN;
 	update->priv->id = NULL;
 	update->priv->title = NULL;
 	update->priv->description = NULL;

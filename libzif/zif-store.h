@@ -28,7 +28,6 @@
 
 #include <glib-object.h>
 #include <gio/gio.h>
-#include <packagekit-glib2/packagekit.h>
 
 #include "zif-package.h"
 #include "zif-completion.h"

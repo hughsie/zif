@@ -31,7 +31,6 @@
 #endif
 
 #include <glib.h>
-#include <packagekit-glib2/packagekit.h>
 
 #include "zif-store.h"
 #include "zif-package.h"

@@ -1,7 +1,6 @@
 INCLUDES = \
 	$(GLIB_CFLAGS)						\
 	$(SQLITE_CFLAGS)					\
-	$(PACKAGEKIT_CFLAGS)					\
 	$(RPM_CFLAGS)						\
 	$(ZLIB_CFLAGS)						\
 	$(BZLIB_CFLAGS)						\
@@ -10,12 +9,11 @@ INCLUDES = \
 	-I$(top_srcdir)/libzif					\
 	-I$(top_builddir)/libzif				\
 	-I.							\
-	-DI_KNOW_THE_PACKAGEKIT_GLIB2_API_IS_SUBJECT_TO_CHANGE	\
 	-DZIF_COMPILATION					\
 	-DEGG_LOG_FILE=\""$(PK_LOG_DIR)/zif"\"			\
-	-DEGG_VERBOSE="\"PK_VERBOSE\""				\
-	-DEGG_LOGGING="\"PK_LOGGING\""				\
-	-DEGG_CONSOLE="\"PK_CONSOLE\""				\
+	-DEGG_VERBOSE="\"ZIF_VERBOSE\""				\
+	-DEGG_LOGGING="\"ZIF_LOGGING\""				\
+	-DEGG_CONSOLE="\"ZIF_CONSOLE\""				\
 	-DLOCALSTATEDIR=\""$(localstatedir)"\" 			\
 	-DPACKAGE_DATA_DIR=\""$(datadir)"\"			\
 	-DPACKAGE_LOCALE_DIR=\""$(prefix)/$(DATADIRNAME)/locale"\"
@@ -119,7 +117,6 @@ libzif_la_SOURCES =						\
 libzif_la_LIBADD =						\
 	$(GLIB_LIBS)						\
 	$(SQLITE_LIBS)						\
-	$(PACKAGEKIT_LIBS)					\
 	$(ZLIB_LIBS)						\
 	$(BZLIB_LIBS)						\
 	$(RPM_LIBS)						\
@@ -152,7 +149,6 @@ zif_self_test_LDADD =						\
 	$(ZLIB_LIBS)						\
 	$(BZLIB_LIBS)						\
 	$(SELFTEST_LIBS)					\
-	$(PACKAGEKIT_LIBS)					\
 	$(RPM_LIBS)						\
 	$(SOUP_LIBS)						\
 	$(ARCHIVE_LIBS)						\

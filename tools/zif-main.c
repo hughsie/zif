@@ -23,7 +23,6 @@
 
 #include <glib.h>
 #include <glib/gi18n.h>
-#include <packagekit-glib2/packagekit.h>
 #include <zif.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -53,10 +52,10 @@ zif_print_package (ZifPackage *package)
 	completion_tmp = zif_completion_new ();
 	summary = zif_package_get_summary (package, NULL, completion_tmp, NULL);
 	g_print ("%s-%s.%s (%s)\t%s\n",
-		 split[PK_PACKAGE_ID_NAME],
-		 split[PK_PACKAGE_ID_VERSION],
-		 split[PK_PACKAGE_ID_ARCH],
-		 split[PK_PACKAGE_ID_DATA],
+		 split[ZIF_PACKAGE_ID_NAME],
+		 split[ZIF_PACKAGE_ID_VERSION],
+		 split[ZIF_PACKAGE_ID_ARCH],
+		 split[ZIF_PACKAGE_ID_DATA],
 		 summary);
 	g_strfreev (split);
 	g_object_unref (completion_tmp);
@@ -267,7 +266,7 @@ zif_cmd_get_depends (const gchar *package_name, ZifCompletion *completion)
 			package = g_ptr_array_index (provides, j);
 			package_id = zif_package_get_id (package);
 			split = zif_package_id_split (package_id);
-			g_print ("   provider: %s-%s.%s (%s)\n", split[PK_PACKAGE_ID_NAME], split[PK_PACKAGE_ID_VERSION], split[PK_PACKAGE_ID_ARCH], split[PK_PACKAGE_ID_DATA]);
+			g_print ("   provider: %s-%s.%s (%s)\n", split[ZIF_PACKAGE_ID_NAME], split[ZIF_PACKAGE_ID_VERSION], split[ZIF_PACKAGE_ID_ARCH], split[ZIF_PACKAGE_ID_DATA]);
 			g_strfreev (split);
 		}
 		g_ptr_array_unref (provides);
@@ -796,7 +795,7 @@ main (int argc, char *argv[])
 				/* non-fatal */
 				continue;
 			}
-			g_print ("\t%s\t%s\n", "kind", pk_update_state_enum_to_string (zif_update_get_kind (update)));
+			g_print ("\t%s\t%s\n", "kind", zif_update_state_to_string (zif_update_get_kind (update)));
 			g_print ("\t%s\t%s\n", "id", zif_update_get_id (update));
 			g_print ("\t%s\t%s\n", "title", zif_update_get_title (update));
 			g_print ("\t%s\t%s\n", "description", zif_update_get_description (update));
@@ -1146,11 +1145,11 @@ main (int argc, char *argv[])
 		url = zif_package_get_url (package, NULL, completion_local, NULL);
 		size = zif_package_get_size (package, NULL, completion_local, NULL);
 
-		g_print ("Name\t : %s\n", split[PK_PACKAGE_ID_NAME]);
-		g_print ("Version\t : %s\n", split[PK_PACKAGE_ID_VERSION]);
-		g_print ("Arch\t : %s\n", split[PK_PACKAGE_ID_ARCH]);
+		g_print ("Name\t : %s\n", split[ZIF_PACKAGE_ID_NAME]);
+		g_print ("Version\t : %s\n", split[ZIF_PACKAGE_ID_VERSION]);
+		g_print ("Arch\t : %s\n", split[ZIF_PACKAGE_ID_ARCH]);
 		g_print ("Size\t : %" G_GUINT64_FORMAT " bytes\n", size);
-		g_print ("Repo\t : %s\n", split[PK_PACKAGE_ID_DATA]);
+		g_print ("Repo\t : %s\n", split[ZIF_PACKAGE_ID_DATA]);
 		g_print ("Summary\t : %s\n", summary);
 		g_print ("URL\t : %s\n", url);
 		g_print ("License\t : %s\n", license);
@@ -1372,7 +1371,7 @@ main (int argc, char *argv[])
 		zif_completion_done (completion);
 
 		/* get id */
-		if (!pk_package_id_check (value)) {
+		if (!zif_package_id_check (value)) {
 			g_print ("failed to parse ID: %s\n", value);
 			goto out;
 		}

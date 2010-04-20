@@ -27,7 +27,6 @@
 #define __ZIF_STORE_LOCAL_H
 
 #include <glib-object.h>
-#include <packagekit-glib2/packagekit.h>
 
 #include "zif-store.h"
 #include "zif-package.h"
