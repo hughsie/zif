@@ -28,7 +28,6 @@
 
 #include <gio/gio.h>
 #include <glib-object.h>
-#include <packagekit-glib2/packagekit.h>
 
 #include "zif-completion.h"
 
@@ -43,6 +42,11 @@ typedef enum {
 	ZIF_UTILS_ERROR_CANCELLED,
 	ZIF_UTILS_ERROR_LAST
 } ZifUtilsError;
+
+#define ZIF_PACKAGE_ID_NAME	0
+#define ZIF_PACKAGE_ID_VERSION	1
+#define ZIF_PACKAGE_ID_ARCH	2
+#define ZIF_PACKAGE_ID_DATA	3
 
 gboolean	 zif_init			(void);
 void		 zif_debug_crash		(void);
@@ -68,6 +72,7 @@ gboolean	 zif_file_decompress		(const gchar	*in,
 gchar		*zif_file_get_uncompressed_name	(const gchar	*filename);
 gboolean	 zif_file_is_compressed_name	(const gchar	*filename);
 gchar		**zif_package_id_split		(const gchar	*package_id);
+gboolean	 zif_package_id_check		(const gchar	*package_id);
 
 G_END_DECLS
 

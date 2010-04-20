@@ -37,7 +37,6 @@
 #include <archive_entry.h>
 #include <bzlib.h>
 #include <zlib.h>
-#include <packagekit-glib2/packagekit.h>
 
 #include "egg-debug.h"
 
@@ -143,6 +142,21 @@ zif_list_print_array (GPtrArray *array)
 }
 
 /**
+ * zif_package_id_build:
+ **/
+static gchar *
+zif_package_id_build (const gchar *name, const gchar *version,
+		      const gchar *arch, const gchar *data)
+{
+	g_return_val_if_fail (name != NULL, NULL);
+	return g_strjoin (";", name,
+			  version != NULL ? version : "",
+			  arch != NULL ? arch : "",
+			  data != NULL ? data : "",
+			  NULL);
+}
+
+/**
  * zif_package_id_from_header:
  * @name: The package name, e.g. "hal"
  * @epoch: The package epoch, e.g. 1 or 0 for none.
@@ -169,7 +183,7 @@ zif_package_id_from_nevra (const gchar *name, guint epoch, const gchar *version,
 	else
 		version_compound = g_strdup_printf ("%i:%s-%s", epoch, version, release);
 
-	package_id = pk_package_id_build (name, version_compound, arch, data);
+	package_id = zif_package_id_build (name, version_compound, arch, data);
 	g_free (version_compound);
 	return package_id;
 }
@@ -652,6 +666,41 @@ zif_package_id_split (const gchar *package_id)
 out:
 	g_strfreev (sections);
 	return NULL;
+}
+
+/**
+ * zif_package_id_check:
+ * @package_id: the PackageID to check
+ *
+ * Return value: %TRUE if the PackageID was well formed.
+ *
+ * Since: 0.5.0
+ **/
+gboolean
+zif_package_id_check (const gchar *package_id)
+{
+	gchar **sections;
+	gboolean ret;
+
+	/* NULL check */
+	if (package_id == NULL)
+		return FALSE;
+
+	/* UTF8 */
+	ret = g_utf8_validate (package_id, -1, NULL);
+	if (!ret) {
+		egg_warning ("invalid UTF8!");
+		return FALSE;
+	}
+
+	/* correct number of sections */
+	sections = zif_package_id_split (package_id);
+	if (sections == NULL)
+		return FALSE;
+
+	/* all okay */
+	g_strfreev (sections);
+	return TRUE;
 }
 
 /***************************************************************************
