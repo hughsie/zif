@@ -793,6 +793,8 @@ main (int argc, char *argv[])
 				g_clear_error (&error);
 
 				/* non-fatal */
+				zif_completion_finished (completion_loop);
+				zif_completion_done (completion_local);
 				continue;
 			}
 			g_print ("\t%s\t%s\n", "kind", zif_update_state_to_string (zif_update_get_kind (update)));
