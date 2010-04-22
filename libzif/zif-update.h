@@ -95,7 +95,7 @@ GPtrArray		*zif_update_get_changelog	(ZifUpdate		*update);
 void			 zif_update_set_state		(ZifUpdate		*update,
 							 ZifUpdateState	 state);
 void			 zif_update_set_kind		(ZifUpdate		*update,
-							 ZifUpdateKind		 type);
+							 ZifUpdateKind		 kind);
 void			 zif_update_set_id		(ZifUpdate		*update,
 							 const gchar		*id);
 void			 zif_update_set_title		(ZifUpdate		*update,

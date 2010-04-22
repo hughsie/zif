@@ -386,7 +386,7 @@ zif_store_what_provides (ZifStore *store, gchar **search, GCancellable *cancella
  * @completion: a #ZifCompletion to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
- * Return all packages in the #ZifSack's.
+ * Return all packages in the #ZifStore's.
  *
  * Return value: an array of #ZifPackage's
  *
@@ -452,7 +452,7 @@ zif_store_get_updates (ZifStore *store, GPtrArray *packages,
  * @completion: a #ZifCompletion to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
- * Find a single package in the #ZifSack.
+ * Find a single package in the #ZifStore.
  *
  * Return value: A single #ZifPackage or %NULL
  *

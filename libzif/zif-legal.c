@@ -223,11 +223,8 @@ out:
  * zif_legal_set_filename:
  * @legal: the #ZifLegal object
  * @filename: the system wide legal file, e.g. "/etc/yum.conf"
- * @error: a #GError which is used on failure, or %NULL
  *
  * Sets the filename to use as the system wide legal file.
- *
- * Return value: %TRUE for success, %FALSE for failure
  *
  * Since: 0.0.1
  **/

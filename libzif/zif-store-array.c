@@ -757,6 +757,7 @@ zif_store_array_get_packages (GPtrArray *store_array,
 /**
  * zif_store_array_get_updates:
  * @store_array: the #GPtrArray of #ZifStores
+ * @packages: the #GPtrArray of #ZifPackages to check for updates
  * @error_cb: a #ZifStoreArrayErrorCb which returns %FALSE if the error is fatal
  * @user_data: the user_data to be passed to the #ZifStoreArrayErrorCb
  * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL

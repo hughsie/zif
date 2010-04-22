@@ -647,7 +647,7 @@ zif_package_get_name (ZifPackage *package)
  *
  * Gets the id (as text) uniquely identifying the package in all repos.
  *
- * Return value: The %package_id representing the package.
+ * Return value: The package-id representing the package.
  *
  * Since: 0.0.1
  **/
@@ -723,6 +723,8 @@ out:
 /**
  * zif_package_get_summary:
  * @package: the #ZifPackage object
+ * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Gets the package summary.
@@ -754,6 +756,8 @@ zif_package_get_summary (ZifPackage *package, GCancellable *cancellable, ZifComp
 /**
  * zif_package_get_description:
  * @package: the #ZifPackage object
+ * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Gets the package description.
@@ -785,6 +789,8 @@ zif_package_get_description (ZifPackage *package, GCancellable *cancellable, Zif
 /**
  * zif_package_get_license:
  * @package: the #ZifPackage object
+ * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Gets the package licence.
@@ -816,6 +822,8 @@ zif_package_get_license (ZifPackage *package, GCancellable *cancellable, ZifComp
 /**
  * zif_package_get_url:
  * @package: the #ZifPackage object
+ * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Gets the homepage URL for the package.
@@ -847,6 +855,8 @@ zif_package_get_url (ZifPackage *package, GCancellable *cancellable, ZifCompleti
 /**
  * zif_package_get_filename:
  * @package: the #ZifPackage object
+ * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Gets the remote filename for the package, e.g. Packages/net-snmp-5.4.2-3.fc10.i386.rpm
@@ -883,6 +893,8 @@ zif_package_get_filename (ZifPackage *package, GCancellable *cancellable, ZifCom
 /**
  * zif_package_get_category:
  * @package: the #ZifPackage object
+ * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Gets the category the packag is in.
@@ -914,6 +926,8 @@ zif_package_get_category (ZifPackage *package, GCancellable *cancellable, ZifCom
 /**
  * zif_package_get_group:
  * @package: the #ZifPackage object
+ * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Gets the package group.
@@ -945,6 +959,8 @@ zif_package_get_group (ZifPackage *package, GCancellable *cancellable, ZifComple
 /**
  * zif_package_get_size:
  * @package: the #ZifPackage object
+ * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Gets the size of the package.
@@ -977,6 +993,8 @@ zif_package_get_size (ZifPackage *package, GCancellable *cancellable, ZifComplet
 /**
  * zif_package_get_files:
  * @package: the #ZifPackage object
+ * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Gets the file list for the package.
@@ -1007,6 +1025,8 @@ zif_package_get_files (ZifPackage *package, GCancellable *cancellable, ZifComple
 /**
  * zif_package_get_requires:
  * @package: the #ZifPackage object
+ * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Gets all the package requires.
@@ -1038,6 +1058,8 @@ zif_package_get_requires (ZifPackage *package, GCancellable *cancellable, ZifCom
 /**
  * zif_package_get_provides:
  * @package: the #ZifPackage object
+ * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
+ * @completion: a #ZifCompletion to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Get all the package provides.

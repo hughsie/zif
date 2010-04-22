@@ -305,7 +305,7 @@ zif_update_set_state (ZifUpdate *update, ZifUpdateState state)
 /**
  * zif_update_set_kind:
  * @update: the #ZifUpdate object
- * @kind: If the update kind, e.g. %PK_INFO_ENUM_SECURITY.
+ * @kind: the update kind, e.g. %PK_INFO_ENUM_SECURITY.
  *
  * Sets the kind of update.
  *
@@ -448,7 +448,7 @@ zif_update_add_package (ZifUpdate *update, ZifPackage *package)
 /**
  * zif_update_add_changeset:
  * @update: the #ZifUpdate object
- * @package: the #ZifPackage
+ * @changeset: the #ZifChangeset
  *
  * Adds a changeset to the update.
  *

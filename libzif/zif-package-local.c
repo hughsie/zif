@@ -463,7 +463,7 @@ out:
 /**
  * zif_package_local_set_from_header:
  * @pkg: the #ZifPackageLocal object
- * @header: a rpm #Header structure
+ * @header: a rpm Header structure
  * @error: a #GError which is used on failure, or %NULL
  *
  * Sets the local package from an RPM header object.

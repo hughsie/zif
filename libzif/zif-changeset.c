@@ -201,7 +201,8 @@ zif_changeset_set_version (ZifChangeset *changeset, const gchar *version)
 /**
  * zif_changeset_parse_header:
  * @changeset: the #ZifChangeset object
- * @header: the package header, e.g "Ania Hughes <ahughes@redhat.com> - 2.29.91-1.fc13"
+ * @header: the package header, e.g "Ania Hughes &lt;ahughes&amp;redhat.com&gt; - 2.29.91-1.fc13"
+ * @error: a #GError which is used on failure, or %NULL
  *
  * Sets the author and version from the package header.
  *

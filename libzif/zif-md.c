@@ -24,7 +24,8 @@
  * @short_description: Metadata file common functionality
  *
  * This provides an abstract metadata class.
- * It is implemented by #ZifMdFilelistsSql, #ZifMdMaster and #ZifMdPrimary.
+ * It is implemented by #ZifMdFilelistsSql, #ZifMdFilelistsXml, #ZifMdPrimaryXml,
+ * #ZifMdPrimarySql and many others.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -452,29 +453,6 @@ out:
  * @error: a #GError which is used on failure, or %NULL
  *
  * Load the metadata store.
- *
- * - Check compressed file
- *   if invalid:
- *       delete_it()
- *       if online:
- *           download_it()
- *           if failure:
- *               abort
- *           check_it()
- *           if failure:
- *               abort
- *       else
- *           abort
- *
- * - Check uncompressed file
- *   if invalid:
- *       delete_it()
- *       decompress_it()
- *           if failure:
- *               abort()
- *       check_it()
- *       if failure:
- *           abort
  *
  * Return value: %TRUE for success, %FALSE for failure
  *
