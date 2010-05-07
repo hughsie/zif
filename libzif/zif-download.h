@@ -70,7 +70,6 @@ gboolean	 zif_download_set_proxy			(ZifDownload		*download,
 gboolean	 zif_download_file			(ZifDownload		*download,
 							 const gchar		*uri,
 							 const gchar		*filename,
-							 GCancellable		*cancellable,
 							 ZifState		*state,
 							 GError			**error);
 

@@ -119,7 +119,7 @@ out:
  * zif_store_local_load:
  **/
 static gboolean
-zif_store_local_load (ZifStore *store, GCancellable *cancellable, ZifState *state, GError **error)
+zif_store_local_load (ZifStore *store, ZifState *state, GError **error)
 {
 	gint retval;
 	gboolean ret = TRUE;
@@ -195,7 +195,7 @@ out:
  * zif_store_local_search_name:
  **/
 static GPtrArray *
-zif_store_local_search_name (ZifStore *store, gchar **search, GCancellable *cancellable, ZifState *state, GError **error)
+zif_store_local_search_name (ZifStore *store, gchar **search, ZifState *state, GError **error)
 {
 	guint i, j;
 	GPtrArray *array = NULL;
@@ -228,7 +228,7 @@ zif_store_local_search_name (ZifStore *store, gchar **search, GCancellable *canc
 	/* if not already loaded, load */
 	if (!local->priv->loaded) {
 		state_local = zif_state_get_child (state);
-		ret = zif_store_local_load (store, cancellable, state_local, &error_local);
+		ret = zif_store_local_load (store, state_local, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 				     "failed to load package store: %s", error_local->message);
@@ -279,7 +279,7 @@ out:
  * zif_store_local_search_category:
  **/
 static GPtrArray *
-zif_store_local_search_category (ZifStore *store, gchar **search, GCancellable *cancellable, ZifState *state, GError **error)
+zif_store_local_search_category (ZifStore *store, gchar **search, ZifState *state, GError **error)
 {
 	guint i, j;
 	GPtrArray *array = NULL;
@@ -311,7 +311,7 @@ zif_store_local_search_category (ZifStore *store, gchar **search, GCancellable *
 	/* if not already loaded, load */
 	if (!local->priv->loaded) {
 		state_local = zif_state_get_child (state);
-		ret = zif_store_local_load (store, cancellable, state_local, &error_local);
+		ret = zif_store_local_load (store, state_local, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 				     "failed to load package store: %s", error_local->message);
@@ -340,7 +340,7 @@ zif_store_local_search_category (ZifStore *store, gchar **search, GCancellable *
 	for (i=0;i<local->priv->packages->len;i++) {
 		package = g_ptr_array_index (local->priv->packages, i);
 		state_loop = zif_state_get_child (state_local);
-		category = zif_package_get_category (package, cancellable, state_loop, NULL);
+		category = zif_package_get_category (package, state_loop, NULL);
 		for (j=0; search[j] != NULL; j++) {
 			if (g_strcmp0 (category, search[j]) == 0) {
 				g_ptr_array_add (array, g_object_ref (package));
@@ -362,7 +362,7 @@ out:
  * zif_store_local_earch_details:
  **/
 static GPtrArray *
-zif_store_local_search_details (ZifStore *store, gchar **search, GCancellable *cancellable, ZifState *state, GError **error)
+zif_store_local_search_details (ZifStore *store, gchar **search, ZifState *state, GError **error)
 {
 	guint i, j;
 	GPtrArray *array = NULL;
@@ -396,7 +396,7 @@ zif_store_local_search_details (ZifStore *store, gchar **search, GCancellable *c
 	/* if not already loaded, load */
 	if (!local->priv->loaded) {
 		state_local = zif_state_get_child (state);
-		ret = zif_store_local_load (store, cancellable, state_local, &error_local);
+		ret = zif_store_local_load (store, state_local, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 				     "failed to load package store: %s", error_local->message);
@@ -426,7 +426,7 @@ zif_store_local_search_details (ZifStore *store, gchar **search, GCancellable *c
 		package = g_ptr_array_index (local->priv->packages, i);
 		package_id = zif_package_get_id (package);
 		state_loop = zif_state_get_child (state_local);
-		description = zif_package_get_description (package, cancellable, state_loop, NULL);
+		description = zif_package_get_description (package, state_loop, NULL);
 		split = zif_package_id_split (package_id);
 		for (j=0; search[j] != NULL; j++) {
 			if (strcasestr (split[ZIF_PACKAGE_ID_NAME], search[j]) != NULL) {
@@ -453,7 +453,7 @@ out:
  * zif_store_local_search_group:
  **/
 static GPtrArray *
-zif_store_local_search_group (ZifStore *store, gchar **search, GCancellable *cancellable, ZifState *state, GError **error)
+zif_store_local_search_group (ZifStore *store, gchar **search, ZifState *state, GError **error)
 {
 	guint i, j;
 	GPtrArray *array = NULL;
@@ -485,7 +485,7 @@ zif_store_local_search_group (ZifStore *store, gchar **search, GCancellable *can
 	/* if not already loaded, load */
 	if (!local->priv->loaded) {
 		state_local = zif_state_get_child (state);
-		ret = zif_store_local_load (store, cancellable, state_local, &error_local);
+		ret = zif_store_local_load (store, state_local, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 				     "failed to load package store: %s", error_local->message);
@@ -516,7 +516,7 @@ zif_store_local_search_group (ZifStore *store, gchar **search, GCancellable *can
 		for (j=0; search[j] != NULL; j++) {
 			group = search[j];
 			state_loop = zif_state_get_child (state_local);
-			group_tmp = zif_package_get_group (package, cancellable, state_loop, NULL);
+			group_tmp = zif_package_get_group (package, state_loop, NULL);
 			if (g_strcmp0 (group, group_tmp) == 0) {
 				g_ptr_array_add (array, g_object_ref (package));
 				break;
@@ -537,7 +537,7 @@ out:
  * zif_store_local_search_file:
  **/
 static GPtrArray *
-zif_store_local_search_file (ZifStore *store, gchar **search, GCancellable *cancellable, ZifState *state, GError **error)
+zif_store_local_search_file (ZifStore *store, gchar **search, ZifState *state, GError **error)
 {
 	guint i, j, l;
 	GPtrArray *array = NULL;
@@ -569,7 +569,7 @@ zif_store_local_search_file (ZifStore *store, gchar **search, GCancellable *canc
 	/* if not already loaded, load */
 	if (!local->priv->loaded) {
 		state_local = zif_state_get_child (state);
-		ret = zif_store_local_load (store, cancellable, state_local, &error_local);
+		ret = zif_store_local_load (store, state_local, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 				     "failed to load package store: %s", error_local->message);
@@ -598,7 +598,7 @@ zif_store_local_search_file (ZifStore *store, gchar **search, GCancellable *canc
 	for (i=0;i<local->priv->packages->len;i++) {
 		package = g_ptr_array_index (local->priv->packages, i);
 		state_loop = zif_state_get_child (state_local);
-		files = zif_package_get_files (package, cancellable, state_loop, &error_local);
+		files = zif_package_get_files (package, state_loop, &error_local);
 		if (files == NULL) {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 				     "failed to get file lists: %s", error_local->message);
@@ -629,7 +629,7 @@ out:
  * zif_store_local_resolve:
  **/
 static GPtrArray *
-zif_store_local_resolve (ZifStore *store, gchar **search, GCancellable *cancellable, ZifState *state, GError **error)
+zif_store_local_resolve (ZifStore *store, gchar **search, ZifState *state, GError **error)
 {
 	guint i, j;
 	GPtrArray *array = NULL;
@@ -661,7 +661,7 @@ zif_store_local_resolve (ZifStore *store, gchar **search, GCancellable *cancella
 	/* if not already loaded, load */
 	if (!local->priv->loaded) {
 		state_local = zif_state_get_child (state);
-		ret = zif_store_local_load (store, cancellable, state_local, &error_local);
+		ret = zif_store_local_load (store, state_local, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 				     "failed to load package store: %s", error_local->message);
@@ -713,7 +713,7 @@ out:
  * zif_store_local_what_provides:
  **/
 static GPtrArray *
-zif_store_local_what_provides (ZifStore *store, gchar **search, GCancellable *cancellable, ZifState *state, GError **error)
+zif_store_local_what_provides (ZifStore *store, gchar **search, ZifState *state, GError **error)
 {
 	guint i;
 	guint j, k;
@@ -747,7 +747,7 @@ zif_store_local_what_provides (ZifStore *store, gchar **search, GCancellable *ca
 	/* if not already loaded, load */
 	if (!local->priv->loaded) {
 		state_local = zif_state_get_child (state);
-		ret = zif_store_local_load (store, cancellable, state_local, &error_local);
+		ret = zif_store_local_load (store, state_local, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 				     "failed to load package store: %s", error_local->message);
@@ -776,7 +776,7 @@ zif_store_local_what_provides (ZifStore *store, gchar **search, GCancellable *ca
 	for (i=0;i<local->priv->packages->len;i++) {
 		package = g_ptr_array_index (local->priv->packages, i);
 		state_loop = zif_state_get_child (state_local);
-		provides = zif_package_get_provides (package, cancellable, state_loop, NULL);
+		provides = zif_package_get_provides (package, state_loop, NULL);
 		for (j=0; j<provides->len; j++) {
 			provide = g_ptr_array_index (provides, j);
 			for (k=0; search[k] != NULL; k++) {
@@ -801,7 +801,7 @@ out:
  * zif_store_local_get_packages:
  **/
 static GPtrArray *
-zif_store_local_get_packages (ZifStore *store, GCancellable *cancellable, ZifState *state, GError **error)
+zif_store_local_get_packages (ZifStore *store, ZifState *state, GError **error)
 {
 	guint i;
 	GPtrArray *array = NULL;
@@ -830,7 +830,7 @@ zif_store_local_get_packages (ZifStore *store, GCancellable *cancellable, ZifSta
 	/* if not already loaded, load */
 	if (!local->priv->loaded) {
 		state_local = zif_state_get_child (state);
-		ret = zif_store_local_load (store, cancellable, state_local, &error_local);
+		ret = zif_store_local_load (store, state_local, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 				     "failed to load package store: %s", error_local->message);
@@ -874,7 +874,7 @@ out:
  * zif_store_local_find_package:
  **/
 static ZifPackage *
-zif_store_local_find_package (ZifStore *store, const gchar *package_id, GCancellable *cancellable, ZifState *state, GError **error)
+zif_store_local_find_package (ZifStore *store, const gchar *package_id, ZifState *state, GError **error)
 {
 	guint i;
 	GPtrArray *array = NULL;
@@ -905,7 +905,7 @@ zif_store_local_find_package (ZifStore *store, const gchar *package_id, GCancell
 	/* if not already loaded, load */
 	if (!local->priv->loaded) {
 		state_local = zif_state_get_child (state);
-		ret = zif_store_local_load (store, cancellable, state_local, &error_local);
+		ret = zif_store_local_load (store, state_local, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 				     "failed to load package store: %s", error_local->message);
@@ -1165,7 +1165,7 @@ zif_store_local_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "load");
-	ret = zif_store_local_load (ZIF_STORE (store), NULL, state, &error);
+	ret = zif_store_local_load (ZIF_STORE (store), state, &error);
 	elapsed = egg_test_elapsed (test);
 	if (ret)
 		egg_test_success (test, NULL);
@@ -1182,7 +1182,7 @@ zif_store_local_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "load (again)");
 	zif_state_reset (state);
-	ret = zif_store_local_load (ZIF_STORE (store), NULL, state, &error);
+	ret = zif_store_local_load (ZIF_STORE (store), state, &error);
 	elapsed = egg_test_elapsed (test);
 	if (ret)
 		egg_test_success (test, NULL);
@@ -1200,7 +1200,7 @@ zif_store_local_test (EggTest *test)
 	egg_test_title (test, "resolve");
 	zif_state_reset (state);
 	to_array[0] = "kernel";
-	array = zif_store_local_resolve (ZIF_STORE (store), (gchar**)to_array, NULL, state, NULL);
+	array = zif_store_local_resolve (ZIF_STORE (store), (gchar**)to_array, state, NULL);
 	elapsed = egg_test_elapsed (test);
 	if (array->len >= 1)
 		egg_test_success (test, NULL);
@@ -1219,7 +1219,7 @@ zif_store_local_test (EggTest *test)
 	egg_test_title (test, "search name");
 	zif_state_reset (state);
 	to_array[0] = "gnome-p";
-	array = zif_store_local_search_name (ZIF_STORE (store), (gchar**)to_array, NULL, state, NULL);
+	array = zif_store_local_search_name (ZIF_STORE (store), (gchar**)to_array, state, NULL);
 	if (array->len > 10)
 		egg_test_success (test, NULL);
 	else
@@ -1230,7 +1230,7 @@ zif_store_local_test (EggTest *test)
 	egg_test_title (test, "search details");
 	zif_state_reset (state);
 	to_array[0] = "manage packages";
-	array = zif_store_local_search_details (ZIF_STORE (store), (gchar**)to_array, NULL, state, NULL);
+	array = zif_store_local_search_details (ZIF_STORE (store), (gchar**)to_array, state, NULL);
 	if (array->len == 1)
 		egg_test_success (test, NULL);
 	else
@@ -1241,7 +1241,7 @@ zif_store_local_test (EggTest *test)
 	egg_test_title (test, "what-provides");
 	zif_state_reset (state);
 	to_array[0] = "config(PackageKit)";
-	array = zif_store_local_what_provides (ZIF_STORE (store), (gchar**)to_array, NULL, state, NULL);
+	array = zif_store_local_what_provides (ZIF_STORE (store), (gchar**)to_array, state, NULL);
 	if (array->len == 1)
 		egg_test_success (test, NULL);
 	else
@@ -1271,7 +1271,7 @@ zif_store_local_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "get summary");
 	zif_state_reset (state);
-	string = zif_package_get_summary (package, NULL, state, NULL);
+	string = zif_package_get_summary (package, state, NULL);
 	if (g_strcmp0 (string, "Package management service") == 0)
 		egg_test_success (test, NULL);
 	else
@@ -1280,7 +1280,7 @@ zif_store_local_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "get license");
 	zif_state_reset (state);
-	string = zif_package_get_license (package, NULL, state, NULL);
+	string = zif_package_get_license (package, state, NULL);
 	if (g_strcmp0 (string, "GPLv2+") == 0)
 		egg_test_success (test, NULL);
 	else
@@ -1289,7 +1289,7 @@ zif_store_local_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "get category");
 	zif_state_reset (state);
-	string = zif_package_get_category (package, NULL, state, NULL);
+	string = zif_package_get_category (package, state, NULL);
 	if (g_strcmp0 (string, "Unspecified") == 0)
 		egg_test_success (test, NULL);
 	else

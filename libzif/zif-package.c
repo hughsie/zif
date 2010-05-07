@@ -233,11 +233,11 @@ zif_package_array_filter_newest (GPtrArray *packages)
  * zif_package_get_store_for_package:
  **/
 static ZifStoreRemote *
-zif_package_get_store_for_package (ZifPackage *package, GCancellable *cancellable, ZifState *state, GError **error)
+zif_package_get_store_for_package (ZifPackage *package, ZifState *state, GError **error)
 {
 	ZifStoreRemote *store_remote;
 	store_remote = zif_repos_get_store (package->priv->repos, package->priv->package_id_split[ZIF_PACKAGE_ID_DATA],
-					    cancellable, state, error);
+					    state, error);
 	return store_remote;
 }
 
@@ -245,7 +245,6 @@ zif_package_get_store_for_package (ZifPackage *package, GCancellable *cancellabl
  * zif_package_download:
  * @package: the #ZifPackage object
  * @directory: the local directory to save to
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -256,7 +255,7 @@ zif_package_get_store_for_package (ZifPackage *package, GCancellable *cancellabl
  * Since: 0.0.1
  **/
 gboolean
-zif_package_download (ZifPackage *package, const gchar *directory, GCancellable *cancellable, ZifState *state, GError **error)
+zif_package_download (ZifPackage *package, const gchar *directory, ZifState *state, GError **error)
 {
 	gboolean ret = FALSE;
 	ZifStoreRemote *store_remote = NULL;
@@ -279,7 +278,7 @@ zif_package_download (ZifPackage *package, const gchar *directory, GCancellable 
 
 	/* find correct repo */
 	state_local = zif_state_get_child (state);
-	store_remote = zif_package_get_store_for_package (package, cancellable, state_local, &error_local);
+	store_remote = zif_package_get_store_for_package (package, state_local, &error_local);
 	if (store_remote == NULL) {
 		g_set_error (error, ZIF_PACKAGE_ERROR, ZIF_PACKAGE_ERROR_FAILED,
 			     "cannot find remote store: %s", error_local->message);
@@ -294,7 +293,7 @@ zif_package_download (ZifPackage *package, const gchar *directory, GCancellable 
 	state_local = zif_state_get_child (state);
 
 	/* download from the store */
-	ret = zif_store_remote_download (store_remote, zif_string_get_value (package->priv->location_href), directory, cancellable, state_local, &error_local);
+	ret = zif_store_remote_download (store_remote, zif_string_get_value (package->priv->location_href), directory, state_local, &error_local);
 	if (!ret) {
 		g_set_error (error, ZIF_PACKAGE_ERROR, ZIF_PACKAGE_ERROR_FAILED,
 			     "cannot download from store: %s", error_local->message);
@@ -313,7 +312,6 @@ out:
 /**
  * zif_package_get_update_detail:
  * @package: the #ZifPackage object
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -324,7 +322,7 @@ out:
  * Since: 0.0.1
  **/
 ZifUpdate *
-zif_package_get_update_detail (ZifPackage *package, GCancellable *cancellable, ZifState *state, GError **error)
+zif_package_get_update_detail (ZifPackage *package, ZifState *state, GError **error)
 {
 	ZifUpdate *update = NULL;
 	ZifStoreRemote *store_remote = NULL;
@@ -346,7 +344,7 @@ zif_package_get_update_detail (ZifPackage *package, GCancellable *cancellable, Z
 
 	/* find correct repo */
 	state_local = zif_state_get_child (state);
-	store_remote = zif_package_get_store_for_package (package, cancellable, state_local, &error_local);
+	store_remote = zif_package_get_store_for_package (package, state_local, &error_local);
 	if (store_remote == NULL) {
 		g_set_error (error, ZIF_PACKAGE_ERROR, ZIF_PACKAGE_ERROR_FAILED,
 			     "cannot find remote store: %s", error_local->message);
@@ -359,7 +357,7 @@ zif_package_get_update_detail (ZifPackage *package, GCancellable *cancellable, Z
 
 	/* download from the store */
 	state_local = zif_state_get_child (state);
-	update = zif_store_remote_get_update_detail (store_remote, package->priv->package_id, cancellable, state_local, &error_local);
+	update = zif_store_remote_get_update_detail (store_remote, package->priv->package_id, state_local, &error_local);
 	if (update == NULL) {
 		g_set_error (error, ZIF_PACKAGE_ERROR, ZIF_PACKAGE_ERROR_FAILED,
 			     "cannot get update detail from store: %s", error_local->message);
@@ -483,7 +481,7 @@ zif_package_is_gui (ZifPackage *package)
 
 	/* get list of requires */
 	state_tmp = zif_state_new ();
-	array = zif_package_get_requires (package, NULL, state_tmp, NULL);
+	array = zif_package_get_requires (package, state_tmp, NULL);
 	if (array == NULL)
 		goto out;
 	for (i=0; i<array->len; i++) {
@@ -700,7 +698,7 @@ zif_package_ensure_type_to_string (ZifPackageEnsureType type)
  **/
 static gboolean
 zif_package_ensure_data (ZifPackage *package, ZifPackageEnsureType type,
-			 GCancellable *cancellable, ZifState *state, GError **error)
+			 ZifState *state, GError **error)
 {
 	gboolean ret = FALSE;
 	ZifPackageClass *klass = ZIF_PACKAGE_GET_CLASS (package);
@@ -715,7 +713,7 @@ zif_package_ensure_data (ZifPackage *package, ZifPackageEnsureType type,
 		goto out;
 	}
 
-	ret = klass->ensure_data (package, type, cancellable, state, error);
+	ret = klass->ensure_data (package, type, state, error);
 out:
 	return ret;
 }
@@ -723,7 +721,6 @@ out:
 /**
  * zif_package_get_summary:
  * @package: the #ZifPackage object
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -734,7 +731,7 @@ out:
  * Since: 0.0.1
  **/
 const gchar *
-zif_package_get_summary (ZifPackage *package, GCancellable *cancellable, ZifState *state, GError **error)
+zif_package_get_summary (ZifPackage *package, ZifState *state, GError **error)
 {
 	gboolean ret;
 
@@ -744,7 +741,7 @@ zif_package_get_summary (ZifPackage *package, GCancellable *cancellable, ZifStat
 
 	/* not exists */
 	if (package->priv->summary == NULL) {
-		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_SUMMARY, cancellable, state, error);
+		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_SUMMARY, state, error);
 		if (!ret)
 			return NULL;
 	}
@@ -756,7 +753,6 @@ zif_package_get_summary (ZifPackage *package, GCancellable *cancellable, ZifStat
 /**
  * zif_package_get_description:
  * @package: the #ZifPackage object
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -767,7 +763,7 @@ zif_package_get_summary (ZifPackage *package, GCancellable *cancellable, ZifStat
  * Since: 0.0.1
  **/
 const gchar *
-zif_package_get_description (ZifPackage *package, GCancellable *cancellable, ZifState *state, GError **error)
+zif_package_get_description (ZifPackage *package, ZifState *state, GError **error)
 {
 	gboolean ret;
 
@@ -777,7 +773,7 @@ zif_package_get_description (ZifPackage *package, GCancellable *cancellable, Zif
 
 	/* not exists */
 	if (package->priv->description == NULL) {
-		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_DESCRIPTION, cancellable, state, error);
+		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_DESCRIPTION, state, error);
 		if (!ret)
 			return NULL;
 	}
@@ -789,7 +785,6 @@ zif_package_get_description (ZifPackage *package, GCancellable *cancellable, Zif
 /**
  * zif_package_get_license:
  * @package: the #ZifPackage object
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -800,7 +795,7 @@ zif_package_get_description (ZifPackage *package, GCancellable *cancellable, Zif
  * Since: 0.0.1
  **/
 const gchar *
-zif_package_get_license (ZifPackage *package, GCancellable *cancellable, ZifState *state, GError **error)
+zif_package_get_license (ZifPackage *package, ZifState *state, GError **error)
 {
 	gboolean ret;
 
@@ -810,7 +805,7 @@ zif_package_get_license (ZifPackage *package, GCancellable *cancellable, ZifStat
 
 	/* not exists */
 	if (package->priv->license == NULL) {
-		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_LICENCE, cancellable, state, error);
+		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_LICENCE, state, error);
 		if (!ret)
 			return NULL;
 	}
@@ -822,7 +817,6 @@ zif_package_get_license (ZifPackage *package, GCancellable *cancellable, ZifStat
 /**
  * zif_package_get_url:
  * @package: the #ZifPackage object
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -833,7 +827,7 @@ zif_package_get_license (ZifPackage *package, GCancellable *cancellable, ZifStat
  * Since: 0.0.1
  **/
 const gchar *
-zif_package_get_url (ZifPackage *package, GCancellable *cancellable, ZifState *state, GError **error)
+zif_package_get_url (ZifPackage *package, ZifState *state, GError **error)
 {
 	gboolean ret;
 
@@ -843,7 +837,7 @@ zif_package_get_url (ZifPackage *package, GCancellable *cancellable, ZifState *s
 
 	/* not exists */
 	if (package->priv->url == NULL) {
-		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_URL, cancellable, state, error);
+		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_URL, state, error);
 		if (!ret)
 			return NULL;
 	}
@@ -855,7 +849,6 @@ zif_package_get_url (ZifPackage *package, GCancellable *cancellable, ZifState *s
 /**
  * zif_package_get_filename:
  * @package: the #ZifPackage object
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -866,7 +859,7 @@ zif_package_get_url (ZifPackage *package, GCancellable *cancellable, ZifState *s
  * Since: 0.0.1
  **/
 const gchar *
-zif_package_get_filename (ZifPackage *package, GCancellable *cancellable, ZifState *state, GError **error)
+zif_package_get_filename (ZifPackage *package, ZifState *state, GError **error)
 {
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
 	g_return_val_if_fail (package->priv->package_id_split != NULL, NULL);
@@ -893,7 +886,6 @@ zif_package_get_filename (ZifPackage *package, GCancellable *cancellable, ZifSta
 /**
  * zif_package_get_category:
  * @package: the #ZifPackage object
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -904,7 +896,7 @@ zif_package_get_filename (ZifPackage *package, GCancellable *cancellable, ZifSta
  * Since: 0.0.1
  **/
 const gchar *
-zif_package_get_category (ZifPackage *package, GCancellable *cancellable, ZifState *state, GError **error)
+zif_package_get_category (ZifPackage *package, ZifState *state, GError **error)
 {
 	gboolean ret;
 
@@ -914,7 +906,7 @@ zif_package_get_category (ZifPackage *package, GCancellable *cancellable, ZifSta
 
 	/* not exists */
 	if (package->priv->category == NULL) {
-		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_CATEGORY, cancellable, state, error);
+		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_CATEGORY, state, error);
 		if (!ret)
 			return NULL;
 	}
@@ -926,7 +918,6 @@ zif_package_get_category (ZifPackage *package, GCancellable *cancellable, ZifSta
 /**
  * zif_package_get_group:
  * @package: the #ZifPackage object
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -937,7 +928,7 @@ zif_package_get_category (ZifPackage *package, GCancellable *cancellable, ZifSta
  * Since: 0.0.1
  **/
 const gchar *
-zif_package_get_group (ZifPackage *package, GCancellable *cancellable, ZifState *state, GError **error)
+zif_package_get_group (ZifPackage *package, ZifState *state, GError **error)
 {
 	gboolean ret;
 
@@ -946,7 +937,7 @@ zif_package_get_group (ZifPackage *package, GCancellable *cancellable, ZifState 
 
 	/* not exists */
 	if (package->priv->group == NULL) {
-		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_GROUP, cancellable, state, error);
+		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_GROUP, state, error);
 		if (!ret)
 			return NULL;
 	}
@@ -959,7 +950,6 @@ zif_package_get_group (ZifPackage *package, GCancellable *cancellable, ZifState 
 /**
  * zif_package_get_size:
  * @package: the #ZifPackage object
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -972,7 +962,7 @@ zif_package_get_group (ZifPackage *package, GCancellable *cancellable, ZifState 
  * Since: 0.0.1
  **/
 guint64
-zif_package_get_size (ZifPackage *package, GCancellable *cancellable, ZifState *state, GError **error)
+zif_package_get_size (ZifPackage *package, ZifState *state, GError **error)
 {
 	gboolean ret;
 
@@ -980,7 +970,7 @@ zif_package_get_size (ZifPackage *package, GCancellable *cancellable, ZifState *
 	g_return_val_if_fail (error == NULL || *error == NULL, 0);
 
 	if (package->priv->size == 0) {
-		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_SIZE, cancellable, state, error);
+		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_SIZE, state, error);
 		if (!ret)
 			return 0;
 	}
@@ -993,7 +983,6 @@ zif_package_get_size (ZifPackage *package, GCancellable *cancellable, ZifState *
 /**
  * zif_package_get_files:
  * @package: the #ZifPackage object
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -1004,7 +993,7 @@ zif_package_get_size (ZifPackage *package, GCancellable *cancellable, ZifState *
  * Since: 0.0.1
  **/
 GPtrArray *
-zif_package_get_files (ZifPackage *package, GCancellable *cancellable, ZifState *state, GError **error)
+zif_package_get_files (ZifPackage *package, ZifState *state, GError **error)
 {
 	gboolean ret;
 
@@ -1013,7 +1002,7 @@ zif_package_get_files (ZifPackage *package, GCancellable *cancellable, ZifState 
 
 	/* not exists */
 	if (package->priv->files == NULL) {
-		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_FILES, cancellable, state, error);
+		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_FILES, state, error);
 		if (!ret)
 			return NULL;
 	}
@@ -1025,7 +1014,6 @@ zif_package_get_files (ZifPackage *package, GCancellable *cancellable, ZifState 
 /**
  * zif_package_get_requires:
  * @package: the #ZifPackage object
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -1036,7 +1024,7 @@ zif_package_get_files (ZifPackage *package, GCancellable *cancellable, ZifState 
  * Since: 0.0.1
  **/
 GPtrArray *
-zif_package_get_requires (ZifPackage *package, GCancellable *cancellable, ZifState *state, GError **error)
+zif_package_get_requires (ZifPackage *package, ZifState *state, GError **error)
 {
 	gboolean ret;
 
@@ -1046,7 +1034,7 @@ zif_package_get_requires (ZifPackage *package, GCancellable *cancellable, ZifSta
 
 	/* not exists */
 	if (package->priv->requires == NULL) {
-		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_REQUIRES, cancellable, state, error);
+		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_REQUIRES, state, error);
 		if (!ret)
 			return NULL;
 	}
@@ -1058,7 +1046,6 @@ zif_package_get_requires (ZifPackage *package, GCancellable *cancellable, ZifSta
 /**
  * zif_package_get_provides:
  * @package: the #ZifPackage object
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -1069,7 +1056,7 @@ zif_package_get_requires (ZifPackage *package, GCancellable *cancellable, ZifSta
  * Since: 0.0.1
  **/
 GPtrArray *
-zif_package_get_provides (ZifPackage *package, GCancellable *cancellable, ZifState *state, GError **error)
+zif_package_get_provides (ZifPackage *package, ZifState *state, GError **error)
 {
 	gboolean ret;
 
@@ -1079,7 +1066,7 @@ zif_package_get_provides (ZifPackage *package, GCancellable *cancellable, ZifSta
 
 	/* not exists */
 	if (package->priv->provides == NULL) {
-		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_PROVIDES, cancellable, state, error);
+		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_PROVIDES, state, error);
 		if (!ret)
 			return NULL;
 	}

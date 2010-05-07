@@ -191,7 +191,7 @@ out:
  * zif_md_metalink_unload:
  **/
 static gboolean
-zif_md_metalink_unload (ZifMd *md, GCancellable *cancellable, ZifState *state, GError **error)
+zif_md_metalink_unload (ZifMd *md, ZifState *state, GError **error)
 {
 	gboolean ret = FALSE;
 	return ret;
@@ -201,7 +201,7 @@ zif_md_metalink_unload (ZifMd *md, GCancellable *cancellable, ZifState *state, G
  * zif_md_metalink_load:
  **/
 static gboolean
-zif_md_metalink_load (ZifMd *md, GCancellable *cancellable, ZifState *state, GError **error)
+zif_md_metalink_load (ZifMd *md, ZifState *state, GError **error)
 {
 	gboolean ret = TRUE;
 	gchar *contents = NULL;
@@ -259,7 +259,6 @@ out:
  * zif_md_metalink_get_uris:
  * @md: the #ZifMdMetalink object
  * @threshold: the threshold in percent
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -271,7 +270,7 @@ out:
  **/
 GPtrArray *
 zif_md_metalink_get_uris (ZifMdMetalink *md, guint threshold,
-			  GCancellable *cancellable, ZifState *state, GError **error)
+			  ZifState *state, GError **error)
 {
 	gboolean ret;
 	guint len;
@@ -287,7 +286,7 @@ zif_md_metalink_get_uris (ZifMdMetalink *md, guint threshold,
 
 	/* if not already loaded, load */
 	if (!metalink->priv->loaded) {
-		ret = zif_md_load (ZIF_MD (md), cancellable, state, &error_local);
+		ret = zif_md_load (ZIF_MD (md), state, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED_TO_LOAD,
 				     "failed to get mirrors from metalink: %s", error_local->message);
@@ -458,7 +457,7 @@ zif_md_metalink_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "load");
-	ret = zif_md_load (ZIF_MD (md), cancellable, state, &error);
+	ret = zif_md_load (ZIF_MD (md), state, &error);
 	if (ret)
 		egg_test_success (test, NULL);
 	else
@@ -470,7 +469,7 @@ zif_md_metalink_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "get uris");
-	array = zif_md_metalink_get_uris (md, 50, cancellable, state, &error);
+	array = zif_md_metalink_get_uris (md, 50, state, &error);
 	if (array != NULL)
 		egg_test_success (test, NULL);
 	else

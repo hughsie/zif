@@ -143,7 +143,6 @@ zif_store_array_add_stores (GPtrArray *store_array, GPtrArray *stores)
 /**
  * zif_store_array_add_local:
  * @store_array: the #GPtrArray of #ZifStores
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -154,7 +153,7 @@ zif_store_array_add_stores (GPtrArray *store_array, GPtrArray *stores)
  * Since: 0.0.1
  **/
 gboolean
-zif_store_array_add_local (GPtrArray *store_array, GCancellable *cancellable, ZifState *state, GError **error)
+zif_store_array_add_local (GPtrArray *store_array, ZifState *state, GError **error)
 {
 	ZifStoreLocal *store;
 
@@ -168,7 +167,6 @@ zif_store_array_add_local (GPtrArray *store_array, GCancellable *cancellable, Zi
 /**
  * zif_store_array_add_remote:
  * @store_array: the #GPtrArray of #ZifStores
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -179,7 +177,7 @@ zif_store_array_add_local (GPtrArray *store_array, GCancellable *cancellable, Zi
  * Since: 0.0.1
  **/
 gboolean
-zif_store_array_add_remote (GPtrArray *store_array, GCancellable *cancellable, ZifState *state, GError **error)
+zif_store_array_add_remote (GPtrArray *store_array, ZifState *state, GError **error)
 {
 	GPtrArray *array;
 	ZifRepos *repos;
@@ -188,7 +186,7 @@ zif_store_array_add_remote (GPtrArray *store_array, GCancellable *cancellable, Z
 
 	/* get stores */
 	repos = zif_repos_new ();
-	array = zif_repos_get_stores (repos, cancellable, state, &error_local);
+	array = zif_repos_get_stores (repos, state, &error_local);
 	if (array == NULL) {
 		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 			     "failed to get enabled stores: %s", error_local->message);
@@ -210,7 +208,6 @@ out:
 /**
  * zif_store_array_add_remote_enabled:
  * @store_array: the #GPtrArray of #ZifStores
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -221,7 +218,7 @@ out:
  * Since: 0.0.1
  **/
 gboolean
-zif_store_array_add_remote_enabled (GPtrArray *store_array, GCancellable *cancellable, ZifState *state, GError **error)
+zif_store_array_add_remote_enabled (GPtrArray *store_array, ZifState *state, GError **error)
 {
 	GPtrArray *array;
 	ZifRepos *repos;
@@ -230,7 +227,7 @@ zif_store_array_add_remote_enabled (GPtrArray *store_array, GCancellable *cancel
 
 	/* get stores */
 	repos = zif_repos_new ();
-	array = zif_repos_get_stores_enabled (repos, cancellable, state, &error_local);
+	array = zif_repos_get_stores_enabled (repos, state, &error_local);
 	if (array == NULL) {
 		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 			     "failed to get enabled stores: %s", error_local->message);
@@ -255,7 +252,7 @@ out:
 static GPtrArray *
 zif_store_array_repos_search (GPtrArray *store_array, ZifRole role, gchar **search,
 			      ZifStoreArrayErrorCb error_cb, gpointer user_data,
-			      GCancellable *cancellable, ZifState *state, GError **error)
+			      ZifState *state, GError **error)
 {
 	guint i, j;
 	GPtrArray *array = NULL;
@@ -285,25 +282,25 @@ zif_store_array_repos_search (GPtrArray *store_array, ZifRole role, gchar **sear
 
 		/* get results for this store */
 		if (role == ZIF_ROLE_RESOLVE)
-			part = zif_store_resolve (store, search, cancellable, state_local, &error_local);
+			part = zif_store_resolve (store, search, state_local, &error_local);
 		else if (role == ZIF_ROLE_SEARCH_NAME)
-			part = zif_store_search_name (store, search, cancellable, state_local, &error_local);
+			part = zif_store_search_name (store, search, state_local, &error_local);
 		else if (role == ZIF_ROLE_SEARCH_DETAILS)
-			part = zif_store_search_details (store, search, cancellable, state_local, &error_local);
+			part = zif_store_search_details (store, search, state_local, &error_local);
 		else if (role == ZIF_ROLE_SEARCH_GROUP)
-			part = zif_store_search_group (store, search, cancellable, state_local, &error_local);
+			part = zif_store_search_group (store, search, state_local, &error_local);
 		else if (role == ZIF_ROLE_SEARCH_CATEGORY)
-			part = zif_store_search_category (store, search, cancellable, state_local, &error_local);
+			part = zif_store_search_category (store, search, state_local, &error_local);
 		else if (role == ZIF_ROLE_SEARCH_FILE)
-			part = zif_store_search_file (store, search, cancellable, state_local, &error_local);
+			part = zif_store_search_file (store, search, state_local, &error_local);
 		else if (role == ZIF_ROLE_GET_PACKAGES)
-			part = zif_store_get_packages (store, cancellable, state_local, &error_local);
+			part = zif_store_get_packages (store, state_local, &error_local);
 		else if (role == ZIF_ROLE_GET_UPDATES)
-			part = zif_store_get_updates (store, (GPtrArray *) search, cancellable, state_local, &error_local);
+			part = zif_store_get_updates (store, (GPtrArray *) search, state_local, &error_local);
 		else if (role == ZIF_ROLE_WHAT_PROVIDES)
-			part = zif_store_what_provides (store, search, cancellable, state_local, &error_local);
+			part = zif_store_what_provides (store, search, state_local, &error_local);
 		else if (role == ZIF_ROLE_GET_CATEGORIES)
-			part = zif_store_get_categories (store, cancellable, state_local, &error_local);
+			part = zif_store_get_categories (store, state_local, &error_local);
 		else {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 				     "internal error, no such role: %s", zif_role_to_string (role));
@@ -343,7 +340,6 @@ out:
  * zif_store_array_find_package:
  * @store_array: the #GPtrArray of #ZifStores
  * @package_id: the PackageId which defines the package
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -354,7 +350,7 @@ out:
  * Since: 0.0.1
  **/
 ZifPackage *
-zif_store_array_find_package (GPtrArray *store_array, const gchar *package_id, GCancellable *cancellable, ZifState *state, GError **error)
+zif_store_array_find_package (GPtrArray *store_array, const gchar *package_id, ZifState *state, GError **error)
 {
 	guint i;
 	ZifStore *store;
@@ -379,7 +375,7 @@ zif_store_array_find_package (GPtrArray *store_array, const gchar *package_id, G
 		store = g_ptr_array_index (store_array, i);
 
 		state_local = zif_state_get_child (state);
-		package = zif_store_find_package (store, package_id, cancellable, state_local, &error_local);
+		package = zif_store_find_package (store, package_id, state_local, &error_local);
 
 		/* get results */
 		if (package == NULL) {
@@ -416,7 +412,6 @@ out:
  * @store_array: the #GPtrArray of #ZifStores
  * @error_cb: a #ZifStoreArrayErrorCb which returns %FALSE if the error is fatal
  * @user_data: the user_data to be passed to the #ZifStoreArrayErrorCb
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -429,7 +424,7 @@ out:
 gboolean
 zif_store_array_clean (GPtrArray *store_array,
 		       ZifStoreArrayErrorCb error_cb, gpointer user_data,
-		       GCancellable *cancellable, ZifState *state, GError **error)
+		       ZifState *state, GError **error)
 {
 	guint i;
 	ZifStore *store;
@@ -454,7 +449,7 @@ zif_store_array_clean (GPtrArray *store_array,
 
 		/* clean this one */
 		state_local = zif_state_get_child (state);
-		ret = zif_store_clean (store, cancellable, state_local, &error_local);
+		ret = zif_store_clean (store, state_local, &error_local);
 		if (!ret) {
 			/* do we need to skip this error */
 			if (error_cb != NULL && error_cb (store_array, error_local, user_data)) {
@@ -482,7 +477,6 @@ out:
  * @force: if the data should be re-downloaded if it's still valid
  * @error_cb: a #ZifStoreArrayErrorCb which returns %FALSE if the error is fatal
  * @user_data: the user_data to be passed to the #ZifStoreArrayErrorCb
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -495,7 +489,7 @@ out:
 gboolean
 zif_store_array_refresh (GPtrArray *store_array, gboolean force,
 			 ZifStoreArrayErrorCb error_cb, gpointer user_data,
-			 GCancellable *cancellable, ZifState *state, GError **error)
+			 ZifState *state, GError **error)
 {
 	guint i;
 	ZifStore *store;
@@ -520,7 +514,7 @@ zif_store_array_refresh (GPtrArray *store_array, gboolean force,
 
 		/* refresh this one */
 		state_local = zif_state_get_child (state);
-		ret = zif_store_refresh (store, force, cancellable, state_local, &error_local);
+		ret = zif_store_refresh (store, force, state_local, &error_local);
 		if (!ret) {
 			/* do we need to skip this error */
 			if (error_cb != NULL && error_cb (store_array, error_local, user_data)) {
@@ -548,7 +542,6 @@ out:
  * @search: the search term, e.g. "gnome-power-manager"
  * @error_cb: a #ZifStoreArrayErrorCb which returns %FALSE if the error is fatal
  * @user_data: the user_data to be passed to the #ZifStoreArrayErrorCb
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -561,11 +554,11 @@ out:
 GPtrArray *
 zif_store_array_resolve (GPtrArray *store_array, gchar **search,
 			 ZifStoreArrayErrorCb error_cb, gpointer user_data,
-			 GCancellable *cancellable, ZifState *state, GError **error)
+			 ZifState *state, GError **error)
 {
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 	return zif_store_array_repos_search (store_array, ZIF_ROLE_RESOLVE, search,
-					     error_cb, user_data, cancellable, state, error);
+					     error_cb, user_data, state, error);
 }
 
 /**
@@ -574,7 +567,6 @@ zif_store_array_resolve (GPtrArray *store_array, gchar **search,
  * @search: the search term, e.g. "power"
  * @error_cb: a #ZifStoreArrayErrorCb which returns %FALSE if the error is fatal
  * @user_data: the user_data to be passed to the #ZifStoreArrayErrorCb
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -587,11 +579,11 @@ zif_store_array_resolve (GPtrArray *store_array, gchar **search,
 GPtrArray *
 zif_store_array_search_name (GPtrArray *store_array, gchar **search,
 			     ZifStoreArrayErrorCb error_cb, gpointer user_data,
-			     GCancellable *cancellable, ZifState *state, GError **error)
+			     ZifState *state, GError **error)
 {
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 	return zif_store_array_repos_search (store_array, ZIF_ROLE_SEARCH_NAME, search,
-					     error_cb, user_data, cancellable, state, error);
+					     error_cb, user_data, state, error);
 }
 
 /**
@@ -600,7 +592,6 @@ zif_store_array_search_name (GPtrArray *store_array, gchar **search,
  * @search: the search term, e.g. "trouble"
  * @error_cb: a #ZifStoreArrayErrorCb which returns %FALSE if the error is fatal
  * @user_data: the user_data to be passed to the #ZifStoreArrayErrorCb
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -613,11 +604,11 @@ zif_store_array_search_name (GPtrArray *store_array, gchar **search,
 GPtrArray *
 zif_store_array_search_details (GPtrArray *store_array, gchar **search,
 				ZifStoreArrayErrorCb error_cb, gpointer user_data,
-				GCancellable *cancellable, ZifState *state, GError **error)
+				ZifState *state, GError **error)
 {
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 	return zif_store_array_repos_search (store_array, ZIF_ROLE_SEARCH_DETAILS, search,
-					     error_cb, user_data, cancellable, state, error);
+					     error_cb, user_data, state, error);
 }
 
 /**
@@ -626,7 +617,6 @@ zif_store_array_search_details (GPtrArray *store_array, gchar **search,
  * @group_enum: the group enumerated value, e.g. "games"
  * @error_cb: a #ZifStoreArrayErrorCb which returns %FALSE if the error is fatal
  * @user_data: the user_data to be passed to the #ZifStoreArrayErrorCb
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -639,11 +629,11 @@ zif_store_array_search_details (GPtrArray *store_array, gchar **search,
 GPtrArray *
 zif_store_array_search_group (GPtrArray *store_array, gchar **group_enum,
 			      ZifStoreArrayErrorCb error_cb, gpointer user_data,
-			      GCancellable *cancellable, ZifState *state, GError **error)
+			      ZifState *state, GError **error)
 {
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 	return zif_store_array_repos_search (store_array, ZIF_ROLE_SEARCH_GROUP, group_enum,
-					     error_cb, user_data, cancellable, state, error);
+					     error_cb, user_data, state, error);
 }
 
 /**
@@ -652,7 +642,6 @@ zif_store_array_search_group (GPtrArray *store_array, gchar **group_enum,
  * @group_id: the group id, e.g. "gnome-system-tools"
  * @error_cb: a #ZifStoreArrayErrorCb which returns %FALSE if the error is fatal
  * @user_data: the user_data to be passed to the #ZifStoreArrayErrorCb
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -665,7 +654,7 @@ zif_store_array_search_group (GPtrArray *store_array, gchar **group_enum,
 GPtrArray *
 zif_store_array_search_category (GPtrArray *store_array, gchar **group_id,
 				 ZifStoreArrayErrorCb error_cb, gpointer user_data,
-				 GCancellable *cancellable, ZifState *state, GError **error)
+				 ZifState *state, GError **error)
 {
 	guint i, j;
 	GPtrArray *array;
@@ -678,7 +667,7 @@ zif_store_array_search_category (GPtrArray *store_array, gchar **group_id,
 
 	/* get all results from all repos */
 	array = zif_store_array_repos_search (store_array, ZIF_ROLE_SEARCH_CATEGORY, group_id,
-					      error_cb, user_data, cancellable, state, error);
+					      error_cb, user_data, state, error);
 	if (array == NULL)
 		goto out;
 
@@ -709,7 +698,6 @@ out:
  * @search: the search term, e.g. "/usr/bin/gnome-power-manager"
  * @error_cb: a #ZifStoreArrayErrorCb which returns %FALSE if the error is fatal
  * @user_data: the user_data to be passed to the #ZifStoreArrayErrorCb
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -722,11 +710,11 @@ out:
 GPtrArray *
 zif_store_array_search_file (GPtrArray *store_array, gchar **search,
 			     ZifStoreArrayErrorCb error_cb, gpointer user_data,
-			     GCancellable *cancellable, ZifState *state, GError **error)
+			     ZifState *state, GError **error)
 {
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 	return zif_store_array_repos_search (store_array, ZIF_ROLE_SEARCH_FILE, search,
-					     error_cb, user_data, cancellable, state, error);
+					     error_cb, user_data, state, error);
 }
 
 /**
@@ -734,7 +722,6 @@ zif_store_array_search_file (GPtrArray *store_array, gchar **search,
  * @store_array: the #GPtrArray of #ZifStores
  * @error_cb: a #ZifStoreArrayErrorCb which returns %FALSE if the error is fatal
  * @user_data: the user_data to be passed to the #ZifStoreArrayErrorCb
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -747,11 +734,11 @@ zif_store_array_search_file (GPtrArray *store_array, gchar **search,
 GPtrArray *
 zif_store_array_get_packages (GPtrArray *store_array,
 			      ZifStoreArrayErrorCb error_cb, gpointer user_data,
-			      GCancellable *cancellable, ZifState *state, GError **error)
+			      ZifState *state, GError **error)
 {
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 	return zif_store_array_repos_search (store_array, ZIF_ROLE_GET_PACKAGES, NULL,
-					     error_cb, user_data, cancellable, state, error);
+					     error_cb, user_data, state, error);
 }
 
 /**
@@ -760,7 +747,6 @@ zif_store_array_get_packages (GPtrArray *store_array,
  * @packages: the #GPtrArray of #ZifPackages to check for updates
  * @error_cb: a #ZifStoreArrayErrorCb which returns %FALSE if the error is fatal
  * @user_data: the user_data to be passed to the #ZifStoreArrayErrorCb
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -773,11 +759,11 @@ zif_store_array_get_packages (GPtrArray *store_array,
 GPtrArray *
 zif_store_array_get_updates (GPtrArray *store_array, GPtrArray *packages,
 			     ZifStoreArrayErrorCb error_cb, gpointer user_data,
-			     GCancellable *cancellable, ZifState *state, GError **error)
+			     ZifState *state, GError **error)
 {
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 	return zif_store_array_repos_search (store_array, ZIF_ROLE_GET_UPDATES, (gchar **) packages,
-					     error_cb, user_data, cancellable, state, error);
+					     error_cb, user_data, state, error);
 }
 
 /**
@@ -786,7 +772,6 @@ zif_store_array_get_updates (GPtrArray *store_array, GPtrArray *packages,
  * @search: the search term, e.g. "gstreamer(codec-mp3)"
  * @error_cb: a #ZifStoreArrayErrorCb which returns %FALSE if the error is fatal
  * @user_data: the user_data to be passed to the #ZifStoreArrayErrorCb
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -799,17 +784,17 @@ zif_store_array_get_updates (GPtrArray *store_array, GPtrArray *packages,
 GPtrArray *
 zif_store_array_what_provides (GPtrArray *store_array, gchar **search,
 			       ZifStoreArrayErrorCb error_cb, gpointer user_data,
-			       GCancellable *cancellable, ZifState *state, GError **error)
+			       ZifState *state, GError **error)
 {
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* if this is a path, then we use the file list and treat like a SearchFile */
 	if (g_str_has_prefix (search[0], "/")) {
 		return zif_store_array_repos_search (store_array, ZIF_ROLE_SEARCH_FILE, search,
-						     error_cb, user_data, cancellable, state, error);
+						     error_cb, user_data, state, error);
 	}
 	return zif_store_array_repos_search (store_array, ZIF_ROLE_WHAT_PROVIDES, search,
-					     error_cb, user_data, cancellable, state, error);
+					     error_cb, user_data, state, error);
 }
 
 /**
@@ -817,7 +802,6 @@ zif_store_array_what_provides (GPtrArray *store_array, gchar **search,
  * @store_array: the #GPtrArray of #ZifStores
  * @error_cb: a #ZifStoreArrayErrorCb which returns %FALSE if the error is fatal
  * @user_data: the user_data to be passed to the #ZifStoreArrayErrorCb
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -830,7 +814,7 @@ zif_store_array_what_provides (GPtrArray *store_array, gchar **search,
 GPtrArray *
 zif_store_array_get_categories (GPtrArray *store_array,
 				ZifStoreArrayErrorCb error_cb, gpointer user_data,
-				GCancellable *cancellable, ZifState *state, GError **error)
+				ZifState *state, GError **error)
 {
 	guint i, j;
 	GPtrArray *array;
@@ -845,7 +829,7 @@ zif_store_array_get_categories (GPtrArray *store_array,
 
 	/* get all results from all repos */
 	array = zif_store_array_repos_search (store_array, ZIF_ROLE_GET_CATEGORIES, NULL,
-					      error_cb, user_data, cancellable, state, error);
+					      error_cb, user_data, state, error);
 	if (array == NULL)
 		goto out;
 

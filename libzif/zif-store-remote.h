@@ -61,24 +61,19 @@ ZifStoreRemote	*zif_store_remote_new			(void);
 gboolean	 zif_store_remote_set_from_file		(ZifStoreRemote		*store,
 							 const gchar		*filename,
 							 const gchar		*id,
-							 GCancellable		*cancellable,
 							 ZifState		*state,
 							 GError			**error);
 gboolean	 zif_store_remote_is_devel		(ZifStoreRemote		*store,
-							 GCancellable		*cancellable,
 							 ZifState		*state,
 							 GError			**error);
 const gchar	*zif_store_remote_get_name		(ZifStoreRemote		*store,
-							 GCancellable		*cancellable,
 							 ZifState		*state,
 							 GError			**error);
 GPtrArray	*zif_store_remote_get_files		(ZifStoreRemote		*store,
 							 ZifPackage		*package,
-							 GCancellable		*cancellable,
 							 ZifState		*state,
 							 GError			**error);
 gboolean	 zif_store_remote_get_enabled		(ZifStoreRemote		*store,
-							 GCancellable		*cancellable,
 							 ZifState		*state,
 							 GError			**error);
 gboolean	 zif_store_remote_set_enabled		(ZifStoreRemote		*store,
@@ -87,16 +82,13 @@ gboolean	 zif_store_remote_set_enabled		(ZifStoreRemote		*store,
 gboolean	 zif_store_remote_download		(ZifStoreRemote		*store,
 							 const gchar		*filename,
 							 const gchar		*directory,
-							 GCancellable		*cancellable,
 							 ZifState		*state,
 							 GError			**error);
 ZifUpdate	*zif_store_remote_get_update_detail	(ZifStoreRemote		*store,
 							 const gchar		*package_id,
-							 GCancellable		*cancellable,
 							 ZifState		*state,
 							 GError			**error);
 gboolean	 zif_store_remote_check			(ZifStoreRemote		*store,
-							 GCancellable		*cancellable,
 							 ZifState		*state,
 							 GError			**error);
 

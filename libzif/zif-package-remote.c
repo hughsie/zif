@@ -209,7 +209,7 @@ zif_package_remote_set_store_remote (ZifPackageRemote *pkg, ZifStoreRemote *stor
  * zif_package_remote_ensure_data:
  */
 static gboolean
-zif_package_remote_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, GCancellable *cancellable, ZifState *state, GError **error)
+zif_package_remote_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, ZifState *state, GError **error)
 {
 	gboolean ret = TRUE;
 	GPtrArray *array = NULL;
@@ -218,7 +218,7 @@ zif_package_remote_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, GCan
 	if (type == ZIF_PACKAGE_ENSURE_TYPE_FILES) {
 
 		/* get the file list for this package */
-		array = zif_store_remote_get_files (pkg_remote->priv->store_remote, pkg, cancellable, state, error);
+		array = zif_store_remote_get_files (pkg_remote->priv->store_remote, pkg, state, error);
 		if (array == NULL) {
 			ret = FALSE;
 			goto out;

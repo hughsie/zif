@@ -102,7 +102,7 @@ struct _ZifStoreRemotePrivate
 
 G_DEFINE_TYPE (ZifStoreRemote, zif_store_remote, ZIF_TYPE_STORE)
 
-static gboolean zif_store_remote_load_metadata (ZifStoreRemote *store, GCancellable *cancellable, ZifState *state, GError **error);
+static gboolean zif_store_remote_load_metadata (ZifStoreRemote *store, ZifState *state, GError **error);
 
 /**
  * zif_store_remote_checksum_type_from_text:
@@ -346,7 +346,7 @@ zif_store_remote_parser_text (GMarkupParseContext *context, const gchar *text, g
  **/
 static gboolean
 zif_store_remote_download_try (ZifStoreRemote *store, const gchar *uri, const gchar *filename,
-			       GCancellable *cancellable, ZifState *state, GError **error)
+			       ZifState *state, GError **error)
 {
 	gboolean ret = FALSE;
 	GError *error_local = NULL;
@@ -357,7 +357,7 @@ zif_store_remote_download_try (ZifStoreRemote *store, const gchar *uri, const gc
 	/* download object */
 	download = zif_download_new ();
 	egg_debug ("trying to download %s and save to %s", uri, filename);
-	ret = zif_download_file (download, uri, filename, cancellable, state, &error_local);
+	ret = zif_download_file (download, uri, filename, state, &error_local);
 	if (!ret) {
 		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 			     "failed to download %s from %s: %s", filename, uri, error_local->message);
@@ -417,7 +417,6 @@ zif_store_remote_ensure_parent_dir_exists (const gchar *filename, GError **error
  * @store: the #ZifStoreRemote object
  * @filename: the state filename to download, e.g. "Packages/hal-0.0.1.rpm"
  * @directory: the directory to put the downloaded file, e.g. "/var/cache/zif"
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -431,7 +430,7 @@ zif_store_remote_ensure_parent_dir_exists (const gchar *filename, GError **error
  **/
 gboolean
 zif_store_remote_download (ZifStoreRemote *store, const gchar *filename, const gchar *directory,
-			   GCancellable *cancellable, ZifState *state, GError **error)
+			   ZifState *state, GError **error)
 {
 	guint i;
 	guint len;
@@ -474,7 +473,7 @@ zif_store_remote_download (ZifStoreRemote *store, const gchar *filename, const g
 	/* if not already loaded, load */
 	if (!store->priv->loaded_metadata) {
 		state_local = zif_state_get_child (state);
-		ret = zif_store_remote_load_metadata (store, cancellable, state_local, &error_local);
+		ret = zif_store_remote_load_metadata (store, state_local, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 				     "failed to load metadata: %s", error_local->message);
@@ -514,7 +513,7 @@ zif_store_remote_download (ZifStoreRemote *store, const gchar *filename, const g
 
 		/* try download */
 		zif_state_reset (state_local);
-		ret = zif_store_remote_download_try (store, uri, filename_local, cancellable, state_local, &error_local);
+		ret = zif_store_remote_download_try (store, uri, filename_local, state_local, &error_local);
 		if (!ret) {
 			egg_debug ("failed to download (non-fatal): %s", error_local->message);
 			g_clear_error (&error_local);
@@ -547,7 +546,6 @@ out:
  * zif_store_remote_get_update_detail:
  * @store: the #ZifStoreRemote object
  * @package_id: the package_id of the package to find
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -559,7 +557,7 @@ out:
  **/
 ZifUpdate *
 zif_store_remote_get_update_detail (ZifStoreRemote *store, const gchar *package_id,
-				    GCancellable *cancellable, ZifState *state, GError **error)
+				    ZifState *state, GError **error)
 {
 	const gchar *pkgid;
 	gboolean ret;
@@ -589,7 +587,7 @@ zif_store_remote_get_update_detail (ZifStoreRemote *store, const gchar *package_
 	/* if not already loaded, load */
 	if (!store->priv->loaded_metadata) {
 		state_local = zif_state_get_child (state);
-		ret = zif_store_remote_load_metadata (store, cancellable, state_local, &error_local);
+		ret = zif_store_remote_load_metadata (store, state_local, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 				     "failed to load metadata: %s", error_local->message);
@@ -604,7 +602,7 @@ zif_store_remote_get_update_detail (ZifStoreRemote *store, const gchar *package_
 	/* actually get the data */
 	state_local = zif_state_get_child (state);
 	array = zif_md_updateinfo_get_detail_for_package (ZIF_MD_UPDATEINFO (store->priv->md_updateinfo), package_id,
-							  cancellable, state_local, &error_local);
+							  state_local, &error_local);
 	if (array == NULL) {
 		/* lets try this again with fresh metadata */
 		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
@@ -621,7 +619,7 @@ zif_store_remote_get_update_detail (ZifStoreRemote *store, const gchar *package_
 
 	/* get ZifPackage for package-id */
 	md = zif_store_remote_get_primary (store);
-	packages = zif_md_find_package (md, package_id, cancellable, state_local, &error_local);
+	packages = zif_md_find_package (md, package_id, state_local, &error_local);
 	if (packages == NULL) {
 		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 			     "cannot find package in primary repo: %s", error_local->message);
@@ -643,7 +641,7 @@ zif_store_remote_get_update_detail (ZifStoreRemote *store, const gchar *package_
 
 	/* get changelog and add to ZifUpdate */
 	state_local = zif_state_get_child (state);
-	changelog = zif_md_get_changelog (ZIF_MD (store->priv->md_other_sql), pkgid, cancellable, state_local, &error_local);
+	changelog = zif_md_get_changelog (ZIF_MD (store->priv->md_other_sql), pkgid, state_local, &error_local);
 	if (changelog == NULL) {
 		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 			     "failed to get changelog: %s", error_local->message);
@@ -659,7 +657,7 @@ zif_store_remote_get_update_detail (ZifStoreRemote *store, const gchar *package_
 	split = zif_package_id_split (package_id);
 	store_local = zif_store_local_new ();
 	to_array[0] = split[ZIF_PACKAGE_ID_NAME];
-	array_installed = zif_store_resolve (ZIF_STORE (store_local), to_array, cancellable, state_local, &error_local);
+	array_installed = zif_store_resolve (ZIF_STORE (store_local), to_array, state_local, &error_local);
 	if (array_installed == NULL) {
 		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 			     "failed to resolve installed package for update: %s", error_local->message);
@@ -711,7 +709,7 @@ out:
  * zif_store_remote_add_metalink:
  **/
 static gboolean
-zif_store_remote_add_metalink (ZifStoreRemote *store, GCancellable *cancellable, ZifState *state, GError **error)
+zif_store_remote_add_metalink (ZifStoreRemote *store, ZifState *state, GError **error)
 {
 	guint i;
 	GPtrArray *array = NULL;
@@ -744,7 +742,7 @@ zif_store_remote_add_metalink (ZifStoreRemote *store, GCancellable *cancellable,
 
 		/* download object directly, as we don't have the repo setup yet */
 		download = zif_download_new ();
-		ret = zif_download_file (download, store->priv->metalink, filename, cancellable, state_local, &error_local);
+		ret = zif_download_file (download, store->priv->metalink, filename, state_local, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 				     "failed to download %s from %s: %s", filename, store->priv->metalink, error_local->message);
@@ -757,7 +755,7 @@ zif_store_remote_add_metalink (ZifStoreRemote *store, GCancellable *cancellable,
 
 	/* get mirrors */
 	state_local = zif_state_get_child (state);
-	array = zif_md_metalink_get_uris (ZIF_MD_METALINK (store->priv->md_metalink), 50, cancellable, state_local, &error_local);
+	array = zif_md_metalink_get_uris (ZIF_MD_METALINK (store->priv->md_metalink), 50, state_local, &error_local);
 	if (array == NULL) {
 		ret = FALSE;
 		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
@@ -791,7 +789,7 @@ out:
  * zif_store_remote_add_mirrorlist:
  **/
 static gboolean
-zif_store_remote_add_mirrorlist (ZifStoreRemote *store, GCancellable *cancellable, ZifState *state, GError **error)
+zif_store_remote_add_mirrorlist (ZifStoreRemote *store, ZifState *state, GError **error)
 {
 	guint i;
 	GPtrArray *array = NULL;
@@ -824,7 +822,7 @@ zif_store_remote_add_mirrorlist (ZifStoreRemote *store, GCancellable *cancellabl
 
 		/* download object directly, as we don't have the repo setup yet */
 		download = zif_download_new ();
-		ret = zif_download_file (download, store->priv->mirrorlist, filename, cancellable, state_local, &error_local);
+		ret = zif_download_file (download, store->priv->mirrorlist, filename, state_local, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 				     "failed to download %s from %s: %s", filename, store->priv->mirrorlist, error_local->message);
@@ -837,7 +835,7 @@ zif_store_remote_add_mirrorlist (ZifStoreRemote *store, GCancellable *cancellabl
 
 	/* get mirrors */
 	state_local = zif_state_get_child (state);
-	array = zif_md_mirrorlist_get_uris (ZIF_MD_MIRRORLIST (store->priv->md_mirrorlist), cancellable, state_local, &error_local);
+	array = zif_md_mirrorlist_get_uris (ZIF_MD_MIRRORLIST (store->priv->md_mirrorlist), state_local, &error_local);
 	if (array == NULL) {
 		ret = FALSE;
 		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
@@ -882,7 +880,7 @@ out:
  * - checks all the uncompressed metadata checksums are valid, else they are deleted
  **/
 static gboolean
-zif_store_remote_load_metadata (ZifStoreRemote *store, GCancellable *cancellable, ZifState *state, GError **error)
+zif_store_remote_load_metadata (ZifStoreRemote *store, ZifState *state, GError **error)
 {
 	guint i;
 	ZifState *state_local;
@@ -924,7 +922,7 @@ zif_store_remote_load_metadata (ZifStoreRemote *store, GCancellable *cancellable
 	/* extract details from mirrorlist */
 	if (store->priv->mirrorlist != NULL) {
 		state_local = zif_state_get_child (state);
-		ret = zif_store_remote_add_mirrorlist (store, cancellable, state_local, &error_local);
+		ret = zif_store_remote_add_mirrorlist (store, state_local, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 				     "failed to add mirrorlist: %s", error_local->message);
@@ -939,7 +937,7 @@ zif_store_remote_load_metadata (ZifStoreRemote *store, GCancellable *cancellable
 	/* extract details from metalink */
 	if (store->priv->metalink != NULL) {
 		state_local = zif_state_get_child (state);
-		ret = zif_store_remote_add_metalink (store, cancellable, state_local, &error_local);
+		ret = zif_store_remote_add_metalink (store, state_local, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 				     "failed to add metalink: %s", error_local->message);
@@ -974,7 +972,7 @@ zif_store_remote_load_metadata (ZifStoreRemote *store, GCancellable *cancellable
 		/* download new file */
 		state_local = zif_state_get_child (state);
 		store->priv->loaded_metadata = TRUE;
-		ret = zif_store_remote_download (store, "repodata/repomd.xml", store->priv->directory, cancellable, state_local, &error_local);
+		ret = zif_store_remote_download (store, "repodata/repomd.xml", store->priv->directory, state_local, &error_local);
 		store->priv->loaded_metadata = FALSE;
 		if (!ret) {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
@@ -1063,7 +1061,7 @@ out:
  * zif_store_file_decompress:
  **/
 static gboolean
-zif_store_file_decompress (const gchar *filename, GCancellable *cancellable, ZifState *state, GError **error)
+zif_store_file_decompress (const gchar *filename, ZifState *state, GError **error)
 {
 	gboolean ret = TRUE;
 	gboolean compressed;
@@ -1080,7 +1078,7 @@ zif_store_file_decompress (const gchar *filename, GCancellable *cancellable, Zif
 	filename_uncompressed = zif_file_get_uncompressed_name (filename);
 
 	/* decompress */
-	ret = zif_file_decompress (filename, filename_uncompressed, cancellable, state, error);
+	ret = zif_file_decompress (filename, filename_uncompressed, state, error);
 out:
 	g_free (filename_uncompressed);
 	return ret;
@@ -1090,7 +1088,7 @@ out:
  * zif_store_remote_refresh:
  **/
 static gboolean
-zif_store_remote_refresh (ZifStore *store, gboolean force, GCancellable *cancellable, ZifState *state, GError **error)
+zif_store_remote_refresh (ZifStore *store, gboolean force, ZifState *state, GError **error)
 {
 	gboolean ret = FALSE;
 	GError *error_local = NULL;
@@ -1126,7 +1124,7 @@ zif_store_remote_refresh (ZifStore *store, gboolean force, GCancellable *cancell
 	state_local = zif_state_get_child (state);
 
 	/* download new repomd file */
-	ret = zif_store_remote_download (remote, "repodata/repomd.xml", remote->priv->directory, cancellable, state_local, &error_local);
+	ret = zif_store_remote_download (remote, "repodata/repomd.xml", remote->priv->directory, state_local, &error_local);
 	if (!ret) {
 		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 			     "failed to download repomd: %s", error_local->message);
@@ -1139,7 +1137,7 @@ zif_store_remote_refresh (ZifStore *store, gboolean force, GCancellable *cancell
 
 	/* reload */
 	state_local = zif_state_get_child (state);
-	ret = zif_store_remote_load_metadata (remote, cancellable, state_local, &error_local);
+	ret = zif_store_remote_load_metadata (remote, state_local, &error_local);
 	if (!ret) {
 		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 			     "failed to load updated metadata: %s", error_local->message);
@@ -1178,7 +1176,7 @@ zif_store_remote_refresh (ZifStore *store, gboolean force, GCancellable *cancell
 
 		/* download new file */
 		state_local = zif_state_get_child (state);
-		ret = zif_store_remote_download (remote, filename, remote->priv->directory, cancellable, state_local, &error_local);
+		ret = zif_store_remote_download (remote, filename, remote->priv->directory, state_local, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 				     "failed to refresh %s (%s): %s", zif_md_type_to_text (i), filename, error_local->message);
@@ -1192,7 +1190,7 @@ zif_store_remote_refresh (ZifStore *store, gboolean force, GCancellable *cancell
 		/* decompress */
 		state_local = zif_state_get_child (state);
 		filename = zif_md_get_filename (md);
-		ret = zif_store_file_decompress (filename, cancellable, state_local, &error_local);
+		ret = zif_store_file_decompress (filename, state_local, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 				     "failed to decompress %s for %s: %s",
@@ -1216,7 +1214,7 @@ out:
  * databases until zif_store_remote_load_metadata().
  **/
 static gboolean
-zif_store_remote_load (ZifStore *store, GCancellable *cancellable, ZifState *state, GError **error)
+zif_store_remote_load (ZifStore *store, ZifState *state, GError **error)
 {
 	GKeyFile *file = NULL;
 	gboolean ret = TRUE;
@@ -1352,7 +1350,7 @@ out:
  * zif_store_remote_clean:
  **/
 static gboolean
-zif_store_remote_clean (ZifStore *store, GCancellable *cancellable, ZifState *state, GError **error)
+zif_store_remote_clean (ZifStore *store, ZifState *state, GError **error)
 {
 	gboolean ret = FALSE;
 	gboolean exists;
@@ -1384,7 +1382,7 @@ zif_store_remote_clean (ZifStore *store, GCancellable *cancellable, ZifState *st
 	/* load metadata */
 	if (!remote->priv->loaded_metadata) {
 		state_local = zif_state_get_child (state);
-		ret = zif_store_remote_load_metadata (remote, cancellable, state_local, &error_local);
+		ret = zif_store_remote_load_metadata (remote, state_local, &error_local);
 		if (!ret) {
 			/* ignore this error */
 			g_print ("failed to load xml: %s\n", error_local->message);
@@ -1449,14 +1447,13 @@ out:
 
 /**
  * zif_store_remote_set_from_file:
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @state: a #ZifState to use for progress reporting
  *
  * Since: 0.0.1
  **/
 gboolean
 zif_store_remote_set_from_file (ZifStoreRemote *store, const gchar *repo_filename, const gchar *id,
-				GCancellable *cancellable, ZifState *state, GError **error)
+				ZifState *state, GError **error)
 {
 	gboolean ret = TRUE;
 	guint i;
@@ -1505,7 +1502,7 @@ zif_store_remote_set_from_file (ZifStoreRemote *store, const gchar *repo_filenam
 	}
 
 	/* get data */
-	ret = zif_store_remote_load (ZIF_STORE (store), cancellable, state, &error_local);
+	ret = zif_store_remote_load (ZIF_STORE (store), state, &error_local);
 	if (!ret) {
 		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 			     "failed to load %s: %s", id, error_local->message);
@@ -1607,7 +1604,7 @@ zif_store_remote_print (ZifStore *store)
  * zif_store_remote_resolve:
  **/
 static GPtrArray *
-zif_store_remote_resolve (ZifStore *store, gchar **search, GCancellable *cancellable, ZifState *state, GError **error)
+zif_store_remote_resolve (ZifStore *store, gchar **search, ZifState *state, GError **error)
 {
 	gboolean ret;
 	GError *error_local = NULL;
@@ -1636,7 +1633,7 @@ zif_store_remote_resolve (ZifStore *store, gchar **search, GCancellable *cancell
 	/* load metadata */
 	if (!remote->priv->loaded_metadata) {
 		state_local = zif_state_get_child (state);
-		ret = zif_store_remote_load_metadata (remote, cancellable, state_local, &error_local);
+		ret = zif_store_remote_load_metadata (remote, state_local, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 				     "failed to load metadata for %s: %s", remote->priv->id, error_local->message);
@@ -1650,7 +1647,7 @@ zif_store_remote_resolve (ZifStore *store, gchar **search, GCancellable *cancell
 
 	state_local = zif_state_get_child (state);
 	primary = zif_store_remote_get_primary (remote);
-	array = zif_md_resolve (primary, search, cancellable, state_local, error);
+	array = zif_md_resolve (primary, search, state_local, error);
 
 	/* this section done */
 	zif_state_done (state);
@@ -1662,7 +1659,7 @@ out:
  * zif_store_remote_search_name:
  **/
 static GPtrArray *
-zif_store_remote_search_name (ZifStore *store, gchar **search, GCancellable *cancellable, ZifState *state, GError **error)
+zif_store_remote_search_name (ZifStore *store, gchar **search, ZifState *state, GError **error)
 {
 	gboolean ret;
 	GError *error_local = NULL;
@@ -1691,7 +1688,7 @@ zif_store_remote_search_name (ZifStore *store, gchar **search, GCancellable *can
 	/* load metadata */
 	if (!remote->priv->loaded_metadata) {
 		state_local = zif_state_get_child (state);
-		ret = zif_store_remote_load_metadata (remote, cancellable, state_local, &error_local);
+		ret = zif_store_remote_load_metadata (remote, state_local, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 				     "failed to load xml: %s", error_local->message);
@@ -1705,7 +1702,7 @@ zif_store_remote_search_name (ZifStore *store, gchar **search, GCancellable *can
 
 	state_local = zif_state_get_child (state);
 	md = zif_store_remote_get_primary (remote);
-	array = zif_md_search_name (md, search, cancellable, state_local, error);
+	array = zif_md_search_name (md, search, state_local, error);
 
 	/* this section done */
 	zif_state_done (state);
@@ -1717,7 +1714,7 @@ out:
  * zif_store_remote_search_details:
  **/
 static GPtrArray *
-zif_store_remote_search_details (ZifStore *store, gchar **search, GCancellable *cancellable, ZifState *state, GError **error)
+zif_store_remote_search_details (ZifStore *store, gchar **search, ZifState *state, GError **error)
 {
 	gboolean ret;
 	GError *error_local = NULL;
@@ -1746,7 +1743,7 @@ zif_store_remote_search_details (ZifStore *store, gchar **search, GCancellable *
 	/* load metadata */
 	if (!remote->priv->loaded_metadata) {
 		state_local = zif_state_get_child (state);
-		ret = zif_store_remote_load_metadata (remote, cancellable, state_local, &error_local);
+		ret = zif_store_remote_load_metadata (remote, state_local, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 				     "failed to load xml: %s", error_local->message);
@@ -1760,7 +1757,7 @@ zif_store_remote_search_details (ZifStore *store, gchar **search, GCancellable *
 
 	state_local = zif_state_get_child (state);
 	md = zif_store_remote_get_primary (remote);
-	array = zif_md_search_details (md, search, cancellable, state_local, error);
+	array = zif_md_search_details (md, search, state_local, error);
 
 	/* this section done */
 	zif_state_done (state);
@@ -1772,7 +1769,7 @@ out:
  * zif_store_remote_search_category_resolve:
  **/
 static ZifPackage *
-zif_store_remote_search_category_resolve (ZifStore *store, const gchar *name, GCancellable *cancellable, ZifState *state, GError **error)
+zif_store_remote_search_category_resolve (ZifStore *store, const gchar *name, ZifState *state, GError **error)
 {
 	ZifStoreLocal *store_local = NULL;
 	GError *error_local = NULL;
@@ -1789,7 +1786,7 @@ zif_store_remote_search_category_resolve (ZifStore *store, const gchar *name, GC
 	/* is already installed? */
 	state_local = zif_state_get_child (state);
 	to_array[0] = name;
-	array = zif_store_resolve (ZIF_STORE (store_local), (gchar**) to_array, cancellable, state_local, &error_local);
+	array = zif_store_resolve (ZIF_STORE (store_local), (gchar**) to_array, state_local, &error_local);
 	if (array == NULL) {
 		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 			     "failed to resolve installed package %s: %s", name, error_local->message);
@@ -1814,7 +1811,7 @@ zif_store_remote_search_category_resolve (ZifStore *store, const gchar *name, GC
 	/* is available in this repo? */
 	state_local = zif_state_get_child (state);
 	to_array[0] = name;
-	array = zif_store_resolve (ZIF_STORE (store), (gchar**)to_array, cancellable, state_local, &error_local);
+	array = zif_store_resolve (ZIF_STORE (store), (gchar**)to_array, state_local, &error_local);
 	if (array == NULL) {
 		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 			     "failed to resolve installed package %s: %s", name, error_local->message);
@@ -1845,7 +1842,7 @@ out:
  * zif_store_remote_search_category:
  **/
 static GPtrArray *
-zif_store_remote_search_category (ZifStore *store, gchar **group_id, GCancellable *cancellable, ZifState *state, GError **error)
+zif_store_remote_search_category (ZifStore *store, gchar **group_id, ZifState *state, GError **error)
 {
 	gboolean ret;
 	GError *error_local = NULL;
@@ -1879,7 +1876,7 @@ zif_store_remote_search_category (ZifStore *store, gchar **group_id, GCancellabl
 	/* load metadata */
 	if (!remote->priv->loaded_metadata) {
 		state_local = zif_state_get_child (state);
-		ret = zif_store_remote_load_metadata (remote, cancellable, state_local, &error_local);
+		ret = zif_store_remote_load_metadata (remote, state_local, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 				     "failed to load xml: %s", error_local->message);
@@ -1903,7 +1900,7 @@ zif_store_remote_search_category (ZifStore *store, gchar **group_id, GCancellabl
 	/* get package names for group */
 	state_local = zif_state_get_child (state);
 	array_names = zif_md_comps_get_packages_for_group (ZIF_MD_COMPS (remote->priv->md_comps),
-							   group_id[0], cancellable, state_local, &error_local);
+							   group_id[0], state_local, &error_local);
 	if (array_names == NULL) {
 		/* ignore when group isn't present, TODO: use GError code */
 		if (g_str_has_prefix (error_local->message, "could not find group")) {
@@ -1934,7 +1931,7 @@ zif_store_remote_search_category (ZifStore *store, gchar **group_id, GCancellabl
 
 		/* state */
 		state_loop = zif_state_get_child (state_local);
-		package = zif_store_remote_search_category_resolve (store, name, cancellable, state_loop, &error_local);
+		package = zif_store_remote_search_category_resolve (store, name, state_loop, &error_local);
 		if (package == NULL) {
 			/* ignore when package isn't present */
 			if (error_local->code == ZIF_STORE_ERROR_FAILED_TO_FIND) {
@@ -1972,7 +1969,7 @@ out:
  * zif_store_remote_search_group:
  **/
 static GPtrArray *
-zif_store_remote_search_group (ZifStore *store, gchar **search, GCancellable *cancellable, ZifState *state, GError **error)
+zif_store_remote_search_group (ZifStore *store, gchar **search, ZifState *state, GError **error)
 {
 	gboolean ret;
 	GError *error_local = NULL;
@@ -2001,7 +1998,7 @@ zif_store_remote_search_group (ZifStore *store, gchar **search, GCancellable *ca
 	/* load metadata */
 	if (!remote->priv->loaded_metadata) {
 		state_local = zif_state_get_child (state);
-		ret = zif_store_remote_load_metadata (remote, cancellable, state_local, &error_local);
+		ret = zif_store_remote_load_metadata (remote, state_local, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 				     "failed to load xml: %s", error_local->message);
@@ -2015,7 +2012,7 @@ zif_store_remote_search_group (ZifStore *store, gchar **search, GCancellable *ca
 
 	state_local = zif_state_get_child (state);
 	primary = zif_store_remote_get_primary (remote);
-	array = zif_md_search_group (primary, search, cancellable, state_local, error);
+	array = zif_md_search_group (primary, search, state_local, error);
 
 	/* this section done */
 	zif_state_done (state);
@@ -2027,7 +2024,7 @@ out:
  * zif_store_remote_find_package:
  **/
 static ZifPackage *
-zif_store_remote_find_package (ZifStore *store, const gchar *package_id, GCancellable *cancellable, ZifState *state, GError **error)
+zif_store_remote_find_package (ZifStore *store, const gchar *package_id, ZifState *state, GError **error)
 {
 	gboolean ret;
 	GPtrArray *array = NULL;
@@ -2057,7 +2054,7 @@ zif_store_remote_find_package (ZifStore *store, const gchar *package_id, GCancel
 	/* load metadata */
 	if (!remote->priv->loaded_metadata) {
 		state_local = zif_state_get_child (state);
-		ret = zif_store_remote_load_metadata (remote, cancellable, state_local, &error_local);
+		ret = zif_store_remote_load_metadata (remote, state_local, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 				     "failed to load xml: %s", error_local->message);
@@ -2072,7 +2069,7 @@ zif_store_remote_find_package (ZifStore *store, const gchar *package_id, GCancel
 	/* search with predicate, TODO: search version (epoch+release) */
 	state_local = zif_state_get_child (state);
 	primary = zif_store_remote_get_primary (remote);
-	array = zif_md_find_package (primary, package_id, cancellable, state_local, &error_local);
+	array = zif_md_find_package (primary, package_id, state_local, &error_local);
 	if (array == NULL) {
 		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 			     "failed to search: %s", error_local->message);
@@ -2108,7 +2105,7 @@ out:
  * zif_store_remote_get_packages:
  **/
 static GPtrArray *
-zif_store_remote_get_packages (ZifStore *store, GCancellable *cancellable, ZifState *state, GError **error)
+zif_store_remote_get_packages (ZifStore *store, ZifState *state, GError **error)
 {
 	gboolean ret;
 	GError *error_local = NULL;
@@ -2137,7 +2134,7 @@ zif_store_remote_get_packages (ZifStore *store, GCancellable *cancellable, ZifSt
 	/* load metadata */
 	if (!remote->priv->loaded_metadata) {
 		state_local = zif_state_get_child (state);
-		ret = zif_store_remote_load_metadata (remote, cancellable, state_local, &error_local);
+		ret = zif_store_remote_load_metadata (remote, state_local, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 				     "failed to load xml: %s", error_local->message);
@@ -2151,7 +2148,7 @@ zif_store_remote_get_packages (ZifStore *store, GCancellable *cancellable, ZifSt
 
 	primary = zif_store_remote_get_primary (remote);
 	state_local = zif_state_get_child (state);
-	array = zif_md_get_packages (primary, cancellable, state_local, error);
+	array = zif_md_get_packages (primary, state_local, error);
 
 	/* this section done */
 	zif_state_done (state);
@@ -2163,7 +2160,7 @@ out:
  * zif_store_remote_get_categories:
  **/
 static GPtrArray *
-zif_store_remote_get_categories (ZifStore *store, GCancellable *cancellable, ZifState *state, GError **error)
+zif_store_remote_get_categories (ZifStore *store, ZifState *state, GError **error)
 {
 	gboolean ret;
 	guint i, j;
@@ -2199,7 +2196,7 @@ zif_store_remote_get_categories (ZifStore *store, GCancellable *cancellable, Zif
 	/* load metadata */
 	if (!remote->priv->loaded_metadata) {
 		state_local = zif_state_get_child (state);
-		ret = zif_store_remote_load_metadata (remote, cancellable, state_local, &error_local);
+		ret = zif_store_remote_load_metadata (remote, state_local, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 				     "failed to load xml: %s", error_local->message);
@@ -2221,7 +2218,7 @@ zif_store_remote_get_categories (ZifStore *store, GCancellable *cancellable, Zif
 
 	/* get list of categories */
 	state_local = zif_state_get_child (state);
-	array_cats = zif_md_comps_get_categories (ZIF_MD_COMPS (remote->priv->md_comps), cancellable, state_local, &error_local);
+	array_cats = zif_md_comps_get_categories (ZIF_MD_COMPS (remote->priv->md_comps), state_local, &error_local);
 	if (array_cats == NULL) {
 		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 			     "failed to get categories: %s", error_local->message);
@@ -2250,7 +2247,7 @@ zif_store_remote_get_categories (ZifStore *store, GCancellable *cancellable, Zif
 		/* get the groups for this category */
 		state_loop = zif_state_get_child (state_local);
 		array_groups = zif_md_comps_get_groups_for_category (ZIF_MD_COMPS (remote->priv->md_comps),
-									  zif_category_get_id (category), cancellable, state_loop, &error_local);
+									  zif_category_get_id (category), state_loop, &error_local);
 		if (array_groups == NULL) {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 				     "failed to get groups for %s: %s", zif_category_get_id (category), error_local->message);
@@ -2293,7 +2290,7 @@ out:
  **/
 static GPtrArray *
 zif_store_remote_get_updates (ZifStore *store, GPtrArray *packages,
-			      GCancellable *cancellable, ZifState *state, GError **error)
+			      ZifState *state, GError **error)
 {
 	gboolean ret;
 	GPtrArray *updates = NULL;
@@ -2329,7 +2326,7 @@ zif_store_remote_get_updates (ZifStore *store, GPtrArray *packages,
 	/* load metadata */
 	if (!remote->priv->loaded_metadata) {
 		state_local = zif_state_get_child (state);
-		ret = zif_store_remote_load_metadata (remote, cancellable, state_local, &error_local);
+		ret = zif_store_remote_load_metadata (remote, state_local, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 				     "failed to load xml: %s", error_local->message);
@@ -2364,7 +2361,7 @@ zif_store_remote_get_updates (ZifStore *store, GPtrArray *packages,
 	/* resolve all of them in one fell swoop */
 	state_local = zif_state_get_child (state);
 	updates = zif_md_resolve (primary, resolve_array,
-				  cancellable, state_local, &error_local);
+				  state_local, &error_local);
 	if (updates == NULL) {
 		egg_error ("failed to resolve: %s", error_local->message);
 		g_error_free (error_local);
@@ -2415,7 +2412,7 @@ out:
  **/
 static GPtrArray *
 zif_store_remote_what_provides (ZifStore *store, gchar **search,
-				GCancellable *cancellable, ZifState *state, GError **error)
+				ZifState *state, GError **error)
 {
 	gboolean ret;
 	GError *error_local = NULL;
@@ -2441,7 +2438,7 @@ zif_store_remote_what_provides (ZifStore *store, gchar **search,
 	/* load metadata */
 	if (!remote->priv->loaded_metadata) {
 		state_local = zif_state_get_child (state);
-		ret = zif_store_remote_load_metadata (remote, cancellable, state_local, &error_local);
+		ret = zif_store_remote_load_metadata (remote, state_local, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 				     "failed to load xml: %s", error_local->message);
@@ -2457,7 +2454,7 @@ zif_store_remote_what_provides (ZifStore *store, gchar **search,
 	state_local = zif_state_get_child (state);
 	primary = zif_store_remote_get_primary (remote);
 	array = zif_md_what_provides (primary, search,
-				      cancellable, state_local, error);
+				      state_local, error);
 
 	/* this section done */
 	zif_state_done (state);
@@ -2469,7 +2466,7 @@ out:
  * zif_store_remote_search_file:
  **/
 static GPtrArray *
-zif_store_remote_search_file (ZifStore *store, gchar **search, GCancellable *cancellable, ZifState *state, GError **error)
+zif_store_remote_search_file (ZifStore *store, gchar **search, ZifState *state, GError **error)
 {
 	gboolean ret;
 	GError *error_local = NULL;
@@ -2502,7 +2499,7 @@ zif_store_remote_search_file (ZifStore *store, gchar **search, GCancellable *can
 	/* load metadata */
 	if (!remote->priv->loaded_metadata) {
 		state_local = zif_state_get_child (state);
-		ret = zif_store_remote_load_metadata (remote, cancellable, state_local, &error_local);
+		ret = zif_store_remote_load_metadata (remote, state_local, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 				     "failed to load xml: %s", error_local->message);
@@ -2518,7 +2515,7 @@ zif_store_remote_search_file (ZifStore *store, gchar **search, GCancellable *can
 	state_local = zif_state_get_child (state);
 	filelists = zif_store_remote_get_filelists (remote);
 	pkgids = zif_md_search_file (filelists,
-				     search, cancellable, state_local, &error_local);
+				     search, state_local, &error_local);
 	if (pkgids == NULL) {
 		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 			     "failed to load get list of pkgids: %s", error_local->message);
@@ -2540,7 +2537,7 @@ zif_store_remote_search_file (ZifStore *store, gchar **search, GCancellable *can
 		/* get the results (should just be one) */
 		state_local = zif_state_get_child (state);
 		to_array[0] = pkgid;
-		tmp = zif_md_search_pkgid (primary, (gchar **) to_array, cancellable, state_local, &error_local);
+		tmp = zif_md_search_pkgid (primary, (gchar **) to_array, state_local, &error_local);
 		if (tmp == NULL) {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED_TO_FIND,
 				     "failed to resolve pkgId to package: %s", error_local->message);
@@ -2570,7 +2567,6 @@ out:
 /**
  * zif_store_remote_is_devel:
  * @store: the #ZifStoreRemote object
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -2581,7 +2577,7 @@ out:
  * Since: 0.0.1
  **/
 gboolean
-zif_store_remote_is_devel (ZifStoreRemote *store, GCancellable *cancellable, ZifState *state, GError **error)
+zif_store_remote_is_devel (ZifStoreRemote *store, ZifState *state, GError **error)
 {
 	gboolean ret;
 	GError *error_local = NULL;
@@ -2600,7 +2596,7 @@ zif_store_remote_is_devel (ZifStoreRemote *store, GCancellable *cancellable, Zif
 
 	/* if not already loaded, load */
 	if (!store->priv->loaded) {
-		ret = zif_store_remote_load (ZIF_STORE (store), cancellable, state, &error_local);
+		ret = zif_store_remote_load (ZIF_STORE (store), state, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 				     "failed to load store file: %s", error_local->message);
@@ -2643,7 +2639,6 @@ zif_store_remote_get_id (ZifStore *store)
 /**
  * zif_store_remote_get_name:
  * @store: the #ZifStoreRemote object
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -2654,7 +2649,7 @@ zif_store_remote_get_id (ZifStore *store)
  * Since: 0.0.1
  **/
 const gchar *
-zif_store_remote_get_name (ZifStoreRemote *store, GCancellable *cancellable, ZifState *state, GError **error)
+zif_store_remote_get_name (ZifStoreRemote *store, ZifState *state, GError **error)
 {
 	gboolean ret;
 	GError *error_local = NULL;
@@ -2673,7 +2668,7 @@ zif_store_remote_get_name (ZifStoreRemote *store, GCancellable *cancellable, Zif
 
 	/* if not already loaded, load */
 	if (!store->priv->loaded) {
-		ret = zif_store_remote_load (ZIF_STORE (store), cancellable, state, &error_local);
+		ret = zif_store_remote_load (ZIF_STORE (store), state, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 				     "failed to load store file: %s", error_local->message);
@@ -2688,7 +2683,6 @@ out:
 /**
  * zif_store_remote_get_enabled:
  * @store: the #ZifStoreRemote object
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -2699,7 +2693,7 @@ out:
  * Since: 0.0.1
  **/
 gboolean
-zif_store_remote_get_enabled (ZifStoreRemote *store, GCancellable *cancellable, ZifState *state, GError **error)
+zif_store_remote_get_enabled (ZifStoreRemote *store, ZifState *state, GError **error)
 {
 	GError *error_local = NULL;
 	gboolean ret;
@@ -2718,7 +2712,7 @@ zif_store_remote_get_enabled (ZifStoreRemote *store, GCancellable *cancellable, 
 
 	/* if not already loaded, load */
 	if (!store->priv->loaded) {
-		ret = zif_store_remote_load (ZIF_STORE (store), cancellable, state, &error_local);
+		ret = zif_store_remote_load (ZIF_STORE (store), state, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 				     "failed to load store file: %s", error_local->message);
@@ -2735,7 +2729,7 @@ out:
  **/
 GPtrArray *
 zif_store_remote_get_files (ZifStoreRemote *store, ZifPackage *package,
-			    GCancellable *cancellable, ZifState *state, GError **error)
+			    ZifState *state, GError **error)
 {
 	ZifMd *filelists;
 
@@ -2743,7 +2737,7 @@ zif_store_remote_get_files (ZifStoreRemote *store, ZifPackage *package,
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	filelists = zif_store_remote_get_filelists (store);
-	return zif_md_get_files (filelists, package, cancellable, state, error);
+	return zif_md_get_files (filelists, package, state, error);
 }
 
 /**
@@ -2984,7 +2978,7 @@ zif_store_remote_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "load from a file");
 	zif_state_reset (state);
-	ret = zif_store_remote_set_from_file (store, "../test/repos/fedora.repo", "fedora", NULL, state, &error);
+	ret = zif_store_remote_set_from_file (store, "../test/repos/fedora.repo", "fedora", state, &error);
 	if (ret)
 		egg_test_success (test, NULL);
 	else
@@ -2999,12 +2993,12 @@ zif_store_remote_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "get updates");
 	zif_state_reset (state);
-	packages = zif_store_get_packages (ZIF_STORE (store_local), NULL, state, &error);
+	packages = zif_store_get_packages (ZIF_STORE (store_local), state, &error);
 	if (packages == NULL)
 		egg_test_failed (test, "failed to get local store: %s", error->message);
 	zif_package_array_filter_newest (packages);
 	zif_state_reset (state);
-	array = zif_store_remote_get_updates (ZIF_STORE (store), packages, NULL, state, &error);
+	array = zif_store_remote_get_updates (ZIF_STORE (store), packages, state, &error);
 	if (array == NULL)
 		egg_test_failed (test, "no data: %s", error->message);
 	else if (array->len > 0)
@@ -3016,12 +3010,12 @@ zif_store_remote_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "is devel");
-	ret = zif_store_remote_is_devel (store, NULL, state, NULL);
+	ret = zif_store_remote_is_devel (store, state, NULL);
 	egg_test_assert (test, !ret);
 
 	/************************************************************/
 	egg_test_title (test, "is enabled");
-	ret = zif_store_remote_get_enabled (store, NULL, state, NULL);
+	ret = zif_store_remote_get_enabled (store, state, NULL);
 	egg_test_assert (test, ret);
 
 	/************************************************************/
@@ -3034,7 +3028,7 @@ zif_store_remote_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "get name");
-	id = zif_store_remote_get_name (store, NULL, state, NULL);
+	id = zif_store_remote_get_name (store, state, NULL);
 	if (g_strcmp0 (id, "Fedora 11 - i386") == 0)
 		egg_test_success (test, NULL);
 	else
@@ -3043,7 +3037,7 @@ zif_store_remote_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "load metadata");
 	zif_state_reset (state);
-	ret = zif_store_remote_load (ZIF_STORE (store), NULL, state, &error);
+	ret = zif_store_remote_load (ZIF_STORE (store), state, &error);
 	if (ret)
 		egg_test_success (test, NULL);
 	else
@@ -3053,7 +3047,7 @@ zif_store_remote_test (EggTest *test)
 	egg_test_title (test, "resolve");
 	zif_state_reset (state);
 	in_array[0] = "kernel";
-	array = zif_store_remote_resolve (ZIF_STORE (store), (gchar**)in_array, NULL, state, &error);
+	array = zif_store_remote_resolve (ZIF_STORE (store), (gchar**)in_array, state, &error);
 	if (array != NULL)
 		egg_test_success (test, NULL);
 	else
@@ -3072,7 +3066,7 @@ zif_store_remote_test (EggTest *test)
 	egg_test_title (test, "search name");
 	zif_state_reset (state);
 	in_array[0] = "power-manager";
-	array = zif_store_remote_search_name (ZIF_STORE (store), (gchar**)in_array, NULL, state, &error);
+	array = zif_store_remote_search_name (ZIF_STORE (store), (gchar**)in_array, state, &error);
 	if (array != NULL)
 		egg_test_success (test, NULL);
 	else
@@ -3091,7 +3085,7 @@ zif_store_remote_test (EggTest *test)
 	egg_test_title (test, "search details");
 	zif_state_reset (state);
 	in_array[0] = "browser plugin";
-	array = zif_store_remote_search_details (ZIF_STORE (store), (gchar**)in_array, NULL, state, &error);
+	array = zif_store_remote_search_details (ZIF_STORE (store), (gchar**)in_array, state, &error);
 	if (array != NULL)
 		egg_test_success (test, NULL);
 	else
@@ -3110,7 +3104,7 @@ zif_store_remote_test (EggTest *test)
 	egg_test_title (test, "search file");
 	zif_state_reset (state);
 	in_array[0] = "/usr/bin/gnome-power-manager";
-	array = zif_store_remote_search_file (ZIF_STORE (store), (gchar**)in_array, NULL, state, &error);
+	array = zif_store_remote_search_file (ZIF_STORE (store), (gchar**)in_array, state, &error);
 	if (array != NULL)
 		egg_test_success (test, NULL);
 	else
@@ -3135,7 +3129,7 @@ zif_store_remote_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "is enabled");
-	ret = zif_store_remote_get_enabled (store, NULL, state, NULL);
+	ret = zif_store_remote_get_enabled (store, state, NULL);
 	egg_test_assert (test, !ret);
 
 	/************************************************************/
@@ -3148,13 +3142,13 @@ zif_store_remote_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "is enabled");
-	ret = zif_store_remote_get_enabled (store, NULL, state, NULL);
+	ret = zif_store_remote_get_enabled (store, state, NULL);
 	egg_test_assert (test, ret);
 
 	/************************************************************/
 	egg_test_title (test, "get packages");
 	zif_state_reset (state);
-	array = zif_store_remote_get_packages (ZIF_STORE (store), NULL, state, &error);
+	array = zif_store_remote_get_packages (ZIF_STORE (store), state, &error);
 	if (array != NULL)
 		egg_test_success (test, NULL);
 	else
@@ -3172,7 +3166,7 @@ zif_store_remote_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "get categories");
 	zif_state_reset (state);
-	array = zif_store_remote_get_categories (ZIF_STORE (store), NULL, state, &error);
+	array = zif_store_remote_get_categories (ZIF_STORE (store), state, &error);
 	if (array == NULL)
 		egg_test_failed (test, "no data: %s", error->message);
 	else if (array->len > 0)
@@ -3210,7 +3204,7 @@ zif_store_remote_test (EggTest *test)
 	egg_test_title (test, "search category");
 	zif_state_reset (state);
 	in_array[0] = "admin-tools";
-	array = zif_store_remote_search_category (ZIF_STORE (store), (gchar**)in_array, NULL, state, &error);
+	array = zif_store_remote_search_category (ZIF_STORE (store), (gchar**)in_array, state, &error);
 	if (array == NULL)
 		egg_test_failed (test, "no data: %s", error->message);
 	else if (array->len > 0)

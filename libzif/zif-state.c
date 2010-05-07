@@ -95,6 +95,8 @@ struct _ZifStatePrivate
 	gulong			 percentage_child_id;
 	gulong			 subpercentage_child_id;
 	gchar			*id;
+	gboolean		 allow_cancel;
+	GCancellable		*cancellable;
 };
 
 enum {
@@ -127,6 +129,79 @@ zif_state_discrete_to_percent (guint discrete, guint steps)
 		return 0;
 	}
 	return ((gfloat) discrete * (100.0f / (gfloat) (steps)));
+}
+
+/**
+ * zif_state_get_cancellable:
+ * @state: the #ZifState object
+ *
+ * Gets the #GCancellable for this operation
+ *
+ * Return value: the #GCancellable or %NULL
+ *
+ * Since: 0.0.1
+ **/
+GCancellable *
+zif_state_get_cancellable (ZifState *state)
+{
+	g_return_val_if_fail (ZIF_IS_STATE (state), NULL);
+	if (state->priv->cancellable == NULL)
+		state->priv->cancellable = g_cancellable_new ();
+	return state->priv->cancellable;
+}
+
+/**
+ * zif_state_set_cancellable:
+ * @state: the #ZifState object
+ * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
+ *
+ * Sets the #GCancellable object to use. You normally don't have to call this
+ * function as a cancellable is created for you at when you request it.
+ * It's also safe to call this function more that once if you need to.
+ *
+ * Since: 0.0.1
+ **/
+void
+zif_state_set_cancellable (ZifState *state, GCancellable *cancellable)
+{
+	g_return_if_fail (ZIF_IS_STATE (state));
+	if (state->priv->cancellable != NULL)
+		g_object_unref (state->priv->cancellable);
+	state->priv->cancellable = g_object_ref (cancellable);
+}
+
+/**
+ * zif_state_get_allow_cancel:
+ * @state: the #ZifState object
+ *
+ * Gets if the sub-task (or one of it's sub-sub-tasks) is cancellable
+ *
+ * Return value: %TRUE if the translation has a chance of being cancelled
+ *
+ * Since: 0.0.1
+ **/
+gboolean
+zif_state_get_allow_cancel (ZifState *state)
+{
+	g_return_val_if_fail (ZIF_IS_STATE (state), FALSE);
+	return state->priv->allow_cancel;
+}
+
+/**
+ * zif_state_set_allow_cancel:
+ * @state: the #ZifState object
+ * @allow_cancel: If this sub-task can be cancelled
+ *
+ * Set is this sub task can be cancelled safely.
+ *
+ * Since: 0.0.1
+ **/
+void
+zif_state_set_allow_cancel (ZifState *state, gboolean allow_cancel)
+{
+	g_return_if_fail (ZIF_IS_STATE (state));
+	/* TODO: need signal */
+	state->priv->allow_cancel = allow_cancel;
 }
 
 /**
@@ -493,6 +568,8 @@ zif_state_finalize (GObject *object)
 	zif_state_reset (state);
 	if (state->priv->parent != NULL)
 		g_object_unref (state->priv->parent);
+	if (state->priv->cancellable != NULL)
+		g_object_unref (state->priv->cancellable);
 
 	G_OBJECT_CLASS (zif_state_parent_class)->finalize (object);
 }
@@ -532,6 +609,8 @@ zif_state_init (ZifState *state)
 	state->priv = ZIF_STATE_GET_PRIVATE (state);
 	state->priv->child = NULL;
 	state->priv->parent = NULL;
+	state->priv->cancellable = NULL;
+	state->priv->allow_cancel = FALSE;
 	state->priv->steps = 0;
 	state->priv->current = 0;
 	state->priv->last_percentage = 0;

@@ -66,20 +66,16 @@ gboolean	 zif_repos_set_repos_dir	(ZifRepos		*repos,
 						 const gchar		*repos_dir,
 						 GError			**error);
 gboolean	 zif_repos_load			(ZifRepos		*repos,
-						 GCancellable		*cancellable,
 						 ZifState		*state,
 						 GError			**error);
 GPtrArray	*zif_repos_get_stores		(ZifRepos		*repos,
-						 GCancellable		*cancellable,
 						 ZifState		*state,
 						 GError			**error);
 GPtrArray	*zif_repos_get_stores_enabled	(ZifRepos		*repos,
-						 GCancellable		*cancellable,
 						 ZifState		*state,
 						 GError			**error);
 ZifStoreRemote	*zif_repos_get_store		(ZifRepos		*repos,
 						 const gchar		*id,
-						 GCancellable		*cancellable,
 						 ZifState		*state,
 						 GError			**error);
 G_END_DECLS

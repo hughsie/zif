@@ -448,7 +448,6 @@ out:
 /**
  * zif_md_load:
  * @md: the #ZifMd object
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -459,7 +458,7 @@ out:
  * Since: 0.0.1
  **/
 gboolean
-zif_md_load (ZifMd *md, GCancellable *cancellable, ZifState *state, GError **error)
+zif_md_load (ZifMd *md, ZifState *state, GError **error)
 {
 	gboolean ret;
 	gboolean uncompressed_check;
@@ -519,7 +518,7 @@ zif_md_load (ZifMd *md, GCancellable *cancellable, ZifState *state, GError **err
 		/* download file */
 		state_local = zif_state_get_child (state);
 		dirname = g_path_get_dirname (md->priv->filename);
-		ret = zif_store_remote_download (md->priv->remote, md->priv->location, dirname, cancellable, state_local, &error_local);
+		ret = zif_store_remote_download (md->priv->remote, md->priv->location, dirname, state_local, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED_DOWNLOAD,
 				     "failed to download missing compressed file: %s", error_local->message);
@@ -548,7 +547,7 @@ zif_md_load (ZifMd *md, GCancellable *cancellable, ZifState *state, GError **err
 		egg_debug ("decompressing file");
 		state_local = zif_state_get_child (state);
 		ret = zif_file_decompress (md->priv->filename, md->priv->filename_uncompressed,
-					   cancellable, state_local, &error_local);
+					   state_local, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED,
 				     "failed to decompress: %s", error_local->message);
@@ -571,7 +570,7 @@ skip_compressed_check:
 
 	/* do subclassed load */
 	state_local = zif_state_get_child (state);
-	ret = klass->load (md, cancellable, state_local, error);
+	ret = klass->load (md, state_local, error);
 
 	/* this section done */
 	zif_state_done (state);
@@ -583,7 +582,6 @@ out:
 /**
  * zif_md_unload:
  * @md: the #ZifMd object
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -594,7 +592,7 @@ out:
  * Since: 0.0.1
  **/
 gboolean
-zif_md_unload (ZifMd *md, GCancellable *cancellable, ZifState *state, GError **error)
+zif_md_unload (ZifMd *md, ZifState *state, GError **error)
 {
 	ZifMdClass *klass = ZIF_MD_GET_CLASS (md);
 
@@ -608,14 +606,13 @@ zif_md_unload (ZifMd *md, GCancellable *cancellable, ZifState *state, GError **e
 		return FALSE;
 	}
 
-	return klass->unload (md, cancellable, state, error);
+	return klass->unload (md, state, error);
 }
 
 /**
  * zif_md_resolve:
  * @md: the #ZifMd object
  * @search: the search term, e.g. "gnome-power-manager"
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -626,7 +623,7 @@ zif_md_unload (ZifMd *md, GCancellable *cancellable, ZifState *state, GError **e
  * Since: 0.0.1
  **/
 GPtrArray *
-zif_md_resolve (ZifMd *md, gchar **search, GCancellable *cancellable, ZifState *state, GError **error)
+zif_md_resolve (ZifMd *md, gchar **search, ZifState *state, GError **error)
 {
 	GPtrArray *array = NULL;
 	ZifMdClass *klass = ZIF_MD_GET_CLASS (md);
@@ -642,7 +639,7 @@ zif_md_resolve (ZifMd *md, gchar **search, GCancellable *cancellable, ZifState *
 	}
 
 	/* do subclassed action */
-	array = klass->resolve (md, search, cancellable, state, error);
+	array = klass->resolve (md, search, state, error);
 out:
 	return array;
 }
@@ -651,7 +648,6 @@ out:
  * zif_md_search_file:
  * @md: the #ZifMd object
  * @search: the search term, e.g. "/usr/bin/powertop"
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -663,7 +659,7 @@ out:
  * Since: 0.0.1
  **/
 GPtrArray *
-zif_md_search_file (ZifMd *md, gchar **search, GCancellable *cancellable, ZifState *state, GError **error)
+zif_md_search_file (ZifMd *md, gchar **search, ZifState *state, GError **error)
 {
 	GPtrArray *array = NULL;
 	ZifMdClass *klass = ZIF_MD_GET_CLASS (md);
@@ -679,7 +675,7 @@ zif_md_search_file (ZifMd *md, gchar **search, GCancellable *cancellable, ZifSta
 	}
 
 	/* do subclassed action */
-	array = klass->search_file (md, search, cancellable, state, error);
+	array = klass->search_file (md, search, state, error);
 out:
 	return array;
 }
@@ -688,7 +684,6 @@ out:
  * zif_md_search_name:
  * @md: the #ZifMd object
  * @search: the search term, e.g. "power"
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -699,7 +694,7 @@ out:
  * Since: 0.0.1
  **/
 GPtrArray *
-zif_md_search_name (ZifMd *md, gchar **search, GCancellable *cancellable, ZifState *state, GError **error)
+zif_md_search_name (ZifMd *md, gchar **search, ZifState *state, GError **error)
 {
 	GPtrArray *array = NULL;
 	ZifMdClass *klass = ZIF_MD_GET_CLASS (md);
@@ -715,7 +710,7 @@ zif_md_search_name (ZifMd *md, gchar **search, GCancellable *cancellable, ZifSta
 	}
 
 	/* do subclassed action */
-	array = klass->search_name (md, search, cancellable, state, error);
+	array = klass->search_name (md, search, state, error);
 out:
 	return array;
 }
@@ -724,7 +719,6 @@ out:
  * zif_md_search_details:
  * @md: the #ZifMd object
  * @search: the search term, e.g. "advanced"
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -735,7 +729,7 @@ out:
  * Since: 0.0.1
  **/
 GPtrArray *
-zif_md_search_details (ZifMd *md, gchar **search, GCancellable *cancellable, ZifState *state, GError **error)
+zif_md_search_details (ZifMd *md, gchar **search, ZifState *state, GError **error)
 {
 	GPtrArray *array = NULL;
 	ZifMdClass *klass = ZIF_MD_GET_CLASS (md);
@@ -751,7 +745,7 @@ zif_md_search_details (ZifMd *md, gchar **search, GCancellable *cancellable, Zif
 	}
 
 	/* do subclassed action */
-	array = klass->search_details (md, search, cancellable, state, error);
+	array = klass->search_details (md, search, state, error);
 out:
 	return array;
 }
@@ -760,7 +754,6 @@ out:
  * zif_md_search_group:
  * @md: the #ZifMd object
  * @search: the search term, e.g. "games/console"
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -771,7 +764,7 @@ out:
  * Since: 0.0.1
  **/
 GPtrArray *
-zif_md_search_group (ZifMd *md, gchar **search, GCancellable *cancellable, ZifState *state, GError **error)
+zif_md_search_group (ZifMd *md, gchar **search, ZifState *state, GError **error)
 {
 	GPtrArray *array = NULL;
 	ZifMdClass *klass = ZIF_MD_GET_CLASS (md);
@@ -787,7 +780,7 @@ zif_md_search_group (ZifMd *md, gchar **search, GCancellable *cancellable, ZifSt
 	}
 
 	/* do subclassed action */
-	array = klass->search_group (md, search, cancellable, state, error);
+	array = klass->search_group (md, search, state, error);
 out:
 	return array;
 }
@@ -796,7 +789,6 @@ out:
  * zif_md_search_pkgid:
  * @md: the #ZifMd object
  * @search: the search term as a 64 bit hash
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -807,7 +799,7 @@ out:
  * Since: 0.0.1
  **/
 GPtrArray *
-zif_md_search_pkgid (ZifMd *md, gchar **search, GCancellable *cancellable, ZifState *state, GError **error)
+zif_md_search_pkgid (ZifMd *md, gchar **search, ZifState *state, GError **error)
 {
 	GPtrArray *array = NULL;
 	ZifMdClass *klass = ZIF_MD_GET_CLASS (md);
@@ -823,7 +815,7 @@ zif_md_search_pkgid (ZifMd *md, gchar **search, GCancellable *cancellable, ZifSt
 	}
 
 	/* do subclassed action */
-	array = klass->search_pkgid (md, search, cancellable, state, error);
+	array = klass->search_pkgid (md, search, state, error);
 out:
 	return array;
 }
@@ -832,7 +824,6 @@ out:
  * zif_md_what_provides:
  * @md: the #ZifMd object
  * @search: the provide, e.g. "mimehandler(application/ogg)"
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -844,7 +835,7 @@ out:
  **/
 GPtrArray *
 zif_md_what_provides (ZifMd *md, gchar **search,
-		      GCancellable *cancellable, ZifState *state, GError **error)
+		      ZifState *state, GError **error)
 {
 	GPtrArray *array = NULL;
 	ZifMdClass *klass = ZIF_MD_GET_CLASS (md);
@@ -860,7 +851,7 @@ zif_md_what_provides (ZifMd *md, gchar **search,
 	}
 
 	/* do subclassed action */
-	array = klass->what_provides (md, search, cancellable, state, error);
+	array = klass->what_provides (md, search, state, error);
 out:
 	return array;
 }
@@ -869,7 +860,6 @@ out:
  * zif_md_find_package:
  * @md: the #ZifMd object
  * @package_id: the PackageId to match
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -880,7 +870,7 @@ out:
  * Since: 0.0.1
  **/
 GPtrArray *
-zif_md_find_package (ZifMd *md, const gchar *package_id, GCancellable *cancellable, ZifState *state, GError **error)
+zif_md_find_package (ZifMd *md, const gchar *package_id, ZifState *state, GError **error)
 {
 	GPtrArray *array = NULL;
 	ZifMdClass *klass = ZIF_MD_GET_CLASS (md);
@@ -896,7 +886,7 @@ zif_md_find_package (ZifMd *md, const gchar *package_id, GCancellable *cancellab
 	}
 
 	/* do subclassed action */
-	array = klass->find_package (md, package_id, cancellable, state, error);
+	array = klass->find_package (md, package_id, state, error);
 out:
 	return array;
 }
@@ -905,7 +895,6 @@ out:
  * zif_md_get_changelog:
  * @md: the #ZifMd object
  * @pkgid: the internal pkgid to match
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -916,7 +905,7 @@ out:
  * Since: 0.0.1
  **/
 GPtrArray *
-zif_md_get_changelog (ZifMd *md, const gchar *pkgid, GCancellable *cancellable, ZifState *state, GError **error)
+zif_md_get_changelog (ZifMd *md, const gchar *pkgid, ZifState *state, GError **error)
 {
 	GPtrArray *array = NULL;
 	ZifMdClass *klass = ZIF_MD_GET_CLASS (md);
@@ -932,7 +921,7 @@ zif_md_get_changelog (ZifMd *md, const gchar *pkgid, GCancellable *cancellable, 
 	}
 
 	/* do subclassed action */
-	array = klass->get_changelog (md, pkgid, cancellable, state, error);
+	array = klass->get_changelog (md, pkgid, state, error);
 out:
 	return array;
 }
@@ -941,7 +930,6 @@ out:
  * zif_md_get_files:
  * @md: the #ZifMd object
  * @package: the %ZifPackage
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -952,7 +940,7 @@ out:
  * Since: 0.0.1
  **/
 GPtrArray *
-zif_md_get_files (ZifMd *md, ZifPackage *package, GCancellable *cancellable, ZifState *state, GError **error)
+zif_md_get_files (ZifMd *md, ZifPackage *package, ZifState *state, GError **error)
 {
 	GPtrArray *array = NULL;
 	ZifMdClass *klass = ZIF_MD_GET_CLASS (md);
@@ -968,7 +956,7 @@ zif_md_get_files (ZifMd *md, ZifPackage *package, GCancellable *cancellable, Zif
 	}
 
 	/* do subclassed action */
-	array = klass->get_files (md, package, cancellable, state, error);
+	array = klass->get_files (md, package, state, error);
 out:
 	return array;
 }
@@ -976,7 +964,6 @@ out:
 /**
  * zif_md_get_packages:
  * @md: the #ZifMd object
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -987,7 +974,7 @@ out:
  * Since: 0.0.1
  **/
 GPtrArray *
-zif_md_get_packages (ZifMd *md, GCancellable *cancellable, ZifState *state, GError **error)
+zif_md_get_packages (ZifMd *md, ZifState *state, GError **error)
 {
 	GPtrArray *array = NULL;
 	ZifMdClass *klass = ZIF_MD_GET_CLASS (md);
@@ -1003,7 +990,7 @@ zif_md_get_packages (ZifMd *md, GCancellable *cancellable, ZifState *state, GErr
 	}
 
 	/* do subclassed action */
-	array = klass->get_packages (md, cancellable, state, error);
+	array = klass->get_packages (md, state, error);
 out:
 	return array;
 }
@@ -1317,7 +1304,7 @@ zif_md_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "load");
-	ret = zif_md_load (md, cancellable, state, &error);
+	ret = zif_md_load (md, state, &error);
 	if (ret)
 		egg_test_success (test, NULL);
 	else

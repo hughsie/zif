@@ -63,7 +63,7 @@ G_DEFINE_TYPE (ZifMdOtherSql, zif_md_other_sql, ZIF_TYPE_MD)
  * zif_md_other_sql_unload:
  **/
 static gboolean
-zif_md_other_sql_unload (ZifMd *md, GCancellable *cancellable, ZifState *state, GError **error)
+zif_md_other_sql_unload (ZifMd *md, ZifState *state, GError **error)
 {
 	gboolean ret = FALSE;
 	return ret;
@@ -73,7 +73,7 @@ zif_md_other_sql_unload (ZifMd *md, GCancellable *cancellable, ZifState *state, 
  * zif_md_other_sql_load:
  **/
 static gboolean
-zif_md_other_sql_load (ZifMd *md, GCancellable *cancellable, ZifState *state, GError **error)
+zif_md_other_sql_load (ZifMd *md, ZifState *state, GError **error)
 {
 	const gchar *filename;
 	gint rc;
@@ -164,7 +164,7 @@ out:
  **/
 static GPtrArray *
 zif_md_other_sql_search_pkgkey (ZifMdOtherSql *md, guint pkgkey,
-			        GCancellable *cancellable, ZifState *state, GError **error)
+			        ZifState *state, GError **error)
 {
 	gchar *statement = NULL;
 	gchar *error_msg = NULL;
@@ -218,7 +218,7 @@ zif_md_other_sql_sqlite_pkgkey_cb (void *data, gint argc, gchar **argv, gchar **
  **/
 static GPtrArray *
 zif_md_other_sql_get_changelog (ZifMd *md, const gchar *pkgid,
-			        GCancellable *cancellable, ZifState *state, GError **error)
+			        ZifState *state, GError **error)
 {
 	gchar *statement = NULL;
 	gchar *error_msg = NULL;
@@ -244,7 +244,7 @@ zif_md_other_sql_get_changelog (ZifMd *md, const gchar *pkgid,
 	/* if not already loaded, load */
 	if (!md_other_sql->priv->loaded) {
 		state_local = zif_state_get_child (state);
-		ret = zif_md_load (md, cancellable, state_local, &error_local);
+		ret = zif_md_load (md, state_local, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED_TO_LOAD,
 				     "failed to load md_other_sql file: %s", error_local->message);
@@ -282,7 +282,7 @@ zif_md_other_sql_get_changelog (ZifMd *md, const gchar *pkgid,
 
 		/* get changeset for pkgKey */
 		state_loop = zif_state_get_child (state_local);
-		array_tmp = zif_md_other_sql_search_pkgkey (md_other_sql, pkgkey, cancellable, state_loop, error);
+		array_tmp = zif_md_other_sql_search_pkgkey (md_other_sql, pkgkey, state_loop, error);
 		if (array_tmp == NULL) {
 			g_ptr_array_unref (array);
 			array = NULL;
@@ -457,7 +457,7 @@ zif_md_other_sql_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "load");
-	ret = zif_md_load (ZIF_MD (md), cancellable, state, &error);
+	ret = zif_md_load (ZIF_MD (md), state, &error);
 	if (ret)
 		egg_test_success (test, NULL);
 	else
@@ -472,7 +472,7 @@ zif_md_other_sql_test (EggTest *test)
 	zif_state_reset (state);
 	array = zif_md_other_sql_get_changelog (ZIF_MD (md),
 						"42b8d71b303b19c2fcc2b06bb9c764f2902dd72b9376525025ee9ba4a41c38e9",
-						cancellable, state, &error);
+						state, &error);
 	if (array != NULL)
 		egg_test_success (test, NULL);
 	else

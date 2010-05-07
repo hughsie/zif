@@ -58,17 +58,14 @@ GType		 zif_md_comps_get_type			(void);
 ZifMdComps	*zif_md_comps_new			(void);
 
 GPtrArray	*zif_md_comps_get_categories		(ZifMdComps		*md,
-							 GCancellable		*cancellable,
 							 ZifState		*state,
 							 GError			**error);
 GPtrArray	*zif_md_comps_get_groups_for_category	(ZifMdComps		*md,
 							 const gchar		*category_id,
-							 GCancellable		*cancellable,
 							 ZifState		*state,
 							 GError			**error);
 GPtrArray	*zif_md_comps_get_packages_for_group	(ZifMdComps		*md,
 							 const gchar		*group_id,
-							 GCancellable		*cancellable,
 							 ZifState		*state,
 							 GError			**error);
 

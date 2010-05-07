@@ -295,7 +295,7 @@ out:
  * zif_file_decompress_zlib:
  **/
 static gboolean
-zif_file_decompress_zlib (const gchar *in, const gchar *out, GCancellable *cancellable, ZifState *state, GError **error)
+zif_file_decompress_zlib (const gchar *in, const gchar *out, ZifState *state, GError **error)
 {
 	gboolean ret = FALSE;
 	gint size;
@@ -303,9 +303,13 @@ zif_file_decompress_zlib (const gchar *in, const gchar *out, GCancellable *cance
 	gzFile *f_in = NULL;
 	FILE *f_out = NULL;
 	guchar buf[ZIF_BUFFER_SIZE];
+	GCancellable *cancellable;
 
 	g_return_val_if_fail (in != NULL, FALSE);
 	g_return_val_if_fail (out != NULL, FALSE);
+
+	/* get cancellable */
+	cancellable = zif_state_get_cancellable (state);
 
 	/* open file for reading */
 	f_in = gzopen (in, "rb");
@@ -367,7 +371,7 @@ out:
  * zif_file_decompress_bz2:
  **/
 static gboolean
-zif_file_decompress_bz2 (const gchar *in, const gchar *out, GCancellable *cancellable, ZifState *state, GError **error)
+zif_file_decompress_bz2 (const gchar *in, const gchar *out, ZifState *state, GError **error)
 {
 	gboolean ret = FALSE;
 	FILE *f_in = NULL;
@@ -377,9 +381,13 @@ zif_file_decompress_bz2 (const gchar *in, const gchar *out, GCancellable *cancel
 	gint written;
 	gchar buf[ZIF_BUFFER_SIZE];
 	gint bzerror = BZ_OK;
+	GCancellable *cancellable;
 
 	g_return_val_if_fail (in != NULL, FALSE);
 	g_return_val_if_fail (out != NULL, FALSE);
+
+	/* get cancellable */
+	cancellable = zif_state_get_cancellable (state);
 
 	/* open file for reading */
 	f_in = fopen (in, "r");
@@ -455,7 +463,6 @@ out:
  * zif_file_decompress:
  * @in: the filename to unpack
  * @out: the file to create
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @state: a #ZifState to use for progress reporting
  * @error: a valid %GError
  *
@@ -466,7 +473,7 @@ out:
  * Since: 0.0.1
  **/
 gboolean
-zif_file_decompress (const gchar *in, const gchar *out, GCancellable *cancellable, ZifState *state, GError **error)
+zif_file_decompress (const gchar *in, const gchar *out, ZifState *state, GError **error)
 {
 	gboolean ret = FALSE;
 
@@ -475,13 +482,13 @@ zif_file_decompress (const gchar *in, const gchar *out, GCancellable *cancellabl
 
 	/* bz2 */
 	if (g_str_has_suffix (in, "bz2")) {
-		ret = zif_file_decompress_bz2 (in, out, cancellable, state, error);
+		ret = zif_file_decompress_bz2 (in, out, state, error);
 		goto out;
 	}
 
 	/* zlib */
 	if (g_str_has_suffix (in, "gz")) {
-		ret = zif_file_decompress_zlib (in, out, cancellable, state, error);
+		ret = zif_file_decompress_zlib (in, out, state, error);
 		goto out;
 	}
 
@@ -845,7 +852,7 @@ zif_utils_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "decompress gz");
 	ret = zif_file_decompress ("../test/cache/fedora/cf940a26805152e5f675edd695022d890241aba057a4a4a97a0b46618a51c482-comps-rawhide.xml.gz",
-				   "/tmp/comps-rawhide.xml", cancellable, state, &error);
+				   "/tmp/comps-rawhide.xml", state, &error);
 	if (ret)
 		egg_test_success (test, NULL);
 	else {
@@ -856,7 +863,7 @@ zif_utils_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "decompress bz2");
 	ret = zif_file_decompress ("../test/cache/fedora/35d817e2bac701525fa72cec57387a2e3457bf32642adeee1e345cc180044c86-primary.sqlite.bz2",
-				   "/tmp/moo.sqlite", cancellable, state, &error);
+				   "/tmp/moo.sqlite", state, &error);
 	if (ret)
 		egg_test_success (test, NULL);
 	else {

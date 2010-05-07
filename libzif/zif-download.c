@@ -144,7 +144,6 @@ zif_download_cancelled_cb (GCancellable *cancellable, ZifDownload *download)
  * @download: the #ZifDownload object
  * @uri: the full remote URI
  * @filename: the local filename to save to
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -155,13 +154,14 @@ zif_download_cancelled_cb (GCancellable *cancellable, ZifDownload *download)
  * Since: 0.0.1
  **/
 gboolean
-zif_download_file (ZifDownload *download, const gchar *uri, const gchar *filename, GCancellable *cancellable, ZifState *state, GError **error)
+zif_download_file (ZifDownload *download, const gchar *uri, const gchar *filename, ZifState *state, GError **error)
 {
 	gboolean ret = FALSE;
 	SoupURI *base_uri;
 	SoupMessage *msg = NULL;
 	GError *error_local = NULL;
 	gulong cancellable_id = 0;
+	GCancellable *cancellable;
 
 	g_return_val_if_fail (ZIF_IS_DOWNLOAD (download), FALSE);
 	g_return_val_if_fail (uri != NULL, FALSE);
@@ -174,6 +174,7 @@ zif_download_file (ZifDownload *download, const gchar *uri, const gchar *filenam
 	download->priv->state = g_object_ref (state);
 
 	/* set up cancel */
+	cancellable = zif_state_get_cancellable (state);
 	if (cancellable != NULL) {
 		g_cancellable_reset (cancellable);
 		cancellable_id = g_cancellable_connect (cancellable, G_CALLBACK (zif_download_cancelled_cb), download, NULL);
@@ -411,7 +412,7 @@ zif_download_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "download file");
 	ret = zif_download_file (download, "http://people.freedesktop.org/~hughsient/temp/Screenshot.png",
-				 "../test/downloads", cancellable, state, &error);
+				 "../test/downloads", state, &error);
 	if (ret)
 		egg_test_success (test, NULL);
 	else
@@ -431,7 +432,7 @@ zif_download_test (EggTest *test)
 	egg_test_title (test, "download second file (should be cancelled)");
 	zif_state_reset (state);
 	ret = zif_download_file (download, "http://people.freedesktop.org/~hughsient/temp/Screenshot.png",
-				 "../test/downloads", cancellable, state, &error);
+				 "../test/downloads", state, &error);
 	if (!ret)
 		egg_test_success (test, NULL);
 	else

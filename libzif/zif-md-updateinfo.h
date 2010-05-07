@@ -58,12 +58,10 @@ GType		 zif_md_updateinfo_get_type		(void);
 ZifMdUpdateinfo	*zif_md_updateinfo_new			(void);
 
 GPtrArray	*zif_md_updateinfo_get_detail		(ZifMdUpdateinfo	*md,
-							 GCancellable		*cancellable,
 							 ZifState		*state,
 							 GError			**error);
 GPtrArray	*zif_md_updateinfo_get_detail_for_package (ZifMdUpdateinfo	*md,
 							 const gchar		*package_id,
-							 GCancellable		*cancellable,
 							 ZifState		*state,
 							 GError			**error);
 

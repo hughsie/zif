@@ -123,7 +123,7 @@ out:
  * zif_repos_get_for_filename:
  **/
 static gboolean
-zif_repos_get_for_filename (ZifRepos *repos, const gchar *filename, GCancellable *cancellable, ZifState *state, GError **error)
+zif_repos_get_for_filename (ZifRepos *repos, const gchar *filename, ZifState *state, GError **error)
 {
 	GError *error_local = NULL;
 	GKeyFile *file;
@@ -155,7 +155,7 @@ zif_repos_get_for_filename (ZifRepos *repos, const gchar *filename, GCancellable
 	for (i=0; repos_groups[i] != NULL; i++) {
 		store = zif_store_remote_new ();
 		state_local = zif_state_get_child (state);
-		ret = zif_store_remote_set_from_file (store, path, repos_groups[i], cancellable, state_local, &error_local);
+		ret = zif_store_remote_set_from_file (store, path, repos_groups[i], state_local, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_REPOS_ERROR, ZIF_REPOS_ERROR_FAILED,
 				     "failed to set from %s: %s", path, error_local->message);
@@ -177,7 +177,6 @@ out:
 /**
  * zif_repos_load:
  * @repos: the #ZifRepos object
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -188,7 +187,7 @@ out:
  * Since: 0.0.1
  **/
 gboolean
-zif_repos_load (ZifRepos *repos, GCancellable *cancellable, ZifState *state, GError **error)
+zif_repos_load (ZifRepos *repos, ZifState *state, GError **error)
 {
 	gboolean ret = TRUE;
 	ZifStoreRemote *store;
@@ -245,7 +244,7 @@ zif_repos_load (ZifRepos *repos, GCancellable *cancellable, ZifState *state, GEr
 
 		/* add all repos for filename */
 		state_local = zif_state_get_child (state);
-		ret = zif_repos_get_for_filename (repos, filename, cancellable, state_local, &error_local);
+		ret = zif_repos_get_for_filename (repos, filename, state_local, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_REPOS_ERROR, ZIF_REPOS_ERROR_FAILED,
 				     "failed to get filename %s: %s", filename, error_local->message);
@@ -269,7 +268,7 @@ zif_repos_load (ZifRepos *repos, GCancellable *cancellable, ZifState *state, GEr
 
 		/* get repo enabled state */
 		state_local = zif_state_get_child (state);
-		ret = zif_store_remote_get_enabled (store, cancellable, state_local, &error_local);
+		ret = zif_store_remote_get_enabled (store, state_local, &error_local);
 		if (error_local != NULL) {
 			g_set_error (error, ZIF_REPOS_ERROR, ZIF_REPOS_ERROR_FAILED,
 				     "failed to get repo state for %s: %s", zif_store_get_id (ZIF_STORE (store)), error_local->message);
@@ -299,7 +298,6 @@ out:
 /**
  * zif_repos_get_stores:
  * @repos: the #ZifRepos object
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -310,7 +308,7 @@ out:
  * Since: 0.0.1
  **/
 GPtrArray *
-zif_repos_get_stores (ZifRepos *repos, GCancellable *cancellable, ZifState *state, GError **error)
+zif_repos_get_stores (ZifRepos *repos, ZifState *state, GError **error)
 {
 	GPtrArray *array = NULL;
 	GError *error_local = NULL;
@@ -321,7 +319,7 @@ zif_repos_get_stores (ZifRepos *repos, GCancellable *cancellable, ZifState *stat
 
 	/* if not already loaded, load */
 	if (!repos->priv->loaded) {
-		ret = zif_repos_load (repos, cancellable, state, &error_local);
+		ret = zif_repos_load (repos, state, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_REPOS_ERROR, ZIF_REPOS_ERROR_FAILED,
 				     "failed to load repos: %s", error_local->message);
@@ -339,7 +337,6 @@ out:
 /**
  * zif_repos_get_stores_enabled:
  * @repos: the #ZifRepos object
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -350,7 +347,7 @@ out:
  * Since: 0.0.1
  **/
 GPtrArray *
-zif_repos_get_stores_enabled (ZifRepos *repos, GCancellable *cancellable, ZifState *state, GError **error)
+zif_repos_get_stores_enabled (ZifRepos *repos, ZifState *state, GError **error)
 {
 	GPtrArray *array = NULL;
 	GError *error_local = NULL;
@@ -363,7 +360,7 @@ zif_repos_get_stores_enabled (ZifRepos *repos, GCancellable *cancellable, ZifSta
 
 	/* if not already loaded, load */
 	if (!repos->priv->loaded) {
-		ret = zif_repos_load (repos, cancellable, state, &error_local);
+		ret = zif_repos_load (repos, state, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_REPOS_ERROR, ZIF_REPOS_ERROR_FAILED,
 				     "failed to load enabled repos: %s", error_local->message);
@@ -386,7 +383,6 @@ out:
  * zif_repos_get_store:
  * @repos: the #ZifRepos object
  * @id: the repository id, e.g. "fedora"
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -397,7 +393,7 @@ out:
  * Since: 0.0.1
  **/
 ZifStoreRemote *
-zif_repos_get_store (ZifRepos *repos, const gchar *id, GCancellable *cancellable, ZifState *state, GError **error)
+zif_repos_get_store (ZifRepos *repos, const gchar *id, ZifState *state, GError **error)
 {
 	guint i;
 	ZifStoreRemote *store = NULL;
@@ -412,7 +408,7 @@ zif_repos_get_store (ZifRepos *repos, const gchar *id, GCancellable *cancellable
 
 	/* if not already loaded, load */
 	if (!repos->priv->loaded) {
-		ret = zif_repos_load (repos, cancellable, state, &error_local);
+		ret = zif_repos_load (repos, state, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_REPOS_ERROR, ZIF_REPOS_ERROR_FAILED,
 				     "failed to load repos: %s", error_local->message);
@@ -578,7 +574,7 @@ zif_repos_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "get list of repos");
-	array = zif_repos_get_stores (repos, NULL, state, &error);
+	array = zif_repos_get_stores (repos, state, &error);
 	if (array != NULL)
 		egg_test_success (test, NULL);
 	else
@@ -599,7 +595,7 @@ zif_repos_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "get list of enabled repos");
-	array = zif_repos_get_stores_enabled (repos, NULL, state, &error);
+	array = zif_repos_get_stores_enabled (repos, state, &error);
 	if (array != NULL)
 		egg_test_success (test, NULL);
 	else
@@ -618,7 +614,7 @@ zif_repos_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "get name");
-	value = zif_store_remote_get_name (store, NULL, state, NULL);
+	value = zif_store_remote_get_name (store, state, NULL);
 	if (g_strcmp0 (value, "Fedora 11 - i386") == 0)
 		egg_test_success (test, NULL);
 	else

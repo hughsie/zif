@@ -27,6 +27,7 @@
 #define __ZIF_STATE_H
 
 #include <glib-object.h>
+#include <gio/gio.h>
 
 G_BEGIN_DECLS
 
@@ -76,9 +77,11 @@ struct _ZifStateClass
 #define zif_state_set_number_steps(state, steps)
 #endif
 
-GType		 zif_state_get_type		(void);
-ZifState	*zif_state_new			(void);
-ZifState	*zif_state_get_child		(ZifState		*state);
+GType		 zif_state_get_type			(void);
+ZifState	*zif_state_new				(void);
+ZifState	*zif_state_get_child			(ZifState		*state);
+
+/* percentage changed */
 gboolean	 zif_state_set_number_steps_real	(ZifState		*state,
 							 guint			 steps,
 							 const gchar		*function_name,
@@ -86,13 +89,21 @@ gboolean	 zif_state_set_number_steps_real	(ZifState		*state,
 gboolean	 zif_state_set_percentage		(ZifState		*state,
 							 guint			 percentage);
 guint		 zif_state_get_percentage		(ZifState		*state);
-gboolean	 zif_state_done_real		(ZifState		*state,
+gboolean	 zif_state_done_real			(ZifState		*state,
 							 const gchar		*function_name,
 							 gint			 function_line);
 gboolean	 zif_state_finished_real		(ZifState		*state,
 							 const gchar		*function_name,
 							 gint			 function_line);
 gboolean	 zif_state_reset			(ZifState		*state);
+
+/* cancellation */
+GCancellable	*zif_state_get_cancellable		(ZifState		*state);
+void		 zif_state_set_cancellable		(ZifState		*state,
+							 GCancellable		*cancellable);
+gboolean	 zif_state_get_allow_cancel		(ZifState		*state);
+void		 zif_state_set_allow_cancel		(ZifState		*state,
+							 gboolean		 allow_cancel);
 
 G_END_DECLS
 

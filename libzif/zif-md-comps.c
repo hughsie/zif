@@ -398,7 +398,7 @@ out:
  * zif_md_comps_unload:
  **/
 static gboolean
-zif_md_comps_unload (ZifMd *md, GCancellable *cancellable, ZifState *state, GError **error)
+zif_md_comps_unload (ZifMd *md, ZifState *state, GError **error)
 {
 	gboolean ret = FALSE;
 	return ret;
@@ -408,7 +408,7 @@ zif_md_comps_unload (ZifMd *md, GCancellable *cancellable, ZifState *state, GErr
  * zif_md_comps_load:
  **/
 static gboolean
-zif_md_comps_load (ZifMd *md, GCancellable *cancellable, ZifState *state, GError **error)
+zif_md_comps_load (ZifMd *md, ZifState *state, GError **error)
 {
 	gboolean ret = TRUE;
 	gchar *contents = NULL;
@@ -496,7 +496,6 @@ out:
 /**
  * zif_md_comps_get_categories:
  * @md: the #ZifMdComps object
- * @cancellable: the %GCancellable, or %NULL
  * @state: the %ZifState object
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -507,7 +506,7 @@ out:
  * Since: 0.0.1
  **/
 GPtrArray *
-zif_md_comps_get_categories (ZifMdComps *md, GCancellable *cancellable,
+zif_md_comps_get_categories (ZifMdComps *md,
 			     ZifState *state, GError **error)
 {
 	GPtrArray *array = NULL;
@@ -522,7 +521,7 @@ zif_md_comps_get_categories (ZifMdComps *md, GCancellable *cancellable,
 
 	/* if not already loaded, load */
 	if (!md->priv->loaded) {
-		ret = zif_md_load (ZIF_MD (md), cancellable, state, &error_local);
+		ret = zif_md_load (ZIF_MD (md), state, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED_TO_LOAD,
 				     "failed to get load comps: %s", error_local->message);
@@ -577,7 +576,6 @@ zif_md_comps_get_category_for_group (ZifMdComps *md, const gchar *group_id)
  * zif_md_comps_get_groups_for_category:
  * @md: the #ZifMdComps object
  * @category_id: the category to search for
- * @cancellable: the %GCancellable, or %NULL
  * @state: the %ZifState object
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -589,7 +587,7 @@ zif_md_comps_get_category_for_group (ZifMdComps *md, const gchar *group_id)
  **/
 GPtrArray *
 zif_md_comps_get_groups_for_category (ZifMdComps *md, const gchar *category_id,
-				      GCancellable *cancellable, ZifState *state, GError **error)
+				      ZifState *state, GError **error)
 {
 	GPtrArray *array = NULL;
 	guint i;
@@ -607,7 +605,7 @@ zif_md_comps_get_groups_for_category (ZifMdComps *md, const gchar *category_id,
 
 	/* if not already loaded, load */
 	if (!md->priv->loaded) {
-		ret = zif_md_load (ZIF_MD (md), cancellable, state, &error_local);
+		ret = zif_md_load (ZIF_MD (md), state, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED_TO_LOAD,
 				     "failed to get load comps: %s", error_local->message);
@@ -653,7 +651,6 @@ out:
  * zif_md_comps_get_packages_for_group:
  * @md: the #ZifMdComps object
  * @group_id: the group to search for
- * @cancellable: the %GCancellable, or %NULL
  * @state: the %ZifState object
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -665,7 +662,7 @@ out:
  **/
 GPtrArray *
 zif_md_comps_get_packages_for_group (ZifMdComps *md, const gchar *group_id,
-				     GCancellable *cancellable, ZifState *state, GError **error)
+				     ZifState *state, GError **error)
 {
 	GPtrArray *array = NULL;
 	guint i;
@@ -682,7 +679,7 @@ zif_md_comps_get_packages_for_group (ZifMdComps *md, const gchar *group_id,
 
 	/* if not already loaded, load */
 	if (!md->priv->loaded) {
-		ret = zif_md_load (ZIF_MD (md), cancellable, state, &error_local);
+		ret = zif_md_load (ZIF_MD (md), state, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED_TO_LOAD,
 				     "failed to get load comps: %s", error_local->message);
@@ -859,7 +856,7 @@ zif_md_comps_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "get categories");
-	array = zif_md_comps_get_categories (md, cancellable, state, &error);
+	array = zif_md_comps_get_categories (md, state, &error);
 	if (array != NULL)
 		egg_test_success (test, NULL);
 	else
@@ -904,7 +901,7 @@ zif_md_comps_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "get groups for category");
-	array = zif_md_comps_get_groups_for_category (md, "apps", cancellable, state, &error);
+	array = zif_md_comps_get_groups_for_category (md, "apps", state, &error);
 	if (array != NULL)
 		egg_test_success (test, NULL);
 	else
@@ -928,7 +925,7 @@ zif_md_comps_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "get packages for group");
-	array = zif_md_comps_get_packages_for_group (md, "admin-tools", cancellable, state, &error);
+	array = zif_md_comps_get_packages_for_group (md, "admin-tools", state, &error);
 	if (array != NULL)
 		egg_test_success (test, NULL);
 	else

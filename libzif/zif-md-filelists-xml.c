@@ -82,7 +82,7 @@ G_DEFINE_TYPE (ZifMdFilelistsXml, zif_md_filelists_xml, ZIF_TYPE_MD)
  * zif_md_filelists_xml_unload:
  **/
 static gboolean
-zif_md_filelists_xml_unload (ZifMd *md, GCancellable *cancellable, ZifState *state, GError **error)
+zif_md_filelists_xml_unload (ZifMd *md, ZifState *state, GError **error)
 {
 	gboolean ret = FALSE;
 	return ret;
@@ -270,7 +270,7 @@ out:
  * zif_md_filelists_xml_load:
  **/
 static gboolean
-zif_md_filelists_xml_load (ZifMd *md, GCancellable *cancellable, ZifState *state, GError **error)
+zif_md_filelists_xml_load (ZifMd *md, ZifState *state, GError **error)
 {
 	const gchar *filename;
 	gboolean ret;
@@ -326,7 +326,7 @@ out:
  **/
 static GPtrArray *
 zif_md_filelists_xml_get_files (ZifMd *md, ZifPackage *package,
-				GCancellable *cancellable, ZifState *state, GError **error)
+				ZifState *state, GError **error)
 {
 	GPtrArray *array = NULL;
 	GPtrArray *packages;
@@ -352,7 +352,7 @@ zif_md_filelists_xml_get_files (ZifMd *md, ZifPackage *package,
 	/* if not already loaded, load */
 	if (!md_filelists->priv->loaded) {
 		state_local = zif_state_get_child (state);
-		ret = zif_md_load (ZIF_MD (md), cancellable, state_local, &error_local);
+		ret = zif_md_load (ZIF_MD (md), state_local, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED_TO_LOAD,
 				     "failed to load md_filelists_xml file: %s", error_local->message);
@@ -376,7 +376,7 @@ zif_md_filelists_xml_get_files (ZifMd *md, ZifPackage *package,
 		pkgid_tmp = zif_package_remote_get_pkgid (ZIF_PACKAGE_REMOTE (package_tmp));
 		if (g_strcmp0 (pkgid, pkgid_tmp) == 0) {
 			state_loop = zif_state_get_child (state_local);
-			array = zif_package_get_files (package_tmp, cancellable, state_loop, NULL);
+			array = zif_package_get_files (package_tmp, state_loop, NULL);
 			break;
 		}
 
@@ -395,7 +395,7 @@ out:
  **/
 static GPtrArray *
 zif_md_filelists_xml_search_file (ZifMd *md, gchar **search,
-				  GCancellable *cancellable, ZifState *state, GError **error)
+				  ZifState *state, GError **error)
 {
 	GPtrArray *array = NULL;
 	GPtrArray *packages;
@@ -422,7 +422,7 @@ zif_md_filelists_xml_search_file (ZifMd *md, gchar **search,
 	/* if not already loaded, load */
 	if (!md_filelists->priv->loaded) {
 		state_local = zif_state_get_child (state);
-		ret = zif_md_load (ZIF_MD (md), cancellable, state_local, &error_local);
+		ret = zif_md_load (ZIF_MD (md), state_local, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED_TO_LOAD,
 				     "failed to load md_filelists_xml file: %s", error_local->message);
@@ -453,7 +453,7 @@ zif_md_filelists_xml_search_file (ZifMd *md, gchar **search,
 		package = g_ptr_array_index (packages, i);
 		pkgid = zif_package_remote_get_pkgid (ZIF_PACKAGE_REMOTE (package));
 		state_loop = zif_state_get_child (state_local);
-		files = zif_package_get_files (package, cancellable, state_loop, NULL);
+		files = zif_package_get_files (package, state_loop, NULL);
 		for (k=0; k<files->len; k++) {
 			filename = g_ptr_array_index (files, k);
 			for (j=0; search[j] != NULL; j++) {
@@ -629,7 +629,7 @@ zif_md_filelists_xml_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "load");
-	ret = zif_md_load (ZIF_MD (md), cancellable, state, &error);
+	ret = zif_md_load (ZIF_MD (md), state, &error);
 	if (ret)
 		egg_test_success (test, NULL);
 	else
@@ -642,7 +642,7 @@ zif_md_filelists_xml_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "search for files");
 	zif_state_reset (state);
-	array = zif_md_filelists_xml_search_file (ZIF_MD (md), (gchar**)data, cancellable, state, &error);
+	array = zif_md_filelists_xml_search_file (ZIF_MD (md), (gchar**)data, state, &error);
 	if (array != NULL)
 		egg_test_success (test, NULL);
 	else

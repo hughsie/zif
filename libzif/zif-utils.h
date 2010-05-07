@@ -66,7 +66,6 @@ gboolean	 zif_file_untar			(const gchar	*filename,
 						 GError		**error);
 gboolean	 zif_file_decompress		(const gchar	*in,
 						 const gchar	*out,
-						 GCancellable	*cancellable,
 						 ZifState	*state,
 						 GError		**error);
 gchar		*zif_file_get_uncompressed_name	(const gchar	*filename);

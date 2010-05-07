@@ -414,7 +414,7 @@ out:
  * zif_md_updateinfo_unload:
  **/
 static gboolean
-zif_md_updateinfo_unload (ZifMd *md, GCancellable *cancellable, ZifState *state, GError **error)
+zif_md_updateinfo_unload (ZifMd *md, ZifState *state, GError **error)
 {
 	gboolean ret = FALSE;
 	return ret;
@@ -424,7 +424,7 @@ zif_md_updateinfo_unload (ZifMd *md, GCancellable *cancellable, ZifState *state,
  * zif_md_updateinfo_load:
  **/
 static gboolean
-zif_md_updateinfo_load (ZifMd *md, GCancellable *cancellable, ZifState *state, GError **error)
+zif_md_updateinfo_load (ZifMd *md, ZifState *state, GError **error)
 {
 	gboolean ret = TRUE;
 	gchar *contents = NULL;
@@ -481,7 +481,6 @@ out:
 /**
  * zif_md_updateinfo_get_detail:
  * @md: the #ZifMdUpdateinfo object
- * @cancellable: the %GCancellable, or %NULL
  * @state: the %ZifState object
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -493,7 +492,7 @@ out:
  **/
 GPtrArray *
 zif_md_updateinfo_get_detail (ZifMdUpdateinfo *md,
-			      GCancellable *cancellable, ZifState *state, GError **error)
+			      ZifState *state, GError **error)
 {
 	GPtrArray *array = NULL;
 	gboolean ret;
@@ -504,7 +503,7 @@ zif_md_updateinfo_get_detail (ZifMdUpdateinfo *md,
 
 	/* if not already loaded, load */
 	if (!md->priv->loaded) {
-		ret = zif_md_load (ZIF_MD (md), cancellable, state, &error_local);
+		ret = zif_md_load (ZIF_MD (md), state, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED_TO_LOAD,
 				     "failed to get load updateinfo: %s", error_local->message);
@@ -522,7 +521,6 @@ out:
  * zif_md_updateinfo_get_detail_for_package:
  * @md: the #ZifMdUpdateinfo object
  * @package_id: the group to search for
- * @cancellable: the %GCancellable, or %NULL
  * @state: the %ZifState object
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -534,7 +532,7 @@ out:
  **/
 GPtrArray *
 zif_md_updateinfo_get_detail_for_package (ZifMdUpdateinfo *md, const gchar *package_id,
-					  GCancellable *cancellable, ZifState *state, GError **error)
+					  ZifState *state, GError **error)
 {
 	GPtrArray *array = NULL;
 	GPtrArray *array_tmp;
@@ -552,7 +550,7 @@ zif_md_updateinfo_get_detail_for_package (ZifMdUpdateinfo *md, const gchar *pack
 
 	/* if not already loaded, load */
 	if (!md->priv->loaded) {
-		ret = zif_md_load (ZIF_MD (md), cancellable, state, &error_local);
+		ret = zif_md_load (ZIF_MD (md), state, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED_TO_LOAD,
 				     "failed to get load updateinfo: %s", error_local->message);
@@ -736,7 +734,7 @@ zif_md_updateinfo_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "get categories");
-	array = zif_md_updateinfo_get_detail_for_package (md, "device-mapper-libs;1.02.27-7.fc10;ppc64;fedora", cancellable, state, &error);
+	array = zif_md_updateinfo_get_detail_for_package (md, "device-mapper-libs;1.02.27-7.fc10;ppc64;fedora", state, &error);
 	if (array != NULL)
 		egg_test_success (test, NULL);
 	else
