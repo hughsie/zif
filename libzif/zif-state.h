@@ -56,6 +56,8 @@ struct _ZifStateClass
 							 guint		 value);
 	void		(* subpercentage_changed)	(ZifState	*state,
 							 guint		 value);
+	void		(* allow_cancel_changed)	(ZifState	*state,
+							 gboolean	 allow_cancel);
 	/* Padding for future expansion */
 	void (*_zif_reserved1) (void);
 	void (*_zif_reserved2) (void);

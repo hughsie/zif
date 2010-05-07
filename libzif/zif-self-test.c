@@ -62,6 +62,7 @@ main (int argc, char **argv)
 	zif_init ();
 
 	/* tests go here */
+	zif_state_test (test);
 	zif_legal_test (test);
 	zif_groups_test (test);
 	zif_md_filelists_xml_test (test);
@@ -70,7 +71,6 @@ main (int argc, char **argv)
 	zif_md_other_sql_test (test);
 	zif_changeset_test (test);
 	zif_lock_test (test);
-	zif_state_test (test);
 	zif_config_test (test);
 	zif_string_test (test);
 	zif_update_test (test);

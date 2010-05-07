@@ -56,6 +56,8 @@ gboolean	 pk_progress_bar_set_percentage		(PkProgressBar	*progress_bar,
 							 guint		 percentage);
 gboolean	 pk_progress_bar_set_value		(PkProgressBar	*progress_bar,
 							 guint		 value);
+void		 pk_progress_bar_set_allow_cancel	(PkProgressBar	*progress_bar,
+							 gboolean	 allow_cancel);
 gboolean	 pk_progress_bar_start			(PkProgressBar	*progress_bar,
 							 const gchar	*text);
 gboolean	 pk_progress_bar_end			(PkProgressBar	*progress_bar);

@@ -54,6 +54,9 @@
  *	// setup correct number of steps
  *	zif_state_set_number_steps (state, 2);
  *
+ *	// we can't cancel this function
+ *	zif_state_set_allow_cancel (state, FALSE);
+ *
  *	// run a sub function
  *	state_local = zif_state_get_child (state);
  *	_do_something_else1 (state_local);
@@ -94,14 +97,17 @@ struct _ZifStatePrivate
 	ZifState		*parent;
 	gulong			 percentage_child_id;
 	gulong			 subpercentage_child_id;
+	gulong			 allow_cancel_child_id;
 	gchar			*id;
 	gboolean		 allow_cancel;
+	gboolean		 allow_cancel_child;
 	GCancellable		*cancellable;
 };
 
 enum {
 	SIGNAL_PERCENTAGE_CHANGED,
 	SIGNAL_SUBPERCENTAGE_CHANGED,
+	SIGNAL_ALLOW_CANCEL,
 	SIGNAL_LAST
 };
 
@@ -184,7 +190,7 @@ gboolean
 zif_state_get_allow_cancel (ZifState *state)
 {
 	g_return_val_if_fail (ZIF_IS_STATE (state), FALSE);
-	return state->priv->allow_cancel;
+	return state->priv->allow_cancel && state->priv->allow_cancel_child;
 }
 
 /**
@@ -200,8 +206,12 @@ void
 zif_state_set_allow_cancel (ZifState *state, gboolean allow_cancel)
 {
 	g_return_if_fail (ZIF_IS_STATE (state));
-	/* TODO: need signal */
+
 	state->priv->allow_cancel = allow_cancel;
+
+	/* just emit if both this and child is okay */
+	g_signal_emit (state, signals [SIGNAL_ALLOW_CANCEL], 0,
+		       state->priv->allow_cancel && state->priv->allow_cancel_child);
 }
 
 /**
@@ -227,6 +237,12 @@ zif_state_set_percentage (ZifState *state, guint percentage)
 	if (percentage < state->priv->last_percentage) {
 		egg_warning ("percentage cannot go down from %i to %i on %p!", state->priv->last_percentage, percentage, state);
 		return FALSE;
+	}
+
+	/* we're done, so we're not preventing cancellation anymore */
+	if (percentage == 100 && !state->priv->allow_cancel) {
+		egg_debug ("done, so allow cancel 1 for %p", state);
+		zif_state_set_allow_cancel (state, TRUE);
 	}
 
 	/* emit and save */
@@ -326,6 +342,20 @@ zif_state_child_subpercentage_changed_cb (ZifState *child, guint percentage, Zif
 }
 
 /**
+ * zif_state_child_allow_cancel_changed_cb:
+ **/
+static void
+zif_state_child_allow_cancel_cb (ZifState *child, gboolean allow_cancel, ZifState *state)
+{
+	/* save */
+	state->priv->allow_cancel_child = allow_cancel;
+
+	/* just emit if both this and child is okay */
+	g_signal_emit (state, signals [SIGNAL_ALLOW_CANCEL], 0,
+		       state->priv->allow_cancel && state->priv->allow_cancel_child);
+}
+
+/**
  * zif_state_reset:
  * @state: the #ZifState object
  *
@@ -353,6 +383,10 @@ zif_state_reset (ZifState *state)
 	if (state->priv->subpercentage_child_id != 0) {
 		g_signal_handler_disconnect (state->priv->child, state->priv->subpercentage_child_id);
 		state->priv->subpercentage_child_id = 0;
+	}
+	if (state->priv->allow_cancel_child_id != 0) {
+		g_signal_handler_disconnect (state->priv->child, state->priv->allow_cancel_child_id);
+		state->priv->allow_cancel_child_id = 0;
 	}
 
 	/* unref child */
@@ -386,6 +420,7 @@ zif_state_get_child (ZifState *state)
 	if (state->priv->child != NULL) {
 		g_signal_handler_disconnect (state->priv->child, state->priv->percentage_child_id);
 		g_signal_handler_disconnect (state->priv->child, state->priv->subpercentage_child_id);
+		g_signal_handler_disconnect (state->priv->child, state->priv->allow_cancel_child_id);
 		g_object_unref (state->priv->child);
 	}
 
@@ -397,6 +432,8 @@ zif_state_get_child (ZifState *state)
 		g_signal_connect (child, "percentage-changed", G_CALLBACK (zif_state_child_percentage_changed_cb), state);
 	state->priv->subpercentage_child_id =
 		g_signal_connect (child, "subpercentage-changed", G_CALLBACK (zif_state_child_subpercentage_changed_cb), state);
+	state->priv->allow_cancel_child_id =
+		g_signal_connect (child, "allow-cancel-changed", G_CALLBACK (zif_state_child_allow_cancel_cb), state);
 
 	/* reset child */
 	child->priv->current = 0;
@@ -597,6 +634,13 @@ zif_state_class_init (ZifStateClass *klass)
 			      NULL, NULL, g_cclosure_marshal_VOID__UINT,
 			      G_TYPE_NONE, 1, G_TYPE_UINT);
 
+	signals [SIGNAL_ALLOW_CANCEL] =
+		g_signal_new ("allow-cancel-changed",
+			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,
+			      G_STRUCT_OFFSET (ZifStateClass, allow_cancel_changed),
+			      NULL, NULL, g_cclosure_marshal_VOID__BOOLEAN,
+			      G_TYPE_NONE, 1, G_TYPE_BOOLEAN);
+
 	g_type_class_add_private (klass, sizeof (ZifStatePrivate));
 }
 
@@ -610,12 +654,14 @@ zif_state_init (ZifState *state)
 	state->priv->child = NULL;
 	state->priv->parent = NULL;
 	state->priv->cancellable = NULL;
-	state->priv->allow_cancel = FALSE;
+	state->priv->allow_cancel = TRUE;
+	state->priv->allow_cancel_child = TRUE;
 	state->priv->steps = 0;
 	state->priv->current = 0;
 	state->priv->last_percentage = 0;
 	state->priv->percentage_child_id = 0;
 	state->priv->subpercentage_child_id = 0;
+	state->priv->allow_cancel_child_id = 0;
 }
 
 /**
@@ -640,6 +686,7 @@ zif_state_new (void)
 #include "egg-test.h"
 
 static guint _updates = 0;
+static guint _allow_cancel_updates = 0;
 static guint _last_percent = 0;
 static guint _last_subpercent = 0;
 
@@ -654,6 +701,12 @@ static void
 zif_state_test_subpercentage_changed_cb (ZifState *state, guint value, gpointer data)
 {
 	_last_subpercent = value;
+}
+
+static void
+zif_state_test_allow_cancel_changed_cb (ZifState *state, gboolean allow_cancel, gpointer data)
+{
+	_allow_cancel_updates++;
 }
 
 void
@@ -672,6 +725,28 @@ zif_state_test (EggTest *test)
 	egg_test_assert (test, state != NULL);
 	g_signal_connect (state, "percentage-changed", G_CALLBACK (zif_state_test_percentage_changed_cb), NULL);
 	g_signal_connect (state, "subpercentage-changed", G_CALLBACK (zif_state_test_subpercentage_changed_cb), NULL);
+	g_signal_connect (state, "allow-cancel-changed", G_CALLBACK (zif_state_test_allow_cancel_changed_cb), NULL);
+
+	/************************************************************/
+	egg_test_title (test, "get default allow cancel");
+	ret = zif_state_get_allow_cancel (state);
+	egg_test_assert (test, ret);
+
+	/************************************************************/
+	egg_test_title (test, "set allow cancel");
+	zif_state_set_allow_cancel (state, TRUE);
+	ret = zif_state_get_allow_cancel (state);
+	egg_test_assert (test, ret);
+
+	/************************************************************/
+	egg_test_title (test, "unset allow cancel");
+	zif_state_set_allow_cancel (state, FALSE);
+	ret = zif_state_get_allow_cancel (state);
+	egg_test_assert (test, !ret);
+
+	/************************************************************/
+	egg_test_title (test, "ensure 2 update2");
+	egg_test_assert (test, (_allow_cancel_updates == 2));
 
 	/************************************************************/
 	egg_test_title (test, "set steps");
@@ -712,18 +787,25 @@ zif_state_test (EggTest *test)
 	egg_test_title (test, "ensure correct percent");
 	egg_test_assert (test, (_last_percent == 100));
 
+	/************************************************************/
+	egg_test_title (test, "ensure allow cancel as we're done");
+	ret = zif_state_get_allow_cancel (state);
+	egg_test_assert (test, ret);
+
 	g_object_unref (state);
 
 	/* reset */
 	_updates = 0;
+	_allow_cancel_updates = 0;
 	state = zif_state_new ();
 	zif_state_set_number_steps (state, 2);
 	g_signal_connect (state, "percentage-changed", G_CALLBACK (zif_state_test_percentage_changed_cb), NULL);
 	g_signal_connect (state, "subpercentage-changed", G_CALLBACK (zif_state_test_subpercentage_changed_cb), NULL);
+	g_signal_connect (state, "allow-cancel-changed", G_CALLBACK (zif_state_test_allow_cancel_changed_cb), NULL);
 
 	// state: |-----------------------|-----------------------|
-	// step1:      |-----------------------|
-	// child:                              |-------------|---------|
+	// step1: |-----------------------|
+	// child:                         |-------------|---------|
 
 	/* PARENT UPDATE */
 	zif_state_done (state);
@@ -739,6 +821,19 @@ zif_state_test (EggTest *test)
 	/* now test with a child */
 	child = zif_state_get_child (state);
 	zif_state_set_number_steps (child, 2);
+
+	/* set child non-cancellable */
+	zif_state_set_allow_cancel (child, FALSE);
+
+	/************************************************************/
+	egg_test_title (test, "ensure child is disallow-cancel");
+	ret = zif_state_get_allow_cancel (state);
+	egg_test_assert (test, !ret);
+
+	/************************************************************/
+	egg_test_title (test, "ensure parent is disallow-cancel");
+	ret = zif_state_get_allow_cancel (state);
+	egg_test_assert (test, !ret);
 
 	/* CHILD UPDATE */
 	zif_state_done (child);
@@ -764,6 +859,11 @@ zif_state_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "ensure correct percent");
 	egg_test_assert (test, (_last_percent == 100));
+
+	/************************************************************/
+	egg_test_title (test, " ensure the child finishing cleared the allow cancel on the parent");
+	ret = zif_state_get_allow_cancel (state);
+	egg_test_assert (test, ret);
 
 	/* PARENT UPDATE */
 	zif_state_done (state);
@@ -792,6 +892,7 @@ zif_state_test (EggTest *test)
 	zif_state_set_number_steps (state, 1);
 	g_signal_connect (state, "percentage-changed", G_CALLBACK (zif_state_test_percentage_changed_cb), NULL);
 	g_signal_connect (state, "subpercentage-changed", G_CALLBACK (zif_state_test_subpercentage_changed_cb), NULL);
+	g_signal_connect (state, "allow-cancel-changed", G_CALLBACK (zif_state_test_allow_cancel_changed_cb), NULL);
 
 	/* now test with a child */
 	child = zif_state_get_child (state);

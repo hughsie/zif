@@ -96,6 +96,15 @@ zif_state_subpercentage_changed_cb (ZifState *state, guint percentage, gpointer 
 }
 
 /**
+ * zif_state_allow_cancel_changed_cb:
+ **/
+static void
+zif_state_allow_cancel_changed_cb (ZifState *state, gboolean allow_cancel, gpointer data)
+{
+	pk_progress_bar_set_allow_cancel (progressbar, allow_cancel);
+}
+
+/**
  * zif_cmd_download:
  **/
 static gboolean
@@ -709,6 +718,7 @@ main (int argc, char *argv[])
 	state = zif_state_new ();
 	g_signal_connect (state, "percentage-changed", G_CALLBACK (zif_state_percentage_changed_cb), NULL);
 	g_signal_connect (state, "subpercentage-changed", G_CALLBACK (zif_state_subpercentage_changed_cb), NULL);
+	g_signal_connect (state, "allow-cancel-changed", G_CALLBACK (zif_state_allow_cancel_changed_cb), NULL);
 
 	if (argc < 2) {
 		g_print ("%s", options_help);

@@ -40,6 +40,7 @@ struct PkProgressBarPrivate
 	guint			 value;
 	guint			 padding;
 	guint			 timer_id;
+	gboolean		 allow_cancel;
 	PkProgressBarPulseState	 pulse_state;
 };
 
@@ -92,7 +93,10 @@ pk_progress_bar_draw (PkProgressBar *self, guint value)
 		g_print (" ");
 	g_print ("] ");
 	if (self->priv->percentage != PK_PROGRESS_BAR_PERCENTAGE_INVALID)
-		g_print ("(%i%%)  ", self->priv->percentage);
+		g_print ("%c%i%%%c  ",
+			 self->priv->allow_cancel ? '(' : '<',
+			 self->priv->percentage,
+			 self->priv->allow_cancel ? ')' : '>');
 	else
 		g_print ("        ");
 	return TRUE;
@@ -150,7 +154,10 @@ pk_progress_bar_pulse_bar (PkProgressBar *self)
 		g_print (" ");
 	g_print ("] ");
 	if (self->priv->percentage != PK_PROGRESS_BAR_PERCENTAGE_INVALID)
-		g_print ("(%i%%)  ", self->priv->percentage);
+		g_print ("%c%i%%%c  ",
+			 self->priv->allow_cancel ? '(' : '<',
+			 self->priv->percentage,
+			 self->priv->allow_cancel ? ')' : '>');
 	else
 		g_print ("        ");
 
@@ -171,6 +178,16 @@ pk_progress_bar_draw_pulse_bar (PkProgressBar *self)
 		self->priv->pulse_state.move_forward = TRUE;
 		self->priv->timer_id = g_timeout_add (PK_PROGRESS_BAR_PULSE_TIMEOUT, (GSourceFunc) pk_progress_bar_pulse_bar, self);
 	}
+}
+
+/**
+ * pk_progress_bar_set_allow_cancel:
+ **/
+void
+pk_progress_bar_set_allow_cancel (PkProgressBar *self, gboolean allow_cancel)
+{
+	self->priv->allow_cancel = allow_cancel;
+	pk_progress_bar_draw (self, self->priv->value);
 }
 
 /**
@@ -332,6 +349,7 @@ pk_progress_bar_init (PkProgressBar *self)
 	self->priv->value = 0;
 	self->priv->padding = 0;
 	self->priv->timer_id = 0;
+	self->priv->allow_cancel = TRUE;
 }
 
 /**

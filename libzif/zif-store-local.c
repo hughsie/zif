@@ -159,6 +159,7 @@ zif_store_local_load (ZifStore *store, ZifState *state, GError **error)
 
 	/* this section done */
 	zif_state_done (state);
+	zif_state_set_allow_cancel (state, FALSE);
 
 	/* get list */
 	mi = rpmdbInitIterator (db, RPMDBI_PACKAGES, NULL, 0);
