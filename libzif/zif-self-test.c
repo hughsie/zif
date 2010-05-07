@@ -28,7 +28,7 @@
 
 /* prototypes */
 void zif_md_other_sql_test (EggTest *test);
-void zif_completion_test (EggTest *test);
+void zif_state_test (EggTest *test);
 void zif_legal_test (EggTest *test);
 void zif_changeset_test (EggTest *test);
 void zif_monitor_test (EggTest *test);
@@ -70,7 +70,7 @@ main (int argc, char **argv)
 	zif_md_other_sql_test (test);
 	zif_changeset_test (test);
 	zif_lock_test (test);
-	zif_completion_test (test);
+	zif_state_test (test);
 	zif_config_test (test);
 	zif_string_test (test);
 	zif_update_test (test);

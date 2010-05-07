@@ -191,7 +191,7 @@ out:
  * zif_md_metalink_unload:
  **/
 static gboolean
-zif_md_metalink_unload (ZifMd *md, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+zif_md_metalink_unload (ZifMd *md, GCancellable *cancellable, ZifState *state, GError **error)
 {
 	gboolean ret = FALSE;
 	return ret;
@@ -201,7 +201,7 @@ zif_md_metalink_unload (ZifMd *md, GCancellable *cancellable, ZifCompletion *com
  * zif_md_metalink_load:
  **/
 static gboolean
-zif_md_metalink_load (ZifMd *md, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+zif_md_metalink_load (ZifMd *md, GCancellable *cancellable, ZifState *state, GError **error)
 {
 	gboolean ret = TRUE;
 	gchar *contents = NULL;
@@ -260,7 +260,7 @@ out:
  * @md: the #ZifMdMetalink object
  * @threshold: the threshold in percent
  * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
- * @completion: a #ZifCompletion to use for progress reporting
+ * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Finds all mirrors we should use.
@@ -271,7 +271,7 @@ out:
  **/
 GPtrArray *
 zif_md_metalink_get_uris (ZifMdMetalink *md, guint threshold,
-			  GCancellable *cancellable, ZifCompletion *completion, GError **error)
+			  GCancellable *cancellable, ZifState *state, GError **error)
 {
 	gboolean ret;
 	guint len;
@@ -287,7 +287,7 @@ zif_md_metalink_get_uris (ZifMdMetalink *md, guint threshold,
 
 	/* if not already loaded, load */
 	if (!metalink->priv->loaded) {
-		ret = zif_md_load (ZIF_MD (md), cancellable, completion, &error_local);
+		ret = zif_md_load (ZIF_MD (md), cancellable, state, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED_TO_LOAD,
 				     "failed to get mirrors from metalink: %s", error_local->message);
@@ -411,7 +411,7 @@ zif_md_metalink_test (EggTest *test)
 	GPtrArray *array;
 	const gchar *uri;
 	GCancellable *cancellable;
-	ZifCompletion *completion;
+	ZifState *state;
 	ZifConfig *config;
 
 	if (!egg_test_start (test, "ZifMdMetalink"))
@@ -419,7 +419,7 @@ zif_md_metalink_test (EggTest *test)
 
 	/* use */
 	cancellable = g_cancellable_new ();
-	completion = zif_completion_new ();
+	state = zif_state_new ();
 	config = zif_config_new ();
 	zif_config_set_filename (config, "../test/etc/yum.conf", NULL);
 
@@ -458,7 +458,7 @@ zif_md_metalink_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "load");
-	ret = zif_md_load (ZIF_MD (md), cancellable, completion, &error);
+	ret = zif_md_load (ZIF_MD (md), cancellable, state, &error);
 	if (ret)
 		egg_test_success (test, NULL);
 	else
@@ -470,7 +470,7 @@ zif_md_metalink_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "get uris");
-	array = zif_md_metalink_get_uris (md, 50, cancellable, completion, &error);
+	array = zif_md_metalink_get_uris (md, 50, cancellable, state, &error);
 	if (array != NULL)
 		egg_test_success (test, NULL);
 	else
@@ -494,7 +494,7 @@ zif_md_metalink_test (EggTest *test)
 
 	g_object_unref (md);
 	g_object_unref (cancellable);
-	g_object_unref (completion);
+	g_object_unref (state);
 	g_object_unref (config);
 
 	egg_test_end (test);

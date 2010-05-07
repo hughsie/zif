@@ -25,7 +25,7 @@
 #define __ZIF_H_INSIDE__
 
 #include <zif-category.h>
-#include <zif-completion.h>
+#include <zif-state.h>
 #include <zif-config.h>
 #include <zif-depend.h>
 #include <zif-download.h>

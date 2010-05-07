@@ -29,7 +29,7 @@
 #include <glib-object.h>
 #include <gio/gio.h>
 
-#include "zif-completion.h"
+#include "zif-state.h"
 
 G_BEGIN_DECLS
 
@@ -71,7 +71,7 @@ gboolean	 zif_download_file			(ZifDownload		*download,
 							 const gchar		*uri,
 							 const gchar		*filename,
 							 GCancellable		*cancellable,
-							 ZifCompletion		*completion,
+							 ZifState		*state,
 							 GError			**error);
 
 G_END_DECLS

@@ -30,7 +30,7 @@ libzif_includedir = $(includedir)/libzif
 libzif_include_HEADERS =					\
 	zif.h							\
 	zif-lock.h						\
-	zif-completion.h					\
+	zif-state.h					\
 	zif-string.h						\
 	zif-depend.h						\
 	zif-package.h						\
@@ -53,8 +53,8 @@ libzif_la_SOURCES =						\
 	egg-debug.h						\
 	zif-lock.c						\
 	zif-lock.h						\
-	zif-completion.c					\
-	zif-completion.h					\
+	zif-state.c					\
+	zif-state.h					\
 	zif-changeset.c						\
 	zif-changeset.h						\
 	zif-string.c						\

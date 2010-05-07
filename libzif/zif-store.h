@@ -30,7 +30,7 @@
 #include <gio/gio.h>
 
 #include "zif-package.h"
-#include "zif-completion.h"
+#include "zif-state.h"
 
 G_BEGIN_DECLS
 
@@ -58,69 +58,69 @@ struct _ZifStoreClass
 	/* vtable */
 	gboolean	 (*load)		(ZifStore		*store,
 						 GCancellable		*cancellable,
-						 ZifCompletion		*completion,
+						 ZifState		*state,
 						 GError			**error);
 	gboolean	 (*clean)		(ZifStore		*store,
 						 GCancellable		*cancellable,
-						 ZifCompletion		*completion,
+						 ZifState		*state,
 						 GError			**error);
 	gboolean	 (*refresh)		(ZifStore		*store,
 						 gboolean		 force,
 						 GCancellable		*cancellable,
-						 ZifCompletion		*completion,
+						 ZifState		*state,
 						 GError			**error);
 	GPtrArray	*(*search_name)		(ZifStore		*store,
 						 gchar			**search,
 						 GCancellable		*cancellable,
-						 ZifCompletion		*completion,
+						 ZifState		*state,
 						 GError			**error);
 	GPtrArray	*(*search_category)	(ZifStore		*store,
 						 gchar			**search,
 						 GCancellable		*cancellable,
-						 ZifCompletion		*completion,
+						 ZifState		*state,
 						 GError			**error);
 	GPtrArray	*(*search_details)	(ZifStore		*store,
 						 gchar			**search,
 						 GCancellable		*cancellable,
-						 ZifCompletion		*completion,
+						 ZifState		*state,
 						 GError			**error);
 	GPtrArray	*(*search_group)	(ZifStore		*store,
 						 gchar			**search,
 						 GCancellable		*cancellable,
-						 ZifCompletion		*completion,
+						 ZifState		*state,
 						 GError			**error);
 	GPtrArray	*(*search_file)		(ZifStore		*store,
 						 gchar			**search,
 						 GCancellable		*cancellable,
-						 ZifCompletion		*completion,
+						 ZifState		*state,
 						 GError			**error);
 	GPtrArray	*(*resolve)		(ZifStore		*store,
 						 gchar			**search,
 						 GCancellable		*cancellable,
-						 ZifCompletion		*completion,
+						 ZifState		*state,
 						 GError			**error);
 	GPtrArray	*(*what_provides)	(ZifStore		*store,
 						 gchar			**search,
 						 GCancellable		*cancellable,
-						 ZifCompletion		*completion,
+						 ZifState		*state,
 						 GError			**error);
 	GPtrArray	*(*get_packages)	(ZifStore		*store,
 						 GCancellable		*cancellable,
-						 ZifCompletion		*completion,
+						 ZifState		*state,
 						 GError			**error);
 	GPtrArray	*(*get_updates)		(ZifStore		*store,
 						 GPtrArray		*packages,
 						 GCancellable		*cancellable,
-						 ZifCompletion		*completion,
+						 ZifState		*state,
 						 GError			**error);
 	ZifPackage	*(*find_package)	(ZifStore		*store,
 						 const gchar		*package_id,
 						 GCancellable		*cancellable,
-						 ZifCompletion		*completion,
+						 ZifState		*state,
 						 GError			**error);
 	GPtrArray	*(*get_categories)	(ZifStore		*store,
 						 GCancellable		*cancellable,
-						 ZifCompletion		*completion,
+						 ZifState		*state,
 						 GError			**error);
 	const gchar	*(*get_id)		(ZifStore		*store);
 	void		 (*print)		(ZifStore		*store);
@@ -143,69 +143,69 @@ GQuark		 zif_store_error_quark		(void);
 ZifStore	*zif_store_new			(void);
 gboolean	 zif_store_load			(ZifStore		*store,
 						 GCancellable		*cancellable,
-						 ZifCompletion		*completion,
+						 ZifState		*state,
 						 GError			**error);
 gboolean	 zif_store_clean		(ZifStore		*store,
 						 GCancellable		*cancellable,
-						 ZifCompletion		*completion,
+						 ZifState		*state,
 						 GError			**error);
 gboolean	 zif_store_refresh		(ZifStore		*store,
 						 gboolean		 force,
 						 GCancellable		*cancellable,
-						 ZifCompletion		*completion,
+						 ZifState		*state,
 						 GError			**error);
 GPtrArray	*zif_store_search_name		(ZifStore		*store,
 						 gchar			**search,
 						 GCancellable		*cancellable,
-						 ZifCompletion		*completion,
+						 ZifState		*state,
 						 GError			**error);
 GPtrArray	*zif_store_search_category	(ZifStore		*store,
 						 gchar			**search,
 						 GCancellable		*cancellable,
-						 ZifCompletion		*completion,
+						 ZifState		*state,
 						 GError			**error);
 GPtrArray	*zif_store_search_details	(ZifStore		*store,
 						 gchar			**search,
 						 GCancellable		*cancellable,
-						 ZifCompletion		*completion,
+						 ZifState		*state,
 						 GError			**error);
 GPtrArray	*zif_store_search_group		(ZifStore		*store,
 						 gchar			**search,
 						 GCancellable		*cancellable,
-						 ZifCompletion		*completion,
+						 ZifState		*state,
 						 GError			**error);
 GPtrArray	*zif_store_search_file		(ZifStore		*store,
 						 gchar			**search,
 						 GCancellable		*cancellable,
-						 ZifCompletion		*completion,
+						 ZifState		*state,
 						 GError			**error);
 GPtrArray	*zif_store_resolve		(ZifStore		*store,
 						 gchar			**search,
 						 GCancellable		*cancellable,
-						 ZifCompletion		*completion,
+						 ZifState		*state,
 						 GError			**error);
 GPtrArray	*zif_store_what_provides	(ZifStore		*store,
 						 gchar			**search,
 						 GCancellable		*cancellable,
-						 ZifCompletion		*completion,
+						 ZifState		*state,
 						 GError			**error);
 GPtrArray	*zif_store_get_packages		(ZifStore		*store,
 						 GCancellable		*cancellable,
-						 ZifCompletion		*completion,
+						 ZifState		*state,
 						 GError			**error);
 GPtrArray	*zif_store_get_updates		(ZifStore		*store,
 						 GPtrArray		*packages,
 						 GCancellable		*cancellable,
-						 ZifCompletion		*completion,
+						 ZifState		*state,
 						 GError			**error);
 ZifPackage	*zif_store_find_package		(ZifStore		*store,
 						 const gchar		*package_id,
 						 GCancellable		*cancellable,
-						 ZifCompletion		*completion,
+						 ZifState		*state,
 						 GError			**error);
 GPtrArray	*zif_store_get_categories	(ZifStore		*store,
 						 GCancellable		*cancellable,
-						 ZifCompletion		*completion,
+						 ZifState		*state,
 						 GError			**error);
 const gchar	*zif_store_get_id		(ZifStore		*store);
 void		 zif_store_print		(ZifStore		*store);

@@ -60,7 +60,7 @@ G_DEFINE_TYPE (ZifMdMirrorlist, zif_md_mirrorlist, ZIF_TYPE_MD)
  * zif_md_mirrorlist_unload:
  **/
 static gboolean
-zif_md_mirrorlist_unload (ZifMd *md, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+zif_md_mirrorlist_unload (ZifMd *md, GCancellable *cancellable, ZifState *state, GError **error)
 {
 	gboolean ret = FALSE;
 	return ret;
@@ -70,7 +70,7 @@ zif_md_mirrorlist_unload (ZifMd *md, GCancellable *cancellable, ZifCompletion *c
  * zif_md_mirrorlist_load:
  **/
 static gboolean
-zif_md_mirrorlist_load (ZifMd *md, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+zif_md_mirrorlist_load (ZifMd *md, GCancellable *cancellable, ZifState *state, GError **error)
 {
 	gboolean ret = TRUE;
 	gchar *contents = NULL;
@@ -122,7 +122,7 @@ out:
  * zif_md_mirrorlist_get_uris:
  * @md: the #ZifMdMirrorlist object
  * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
- * @completion: a #ZifCompletion to use for progress reporting
+ * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Finds all mirrors we should use.
@@ -132,7 +132,7 @@ out:
  * Since: 0.0.1
  **/
 GPtrArray *
-zif_md_mirrorlist_get_uris (ZifMdMirrorlist *md, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+zif_md_mirrorlist_get_uris (ZifMdMirrorlist *md, GCancellable *cancellable, ZifState *state, GError **error)
 {
 	gboolean ret;
 	guint len;
@@ -148,7 +148,7 @@ zif_md_mirrorlist_get_uris (ZifMdMirrorlist *md, GCancellable *cancellable, ZifC
 
 	/* if not already loaded, load */
 	if (!mirrorlist->priv->loaded) {
-		ret = zif_md_load (ZIF_MD (md), cancellable, completion, &error_local);
+		ret = zif_md_load (ZIF_MD (md), cancellable, state, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED_TO_LOAD,
 				     "failed to get uris from mirrorlist: %s", error_local->message);
@@ -254,7 +254,7 @@ zif_md_mirrorlist_test (EggTest *test)
 	GPtrArray *array;
 	const gchar *uri;
 	GCancellable *cancellable;
-	ZifCompletion *completion;
+	ZifState *state;
 	ZifConfig *config;
 
 	if (!egg_test_start (test, "ZifMdMirrorlist"))
@@ -262,7 +262,7 @@ zif_md_mirrorlist_test (EggTest *test)
 
 	/* use */
 	cancellable = g_cancellable_new ();
-	completion = zif_completion_new ();
+	state = zif_state_new ();
 	config = zif_config_new ();
 	zif_config_set_filename (config, "../test/etc/yum.conf", NULL);
 
@@ -301,7 +301,7 @@ zif_md_mirrorlist_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "load");
-	ret = zif_md_load (ZIF_MD (md), cancellable, completion, &error);
+	ret = zif_md_load (ZIF_MD (md), cancellable, state, &error);
 	if (ret)
 		egg_test_success (test, NULL);
 	else
@@ -313,7 +313,7 @@ zif_md_mirrorlist_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "get uris");
-	array = zif_md_mirrorlist_get_uris (md, cancellable, completion, &error);
+	array = zif_md_mirrorlist_get_uris (md, cancellable, state, &error);
 	if (array != NULL)
 		egg_test_success (test, NULL);
 	else
@@ -337,7 +337,7 @@ zif_md_mirrorlist_test (EggTest *test)
 
 	g_object_unref (md);
 	g_object_unref (cancellable);
-	g_object_unref (completion);
+	g_object_unref (state);
 	g_object_unref (config);
 
 	egg_test_end (test);

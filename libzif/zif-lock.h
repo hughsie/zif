@@ -27,7 +27,7 @@
 #define __ZIF_LOCK_H
 
 #include <glib-object.h>
-#include "zif-completion.h"
+#include "zif-state.h"
 
 G_BEGIN_DECLS
 

@@ -30,7 +30,7 @@
 #include <gio/gio.h>
 
 #include "zif-string.h"
-#include "zif-completion.h"
+#include "zif-state.h"
 
 G_BEGIN_DECLS
 
@@ -78,7 +78,7 @@ struct _ZifPackageClass
 	gboolean	 (*ensure_data)			(ZifPackage	*package,
 							 ZifPackageEnsureType type,
 							 GCancellable	*cancellable,
-							 ZifCompletion	*completion,
+							 ZifState	*state,
 							 GError		**error);
 };
 
@@ -96,47 +96,47 @@ const gchar		*zif_package_get_id		(ZifPackage	*package);
 const gchar		*zif_package_get_name		(ZifPackage	*package);
 const gchar		*zif_package_get_summary	(ZifPackage	*package,
 							 GCancellable	*cancellable,
-							 ZifCompletion	*completion,
+							 ZifState	*state,
 							 GError		**error);
 const gchar		*zif_package_get_description	(ZifPackage	*package,
 							 GCancellable	*cancellable,
-							 ZifCompletion	*completion,
+							 ZifState	*state,
 							 GError		**error);
 const gchar		*zif_package_get_license	(ZifPackage	*package,
 							 GCancellable	*cancellable,
-							 ZifCompletion	*completion,
+							 ZifState	*state,
 							 GError		**error);
 const gchar		*zif_package_get_url		(ZifPackage	*package,
 							 GCancellable	*cancellable,
-							 ZifCompletion	*completion,
+							 ZifState	*state,
 							 GError		**error);
 const gchar		*zif_package_get_filename	(ZifPackage	*package,
 							 GCancellable	*cancellable,
-							 ZifCompletion	*completion,
+							 ZifState	*state,
 							 GError		**error);
 const gchar		*zif_package_get_category	(ZifPackage	*package,
 							 GCancellable	*cancellable,
-							 ZifCompletion	*completion,
+							 ZifState	*state,
 							 GError		**error);
 const gchar		*zif_package_get_group		(ZifPackage	*package,
 							 GCancellable	*cancellable,
-							 ZifCompletion	*completion,
+							 ZifState	*state,
 							 GError		**error);
 guint64			 zif_package_get_size		(ZifPackage	*package,
 							 GCancellable	*cancellable,
-							 ZifCompletion	*completion,
+							 ZifState	*state,
 							 GError		**error);
 GPtrArray		*zif_package_get_files		(ZifPackage	*package,
 							 GCancellable	*cancellable,
-							 ZifCompletion	*completion,
+							 ZifState	*state,
 							 GError		**error);
 GPtrArray		*zif_package_get_requires	(ZifPackage	*package,
 							 GCancellable	*cancellable,
-							 ZifCompletion	*completion,
+							 ZifState	*state,
 							 GError		**error);
 GPtrArray		*zif_package_get_provides	(ZifPackage	*package,
 							 GCancellable	*cancellable,
-							 ZifCompletion	*completion,
+							 ZifState	*state,
 							 GError		**error);
 
 /* internal setters: TODO, in seporate -internal header file */
@@ -171,11 +171,11 @@ gboolean		 zif_package_set_provides	(ZifPackage	*package,
 gboolean		 zif_package_download		(ZifPackage	*package,
 							 const gchar	*directory,
 							 GCancellable	*cancellable,
-							 ZifCompletion	*completion,
+							 ZifState	*state,
 							 GError		**error);
 ZifUpdate		*zif_package_get_update_detail	(ZifPackage	*package,
 							 GCancellable	*cancellable,
-							 ZifCompletion	*completion,
+							 ZifState	*state,
 							 GError		**error);
 const gchar		*zif_package_get_package_id	(ZifPackage	*package);
 void			 zif_package_print		(ZifPackage	*package);

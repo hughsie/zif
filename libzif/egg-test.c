@@ -201,7 +201,7 @@ egg_test_end (EggTest *test)
 
 	/* check we don't have any pending iterations */
 	if (g_main_context_pending (NULL)) {
-		g_print ("WARNING: Pending event in context! Running to completion... ");
+		g_print ("WARNING: Pending event in context! Running to state... ");
 		while (g_main_context_pending (NULL))
 			g_main_context_iteration (NULL, TRUE);
 		g_print ("Done!\n");

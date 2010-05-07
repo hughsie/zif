@@ -414,7 +414,7 @@ out:
  * zif_md_updateinfo_unload:
  **/
 static gboolean
-zif_md_updateinfo_unload (ZifMd *md, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+zif_md_updateinfo_unload (ZifMd *md, GCancellable *cancellable, ZifState *state, GError **error)
 {
 	gboolean ret = FALSE;
 	return ret;
@@ -424,7 +424,7 @@ zif_md_updateinfo_unload (ZifMd *md, GCancellable *cancellable, ZifCompletion *c
  * zif_md_updateinfo_load:
  **/
 static gboolean
-zif_md_updateinfo_load (ZifMd *md, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+zif_md_updateinfo_load (ZifMd *md, GCancellable *cancellable, ZifState *state, GError **error)
 {
 	gboolean ret = TRUE;
 	gchar *contents = NULL;
@@ -482,7 +482,7 @@ out:
  * zif_md_updateinfo_get_detail:
  * @md: the #ZifMdUpdateinfo object
  * @cancellable: the %GCancellable, or %NULL
- * @completion: the %ZifCompletion object
+ * @state: the %ZifState object
  * @error: a #GError which is used on failure, or %NULL
  *
  * Gets all the available update data.
@@ -493,7 +493,7 @@ out:
  **/
 GPtrArray *
 zif_md_updateinfo_get_detail (ZifMdUpdateinfo *md,
-			      GCancellable *cancellable, ZifCompletion *completion, GError **error)
+			      GCancellable *cancellable, ZifState *state, GError **error)
 {
 	GPtrArray *array = NULL;
 	gboolean ret;
@@ -504,7 +504,7 @@ zif_md_updateinfo_get_detail (ZifMdUpdateinfo *md,
 
 	/* if not already loaded, load */
 	if (!md->priv->loaded) {
-		ret = zif_md_load (ZIF_MD (md), cancellable, completion, &error_local);
+		ret = zif_md_load (ZIF_MD (md), cancellable, state, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED_TO_LOAD,
 				     "failed to get load updateinfo: %s", error_local->message);
@@ -523,7 +523,7 @@ out:
  * @md: the #ZifMdUpdateinfo object
  * @package_id: the group to search for
  * @cancellable: the %GCancellable, or %NULL
- * @completion: the %ZifCompletion object
+ * @state: the %ZifState object
  * @error: a #GError which is used on failure, or %NULL
  *
  * Gets the list of update details for the package_id.
@@ -534,7 +534,7 @@ out:
  **/
 GPtrArray *
 zif_md_updateinfo_get_detail_for_package (ZifMdUpdateinfo *md, const gchar *package_id,
-					  GCancellable *cancellable, ZifCompletion *completion, GError **error)
+					  GCancellable *cancellable, ZifState *state, GError **error)
 {
 	GPtrArray *array = NULL;
 	GPtrArray *array_tmp;
@@ -552,7 +552,7 @@ zif_md_updateinfo_get_detail_for_package (ZifMdUpdateinfo *md, const gchar *pack
 
 	/* if not already loaded, load */
 	if (!md->priv->loaded) {
-		ret = zif_md_load (ZIF_MD (md), cancellable, completion, &error_local);
+		ret = zif_md_load (ZIF_MD (md), cancellable, state, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED_TO_LOAD,
 				     "failed to get load updateinfo: %s", error_local->message);
@@ -675,7 +675,7 @@ zif_md_updateinfo_test (EggTest *test)
 	GPtrArray *array;
 	const gchar *id;
 	GCancellable *cancellable;
-	ZifCompletion *completion;
+	ZifState *state;
 	ZifUpdate *update;
 
 	if (!egg_test_start (test, "ZifMdUpdateinfo"))
@@ -683,7 +683,7 @@ zif_md_updateinfo_test (EggTest *test)
 
 	/* use */
 	cancellable = g_cancellable_new ();
-	completion = zif_completion_new ();
+	state = zif_state_new ();
 
 	/************************************************************/
 	egg_test_title (test, "get md_updateinfo md");
@@ -736,7 +736,7 @@ zif_md_updateinfo_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "get categories");
-	array = zif_md_updateinfo_get_detail_for_package (md, "device-mapper-libs;1.02.27-7.fc10;ppc64;fedora", cancellable, completion, &error);
+	array = zif_md_updateinfo_get_detail_for_package (md, "device-mapper-libs;1.02.27-7.fc10;ppc64;fedora", cancellable, state, &error);
 	if (array != NULL)
 		egg_test_success (test, NULL);
 	else
@@ -780,7 +780,7 @@ zif_md_updateinfo_test (EggTest *test)
 	g_ptr_array_unref (array);
 	g_object_unref (md);
 	g_object_unref (cancellable);
-	g_object_unref (completion);
+	g_object_unref (state);
 
 	egg_test_end (test);
 }

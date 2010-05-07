@@ -44,13 +44,13 @@ zif_print_package (ZifPackage *package)
 {
 	const gchar *package_id;
 	const gchar *summary;
-	ZifCompletion *completion_tmp;
+	ZifState *state_tmp;
 	gchar **split;
 
 	package_id = zif_package_get_id (package);
 	split = zif_package_id_split (package_id);
-	completion_tmp = zif_completion_new ();
-	summary = zif_package_get_summary (package, NULL, completion_tmp, NULL);
+	state_tmp = zif_state_new ();
+	summary = zif_package_get_summary (package, NULL, state_tmp, NULL);
 	g_print ("%s-%s.%s (%s)\t%s\n",
 		 split[ZIF_PACKAGE_ID_NAME],
 		 split[ZIF_PACKAGE_ID_VERSION],
@@ -58,7 +58,7 @@ zif_print_package (ZifPackage *package)
 		 split[ZIF_PACKAGE_ID_DATA],
 		 summary);
 	g_strfreev (split);
-	g_object_unref (completion_tmp);
+	g_object_unref (state_tmp);
 }
 
 /**
@@ -77,20 +77,20 @@ zif_print_packages (GPtrArray *array)
 }
 
 /**
- * zif_completion_percentage_changed_cb:
+ * zif_state_percentage_changed_cb:
  **/
 static void
-zif_completion_percentage_changed_cb (ZifCompletion *completion, guint percentage, gpointer data)
+zif_state_percentage_changed_cb (ZifState *state, guint percentage, gpointer data)
 {
 	pk_progress_bar_set_value (progressbar, percentage);
 	pk_progress_bar_set_percentage (progressbar, percentage);
 }
 
 /**
- * zif_completion_subpercentage_changed_cb:
+ * zif_state_subpercentage_changed_cb:
  **/
 static void
-zif_completion_subpercentage_changed_cb (ZifCompletion *completion, guint percentage, gpointer data)
+zif_state_subpercentage_changed_cb (ZifState *state, guint percentage, gpointer data)
 {
 //	pk_progress_bar_set_percentage (progressbar, percentage);
 }
@@ -99,23 +99,23 @@ zif_completion_subpercentage_changed_cb (ZifCompletion *completion, guint percen
  * zif_cmd_download:
  **/
 static gboolean
-zif_cmd_download (const gchar *package_name, ZifCompletion *completion)
+zif_cmd_download (const gchar *package_name, ZifState *state)
 {
 	gboolean ret;
 	GError *error = NULL;
 	GPtrArray *array = NULL;
 	ZifPackage *package;
-	ZifCompletion *completion_local;
+	ZifState *state_local;
 	GPtrArray *store_array;
 	const gchar *to_array[] = { NULL, NULL };
 
-	/* setup completion */
-	zif_completion_set_number_steps (completion, 3);
+	/* setup state */
+	zif_state_set_number_steps (state, 3);
 
 	/* add remote stores */
 	store_array = zif_store_array_new ();
-	completion_local = zif_completion_get_child (completion);
-	ret = zif_store_array_add_remote_enabled (store_array, NULL, completion_local, &error);
+	state_local = zif_state_get_child (state);
+	ret = zif_store_array_add_remote_enabled (store_array, NULL, state_local, &error);
 	if (!ret) {
 		g_print ("failed to add enabled stores: %s\n", error->message);
 		g_error_free (error);
@@ -123,12 +123,12 @@ zif_cmd_download (const gchar *package_name, ZifCompletion *completion)
 	}
 
 	/* this section done */
-	zif_completion_done (completion);
+	zif_state_done (state);
 
 	/* resolve package name */
-	completion_local = zif_completion_get_child (completion);
+	state_local = zif_state_get_child (state);
 	to_array[0] = package_name;
-	array = zif_store_array_resolve (store_array, (gchar **)to_array, NULL, NULL, NULL, completion_local, &error);
+	array = zif_store_array_resolve (store_array, (gchar **)to_array, NULL, NULL, NULL, state_local, &error);
 	if (array == NULL) {
 		g_print ("failed to get results: %s\n", error->message);
 		g_error_free (error);
@@ -140,11 +140,11 @@ zif_cmd_download (const gchar *package_name, ZifCompletion *completion)
 	}
 
 	/* this section done */
-	zif_completion_done (completion);
+	zif_state_done (state);
 
 	/* download package file */
 	package = g_ptr_array_index (array, 0);
-	ret = zif_package_download (package, "/tmp", NULL, completion_local, &error);
+	ret = zif_package_download (package, "/tmp", NULL, state_local, &error);
 	if (!ret) {
 		g_print ("failed to download: %s\n", error->message);
 		g_error_free (error);
@@ -152,13 +152,13 @@ zif_cmd_download (const gchar *package_name, ZifCompletion *completion)
 	}
 
 	/* this section done */
-	zif_completion_done (completion);
+	zif_state_done (state);
 
 out:
 	if (array != NULL) {
 		g_ptr_array_unref (array);
 	}
-	g_object_unref (completion_local);
+	g_object_unref (state_local);
 	g_ptr_array_unref (store_array);
 	return ret;
 }
@@ -167,14 +167,14 @@ out:
  * zif_cmd_get_depends:
  **/
 static gboolean
-zif_cmd_get_depends (const gchar *package_name, ZifCompletion *completion)
+zif_cmd_get_depends (const gchar *package_name, ZifState *state)
 {
 	gboolean ret;
 	GError *error = NULL;
 	GPtrArray *array = NULL;
 	ZifPackage *package;
-	ZifCompletion *completion_local;
-	ZifCompletion *completion_loop;
+	ZifState *state_local;
+	ZifState *state_loop;
 	GPtrArray *store_array;
 	GPtrArray *requires = NULL;
 	const ZifDepend *require;
@@ -185,8 +185,8 @@ zif_cmd_get_depends (const gchar *package_name, ZifCompletion *completion)
 	gchar **split;
 	const gchar *to_array[] = { NULL, NULL };
 
-	/* setup completion */
-	zif_completion_set_number_steps (completion, 3);
+	/* setup state */
+	zif_state_set_number_steps (state, 3);
 
 	/* add all stores */
 	store_array = zif_store_array_new ();
@@ -198,8 +198,8 @@ zif_cmd_get_depends (const gchar *package_name, ZifCompletion *completion)
 		goto out;
 	}
 #endif
-	completion_local = zif_completion_get_child (completion);
-	ret = zif_store_array_add_local (store_array, NULL, completion, &error);
+	state_local = zif_state_get_child (state);
+	ret = zif_store_array_add_local (store_array, NULL, state, &error);
 	if (!ret) {
 		g_print ("failed to add local store: %s\n", error->message);
 		g_error_free (error);
@@ -207,12 +207,12 @@ zif_cmd_get_depends (const gchar *package_name, ZifCompletion *completion)
 	}
 
 	/* this section done */
-	zif_completion_done (completion);
+	zif_state_done (state);
 
 	/* resolve package name */
-	completion_local = zif_completion_get_child (completion);
+	state_local = zif_state_get_child (state);
 	to_array[0] = package_name;
-	array = zif_store_array_resolve (store_array, (gchar**)to_array, NULL, NULL, NULL, completion_local, &error);
+	array = zif_store_array_resolve (store_array, (gchar**)to_array, NULL, NULL, NULL, state_local, &error);
 	if (array == NULL) {
 		g_print ("failed to get results: %s\n", error->message);
 		g_error_free (error);
@@ -225,11 +225,11 @@ zif_cmd_get_depends (const gchar *package_name, ZifCompletion *completion)
 	package = g_ptr_array_index (array, 0);
 
 	/* this section done */
-	zif_completion_done (completion);
+	zif_state_done (state);
 
 	/* get requires */
-	completion_local = zif_completion_get_child (completion);
-	requires = zif_package_get_requires (package, NULL, completion_local, &error);
+	state_local = zif_state_get_child (state);
+	requires = zif_package_get_requires (package, NULL, state_local, &error);
 	if (requires == NULL) {
 		g_print ("failed to get requires: %s\n", error->message);
 		g_error_free (error);
@@ -237,15 +237,15 @@ zif_cmd_get_depends (const gchar *package_name, ZifCompletion *completion)
 	}
 
 	/* this section done */
-	zif_completion_done (completion);
+	zif_state_done (state);
 
 	/* match a package to each require */
-	completion_local = zif_completion_get_child (completion);
-	zif_completion_set_number_steps (completion_local, requires->len);
+	state_local = zif_state_get_child (state);
+	zif_state_set_number_steps (state_local, requires->len);
 	for (i=0; i<requires->len; i++) {
 
-		/* setup deeper completion */
-		completion_loop = zif_completion_get_child (completion_local);
+		/* setup deeper state */
+		state_loop = zif_state_get_child (state_local);
 
 		require = g_ptr_array_index (requires, i);
 		require_str = zif_depend_to_string (require);
@@ -254,7 +254,7 @@ zif_cmd_get_depends (const gchar *package_name, ZifCompletion *completion)
 
 		/* find the package providing the depend */
 		to_array[0] = require->name;
-		provides = zif_store_array_what_provides (store_array, (gchar**)to_array, NULL, NULL, NULL, completion_loop, &error);
+		provides = zif_store_array_what_provides (store_array, (gchar**)to_array, NULL, NULL, NULL, state_loop, &error);
 		if (provides == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
@@ -272,17 +272,17 @@ zif_cmd_get_depends (const gchar *package_name, ZifCompletion *completion)
 		g_ptr_array_unref (provides);
 
 		/* this section done */
-		zif_completion_done (completion_local);
+		zif_state_done (state_local);
 	}
 
 	/* this section done */
-	zif_completion_done (completion);
+	zif_state_done (state);
 out:
 	if (requires != NULL)
 		g_ptr_array_unref (requires);
 	if (array != NULL)
 		g_ptr_array_unref (array);
-	g_object_unref (completion_local);
+	g_object_unref (state_local);
 	g_ptr_array_unref (store_array);
 	return ret;
 }
@@ -291,23 +291,23 @@ out:
  * zif_cmd_install:
  **/
 static gboolean
-zif_cmd_install (const gchar *package_name, ZifCompletion *completion)
+zif_cmd_install (const gchar *package_name, ZifState *state)
 {
 	gboolean ret;
 	GError *error = NULL;
 	GPtrArray *array = NULL;
 	ZifPackage *package;
-	ZifCompletion *completion_local;
+	ZifState *state_local;
 	GPtrArray *store_array;
 	const gchar *to_array[] = { NULL, NULL };
 
-	/* setup completion */
-	zif_completion_set_number_steps (completion, 3);
+	/* setup state */
+	zif_state_set_number_steps (state, 3);
 
 	/* add all stores */
 	store_array = zif_store_array_new ();
-	completion_local = zif_completion_get_child (completion);
-	ret = zif_store_array_add_local (store_array, NULL, completion_local, &error);
+	state_local = zif_state_get_child (state);
+	ret = zif_store_array_add_local (store_array, NULL, state_local, &error);
 	if (!ret) {
 		g_print ("failed to add local store: %s\n", error->message);
 		g_error_free (error);
@@ -315,12 +315,12 @@ zif_cmd_install (const gchar *package_name, ZifCompletion *completion)
 	}
 
 	/* this section done */
-	zif_completion_done (completion);
+	zif_state_done (state);
 
 	/* check not already installed */
-	completion_local = zif_completion_get_child (completion);
+	state_local = zif_state_get_child (state);
 	to_array[0] = package_name;
-	array = zif_store_array_resolve (store_array, (gchar**)to_array, NULL, NULL, NULL, completion_local, &error);
+	array = zif_store_array_resolve (store_array, (gchar**)to_array, NULL, NULL, NULL, state_local, &error);
 	if (array == NULL) {
 		g_print ("failed to get results: %s\n", error->message);
 		g_error_free (error);
@@ -337,12 +337,12 @@ zif_cmd_install (const gchar *package_name, ZifCompletion *completion)
 	g_ptr_array_unref (store_array);
 
 	/* this section done */
-	zif_completion_done (completion);
+	zif_state_done (state);
 
 	/* check available */
 	store_array = zif_store_array_new ();
-	completion_local = zif_completion_get_child (completion);
-	ret = zif_store_array_add_remote_enabled (store_array, NULL, completion_local, &error);
+	state_local = zif_state_get_child (state);
+	ret = zif_store_array_add_remote_enabled (store_array, NULL, state_local, &error);
 	if (!ret) {
 		g_print ("failed to add enabled stores: %s\n", error->message);
 		g_error_free (error);
@@ -350,11 +350,11 @@ zif_cmd_install (const gchar *package_name, ZifCompletion *completion)
 	}
 
 	/* this section done */
-	zif_completion_done (completion);
+	zif_state_done (state);
 
 	/* check we can find a package of this name */
 	to_array[0] = package_name;
-	array = zif_store_array_resolve (store_array, (gchar**)to_array, NULL, NULL, NULL, completion_local, &error);
+	array = zif_store_array_resolve (store_array, (gchar**)to_array, NULL, NULL, NULL, state_local, &error);
 	if (array == NULL) {
 		g_print ("failed to get results: %s\n", error->message);
 		g_error_free (error);
@@ -366,7 +366,7 @@ zif_cmd_install (const gchar *package_name, ZifCompletion *completion)
 	}
 
 	/* this section done */
-	zif_completion_done (completion);
+	zif_state_done (state);
 
 	/* install this package, TODO: what if > 1? */
 	package = g_ptr_array_index (array, 0);
@@ -375,7 +375,7 @@ out:
 		g_ptr_array_unref (array);
 	}
 	g_ptr_array_unref (store_array);
-	g_object_unref (completion_local);
+	g_object_unref (state_local);
 	return ret;
 }
 
@@ -383,20 +383,20 @@ out:
  * zif_cmd_refresh_cache:
  **/
 static gboolean
-zif_cmd_refresh_cache (ZifCompletion *completion, gboolean force)
+zif_cmd_refresh_cache (ZifState *state, gboolean force)
 {
 	gboolean ret;
 	GError *error = NULL;
 	GPtrArray *store_array;
-	ZifCompletion *completion_local;
+	ZifState *state_local;
 
-	/* setup completion */
-	zif_completion_set_number_steps (completion, 2);
+	/* setup state */
+	zif_state_set_number_steps (state, 2);
 
 	/* add remote stores */
 	store_array = zif_store_array_new ();
-	completion_local = zif_completion_get_child (completion);
-	ret = zif_store_array_add_remote_enabled (store_array, NULL, completion_local, &error);
+	state_local = zif_state_get_child (state);
+	ret = zif_store_array_add_remote_enabled (store_array, NULL, state_local, &error);
 	if (!ret) {
 		g_print ("failed to add enabled stores: %s\n", error->message);
 		g_error_free (error);
@@ -404,11 +404,11 @@ zif_cmd_refresh_cache (ZifCompletion *completion, gboolean force)
 	}
 
 	/* this section done */
-	zif_completion_done (completion);
+	zif_state_done (state);
 
 	/* refresh all ZifRemoteStores */
-	completion_local = zif_completion_get_child (completion);
-	ret = zif_store_array_refresh (store_array, force, NULL, NULL, NULL, completion_local, &error);
+	state_local = zif_state_get_child (state);
+	ret = zif_store_array_refresh (store_array, force, NULL, NULL, NULL, state_local, &error);
 	if (!ret) {
 		g_print ("failed to refresh cache: %s\n", error->message);
 		g_error_free (error);
@@ -416,7 +416,7 @@ zif_cmd_refresh_cache (ZifCompletion *completion, gboolean force)
 	}
 
 	/* this section done */
-	zif_completion_done (completion);
+	zif_state_done (state);
 out:
 	g_ptr_array_unref (store_array);
 	return ret;
@@ -426,23 +426,23 @@ out:
  * zif_cmd_update:
  **/
 static gboolean
-zif_cmd_update (const gchar *package_name, ZifCompletion *completion)
+zif_cmd_update (const gchar *package_name, ZifState *state)
 {
 	gboolean ret;
 	GError *error = NULL;
 	GPtrArray *array = NULL;
 	ZifPackage *package;
-	ZifCompletion *completion_local;
+	ZifState *state_local;
 	GPtrArray *store_array;
 	const gchar *to_array[] = { NULL, NULL };
 
-	/* setup completion */
-	zif_completion_set_number_steps (completion, 4);
+	/* setup state */
+	zif_state_set_number_steps (state, 4);
 
 	/* add all stores */
 	store_array = zif_store_array_new ();
-	completion_local = zif_completion_get_child (completion);
-	ret = zif_store_array_add_local (store_array, NULL, completion_local, &error);
+	state_local = zif_state_get_child (state);
+	ret = zif_store_array_add_local (store_array, NULL, state_local, &error);
 	if (!ret) {
 		g_print ("failed to add local store: %s\n", error->message);
 		g_error_free (error);
@@ -450,12 +450,12 @@ zif_cmd_update (const gchar *package_name, ZifCompletion *completion)
 	}
 
 	/* this section done */
-	zif_completion_done (completion);
+	zif_state_done (state);
 
 	/* check not already installed */
-	completion_local = zif_completion_get_child (completion);
+	state_local = zif_state_get_child (state);
 	to_array[0] = package_name;
-	array = zif_store_array_resolve (store_array, (gchar**)to_array, NULL, NULL, NULL, completion_local, &error);
+	array = zif_store_array_resolve (store_array, (gchar**)to_array, NULL, NULL, NULL, state_local, &error);
 	if (array == NULL) {
 		g_print ("failed to get results: %s\n", error->message);
 		g_error_free (error);
@@ -472,12 +472,12 @@ zif_cmd_update (const gchar *package_name, ZifCompletion *completion)
 	g_ptr_array_unref (store_array);
 
 	/* this section done */
-	zif_completion_done (completion);
+	zif_state_done (state);
 
 	/* check available */
 	store_array = zif_store_array_new ();
-	completion_local = zif_completion_get_child (completion);
-	ret = zif_store_array_add_remote_enabled (store_array, NULL, completion_local, &error);
+	state_local = zif_state_get_child (state);
+	ret = zif_store_array_add_remote_enabled (store_array, NULL, state_local, &error);
 	if (!ret) {
 		g_print ("failed to add enabled stores: %s\n", error->message);
 		g_error_free (error);
@@ -485,12 +485,12 @@ zif_cmd_update (const gchar *package_name, ZifCompletion *completion)
 	}
 
 	/* this section done */
-	zif_completion_done (completion);
+	zif_state_done (state);
 
 	/* check we can find a package of this name */
-	completion_local = zif_completion_get_child (completion);
+	state_local = zif_state_get_child (state);
 	to_array[0] = package_name;
-	array = zif_store_array_resolve (store_array, (gchar**)to_array, NULL, NULL, NULL, completion_local, &error);
+	array = zif_store_array_resolve (store_array, (gchar**)to_array, NULL, NULL, NULL, state_local, &error);
 	if (array == NULL) {
 		g_print ("failed to get results: %s\n", error->message);
 		g_error_free (error);
@@ -502,7 +502,7 @@ zif_cmd_update (const gchar *package_name, ZifCompletion *completion)
 	}
 
 	/* this section done */
-	zif_completion_done (completion);
+	zif_state_done (state);
 
 	/* update this package, TODO: check for newer? */
 	package = g_ptr_array_index (array, 0);
@@ -511,7 +511,7 @@ out:
 		g_ptr_array_unref (array);
 	}
 	g_ptr_array_unref (store_array);
-	g_object_unref (completion_local);
+	g_object_unref (state_local);
 	return ret;
 }
 
@@ -533,8 +533,8 @@ main (int argc, char *argv[])
 	ZifStoreLocal *store_local = NULL;
 	ZifStoreRemote *store_remote = NULL;
 	ZifGroups *groups = NULL;
-	ZifCompletion *completion = NULL;
-	ZifCompletion *completion_local = NULL;
+	ZifState *state = NULL;
+	ZifState *state_local = NULL;
 	ZifLock *lock = NULL;
 	guint i;
 	guint pid;
@@ -705,10 +705,10 @@ main (int argc, char *argv[])
 		goto out;
 	}
 
-	/* ZifCompletion */
-	completion = zif_completion_new ();
-	g_signal_connect (completion, "percentage-changed", G_CALLBACK (zif_completion_percentage_changed_cb), NULL);
-	g_signal_connect (completion, "subpercentage-changed", G_CALLBACK (zif_completion_subpercentage_changed_cb), NULL);
+	/* ZifState */
+	state = zif_state_new ();
+	g_signal_connect (state, "percentage-changed", G_CALLBACK (zif_state_percentage_changed_cb), NULL);
+	g_signal_connect (state, "subpercentage-changed", G_CALLBACK (zif_state_subpercentage_changed_cb), NULL);
 
 	if (argc < 2) {
 		g_print ("%s", options_help);
@@ -725,12 +725,12 @@ main (int argc, char *argv[])
 
 		pk_progress_bar_start (progressbar, "Getting updates");
 
-		/* setup completion with the correct number of steps */
-		zif_completion_set_number_steps (completion, 5);
+		/* setup state with the correct number of steps */
+		zif_state_set_number_steps (state, 5);
 
 		/* get the installed packages */
-		completion_local = zif_completion_get_child (completion);
-		packages = zif_store_get_packages (ZIF_STORE (store_local), NULL, completion_local, &error);
+		state_local = zif_state_get_child (state);
+		packages = zif_store_get_packages (ZIF_STORE (store_local), NULL, state_local, &error);
 		if (packages == NULL) {
 			g_print ("failed to get local store: %s", error->message);
 			g_error_free (error);
@@ -739,18 +739,18 @@ main (int argc, char *argv[])
 		egg_debug ("searching with %i packages", packages->len);
 
 		/* this section done */
-		zif_completion_done (completion);
+		zif_state_done (state);
 
 		/* remove any packages that are not newest (think kernel) */
 		zif_package_array_filter_newest (packages);
 
 		/* this section done */
-		zif_completion_done (completion);
+		zif_state_done (state);
 
 		/* get a store_array of remote stores */
 		store_array = zif_store_array_new ();
-		completion_local = zif_completion_get_child (completion);
-		ret = zif_store_array_add_remote_enabled (store_array, NULL, completion_local, &error);
+		state_local = zif_state_get_child (state);
+		ret = zif_store_array_add_remote_enabled (store_array, NULL, state_local, &error);
 		if (!ret) {
 			g_print ("failed to add enabled stores: %s\n", error->message);
 			g_error_free (error);
@@ -758,11 +758,11 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_completion_done (completion);
+		zif_state_done (state);
 
 		/* get updates */
-		completion_local = zif_completion_get_child (completion);
-		array = zif_store_array_get_updates (store_array, packages, NULL, NULL, NULL, completion_local, &error);
+		state_local = zif_state_get_child (state);
+		array = zif_store_array_get_updates (store_array, packages, NULL, NULL, NULL, state_local, &error);
 		if (array == NULL) {
 			g_print ("failed to get updates: %s\n", error->message);
 			g_error_free (error);
@@ -770,31 +770,31 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_completion_done (completion);
+		zif_state_done (state);
 
 		/* get update details */
-		completion_local = zif_completion_get_child (completion);
-		zif_completion_set_number_steps (completion_local, array->len);
+		state_local = zif_state_get_child (state);
+		zif_state_set_number_steps (state_local, array->len);
 		for (i=0; i<array->len; i++) {
 			ZifUpdate *update;
 			ZifUpdateInfo *info;
 			ZifChangeset *changeset;
 			GPtrArray *update_infos;
 			GPtrArray *changelog;
-			ZifCompletion *completion_loop;
+			ZifState *state_loop;
 			guint j;
 
 			package = g_ptr_array_index (array, i);
-			completion_loop = zif_completion_get_child (completion_local);
-			update = zif_package_get_update_detail (package, NULL, completion_loop, &error);
+			state_loop = zif_state_get_child (state_local);
+			update = zif_package_get_update_detail (package, NULL, state_loop, &error);
 			if (update == NULL) {
 				g_print ("failed to get update detail for %s: %s\n",
 					 zif_package_get_id (package), error->message);
 				g_clear_error (&error);
 
 				/* non-fatal */
-				zif_completion_finished (completion_loop);
-				zif_completion_done (completion_local);
+				zif_state_finished (state_loop);
+				zif_state_done (state_local);
 				continue;
 			}
 			g_print ("\t%s\t%s\n", "kind", zif_update_state_to_string (zif_update_get_kind (update)));
@@ -824,11 +824,11 @@ main (int argc, char *argv[])
 			}
 
 			/* this section done */
-			zif_completion_done (completion_local);
+			zif_state_done (state_local);
 		}
 
 		/* this section done */
-		zif_completion_done (completion);
+		zif_state_done (state);
 
 		/* no more progressbar */
 		pk_progress_bar_end (progressbar);
@@ -844,13 +844,13 @@ main (int argc, char *argv[])
 
 		pk_progress_bar_start (progressbar, "Getting categories");
 
-		/* setup completion with the correct number of steps */
-		zif_completion_set_number_steps (completion, 2);
+		/* setup state with the correct number of steps */
+		zif_state_set_number_steps (state, 2);
 
 		/* get a store_array of remote stores */
 		store_array = zif_store_array_new ();
-		completion_local = zif_completion_get_child (completion);
-		ret = zif_store_array_add_remote_enabled (store_array, NULL, completion_local, &error);
+		state_local = zif_state_get_child (state);
+		ret = zif_store_array_add_remote_enabled (store_array, NULL, state_local, &error);
 		if (!ret) {
 			g_print ("failed to add enabled stores: %s\n", error->message);
 			g_error_free (error);
@@ -858,11 +858,11 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_completion_done (completion);
+		zif_state_done (state);
 
 		/* get categories */
-		completion_local = zif_completion_get_child (completion);
-		array = zif_store_array_get_categories (store_array, NULL, NULL, NULL, completion_local, &error);
+		state_local = zif_state_get_child (state);
+		array = zif_store_array_get_categories (store_array, NULL, NULL, NULL, state_local, &error);
 		if (array == NULL) {
 			g_print ("failed to get categories: %s\n", error->message);
 			g_error_free (error);
@@ -870,7 +870,7 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_completion_done (completion);
+		zif_state_done (state);
 
 		/* no more progressbar */
 		pk_progress_bar_end (progressbar);
@@ -923,13 +923,13 @@ main (int argc, char *argv[])
 
 		pk_progress_bar_start (progressbar, "Cleaning");
 
-		/* setup completion with the correct number of steps */
-		zif_completion_set_number_steps (completion, 2);
+		/* setup state with the correct number of steps */
+		zif_state_set_number_steps (state, 2);
 
 		/* get a store_array of remote stores */
 		store_array = zif_store_array_new ();
-		completion_local = zif_completion_get_child (completion);
-		ret = zif_store_array_add_remote_enabled (store_array, NULL, completion_local, &error);
+		state_local = zif_state_get_child (state);
+		ret = zif_store_array_add_remote_enabled (store_array, NULL, state_local, &error);
 		if (!ret) {
 			g_print ("failed to add enabled stores: %s\n", error->message);
 			g_error_free (error);
@@ -937,11 +937,11 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_completion_done (completion);
+		zif_state_done (state);
 
 		/* clean all the store_array */
-		completion_local = zif_completion_get_child (completion);
-		ret = zif_store_array_clean (store_array, NULL, NULL, NULL, completion_local, &error);
+		state_local = zif_state_get_child (state);
+		ret = zif_store_array_clean (store_array, NULL, NULL, NULL, state_local, &error);
 		if (!ret) {
 			g_print ("failed to clean: %s\n", error->message);
 			g_error_free (error);
@@ -949,7 +949,7 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_completion_done (completion);
+		zif_state_done (state);
 
 		/* no more progressbar */
 		pk_progress_bar_end (progressbar);
@@ -963,7 +963,7 @@ main (int argc, char *argv[])
 			goto out;
 		}
 		pk_progress_bar_start (progressbar, "Getting depends");
-		zif_cmd_get_depends (value, completion);
+		zif_cmd_get_depends (value, state);
 
 		/* no more progressbar */
 		pk_progress_bar_end (progressbar);
@@ -975,7 +975,7 @@ main (int argc, char *argv[])
 			goto out;
 		}
 		pk_progress_bar_start (progressbar, "Downloading");
-		zif_cmd_download (value, completion);
+		zif_cmd_download (value, state);
 
 		/* no more progressbar */
 		pk_progress_bar_end (progressbar);
@@ -995,13 +995,13 @@ main (int argc, char *argv[])
 
 		pk_progress_bar_start (progressbar, "Get file data");
 
-		/* setup completion with the correct number of steps */
-		zif_completion_set_number_steps (completion, 3);
+		/* setup state with the correct number of steps */
+		zif_state_set_number_steps (state, 3);
 
 		/* add both local and remote packages */
 		store_array = zif_store_array_new ();
-		completion_local = zif_completion_get_child (completion);
-		ret = zif_store_array_add_local (store_array, NULL, completion_local, &error);
+		state_local = zif_state_get_child (state);
+		ret = zif_store_array_add_local (store_array, NULL, state_local, &error);
 		if (!ret) {
 			g_print ("failed to add remote: %s\n", error->message);
 			g_error_free (error);
@@ -1009,10 +1009,10 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_completion_done (completion);
+		zif_state_done (state);
 
-		completion_local = zif_completion_get_child (completion);
-		ret = zif_store_array_add_remote_enabled (store_array, NULL, completion_local, &error);
+		state_local = zif_state_get_child (state);
+		ret = zif_store_array_add_remote_enabled (store_array, NULL, state_local, &error);
 		if (!ret) {
 			g_print ("failed to add remote: %s\n", error->message);
 			g_error_free (error);
@@ -1020,12 +1020,12 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_completion_done (completion);
+		zif_state_done (state);
 
 		/* resolve */
-		completion_local = zif_completion_get_child (completion);
+		state_local = zif_state_get_child (state);
 		to_array[0] = value;
-		array = zif_store_array_resolve (store_array, (gchar**)to_array, NULL, NULL, NULL, completion_local, &error);
+		array = zif_store_array_resolve (store_array, (gchar**)to_array, NULL, NULL, NULL, state_local, &error);
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
@@ -1033,13 +1033,13 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_completion_done (completion);
+		zif_state_done (state);
 
 		/* at least one result */
 		if (array->len > 0) {
 			package = g_ptr_array_index (array, 0);
-			completion_local = zif_completion_get_child (completion);
-			files = zif_package_get_files (package, NULL, completion_local, &error);
+			state_local = zif_state_get_child (state);
+			files = zif_package_get_files (package, NULL, state_local, &error);
 			if (files == NULL) {
 				g_print ("failed to get files: %s\n", error->message);
 				g_error_free (error);
@@ -1089,13 +1089,13 @@ main (int argc, char *argv[])
 
 		pk_progress_bar_start (progressbar, "Getting details");
 
-		/* setup completion with the correct number of steps */
-		zif_completion_set_number_steps (completion, 3);
+		/* setup state with the correct number of steps */
+		zif_state_set_number_steps (state, 3);
 
 		/* add both local and remote packages */
 		store_array = zif_store_array_new ();
-		completion_local = zif_completion_get_child (completion);
-		ret = zif_store_array_add_local (store_array, NULL, completion_local, &error);
+		state_local = zif_state_get_child (state);
+		ret = zif_store_array_add_local (store_array, NULL, state_local, &error);
 		if (!ret) {
 			g_print ("failed to add remote: %s\n", error->message);
 			g_error_free (error);
@@ -1103,10 +1103,10 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_completion_done (completion);
+		zif_state_done (state);
 
-		completion_local = zif_completion_get_child (completion);
-		ret = zif_store_array_add_remote_enabled (store_array, NULL, completion_local, &error);
+		state_local = zif_state_get_child (state);
+		ret = zif_store_array_add_remote_enabled (store_array, NULL, state_local, &error);
 		if (!ret) {
 			g_print ("failed to add remote: %s\n", error->message);
 			g_error_free (error);
@@ -1114,18 +1114,18 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_completion_done (completion);
+		zif_state_done (state);
 
 		if (value == NULL) {
 			g_print ("specify a package name\n");
 			goto out;
 		}
-		completion_local = zif_completion_get_child (completion);
+		state_local = zif_state_get_child (state);
 		to_array[0] = value;
-		array = zif_store_array_resolve (store_array, (gchar**)to_array, NULL, NULL, NULL, completion_local, &error);
+		array = zif_store_array_resolve (store_array, (gchar**)to_array, NULL, NULL, NULL, state_local, &error);
 
 		/* this section done */
-		zif_completion_done (completion);
+		zif_state_done (state);
 
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
@@ -1140,12 +1140,12 @@ main (int argc, char *argv[])
 
 		package_id = zif_package_get_id (package);
 		split = zif_package_id_split (package_id);
-		completion_local = zif_completion_get_child (completion);
-		summary = zif_package_get_summary (package, NULL, completion_local, NULL);
-		description = zif_package_get_description (package, NULL, completion_local, NULL);
-		license = zif_package_get_license (package, NULL, completion_local, NULL);
-		url = zif_package_get_url (package, NULL, completion_local, NULL);
-		size = zif_package_get_size (package, NULL, completion_local, NULL);
+		state_local = zif_state_get_child (state);
+		summary = zif_package_get_summary (package, NULL, state_local, NULL);
+		description = zif_package_get_description (package, NULL, state_local, NULL);
+		license = zif_package_get_license (package, NULL, state_local, NULL);
+		url = zif_package_get_url (package, NULL, state_local, NULL);
+		size = zif_package_get_size (package, NULL, state_local, NULL);
 
 		g_print ("Name\t : %s\n", split[ZIF_PACKAGE_ID_NAME]);
 		g_print ("Version\t : %s\n", split[ZIF_PACKAGE_ID_VERSION]);
@@ -1167,7 +1167,7 @@ main (int argc, char *argv[])
 			goto out;
 		}
 		pk_progress_bar_start (progressbar, "Installing");
-		zif_cmd_install (value, completion);
+		zif_cmd_install (value, state);
 
 		/* no more progressbar */
 		pk_progress_bar_end (progressbar);
@@ -1179,13 +1179,13 @@ main (int argc, char *argv[])
 
 		pk_progress_bar_start (progressbar, "Getting packages");
 
-		/* setup completion with the correct number of steps */
-		zif_completion_set_number_steps (completion, 3);
+		/* setup state with the correct number of steps */
+		zif_state_set_number_steps (state, 3);
 
 		/* add both local and remote packages */
 		store_array = zif_store_array_new ();
-		completion_local = zif_completion_get_child (completion);
-		ret = zif_store_array_add_local (store_array, NULL, completion_local, &error);
+		state_local = zif_state_get_child (state);
+		ret = zif_store_array_add_local (store_array, NULL, state_local, &error);
 		if (!ret) {
 			g_print ("failed to add remote: %s\n", error->message);
 			g_error_free (error);
@@ -1193,10 +1193,10 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_completion_done (completion);
+		zif_state_done (state);
 
-		completion_local = zif_completion_get_child (completion);
-		ret = zif_store_array_add_remote_enabled (store_array, NULL, completion_local, &error);
+		state_local = zif_state_get_child (state);
+		ret = zif_store_array_add_remote_enabled (store_array, NULL, state_local, &error);
 		if (!ret) {
 			g_print ("failed to add remote: %s\n", error->message);
 			g_error_free (error);
@@ -1204,10 +1204,10 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_completion_done (completion);
+		zif_state_done (state);
 
-		completion_local = zif_completion_get_child (completion);
-		array = zif_store_array_get_packages (store_array, NULL, NULL, NULL, completion_local, &error);
+		state_local = zif_state_get_child (state);
+		array = zif_store_array_get_packages (store_array, NULL, NULL, NULL, state_local, &error);
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
@@ -1215,7 +1215,7 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_completion_done (completion);
+		zif_state_done (state);
 
 		/* no more progressbar */
 		pk_progress_bar_end (progressbar);
@@ -1247,7 +1247,7 @@ main (int argc, char *argv[])
 	if (g_strcmp0 (mode, "makecache") == 0 || g_strcmp0 (mode, "refreshcache") == 0) {
 
 		pk_progress_bar_start (progressbar, "Refreshing cache");
-		zif_cmd_refresh_cache (completion, FALSE);
+		zif_cmd_refresh_cache (state, FALSE);
 
 		/* no more progressbar */
 		pk_progress_bar_end (progressbar);
@@ -1261,7 +1261,7 @@ main (int argc, char *argv[])
 		pk_progress_bar_start (progressbar, "Getting repo list");
 
 		/* get list */
-		array = zif_repos_get_stores (repos, NULL, completion, &error);
+		array = zif_repos_get_stores (repos, NULL, state, &error);
 		if (array == NULL) {
 			g_print ("failed to get list of repos: %s\n", error->message);
 			g_error_free (error);
@@ -1276,8 +1276,8 @@ main (int argc, char *argv[])
 			store_remote = g_ptr_array_index (array, i);
 			g_print ("%s\t\t%s\t\t%s\n",
 				 zif_store_get_id (ZIF_STORE (store_remote)),
-				 zif_store_remote_get_enabled (store_remote, NULL, completion, NULL) ? "enabled" : "disabled",
-				 zif_store_remote_get_name (store_remote, NULL, completion, NULL));
+				 zif_store_remote_get_enabled (store_remote, NULL, state, NULL) ? "enabled" : "disabled",
+				 zif_store_remote_get_name (store_remote, NULL, state, NULL));
 		}
 
 		g_ptr_array_unref (array);
@@ -1291,13 +1291,13 @@ main (int argc, char *argv[])
 
 		pk_progress_bar_start (progressbar, "Resolving");
 
-		/* setup completion with the correct number of steps */
-		zif_completion_set_number_steps (completion, 3);
+		/* setup state with the correct number of steps */
+		zif_state_set_number_steps (state, 3);
 
 		/* add both local and remote packages */
 		store_array = zif_store_array_new ();
-		completion_local = zif_completion_get_child (completion);
-		ret = zif_store_array_add_local (store_array, NULL, completion_local, &error);
+		state_local = zif_state_get_child (state);
+		ret = zif_store_array_add_local (store_array, NULL, state_local, &error);
 		if (!ret) {
 			g_print ("failed to add remote: %s\n", error->message);
 			g_error_free (error);
@@ -1305,10 +1305,10 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_completion_done (completion);
+		zif_state_done (state);
 
-		completion_local = zif_completion_get_child (completion);
-		ret = zif_store_array_add_remote_enabled (store_array, NULL, completion_local, &error);
+		state_local = zif_state_get_child (state);
+		ret = zif_store_array_add_remote_enabled (store_array, NULL, state_local, &error);
 		if (!ret) {
 			g_print ("failed to add remote: %s\n", error->message);
 			g_error_free (error);
@@ -1316,11 +1316,11 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_completion_done (completion);
+		zif_state_done (state);
 
-		completion_local = zif_completion_get_child (completion);
+		state_local = zif_state_get_child (state);
 		to_array[0] = value;
-		array = zif_store_array_resolve (store_array, (gchar**)to_array, NULL, NULL, NULL, completion_local, &error);
+		array = zif_store_array_resolve (store_array, (gchar**)to_array, NULL, NULL, NULL, state_local, &error);
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
@@ -1328,7 +1328,7 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_completion_done (completion);
+		zif_state_done (state);
 
 		/* no more progressbar */
 		pk_progress_bar_end (progressbar);
@@ -1345,13 +1345,13 @@ main (int argc, char *argv[])
 
 		pk_progress_bar_start (progressbar, "Resolving ID");
 
-		/* setup completion with the correct number of steps */
-		zif_completion_set_number_steps (completion, 3);
+		/* setup state with the correct number of steps */
+		zif_state_set_number_steps (state, 3);
 
 		/* add both local and remote packages */
 		store_array = zif_store_array_new ();
-		completion_local = zif_completion_get_child (completion);
-		ret = zif_store_array_add_local (store_array, NULL, completion_local, &error);
+		state_local = zif_state_get_child (state);
+		ret = zif_store_array_add_local (store_array, NULL, state_local, &error);
 		if (!ret) {
 			g_print ("failed to add remote: %s\n", error->message);
 			g_error_free (error);
@@ -1359,10 +1359,10 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_completion_done (completion);
+		zif_state_done (state);
 
-		completion_local = zif_completion_get_child (completion);
-		ret = zif_store_array_add_remote_enabled (store_array, NULL, completion_local, &error);
+		state_local = zif_state_get_child (state);
+		ret = zif_store_array_add_remote_enabled (store_array, NULL, state_local, &error);
 		if (!ret) {
 			g_print ("failed to add remote: %s\n", error->message);
 			g_error_free (error);
@@ -1370,7 +1370,7 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_completion_done (completion);
+		zif_state_done (state);
 
 		/* get id */
 		if (!zif_package_id_check (value)) {
@@ -1379,8 +1379,8 @@ main (int argc, char *argv[])
 		}
 
 		/* find package id */
-		completion_local = zif_completion_get_child (completion);
-		package = zif_store_array_find_package (store_array, value, NULL, completion_local, &error);
+		state_local = zif_state_get_child (state);
+		package = zif_store_array_find_package (store_array, value, NULL, state_local, &error);
 		if (package == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
@@ -1388,7 +1388,7 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_completion_done (completion);
+		zif_state_done (state);
 
 		/* no more progressbar */
 		pk_progress_bar_end (progressbar);
@@ -1405,13 +1405,13 @@ main (int argc, char *argv[])
 
 		pk_progress_bar_start (progressbar, "Searching name");
 
-		/* setup completion with the correct number of steps */
-		zif_completion_set_number_steps (completion, 3);
+		/* setup state with the correct number of steps */
+		zif_state_set_number_steps (state, 3);
 
 		/* add both local and remote packages */
 		store_array = zif_store_array_new ();
-		completion_local = zif_completion_get_child (completion);
-		ret = zif_store_array_add_local (store_array, NULL, completion_local, &error);
+		state_local = zif_state_get_child (state);
+		ret = zif_store_array_add_local (store_array, NULL, state_local, &error);
 		if (!ret) {
 			g_print ("failed to add remote: %s\n", error->message);
 			g_error_free (error);
@@ -1419,10 +1419,10 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_completion_done (completion);
+		zif_state_done (state);
 
-		completion_local = zif_completion_get_child (completion);
-		ret = zif_store_array_add_remote_enabled (store_array, NULL, completion_local, &error);
+		state_local = zif_state_get_child (state);
+		ret = zif_store_array_add_remote_enabled (store_array, NULL, state_local, &error);
 		if (!ret) {
 			g_print ("failed to add remote: %s\n", error->message);
 			g_error_free (error);
@@ -1430,11 +1430,11 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_completion_done (completion);
+		zif_state_done (state);
 
-		completion_local = zif_completion_get_child (completion);
+		state_local = zif_state_get_child (state);
 		to_array[0] = value;
-		array = zif_store_array_search_name (store_array, (gchar**)to_array, NULL, NULL, NULL, completion_local, &error);
+		array = zif_store_array_search_name (store_array, (gchar**)to_array, NULL, NULL, NULL, state_local, &error);
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
@@ -1442,7 +1442,7 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_completion_done (completion);
+		zif_state_done (state);
 
 		g_print ("\n");
 
@@ -1458,13 +1458,13 @@ main (int argc, char *argv[])
 
 		pk_progress_bar_start (progressbar, "Searching details");
 
-		/* setup completion with the correct number of steps */
-		zif_completion_set_number_steps (completion, 3);
+		/* setup state with the correct number of steps */
+		zif_state_set_number_steps (state, 3);
 
 		/* add local packages */
 		store_array = zif_store_array_new ();
-		completion_local = zif_completion_get_child (completion);
-		ret = zif_store_array_add_local (store_array, NULL, completion_local, &error);
+		state_local = zif_state_get_child (state);
+		ret = zif_store_array_add_local (store_array, NULL, state_local, &error);
 		if (!ret) {
 			g_print ("failed to add remote: %s\n", error->message);
 			g_error_free (error);
@@ -1472,11 +1472,11 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_completion_done (completion);
+		zif_state_done (state);
 
 		/* add remote packages */
-		completion_local = zif_completion_get_child (completion);
-		ret = zif_store_array_add_remote_enabled (store_array, NULL, completion_local, &error);
+		state_local = zif_state_get_child (state);
+		ret = zif_store_array_add_remote_enabled (store_array, NULL, state_local, &error);
 		if (!ret) {
 			g_print ("failed to add remote: %s\n", error->message);
 			g_error_free (error);
@@ -1484,11 +1484,11 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_completion_done (completion);
+		zif_state_done (state);
 
-		completion_local = zif_completion_get_child (completion);
+		state_local = zif_state_get_child (state);
 		to_array[0] = value;
-		array = zif_store_array_search_details (store_array, (gchar**)to_array, NULL, NULL, NULL, completion_local, &error);
+		array = zif_store_array_search_details (store_array, (gchar**)to_array, NULL, NULL, NULL, state_local, &error);
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
@@ -1496,7 +1496,7 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_completion_done (completion);
+		zif_state_done (state);
 
 		/* no more progressbar */
 		pk_progress_bar_end (progressbar);
@@ -1513,13 +1513,13 @@ main (int argc, char *argv[])
 
 		pk_progress_bar_start (progressbar, "Searching file");
 
-		/* setup completion with the correct number of steps */
-		zif_completion_set_number_steps (completion, 3);
+		/* setup state with the correct number of steps */
+		zif_state_set_number_steps (state, 3);
 
 		/* add local packages */
 		store_array = zif_store_array_new ();
-		completion_local = zif_completion_get_child (completion);
-		ret = zif_store_array_add_local (store_array, NULL, completion_local, &error);
+		state_local = zif_state_get_child (state);
+		ret = zif_store_array_add_local (store_array, NULL, state_local, &error);
 		if (!ret) {
 			g_print ("failed to add local: %s\n", error->message);
 			g_error_free (error);
@@ -1527,11 +1527,11 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_completion_done (completion);
+		zif_state_done (state);
 
 		/* add remote packages */
-		completion_local = zif_completion_get_child (completion);
-		ret = zif_store_array_add_remote_enabled (store_array, NULL, completion_local, &error);
+		state_local = zif_state_get_child (state);
+		ret = zif_store_array_add_remote_enabled (store_array, NULL, state_local, &error);
 		if (!ret) {
 			g_print ("failed to add remote: %s\n", error->message);
 			g_error_free (error);
@@ -1539,11 +1539,11 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_completion_done (completion);
+		zif_state_done (state);
 
-		completion_local = zif_completion_get_child (completion);
+		state_local = zif_state_get_child (state);
 		to_array[0] = value;
-		array = zif_store_array_search_file (store_array, (gchar**)to_array, NULL, NULL, NULL, completion_local, &error);
+		array = zif_store_array_search_file (store_array, (gchar**)to_array, NULL, NULL, NULL, state_local, &error);
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
@@ -1551,7 +1551,7 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_completion_done (completion);
+		zif_state_done (state);
 
 		/* no more progressbar */
 		pk_progress_bar_end (progressbar);
@@ -1568,13 +1568,13 @@ main (int argc, char *argv[])
 
 		pk_progress_bar_start (progressbar, "Search group");
 
-		/* setup completion with the correct number of steps */
-		zif_completion_set_number_steps (completion, 3);
+		/* setup state with the correct number of steps */
+		zif_state_set_number_steps (state, 3);
 
 		/* add both local and remote packages */
 		store_array = zif_store_array_new ();
-		completion_local = zif_completion_get_child (completion);
-		ret = zif_store_array_add_local (store_array, NULL, completion_local, &error);
+		state_local = zif_state_get_child (state);
+		ret = zif_store_array_add_local (store_array, NULL, state_local, &error);
 		if (!ret) {
 			g_print ("failed to add remote: %s\n", error->message);
 			g_error_free (error);
@@ -1582,10 +1582,10 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_completion_done (completion);
+		zif_state_done (state);
 
-		completion_local = zif_completion_get_child (completion);
-		ret = zif_store_array_add_remote_enabled (store_array, NULL, completion_local, &error);
+		state_local = zif_state_get_child (state);
+		ret = zif_store_array_add_remote_enabled (store_array, NULL, state_local, &error);
 		if (!ret) {
 			g_print ("failed to add remote: %s\n", error->message);
 			g_error_free (error);
@@ -1593,11 +1593,11 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_completion_done (completion);
+		zif_state_done (state);
 
-		completion_local = zif_completion_get_child (completion);
+		state_local = zif_state_get_child (state);
 		to_array[0] = value;
-		array = zif_store_array_search_group (store_array, (gchar**)to_array, NULL, NULL, NULL, completion_local, &error);
+		array = zif_store_array_search_group (store_array, (gchar**)to_array, NULL, NULL, NULL, state_local, &error);
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
@@ -1605,7 +1605,7 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_completion_done (completion);
+		zif_state_done (state);
 
 		/* no more progressbar */
 		pk_progress_bar_end (progressbar);
@@ -1622,13 +1622,13 @@ main (int argc, char *argv[])
 
 		pk_progress_bar_start (progressbar, "Search category");
 
-		/* setup completion with the correct number of steps */
-		zif_completion_set_number_steps (completion, 2);
+		/* setup state with the correct number of steps */
+		zif_state_set_number_steps (state, 2);
 
 		/* add remote stores */
 		store_array = zif_store_array_new ();
-		completion_local = zif_completion_get_child (completion);
-		ret = zif_store_array_add_remote_enabled (store_array, NULL, completion_local, &error);
+		state_local = zif_state_get_child (state);
+		ret = zif_store_array_add_remote_enabled (store_array, NULL, state_local, &error);
 		if (!ret) {
 			g_print ("failed to add remote: %s\n", error->message);
 			g_error_free (error);
@@ -1636,11 +1636,11 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_completion_done (completion);
+		zif_state_done (state);
 
-		completion_local = zif_completion_get_child (completion);
+		state_local = zif_state_get_child (state);
 		to_array[0] = value;
-		array = zif_store_array_search_category (store_array, (gchar**)to_array, NULL, NULL, NULL, completion_local, &error);
+		array = zif_store_array_search_category (store_array, (gchar**)to_array, NULL, NULL, NULL, state_local, &error);
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
@@ -1648,7 +1648,7 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_completion_done (completion);
+		zif_state_done (state);
 
 		/* no more progressbar */
 		pk_progress_bar_end (progressbar);
@@ -1665,13 +1665,13 @@ main (int argc, char *argv[])
 
 		pk_progress_bar_start (progressbar, "Provides");
 
-		/* setup completion with the correct number of steps */
-		zif_completion_set_number_steps (completion, 3);
+		/* setup state with the correct number of steps */
+		zif_state_set_number_steps (state, 3);
 
 		/* add both local and remote packages */
 		store_array = zif_store_array_new ();
-		completion_local = zif_completion_get_child (completion);
-		ret = zif_store_array_add_local (store_array, NULL, completion_local, &error);
+		state_local = zif_state_get_child (state);
+		ret = zif_store_array_add_local (store_array, NULL, state_local, &error);
 		if (!ret) {
 			g_print ("failed to add remote: %s\n", error->message);
 			g_error_free (error);
@@ -1679,10 +1679,10 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_completion_done (completion);
+		zif_state_done (state);
 
-		completion_local = zif_completion_get_child (completion);
-		ret = zif_store_array_add_remote_enabled (store_array, NULL, completion_local, &error);
+		state_local = zif_state_get_child (state);
+		ret = zif_store_array_add_remote_enabled (store_array, NULL, state_local, &error);
 		if (!ret) {
 			g_print ("failed to add remote: %s\n", error->message);
 			g_error_free (error);
@@ -1690,11 +1690,11 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_completion_done (completion);
+		zif_state_done (state);
 
-		completion_local = zif_completion_get_child (completion);
+		state_local = zif_state_get_child (state);
 		to_array[0] = value;
-		array = zif_store_array_what_provides (store_array, (gchar**)to_array, NULL, NULL, NULL, completion_local, &error);
+		array = zif_store_array_what_provides (store_array, (gchar**)to_array, NULL, NULL, NULL, state_local, &error);
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
@@ -1702,7 +1702,7 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_completion_done (completion);
+		zif_state_done (state);
 
 		/* no more progressbar */
 		pk_progress_bar_end (progressbar);
@@ -1717,7 +1717,7 @@ main (int argc, char *argv[])
 			goto out;
 		}
 		pk_progress_bar_start (progressbar, "Updating");
-		zif_cmd_update (value, completion);
+		zif_cmd_update (value, state);
 		pk_progress_bar_end (progressbar);
 		g_print ("not yet supported\n");
 		goto out;
@@ -1735,8 +1735,8 @@ out:
 		g_object_unref (repos);
 	if (config != NULL)
 		g_object_unref (config);
-	if (completion != NULL)
-		g_object_unref (completion);
+	if (state != NULL)
+		g_object_unref (state);
 	if (lock != NULL) {
 		GError *error_local = NULL;
 		ret = zif_lock_set_unlocked (lock, &error_local);

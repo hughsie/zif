@@ -61,7 +61,7 @@ So far:
 
 Zif features:
 • Modern GObject library with GCancellation and GError
-• Full completion support for accurate progress reporting
+• Full state support for accurate progress reporting
 • Downloads using libsoup
 • Internally ref-counted strings for speed
 • Remote, installed and local packages handled as abstract packages

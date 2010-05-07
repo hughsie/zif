@@ -48,7 +48,7 @@
     </partintro>
     <xi:include href="xml/zif-category.xml"/>
     <xi:include href="xml/zif-changeset.xml"/>
-    <xi:include href="xml/zif-completion.xml"/>
+    <xi:include href="xml/zif-state.xml"/>
     <xi:include href="xml/zif-config.xml"/>
     <xi:include href="xml/zif-download.xml"/>
     <xi:include href="xml/zif-groups.xml"/>

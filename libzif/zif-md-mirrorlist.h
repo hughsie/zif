@@ -58,7 +58,7 @@ GType		 zif_md_mirrorlist_get_type		(void);
 ZifMdMirrorlist *zif_md_mirrorlist_new			(void);
 GPtrArray	*zif_md_mirrorlist_get_uris		(ZifMdMirrorlist	*md,
 							 GCancellable		*cancellable,
-							 ZifCompletion		*completion,
+							 ZifState		*state,
 							 GError			**error);
 
 G_END_DECLS

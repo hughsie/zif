@@ -59,12 +59,12 @@ ZifMdUpdateinfo	*zif_md_updateinfo_new			(void);
 
 GPtrArray	*zif_md_updateinfo_get_detail		(ZifMdUpdateinfo	*md,
 							 GCancellable		*cancellable,
-							 ZifCompletion		*completion,
+							 ZifState		*state,
 							 GError			**error);
 GPtrArray	*zif_md_updateinfo_get_detail_for_package (ZifMdUpdateinfo	*md,
 							 const gchar		*package_id,
 							 GCancellable		*cancellable,
-							 ZifCompletion		*completion,
+							 ZifState		*state,
 							 GError			**error);
 
 G_END_DECLS

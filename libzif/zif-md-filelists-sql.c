@@ -67,7 +67,7 @@ G_DEFINE_TYPE (ZifMdFilelistsSql, zif_md_filelists_sql, ZIF_TYPE_MD)
  * zif_md_filelists_sql_unload:
  **/
 static gboolean
-zif_md_filelists_sql_unload (ZifMd *md, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+zif_md_filelists_sql_unload (ZifMd *md, GCancellable *cancellable, ZifState *state, GError **error)
 {
 	gboolean ret = FALSE;
 	return ret;
@@ -77,7 +77,7 @@ zif_md_filelists_sql_unload (ZifMd *md, GCancellable *cancellable, ZifCompletion
  * zif_md_filelists_sql_load:
  **/
 static gboolean
-zif_md_filelists_sql_load (ZifMd *md, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+zif_md_filelists_sql_load (ZifMd *md, GCancellable *cancellable, ZifState *state, GError **error)
 {
 	const gchar *filename;
 	gint rc;
@@ -200,7 +200,7 @@ zif_md_filelists_sql_sqlite_get_files_cb (void *data, gint argc, gchar **argv, g
  **/
 static GPtrArray *
 zif_md_filelists_sql_get_files (ZifMd *md, ZifPackage *package,
-				GCancellable *cancellable, ZifCompletion *completion, GError **error)
+				GCancellable *cancellable, ZifState *state, GError **error)
 {
 	gchar *statement = NULL;
 	gint rc;
@@ -215,7 +215,7 @@ zif_md_filelists_sql_get_files (ZifMd *md, ZifPackage *package,
 
 	/* if not already loaded, load */
 	if (!md_filelists_sql->priv->loaded) {
-		ret = zif_md_load (md, cancellable, completion, &error_local);
+		ret = zif_md_load (md, cancellable, state, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED_TO_LOAD,
 				     "failed to load store file: %s", error_local->message);
@@ -268,7 +268,7 @@ out:
  **/
 static GPtrArray *
 zif_md_filelists_sql_search_file (ZifMd *md, gchar **search,
-				  GCancellable *cancellable, ZifCompletion *completion, GError **error)
+				  GCancellable *cancellable, ZifState *state, GError **error)
 {
 	GPtrArray *array = NULL;
 	gchar *statement = NULL;
@@ -287,7 +287,7 @@ zif_md_filelists_sql_search_file (ZifMd *md, gchar **search,
 
 	/* if not already loaded, load */
 	if (!md_filelists_sql->priv->loaded) {
-		ret = zif_md_load (md, cancellable, completion, &error_local);
+		ret = zif_md_load (md, cancellable, state, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED_TO_LOAD,
 				     "failed to load store file: %s", error_local->message);
@@ -432,7 +432,7 @@ zif_md_filelists_sql_test (EggTest *test)
 	GPtrArray *array;
 	const gchar *pkgid;
 	GCancellable *cancellable;
-	ZifCompletion *completion;
+	ZifState *state;
 	const gchar *data[] = { "/usr/bin/gnome-power-manager", NULL };
 
 	if (!egg_test_start (test, "ZifMdFilelistsSql"))
@@ -440,7 +440,7 @@ zif_md_filelists_sql_test (EggTest *test)
 
 	/* use */
 	cancellable = g_cancellable_new ();
-	completion = zif_completion_new ();
+	state = zif_state_new ();
 
 	/************************************************************/
 	egg_test_title (test, "get store_remote md");
@@ -501,7 +501,7 @@ zif_md_filelists_sql_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "load");
-	ret = zif_md_load (ZIF_MD (md), cancellable, completion, &error);
+	ret = zif_md_load (ZIF_MD (md), cancellable, state, &error);
 	if (ret)
 		egg_test_success (test, NULL);
 	else
@@ -513,7 +513,7 @@ zif_md_filelists_sql_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "search for files");
-	array = zif_md_filelists_sql_search_file (ZIF_MD (md), (gchar**)data, cancellable, completion, &error);
+	array = zif_md_filelists_sql_search_file (ZIF_MD (md), (gchar**)data, cancellable, state, &error);
 	if (array != NULL)
 		egg_test_success (test, NULL);
 	else
@@ -534,7 +534,7 @@ zif_md_filelists_sql_test (EggTest *test)
 
 	g_object_unref (md);
 	g_object_unref (cancellable);
-	g_object_unref (completion);
+	g_object_unref (state);
 
 	egg_test_end (test);
 }

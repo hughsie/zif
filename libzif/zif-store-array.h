@@ -30,7 +30,7 @@
 
 #include "zif-store.h"
 #include "zif-package.h"
-#include "zif-completion.h"
+#include "zif-state.h"
 
 G_BEGIN_DECLS
 
@@ -47,15 +47,15 @@ gboolean	 zif_store_array_add_stores		(GPtrArray		*store_array,
 							 GPtrArray		*stores);
 gboolean	 zif_store_array_add_local		(GPtrArray		*store_array,
 							 GCancellable		*cancellable,
-							 ZifCompletion		*completion,
+							 ZifState		*state,
 							 GError			**error);
 gboolean	 zif_store_array_add_remote		(GPtrArray		*store_array,
 							 GCancellable		*cancellable,
-							 ZifCompletion		*completion,
+							 ZifState		*state,
 							 GError			**error);
 gboolean	 zif_store_array_add_remote_enabled	(GPtrArray		*store_array,
 							 GCancellable		*cancellable,
-							 ZifCompletion		*completion,
+							 ZifState		*state,
 							 GError			**error);
 
 /* methods */
@@ -63,87 +63,87 @@ gboolean	 zif_store_array_clean			(GPtrArray		*store_array,
 							 ZifStoreArrayErrorCb	 error_cb,
 							 gpointer		 user_data,
 							 GCancellable		*cancellable,
-							 ZifCompletion		*completion,
+							 ZifState		*state,
 							 GError			**error);
 gboolean	 zif_store_array_refresh		(GPtrArray		*store_array,
 							 gboolean		 force,
 							 ZifStoreArrayErrorCb	 error_cb,
 							 gpointer		 user_data,
 							 GCancellable		*cancellable,
-							 ZifCompletion		*completion,
+							 ZifState		*state,
 							 GError			**error);
 GPtrArray	*zif_store_array_resolve		(GPtrArray		*store_array,
 							 gchar			**search,
 							 ZifStoreArrayErrorCb	 error_cb,
 							 gpointer		 user_data,
 							 GCancellable		*cancellable,
-							 ZifCompletion		*completion,
+							 ZifState		*state,
 							 GError			**error);
 GPtrArray	*zif_store_array_search_name		(GPtrArray		*store_array,
 							 gchar			**search,
 							 ZifStoreArrayErrorCb	 error_cb,
 							 gpointer		 user_data,
 							 GCancellable		*cancellable,
-							 ZifCompletion		*completion,
+							 ZifState		*state,
 							 GError			**error);
 GPtrArray	*zif_store_array_search_details		(GPtrArray		*store_array,
 							 gchar			**search,
 							 ZifStoreArrayErrorCb	 error_cb,
 							 gpointer		 user_data,
 							 GCancellable		*cancellable,
-							 ZifCompletion		*completion,
+							 ZifState		*state,
 							 GError			**error);
 GPtrArray	*zif_store_array_search_group		(GPtrArray		*store_array,
 							 gchar			**group_enum,
 							 ZifStoreArrayErrorCb	 error_cb,
 							 gpointer		 user_data,
 							 GCancellable		*cancellable,
-							 ZifCompletion		*completion,
+							 ZifState		*state,
 							 GError			**error);
 GPtrArray	*zif_store_array_search_category	(GPtrArray		*store_array,
 							 gchar			**group_id,
 							 ZifStoreArrayErrorCb	 error_cb,
 							 gpointer		 user_data,
 							 GCancellable		*cancellable,
-							 ZifCompletion		*completion,
+							 ZifState		*state,
 							 GError			**error);
 GPtrArray	*zif_store_array_search_file		(GPtrArray		*store_array,
 							 gchar			**search,
 							 ZifStoreArrayErrorCb	 error_cb,
 							 gpointer		 user_data,
 							 GCancellable		*cancellable,
-							 ZifCompletion		*completion,
+							 ZifState		*state,
 							 GError			**error);
 GPtrArray	*zif_store_array_what_provides		(GPtrArray		*store_array,
 							 gchar			**search,
 							 ZifStoreArrayErrorCb	 error_cb,
 							 gpointer		 user_data,
 							 GCancellable		*cancellable,
-							 ZifCompletion		*completion,
+							 ZifState		*state,
 							 GError			**error);
 GPtrArray	*zif_store_array_get_packages		(GPtrArray		*store_array,
 							 ZifStoreArrayErrorCb	 error_cb,
 							 gpointer		 user_data,
 							 GCancellable		*cancellable,
-							 ZifCompletion		*completion,
+							 ZifState		*state,
 							 GError			**error);
 GPtrArray	*zif_store_array_get_updates		(GPtrArray		*store_array,
 							 GPtrArray		*packages,
 							 ZifStoreArrayErrorCb	 error_cb,
 							 gpointer		 user_data,
 							 GCancellable		*cancellable,
-							 ZifCompletion		*completion,
+							 ZifState		*state,
 							 GError			**error);
 ZifPackage	*zif_store_array_find_package		(GPtrArray		*store_array,
 							 const gchar		*package_id,
 							 GCancellable		*cancellable,
-							 ZifCompletion		*completion,
+							 ZifState		*state,
 							 GError			**error);
 GPtrArray	*zif_store_array_get_categories		(GPtrArray		*store_array,
 							 ZifStoreArrayErrorCb	 error_cb,
 							 gpointer		 user_data,
 							 GCancellable		*cancellable,
-							 ZifCompletion		*completion,
+							 ZifState		*state,
 							 GError			**error);
 
 G_END_DECLS

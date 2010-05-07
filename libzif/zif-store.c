@@ -59,7 +59,7 @@ zif_store_error_quark (void)
  * zif_store_load:
  * @store: the #ZifStore object
  * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
- * @completion: a #ZifCompletion to use for progress reporting
+ * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Loads the #ZifStore object.
@@ -69,7 +69,7 @@ zif_store_error_quark (void)
  * Since: 0.0.1
  **/
 gboolean
-zif_store_load (ZifStore *store, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+zif_store_load (ZifStore *store, GCancellable *cancellable, ZifState *state, GError **error)
 {
 	ZifStoreClass *klass = ZIF_STORE_GET_CLASS (store);
 
@@ -83,14 +83,14 @@ zif_store_load (ZifStore *store, GCancellable *cancellable, ZifCompletion *compl
 		return FALSE;
 	}
 
-	return klass->load (store, cancellable, completion, error);
+	return klass->load (store, cancellable, state, error);
 }
 
 /**
  * zif_store_clean:
  * @store: the #ZifStore object
  * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
- * @completion: a #ZifCompletion to use for progress reporting
+ * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Cleans the #ZifStore objects by deleting cache.
@@ -100,7 +100,7 @@ zif_store_load (ZifStore *store, GCancellable *cancellable, ZifCompletion *compl
  * Since: 0.0.1
  **/
 gboolean
-zif_store_clean (ZifStore *store, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+zif_store_clean (ZifStore *store, GCancellable *cancellable, ZifState *state, GError **error)
 {
 	ZifStoreClass *klass = ZIF_STORE_GET_CLASS (store);
 
@@ -114,7 +114,7 @@ zif_store_clean (ZifStore *store, GCancellable *cancellable, ZifCompletion *comp
 		return FALSE;
 	}
 
-	return klass->clean (store, cancellable, completion, error);
+	return klass->clean (store, cancellable, state, error);
 }
 
 /**
@@ -122,7 +122,7 @@ zif_store_clean (ZifStore *store, GCancellable *cancellable, ZifCompletion *comp
  * @store: the #ZifStore object
  * @force: if the data should be re-downloaded if it's still valid
  * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
- * @completion: a #ZifCompletion to use for progress reporting
+ * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * refresh the #ZifStore objects by downloading new data if required.
@@ -132,7 +132,7 @@ zif_store_clean (ZifStore *store, GCancellable *cancellable, ZifCompletion *comp
  * Since: 0.0.1
  **/
 gboolean
-zif_store_refresh (ZifStore *store, gboolean force, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+zif_store_refresh (ZifStore *store, gboolean force, GCancellable *cancellable, ZifState *state, GError **error)
 {
 	ZifStoreClass *klass = ZIF_STORE_GET_CLASS (store);
 
@@ -146,7 +146,7 @@ zif_store_refresh (ZifStore *store, gboolean force, GCancellable *cancellable, Z
 		return FALSE;
 	}
 
-	return klass->refresh (store, force, cancellable, completion, error);
+	return klass->refresh (store, force, cancellable, state, error);
 }
 
 /**
@@ -154,7 +154,7 @@ zif_store_refresh (ZifStore *store, gboolean force, GCancellable *cancellable, Z
  * @store: the #ZifStore object
  * @search: the search term, e.g. "power"
  * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
- * @completion: a #ZifCompletion to use for progress reporting
+ * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Find packages that match the package name in some part.
@@ -164,7 +164,7 @@ zif_store_refresh (ZifStore *store, gboolean force, GCancellable *cancellable, Z
  * Since: 0.0.1
  **/
 GPtrArray *
-zif_store_search_name (ZifStore *store, gchar **search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+zif_store_search_name (ZifStore *store, gchar **search, GCancellable *cancellable, ZifState *state, GError **error)
 {
 	ZifStoreClass *klass = ZIF_STORE_GET_CLASS (store);
 
@@ -179,7 +179,7 @@ zif_store_search_name (ZifStore *store, gchar **search, GCancellable *cancellabl
 		return NULL;
 	}
 
-	return klass->search_name (store, search, cancellable, completion, error);
+	return klass->search_name (store, search, cancellable, state, error);
 }
 
 /**
@@ -187,7 +187,7 @@ zif_store_search_name (ZifStore *store, gchar **search, GCancellable *cancellabl
  * @store: the #ZifStore object
  * @search: the search term, e.g. "gnome/games"
  * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
- * @completion: a #ZifCompletion to use for progress reporting
+ * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Return packages in a specific category.
@@ -197,7 +197,7 @@ zif_store_search_name (ZifStore *store, gchar **search, GCancellable *cancellabl
  * Since: 0.0.1
  **/
 GPtrArray *
-zif_store_search_category (ZifStore *store, gchar **search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+zif_store_search_category (ZifStore *store, gchar **search, GCancellable *cancellable, ZifState *state, GError **error)
 {
 	ZifStoreClass *klass = ZIF_STORE_GET_CLASS (store);
 
@@ -212,7 +212,7 @@ zif_store_search_category (ZifStore *store, gchar **search, GCancellable *cancel
 		return NULL;
 	}
 
-	return klass->search_category (store, search, cancellable, completion, error);
+	return klass->search_category (store, search, cancellable, state, error);
 }
 
 /**
@@ -220,7 +220,7 @@ zif_store_search_category (ZifStore *store, gchar **search, GCancellable *cancel
  * @store: the #ZifStore object
  * @search: the search term, e.g. "trouble"
  * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
- * @completion: a #ZifCompletion to use for progress reporting
+ * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Find packages that match some detail about the package.
@@ -230,7 +230,7 @@ zif_store_search_category (ZifStore *store, gchar **search, GCancellable *cancel
  * Since: 0.0.1
  **/
 GPtrArray *
-zif_store_search_details (ZifStore *store, gchar **search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+zif_store_search_details (ZifStore *store, gchar **search, GCancellable *cancellable, ZifState *state, GError **error)
 {
 	ZifStoreClass *klass = ZIF_STORE_GET_CLASS (store);
 
@@ -244,7 +244,7 @@ zif_store_search_details (ZifStore *store, gchar **search, GCancellable *cancell
 		return NULL;
 	}
 
-	return klass->search_details (store, search, cancellable, completion, error);
+	return klass->search_details (store, search, cancellable, state, error);
 }
 
 /**
@@ -252,7 +252,7 @@ zif_store_search_details (ZifStore *store, gchar **search, GCancellable *cancell
  * @store: the #ZifStore object
  * @search: the search term, e.g. "games"
  * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
- * @completion: a #ZifCompletion to use for progress reporting
+ * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Find packages that belong in a specific group.
@@ -262,7 +262,7 @@ zif_store_search_details (ZifStore *store, gchar **search, GCancellable *cancell
  * Since: 0.0.1
  **/
 GPtrArray *
-zif_store_search_group (ZifStore *store, gchar **search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+zif_store_search_group (ZifStore *store, gchar **search, GCancellable *cancellable, ZifState *state, GError **error)
 {
 	ZifStoreClass *klass = ZIF_STORE_GET_CLASS (store);
 
@@ -277,7 +277,7 @@ zif_store_search_group (ZifStore *store, gchar **search, GCancellable *cancellab
 		return NULL;
 	}
 
-	return klass->search_group (store, search, cancellable, completion, error);
+	return klass->search_group (store, search, cancellable, state, error);
 }
 
 /**
@@ -285,7 +285,7 @@ zif_store_search_group (ZifStore *store, gchar **search, GCancellable *cancellab
  * @store: the #ZifStore object
  * @search: the search term, e.g. "/usr/bin/gnome-power-manager"
  * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
- * @completion: a #ZifCompletion to use for progress reporting
+ * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Find packages that provide the specified file.
@@ -295,7 +295,7 @@ zif_store_search_group (ZifStore *store, gchar **search, GCancellable *cancellab
  * Since: 0.0.1
  **/
 GPtrArray *
-zif_store_search_file (ZifStore *store, gchar **search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+zif_store_search_file (ZifStore *store, gchar **search, GCancellable *cancellable, ZifState *state, GError **error)
 {
 	ZifStoreClass *klass = ZIF_STORE_GET_CLASS (store);
 
@@ -310,7 +310,7 @@ zif_store_search_file (ZifStore *store, gchar **search, GCancellable *cancellabl
 		return NULL;
 	}
 
-	return klass->search_file (store, search, cancellable, completion, error);
+	return klass->search_file (store, search, cancellable, state, error);
 }
 
 /**
@@ -318,7 +318,7 @@ zif_store_search_file (ZifStore *store, gchar **search, GCancellable *cancellabl
  * @store: the #ZifStore object
  * @search: the search term, e.g. "gnome-power-manager"
  * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
- * @completion: a #ZifCompletion to use for progress reporting
+ * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Finds packages matching the package name exactly.
@@ -328,7 +328,7 @@ zif_store_search_file (ZifStore *store, gchar **search, GCancellable *cancellabl
  * Since: 0.0.1
  **/
 GPtrArray *
-zif_store_resolve (ZifStore *store, gchar **search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+zif_store_resolve (ZifStore *store, gchar **search, GCancellable *cancellable, ZifState *state, GError **error)
 {
 	ZifStoreClass *klass = ZIF_STORE_GET_CLASS (store);
 
@@ -343,7 +343,7 @@ zif_store_resolve (ZifStore *store, gchar **search, GCancellable *cancellable, Z
 		return NULL;
 	}
 
-	return klass->resolve (store, search, cancellable, completion, error);
+	return klass->resolve (store, search, cancellable, state, error);
 }
 
 /**
@@ -351,7 +351,7 @@ zif_store_resolve (ZifStore *store, gchar **search, GCancellable *cancellable, Z
  * @store: the #ZifStore object
  * @search: the search term, e.g. "gstreamer(codec-mp3)"
  * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
- * @completion: a #ZifCompletion to use for progress reporting
+ * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Find packages that provide a specific string.
@@ -361,7 +361,7 @@ zif_store_resolve (ZifStore *store, gchar **search, GCancellable *cancellable, Z
  * Since: 0.0.1
  **/
 GPtrArray *
-zif_store_what_provides (ZifStore *store, gchar **search, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+zif_store_what_provides (ZifStore *store, gchar **search, GCancellable *cancellable, ZifState *state, GError **error)
 {
 	ZifStoreClass *klass = ZIF_STORE_GET_CLASS (store);
 
@@ -376,14 +376,14 @@ zif_store_what_provides (ZifStore *store, gchar **search, GCancellable *cancella
 		return NULL;
 	}
 
-	return klass->what_provides (store, search, cancellable, completion, error);
+	return klass->what_provides (store, search, cancellable, state, error);
 }
 
 /**
  * zif_store_get_packages:
  * @store: the #ZifStore object
  * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
- * @completion: a #ZifCompletion to use for progress reporting
+ * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Return all packages in the #ZifStore's.
@@ -393,7 +393,7 @@ zif_store_what_provides (ZifStore *store, gchar **search, GCancellable *cancella
  * Since: 0.0.1
  **/
 GPtrArray *
-zif_store_get_packages (ZifStore *store, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+zif_store_get_packages (ZifStore *store, GCancellable *cancellable, ZifState *state, GError **error)
 {
 	ZifStoreClass *klass = ZIF_STORE_GET_CLASS (store);
 
@@ -407,7 +407,7 @@ zif_store_get_packages (ZifStore *store, GCancellable *cancellable, ZifCompletio
 		return NULL;
 	}
 
-	return klass->get_packages (store, cancellable, completion, error);
+	return klass->get_packages (store, cancellable, state, error);
 }
 
 /**
@@ -415,7 +415,7 @@ zif_store_get_packages (ZifStore *store, GCancellable *cancellable, ZifCompletio
  * @store: the #ZifStore object
  * @packages: an array of #ZifPackage's
  * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
- * @completion: a #ZifCompletion to use for progress reporting
+ * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Return a list of packages that are updatable.
@@ -426,7 +426,7 @@ zif_store_get_packages (ZifStore *store, GCancellable *cancellable, ZifCompletio
  **/
 GPtrArray *
 zif_store_get_updates (ZifStore *store, GPtrArray *packages,
-		       GCancellable *cancellable, ZifCompletion *completion, GError **error)
+		       GCancellable *cancellable, ZifState *state, GError **error)
 {
 	ZifStoreClass *klass = ZIF_STORE_GET_CLASS (store);
 
@@ -441,7 +441,7 @@ zif_store_get_updates (ZifStore *store, GPtrArray *packages,
 		return NULL;
 	}
 
-	return klass->get_updates (store, packages, cancellable, completion, error);
+	return klass->get_updates (store, packages, cancellable, state, error);
 }
 
 /**
@@ -449,7 +449,7 @@ zif_store_get_updates (ZifStore *store, GPtrArray *packages,
  * @store: the #ZifStore object
  * @package_id: the package ID which defines the package
  * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
- * @completion: a #ZifCompletion to use for progress reporting
+ * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Find a single package in the #ZifStore.
@@ -459,7 +459,7 @@ zif_store_get_updates (ZifStore *store, GPtrArray *packages,
  * Since: 0.0.1
  **/
 ZifPackage *
-zif_store_find_package (ZifStore *store, const gchar *package_id, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+zif_store_find_package (ZifStore *store, const gchar *package_id, GCancellable *cancellable, ZifState *state, GError **error)
 {
 	ZifStoreClass *klass = ZIF_STORE_GET_CLASS (store);
 
@@ -474,14 +474,14 @@ zif_store_find_package (ZifStore *store, const gchar *package_id, GCancellable *
 		return NULL;
 	}
 
-	return klass->find_package (store, package_id, cancellable, completion, error);
+	return klass->find_package (store, package_id, cancellable, state, error);
 }
 
 /**
  * zif_store_get_categories:
  * @store: the #ZifStore object
  * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
- * @completion: a #ZifCompletion to use for progress reporting
+ * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Return a list of custom categories.
@@ -491,7 +491,7 @@ zif_store_find_package (ZifStore *store, const gchar *package_id, GCancellable *
  * Since: 0.0.1
  **/
 GPtrArray *
-zif_store_get_categories (ZifStore *store, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+zif_store_get_categories (ZifStore *store, GCancellable *cancellable, ZifState *state, GError **error)
 {
 	ZifStoreClass *klass = ZIF_STORE_GET_CLASS (store);
 
@@ -505,7 +505,7 @@ zif_store_get_categories (ZifStore *store, GCancellable *cancellable, ZifComplet
 		return NULL;
 	}
 
-	return klass->get_categories (store, cancellable, completion, error);
+	return klass->get_categories (store, cancellable, state, error);
 }
 
 /**

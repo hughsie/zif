@@ -59,7 +59,7 @@ ZifMdMetalink	*zif_md_metalink_new			(void);
 GPtrArray	*zif_md_metalink_get_uris		(ZifMdMetalink		*md,
 							 guint			 threshold,
 							 GCancellable		*cancellable,
-							 ZifCompletion		*completion,
+							 ZifState		*state,
 							 GError			**error);
 
 G_END_DECLS

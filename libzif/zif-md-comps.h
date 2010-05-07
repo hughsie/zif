@@ -59,17 +59,17 @@ ZifMdComps	*zif_md_comps_new			(void);
 
 GPtrArray	*zif_md_comps_get_categories		(ZifMdComps		*md,
 							 GCancellable		*cancellable,
-							 ZifCompletion		*completion,
+							 ZifState		*state,
 							 GError			**error);
 GPtrArray	*zif_md_comps_get_groups_for_category	(ZifMdComps		*md,
 							 const gchar		*category_id,
 							 GCancellable		*cancellable,
-							 ZifCompletion		*completion,
+							 ZifState		*state,
 							 GError			**error);
 GPtrArray	*zif_md_comps_get_packages_for_group	(ZifMdComps		*md,
 							 const gchar		*group_id,
 							 GCancellable		*cancellable,
-							 ZifCompletion		*completion,
+							 ZifState		*state,
 							 GError			**error);
 
 G_END_DECLS

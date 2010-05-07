@@ -35,7 +35,7 @@
 
 #include "zif-config.h"
 #include "zif-download.h"
-#include "zif-completion.h"
+#include "zif-state.h"
 
 #include "egg-debug.h"
 
@@ -51,7 +51,7 @@ struct _ZifDownloadPrivate
 	gchar			*proxy;
 	SoupSession		*session;
 	SoupMessage		*msg;
-	ZifCompletion		*completion;
+	ZifState		*state;
 	ZifConfig		*config;
 };
 
@@ -103,7 +103,7 @@ zif_download_file_got_chunk_cb (SoupMessage *msg, SoupBuffer *chunk, ZifDownload
 	}
 
 	egg_debug ("DOWNLOAD: %i%% (%i, %i) - %p, %p", percentage, body_length, header_size, msg, download);
-	zif_completion_set_percentage (download->priv->completion, percentage);
+	zif_state_set_percentage (download->priv->state, percentage);
 
 out:
 	return;
@@ -145,7 +145,7 @@ zif_download_cancelled_cb (GCancellable *cancellable, ZifDownload *download)
  * @uri: the full remote URI
  * @filename: the local filename to save to
  * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
- * @completion: a #ZifCompletion to use for progress reporting
+ * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Downloads a file.
@@ -155,7 +155,7 @@ zif_download_cancelled_cb (GCancellable *cancellable, ZifDownload *download)
  * Since: 0.0.1
  **/
 gboolean
-zif_download_file (ZifDownload *download, const gchar *uri, const gchar *filename, GCancellable *cancellable, ZifCompletion *completion, GError **error)
+zif_download_file (ZifDownload *download, const gchar *uri, const gchar *filename, GCancellable *cancellable, ZifState *state, GError **error)
 {
 	gboolean ret = FALSE;
 	SoupURI *base_uri;
@@ -170,8 +170,8 @@ zif_download_file (ZifDownload *download, const gchar *uri, const gchar *filenam
 	g_return_val_if_fail (download->priv->session != NULL, FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
-	/* save an instance of the completion object */
-	download->priv->completion = g_object_ref (completion);
+	/* save an instance of the state object */
+	download->priv->state = g_object_ref (state);
 
 	/* set up cancel */
 	if (cancellable != NULL) {
@@ -225,8 +225,8 @@ zif_download_file (ZifDownload *download, const gchar *uri, const gchar *filenam
 out:
 	if (cancellable_id != 0)
 		g_cancellable_disconnect (cancellable, cancellable_id);
-	g_object_unref (download->priv->completion);
-	download->priv->completion = NULL;
+	g_object_unref (download->priv->state);
+	download->priv->state = NULL;
 	if (base_uri != NULL)
 		soup_uri_free (base_uri);
 	if (msg != NULL)
@@ -319,7 +319,7 @@ zif_download_init (ZifDownload *download)
 	download->priv->msg = NULL;
 	download->priv->session = NULL;
 	download->priv->proxy = NULL;
-	download->priv->completion = NULL;
+	download->priv->state = NULL;
 	download->priv->config = zif_config_new ();
 }
 
@@ -381,7 +381,7 @@ void
 zif_download_test (EggTest *test)
 {
 	ZifDownload *download;
-	ZifCompletion *completion;
+	ZifState *state;
 	GCancellable *cancellable;
 	gboolean ret;
 	GError *error = NULL;
@@ -395,8 +395,8 @@ zif_download_test (EggTest *test)
 	cancellable = g_cancellable_new ();
 	egg_test_assert (test, download != NULL);
 
-	completion = zif_completion_new ();
-	g_signal_connect (completion, "percentage-changed", G_CALLBACK (zif_download_progress_changed), NULL);
+	state = zif_state_new ();
+	g_signal_connect (state, "percentage-changed", G_CALLBACK (zif_download_progress_changed), NULL);
 
 	/************************************************************/
 	egg_test_title (test, "set proxy");
@@ -411,7 +411,7 @@ zif_download_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "download file");
 	ret = zif_download_file (download, "http://people.freedesktop.org/~hughsient/temp/Screenshot.png",
-				 "../test/downloads", cancellable, completion, &error);
+				 "../test/downloads", cancellable, state, &error);
 	if (ret)
 		egg_test_success (test, NULL);
 	else
@@ -429,16 +429,16 @@ zif_download_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "download second file (should be cancelled)");
-	zif_completion_reset (completion);
+	zif_state_reset (state);
 	ret = zif_download_file (download, "http://people.freedesktop.org/~hughsient/temp/Screenshot.png",
-				 "../test/downloads", cancellable, completion, &error);
+				 "../test/downloads", cancellable, state, &error);
 	if (!ret)
 		egg_test_success (test, NULL);
 	else
 		egg_test_failed (test, "failed to be cancelled");
 
 	g_object_unref (download);
-	g_object_unref (completion);
+	g_object_unref (state);
 	g_object_unref (cancellable);
 
 	egg_test_end (test);
