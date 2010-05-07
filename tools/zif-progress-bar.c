@@ -22,18 +22,18 @@
 #include <glib.h>
 #include <string.h>
 
-#include "pk-progress-bar.h"
+#include "zif-progress-bar.h"
 
 #include "egg-debug.h"
 
-#define PK_PROGRESS_BAR_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), PK_TYPE_PROGRESS_BAR, PkProgressBarPrivate))
+#define ZIF_PROGRESS_BAR_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_PROGRESS_BAR, ZifProgressBarPrivate))
 
 typedef struct {
 	guint			 position;
 	gboolean		 move_forward;
-} PkProgressBarPulseState;
+} ZifProgressBarPulseState;
 
-struct PkProgressBarPrivate
+struct ZifProgressBarPrivate
 {
 	guint			 size;
 	guint			 percentage;
@@ -41,21 +41,21 @@ struct PkProgressBarPrivate
 	guint			 padding;
 	guint			 timer_id;
 	gboolean		 allow_cancel;
-	PkProgressBarPulseState	 pulse_state;
+	ZifProgressBarPulseState	 pulse_state;
 };
 
-#define PK_PROGRESS_BAR_PERCENTAGE_INVALID	101
-#define PK_PROGRESS_BAR_PULSE_TIMEOUT		40 /* ms */
+#define ZIF_PROGRESS_BAR_PERCENTAGE_INVALID	101
+#define ZIF_PROGRESS_BAR_PULSE_TIMEOUT		40 /* ms */
 
-G_DEFINE_TYPE (PkProgressBar, pk_progress_bar, G_TYPE_OBJECT)
+G_DEFINE_TYPE (ZifProgressBar, pk_progress_bar, G_TYPE_OBJECT)
 
 /**
  * pk_progress_bar_set_padding:
  **/
 gboolean
-pk_progress_bar_set_padding (PkProgressBar *self, guint padding)
+pk_progress_bar_set_padding (ZifProgressBar *self, guint padding)
 {
-	g_return_val_if_fail (PK_IS_PROGRESS_BAR (self), FALSE);
+	g_return_val_if_fail (ZIF_IS_PROGRESS_BAR (self), FALSE);
 	g_return_val_if_fail (padding < 100, FALSE);
 	self->priv->padding = padding;
 	return TRUE;
@@ -65,9 +65,9 @@ pk_progress_bar_set_padding (PkProgressBar *self, guint padding)
  * pk_progress_bar_set_size:
  **/
 gboolean
-pk_progress_bar_set_size (PkProgressBar *self, guint size)
+pk_progress_bar_set_size (ZifProgressBar *self, guint size)
 {
-	g_return_val_if_fail (PK_IS_PROGRESS_BAR (self), FALSE);
+	g_return_val_if_fail (ZIF_IS_PROGRESS_BAR (self), FALSE);
 	g_return_val_if_fail (size < 100, FALSE);
 	self->priv->size = size;
 	return TRUE;
@@ -77,7 +77,7 @@ pk_progress_bar_set_size (PkProgressBar *self, guint size)
  * pk_progress_bar_draw:
  **/
 static gboolean
-pk_progress_bar_draw (PkProgressBar *self, guint value)
+pk_progress_bar_draw (ZifProgressBar *self, guint value)
 {
 	guint section;
 	guint i;
@@ -92,7 +92,7 @@ pk_progress_bar_draw (PkProgressBar *self, guint value)
 	for (i=0; i<self->priv->size - section; i++)
 		g_print (" ");
 	g_print ("] ");
-	if (self->priv->percentage != PK_PROGRESS_BAR_PERCENTAGE_INVALID)
+	if (self->priv->percentage != ZIF_PROGRESS_BAR_PERCENTAGE_INVALID)
 		g_print ("%c%i%%%c  ",
 			 self->priv->allow_cancel ? '(' : '<',
 			 self->priv->percentage,
@@ -106,10 +106,10 @@ pk_progress_bar_draw (PkProgressBar *self, guint value)
  * pk_progress_bar_set_percentage:
  **/
 gboolean
-pk_progress_bar_set_percentage (PkProgressBar *self, guint percentage)
+pk_progress_bar_set_percentage (ZifProgressBar *self, guint percentage)
 {
-	g_return_val_if_fail (PK_IS_PROGRESS_BAR (self), FALSE);
-	g_return_val_if_fail (percentage <= PK_PROGRESS_BAR_PERCENTAGE_INVALID, FALSE);
+	g_return_val_if_fail (ZIF_IS_PROGRESS_BAR (self), FALSE);
+	g_return_val_if_fail (percentage <= ZIF_PROGRESS_BAR_PERCENTAGE_INVALID, FALSE);
 
 	/* check for old value */
 	if (percentage == self->priv->percentage) {
@@ -127,7 +127,7 @@ out:
  * pk_progress_bar_pulse_bar:
  **/
 static gboolean
-pk_progress_bar_pulse_bar (PkProgressBar *self)
+pk_progress_bar_pulse_bar (ZifProgressBar *self)
 {
 	gint i;
 
@@ -153,7 +153,7 @@ pk_progress_bar_pulse_bar (PkProgressBar *self)
 	for (i=0; i<(gint) (self->priv->size - self->priv->pulse_state.position - 1); i++)
 		g_print (" ");
 	g_print ("] ");
-	if (self->priv->percentage != PK_PROGRESS_BAR_PERCENTAGE_INVALID)
+	if (self->priv->percentage != ZIF_PROGRESS_BAR_PERCENTAGE_INVALID)
 		g_print ("%c%i%%%c  ",
 			 self->priv->allow_cancel ? '(' : '<',
 			 self->priv->percentage,
@@ -168,7 +168,7 @@ pk_progress_bar_pulse_bar (PkProgressBar *self)
  * pk_progress_bar_draw_pulse_bar:
  **/
 static void
-pk_progress_bar_draw_pulse_bar (PkProgressBar *self)
+pk_progress_bar_draw_pulse_bar (ZifProgressBar *self)
 {
 	/* have we already got zero percent? */
 	if (self->priv->timer_id != 0)
@@ -176,7 +176,7 @@ pk_progress_bar_draw_pulse_bar (PkProgressBar *self)
 	if (TRUE) {
 		self->priv->pulse_state.position = 1;
 		self->priv->pulse_state.move_forward = TRUE;
-		self->priv->timer_id = g_timeout_add (PK_PROGRESS_BAR_PULSE_TIMEOUT, (GSourceFunc) pk_progress_bar_pulse_bar, self);
+		self->priv->timer_id = g_timeout_add (ZIF_PROGRESS_BAR_PULSE_TIMEOUT, (GSourceFunc) pk_progress_bar_pulse_bar, self);
 	}
 }
 
@@ -184,7 +184,7 @@ pk_progress_bar_draw_pulse_bar (PkProgressBar *self)
  * pk_progress_bar_set_allow_cancel:
  **/
 void
-pk_progress_bar_set_allow_cancel (PkProgressBar *self, gboolean allow_cancel)
+pk_progress_bar_set_allow_cancel (ZifProgressBar *self, gboolean allow_cancel)
 {
 	self->priv->allow_cancel = allow_cancel;
 	pk_progress_bar_draw (self, self->priv->value);
@@ -194,10 +194,10 @@ pk_progress_bar_set_allow_cancel (PkProgressBar *self, gboolean allow_cancel)
  * pk_progress_bar_set_value:
  **/
 gboolean
-pk_progress_bar_set_value (PkProgressBar *self, guint value)
+pk_progress_bar_set_value (ZifProgressBar *self, guint value)
 {
-	g_return_val_if_fail (PK_IS_PROGRESS_BAR (self), FALSE);
-	g_return_val_if_fail (value <= PK_PROGRESS_BAR_PERCENTAGE_INVALID, FALSE);
+	g_return_val_if_fail (ZIF_IS_PROGRESS_BAR (self), FALSE);
+	g_return_val_if_fail (value <= ZIF_PROGRESS_BAR_PERCENTAGE_INVALID, FALSE);
 
 	/* check for old value */
 	if (value == self->priv->value) {
@@ -209,7 +209,7 @@ pk_progress_bar_set_value (PkProgressBar *self, guint value)
 	self->priv->value = value;
 
 	/* either pulse or display */
-	if (value == PK_PROGRESS_BAR_PERCENTAGE_INVALID) {
+	if (value == ZIF_PROGRESS_BAR_PERCENTAGE_INVALID) {
 		pk_progress_bar_draw (self, 0);
 		pk_progress_bar_draw_pulse_bar (self);
 	} else {
@@ -262,11 +262,11 @@ pk_strpad (const gchar *data, guint length)
  * pk_progress_bar_start:
  **/
 gboolean
-pk_progress_bar_start (PkProgressBar *self, const gchar *text)
+pk_progress_bar_start (ZifProgressBar *self, const gchar *text)
 {
 	gchar *text_pad;
 
-	g_return_val_if_fail (PK_IS_PROGRESS_BAR (self), FALSE);
+	g_return_val_if_fail (ZIF_IS_PROGRESS_BAR (self), FALSE);
 
 	/* finish old value */
 	if (self->priv->value != 0 && self->priv->value != 100) {
@@ -297,9 +297,9 @@ pk_progress_bar_start (PkProgressBar *self, const gchar *text)
  * pk_progress_bar_end:
  **/
 gboolean
-pk_progress_bar_end (PkProgressBar *self)
+pk_progress_bar_end (ZifProgressBar *self)
 {
-	g_return_val_if_fail (PK_IS_PROGRESS_BAR (self), FALSE);
+	g_return_val_if_fail (ZIF_IS_PROGRESS_BAR (self), FALSE);
 
 	self->priv->value = 100;
 	self->priv->percentage = 100;
@@ -315,9 +315,9 @@ pk_progress_bar_end (PkProgressBar *self)
 static void
 pk_progress_bar_finalize (GObject *object)
 {
-	PkProgressBar *self;
-	g_return_if_fail (PK_IS_PROGRESS_BAR (object));
-	self = PK_PROGRESS_BAR (object);
+	ZifProgressBar *self;
+	g_return_if_fail (ZIF_IS_PROGRESS_BAR (object));
+	self = ZIF_PROGRESS_BAR (object);
 
 	if (self->priv->timer_id != 0)
 		g_source_remove (self->priv->timer_id);
@@ -329,20 +329,20 @@ pk_progress_bar_finalize (GObject *object)
  * pk_progress_bar_class_init:
  **/
 static void
-pk_progress_bar_class_init (PkProgressBarClass *klass)
+pk_progress_bar_class_init (ZifProgressBarClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 	object_class->finalize = pk_progress_bar_finalize;
-	g_type_class_add_private (klass, sizeof (PkProgressBarPrivate));
+	g_type_class_add_private (klass, sizeof (ZifProgressBarPrivate));
 }
 
 /**
  * pk_progress_bar_init:
  **/
 static void
-pk_progress_bar_init (PkProgressBar *self)
+pk_progress_bar_init (ZifProgressBar *self)
 {
-	self->priv = PK_PROGRESS_BAR_GET_PRIVATE (self);
+	self->priv = ZIF_PROGRESS_BAR_GET_PRIVATE (self);
 
 	self->priv->size = 10;
 	self->priv->percentage = 0;
@@ -356,12 +356,12 @@ pk_progress_bar_init (PkProgressBar *self)
  * pk_progress_bar_new:
  * Return value: A new progress_bar class instance.
  **/
-PkProgressBar *
+ZifProgressBar *
 pk_progress_bar_new (void)
 {
-	PkProgressBar *self;
-	self = g_object_new (PK_TYPE_PROGRESS_BAR, NULL);
-	return PK_PROGRESS_BAR (self);
+	ZifProgressBar *self;
+	self = g_object_new (ZIF_TYPE_PROGRESS_BAR, NULL);
+	return ZIF_PROGRESS_BAR (self);
 }
 
 /***************************************************************************
@@ -373,9 +373,9 @@ pk_progress_bar_new (void)
 void
 egg_test_progress_bar (EggTest *test)
 {
-	PkProgressBar *self;
+	ZifProgressBar *self;
 
-	if (!egg_test_start (test, "PkProgressBar"))
+	if (!egg_test_start (test, "ZifProgressBar"))
 		return;
 
 	/************************************************************/

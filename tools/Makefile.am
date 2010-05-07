@@ -8,9 +8,8 @@ INCLUDES =						\
 	-DLIBDIR=\""$(libdir)"\" 			\
 	-DVERSION="\"$(VERSION)\"" 			\
 	-DPACKAGE_LOCALE_DIR=\"$(localedir)\"		\
-	-DPK_DATA=\"$(zifgdatadir)\"			\
-	-DPK_DB_DIR=\""$(PK_DB_DIR)"\" 			\
-	-DEGG_LOG_FILE=\""$(PK_LOG_DIR)/zif"\"		\
+	-DZIF_DATA=\"$(pkggdatadir)\"			\
+	-DEGG_LOG_FILE=\""$(ZIF_LOG_DIR)/zif"\"		\
 	-DEGG_VERBOSE="\"ZIF_VERBOSE\""			\
 	-DEGG_LOGGING="\"ZIF_LOGGING\""			\
 	-DEGG_CONSOLE="\"ZIF_CONSOLE\""			\
@@ -25,8 +24,8 @@ bin_PROGRAMS =						\
 zif_SOURCES =						\
 	egg-debug.c					\
 	egg-debug.h					\
-	pk-progress-bar.c				\
-	pk-progress-bar.h				\
+	zif-progress-bar.c				\
+	zif-progress-bar.h				\
 	egg-debug.h					\
 	zif-main.c
 

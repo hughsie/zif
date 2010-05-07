@@ -29,12 +29,12 @@
 
 #include "egg-debug.h"
 
-#include "pk-progress-bar.h"
+#include "zif-progress-bar.h"
 
 #define ZIF_MAIN_LOCKING_RETRIES	10
 #define ZIF_MAIN_LOCKING_DELAY		2 /* seconds */
 
-static PkProgressBar *progressbar;
+static ZifProgressBar *progressbar;
 
 /**
  * zif_print_package:
