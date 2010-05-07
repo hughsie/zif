@@ -49,7 +49,6 @@ typedef enum {
 #define ZIF_PACKAGE_ID_DATA	3
 
 gboolean	 zif_init			(void);
-void		 zif_debug_crash		(void);
 GQuark		 zif_utils_error_quark		(void);
 void		 zif_list_print_array		(GPtrArray	*array);
 gchar		*zif_package_id_from_nevra	(const gchar	*name,

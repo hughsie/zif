@@ -596,6 +596,8 @@ skip_compressed_check:
 	/* do subclassed load */
 	state_local = zif_state_get_child (state);
 	ret = klass->load (md, state_local, error);
+	if (!ret)
+		goto out;
 
 	/* this section done */
 	ret = zif_state_finished (state, error);

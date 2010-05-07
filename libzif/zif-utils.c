@@ -43,8 +43,6 @@
 #include "zif-utils.h"
 #include "zif-package.h"
 
-#define ZIF_CRASH_DEBUG
-
 /**
  * zif_utils_error_quark:
  *
@@ -82,22 +80,6 @@ zif_init (void)
 	}
 
 	return TRUE;
-}
-
-/**
- * zif_debug_crash:
- *
- * Does a null dereference, useful for debugging.
- *
- * Since: 0.0.1
- **/
-void
-zif_debug_crash (void)
-{
-#ifdef ZIF_CRASH_DEBUG
-	GString *string = NULL;
-	string->str = NULL;
-#endif
 }
 
 /**

@@ -62,6 +62,7 @@ typedef enum {
 
 #include "zif-md.h"
 #include "zif-utils.h"
+#include "zif-depend.h"
 #include "zif-md-primary-xml.h"
 #include "zif-package-remote.h"
 
@@ -700,12 +701,13 @@ zif_md_primary_xml_search_pkgid (ZifMd *md, gchar **search, ZifState *state, GEr
 static gboolean
 zif_md_primary_xml_what_provides_cb (ZifPackage *package, gpointer user_data)
 {
-//	guint i;
-	gboolean ret;
+	guint i, j;
+	gboolean ret = FALSE;
 	GPtrArray *array = NULL;
 	ZifState *state_tmp;
+	ZifDepend *depend;
 	GError *error = NULL;
-//	gchar **search = (gchar **) user_data;
+	gchar **search = (gchar **) user_data;
 
 	state_tmp = zif_state_new ();
 	array = zif_package_get_provides (package, state_tmp, &error);
@@ -714,10 +716,19 @@ zif_md_primary_xml_what_provides_cb (ZifPackage *package, gpointer user_data)
 		g_error_free (error);
 		goto out;
 	}
-	/* TODO: do something with the ZifDepend objects */
-	ret = FALSE;
-	g_object_unref (state_tmp);
+
+	/* find a depends string */
+	for (i=0; i<array->len; i++) {
+		depend = g_ptr_array_index (array, i);
+		for (j=0; search[j] != NULL; j++) {
+			if (g_strcmp0 (depend->name, search[j]) == 0) {
+				ret = TRUE;
+				goto out;
+			}
+		}
+	}
 out:
+	g_object_unref (state_tmp);
 	if (array != NULL)
 		g_ptr_array_unref (array);
 	return ret;

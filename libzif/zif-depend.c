@@ -104,9 +104,6 @@ zif_depend_ref (ZifDepend *depend)
 ZifDepend *
 zif_depend_unref (ZifDepend *depend)
 {
-	if (depend == NULL)
-		zif_debug_crash ();
-
 	g_return_val_if_fail (depend != NULL, NULL);
 	depend->count--;
 	if (depend->count == 0) {

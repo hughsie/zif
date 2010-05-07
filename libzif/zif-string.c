@@ -135,9 +135,6 @@ zif_string_ref (ZifString *string)
 ZifString *
 zif_string_unref (ZifString *string)
 {
-	if (string == NULL)
-		zif_debug_crash ();
-
 	g_return_val_if_fail (string != NULL, NULL);
 	string->count--;
 	if (string->count == 0) {

@@ -465,7 +465,6 @@ zif_store_array_clean (GPtrArray *store_array,
 		if (!ret) {
 			/* do we need to skip this error */
 			if (error_cb != NULL && error_cb (store_array, error_local, user_data)) {
-				ret = TRUE;
 				g_clear_error (&error_local);
 				ret = zif_state_finished (state_local, error);
 				if (!ret)
@@ -532,9 +531,8 @@ zif_store_array_refresh (GPtrArray *store_array, gboolean force,
 		state_local = zif_state_get_child (state);
 		ret = zif_store_refresh (store, force, state_local, &error_local);
 		if (!ret) {
-			/* do we need to skip this error */
+			/* do we need to skip this error: FIXME put this in ZifState */
 			if (error_cb != NULL && error_cb (store_array, error_local, user_data)) {
-				ret = TRUE;
 				g_clear_error (&error_local);
 				ret = zif_state_finished (state_local, error);
 				if (!ret)
