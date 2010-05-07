@@ -527,20 +527,20 @@ zif_state_get_child (ZifState *state)
  * Since: 0.0.1
  **/
 gboolean
-zif_state_set_number_steps_real (ZifState *state, guint steps, const gchar *function_name, gint function_line)
+zif_state_set_number_steps_real (ZifState *state, guint steps, const gchar *strloc)
 {
 	g_return_val_if_fail (ZIF_IS_STATE (state), FALSE);
 	g_return_val_if_fail (steps != 0, FALSE);
 
 	/* did we call done on a state that did not have a size set? */
 	if (state->priv->steps != 0) {
-		egg_warning ("steps already set (%i)! [%s:%i]",
-			     state->priv->steps, function_name, function_line);
+		egg_warning ("steps already set (%i)! [%s]",
+			     state->priv->steps, strloc);
 		return FALSE;
 	}
 
 	/* set id */
-	state->priv->id = g_strdup_printf ("%s:%i", function_name, function_line);
+	state->priv->id = g_strdup_printf ("%s", strloc);
 
 	/* imply reset */
 	g_timer_start (state->priv->timer);
@@ -564,7 +564,7 @@ zif_state_set_number_steps_real (ZifState *state, guint steps, const gchar *func
  * Since: 0.0.1
  **/
 gboolean
-zif_state_done_real (ZifState *state, GError **error, const gchar *function_name, gint function_line)
+zif_state_done_real (ZifState *state, GError **error, const gchar *strloc)
 {
 	gboolean ret = TRUE;
 	gfloat percentage;
@@ -583,8 +583,8 @@ zif_state_done_real (ZifState *state, GError **error, const gchar *function_name
 	/* did we call done on a state that did not have a size set? */
 	if (state->priv->steps == 0) {
 		g_set_error (error, ZIF_STATE_ERROR, ZIF_STATE_ERROR_INVALID,
-			     "done on a state %p that did not have a size set! [%s:%i]",
-			     state, function_name, function_line);
+			     "done on a state %p that did not have a size set! [%s]",
+			     state, strloc);
 		zif_state_print_parent_chain (state, 0);
 		ret = FALSE;
 		goto out;
@@ -603,7 +603,7 @@ zif_state_done_real (ZifState *state, GError **error, const gchar *function_name
 	/* is already at 100%? */
 	if (state->priv->current == state->priv->steps) {
 		g_set_error (error, ZIF_STATE_ERROR, ZIF_STATE_ERROR_INVALID,
-			     "already at 100%% state [%s:%i]", function_name, function_line);
+			     "already at 100%% state [%s]", strloc);
 		zif_state_print_parent_chain (state, 0);
 		ret = FALSE;
 		goto out;
@@ -614,8 +614,8 @@ zif_state_done_real (ZifState *state, GError **error, const gchar *function_name
 		ZifStatePrivate *child_priv = state->priv->child->priv;
 		if (child_priv->current != child_priv->steps) {
 			g_set_error (error, ZIF_STATE_ERROR, ZIF_STATE_ERROR_INVALID,
-				     "child is at %i/%i steps and parent done [%s:%i]",
-				     child_priv->current, child_priv->steps, function_name, function_line);
+				     "child is at %i/%i steps and parent done [%s]",
+				     child_priv->current, child_priv->steps, strloc);
 			zif_state_print_parent_chain (state->priv->child, 0);
 			ret = FALSE;
 			/* do not abort, as we want to clean this up */
@@ -651,7 +651,7 @@ out:
  * Since: 0.0.1
  **/
 gboolean
-zif_state_finished_real (ZifState *state, GError **error, const gchar *function_name, gint function_line)
+zif_state_finished_real (ZifState *state, GError **error, const gchar *strloc)
 {
 	g_return_val_if_fail (ZIF_IS_STATE (state), FALSE);
 
@@ -665,15 +665,15 @@ zif_state_finished_real (ZifState *state, GError **error, const gchar *function_
 	/* did we call done on a state that did not have a size set? */
 	if (state->priv->steps == 0) {
 		g_set_error (error, ZIF_STATE_ERROR, ZIF_STATE_ERROR_INVALID,
-			     "finished on a state %p that did not have a size set! [%s:%i]",
-			     state, function_name, function_line);
+			     "finished on a state %p that did not have a size set! [%s]",
+			     state, strloc);
 		return FALSE;
 	}
 
 	/* is already at 100%? */
 	if (state->priv->current == state->priv->steps) {
 		g_set_error (error, ZIF_STATE_ERROR, ZIF_STATE_ERROR_INVALID,
-			     "already at 100%% state [%s:%i]", function_name, function_line);
+			     "already at 100%% state [%s]", strloc);
 		return FALSE;
 	}
 

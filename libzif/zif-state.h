@@ -72,19 +72,9 @@ typedef enum {
 	ZIF_STATE_ERROR_LAST
 } ZifStateError;
 
-#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
-#define zif_state_done(state, error)			zif_state_done_real (state, error, __func__, __LINE__)
-#define zif_state_finished(state, error)		zif_state_finished_real (state, error, __func__, __LINE__)
-#define zif_state_set_number_steps(state, steps)	zif_state_set_number_steps_real (state, steps, __func__, __LINE__)
-#elif defined(__GNUC__) && __GNUC__ >= 3
-#define zif_state_done(state, error)			zif_state_done_real (state, error, __FUNCTION__, __LINE__)
-#define zif_state_finished(state, error)		zif_state_finished_real (state, error, __FUNCTION__, __LINE__)
-#define zif_state_set_number_steps(state, steps)	zif_state_set_number_steps_real (state, steps, __FUNCTION__, __LINE__)
-#else
-#define zif_state_done(state, error)
-#define zif_state_finished(state, error)
-#define zif_state_set_number_steps(state, steps)
-#endif
+#define zif_state_done(state, error)			zif_state_done_real(state, error, G_STRLOC)
+#define zif_state_finished(state, error)		zif_state_finished_real(state, error, G_STRLOC)
+#define zif_state_set_number_steps(state, steps)	zif_state_set_number_steps_real(state, steps, G_STRLOC)
 
 typedef gboolean (*ZifStateErrorHandlerCb)		(const GError		*error,
 							 gpointer		 user_data);
@@ -97,20 +87,17 @@ ZifState	*zif_state_get_child			(ZifState		*state);
 /* percentage changed */
 gboolean	 zif_state_set_number_steps_real	(ZifState		*state,
 							 guint			 steps,
-							 const gchar		*function_name,
-							 gint			 function_line);
+							 const gchar		*strloc);
 gboolean	 zif_state_set_percentage		(ZifState		*state,
 							 guint			 percentage);
 guint		 zif_state_get_percentage		(ZifState		*state);
 gboolean	 zif_state_done_real			(ZifState		*state,
 							 GError			 **error,
-							 const gchar		*function_name,
-							 gint			 function_line)
+							 const gchar		*strloc)
 							 G_GNUC_WARN_UNUSED_RESULT;
 gboolean	 zif_state_finished_real		(ZifState		*state,
 							 GError			 **error,
-							 const gchar		*function_name,
-							 gint			 function_line)
+							 const gchar		*strloc)
 							 G_GNUC_WARN_UNUSED_RESULT;
 gboolean	 zif_state_reset			(ZifState		*state);
 
