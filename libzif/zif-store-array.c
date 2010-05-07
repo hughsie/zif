@@ -27,7 +27,7 @@
  * be done on the array and not the indervidual stores.
  *
  * IMPORTANT: any errors that happen on the ZifStores are fatal unless you're
- * using ZifStoreArrayErrorCb, and it returns TRUE.
+ * using zif_state_set_error_handler().
  */
 
 #ifdef HAVE_CONFIG_H
@@ -251,7 +251,6 @@ out:
  **/
 static GPtrArray *
 zif_store_array_repos_search (GPtrArray *store_array, ZifRole role, gchar **search,
-			      ZifStoreArrayErrorCb error_cb, gpointer user_data,
 			      ZifState *state, GError **error)
 {
 	gboolean ret;
@@ -311,7 +310,7 @@ zif_store_array_repos_search (GPtrArray *store_array, ZifRole role, gchar **sear
 		}
 		if (part == NULL) {
 			/* do we need to skip this error */
-			if (error_cb != NULL && error_cb (store_array, error_local, user_data)) {
+			if (zif_state_error_handler (state, error_local)) {
 				g_clear_error (&error_local);
 				ret = zif_state_finished (state_local, error);
 				if (!ret)
@@ -422,8 +421,6 @@ out:
 /**
  * zif_store_array_clean:
  * @store_array: the #GPtrArray of #ZifStores
- * @error_cb: a #ZifStoreArrayErrorCb which returns %FALSE if the error is fatal
- * @user_data: the user_data to be passed to the #ZifStoreArrayErrorCb
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -435,7 +432,6 @@ out:
  **/
 gboolean
 zif_store_array_clean (GPtrArray *store_array,
-		       ZifStoreArrayErrorCb error_cb, gpointer user_data,
 		       ZifState *state, GError **error)
 {
 	guint i;
@@ -464,7 +460,7 @@ zif_store_array_clean (GPtrArray *store_array,
 		ret = zif_store_clean (store, state_local, &error_local);
 		if (!ret) {
 			/* do we need to skip this error */
-			if (error_cb != NULL && error_cb (store_array, error_local, user_data)) {
+			if (zif_state_error_handler (state, error_local)) {
 				g_clear_error (&error_local);
 				ret = zif_state_finished (state_local, error);
 				if (!ret)
@@ -490,8 +486,6 @@ out:
  * zif_store_array_refresh:
  * @store_array: the #GPtrArray of #ZifStores
  * @force: if the data should be re-downloaded if it's still valid
- * @error_cb: a #ZifStoreArrayErrorCb which returns %FALSE if the error is fatal
- * @user_data: the user_data to be passed to the #ZifStoreArrayErrorCb
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -503,7 +497,6 @@ out:
  **/
 gboolean
 zif_store_array_refresh (GPtrArray *store_array, gboolean force,
-			 ZifStoreArrayErrorCb error_cb, gpointer user_data,
 			 ZifState *state, GError **error)
 {
 	guint i;
@@ -531,8 +524,8 @@ zif_store_array_refresh (GPtrArray *store_array, gboolean force,
 		state_local = zif_state_get_child (state);
 		ret = zif_store_refresh (store, force, state_local, &error_local);
 		if (!ret) {
-			/* do we need to skip this error: FIXME put this in ZifState */
-			if (error_cb != NULL && error_cb (store_array, error_local, user_data)) {
+			/* do we need to skip this error */
+			if (zif_state_error_handler (state, error_local)) {
 				g_clear_error (&error_local);
 				ret = zif_state_finished (state_local, error);
 				if (!ret)
@@ -558,8 +551,6 @@ out:
  * zif_store_array_resolve:
  * @store_array: the #GPtrArray of #ZifStores
  * @search: the search term, e.g. "gnome-power-manager"
- * @error_cb: a #ZifStoreArrayErrorCb which returns %FALSE if the error is fatal
- * @user_data: the user_data to be passed to the #ZifStoreArrayErrorCb
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -571,20 +562,17 @@ out:
  **/
 GPtrArray *
 zif_store_array_resolve (GPtrArray *store_array, gchar **search,
-			 ZifStoreArrayErrorCb error_cb, gpointer user_data,
 			 ZifState *state, GError **error)
 {
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 	return zif_store_array_repos_search (store_array, ZIF_ROLE_RESOLVE, search,
-					     error_cb, user_data, state, error);
+					     state, error);
 }
 
 /**
  * zif_store_array_search_name:
  * @store_array: the #GPtrArray of #ZifStores
  * @search: the search term, e.g. "power"
- * @error_cb: a #ZifStoreArrayErrorCb which returns %FALSE if the error is fatal
- * @user_data: the user_data to be passed to the #ZifStoreArrayErrorCb
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -596,20 +584,17 @@ zif_store_array_resolve (GPtrArray *store_array, gchar **search,
  **/
 GPtrArray *
 zif_store_array_search_name (GPtrArray *store_array, gchar **search,
-			     ZifStoreArrayErrorCb error_cb, gpointer user_data,
 			     ZifState *state, GError **error)
 {
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 	return zif_store_array_repos_search (store_array, ZIF_ROLE_SEARCH_NAME, search,
-					     error_cb, user_data, state, error);
+					     state, error);
 }
 
 /**
  * zif_store_array_search_details:
  * @store_array: the #GPtrArray of #ZifStores
  * @search: the search term, e.g. "trouble"
- * @error_cb: a #ZifStoreArrayErrorCb which returns %FALSE if the error is fatal
- * @user_data: the user_data to be passed to the #ZifStoreArrayErrorCb
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -621,20 +606,17 @@ zif_store_array_search_name (GPtrArray *store_array, gchar **search,
  **/
 GPtrArray *
 zif_store_array_search_details (GPtrArray *store_array, gchar **search,
-				ZifStoreArrayErrorCb error_cb, gpointer user_data,
 				ZifState *state, GError **error)
 {
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 	return zif_store_array_repos_search (store_array, ZIF_ROLE_SEARCH_DETAILS, search,
-					     error_cb, user_data, state, error);
+					     state, error);
 }
 
 /**
  * zif_store_array_search_group:
  * @store_array: the #GPtrArray of #ZifStores
  * @group_enum: the group enumerated value, e.g. "games"
- * @error_cb: a #ZifStoreArrayErrorCb which returns %FALSE if the error is fatal
- * @user_data: the user_data to be passed to the #ZifStoreArrayErrorCb
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -646,20 +628,17 @@ zif_store_array_search_details (GPtrArray *store_array, gchar **search,
  **/
 GPtrArray *
 zif_store_array_search_group (GPtrArray *store_array, gchar **group_enum,
-			      ZifStoreArrayErrorCb error_cb, gpointer user_data,
 			      ZifState *state, GError **error)
 {
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 	return zif_store_array_repos_search (store_array, ZIF_ROLE_SEARCH_GROUP, group_enum,
-					     error_cb, user_data, state, error);
+					     state, error);
 }
 
 /**
  * zif_store_array_search_category:
  * @store_array: the #GPtrArray of #ZifStores
  * @group_id: the group id, e.g. "gnome-system-tools"
- * @error_cb: a #ZifStoreArrayErrorCb which returns %FALSE if the error is fatal
- * @user_data: the user_data to be passed to the #ZifStoreArrayErrorCb
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -671,8 +650,7 @@ zif_store_array_search_group (GPtrArray *store_array, gchar **group_enum,
  **/
 GPtrArray *
 zif_store_array_search_category (GPtrArray *store_array, gchar **group_id,
-				 ZifStoreArrayErrorCb error_cb, gpointer user_data,
-				 ZifState *state, GError **error)
+					 ZifState *state, GError **error)
 {
 	guint i, j;
 	GPtrArray *array;
@@ -685,7 +663,7 @@ zif_store_array_search_category (GPtrArray *store_array, gchar **group_id,
 
 	/* get all results from all repos */
 	array = zif_store_array_repos_search (store_array, ZIF_ROLE_SEARCH_CATEGORY, group_id,
-					      error_cb, user_data, state, error);
+					      state, error);
 	if (array == NULL)
 		goto out;
 
@@ -714,8 +692,6 @@ out:
  * zif_store_array_search_file:
  * @store_array: the #GPtrArray of #ZifStores
  * @search: the search term, e.g. "/usr/bin/gnome-power-manager"
- * @error_cb: a #ZifStoreArrayErrorCb which returns %FALSE if the error is fatal
- * @user_data: the user_data to be passed to the #ZifStoreArrayErrorCb
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -727,19 +703,16 @@ out:
  **/
 GPtrArray *
 zif_store_array_search_file (GPtrArray *store_array, gchar **search,
-			     ZifStoreArrayErrorCb error_cb, gpointer user_data,
 			     ZifState *state, GError **error)
 {
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 	return zif_store_array_repos_search (store_array, ZIF_ROLE_SEARCH_FILE, search,
-					     error_cb, user_data, state, error);
+					     state, error);
 }
 
 /**
  * zif_store_array_get_packages:
  * @store_array: the #GPtrArray of #ZifStores
- * @error_cb: a #ZifStoreArrayErrorCb which returns %FALSE if the error is fatal
- * @user_data: the user_data to be passed to the #ZifStoreArrayErrorCb
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -751,20 +724,17 @@ zif_store_array_search_file (GPtrArray *store_array, gchar **search,
  **/
 GPtrArray *
 zif_store_array_get_packages (GPtrArray *store_array,
-			      ZifStoreArrayErrorCb error_cb, gpointer user_data,
 			      ZifState *state, GError **error)
 {
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 	return zif_store_array_repos_search (store_array, ZIF_ROLE_GET_PACKAGES, NULL,
-					     error_cb, user_data, state, error);
+					     state, error);
 }
 
 /**
  * zif_store_array_get_updates:
  * @store_array: the #GPtrArray of #ZifStores
  * @packages: the #GPtrArray of #ZifPackages to check for updates
- * @error_cb: a #ZifStoreArrayErrorCb which returns %FALSE if the error is fatal
- * @user_data: the user_data to be passed to the #ZifStoreArrayErrorCb
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -776,20 +746,17 @@ zif_store_array_get_packages (GPtrArray *store_array,
  **/
 GPtrArray *
 zif_store_array_get_updates (GPtrArray *store_array, GPtrArray *packages,
-			     ZifStoreArrayErrorCb error_cb, gpointer user_data,
 			     ZifState *state, GError **error)
 {
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 	return zif_store_array_repos_search (store_array, ZIF_ROLE_GET_UPDATES, (gchar **) packages,
-					     error_cb, user_data, state, error);
+					     state, error);
 }
 
 /**
  * zif_store_array_what_provides:
  * @store_array: the #GPtrArray of #ZifStores
  * @search: the search term, e.g. "gstreamer(codec-mp3)"
- * @error_cb: a #ZifStoreArrayErrorCb which returns %FALSE if the error is fatal
- * @user_data: the user_data to be passed to the #ZifStoreArrayErrorCb
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -801,25 +768,22 @@ zif_store_array_get_updates (GPtrArray *store_array, GPtrArray *packages,
  **/
 GPtrArray *
 zif_store_array_what_provides (GPtrArray *store_array, gchar **search,
-			       ZifStoreArrayErrorCb error_cb, gpointer user_data,
-			       ZifState *state, GError **error)
+				       ZifState *state, GError **error)
 {
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* if this is a path, then we use the file list and treat like a SearchFile */
 	if (g_str_has_prefix (search[0], "/")) {
 		return zif_store_array_repos_search (store_array, ZIF_ROLE_SEARCH_FILE, search,
-						     error_cb, user_data, state, error);
+						     state, error);
 	}
 	return zif_store_array_repos_search (store_array, ZIF_ROLE_WHAT_PROVIDES, search,
-					     error_cb, user_data, state, error);
+					     state, error);
 }
 
 /**
  * zif_store_array_get_categories:
  * @store_array: the #GPtrArray of #ZifStores
- * @error_cb: a #ZifStoreArrayErrorCb which returns %FALSE if the error is fatal
- * @user_data: the user_data to be passed to the #ZifStoreArrayErrorCb
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -831,7 +795,6 @@ zif_store_array_what_provides (GPtrArray *store_array, gchar **search,
  **/
 GPtrArray *
 zif_store_array_get_categories (GPtrArray *store_array,
-				ZifStoreArrayErrorCb error_cb, gpointer user_data,
 				ZifState *state, GError **error)
 {
 	guint i, j;
@@ -847,7 +810,7 @@ zif_store_array_get_categories (GPtrArray *store_array,
 
 	/* get all results from all repos */
 	array = zif_store_array_repos_search (store_array, ZIF_ROLE_GET_CATEGORIES, NULL,
-					      error_cb, user_data, state, error);
+					      state, error);
 	if (array == NULL)
 		goto out;
 

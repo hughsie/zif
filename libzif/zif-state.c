@@ -104,6 +104,8 @@ struct _ZifStatePrivate
 	gboolean		 allow_cancel_child;
 	GCancellable		*cancellable;
 	GTimer			*timer;
+	ZifStateErrorHandlerCb	 error_handler_cb;
+	gpointer		 error_handler_user_data;
 };
 
 enum {
@@ -133,6 +135,39 @@ zif_state_error_quark (void)
 		quark = g_quark_from_static_string ("zif_state_error");
 	return quark;
 }
+
+/**
+ * zif_state_set_error_handler:
+ * @state: the #ZifState object
+ * @error_handler_cb: a #ZifStateErrorHandlerCb which returns %FALSE if the error is fatal
+ * @user_data: the user_data to be passed to the #ZifStateErrorHandlerCb
+ *
+ * Since: 0.0.1
+ **/
+void
+zif_state_set_error_handler (ZifState *state, ZifStateErrorHandlerCb error_handler_cb, gpointer user_data)
+{
+	state->priv->error_handler_cb = error_handler_cb;
+	state->priv->error_handler_user_data = user_data;
+}
+
+/**
+ * zif_state_error_handler:
+ * @state: the #ZifState object
+ * @error: a #GError
+ *
+ * Return value: %FALSE if the error is fatal, %TRUE otherwise
+ *
+ * Since: 0.0.1
+ **/
+gboolean
+zif_state_error_handler (ZifState *state, const GError *error)
+{
+	if (state->priv->error_handler_cb == NULL)
+		return FALSE;
+	return state->priv->error_handler_cb (error, state->priv->error_handler_user_data);
+}
+
 
 /**
  * zif_state_discrete_to_percent:
@@ -238,7 +273,6 @@ zif_state_set_allow_cancel (ZifState *state, gboolean allow_cancel)
 {
 	g_return_if_fail (ZIF_IS_STATE (state));
 
-	egg_warning ("%p now allow-cancel:%i", state, allow_cancel);
 	state->priv->allow_cancel_changed_state = TRUE;
 
 	/* quick optimisation that saves lots of signals */
@@ -721,6 +755,8 @@ zif_state_init (ZifState *state)
 	state->priv->allow_cancel = TRUE;
 	state->priv->allow_cancel_child = TRUE;
 	state->priv->allow_cancel_changed_state = FALSE;
+	state->priv->error_handler_cb = NULL;
+	state->priv->error_handler_user_data = NULL;
 	state->priv->steps = 0;
 	state->priv->current = 0;
 	state->priv->last_percentage = 0;

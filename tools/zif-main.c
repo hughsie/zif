@@ -139,7 +139,7 @@ zif_cmd_download (const gchar *package_name, ZifState *state)
 	/* resolve package name */
 	state_local = zif_state_get_child (state);
 	to_array[0] = package_name;
-	array = zif_store_array_resolve (store_array, (gchar **)to_array, NULL, NULL, state_local, &error);
+	array = zif_store_array_resolve (store_array, (gchar **)to_array, state_local, &error);
 	if (array == NULL) {
 		g_print ("failed to get results: %s\n", error->message);
 		g_error_free (error);
@@ -229,7 +229,7 @@ zif_cmd_get_depends (const gchar *package_name, ZifState *state)
 	/* resolve package name */
 	state_local = zif_state_get_child (state);
 	to_array[0] = package_name;
-	array = zif_store_array_resolve (store_array, (gchar**)to_array, NULL, NULL, state_local, &error);
+	array = zif_store_array_resolve (store_array, (gchar**)to_array, state_local, &error);
 	if (array == NULL) {
 		g_print ("failed to get results: %s\n", error->message);
 		g_error_free (error);
@@ -275,7 +275,7 @@ zif_cmd_get_depends (const gchar *package_name, ZifState *state)
 
 		/* find the package providing the depend */
 		to_array[0] = require->name;
-		provides = zif_store_array_what_provides (store_array, (gchar**)to_array, NULL, NULL, state_loop, &error);
+		provides = zif_store_array_what_provides (store_array, (gchar**)to_array, state_loop, &error);
 		if (provides == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
@@ -347,7 +347,7 @@ zif_cmd_install (const gchar *package_name, ZifState *state)
 	/* check not already installed */
 	state_local = zif_state_get_child (state);
 	to_array[0] = package_name;
-	array = zif_store_array_resolve (store_array, (gchar**)to_array, NULL, NULL, state_local, &error);
+	array = zif_store_array_resolve (store_array, (gchar**)to_array, state_local, &error);
 	if (array == NULL) {
 		g_print ("failed to get results: %s\n", error->message);
 		g_error_free (error);
@@ -385,7 +385,7 @@ zif_cmd_install (const gchar *package_name, ZifState *state)
 
 	/* check we can find a package of this name */
 	to_array[0] = package_name;
-	array = zif_store_array_resolve (store_array, (gchar**)to_array, NULL, NULL, state_local, &error);
+	array = zif_store_array_resolve (store_array, (gchar**)to_array, state_local, &error);
 	if (array == NULL) {
 		g_print ("failed to get results: %s\n", error->message);
 		g_error_free (error);
@@ -443,7 +443,7 @@ zif_cmd_refresh_cache (ZifState *state, gboolean force)
 
 	/* refresh all ZifRemoteStores */
 	state_local = zif_state_get_child (state);
-	ret = zif_store_array_refresh (store_array, force, NULL, NULL, state_local, &error);
+	ret = zif_store_array_refresh (store_array, force, state_local, &error);
 	if (!ret) {
 		g_print ("failed to refresh cache: %s\n", error->message);
 		g_error_free (error);
@@ -494,7 +494,7 @@ zif_cmd_update (const gchar *package_name, ZifState *state)
 	/* check not already installed */
 	state_local = zif_state_get_child (state);
 	to_array[0] = package_name;
-	array = zif_store_array_resolve (store_array, (gchar**)to_array, NULL, NULL, state_local, &error);
+	array = zif_store_array_resolve (store_array, (gchar**)to_array, state_local, &error);
 	if (array == NULL) {
 		g_print ("failed to get results: %s\n", error->message);
 		g_error_free (error);
@@ -533,7 +533,7 @@ zif_cmd_update (const gchar *package_name, ZifState *state)
 	/* check we can find a package of this name */
 	state_local = zif_state_get_child (state);
 	to_array[0] = package_name;
-	array = zif_store_array_resolve (store_array, (gchar**)to_array, NULL, NULL, state_local, &error);
+	array = zif_store_array_resolve (store_array, (gchar**)to_array, state_local, &error);
 	if (array == NULL) {
 		g_print ("failed to get results: %s\n", error->message);
 		g_error_free (error);
@@ -839,7 +839,7 @@ main (int argc, char *argv[])
 
 		/* get updates */
 		state_local = zif_state_get_child (state);
-		array = zif_store_array_get_updates (store_array, packages, NULL, NULL, state_local, &error);
+		array = zif_store_array_get_updates (store_array, packages, state_local, &error);
 		if (array == NULL) {
 			g_print ("failed to get updates: %s\n", error->message);
 			g_error_free (error);
@@ -951,7 +951,7 @@ main (int argc, char *argv[])
 
 		/* get categories */
 		state_local = zif_state_get_child (state);
-		array = zif_store_array_get_categories (store_array, NULL, NULL, state_local, &error);
+		array = zif_store_array_get_categories (store_array, state_local, &error);
 		if (array == NULL) {
 			g_print ("failed to get categories: %s\n", error->message);
 			g_error_free (error);
@@ -1034,7 +1034,7 @@ main (int argc, char *argv[])
 
 		/* clean all the store_array */
 		state_local = zif_state_get_child (state);
-		ret = zif_store_array_clean (store_array, NULL, NULL, state_local, &error);
+		ret = zif_store_array_clean (store_array, state_local, &error);
 		if (!ret) {
 			g_print ("failed to clean: %s\n", error->message);
 			g_error_free (error);
@@ -1124,7 +1124,7 @@ main (int argc, char *argv[])
 		/* resolve */
 		state_local = zif_state_get_child (state);
 		to_array[0] = value;
-		array = zif_store_array_resolve (store_array, (gchar**)to_array, NULL, NULL, state_local, &error);
+		array = zif_store_array_resolve (store_array, (gchar**)to_array, state_local, &error);
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
@@ -1227,7 +1227,7 @@ main (int argc, char *argv[])
 		}
 		state_local = zif_state_get_child (state);
 		to_array[0] = value;
-		array = zif_store_array_resolve (store_array, (gchar**)to_array, NULL, NULL, state_local, &error);
+		array = zif_store_array_resolve (store_array, (gchar**)to_array, state_local, &error);
 
 		/* this section done */
 		ret = zif_state_done (state, &error);
@@ -1318,7 +1318,7 @@ main (int argc, char *argv[])
 			goto out;
 
 		state_local = zif_state_get_child (state);
-		array = zif_store_array_get_packages (store_array, NULL, NULL, state_local, &error);
+		array = zif_store_array_get_packages (store_array, state_local, &error);
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
@@ -1437,7 +1437,7 @@ main (int argc, char *argv[])
 
 		state_local = zif_state_get_child (state);
 		to_array[0] = value;
-		array = zif_store_array_resolve (store_array, (gchar**)to_array, NULL, NULL, state_local, &error);
+		array = zif_store_array_resolve (store_array, (gchar**)to_array, state_local, &error);
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
@@ -1563,7 +1563,7 @@ main (int argc, char *argv[])
 
 		state_local = zif_state_get_child (state);
 		to_array[0] = value;
-		array = zif_store_array_search_name (store_array, (gchar**)to_array, NULL, NULL, state_local, &error);
+		array = zif_store_array_search_name (store_array, (gchar**)to_array, state_local, &error);
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
@@ -1623,7 +1623,7 @@ main (int argc, char *argv[])
 
 		state_local = zif_state_get_child (state);
 		to_array[0] = value;
-		array = zif_store_array_search_details (store_array, (gchar**)to_array, NULL, NULL, state_local, &error);
+		array = zif_store_array_search_details (store_array, (gchar**)to_array, state_local, &error);
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
@@ -1684,7 +1684,7 @@ main (int argc, char *argv[])
 
 		state_local = zif_state_get_child (state);
 		to_array[0] = value;
-		array = zif_store_array_search_file (store_array, (gchar**)to_array, NULL, NULL, state_local, &error);
+		array = zif_store_array_search_file (store_array, (gchar**)to_array, state_local, &error);
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
@@ -1744,7 +1744,7 @@ main (int argc, char *argv[])
 
 		state_local = zif_state_get_child (state);
 		to_array[0] = value;
-		array = zif_store_array_search_group (store_array, (gchar**)to_array, NULL, NULL, state_local, &error);
+		array = zif_store_array_search_group (store_array, (gchar**)to_array, state_local, &error);
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
@@ -1791,7 +1791,7 @@ main (int argc, char *argv[])
 
 		state_local = zif_state_get_child (state);
 		to_array[0] = value;
-		array = zif_store_array_search_category (store_array, (gchar**)to_array, NULL, NULL, state_local, &error);
+		array = zif_store_array_search_category (store_array, (gchar**)to_array, state_local, &error);
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
@@ -1851,7 +1851,7 @@ main (int argc, char *argv[])
 
 		state_local = zif_state_get_child (state);
 		to_array[0] = value;
-		array = zif_store_array_what_provides (store_array, (gchar**)to_array, NULL, NULL, state_local, &error);
+		array = zif_store_array_what_provides (store_array, (gchar**)to_array, state_local, &error);
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);

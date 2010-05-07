@@ -86,6 +86,9 @@ typedef enum {
 #define zif_state_set_number_steps(state, steps)
 #endif
 
+typedef gboolean (*ZifStateErrorHandlerCb)		(const GError		*error,
+							 gpointer		 user_data);
+
 GType		 zif_state_get_type			(void);
 GQuark		 zif_state_error_quark			(void);
 ZifState	*zif_state_new				(void);
@@ -118,6 +121,13 @@ void		 zif_state_set_cancellable		(ZifState		*state,
 gboolean	 zif_state_get_allow_cancel		(ZifState		*state);
 void		 zif_state_set_allow_cancel		(ZifState		*state,
 							 gboolean		 allow_cancel);
+
+/* error handling */
+void		 zif_state_set_error_handler		(ZifState		*state,
+							 ZifStateErrorHandlerCb	 error_handler_cb,
+							 gpointer		 user_data);
+gboolean	 zif_state_error_handler		(ZifState		*state,
+							 const GError		*error);
 
 G_END_DECLS
 

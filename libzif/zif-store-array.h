@@ -34,10 +34,6 @@
 
 G_BEGIN_DECLS
 
-typedef gboolean (*ZifStoreArrayErrorCb)		(GPtrArray		*store_array,
-							 const GError		*error,
-							 gpointer		 user_data);
-
 GPtrArray	*zif_store_array_new			(void);
 
 /* stores */
@@ -57,67 +53,45 @@ gboolean	 zif_store_array_add_remote_enabled	(GPtrArray		*store_array,
 
 /* methods */
 gboolean	 zif_store_array_clean			(GPtrArray		*store_array,
-							 ZifStoreArrayErrorCb	 error_cb,
-							 gpointer		 user_data,
 							 ZifState		*state,
 							 GError			**error);
 gboolean	 zif_store_array_refresh		(GPtrArray		*store_array,
 							 gboolean		 force,
-							 ZifStoreArrayErrorCb	 error_cb,
-							 gpointer		 user_data,
 							 ZifState		*state,
 							 GError			**error);
 GPtrArray	*zif_store_array_resolve		(GPtrArray		*store_array,
 							 gchar			**search,
-							 ZifStoreArrayErrorCb	 error_cb,
-							 gpointer		 user_data,
 							 ZifState		*state,
 							 GError			**error);
 GPtrArray	*zif_store_array_search_name		(GPtrArray		*store_array,
 							 gchar			**search,
-							 ZifStoreArrayErrorCb	 error_cb,
-							 gpointer		 user_data,
 							 ZifState		*state,
 							 GError			**error);
 GPtrArray	*zif_store_array_search_details		(GPtrArray		*store_array,
 							 gchar			**search,
-							 ZifStoreArrayErrorCb	 error_cb,
-							 gpointer		 user_data,
 							 ZifState		*state,
 							 GError			**error);
 GPtrArray	*zif_store_array_search_group		(GPtrArray		*store_array,
 							 gchar			**group_enum,
-							 ZifStoreArrayErrorCb	 error_cb,
-							 gpointer		 user_data,
 							 ZifState		*state,
 							 GError			**error);
 GPtrArray	*zif_store_array_search_category	(GPtrArray		*store_array,
 							 gchar			**group_id,
-							 ZifStoreArrayErrorCb	 error_cb,
-							 gpointer		 user_data,
 							 ZifState		*state,
 							 GError			**error);
 GPtrArray	*zif_store_array_search_file		(GPtrArray		*store_array,
 							 gchar			**search,
-							 ZifStoreArrayErrorCb	 error_cb,
-							 gpointer		 user_data,
 							 ZifState		*state,
 							 GError			**error);
 GPtrArray	*zif_store_array_what_provides		(GPtrArray		*store_array,
 							 gchar			**search,
-							 ZifStoreArrayErrorCb	 error_cb,
-							 gpointer		 user_data,
 							 ZifState		*state,
 							 GError			**error);
 GPtrArray	*zif_store_array_get_packages		(GPtrArray		*store_array,
-							 ZifStoreArrayErrorCb	 error_cb,
-							 gpointer		 user_data,
 							 ZifState		*state,
 							 GError			**error);
 GPtrArray	*zif_store_array_get_updates		(GPtrArray		*store_array,
 							 GPtrArray		*packages,
-							 ZifStoreArrayErrorCb	 error_cb,
-							 gpointer		 user_data,
 							 ZifState		*state,
 							 GError			**error);
 ZifPackage	*zif_store_array_find_package		(GPtrArray		*store_array,
@@ -125,8 +99,6 @@ ZifPackage	*zif_store_array_find_package		(GPtrArray		*store_array,
 							 ZifState		*state,
 							 GError			**error);
 GPtrArray	*zif_store_array_get_categories		(GPtrArray		*store_array,
-							 ZifStoreArrayErrorCb	 error_cb,
-							 gpointer		 user_data,
 							 ZifState		*state,
 							 GError			**error);
 
