@@ -97,6 +97,7 @@ zif_md_mirrorlist_load (ZifMd *md, ZifState *state, GError **error)
 	egg_debug ("filename = %s", filename);
 
 	/* get repo contents */
+	zif_state_set_allow_cancel (state, FALSE);
 	ret = g_file_get_contents (filename, &contents, NULL, error);
 	if (!ret)
 		goto out;

@@ -458,6 +458,7 @@ zif_md_updateinfo_load (ZifMd *md, ZifState *state, GError **error)
 	egg_debug ("filename = %s", filename);
 
 	/* get repo contents */
+	zif_state_set_allow_cancel (state, FALSE);
 	ret = g_file_get_contents (filename, &contents, &size, error);
 	if (!ret)
 		goto out;
@@ -466,6 +467,7 @@ zif_md_updateinfo_load (ZifMd *md, ZifState *state, GError **error)
 	context = g_markup_parse_context_new (&gpk_md_updateinfo_markup_parser, G_MARKUP_PREFIX_ERROR_POSITION, updateinfo, NULL);
 
 	/* parse data */
+	zif_state_set_allow_cancel (state, FALSE);
 	ret = g_markup_parse_context_parse (context, contents, (gssize) size, error);
 	if (!ret)
 		goto out;

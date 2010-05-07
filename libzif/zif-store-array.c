@@ -254,6 +254,7 @@ zif_store_array_repos_search (GPtrArray *store_array, ZifRole role, gchar **sear
 			      ZifStoreArrayErrorCb error_cb, gpointer user_data,
 			      ZifState *state, GError **error)
 {
+	gboolean ret;
 	guint i, j;
 	GPtrArray *array = NULL;
 	GPtrArray *part;
@@ -312,7 +313,9 @@ zif_store_array_repos_search (GPtrArray *store_array, ZifRole role, gchar **sear
 			/* do we need to skip this error */
 			if (error_cb != NULL && error_cb (store_array, error_local, user_data)) {
 				g_clear_error (&error_local);
-				zif_state_finished (state_local);
+				ret = zif_state_finished (state_local, error);
+				if (!ret)
+					goto out;
 				goto skip_error;
 			}
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
@@ -330,7 +333,9 @@ zif_store_array_repos_search (GPtrArray *store_array, ZifRole role, gchar **sear
 		g_ptr_array_unref (part);
 skip_error:
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
 	}
 out:
 	return array;
@@ -353,6 +358,7 @@ ZifPackage *
 zif_store_array_find_package (GPtrArray *store_array, const gchar *package_id, ZifState *state, GError **error)
 {
 	guint i;
+	gboolean ret;
 	ZifStore *store;
 	ZifPackage *package = NULL;
 	GError *error_local = NULL;
@@ -382,19 +388,25 @@ zif_store_array_find_package (GPtrArray *store_array, const gchar *package_id, Z
 			if (error_local->code == ZIF_STORE_ERROR_FAILED_TO_FIND) {
 				/* do not abort */
 				g_clear_error (&error_local);
-				zif_state_finished (state_local);
+				ret = zif_state_finished (state_local, error);
+				if (!ret)
+					goto out;
 			} else {
 				g_set_error (error, 1, 0, "failed to find package: %s", error_local->message);
 				g_error_free (error_local);
 				goto out;
 			}
 		} else {
-			zif_state_finished (state);
+			ret = zif_state_finished (state, error);
+			if (!ret)
+				goto out;
 			break;
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
 	}
 
 	/* nothing to do */
@@ -455,7 +467,9 @@ zif_store_array_clean (GPtrArray *store_array,
 			if (error_cb != NULL && error_cb (store_array, error_local, user_data)) {
 				ret = TRUE;
 				g_clear_error (&error_local);
-				zif_state_finished (state_local);
+				ret = zif_state_finished (state_local, error);
+				if (!ret)
+					goto out;
 				goto skip_error;
 			}
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
@@ -465,7 +479,9 @@ zif_store_array_clean (GPtrArray *store_array,
 		}
 skip_error:
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
 	}
 out:
 	return ret;
@@ -520,7 +536,9 @@ zif_store_array_refresh (GPtrArray *store_array, gboolean force,
 			if (error_cb != NULL && error_cb (store_array, error_local, user_data)) {
 				ret = TRUE;
 				g_clear_error (&error_local);
-				zif_state_finished (state_local);
+				ret = zif_state_finished (state_local, error);
+				if (!ret)
+					goto out;
 				goto skip_error;
 			}
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
@@ -530,7 +548,9 @@ zif_store_array_refresh (GPtrArray *store_array, gboolean force,
 		}
 skip_error:
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
 	}
 out:
 	return ret;

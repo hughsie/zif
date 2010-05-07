@@ -158,7 +158,9 @@ zif_store_local_load (ZifStore *store, ZifState *state, GError **error)
 	}
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 	zif_state_set_allow_cancel (state, FALSE);
 
 	/* get list */
@@ -184,7 +186,9 @@ zif_store_local_load (ZifStore *store, ZifState *state, GError **error)
 	rpmdbClose (db);
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 
 	/* okay */
 	local->priv->loaded = TRUE;
@@ -238,7 +242,9 @@ zif_store_local_search_name (ZifStore *store, gchar **search, ZifState *state, G
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
 	}
 
 	/* check we have packages */
@@ -267,11 +273,15 @@ zif_store_local_search_name (ZifStore *store, gchar **search, ZifState *state, G
 		g_strfreev (split);
 
 		/* this section done */
-		zif_state_done (state_local);
+		ret = zif_state_done (state_local, error);
+		if (!ret)
+			goto out;
 	}
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 out:
 	return array;
 }
@@ -321,7 +331,9 @@ zif_store_local_search_category (ZifStore *store, gchar **search, ZifState *stat
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
 	}
 
 	/* check we have packages */
@@ -350,11 +362,15 @@ zif_store_local_search_category (ZifStore *store, gchar **search, ZifState *stat
 		}
 
 		/* this section done */
-		zif_state_done (state_local);
+		ret = zif_state_done (state_local, error);
+		if (!ret)
+			goto out;
 	}
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 out:
 	return array;
 }
@@ -406,7 +422,9 @@ zif_store_local_search_details (ZifStore *store, gchar **search, ZifState *state
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
 	}
 
 	/* check we have packages */
@@ -441,11 +459,15 @@ zif_store_local_search_details (ZifStore *store, gchar **search, ZifState *state
 		g_strfreev (split);
 
 		/* this section done */
-		zif_state_done (state_local);
+		ret = zif_state_done (state_local, error);
+		if (!ret)
+			goto out;
 	}
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 out:
 	return array;
 }
@@ -495,7 +517,9 @@ zif_store_local_search_group (ZifStore *store, gchar **search, ZifState *state, 
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
 	}
 
 	/* check we have packages */
@@ -525,11 +549,15 @@ zif_store_local_search_group (ZifStore *store, gchar **search, ZifState *state, 
 		}
 
 		/* this section done */
-		zif_state_done (state_local);
+		ret = zif_state_done (state_local, error);
+		if (!ret)
+			goto out;
 	}
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 out:
 	return array;
 }
@@ -579,7 +607,9 @@ zif_store_local_search_file (ZifStore *store, gchar **search, ZifState *state, G
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
 	}
 
 	/* check we have packages */
@@ -620,7 +650,9 @@ zif_store_local_search_file (ZifStore *store, gchar **search, ZifState *state, G
 		g_ptr_array_unref (files);
 
 		/* this section done */
-		zif_state_done (state_local);
+		ret = zif_state_done (state_local, error);
+		if (!ret)
+			goto out;
 	}
 out:
 	return array;
@@ -671,7 +703,9 @@ zif_store_local_resolve (ZifStore *store, gchar **search, ZifState *state, GErro
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
 	}
 
 	/* check we have packages */
@@ -701,11 +735,15 @@ zif_store_local_resolve (ZifStore *store, gchar **search, ZifState *state, GErro
 		g_strfreev (split);
 
 		/* this section done */
-		zif_state_done (state_local);
+		ret = zif_state_done (state_local, error);
+		if (!ret)
+			goto out;
 	}
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 out:
 	return array;
 }
@@ -757,7 +795,9 @@ zif_store_local_what_provides (ZifStore *store, gchar **search, ZifState *state,
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
 	}
 
 	/* check we have packages */
@@ -789,11 +829,15 @@ zif_store_local_what_provides (ZifStore *store, gchar **search, ZifState *state,
 		}
 
 		/* this section done */
-		zif_state_done (state_local);
+		ret = zif_state_done (state_local, error);
+		if (!ret)
+			goto out;
 	}
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 out:
 	return array;
 }
@@ -840,7 +884,9 @@ zif_store_local_get_packages (ZifStore *store, ZifState *state, GError **error)
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
 	}
 
 	/* check we have packages */
@@ -862,11 +908,15 @@ zif_store_local_get_packages (ZifStore *store, ZifState *state, GError **error)
 		g_ptr_array_add (array, g_object_ref (package));
 
 		/* this section done */
-		zif_state_done (state_local);
+		ret = zif_state_done (state_local, error);
+		if (!ret)
+			goto out;
 	}
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 out:
 	return array;
 }
@@ -915,7 +965,9 @@ zif_store_local_find_package (ZifStore *store, const gchar *package_id, ZifState
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
 	}
 
 	/* check we have packages */
@@ -941,7 +993,9 @@ zif_store_local_find_package (ZifStore *store, const gchar *package_id, ZifState
 			g_ptr_array_add (array, g_object_ref (package_tmp));
 
 		/* this section done */
-		zif_state_done (state_local);
+		ret = zif_state_done (state_local, error);
+		if (!ret)
+			goto out;
 	}
 
 	/* nothing */
@@ -962,7 +1016,9 @@ zif_store_local_find_package (ZifStore *store, const gchar *package_id, ZifState
 	package = g_object_ref (g_ptr_array_index (array, 0));
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 out:
 	g_ptr_array_unref (array);
 	return package;

@@ -431,6 +431,7 @@ zif_md_primary_xml_load (ZifMd *md, ZifState *state, GError **error)
 
 	/* open database */
 	egg_debug ("filename = %s", filename);
+	zif_state_set_allow_cancel (state, FALSE);
 	ret = g_file_get_contents (filename, &contents, &size, error);
 	if (!ret)
 		goto out;
@@ -439,6 +440,7 @@ zif_md_primary_xml_load (ZifMd *md, ZifState *state, GError **error)
 	context = g_markup_parse_context_new (&gpk_md_primary_xml_markup_parser, G_MARKUP_PREFIX_ERROR_POSITION, primary_xml, NULL);
 
 	/* parse data */
+	zif_state_set_allow_cancel (state, FALSE);
 	ret = g_markup_parse_context_parse (context, contents, (gssize) size, error);
 	if (!ret)
 		goto out;
@@ -490,7 +492,9 @@ zif_md_primary_xml_filter (ZifMd *md, ZifPackageFilterFunc filter_func, gpointer
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
 	}
 
 	/* search array */
@@ -503,7 +507,9 @@ zif_md_primary_xml_filter (ZifMd *md, ZifPackageFilterFunc filter_func, gpointer
 	}
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 out:
 	return array;
 }

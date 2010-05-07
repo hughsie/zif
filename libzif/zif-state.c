@@ -99,9 +99,11 @@ struct _ZifStatePrivate
 	gulong			 subpercentage_child_id;
 	gulong			 allow_cancel_child_id;
 	gchar			*id;
+	gboolean		 allow_cancel_changed_state;
 	gboolean		 allow_cancel;
 	gboolean		 allow_cancel_child;
 	GCancellable		*cancellable;
+	GTimer			*timer;
 };
 
 enum {
@@ -114,6 +116,23 @@ enum {
 static guint signals [SIGNAL_LAST] = { 0 };
 
 G_DEFINE_TYPE (ZifState, zif_state, G_TYPE_OBJECT)
+
+
+/**
+ * zif_state_error_quark:
+ *
+ * Return value: Our personal error quark.
+ *
+ * Since: 0.0.1
+ **/
+GQuark
+zif_state_error_quark (void)
+{
+	static GQuark quark = 0;
+	if (!quark)
+		quark = g_quark_from_static_string ("zif_state_error");
+	return quark;
+}
 
 /**
  * zif_state_discrete_to_percent:
@@ -135,6 +154,18 @@ zif_state_discrete_to_percent (guint discrete, guint steps)
 		return 0;
 	}
 	return ((gfloat) discrete * (100.0f / (gfloat) (steps)));
+}
+
+/**
+ * zif_state_print_parent_chain:
+ **/
+static void
+zif_state_print_parent_chain (ZifState *state, guint level)
+{
+	if (state->priv->parent != NULL)
+		zif_state_print_parent_chain (state->priv->parent, level + 1);
+	g_print ("%i) %s (%i/%i)\n",
+		 level, state->priv->id, state->priv->current, state->priv->steps);
 }
 
 /**
@@ -207,6 +238,12 @@ zif_state_set_allow_cancel (ZifState *state, gboolean allow_cancel)
 {
 	g_return_if_fail (ZIF_IS_STATE (state));
 
+	egg_warning ("%p now allow-cancel:%i", state, allow_cancel);
+	state->priv->allow_cancel_changed_state = TRUE;
+
+	/* quick optimisation that saves lots of signals */
+	if (state->priv->allow_cancel == allow_cancel)
+		return;
 	state->priv->allow_cancel = allow_cancel;
 
 	/* just emit if both this and child is okay */
@@ -374,6 +411,7 @@ zif_state_reset (ZifState *state)
 	state->priv->steps = 0;
 	state->priv->current = 0;
 	state->priv->last_percentage = 0;
+	g_timer_start (state->priv->timer);
 
 	/* disconnect client */
 	if (state->priv->percentage_child_id != 0) {
@@ -471,6 +509,7 @@ zif_state_set_number_steps_real (ZifState *state, guint steps, const gchar *func
 	state->priv->id = g_strdup_printf ("%s:%i", function_name, function_line);
 
 	/* imply reset */
+	g_timer_start (state->priv->timer);
 	zif_state_reset (state);
 
 	/* set steps */
@@ -480,20 +519,9 @@ zif_state_set_number_steps_real (ZifState *state, guint steps, const gchar *func
 }
 
 /**
- * zif_state_print_parent_chain:
- **/
-static void
-zif_state_print_parent_chain (ZifState *state, guint level)
-{
-	if (state->priv->parent != NULL)
-		zif_state_print_parent_chain (state->priv->parent, level + 1);
-	g_print ("%i) %s (%i/%i)\n",
-		 level, state->priv->id, state->priv->current, state->priv->steps);
-}
-
-/**
  * zif_state_done:
  * @state: the #ZifState object
+ * @error: A #GError or %NULL
  *
  * Called when the current sub-task has finished.
  *
@@ -502,25 +530,46 @@ zif_state_print_parent_chain (ZifState *state, guint level)
  * Since: 0.0.1
  **/
 gboolean
-zif_state_done_real (ZifState *state, const gchar *function_name, gint function_line)
+zif_state_done_real (ZifState *state, GError **error, const gchar *function_name, gint function_line)
 {
 	gboolean ret = TRUE;
 	gfloat percentage;
+	gdouble elapsed;
 
 	g_return_val_if_fail (ZIF_IS_STATE (state), FALSE);
 
+	/* are we cancelled */
+	if (g_cancellable_is_cancelled (state->priv->cancellable)) {
+		g_set_error_literal (error, ZIF_STATE_ERROR, ZIF_STATE_ERROR_CANCELLED,
+				     "cancelled by user action");
+		ret = FALSE;
+		goto out;
+	}
+
 	/* did we call done on a state that did not have a size set? */
 	if (state->priv->steps == 0) {
-		egg_warning ("done on a state %p that did not have a size set! [%s:%i]",
+		g_set_error (error, ZIF_STATE_ERROR, ZIF_STATE_ERROR_INVALID,
+			     "done on a state %p that did not have a size set! [%s:%i]",
 			     state, function_name, function_line);
 		zif_state_print_parent_chain (state, 0);
 		ret = FALSE;
 		goto out;
 	}
 
+	/* check the interval was too big in allow_cancel false mode */
+	if (!state->priv->allow_cancel_changed_state && state->priv->current > 0) {
+		elapsed = g_timer_elapsed (state->priv->timer, NULL);
+		if (elapsed > 0.1f) {
+			egg_warning ("%.1fms between zif_state_done() and no zif_state_set_allow_cancel()", elapsed * 1000);
+			zif_state_print_parent_chain (state, 0);
+		}
+	}
+	g_timer_start (state->priv->timer);
+
 	/* is already at 100%? */
 	if (state->priv->current == state->priv->steps) {
-		egg_warning ("already at 100%% state [%s:%i]", function_name, function_line);
+		g_set_error (error, ZIF_STATE_ERROR, ZIF_STATE_ERROR_INVALID,
+			     "already at 100%% state [%s:%i]", function_name, function_line);
 		zif_state_print_parent_chain (state, 0);
 		ret = FALSE;
 		goto out;
@@ -530,13 +579,17 @@ zif_state_done_real (ZifState *state, const gchar *function_name, gint function_
 	if (state->priv->child != NULL) {
 		ZifStatePrivate *child_priv = state->priv->child->priv;
 		if (child_priv->current != child_priv->steps) {
-			egg_warning ("child is at %i/%i steps and parent done [%s:%i]",
+			g_set_error (error, ZIF_STATE_ERROR, ZIF_STATE_ERROR_INVALID,
+				     "child is at %i/%i steps and parent done [%s:%i]",
 				     child_priv->current, child_priv->steps, function_name, function_line);
 			zif_state_print_parent_chain (state->priv->child, 0);
 			ret = FALSE;
 			/* do not abort, as we want to clean this up */
 		}
 	}
+
+	/* we just checked for cancel, so it's not true to say we're blocking */
+	zif_state_set_allow_cancel (state, TRUE);
 
 	/* another */
 	state->priv->current++;
@@ -555,6 +608,7 @@ out:
 /**
  * zif_state_finished:
  * @state: the #ZifState object
+ * @error: A #GError or %NULL
  *
  * Called when the current sub-task wants to finish early and still complete.
  *
@@ -563,20 +617,29 @@ out:
  * Since: 0.0.1
  **/
 gboolean
-zif_state_finished_real (ZifState *state, const gchar *function_name, gint function_line)
+zif_state_finished_real (ZifState *state, GError **error, const gchar *function_name, gint function_line)
 {
 	g_return_val_if_fail (ZIF_IS_STATE (state), FALSE);
 
+	/* are we cancelled */
+	if (g_cancellable_is_cancelled (state->priv->cancellable)) {
+		g_set_error_literal (error, ZIF_STATE_ERROR, ZIF_STATE_ERROR_CANCELLED,
+				     "cancelled by user action");
+		return FALSE;
+	}
+
 	/* did we call done on a state that did not have a size set? */
 	if (state->priv->steps == 0) {
-		egg_warning ("finished on a state %p that did not have a size set! [%s:%i]",
+		g_set_error (error, ZIF_STATE_ERROR, ZIF_STATE_ERROR_INVALID,
+			     "finished on a state %p that did not have a size set! [%s:%i]",
 			     state, function_name, function_line);
 		return FALSE;
 	}
 
 	/* is already at 100%? */
 	if (state->priv->current == state->priv->steps) {
-		egg_warning ("already at 100%% state [%s:%i]", function_name, function_line);
+		g_set_error (error, ZIF_STATE_ERROR, ZIF_STATE_ERROR_INVALID,
+			     "already at 100%% state [%s:%i]", function_name, function_line);
 		return FALSE;
 	}
 
@@ -607,6 +670,7 @@ zif_state_finalize (GObject *object)
 		g_object_unref (state->priv->parent);
 	if (state->priv->cancellable != NULL)
 		g_object_unref (state->priv->cancellable);
+	g_timer_destroy (state->priv->timer);
 
 	G_OBJECT_CLASS (zif_state_parent_class)->finalize (object);
 }
@@ -656,12 +720,14 @@ zif_state_init (ZifState *state)
 	state->priv->cancellable = NULL;
 	state->priv->allow_cancel = TRUE;
 	state->priv->allow_cancel_child = TRUE;
+	state->priv->allow_cancel_changed_state = FALSE;
 	state->priv->steps = 0;
 	state->priv->current = 0;
 	state->priv->last_percentage = 0;
 	state->priv->percentage_child_id = 0;
 	state->priv->subpercentage_child_id = 0;
 	state->priv->allow_cancel_child_id = 0;
+	state->priv->timer = g_timer_new ();
 }
 
 /**
@@ -745,8 +811,8 @@ zif_state_test (EggTest *test)
 	egg_test_assert (test, !ret);
 
 	/************************************************************/
-	egg_test_title (test, "ensure 2 update2");
-	egg_test_assert (test, (_allow_cancel_updates == 2));
+	egg_test_title (test, "ensure 2 update (%i)", _allow_cancel_updates);
+	egg_test_assert (test, (_allow_cancel_updates == 1));
 
 	/************************************************************/
 	egg_test_title (test, "set steps");
@@ -755,7 +821,7 @@ zif_state_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "done one step");
-	ret = zif_state_done (state);
+	ret = zif_state_done (state, NULL);
 	egg_test_assert (test, ret);
 
 	/************************************************************/
@@ -768,15 +834,15 @@ zif_state_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "done the rest");
-	ret = zif_state_done (state);
-	ret = zif_state_done (state);
-	ret = zif_state_done (state);
-	ret = zif_state_done (state);
+	ret = zif_state_done (state, NULL);
+	ret = zif_state_done (state, NULL);
+	ret = zif_state_done (state, NULL);
+	ret = zif_state_done (state, NULL);
 	egg_test_assert (test, ret);
 
 	/************************************************************/
 	egg_test_title (test, "done one extra");
-	ret = zif_state_done (state);
+	ret = zif_state_done (state, NULL);
 	egg_test_assert (test, !ret);
 
 	/************************************************************/
@@ -798,6 +864,7 @@ zif_state_test (EggTest *test)
 	_updates = 0;
 	_allow_cancel_updates = 0;
 	state = zif_state_new ();
+	zif_state_set_allow_cancel (state, TRUE);
 	zif_state_set_number_steps (state, 2);
 	g_signal_connect (state, "percentage-changed", G_CALLBACK (zif_state_test_percentage_changed_cb), NULL);
 	g_signal_connect (state, "subpercentage-changed", G_CALLBACK (zif_state_test_subpercentage_changed_cb), NULL);
@@ -808,7 +875,7 @@ zif_state_test (EggTest *test)
 	// child:                         |-------------|---------|
 
 	/* PARENT UPDATE */
-	zif_state_done (state);
+	ret = zif_state_done (state, NULL);
 
 	/************************************************************/
 	egg_test_title (test, "ensure 1 update");
@@ -836,7 +903,7 @@ zif_state_test (EggTest *test)
 	egg_test_assert (test, !ret);
 
 	/* CHILD UPDATE */
-	zif_state_done (child);
+	ret = zif_state_done (child, NULL);
 
 	/************************************************************/
 	egg_test_title (test, "ensure 2 updates");
@@ -847,7 +914,7 @@ zif_state_test (EggTest *test)
 	egg_test_assert (test, (_last_percent == 75));
 
 	/* CHILD UPDATE */
-	zif_state_done (child);
+	ret = zif_state_done (child, NULL);
 
 	/************************************************************/
 	egg_test_title (test, "ensure 3 updates");
@@ -866,7 +933,7 @@ zif_state_test (EggTest *test)
 	egg_test_assert (test, ret);
 
 	/* PARENT UPDATE */
-	zif_state_done (state);
+	ret = zif_state_done (state, NULL);
 
 	/************************************************************/
 	egg_test_title (test, "ensure 3 updates (and we ignored the duplicate)");

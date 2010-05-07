@@ -33,12 +33,13 @@ G_BEGIN_DECLS
 
 #define ZIF_TYPE_STATE		(zif_state_get_type ())
 #define ZIF_STATE(o)		(G_TYPE_CHECK_INSTANCE_CAST ((o), ZIF_TYPE_STATE, ZifState))
-#define ZIF_STATE_CLASS(k)		(G_TYPE_CHECK_CLASS_CAST((k), ZIF_TYPE_STATE, ZifStateClass))
+#define ZIF_STATE_CLASS(k)	(G_TYPE_CHECK_CLASS_CAST((k), ZIF_TYPE_STATE, ZifStateClass))
 #define ZIF_IS_STATE(o)		(G_TYPE_CHECK_INSTANCE_TYPE ((o), ZIF_TYPE_STATE))
 #define ZIF_IS_STATE_CLASS(k)	(G_TYPE_CHECK_CLASS_TYPE ((k), ZIF_TYPE_STATE))
 #define ZIF_STATE_GET_CLASS(o)	(G_TYPE_INSTANCE_GET_CLASS ((o), ZIF_TYPE_STATE, ZifStateClass))
+#define ZIF_STATE_ERROR		(zif_state_error_quark ())
 
-typedef struct _ZifState		ZifState;
+typedef struct _ZifState	ZifState;
 typedef struct _ZifStatePrivate	ZifStatePrivate;
 typedef struct _ZifStateClass	ZifStateClass;
 
@@ -65,21 +66,28 @@ struct _ZifStateClass
 	void (*_zif_reserved4) (void);
 };
 
+typedef enum {
+	ZIF_STATE_ERROR_CANCELLED,
+	ZIF_STATE_ERROR_INVALID,
+	ZIF_STATE_ERROR_LAST
+} ZifStateError;
+
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
-#define zif_state_done(state)				zif_state_done_real (state, __func__, __LINE__)
-#define zif_state_finished(state)			zif_state_finished_real (state, __func__, __LINE__)
+#define zif_state_done(state, error)			zif_state_done_real (state, error, __func__, __LINE__)
+#define zif_state_finished(state, error)		zif_state_finished_real (state, error, __func__, __LINE__)
 #define zif_state_set_number_steps(state, steps)	zif_state_set_number_steps_real (state, steps, __func__, __LINE__)
 #elif defined(__GNUC__) && __GNUC__ >= 3
-#define zif_state_done(state)				zif_state_done_real (state, __FUNCTION__, __LINE__)
-#define zif_state_finished(state)			zif_state_finished_real (state, __FUNCTION__, __LINE__)
+#define zif_state_done(state, error)			zif_state_done_real (state, error, __FUNCTION__, __LINE__)
+#define zif_state_finished(state, error)		zif_state_finished_real (state, error, __FUNCTION__, __LINE__)
 #define zif_state_set_number_steps(state, steps)	zif_state_set_number_steps_real (state, steps, __FUNCTION__, __LINE__)
 #else
-#define zif_state_done(state)
-#define zif_state_finished(state)
+#define zif_state_done(state, error)
+#define zif_state_finished(state, error)
 #define zif_state_set_number_steps(state, steps)
 #endif
 
 GType		 zif_state_get_type			(void);
+GQuark		 zif_state_error_quark			(void);
 ZifState	*zif_state_new				(void);
 ZifState	*zif_state_get_child			(ZifState		*state);
 
@@ -92,11 +100,15 @@ gboolean	 zif_state_set_percentage		(ZifState		*state,
 							 guint			 percentage);
 guint		 zif_state_get_percentage		(ZifState		*state);
 gboolean	 zif_state_done_real			(ZifState		*state,
+							 GError			 **error,
 							 const gchar		*function_name,
-							 gint			 function_line);
+							 gint			 function_line)
+							 G_GNUC_WARN_UNUSED_RESULT;
 gboolean	 zif_state_finished_real		(ZifState		*state,
+							 GError			 **error,
 							 const gchar		*function_name,
-							 gint			 function_line);
+							 gint			 function_line)
+							 G_GNUC_WARN_UNUSED_RESULT;
 gboolean	 zif_state_reset			(ZifState		*state);
 
 /* cancellation */

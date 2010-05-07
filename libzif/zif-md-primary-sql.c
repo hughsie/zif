@@ -100,6 +100,7 @@ zif_md_primary_sql_load (ZifMd *md, ZifState *state, GError **error)
 	}
 
 	/* open database */
+	zif_state_set_allow_cancel (state, FALSE);
 	egg_debug ("filename = %s", filename);
 	rc = sqlite3_open (filename, &primary_sql->priv->db);
 	if (rc != 0) {
@@ -179,6 +180,7 @@ zif_md_primary_sql_search (ZifMdPrimarySql *md, const gchar *statement,
 	}
 
 	/* create data struct we can pass to the callback */
+	zif_state_set_allow_cancel (state, FALSE);
 	data = g_new0 (ZifMdPrimarySqlData, 1);
 	data->md = md;
 	data->id = zif_md_get_id (ZIF_MD (md));
@@ -441,7 +443,9 @@ zif_md_primary_sql_what_provides (ZifMd *md, gchar **search,
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
 	}
 
 	/* create data struct we can pass to the callback */
@@ -456,7 +460,9 @@ zif_md_primary_sql_what_provides (ZifMd *md, gchar **search,
 	}
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 
 	/* output array */
 	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
@@ -491,11 +497,15 @@ zif_md_primary_sql_what_provides (ZifMd *md, gchar **search,
 		g_ptr_array_unref (array_tmp);
 
 		/* this section done */
-		zif_state_done (state_local);
+		ret = zif_state_done (state_local, error);
+		if (!ret)
+			goto out;
 	}
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 out:
 	g_free (statement);
 	if (pkgkey_array != NULL)

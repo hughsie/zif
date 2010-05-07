@@ -287,7 +287,9 @@ zif_package_download (ZifPackage *package, const gchar *directory, ZifState *sta
 	}
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 
 	/* create a chain of states */
 	state_local = zif_state_get_child (state);
@@ -302,7 +304,9 @@ zif_package_download (ZifPackage *package, const gchar *directory, ZifState *sta
 	}
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 out:
 	if (store_remote != NULL)
 		g_object_unref (store_remote);
@@ -324,6 +328,7 @@ out:
 ZifUpdate *
 zif_package_get_update_detail (ZifPackage *package, ZifState *state, GError **error)
 {
+	gboolean ret;
 	ZifUpdate *update = NULL;
 	ZifStoreRemote *store_remote = NULL;
 	GError *error_local = NULL;
@@ -353,7 +358,9 @@ zif_package_get_update_detail (ZifPackage *package, ZifState *state, GError **er
 	}
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 
 	/* download from the store */
 	state_local = zif_state_get_child (state);
@@ -366,7 +373,9 @@ zif_package_get_update_detail (ZifPackage *package, ZifState *state, GError **er
 	}
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 out:
 	if (store_remote != NULL)
 		g_object_unref (store_remote);

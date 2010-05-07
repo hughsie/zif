@@ -98,6 +98,7 @@ zif_md_filelists_sql_load (ZifMd *md, ZifState *state, GError **error)
 	}
 
 	/* open database */
+	zif_state_set_allow_cancel (state, FALSE);
 	egg_debug ("filename = %s", filename);
 	rc = sqlite3_open (filename, &filelists->priv->db);
 	if (rc != 0) {

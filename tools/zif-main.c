@@ -132,7 +132,9 @@ zif_cmd_download (const gchar *package_name, ZifState *state)
 	}
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, &error);
+	if (!ret)
+		goto out;
 
 	/* resolve package name */
 	state_local = zif_state_get_child (state);
@@ -149,7 +151,9 @@ zif_cmd_download (const gchar *package_name, ZifState *state)
 	}
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, &error);
+	if (!ret)
+		goto out;
 
 	/* download package file */
 	package = g_ptr_array_index (array, 0);
@@ -161,7 +165,9 @@ zif_cmd_download (const gchar *package_name, ZifState *state)
 	}
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, &error);
+	if (!ret)
+		goto out;
 
 out:
 	if (array != NULL) {
@@ -216,7 +222,9 @@ zif_cmd_get_depends (const gchar *package_name, ZifState *state)
 	}
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, &error);
+	if (!ret)
+		goto out;
 
 	/* resolve package name */
 	state_local = zif_state_get_child (state);
@@ -234,7 +242,9 @@ zif_cmd_get_depends (const gchar *package_name, ZifState *state)
 	package = g_ptr_array_index (array, 0);
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, &error);
+	if (!ret)
+		goto out;
 
 	/* get requires */
 	state_local = zif_state_get_child (state);
@@ -246,7 +256,9 @@ zif_cmd_get_depends (const gchar *package_name, ZifState *state)
 	}
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, &error);
+	if (!ret)
+		goto out;
 
 	/* match a package to each require */
 	state_local = zif_state_get_child (state);
@@ -281,11 +293,15 @@ zif_cmd_get_depends (const gchar *package_name, ZifState *state)
 		g_ptr_array_unref (provides);
 
 		/* this section done */
-		zif_state_done (state_local);
+		ret = zif_state_done (state_local, &error);
+		if (!ret)
+			goto out;
 	}
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, &error);
+	if (!ret)
+		goto out;
 out:
 	if (requires != NULL)
 		g_ptr_array_unref (requires);
@@ -324,7 +340,9 @@ zif_cmd_install (const gchar *package_name, ZifState *state)
 	}
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, &error);
+	if (!ret)
+		goto out;
 
 	/* check not already installed */
 	state_local = zif_state_get_child (state);
@@ -346,7 +364,9 @@ zif_cmd_install (const gchar *package_name, ZifState *state)
 	g_ptr_array_unref (store_array);
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, &error);
+	if (!ret)
+		goto out;
 
 	/* check available */
 	store_array = zif_store_array_new ();
@@ -359,7 +379,9 @@ zif_cmd_install (const gchar *package_name, ZifState *state)
 	}
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, &error);
+	if (!ret)
+		goto out;
 
 	/* check we can find a package of this name */
 	to_array[0] = package_name;
@@ -375,7 +397,9 @@ zif_cmd_install (const gchar *package_name, ZifState *state)
 	}
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, &error);
+	if (!ret)
+		goto out;
 
 	/* install this package, TODO: what if > 1? */
 	package = g_ptr_array_index (array, 0);
@@ -413,7 +437,9 @@ zif_cmd_refresh_cache (ZifState *state, gboolean force)
 	}
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, &error);
+	if (!ret)
+		goto out;
 
 	/* refresh all ZifRemoteStores */
 	state_local = zif_state_get_child (state);
@@ -425,7 +451,9 @@ zif_cmd_refresh_cache (ZifState *state, gboolean force)
 	}
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, &error);
+	if (!ret)
+		goto out;
 out:
 	g_ptr_array_unref (store_array);
 	return ret;
@@ -459,7 +487,9 @@ zif_cmd_update (const gchar *package_name, ZifState *state)
 	}
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, &error);
+	if (!ret)
+		goto out;
 
 	/* check not already installed */
 	state_local = zif_state_get_child (state);
@@ -481,7 +511,9 @@ zif_cmd_update (const gchar *package_name, ZifState *state)
 	g_ptr_array_unref (store_array);
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, &error);
+	if (!ret)
+		goto out;
 
 	/* check available */
 	store_array = zif_store_array_new ();
@@ -494,7 +526,9 @@ zif_cmd_update (const gchar *package_name, ZifState *state)
 	}
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, &error);
+	if (!ret)
+		goto out;
 
 	/* check we can find a package of this name */
 	state_local = zif_state_get_child (state);
@@ -511,7 +545,9 @@ zif_cmd_update (const gchar *package_name, ZifState *state)
 	}
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, &error);
+	if (!ret)
+		goto out;
 
 	/* update this package, TODO: check for newer? */
 	package = g_ptr_array_index (array, 0);
@@ -522,6 +558,25 @@ out:
 	g_ptr_array_unref (store_array);
 	g_object_unref (state_local);
 	return ret;
+}
+
+static ZifState *_state = NULL;
+
+/**
+ * zif_main_sigint_cb:
+ **/
+static void
+zif_main_sigint_cb (int sig)
+{
+	GCancellable *cancellable;
+	egg_debug ("Handling SIGINT");
+
+	/* restore default ASAP, as the cancels might hang */
+	signal (SIGINT, SIG_DFL);
+
+	/* cancel any tasks still running */
+	cancellable = zif_state_get_cancellable (_state);
+	g_cancellable_cancel (cancellable);
 }
 
 /**
@@ -628,6 +683,9 @@ main (int argc, char *argv[])
 
 	progressbar = pk_progress_bar_new ();
 
+	/* do stuff on ctrl-c */
+	signal (SIGINT, zif_main_sigint_cb);
+
 	/* verbose? */
 	egg_debug_init (verbose);
 
@@ -720,6 +778,9 @@ main (int argc, char *argv[])
 	g_signal_connect (state, "subpercentage-changed", G_CALLBACK (zif_state_subpercentage_changed_cb), NULL);
 	g_signal_connect (state, "allow-cancel-changed", G_CALLBACK (zif_state_allow_cancel_changed_cb), NULL);
 
+	/* for the signal handler */
+	_state = state;
+
 	if (argc < 2) {
 		g_print ("%s", options_help);
 		goto out;
@@ -749,13 +810,17 @@ main (int argc, char *argv[])
 		egg_debug ("searching with %i packages", packages->len);
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, &error);
+		if (!ret)
+			goto out;
 
 		/* remove any packages that are not newest (think kernel) */
 		zif_package_array_filter_newest (packages);
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, &error);
+		if (!ret)
+			goto out;
 
 		/* get a store_array of remote stores */
 		store_array = zif_store_array_new ();
@@ -768,7 +833,9 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, &error);
+		if (!ret)
+			goto out;
 
 		/* get updates */
 		state_local = zif_state_get_child (state);
@@ -780,7 +847,9 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, &error);
+		if (!ret)
+			goto out;
 
 		/* get update details */
 		state_local = zif_state_get_child (state);
@@ -803,8 +872,12 @@ main (int argc, char *argv[])
 				g_clear_error (&error);
 
 				/* non-fatal */
-				zif_state_finished (state_loop);
-				zif_state_done (state_local);
+				ret = zif_state_finished (state_loop, &error);
+				if (!ret)
+					goto out;
+				ret = zif_state_done (state_local, &error);
+				if (!ret)
+					goto out;
 				continue;
 			}
 			g_print ("\t%s\t%s\n", "kind", zif_update_state_to_string (zif_update_get_kind (update)));
@@ -834,11 +907,15 @@ main (int argc, char *argv[])
 			}
 
 			/* this section done */
-			zif_state_done (state_local);
+			ret = zif_state_done (state_local, &error);
+			if (!ret)
+				goto out;
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, &error);
+		if (!ret)
+			goto out;
 
 		/* no more progressbar */
 		pk_progress_bar_end (progressbar);
@@ -868,7 +945,9 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, &error);
+		if (!ret)
+			goto out;
 
 		/* get categories */
 		state_local = zif_state_get_child (state);
@@ -880,7 +959,9 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, &error);
+		if (!ret)
+			goto out;
 
 		/* no more progressbar */
 		pk_progress_bar_end (progressbar);
@@ -947,7 +1028,9 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, &error);
+		if (!ret)
+			goto out;
 
 		/* clean all the store_array */
 		state_local = zif_state_get_child (state);
@@ -959,7 +1042,9 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, &error);
+		if (!ret)
+			goto out;
 
 		/* no more progressbar */
 		pk_progress_bar_end (progressbar);
@@ -1019,7 +1104,9 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, &error);
+		if (!ret)
+			goto out;
 
 		state_local = zif_state_get_child (state);
 		ret = zif_store_array_add_remote_enabled (store_array, state_local, &error);
@@ -1030,7 +1117,9 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, &error);
+		if (!ret)
+			goto out;
 
 		/* resolve */
 		state_local = zif_state_get_child (state);
@@ -1043,7 +1132,9 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, &error);
+		if (!ret)
+			goto out;
 
 		/* at least one result */
 		if (array->len > 0) {
@@ -1113,7 +1204,9 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, &error);
+		if (!ret)
+			goto out;
 
 		state_local = zif_state_get_child (state);
 		ret = zif_store_array_add_remote_enabled (store_array, state_local, &error);
@@ -1124,7 +1217,9 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, &error);
+		if (!ret)
+			goto out;
 
 		if (value == NULL) {
 			g_print ("specify a package name\n");
@@ -1135,7 +1230,9 @@ main (int argc, char *argv[])
 		array = zif_store_array_resolve (store_array, (gchar**)to_array, NULL, NULL, state_local, &error);
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, &error);
+		if (!ret)
+			goto out;
 
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
@@ -1203,7 +1300,9 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, &error);
+		if (!ret)
+			goto out;
 
 		state_local = zif_state_get_child (state);
 		ret = zif_store_array_add_remote_enabled (store_array, state_local, &error);
@@ -1214,7 +1313,9 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, &error);
+		if (!ret)
+			goto out;
 
 		state_local = zif_state_get_child (state);
 		array = zif_store_array_get_packages (store_array, NULL, NULL, state_local, &error);
@@ -1225,7 +1326,9 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, &error);
+		if (!ret)
+			goto out;
 
 		/* no more progressbar */
 		pk_progress_bar_end (progressbar);
@@ -1315,7 +1418,9 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, &error);
+		if (!ret)
+			goto out;
 
 		state_local = zif_state_get_child (state);
 		ret = zif_store_array_add_remote_enabled (store_array, state_local, &error);
@@ -1326,7 +1431,9 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, &error);
+		if (!ret)
+			goto out;
 
 		state_local = zif_state_get_child (state);
 		to_array[0] = value;
@@ -1338,7 +1445,9 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, &error);
+		if (!ret)
+			goto out;
 
 		/* no more progressbar */
 		pk_progress_bar_end (progressbar);
@@ -1369,7 +1478,9 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, &error);
+		if (!ret)
+			goto out;
 
 		state_local = zif_state_get_child (state);
 		ret = zif_store_array_add_remote_enabled (store_array, state_local, &error);
@@ -1380,7 +1491,9 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, &error);
+		if (!ret)
+			goto out;
 
 		/* get id */
 		if (!zif_package_id_check (value)) {
@@ -1398,7 +1511,9 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, &error);
+		if (!ret)
+			goto out;
 
 		/* no more progressbar */
 		pk_progress_bar_end (progressbar);
@@ -1429,7 +1544,9 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, &error);
+		if (!ret)
+			goto out;
 
 		state_local = zif_state_get_child (state);
 		ret = zif_store_array_add_remote_enabled (store_array, state_local, &error);
@@ -1440,7 +1557,9 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, &error);
+		if (!ret)
+			goto out;
 
 		state_local = zif_state_get_child (state);
 		to_array[0] = value;
@@ -1452,7 +1571,9 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, &error);
+		if (!ret)
+			goto out;
 
 		g_print ("\n");
 
@@ -1482,7 +1603,9 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, &error);
+		if (!ret)
+			goto out;
 
 		/* add remote packages */
 		state_local = zif_state_get_child (state);
@@ -1494,7 +1617,9 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, &error);
+		if (!ret)
+			goto out;
 
 		state_local = zif_state_get_child (state);
 		to_array[0] = value;
@@ -1506,7 +1631,9 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, &error);
+		if (!ret)
+			goto out;
 
 		/* no more progressbar */
 		pk_progress_bar_end (progressbar);
@@ -1537,7 +1664,9 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, &error);
+		if (!ret)
+			goto out;
 
 		/* add remote packages */
 		state_local = zif_state_get_child (state);
@@ -1549,7 +1678,9 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, &error);
+		if (!ret)
+			goto out;
 
 		state_local = zif_state_get_child (state);
 		to_array[0] = value;
@@ -1561,7 +1692,9 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, &error);
+		if (!ret)
+			goto out;
 
 		/* no more progressbar */
 		pk_progress_bar_end (progressbar);
@@ -1592,7 +1725,9 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, &error);
+		if (!ret)
+			goto out;
 
 		state_local = zif_state_get_child (state);
 		ret = zif_store_array_add_remote_enabled (store_array, state_local, &error);
@@ -1603,7 +1738,9 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, &error);
+		if (!ret)
+			goto out;
 
 		state_local = zif_state_get_child (state);
 		to_array[0] = value;
@@ -1615,7 +1752,9 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, &error);
+		if (!ret)
+			goto out;
 
 		/* no more progressbar */
 		pk_progress_bar_end (progressbar);
@@ -1646,7 +1785,9 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, &error);
+		if (!ret)
+			goto out;
 
 		state_local = zif_state_get_child (state);
 		to_array[0] = value;
@@ -1658,7 +1799,9 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, &error);
+		if (!ret)
+			goto out;
 
 		/* no more progressbar */
 		pk_progress_bar_end (progressbar);
@@ -1689,7 +1832,9 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, &error);
+		if (!ret)
+			goto out;
 
 		state_local = zif_state_get_child (state);
 		ret = zif_store_array_add_remote_enabled (store_array, state_local, &error);
@@ -1700,7 +1845,9 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, &error);
+		if (!ret)
+			goto out;
 
 		state_local = zif_state_get_child (state);
 		to_array[0] = value;
@@ -1712,7 +1859,9 @@ main (int argc, char *argv[])
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, &error);
+		if (!ret)
+			goto out;
 
 		/* no more progressbar */
 		pk_progress_bar_end (progressbar);

@@ -366,6 +366,7 @@ zif_store_remote_download_try (ZifStoreRemote *store, const gchar *uri, const gc
 	}
 
 	/* try to read it */
+	zif_state_set_allow_cancel (state, FALSE);
 	ret = g_file_get_contents (filename, &contents, &length, &error_local);
 	if (!ret) {
 		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
@@ -482,7 +483,9 @@ zif_store_remote_download (ZifStoreRemote *store, const gchar *filename, const g
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
 	}
 
 	/* we need at least one baseurl */
@@ -528,7 +531,9 @@ zif_store_remote_download (ZifStoreRemote *store, const gchar *filename, const g
 	}
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 
 	/* nothing */
 	if (!ret) {
@@ -596,7 +601,9 @@ zif_store_remote_get_update_detail (ZifStoreRemote *store, const gchar *package_
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
 	}
 
 	/* actually get the data */
@@ -634,7 +641,9 @@ zif_store_remote_get_update_detail (ZifStoreRemote *store, const gchar *package_
 	}
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 
 	/* get pkgid */
 	pkgid = zif_package_remote_get_pkgid (ZIF_PACKAGE_REMOTE (g_ptr_array_index (packages, 0)));
@@ -650,7 +659,9 @@ zif_store_remote_get_update_detail (ZifStoreRemote *store, const gchar *package_
 	}
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 
 	/* get the newest installed package with this name */
 	state_local = zif_state_get_child (state);
@@ -666,7 +677,9 @@ zif_store_remote_get_update_detail (ZifStoreRemote *store, const gchar *package_
 	}
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 
 	/* get newest, ignore error */
 	package_installed = zif_package_array_get_newest (array_installed, NULL);
@@ -686,7 +699,9 @@ zif_store_remote_get_update_detail (ZifStoreRemote *store, const gchar *package_
 	}
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 out:
 	g_strfreev (split);
 	g_strfreev (split_installed);
@@ -751,7 +766,9 @@ zif_store_remote_add_metalink (ZifStoreRemote *store, ZifState *state, GError **
 		}
 	}
 
-	zif_state_done (state);
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 
 	/* get mirrors */
 	state_local = zif_state_get_child (state);
@@ -772,7 +789,9 @@ zif_store_remote_add_metalink (ZifStoreRemote *store, ZifState *state, GError **
 		goto out;
 	}
 
-	zif_state_done (state);
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 
 	/* add array */
 	for (i=0; i<array->len; i++) {
@@ -831,7 +850,9 @@ zif_store_remote_add_mirrorlist (ZifStoreRemote *store, ZifState *state, GError 
 		}
 	}
 
-	zif_state_done (state);
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 
 	/* get mirrors */
 	state_local = zif_state_get_child (state);
@@ -852,7 +873,9 @@ zif_store_remote_add_mirrorlist (ZifStoreRemote *store, ZifState *state, GError 
 		goto out;
 	}
 
-	zif_state_done (state);
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 
 	/* add array */
 	for (i=0; i<array->len; i++) {
@@ -932,7 +955,9 @@ zif_store_remote_load_metadata (ZifStoreRemote *store, ZifState *state, GError *
 	}
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 
 	/* extract details from metalink */
 	if (store->priv->metalink != NULL) {
@@ -956,7 +981,9 @@ zif_store_remote_load_metadata (ZifStoreRemote *store, ZifState *state, GError *
 	}
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 
 	/* repomd file does not exist */
 	ret = g_file_test (store->priv->repomd_filename, G_FILE_TEST_EXISTS);
@@ -983,9 +1010,12 @@ zif_store_remote_load_metadata (ZifStoreRemote *store, ZifState *state, GError *
 	}
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 
 	/* get repo contents */
+	zif_state_set_allow_cancel (state, FALSE);
 	ret = g_file_get_contents (store->priv->repomd_filename, &contents, &size, error);
 	if (!ret)
 		goto out;
@@ -994,6 +1024,7 @@ zif_store_remote_load_metadata (ZifStoreRemote *store, ZifState *state, GError *
 	context = g_markup_parse_context_new (&gpk_store_remote_markup_parser, G_MARKUP_PREFIX_ERROR_POSITION, store, NULL);
 
 	/* parse data */
+	zif_state_set_allow_cancel (state, FALSE);
 	ret = g_markup_parse_context_parse (context, contents, (gssize) size, error);
 	if (!ret)
 		goto out;
@@ -1049,7 +1080,9 @@ zif_store_remote_load_metadata (ZifStoreRemote *store, ZifState *state, GError *
 	store->priv->loaded_metadata = TRUE;
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 out:
 	if (context != NULL)
 		g_markup_parse_context_free (context);
@@ -1110,7 +1143,7 @@ zif_store_remote_refresh (ZifStore *store, gboolean force, ZifState *state, GErr
 	}
 
 	/* setup state with the correct number of steps */
-	zif_state_set_number_steps (state, (ZIF_MD_TYPE_UNKNOWN * 2) + 2);
+	zif_state_set_number_steps (state, (ZIF_MD_TYPE_UNKNOWN * 3) + 2);
 
 	/* not locked */
 	ret = zif_lock_is_locked (remote->priv->lock, NULL);
@@ -1133,7 +1166,9 @@ zif_store_remote_refresh (ZifStore *store, gboolean force, ZifState *state, GErr
 	}
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 
 	/* reload */
 	state_local = zif_state_get_child (state);
@@ -1146,7 +1181,9 @@ zif_store_remote_refresh (ZifStore *store, gboolean force, ZifState *state, GErr
 	}
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 
 	/* refresh each repo type */
 	for (i=0; i<ZIF_MD_TYPE_UNKNOWN; i++) {
@@ -1164,7 +1201,8 @@ zif_store_remote_refresh (ZifStore *store, gboolean force, ZifState *state, GErr
 		}
 
 		/* does current uncompressed file equal what repomd says it should be */
-		ret = zif_md_file_check (md, TRUE, &error_local);
+		state_local = zif_state_get_child (state);
+		ret = zif_md_file_check (md, TRUE, state_local, &error_local);
 		if (!ret) {
 			egg_warning ("failed to verify md: %s", error_local->message);
 			g_clear_error (&error_local);
@@ -1173,6 +1211,11 @@ zif_store_remote_refresh (ZifStore *store, gboolean force, ZifState *state, GErr
 			egg_debug ("%s is okay, and we're not forcing", zif_md_type_to_text (i));
 			continue;
 		}
+
+		/* this section done */
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
 
 		/* download new file */
 		state_local = zif_state_get_child (state);
@@ -1185,7 +1228,9 @@ zif_store_remote_refresh (ZifStore *store, gboolean force, ZifState *state, GErr
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
 
 		/* decompress */
 		state_local = zif_state_get_child (state);
@@ -1200,7 +1245,9 @@ zif_store_remote_refresh (ZifStore *store, gboolean force, ZifState *state, GErr
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
 	}
 
 out:
@@ -1254,7 +1301,9 @@ zif_store_remote_load (ZifStore *store, ZifState *state, GError **error)
 	}
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 
 	/* name */
 	remote->priv->name = g_key_file_get_string (file, remote->priv->id, "name", &error_local);
@@ -1338,7 +1387,9 @@ zif_store_remote_load (ZifStore *store, ZifState *state, GError **error)
 	remote->priv->loaded = TRUE;
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 out:
 	g_free (enabled);
 	if (file != NULL)
@@ -1392,7 +1443,9 @@ zif_store_remote_clean (ZifStore *store, ZifState *state, GError **error)
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
 	}
 
 	/* set MD id and filename for each repo type */
@@ -1421,7 +1474,9 @@ zif_store_remote_clean (ZifStore *store, ZifState *state, GError **error)
 		}
 skip:
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
 	}
 
 	/* clean master (last) */
@@ -1440,7 +1495,9 @@ skip:
 	}
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 out:
 	return ret;
 }
@@ -1642,7 +1699,9 @@ zif_store_remote_resolve (ZifStore *store, gchar **search, ZifState *state, GErr
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
 	}
 
 	state_local = zif_state_get_child (state);
@@ -1650,7 +1709,9 @@ zif_store_remote_resolve (ZifStore *store, gchar **search, ZifState *state, GErr
 	array = zif_md_resolve (primary, search, state_local, error);
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 out:
 	return array;
 }
@@ -1697,7 +1758,9 @@ zif_store_remote_search_name (ZifStore *store, gchar **search, ZifState *state, 
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
 	}
 
 	state_local = zif_state_get_child (state);
@@ -1705,7 +1768,9 @@ zif_store_remote_search_name (ZifStore *store, gchar **search, ZifState *state, 
 	array = zif_md_search_name (md, search, state_local, error);
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 out:
 	return array;
 }
@@ -1752,7 +1817,9 @@ zif_store_remote_search_details (ZifStore *store, gchar **search, ZifState *stat
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
 	}
 
 	state_local = zif_state_get_child (state);
@@ -1760,7 +1827,9 @@ zif_store_remote_search_details (ZifStore *store, gchar **search, ZifState *stat
 	array = zif_md_search_details (md, search, state_local, error);
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 out:
 	return array;
 }
@@ -1771,6 +1840,7 @@ out:
 static ZifPackage *
 zif_store_remote_search_category_resolve (ZifStore *store, const gchar *name, ZifState *state, GError **error)
 {
+	gboolean ret;
 	ZifStoreLocal *store_local = NULL;
 	GError *error_local = NULL;
 	GPtrArray *array = NULL;
@@ -1795,13 +1865,17 @@ zif_store_remote_search_category_resolve (ZifStore *store, const gchar *name, Zi
 	}
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 
 	/* get newest, ignore error */
 	package = zif_package_array_get_newest (array, NULL);
 	if (package != NULL) {
 		/* we don't need to do the second part */
-		zif_state_done (state);
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
 		goto out;
 	}
 
@@ -1820,7 +1894,9 @@ zif_store_remote_search_category_resolve (ZifStore *store, const gchar *name, Zi
 	}
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 
 	/* get newest, ignore error */
 	package = zif_package_array_get_newest (array, NULL);
@@ -1885,7 +1961,9 @@ zif_store_remote_search_category (ZifStore *store, gchar **group_id, ZifState *s
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
 	}
 
 	/* does this repo have comps data? */
@@ -1893,7 +1971,9 @@ zif_store_remote_search_category (ZifStore *store, gchar **group_id, ZifState *s
 	if (location == NULL) {
 		/* empty array, as we want success */
 		array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
-		zif_state_finished (state);
+		ret = zif_state_finished (state, error);
+		if (!ret)
+			goto out;
 		goto out;
 	}
 
@@ -1906,7 +1986,9 @@ zif_store_remote_search_category (ZifStore *store, gchar **group_id, ZifState *s
 		if (g_str_has_prefix (error_local->message, "could not find group")) {
 			array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 			g_error_free (error_local);
-			zif_state_finished (state);
+			ret = zif_state_finished (state, error);
+			if (!ret)
+				goto out;
 			goto out;
 		}
 		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
@@ -1916,7 +1998,9 @@ zif_store_remote_search_category (ZifStore *store, gchar **group_id, ZifState *s
 	}
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 
 	/* setup state */
 	state_local = zif_state_get_child (state);
@@ -1954,11 +2038,15 @@ zif_store_remote_search_category (ZifStore *store, gchar **group_id, ZifState *s
 		g_ptr_array_add (array, package);
 ignore_error:
 		/* this section done */
-		zif_state_done (state_local);
+		ret = zif_state_done (state_local, error);
+		if (!ret)
+			goto out;
 	}
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 out:
 	if (array_names != NULL)
 		g_ptr_array_unref (array_names);
@@ -2007,7 +2095,9 @@ zif_store_remote_search_group (ZifStore *store, gchar **search, ZifState *state,
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
 	}
 
 	state_local = zif_state_get_child (state);
@@ -2015,7 +2105,9 @@ zif_store_remote_search_group (ZifStore *store, gchar **search, ZifState *state,
 	array = zif_md_search_group (primary, search, state_local, error);
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 out:
 	return array;
 }
@@ -2063,7 +2155,9 @@ zif_store_remote_find_package (ZifStore *store, const gchar *package_id, ZifStat
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
 	}
 
 	/* search with predicate, TODO: search version (epoch+release) */
@@ -2078,7 +2172,9 @@ zif_store_remote_find_package (ZifStore *store, const gchar *package_id, ZifStat
 	}
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 
 	/* nothing */
 	if (array->len == 0) {
@@ -2143,7 +2239,9 @@ zif_store_remote_get_packages (ZifStore *store, ZifState *state, GError **error)
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
 	}
 
 	primary = zif_store_remote_get_primary (remote);
@@ -2151,7 +2249,9 @@ zif_store_remote_get_packages (ZifStore *store, ZifState *state, GError **error)
 	array = zif_md_get_packages (primary, state_local, error);
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 out:
 	return array;
 }
@@ -2205,7 +2305,9 @@ zif_store_remote_get_categories (ZifStore *store, ZifState *state, GError **erro
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
 	}
 
 	/* does this repo have comps data? */
@@ -2227,7 +2329,9 @@ zif_store_remote_get_categories (ZifStore *store, ZifState *state, GError **erro
 	}
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 
 	/* results array */
 	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
@@ -2274,11 +2378,15 @@ zif_store_remote_get_categories (ZifStore *store, ZifState *state, GError **erro
 		}
 
 		/* this section done */
-		zif_state_done (state_local);
+		ret = zif_state_done (state_local, error);
+		if (!ret)
+			goto out;
 	}
 skip:
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 out:
 	if (array_cats != NULL)
 		g_ptr_array_unref (array_cats);
@@ -2335,7 +2443,9 @@ zif_store_remote_get_updates (ZifStore *store, GPtrArray *packages,
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
 	}
 
 	/* create array for packages to update */
@@ -2399,7 +2509,9 @@ zif_store_remote_get_updates (ZifStore *store, GPtrArray *packages,
 	}
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 out:
 	g_strfreev (resolve_array);
 	if (updates != NULL)
@@ -2447,7 +2559,9 @@ zif_store_remote_what_provides (ZifStore *store, gchar **search,
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
 	}
 
 	/* get details */
@@ -2457,7 +2571,9 @@ zif_store_remote_what_provides (ZifStore *store, gchar **search,
 				      state_local, error);
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 out:
 	return array;
 }
@@ -2508,7 +2624,9 @@ zif_store_remote_search_file (ZifStore *store, gchar **search, ZifState *state, 
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
 	}
 
 	/* gets a list of pkgId's that match this file */
@@ -2524,7 +2642,9 @@ zif_store_remote_search_file (ZifStore *store, gchar **search, ZifState *state, 
 	}
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 
 	/* get primary */
 	primary = zif_store_remote_get_primary (remote);
@@ -2559,7 +2679,9 @@ zif_store_remote_search_file (ZifStore *store, gchar **search, ZifState *state, 
 	}
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 out:
 	return array;
 }

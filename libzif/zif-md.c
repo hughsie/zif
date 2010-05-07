@@ -475,14 +475,17 @@ zif_md_load (ZifMd *md, ZifState *state, GError **error)
 	}
 
 	/* setup state */
-	zif_state_set_number_steps (state, 3);
+	zif_state_set_number_steps (state, 6);
 
 	g_return_val_if_fail (ZIF_IS_MD (md), FALSE);
 
 	/* optimise: if uncompressed file is okay, then don't even check the compressed file */
-	uncompressed_check = zif_md_file_check (md, TRUE, &error_local);
+	state_local = zif_state_get_child (state);
+	uncompressed_check = zif_md_file_check (md, TRUE, state_local, &error_local);
 	if (uncompressed_check) {
-		zif_state_done (state);
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
 		goto skip_compressed_check;
 	}
 
@@ -490,8 +493,14 @@ zif_md_load (ZifMd *md, ZifState *state, GError **error)
 	egg_warning ("failed checksum for uncompressed: %s", error_local->message);
 	g_clear_error (&error_local);
 
+	/* this section done_measure */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
 	/* check compressed file */
-	ret = zif_md_file_check (md, FALSE, &error_local);
+	state_local = zif_state_get_child (state);
+	ret = zif_md_file_check (md, FALSE, state_local, &error_local);
 	if (!ret) {
 
 		/* this one really is fatal */
@@ -525,8 +534,14 @@ zif_md_load (ZifMd *md, ZifState *state, GError **error)
 			goto out;
 		}
 
+		/* this section done_measure */
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
+
 		/* check newly downloaded compressed file */
-		ret = zif_md_file_check (md, FALSE, &error_local);
+		state_local = zif_state_get_child (state);
+		ret = zif_md_file_check (md, FALSE, state_local, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED,
 				     "failed checksum on downloaded file: %s", error_local->message);
@@ -535,7 +550,9 @@ zif_md_load (ZifMd *md, ZifState *state, GError **error)
 	}
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 
 	/* check uncompressed file */
 	if (!uncompressed_check) {
@@ -554,8 +571,14 @@ zif_md_load (ZifMd *md, ZifState *state, GError **error)
 			goto out;
 		}
 
+		/* this section done */
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
+
 		/* check newly uncompressed file */
-		ret = zif_md_file_check (md, TRUE, &error_local);
+		state_local = zif_state_get_child (state);
+		ret = zif_md_file_check (md, TRUE, state_local, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED,
 				     "failed checksum on decompressed file: %s", error_local->message);
@@ -566,14 +589,18 @@ zif_md_load (ZifMd *md, ZifState *state, GError **error)
 skip_compressed_check:
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 
 	/* do subclassed load */
 	state_local = zif_state_get_child (state);
 	ret = klass->load (md, state_local, error);
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_finished (state, error);
+	if (!ret)
+		goto out;
 out:
 	g_free (dirname);
 	return ret;
@@ -1109,6 +1136,7 @@ zif_md_type_to_text (ZifMdType type)
  * zif_md_file_check:
  * @md: the #ZifMd object
  * @use_uncompressed: If we should check only the uncompresed version
+ * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Check the metadata files to make sure they are valid.
@@ -1118,7 +1146,7 @@ zif_md_type_to_text (ZifMdType type)
  * Since: 0.0.1
  **/
 gboolean
-zif_md_file_check (ZifMd *md, gboolean use_uncompressed, GError **error)
+zif_md_file_check (ZifMd *md, gboolean use_uncompressed, ZifState *state, GError **error)
 {
 	gboolean ret = FALSE;
 	GError *error_local = NULL;
@@ -1132,11 +1160,14 @@ zif_md_file_check (ZifMd *md, gboolean use_uncompressed, GError **error)
 	g_return_val_if_fail (md->priv->id != NULL, FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
+	/* setup state */
+	zif_state_set_number_steps (state, 2);
+
 	/* metalink has no checksum... */
 	if (md->priv->type == ZIF_MD_TYPE_METALINK ||
 	    md->priv->type == ZIF_MD_TYPE_MIRRORLIST) {
 		egg_debug ("skipping checksum check on %s", zif_md_type_to_text (md->priv->type));
-		ret = TRUE;
+		ret = zif_state_finished (state, error);
 		goto out;
 	}
 
@@ -1155,6 +1186,7 @@ zif_md_file_check (ZifMd *md, gboolean use_uncompressed, GError **error)
 	}
 
 	/* get contents */
+	zif_state_set_allow_cancel (state, FALSE);
 	ret = g_file_get_contents (filename, &data, &length, &error_local);
 	if (!ret) {
 		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED,
@@ -1162,6 +1194,11 @@ zif_md_file_check (ZifMd *md, gboolean use_uncompressed, GError **error)
 		g_error_free (error_local);
 		goto out;
 	}
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 
 	/* get the one we want */
 	if (use_uncompressed)
@@ -1178,6 +1215,7 @@ zif_md_file_check (ZifMd *md, gboolean use_uncompressed, GError **error)
 	}
 
 	/* compute checksum */
+	zif_state_set_allow_cancel (state, FALSE);
 	checksum = g_compute_checksum_for_data (md->priv->checksum_type, (guchar*) data, length);
 
 	/* matches? */
@@ -1188,6 +1226,11 @@ zif_md_file_check (ZifMd *md, gboolean use_uncompressed, GError **error)
 		goto out;
 	}
 	egg_debug ("%s checksum correct (%s)", filename, checksum_wanted);
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 out:
 	g_free (data);
 	g_free (checksum);

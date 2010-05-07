@@ -302,6 +302,7 @@ zif_md_filelists_xml_load (ZifMd *md, ZifState *state, GError **error)
 
 	/* open database */
 	egg_debug ("filename = %s", filename);
+	zif_state_set_allow_cancel (state, FALSE);
 	ret = g_file_get_contents (filename, &contents, &size, error);
 	if (!ret)
 		goto out;
@@ -310,6 +311,7 @@ zif_md_filelists_xml_load (ZifMd *md, ZifState *state, GError **error)
 	context = g_markup_parse_context_new (&gpk_md_filelists_xml_markup_parser, G_MARKUP_PREFIX_ERROR_POSITION, filelists_xml, NULL);
 
 	/* parse data */
+	zif_state_set_allow_cancel (state, FALSE);
 	ret = g_markup_parse_context_parse (context, contents, (gssize) size, error);
 	if (!ret)
 		goto out;
@@ -361,7 +363,9 @@ zif_md_filelists_xml_get_files (ZifMd *md, ZifPackage *package,
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
 	}
 
 	/* setup steps */
@@ -381,11 +385,15 @@ zif_md_filelists_xml_get_files (ZifMd *md, ZifPackage *package,
 		}
 
 		/* this section done */
-		zif_state_done (state_local);
+		ret = zif_state_done (state_local, error);
+		if (!ret)
+			goto out;
 	}
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 out:
 	return array;
 }
@@ -431,7 +439,9 @@ zif_md_filelists_xml_search_file (ZifMd *md, gchar **search,
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
 	}
 
 	/* create results array */
@@ -439,7 +449,9 @@ zif_md_filelists_xml_search_file (ZifMd *md, gchar **search,
 
 	/* no entries, so shortcut */
 	if (md_filelists->priv->array->len == 0) {
-		zif_state_done (state);
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
 		goto out;
 	}
 
@@ -465,11 +477,15 @@ zif_md_filelists_xml_search_file (ZifMd *md, gchar **search,
 		}
 
 		/* this section done */
-		zif_state_done (state_local);
+		ret = zif_state_done (state_local, error);
+		if (!ret)
+			goto out;
 	}
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 out:
 	if (files != NULL)
 		g_ptr_array_unref (files);

@@ -235,6 +235,7 @@ zif_md_metalink_load (ZifMd *md, ZifState *state, GError **error)
 	egg_debug ("filename = %s", filename);
 
 	/* get repo contents */
+	zif_state_set_allow_cancel (state, FALSE);
 	ret = g_file_get_contents (filename, &contents, &size, error);
 	if (!ret)
 		goto out;
@@ -477,7 +478,7 @@ zif_md_metalink_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "correct number");
-	if (array->len == 47)
+	if (array->len == 43)
 		egg_test_success (test, NULL);
 	else
 		egg_test_failed (test, "incorrect value %i", array->len);
@@ -485,7 +486,7 @@ zif_md_metalink_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "correct value");
 	uri = g_ptr_array_index (array, 0);
-	if (g_strcmp0 (uri, "http://www.mirrorservice.org/sites/download.fedora.redhat.com/pub/fedora/linux/releases/12/Everything/i386/os/") == 0)
+	if (g_strcmp0 (uri, "http://www.mirrorservice.org/sites/download.fedora.redhat.com/pub/fedora/linux/development/13/i386/os/") == 0)
 		egg_test_success (test, NULL);
 	else
 		egg_test_failed (test, "failed to get correct url '%s'", uri);

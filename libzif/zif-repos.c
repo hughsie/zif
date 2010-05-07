@@ -165,7 +165,9 @@ zif_repos_get_for_filename (ZifRepos *repos, const gchar *filename, ZifState *st
 		g_ptr_array_add (repos->priv->list, store);
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
 	}
 out:
 	g_strfreev (repos_groups);
@@ -255,7 +257,9 @@ zif_repos_load (ZifRepos *repos, ZifState *state, GError **error)
 		}
 
 		/* this section done */
-		zif_state_done (state);
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
 	}
 
 	/* we failed one file, abandon attempt */
@@ -283,7 +287,9 @@ zif_repos_load (ZifRepos *repos, ZifState *state, GError **error)
 	}
 
 	/* this section done */
-	zif_state_done (state);
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 
 	/* all loaded okay */
 	repos->priv->loaded = TRUE;
