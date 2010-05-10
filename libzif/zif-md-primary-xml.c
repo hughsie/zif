@@ -254,6 +254,7 @@ zif_md_primary_xml_parser_end_element (GMarkupParseContext *context, const gchar
 {
 	ZifMdPrimaryXml *primary_xml = user_data;
 	gchar *package_id = NULL;
+	GError *error_local = NULL;
 	gboolean ret;
 
 	/* no element */
@@ -278,12 +279,13 @@ zif_md_primary_xml_parser_end_element (GMarkupParseContext *context, const gchar
 								primary_xml->priv->package_release_temp,
 								primary_xml->priv->package_arch_temp,
 								zif_md_get_id (ZIF_MD (primary_xml)));
-			ret = zif_package_set_id (primary_xml->priv->package_temp, package_id);
+			ret = zif_package_set_id (primary_xml->priv->package_temp, package_id, &error_local);
 			if (ret) {
 				g_ptr_array_add (primary_xml->priv->array, primary_xml->priv->package_temp);
 			} else {
-				egg_warning ("failed to set %s", package_id);
+				egg_warning ("failed to set %s: %s", package_id, error_local->message);
 				g_object_unref (primary_xml->priv->package_temp);
+				g_error_free (error_local);
 				goto out;
 			}
 			primary_xml->priv->package_temp = NULL;
@@ -884,55 +886,13 @@ zif_md_primary_xml_test (EggTest *test)
 	egg_test_assert (test, !md->priv->loaded);
 
 	/************************************************************/
-	egg_test_title (test, "set id");
-	ret = zif_md_set_id (ZIF_MD (md), "fedora");
-	if (ret)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "failed to set");
-
-	/************************************************************/
-	egg_test_title (test, "set type");
-	ret = zif_md_set_mdtype (ZIF_MD (md), ZIF_MD_TYPE_PRIMARY_XML);
-	if (ret)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "failed to set");
-
-	/************************************************************/
-	egg_test_title (test, "set checksum type");
-	ret = zif_md_set_checksum_type (ZIF_MD (md), G_CHECKSUM_SHA256);
-	if (ret)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "failed to set");
-
-	/************************************************************/
-	egg_test_title (test, "set checksum compressed");
-	ret = zif_md_set_checksum (ZIF_MD (md), "33a0eed8e12f445618756b18aa49d05ee30069d280d37b03a7a15d1ec954f833");
-	if (ret)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "failed to set");
-
-	/************************************************************/
-	egg_test_title (test, "set checksum uncompressed");
-	ret = zif_md_set_checksum_uncompressed (ZIF_MD (md), "52e4c37b13b4b23ae96432962186e726550b19e93cf3cbf7bf55c2a673a20086");
-	if (ret)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "failed to set");
-
-	/************************************************************/
-	egg_test_title (test, "set filename");
-	ret = zif_md_set_filename (ZIF_MD (md), "../test/cache/fedora/primary.xml.gz");
-	if (ret)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "failed to set");
-
-	/************************************************************/
 	egg_test_title (test, "load");
+	zif_md_set_id (ZIF_MD (md), "fedora");
+	zif_md_set_mdtype (ZIF_MD (md), ZIF_MD_TYPE_PRIMARY_XML);
+	zif_md_set_checksum_type (ZIF_MD (md), G_CHECKSUM_SHA256);
+	zif_md_set_checksum (ZIF_MD (md), "33a0eed8e12f445618756b18aa49d05ee30069d280d37b03a7a15d1ec954f833");
+	zif_md_set_checksum_uncompressed (ZIF_MD (md), "52e4c37b13b4b23ae96432962186e726550b19e93cf3cbf7bf55c2a673a20086");
+	zif_md_set_filename (ZIF_MD (md), "../test/cache/fedora/primary.xml.gz");
 	ret = zif_md_load (ZIF_MD (md), state, &error);
 	if (ret)
 		egg_test_success (test, NULL);

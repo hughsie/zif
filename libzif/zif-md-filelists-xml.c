@@ -596,55 +596,13 @@ zif_md_filelists_xml_test (EggTest *test)
 	egg_test_assert (test, !md->priv->loaded);
 
 	/************************************************************/
-	egg_test_title (test, "set id");
-	ret = zif_md_set_id (ZIF_MD (md), "fedora");
-	if (ret)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "failed to set");
-
-	/************************************************************/
-	egg_test_title (test, "set type");
-	ret = zif_md_set_mdtype (ZIF_MD (md), ZIF_MD_TYPE_FILELISTS_XML);
-	if (ret)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "failed to set");
-
-	/************************************************************/
-	egg_test_title (test, "set checksum type");
-	ret = zif_md_set_checksum_type (ZIF_MD (md), G_CHECKSUM_SHA256);
-	if (ret)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "failed to set");
-
-	/************************************************************/
-	egg_test_title (test, "set checksum compressed");
-	ret = zif_md_set_checksum (ZIF_MD (md), "cadb324b10d395058ed22c9d984038927a3ea4ff9e0e798116be44b0233eaa49");
-	if (ret)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "failed to set");
-
-	/************************************************************/
-	egg_test_title (test, "set checksum uncompressed");
-	ret = zif_md_set_checksum_uncompressed (ZIF_MD (md), "8018e177379ada1d380b4ebf800e7caa95ff8cf90fdd6899528266719bbfdeab");
-	if (ret)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "failed to set");
-
-	/************************************************************/
-	egg_test_title (test, "set filename");
-	ret = zif_md_set_filename (ZIF_MD (md), "../test/cache/fedora/filelists.xml.gz");
-	if (ret)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "failed to set");
-
-	/************************************************************/
 	egg_test_title (test, "load");
+	zif_md_set_id (ZIF_MD (md), "fedora");
+	zif_md_set_mdtype (ZIF_MD (md), ZIF_MD_TYPE_FILELISTS_XML);
+	zif_md_set_checksum_type (ZIF_MD (md), G_CHECKSUM_SHA256);
+	zif_md_set_checksum (ZIF_MD (md), "cadb324b10d395058ed22c9d984038927a3ea4ff9e0e798116be44b0233eaa49");
+	zif_md_set_checksum_uncompressed (ZIF_MD (md), "8018e177379ada1d380b4ebf800e7caa95ff8cf90fdd6899528266719bbfdeab");
+	zif_md_set_filename (ZIF_MD (md), "../test/cache/fedora/filelists.xml.gz");
 	ret = zif_md_load (ZIF_MD (md), state, &error);
 	if (ret)
 		egg_test_success (test, NULL);

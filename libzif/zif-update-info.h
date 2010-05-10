@@ -68,7 +68,7 @@ ZifUpdateInfoKind	 zif_update_info_get_kind	(ZifUpdateInfo		*update_info);
 const gchar		*zif_update_info_get_url	(ZifUpdateInfo		*update_info);
 const gchar		*zif_update_info_get_title	(ZifUpdateInfo		*update_info);
 
-/* internal setters: TODO, in seporate -internal header file */
+/* internal setters */
 void			 zif_update_info_set_kind	(ZifUpdateInfo		*update_info,
 							 ZifUpdateInfoKind	 kind);
 void			 zif_update_info_set_url	(ZifUpdateInfo		*update_info,

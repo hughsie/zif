@@ -417,56 +417,14 @@ zif_md_other_sql_test (EggTest *test)
 	egg_test_title (test, "loaded");
 	egg_test_assert (test, !md->priv->loaded);
 
-	/************************************************************/
-	egg_test_title (test, "set id");
-	ret = zif_md_set_id (ZIF_MD (md), "fedora");
-	if (ret)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "failed to set");
-
-	/************************************************************/
-	egg_test_title (test, "set type");
-	ret = zif_md_set_mdtype (ZIF_MD (md), ZIF_MD_TYPE_OTHER_SQL);
-	if (ret)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "failed to set");
-
-	/************************************************************/
-	egg_test_title (test, "set checksum type");
-	ret = zif_md_set_checksum_type (ZIF_MD (md), G_CHECKSUM_SHA256);
-	if (ret)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "failed to set");
-
-	/************************************************************/
-	egg_test_title (test, "set checksum compressed");
-	ret = zif_md_set_checksum (ZIF_MD (md), "bc58c56b371a83dc546c86e1796d83b9ff78adbf733873c815c3fe5dd48b0d56");
-	if (ret)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "failed to set");
-
-	/************************************************************/
-	egg_test_title (test, "set checksum uncompressed");
-	ret = zif_md_set_checksum_uncompressed (ZIF_MD (md), "c378618f9764ff9fa271a40b962a0c3569ff274e741ada2342d0fe3554614488");
-	if (ret)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "failed to set");
-
-	/************************************************************/
-	egg_test_title (test, "set filename");
-	ret = zif_md_set_filename (ZIF_MD (md), "../test/cache/fedora/bc58c56b371a83dc546c86e1796d83b9ff78adbf733873c815c3fe5dd48b0d56-other.sqlite.bz2");
-	if (ret)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "failed to set");
 
 	/************************************************************/
 	egg_test_title (test, "load");
+	zif_md_set_id (ZIF_MD (md), "fedora");
+	zif_md_set_mdtype (ZIF_MD (md), ZIF_MD_TYPE_OTHER_SQL);
+	zif_md_set_checksum_type (ZIF_MD (md), G_CHECKSUM_SHA256);
+	zif_md_set_checksum (ZIF_MD (md), "bc58c56b371a83dc546c86e1796d83b9ff78adbf733873c815c3fe5dd48b0d56");
+	zif_md_set_checksum_uncompressed (ZIF_MD (md), "c378618f9764ff9fa271a40b962a0c3569ff274e741ada2342d0fe3554614488");
 	ret = zif_md_load (ZIF_MD (md), state, &error);
 	if (ret)
 		egg_test_success (test, NULL);

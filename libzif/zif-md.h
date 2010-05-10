@@ -141,36 +141,34 @@ GQuark		 zif_md_error_quark			(void);
 ZifMd		*zif_md_new				(void);
 
 /* setters */
-gboolean	 zif_md_set_mdtype			(ZifMd		*md,
+void		 zif_md_set_mdtype			(ZifMd		*md,
 							 ZifMdType	 type);
-gboolean	 zif_md_set_store_remote		(ZifMd		*md,
+void		 zif_md_set_store_remote		(ZifMd		*md,
 							 ZifStoreRemote	*remote);
-ZifStoreRemote	*zif_md_get_store_remote		(ZifMd		*md);
-gboolean	 zif_md_set_id				(ZifMd		*md,
+void		 zif_md_set_id				(ZifMd		*md,
 							 const gchar	*id);
-gboolean	 zif_md_set_filename			(ZifMd		*md,
+void		 zif_md_set_filename			(ZifMd		*md,
 							 const gchar	*filename);
-gboolean	 zif_md_set_timestamp			(ZifMd		*md,
+void		 zif_md_set_timestamp			(ZifMd		*md,
 							 guint		 timestamp);
-gboolean	 zif_md_set_location			(ZifMd		*md,
+void		 zif_md_set_location			(ZifMd		*md,
 							 const gchar	*location);
-gboolean	 zif_md_set_checksum			(ZifMd		*md,
+void		 zif_md_set_checksum			(ZifMd		*md,
 							 const gchar	*checksum);
-gboolean	 zif_md_set_checksum_uncompressed	(ZifMd		*md,
+void		 zif_md_set_checksum_uncompressed	(ZifMd		*md,
 							 const gchar	*checksum_uncompressed);
-gboolean	 zif_md_set_checksum_type		(ZifMd		*md,
+void		 zif_md_set_checksum_type		(ZifMd		*md,
 							 GChecksumType	 checksum_type);
 void		 zif_md_set_max_age			(ZifMd		*md,
 							 guint64	 max_age);
 const gchar	*zif_md_type_to_text			(ZifMdType	 type);
 
 /* getters */
+ZifStoreRemote	*zif_md_get_store_remote		(ZifMd		*md);
 const gchar	*zif_md_get_id				(ZifMd		*md);
 ZifMdType	 zif_md_get_mdtype			(ZifMd		*md);
 const gchar	*zif_md_get_filename			(ZifMd		*md);
 const gchar	*zif_md_get_filename_uncompressed	(ZifMd		*md);
-guint		 zif_md_get_age				(ZifMd		*md,
-							 GError		**error);
 const gchar	*zif_md_get_location			(ZifMd		*md);
 
 /* actions */

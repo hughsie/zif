@@ -177,24 +177,20 @@ zif_md_get_filename_uncompressed (ZifMd *md)
  *
  * Sets the filename of the compressed file.
  *
- * Return value: %TRUE for success, %FALSE for failure
- *
  * Since: 0.1.0
  **/
-gboolean
+void
 zif_md_set_filename (ZifMd *md, const gchar *filename)
 {
-	g_return_val_if_fail (ZIF_IS_MD (md), FALSE);
-	g_return_val_if_fail (md->priv->filename == NULL, FALSE);
-	g_return_val_if_fail (filename != NULL, FALSE);
+	g_return_if_fail (ZIF_IS_MD (md));
+	g_return_if_fail (md->priv->filename == NULL);
+	g_return_if_fail (filename != NULL);
 
 	/* this is the compressed name */
 	md->priv->filename = g_strdup (filename);
 
 	/* this is the uncompressed name */
 	md->priv->filename_uncompressed = zif_file_get_uncompressed_name (filename);
-
-	return TRUE;
 }
 
 /**
@@ -221,20 +217,17 @@ zif_md_set_max_age (ZifMd *md, guint64 max_age)
  *
  * Sets the timestamp of the compressed file.
  *
- * Return value: %TRUE for success, %FALSE for failure
- *
  * Since: 0.1.0
  **/
-gboolean
+void
 zif_md_set_timestamp (ZifMd *md, guint timestamp)
 {
-	g_return_val_if_fail (ZIF_IS_MD (md), FALSE);
-	g_return_val_if_fail (md->priv->timestamp == 0, FALSE);
-	g_return_val_if_fail (timestamp != 0, FALSE);
+	g_return_if_fail (ZIF_IS_MD (md));
+	g_return_if_fail (md->priv->timestamp == 0);
+	g_return_if_fail (timestamp != 0);
 
 	/* save new value */
 	md->priv->timestamp = timestamp;
-	return TRUE;
 }
 
 /**
@@ -244,20 +237,17 @@ zif_md_set_timestamp (ZifMd *md, guint timestamp)
  *
  * Sets the location of the compressed file, e.g. "repodata/35d817e-primary.sqlite.bz2"
  *
- * Return value: %TRUE for success, %FALSE for failure
- *
  * Since: 0.1.0
  **/
-gboolean
+void
 zif_md_set_location (ZifMd *md, const gchar *location)
 {
-	g_return_val_if_fail (ZIF_IS_MD (md), FALSE);
-	g_return_val_if_fail (md->priv->location == NULL, FALSE);
-	g_return_val_if_fail (location != NULL, FALSE);
+	g_return_if_fail (ZIF_IS_MD (md));
+	g_return_if_fail (md->priv->location == NULL);
+	g_return_if_fail (location != NULL);
 
 	/* save new value */
 	md->priv->location = g_strdup (location);
-	return TRUE;
 }
 
 /**
@@ -267,20 +257,17 @@ zif_md_set_location (ZifMd *md, const gchar *location)
  *
  * Sets the checksum of the compressed file.
  *
- * Return value: %TRUE for success, %FALSE for failure
- *
  * Since: 0.1.0
  **/
-gboolean
+void
 zif_md_set_checksum (ZifMd *md, const gchar *checksum)
 {
-	g_return_val_if_fail (ZIF_IS_MD (md), FALSE);
-	g_return_val_if_fail (md->priv->checksum == NULL, FALSE);
-	g_return_val_if_fail (checksum != NULL, FALSE);
+	g_return_if_fail (ZIF_IS_MD (md));
+	g_return_if_fail (md->priv->checksum == NULL);
+	g_return_if_fail (checksum != NULL);
 
 	/* save new value */
 	md->priv->checksum = g_strdup (checksum);
-	return TRUE;
 }
 
 /**
@@ -290,20 +277,17 @@ zif_md_set_checksum (ZifMd *md, const gchar *checksum)
  *
  * Sets the checksum of the uncompressed file.
  *
- * Return value: %TRUE for success, %FALSE for failure
- *
  * Since: 0.1.0
  **/
-gboolean
+void
 zif_md_set_checksum_uncompressed (ZifMd *md, const gchar *checksum_uncompressed)
 {
-	g_return_val_if_fail (ZIF_IS_MD (md), FALSE);
-	g_return_val_if_fail (md->priv->checksum_uncompressed == NULL, FALSE);
-	g_return_val_if_fail (checksum_uncompressed != NULL, FALSE);
+	g_return_if_fail (ZIF_IS_MD (md));
+	g_return_if_fail (md->priv->checksum_uncompressed == NULL);
+	g_return_if_fail (checksum_uncompressed != NULL);
 
 	/* save new value */
 	md->priv->checksum_uncompressed = g_strdup (checksum_uncompressed);
-	return TRUE;
 }
 
 /**
@@ -313,19 +297,16 @@ zif_md_set_checksum_uncompressed (ZifMd *md, const gchar *checksum_uncompressed)
  *
  * Sets the checksum_type of the files.
  *
- * Return value: %TRUE for success, %FALSE for failure
- *
  * Since: 0.1.0
  **/
-gboolean
+void
 zif_md_set_checksum_type (ZifMd *md, GChecksumType checksum_type)
 {
-	g_return_val_if_fail (ZIF_IS_MD (md), FALSE);
-	g_return_val_if_fail (md->priv->checksum_type == 0, FALSE);
+	g_return_if_fail (ZIF_IS_MD (md));
+	g_return_if_fail (md->priv->checksum_type == 0);
 
 	/* save new value */
 	md->priv->checksum_type = checksum_type;
-	return TRUE;
 }
 
 /**
@@ -335,18 +316,14 @@ zif_md_set_checksum_type (ZifMd *md, GChecksumType checksum_type)
  *
  * Sets the type of the metadata, e.g. ZIF_MD_TYPE_FILELISTS_SQL.
  *
- * Return value: %TRUE for success, %FALSE for failure
- *
  * Since: 0.1.0
  **/
-gboolean
+void
 zif_md_set_mdtype (ZifMd *md, ZifMdType type)
 {
-	gboolean ret = TRUE;
-
-	g_return_val_if_fail (ZIF_IS_MD (md), FALSE);
-	g_return_val_if_fail (md->priv->type == ZIF_MD_TYPE_UNKNOWN, FALSE);
-	g_return_val_if_fail (type != ZIF_MD_TYPE_UNKNOWN, FALSE);
+	g_return_if_fail (ZIF_IS_MD (md));
+	g_return_if_fail (md->priv->type == ZIF_MD_TYPE_UNKNOWN);
+	g_return_if_fail (type != ZIF_MD_TYPE_UNKNOWN);
 
 	/* save new value */
 	md->priv->type = type;
@@ -368,11 +345,10 @@ zif_md_set_mdtype (ZifMd *md, ZifMdType type)
 		egg_warning ("cannot load md for %s (loc=%s, checksum=%s, checksum_open=%s, timestamp=%i)",
 			     zif_md_type_to_text (type), md->priv->location,
 			     md->priv->checksum, md->priv->checksum_uncompressed, md->priv->timestamp);
-		ret = FALSE;
 		goto out;
 	}
 out:
-	return ret;
+	return;
 }
 
 /**
@@ -382,19 +358,16 @@ out:
  *
  * Sets the repository ID for this metadata.
  *
- * Return value: %TRUE for success, %FALSE for failure
- *
  * Since: 0.1.0
  **/
-gboolean
+void
 zif_md_set_id (ZifMd *md, const gchar *id)
 {
-	g_return_val_if_fail (ZIF_IS_MD (md), FALSE);
-	g_return_val_if_fail (md->priv->id == NULL, FALSE);
-	g_return_val_if_fail (id != NULL, FALSE);
+	g_return_if_fail (ZIF_IS_MD (md));
+	g_return_if_fail (md->priv->id == NULL);
+	g_return_if_fail (id != NULL);
 
 	md->priv->id = g_strdup (id);
-	return TRUE;
 }
 
 /**
@@ -404,20 +377,17 @@ zif_md_set_id (ZifMd *md, const gchar *id)
  *
  * Sets the remote store for this metadata.
  *
- * Return value: %TRUE for success, %FALSE for failure
- *
  * Since: 0.1.0
  **/
-gboolean
+void
 zif_md_set_store_remote (ZifMd *md, ZifStoreRemote *remote)
 {
-	g_return_val_if_fail (ZIF_IS_MD (md), FALSE);
-	g_return_val_if_fail (md->priv->remote == NULL, FALSE);
-	g_return_val_if_fail (remote != NULL, FALSE);
+	g_return_if_fail (ZIF_IS_MD (md));
+	g_return_if_fail (md->priv->remote == NULL);
+	g_return_if_fail (remote != NULL);
 
 	/* do not take a reference, else the parent device never goes away */
 	md->priv->remote = remote;
-	return TRUE;
 }
 
 /**
@@ -1390,15 +1360,8 @@ zif_md_test (EggTest *test)
 	egg_test_assert (test, !md->priv->loaded);
 
 	/************************************************************/
-	egg_test_title (test, "set id");
-	ret = zif_md_set_id (md, "fedora");
-	if (ret)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "failed to set");
-
-	/************************************************************/
 	egg_test_title (test, "load");
+	zif_md_set_id (md, "fedora");
 	ret = zif_md_load (md, state, &error);
 	if (ret)
 		egg_test_success (test, NULL);

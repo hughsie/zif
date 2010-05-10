@@ -489,11 +489,9 @@ zif_package_local_set_from_header (ZifPackageLocal *pkg, Header header, GError *
 
 	/* id */
 	package_id = zif_package_local_id_from_header (header);
-	ret = zif_package_set_id (ZIF_PACKAGE (pkg), package_id);
-	if (!ret) {
-		g_set_error (error, ZIF_PACKAGE_ERROR, ZIF_PACKAGE_ERROR_FAILED, "failed to set package-id: %s", package_id);
+	ret = zif_package_set_id (ZIF_PACKAGE (pkg), package_id, error);
+	if (!ret)
 		goto out;
-	}
 out:
 	g_free (package_id);
 	return ret;

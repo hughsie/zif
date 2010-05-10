@@ -816,45 +816,11 @@ zif_md_comps_test (EggTest *test)
 	egg_test_title (test, "loaded");
 	egg_test_assert (test, !md->priv->loaded);
 
-	/************************************************************/
-	egg_test_title (test, "set id");
-	ret = zif_md_set_id (ZIF_MD (md), "fedora");
-	if (ret)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "failed to set");
-
-	/************************************************************/
-	egg_test_title (test, "set type");
-	ret = zif_md_set_mdtype (ZIF_MD (md), ZIF_MD_TYPE_COMPS);
-	if (ret)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "failed to set");
-
-	/************************************************************/
-	egg_test_title (test, "set filename");
-	ret = zif_md_set_filename (ZIF_MD (md), "../test/cache/comps-rawhide.xml");
-	if (ret)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "failed to set");
-
-	/************************************************************/
-	egg_test_title (test, "set checksum type");
-	ret = zif_md_set_checksum_type (ZIF_MD (md), G_CHECKSUM_SHA256);
-	if (ret)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "failed to set");
-
-	/************************************************************/
-	egg_test_title (test, "set checksum uncompressed");
-	ret = zif_md_set_checksum_uncompressed (ZIF_MD (md), "14f17b894303b4dc9683511104848f75d98cea8f76c107bf25e1b4db5741f6a8");
-	if (ret)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "failed to set");
+	zif_md_set_id (ZIF_MD (md), "fedora");
+	zif_md_set_mdtype (ZIF_MD (md), ZIF_MD_TYPE_COMPS);
+	zif_md_set_filename (ZIF_MD (md), "../test/cache/comps-rawhide.xml");
+	zif_md_set_checksum_type (ZIF_MD (md), G_CHECKSUM_SHA256);
+	zif_md_set_checksum_uncompressed (ZIF_MD (md), "14f17b894303b4dc9683511104848f75d98cea8f76c107bf25e1b4db5741f6a8");
 
 	/************************************************************/
 	egg_test_title (test, "get categories");

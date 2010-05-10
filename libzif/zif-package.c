@@ -932,7 +932,7 @@ zif_package_get_category (ZifPackage *package, ZifState *state, GError **error)
  *
  * Gets the package group.
  *
- * Return value: %TRUE for success, %FALSE for failure
+ * Return value: the group name string
  *
  * Since: 0.1.0
  **/
@@ -1091,16 +1091,13 @@ zif_package_get_provides (ZifPackage *package, ZifState *state, GError **error)
  *
  * Sets the package installed status.
  *
- * Return value: %TRUE for success, %FALSE for failure
- *
  * Since: 0.1.0
  **/
-gboolean
+void
 zif_package_set_installed (ZifPackage *package, gboolean installed)
 {
-	g_return_val_if_fail (ZIF_IS_PACKAGE (package), FALSE);
+	g_return_if_fail (ZIF_IS_PACKAGE (package));
 	package->priv->installed = installed;
-	return TRUE;
 }
 
 /**
@@ -1115,7 +1112,7 @@ zif_package_set_installed (ZifPackage *package, gboolean installed)
  * Since: 0.1.0
  **/
 gboolean
-zif_package_set_id (ZifPackage *package, const gchar *package_id)
+zif_package_set_id (ZifPackage *package, const gchar *package_id, GError **error)
 {
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), FALSE);
 	g_return_val_if_fail (package_id != NULL, FALSE);
@@ -1123,7 +1120,8 @@ zif_package_set_id (ZifPackage *package, const gchar *package_id)
 
 	/* not a valid package id */
 	if (!zif_package_id_check (package_id)) {
-		egg_warning ("not a valid package-id: %s", package_id);
+		g_set_error (error, ZIF_PACKAGE_ERROR, ZIF_PACKAGE_ERROR_FAILED,
+			     "not a valid package-id: %s", package_id);
 		return FALSE;
 	}
 	package->priv->package_id = g_strdup (package_id);
@@ -1138,19 +1136,16 @@ zif_package_set_id (ZifPackage *package, const gchar *package_id)
  *
  * Sets the package summary.
  *
- * Return value: %TRUE for success, %FALSE for failure
- *
  * Since: 0.1.0
  **/
-gboolean
+void
 zif_package_set_summary (ZifPackage *package, ZifString *summary)
 {
-	g_return_val_if_fail (ZIF_IS_PACKAGE (package), FALSE);
-	g_return_val_if_fail (summary != NULL, FALSE);
-	g_return_val_if_fail (package->priv->summary == NULL, FALSE);
+	g_return_if_fail (ZIF_IS_PACKAGE (package));
+	g_return_if_fail (summary != NULL);
+	g_return_if_fail (package->priv->summary == NULL);
 
 	package->priv->summary = zif_string_ref (summary);
-	return TRUE;
 }
 
 /**
@@ -1160,19 +1155,16 @@ zif_package_set_summary (ZifPackage *package, ZifString *summary)
  *
  * Sets the package description.
  *
- * Return value: %TRUE for success, %FALSE for failure
- *
  * Since: 0.1.0
  **/
-gboolean
+void
 zif_package_set_description (ZifPackage *package, ZifString *description)
 {
-	g_return_val_if_fail (ZIF_IS_PACKAGE (package), FALSE);
-	g_return_val_if_fail (description != NULL, FALSE);
-	g_return_val_if_fail (package->priv->description == NULL, FALSE);
+	g_return_if_fail (ZIF_IS_PACKAGE (package));
+	g_return_if_fail (description != NULL);
+	g_return_if_fail (package->priv->description == NULL);
 
 	package->priv->description = zif_string_ref (description);
-	return TRUE;
 }
 
 /**
@@ -1182,19 +1174,16 @@ zif_package_set_description (ZifPackage *package, ZifString *description)
  *
  * Sets the package license.
  *
- * Return value: %TRUE for success, %FALSE for failure
- *
  * Since: 0.1.0
  **/
-gboolean
+void
 zif_package_set_license (ZifPackage *package, ZifString *license)
 {
-	g_return_val_if_fail (ZIF_IS_PACKAGE (package), FALSE);
-	g_return_val_if_fail (license != NULL, FALSE);
-	g_return_val_if_fail (package->priv->license == NULL, FALSE);
+	g_return_if_fail (ZIF_IS_PACKAGE (package));
+	g_return_if_fail (license != NULL);
+	g_return_if_fail (package->priv->license == NULL);
 
 	package->priv->license = zif_string_ref (license);
-	return TRUE;
 }
 
 /**
@@ -1204,19 +1193,16 @@ zif_package_set_license (ZifPackage *package, ZifString *license)
  *
  * Sets the project homepage URL.
  *
- * Return value: %TRUE for success, %FALSE for failure
- *
  * Since: 0.1.0
  **/
-gboolean
+void
 zif_package_set_url (ZifPackage *package, ZifString *url)
 {
-	g_return_val_if_fail (ZIF_IS_PACKAGE (package), FALSE);
-	g_return_val_if_fail (url != NULL, FALSE);
-	g_return_val_if_fail (package->priv->url == NULL, FALSE);
+	g_return_if_fail (ZIF_IS_PACKAGE (package));
+	g_return_if_fail (url != NULL);
+	g_return_if_fail (package->priv->url == NULL);
 
 	package->priv->url = zif_string_ref (url);
-	return TRUE;
 }
 
 /**
@@ -1226,19 +1212,16 @@ zif_package_set_url (ZifPackage *package, ZifString *url)
  *
  * Sets the remote download location.
  *
- * Return value: %TRUE for success, %FALSE for failure
- *
  * Since: 0.1.0
  **/
-gboolean
+void
 zif_package_set_location_href (ZifPackage *package, ZifString *location_href)
 {
-	g_return_val_if_fail (ZIF_IS_PACKAGE (package), FALSE);
-	g_return_val_if_fail (location_href != NULL, FALSE);
-	g_return_val_if_fail (package->priv->location_href == NULL, FALSE);
+	g_return_if_fail (ZIF_IS_PACKAGE (package));
+	g_return_if_fail (location_href != NULL);
+	g_return_if_fail (package->priv->location_href == NULL);
 
 	package->priv->location_href = zif_string_ref (location_href);
-	return TRUE;
 }
 
 /**
@@ -1248,19 +1231,16 @@ zif_package_set_location_href (ZifPackage *package, ZifString *location_href)
  *
  * Sets the package category.
  *
- * Return value: %TRUE for success, %FALSE for failure
- *
  * Since: 0.1.0
  **/
-gboolean
+void
 zif_package_set_category (ZifPackage *package, ZifString *category)
 {
-	g_return_val_if_fail (ZIF_IS_PACKAGE (package), FALSE);
-	g_return_val_if_fail (category != NULL, FALSE);
-	g_return_val_if_fail (package->priv->category == NULL, FALSE);
+	g_return_if_fail (ZIF_IS_PACKAGE (package));
+	g_return_if_fail (category != NULL);
+	g_return_if_fail (package->priv->category == NULL);
 
 	package->priv->category = zif_string_ref (category);
-	return TRUE;
 }
 
 /**
@@ -1270,19 +1250,16 @@ zif_package_set_category (ZifPackage *package, ZifString *category)
  *
  * Sets the package group.
  *
- * Return value: %TRUE for success, %FALSE for failure
- *
  * Since: 0.1.0
  **/
-gboolean
+void
 zif_package_set_group (ZifPackage *package, ZifString *group)
 {
-	g_return_val_if_fail (ZIF_IS_PACKAGE (package), FALSE);
-	g_return_val_if_fail (group != NULL, FALSE);
-	g_return_val_if_fail (package->priv->group == NULL, FALSE);
+	g_return_if_fail (ZIF_IS_PACKAGE (package));
+	g_return_if_fail (group != NULL);
+	g_return_if_fail (package->priv->group == NULL);
 
 	package->priv->group = zif_string_ref (group);
-	return TRUE;
 }
 
 /**
@@ -1292,19 +1269,16 @@ zif_package_set_group (ZifPackage *package, ZifString *group)
  *
  * Sets the package size in bytes.
  *
- * Return value: %TRUE for success, %FALSE for failure
- *
  * Since: 0.1.0
  **/
-gboolean
+void
 zif_package_set_size (ZifPackage *package, guint64 size)
 {
-	g_return_val_if_fail (ZIF_IS_PACKAGE (package), FALSE);
-	g_return_val_if_fail (size != 0, FALSE);
-	g_return_val_if_fail (package->priv->size == 0, FALSE);
+	g_return_if_fail (ZIF_IS_PACKAGE (package));
+	g_return_if_fail (size != 0);
+	g_return_if_fail (package->priv->size == 0);
 
 	package->priv->size = size;
-	return TRUE;
 }
 
 /**
@@ -1314,19 +1288,16 @@ zif_package_set_size (ZifPackage *package, guint64 size)
  *
  * Sets the package file list.
  *
- * Return value: %TRUE for success, %FALSE for failure
- *
  * Since: 0.1.0
  **/
-gboolean
+void
 zif_package_set_files (ZifPackage *package, GPtrArray *files)
 {
-	g_return_val_if_fail (ZIF_IS_PACKAGE (package), FALSE);
-	g_return_val_if_fail (files != NULL, FALSE);
-	g_return_val_if_fail (package->priv->files == NULL, FALSE);
+	g_return_if_fail (ZIF_IS_PACKAGE (package));
+	g_return_if_fail (files != NULL);
+	g_return_if_fail (package->priv->files == NULL);
 
 	package->priv->files = g_ptr_array_ref (files);
-	return TRUE;
 }
 
 /**
@@ -1336,19 +1307,16 @@ zif_package_set_files (ZifPackage *package, GPtrArray *files)
  *
  * Sets the package requires.
  *
- * Return value: %TRUE for success, %FALSE for failure
- *
  * Since: 0.1.0
  **/
-gboolean
+void
 zif_package_set_requires (ZifPackage *package, GPtrArray *requires)
 {
-	g_return_val_if_fail (ZIF_IS_PACKAGE (package), FALSE);
-	g_return_val_if_fail (requires != NULL, FALSE);
-	g_return_val_if_fail (package->priv->requires == NULL, FALSE);
+	g_return_if_fail (ZIF_IS_PACKAGE (package));
+	g_return_if_fail (requires != NULL);
+	g_return_if_fail (package->priv->requires == NULL);
 
 	package->priv->requires = g_ptr_array_ref (requires);
-	return TRUE;
 }
 
 /**
@@ -1358,19 +1326,16 @@ zif_package_set_requires (ZifPackage *package, GPtrArray *requires)
  *
  * Sets the package provides
  *
- * Return value: %TRUE for success, %FALSE for failure
- *
  * Since: 0.1.0
  **/
-gboolean
+void
 zif_package_set_provides (ZifPackage *package, GPtrArray *provides)
 {
-	g_return_val_if_fail (ZIF_IS_PACKAGE (package), FALSE);
-	g_return_val_if_fail (provides != NULL, FALSE);
-	g_return_val_if_fail (package->priv->provides == NULL, FALSE);
+	g_return_if_fail (ZIF_IS_PACKAGE (package));
+	g_return_if_fail (provides != NULL);
+	g_return_if_fail (package->priv->provides == NULL);
 
 	package->priv->provides = g_ptr_array_ref (provides);
-	return TRUE;
 }
 
 /**

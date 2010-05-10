@@ -127,7 +127,7 @@ out:
  *
  * Finds all mirrors we should use.
  *
- * Return value: the uris to use as an array of strings
+ * Return value: the URIs as an array of strings, use g_ptr_array_unref() when done.
  *
  * Since: 0.1.0
  **/
@@ -276,31 +276,10 @@ zif_md_mirrorlist_test (EggTest *test)
 	egg_test_assert (test, !md->priv->loaded);
 
 	/************************************************************/
-	egg_test_title (test, "set id");
-	ret = zif_md_set_id (ZIF_MD (md), "fedora");
-	if (ret)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "failed to set");
-
-	/************************************************************/
-	egg_test_title (test, "set type");
-	ret = zif_md_set_mdtype (ZIF_MD (md), ZIF_MD_TYPE_MIRRORLIST);
-	if (ret)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "failed to set");
-
-	/************************************************************/
-	egg_test_title (test, "set filename");
-	ret = zif_md_set_filename (ZIF_MD (md), "../test/cache/mirrorlist.txt");
-	if (ret)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "failed to set");
-
-	/************************************************************/
 	egg_test_title (test, "load");
+	zif_md_set_id (ZIF_MD (md), "fedora");
+	zif_md_set_mdtype (ZIF_MD (md), ZIF_MD_TYPE_MIRRORLIST);
+	zif_md_set_filename (ZIF_MD (md), "../test/cache/mirrorlist.txt");
 	ret = zif_md_load (ZIF_MD (md), state, &error);
 	if (ret)
 		egg_test_success (test, NULL);

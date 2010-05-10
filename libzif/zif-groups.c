@@ -203,7 +203,7 @@ out:
  *
  * Gets the groups supported by the packaging system.
  *
- * Return value: A #GPtrArray of the string groups that are supported
+ * Return value: A #GPtrArray of the string groups that are supported, free with g_ptr_array_unref()
  *
  * Since: 0.1.0
  **/
@@ -226,7 +226,7 @@ zif_groups_get_groups (ZifGroups *groups, GError **error)
 		}
 	}
 out:
-	return groups->priv->groups;
+	return g_ptr_array_ref (groups->priv->groups);
 }
 
 /**
@@ -236,7 +236,7 @@ out:
  *
  * Gets the categories supported by the packaging system.
  *
- * Return value: category list as an array of strings
+ * Return value: category list as an array of strings, free with g_ptr_array_unref()
  *
  * Since: 0.1.0
  **/
@@ -262,6 +262,7 @@ zif_groups_get_categories (ZifGroups *groups, GError **error)
 		}
 	}
 
+	/* deep copy */
 	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_free);
 	for (i=0; i<groups->priv->categories->len; i++)
 		g_ptr_array_add (array, g_strdup (g_ptr_array_index (groups->priv->categories, i)));

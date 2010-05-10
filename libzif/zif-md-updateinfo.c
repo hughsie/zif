@@ -95,6 +95,7 @@ zif_md_updateinfo_parser_start_element (GMarkupParseContext *context, const gcha
 					gpointer user_data, GError **error)
 {
 	guint i;
+	GError *error_local = NULL;
 	gchar *package_id = NULL;
 	ZifMdUpdateinfo *updateinfo = user_data;
 
@@ -244,9 +245,10 @@ zif_md_updateinfo_parser_start_element (GMarkupParseContext *context, const gcha
 				/* create a package from what we know */
 				data = zif_md_get_id (ZIF_MD (updateinfo));
 				package_id = zif_package_id_from_nevra (name, epoch, version, release, arch, data);
-				ret = zif_package_set_id (updateinfo->priv->package_temp, package_id);
+				ret = zif_package_set_id (updateinfo->priv->package_temp, package_id, &error_local);
 				if (!ret) {
-					egg_warning ("failed to set %s", package_id);
+					egg_warning ("failed to set %s: %s", package_id, error_local->message);
+					g_error_free (error_local);
 					goto out;
 				}
 				string = zif_string_new (src);
@@ -695,47 +697,12 @@ zif_md_updateinfo_test (EggTest *test)
 	egg_test_assert (test, !md->priv->loaded);
 
 	/************************************************************/
-	egg_test_title (test, "set id");
-	ret = zif_md_set_id (ZIF_MD (md), "fedora");
-	if (ret)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "failed to set");
-
-	/************************************************************/
-	egg_test_title (test, "set type");
-	ret = zif_md_set_mdtype (ZIF_MD (md), ZIF_MD_TYPE_UPDATEINFO);
-	if (ret)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "failed to set");
-
-	/************************************************************/
-	egg_test_title (test, "set filename");
-	ret = zif_md_set_filename (ZIF_MD (md), "../test/cache/updateinfo.xml");
-	if (ret)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "failed to set");
-
-	/************************************************************/
-	egg_test_title (test, "set checksum type");
-	ret = zif_md_set_checksum_type (ZIF_MD (md), G_CHECKSUM_SHA256);
-	if (ret)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "failed to set");
-
-	/************************************************************/
-	egg_test_title (test, "set checksum uncompressed");
-	ret = zif_md_set_checksum_uncompressed (ZIF_MD (md), "4fa3657a79af078c588e2ab181ab0a3a156c6008a084d85edccaf6c57d67d47d");
-	if (ret)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "failed to set");
-
-	/************************************************************/
 	egg_test_title (test, "get categories");
+	zif_md_set_id (ZIF_MD (md), "fedora");
+	zif_md_set_mdtype (ZIF_MD (md), ZIF_MD_TYPE_UPDATEINFO);
+	zif_md_set_filename (ZIF_MD (md), "../test/cache/updateinfo.xml");
+	zif_md_set_checksum_type (ZIF_MD (md), G_CHECKSUM_SHA256);
+	zif_md_set_checksum_uncompressed (ZIF_MD (md), "4fa3657a79af078c588e2ab181ab0a3a156c6008a084d85edccaf6c57d67d47d");
 	array = zif_md_updateinfo_get_detail_for_package (md, "device-mapper-libs;1.02.27-7.fc10;ppc64;fedora", state, &error);
 	if (array != NULL)
 		egg_test_success (test, NULL);

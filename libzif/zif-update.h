@@ -91,7 +91,7 @@ GPtrArray		*zif_update_get_update_infos	(ZifUpdate		*update);
 GPtrArray		*zif_update_get_packages	(ZifUpdate		*update);
 GPtrArray		*zif_update_get_changelog	(ZifUpdate		*update);
 
-/* internal setters: TODO, in seporate -internal header file */
+/* internal setters */
 void			 zif_update_set_state		(ZifUpdate		*update,
 							 ZifUpdateState	 state);
 void			 zif_update_set_kind		(ZifUpdate		*update,

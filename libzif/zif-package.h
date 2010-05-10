@@ -127,33 +127,34 @@ GPtrArray		*zif_package_get_provides	(ZifPackage	*package,
 							 ZifState	*state,
 							 GError		**error);
 
-/* internal setters: TODO, in seporate -internal header file */
-gboolean		 zif_package_set_installed	(ZifPackage	*package,
-							 gboolean	 installed);
+/* internal setters */
 gboolean		 zif_package_set_id		(ZifPackage	*package,
-							 const gchar	*package_id)
+							 const gchar	*package_id,
+							 GError		**error)
 							 G_GNUC_WARN_UNUSED_RESULT;
-gboolean		 zif_package_set_summary	(ZifPackage	*package,
+void			 zif_package_set_installed	(ZifPackage	*package,
+							 gboolean	 installed);
+void			 zif_package_set_summary	(ZifPackage	*package,
 							 ZifString	*summary);
-gboolean		 zif_package_set_description	(ZifPackage	*package,
+void			 zif_package_set_description	(ZifPackage	*package,
 							 ZifString	*description);
-gboolean		 zif_package_set_license	(ZifPackage	*package,
+void			 zif_package_set_license	(ZifPackage	*package,
 							 ZifString	*license);
-gboolean		 zif_package_set_url		(ZifPackage	*package,
+void			 zif_package_set_url		(ZifPackage	*package,
 							 ZifString	*url);
-gboolean		 zif_package_set_location_href	(ZifPackage	*package,
+void			 zif_package_set_location_href	(ZifPackage	*package,
 							 ZifString	*location_href);
-gboolean		 zif_package_set_category	(ZifPackage	*package,
+void			 zif_package_set_category	(ZifPackage	*package,
 							 ZifString	*category);
-gboolean		 zif_package_set_group		(ZifPackage	*package,
+void			 zif_package_set_group		(ZifPackage	*package,
 							 ZifString	*group);
-gboolean		 zif_package_set_size		(ZifPackage	*package,
+void			 zif_package_set_size		(ZifPackage	*package,
 							 guint64	 size);
-gboolean		 zif_package_set_files		(ZifPackage	*package,
+void			 zif_package_set_files		(ZifPackage	*package,
 							 GPtrArray	*files);
-gboolean		 zif_package_set_requires	(ZifPackage	*package,
+void			 zif_package_set_requires	(ZifPackage	*package,
 							 GPtrArray	*requires);
-gboolean		 zif_package_set_provides	(ZifPackage	*package,
+void			 zif_package_set_provides	(ZifPackage	*package,
 							 GPtrArray	*provides);
 /* actions */
 gboolean		 zif_package_download		(ZifPackage	*package,
