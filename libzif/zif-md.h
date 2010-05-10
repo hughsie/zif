@@ -132,6 +132,7 @@ typedef enum {
 	ZIF_MD_ERROR_FAILED_AS_OFFLINE,
 	ZIF_MD_ERROR_FAILED_DOWNLOAD,
 	ZIF_MD_ERROR_BAD_SQL,
+	ZIF_MD_ERROR_FILE_TOO_OLD,
 	ZIF_MD_ERROR_LAST
 } ZifMdError;
 
@@ -159,6 +160,8 @@ gboolean	 zif_md_set_checksum_uncompressed	(ZifMd		*md,
 							 const gchar	*checksum_uncompressed);
 gboolean	 zif_md_set_checksum_type		(ZifMd		*md,
 							 GChecksumType	 checksum_type);
+void		 zif_md_set_max_age			(ZifMd		*md,
+							 guint64	 max_age);
 const gchar	*zif_md_type_to_text			(ZifMdType	 type);
 
 /* getters */

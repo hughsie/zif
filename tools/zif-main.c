@@ -603,6 +603,7 @@ main (int argc, char *argv[])
 	guint i;
 	guint pid;
 	guint uid;
+	guint age = 0;
 	GError *error = NULL;
 	ZifPackage *package;
 	const gchar *mode;
@@ -613,6 +614,7 @@ main (int argc, char *argv[])
 	gchar *config_file = NULL;
 	gchar *http_proxy = NULL;
 	gchar *repos_dir = NULL;
+	gchar *max_age = NULL;
 	gchar **split;
 	const gchar *to_array[] = { NULL, NULL };
 
@@ -625,6 +627,8 @@ main (int argc, char *argv[])
 			_("Use different config file"), NULL },
 		{ "proxy", 'p', 0, G_OPTION_ARG_STRING, &http_proxy,
 			_("Proxy server setting"), NULL },
+		{ "age", 'a', 0, G_OPTION_ARG_INT, &age,
+			_("Permitted age of the cache in seconds, 0 for never (default)"), NULL },
 		{ NULL}
 	};
 
@@ -705,6 +709,13 @@ main (int argc, char *argv[])
 	/* are we allowed to access the repos */
 	if (!offline)
 		zif_config_set_local (config, "network", "1", NULL);
+
+	/* set the maximum age of the repo data */
+	if (age > 0) {
+		max_age = g_strdup_printf ("%i", age);
+		zif_config_set_local (config, "max-age", max_age, NULL);
+		g_free (max_age);
+	}
 
 	/* are we root? */
 	uid = getuid ();

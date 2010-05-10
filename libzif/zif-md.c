@@ -64,6 +64,7 @@ struct _ZifMdPrivate
 	ZifMdType		 type;
 	ZifStoreRemote		*remote;
 	ZifConfig		*config;
+	guint64			 max_age;
 };
 
 G_DEFINE_TYPE (ZifMd, zif_md, G_TYPE_OBJECT)
@@ -194,6 +195,23 @@ zif_md_set_filename (ZifMd *md, const gchar *filename)
 	md->priv->filename_uncompressed = zif_file_get_uncompressed_name (filename);
 
 	return TRUE;
+}
+
+/**
+ * zif_md_set_max_age:
+ * @md: the #ZifMd object
+ * @max_age: the maximum permitted value of the metadata, or 0
+ *
+ * Sets the maximum age of the metadata file. Any files older than this will
+ * be deleted and re-downloaded.
+ *
+ * Since: 0.0.1
+ **/
+void
+zif_md_set_max_age (ZifMd *md, guint64 max_age)
+{
+	g_return_if_fail (ZIF_IS_MD (md));
+	md->priv->max_age = max_age;
 }
 
 /**
@@ -492,6 +510,7 @@ zif_md_load (ZifMd *md, ZifState *state, GError **error)
 	/* display any warning */
 	egg_warning ("failed checksum for uncompressed: %s", error_local->message);
 	g_clear_error (&error_local);
+	zif_state_reset (state_local);
 
 	/* this section done_measure */
 	ret = zif_state_done (state, error);
@@ -1151,12 +1170,16 @@ gboolean
 zif_md_file_check (ZifMd *md, gboolean use_uncompressed, ZifState *state, GError **error)
 {
 	gboolean ret = FALSE;
+	GFile *file = NULL;
+	GFileInfo *file_info = NULL;
 	GError *error_local = NULL;
 	gchar *data = NULL;
 	gchar *checksum = NULL;
 	const gchar *filename;
 	const gchar *checksum_wanted;
 	gsize length;
+	GCancellable *cancellable;
+	guint64 modified, age;
 
 	g_return_val_if_fail (ZIF_IS_MD (md), FALSE);
 	g_return_val_if_fail (md->priv->id != NULL, FALSE);
@@ -1187,9 +1210,31 @@ zif_md_file_check (ZifMd *md, gboolean use_uncompressed, ZifState *state, GError
 		goto out;
 	}
 
+	/* get file attributes */
+	file = g_file_new_for_path (filename);
+	cancellable = zif_state_get_cancellable (state);
+	file_info = g_file_query_info (file, G_FILE_ATTRIBUTE_TIME_MODIFIED, G_FILE_QUERY_INFO_NONE, cancellable, &error_local);
+	if (file_info == NULL) {
+		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED,
+			     "failed to get file information of %s: %s", filename, error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* check age */
+	modified = g_file_info_get_attribute_uint64 (file_info, G_FILE_ATTRIBUTE_TIME_MODIFIED);
+	age = time (NULL) - modified;
+	egg_debug ("age of %s is %" G_GUINT64_FORMAT " hours (max-age=%" G_GUINT64_FORMAT " seconds)",
+		   filename, age / (60 * 60), md->priv->max_age);
+	ret = (md->priv->max_age == 0 || age < md->priv->max_age);
+	if (!ret) {
+		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FILE_TOO_OLD,
+			     "data is too old: %s", filename);
+		goto out;
+	}
+
 	/* get contents */
-	zif_state_set_allow_cancel (state, FALSE);
-	ret = g_file_get_contents (filename, &data, &length, &error_local);
+	ret = g_file_load_contents (file, cancellable, &data, &length, NULL, &error_local);
 	if (!ret) {
 		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED,
 			     "failed to get contents of %s: %s", filename, error_local->message);
@@ -1234,6 +1279,10 @@ zif_md_file_check (ZifMd *md, gboolean use_uncompressed, ZifState *state, GError
 	if (!ret)
 		goto out;
 out:
+	if (file != NULL)
+		g_object_unref (file);
+	if (file_info != NULL)
+		g_object_unref (file_info);
 	g_free (data);
 	g_free (checksum);
 	return ret;
@@ -1289,6 +1338,7 @@ zif_md_init (ZifMd *md)
 	md->priv->checksum = NULL;
 	md->priv->checksum_uncompressed = NULL;
 	md->priv->checksum_type = 0;
+	md->priv->max_age = 0;
 	md->priv->remote = NULL;
 	md->priv->config = zif_config_new ();
 }

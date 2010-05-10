@@ -60,6 +60,8 @@
 
 #define ZIF_STORE_REMOTE_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_STORE_REMOTE, ZifStoreRemotePrivate))
 
+#define ZIF_STORE_REMOTE_LINK_MAX_AGE		60*60*24*30
+
 typedef enum {
 	ZIF_STORE_REMOTE_PARSER_SECTION_CHECKSUM,
 	ZIF_STORE_REMOTE_PARSER_SECTION_CHECKSUM_UNCOMPRESSED,
@@ -913,6 +915,7 @@ zif_store_remote_load_metadata (ZifStoreRemote *store, ZifState *state, GError *
 	gchar *basename;
 	gchar *filename;
 	gboolean primary_okay = FALSE;
+	guint max_age;
 	gsize size;
 	GError *error_local = NULL;
 	ZifMd *md;
@@ -1029,6 +1032,9 @@ zif_store_remote_load_metadata (ZifStoreRemote *store, ZifState *state, GError *
 	if (!ret)
 		goto out;
 
+	/* get the maximum age of the repo files */
+	max_age = zif_config_get_uint (store->priv->config, "max-age", NULL);
+
 	/* set MD id and filename for each repo type */
 	for (i=0; i<ZIF_MD_TYPE_UNKNOWN; i++) {
 		md = zif_store_remote_get_md_from_type (store, i);
@@ -1064,6 +1070,7 @@ zif_store_remote_load_metadata (ZifStoreRemote *store, ZifState *state, GError *
 		basename = g_path_get_basename (location);
 		filename = g_build_filename (store->priv->directory, basename, NULL);
 		zif_md_set_filename (md, filename);
+		zif_md_set_max_age (md, max_age);
 		g_free (basename);
 		g_free (filename);
 	}
@@ -1362,6 +1369,7 @@ zif_store_remote_load (ZifStore *store, ZifState *state, GError **error)
 	if (remote->priv->metalink != NULL) {
 		filename = g_build_filename (remote->priv->directory, "metalink.xml", NULL);
 		zif_md_set_filename (remote->priv->md_metalink, filename);
+		zif_md_set_max_age (remote->priv->md_metalink, ZIF_STORE_REMOTE_LINK_MAX_AGE);
 		g_free (filename);
 	}
 
@@ -1369,6 +1377,7 @@ zif_store_remote_load (ZifStore *store, ZifState *state, GError **error)
 	if (remote->priv->mirrorlist != NULL) {
 		filename = g_build_filename (remote->priv->directory, "mirrorlist.txt", NULL);
 		zif_md_set_filename (remote->priv->md_mirrorlist, filename);
+		zif_md_set_max_age (remote->priv->md_mirrorlist, ZIF_STORE_REMOTE_LINK_MAX_AGE);
 		g_free (filename);
 	}
 
@@ -2473,8 +2482,12 @@ zif_store_remote_get_updates (ZifStore *store, GPtrArray *packages,
 	updates = zif_md_resolve (primary, resolve_array,
 				  state_local, &error_local);
 	if (updates == NULL) {
-		egg_error ("failed to resolve: %s", error_local->message);
+		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+			     "failed to resolve updates list: %s", error_local->message);
 		g_error_free (error_local);
+		g_ptr_array_unref (array);
+		array = NULL;
+		goto out;
 	}
 
 	/* some repos contain lots of versions of one package */
