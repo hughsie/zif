@@ -1340,14 +1340,12 @@ zif_md_test (EggTest *test)
 	ZifMd *md;
 	gboolean ret;
 	GError *error = NULL;
-	GCancellable *cancellable;
 	ZifState *state;
 
 	if (!egg_test_start (test, "ZifMd"))
 		return;
 
 	/* use */
-	cancellable = g_cancellable_new ();
 	state = zif_state_new ();
 
 	/************************************************************/
@@ -1373,7 +1371,6 @@ zif_md_test (EggTest *test)
 	egg_test_assert (test, md->priv->loaded);
 
 	g_object_unref (md);
-	g_object_unref (cancellable);
 	g_object_unref (state);
 
 	egg_test_end (test);

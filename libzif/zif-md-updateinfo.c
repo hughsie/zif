@@ -676,7 +676,6 @@ zif_md_updateinfo_test (EggTest *test)
 	GError *error = NULL;
 	GPtrArray *array;
 	const gchar *id;
-	GCancellable *cancellable;
 	ZifState *state;
 	ZifUpdate *update;
 
@@ -684,7 +683,6 @@ zif_md_updateinfo_test (EggTest *test)
 		return;
 
 	/* use */
-	cancellable = g_cancellable_new ();
 	state = zif_state_new ();
 
 	/************************************************************/
@@ -746,7 +744,6 @@ zif_md_updateinfo_test (EggTest *test)
 
 	g_ptr_array_unref (array);
 	g_object_unref (md);
-	g_object_unref (cancellable);
 	g_object_unref (state);
 
 	egg_test_end (test);

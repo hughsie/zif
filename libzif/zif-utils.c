@@ -710,13 +710,11 @@ zif_utils_test (EggTest *test)
 	const gchar *r;
 	gchar *filename;
 	GError *error;
-	GCancellable *cancellable;
 	ZifState *state;
 
 	if (!egg_test_start (test, "ZifUtils"))
 		return;
 
-	cancellable = g_cancellable_new ();
 	state = zif_state_new ();
 
 	/************************************************************
@@ -853,7 +851,6 @@ zif_utils_test (EggTest *test)
 		g_error_free (error);
 	}
 
-	g_object_unref (cancellable);
 	g_object_unref (state);
 
 	egg_test_end (test);

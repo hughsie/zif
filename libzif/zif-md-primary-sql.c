@@ -637,7 +637,6 @@ zif_md_primary_sql_test (EggTest *test)
 	GPtrArray *array;
 	ZifPackage *package;
 	const gchar *summary;
-	GCancellable *cancellable;
 	ZifState *state;
 	gchar *data[] = { "gnome-power-manager", "gnome-color-manager", NULL };
 
@@ -645,7 +644,6 @@ zif_md_primary_sql_test (EggTest *test)
 		return;
 
 	/* use */
-	cancellable = g_cancellable_new ();
 	state = zif_state_new ();
 
 	/************************************************************/
@@ -698,7 +696,6 @@ zif_md_primary_sql_test (EggTest *test)
 		egg_test_failed (test, "failed to get correct summary '%s'", summary);
 	g_ptr_array_unref (array);
 
-	g_object_unref (cancellable);
 	g_object_unref (state);
 	g_object_unref (md);
 

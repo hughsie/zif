@@ -393,11 +393,11 @@ zif_download_test (EggTest *test)
 	/************************************************************/
 	egg_test_title (test, "get download");
 	download = zif_download_new ();
-	cancellable = g_cancellable_new ();
 	egg_test_assert (test, download != NULL);
 
 	state = zif_state_new ();
 	g_signal_connect (state, "percentage-changed", G_CALLBACK (zif_download_progress_changed), NULL);
+	cancellable = zif_state_get_cancellable (state);
 
 	/************************************************************/
 	egg_test_title (test, "set proxy");
@@ -440,7 +440,6 @@ zif_download_test (EggTest *test)
 
 	g_object_unref (download);
 	g_object_unref (state);
-	g_object_unref (cancellable);
 
 	egg_test_end (test);
 }

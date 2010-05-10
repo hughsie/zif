@@ -574,7 +574,6 @@ zif_md_filelists_xml_test (EggTest *test)
 	GPtrArray *array;
 	ZifPackage *package;
 	ZifString *summary;
-	GCancellable *cancellable;
 	ZifState *state;
 	gchar *pkgid;
 	gchar *data[] = { "/usr/lib/debug/usr/bin/gpk-prefs.debug", NULL };
@@ -583,7 +582,6 @@ zif_md_filelists_xml_test (EggTest *test)
 		return;
 
 	/* use */
-	cancellable = g_cancellable_new ();
 	state = zif_state_new ();
 
 	/************************************************************/
@@ -639,7 +637,6 @@ zif_md_filelists_xml_test (EggTest *test)
 		egg_test_failed (test, "failed to get a correct pkgId '%s' (%i)", pkgid, strlen (pkgid));
 	g_ptr_array_unref (array);
 
-	g_object_unref (cancellable);
 	g_object_unref (state);
 	g_object_unref (md);
 

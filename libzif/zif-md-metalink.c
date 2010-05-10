@@ -410,7 +410,6 @@ zif_md_metalink_test (EggTest *test)
 	GError *error = NULL;
 	GPtrArray *array;
 	const gchar *uri;
-	GCancellable *cancellable;
 	ZifState *state;
 	ZifConfig *config;
 
@@ -418,7 +417,6 @@ zif_md_metalink_test (EggTest *test)
 		return;
 
 	/* use */
-	cancellable = g_cancellable_new ();
 	state = zif_state_new ();
 	config = zif_config_new ();
 	zif_config_set_filename (config, "../test/etc/yum.conf", NULL);
@@ -472,7 +470,6 @@ zif_md_metalink_test (EggTest *test)
 	g_ptr_array_unref (array);
 
 	g_object_unref (md);
-	g_object_unref (cancellable);
 	g_object_unref (state);
 	g_object_unref (config);
 

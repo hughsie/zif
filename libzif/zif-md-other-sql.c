@@ -397,7 +397,6 @@ zif_md_other_sql_test (EggTest *test)
 	GError *error = NULL;
 	GPtrArray *array;
 	ZifChangeset *changeset;
-	GCancellable *cancellable;
 	ZifState *state;
 	const gchar *text;
 
@@ -405,7 +404,6 @@ zif_md_other_sql_test (EggTest *test)
 		return;
 
 	/* use */
-	cancellable = g_cancellable_new ();
 	state = zif_state_new ();
 
 	/************************************************************/
@@ -482,7 +480,6 @@ zif_md_other_sql_test (EggTest *test)
 	/* remove array */
 	g_ptr_array_unref (array);
 
-	g_object_unref (cancellable);
 	g_object_unref (state);
 	g_object_unref (md);
 
