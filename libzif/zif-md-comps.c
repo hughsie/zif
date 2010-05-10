@@ -505,7 +505,7 @@ out:
  *
  * Return value: %ZifCategory array of categories, with parent_id set to %NULL
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 GPtrArray *
 zif_md_comps_get_categories (ZifMdComps *md,
@@ -585,7 +585,7 @@ zif_md_comps_get_category_for_group (ZifMdComps *md, const gchar *group_id)
  *
  * Return value: %ZifCategory array of groups
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 GPtrArray *
 zif_md_comps_get_groups_for_category (ZifMdComps *md, const gchar *category_id,
@@ -660,7 +660,7 @@ out:
  *
  * Return value: gchar pointer array of package names (not %ZifPackage's)
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 GPtrArray *
 zif_md_comps_get_packages_for_group (ZifMdComps *md, const gchar *group_id,
@@ -772,7 +772,7 @@ zif_md_comps_init (ZifMdComps *md)
  *
  * Return value: A new #ZifMdComps class instance.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 ZifMdComps *
 zif_md_comps_new (void)

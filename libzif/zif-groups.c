@@ -67,7 +67,7 @@ static gpointer zif_groups_object = NULL;
  *
  * Return value: Our personal error quark.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 GQuark
 zif_groups_error_quark (void)
@@ -88,7 +88,7 @@ zif_groups_error_quark (void)
  *
  * Return value: %TRUE for success, %FALSE for failure
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 gboolean
 zif_groups_set_mapping_file (ZifGroups *groups, const gchar *mapping_file, GError **error)
@@ -132,7 +132,7 @@ out:
  *
  * Return value: %TRUE for success, %FALSE for failure
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 gboolean
 zif_groups_load (ZifGroups *groups, GError **error)
@@ -205,7 +205,7 @@ out:
  *
  * Return value: A #GPtrArray of the string groups that are supported
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 GPtrArray *
 zif_groups_get_groups (ZifGroups *groups, GError **error)
@@ -238,7 +238,7 @@ out:
  *
  * Return value: category list as an array of strings
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 GPtrArray *
 zif_groups_get_categories (ZifGroups *groups, GError **error)
@@ -279,7 +279,7 @@ out:
  *
  * Return value: the specific group name or %NULL
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 const gchar *
 zif_groups_get_group_for_cat (ZifGroups *groups, const gchar *cat, GError **error)
@@ -379,7 +379,7 @@ zif_groups_init (ZifGroups *groups)
  *
  * Return value: A new #ZifGroups class instance.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 ZifGroups *
 zif_groups_new (void)

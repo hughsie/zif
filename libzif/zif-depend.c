@@ -33,7 +33,7 @@
 /**
  * zif_depend_flag_to_string:
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 const gchar *
 zif_depend_flag_to_string (ZifDependFlag flag)
@@ -52,7 +52,7 @@ zif_depend_flag_to_string (ZifDependFlag flag)
 /**
  * zif_depend_new:
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 ZifDepend *
 zif_depend_new (const gchar *name, ZifDependFlag flag, const gchar *version)
@@ -69,7 +69,7 @@ zif_depend_new (const gchar *name, ZifDependFlag flag, const gchar *version)
 /**
  * zif_depend_new_value:
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 ZifDepend *
 zif_depend_new_value (gchar *name, ZifDependFlag flag, gchar *version)
@@ -86,7 +86,7 @@ zif_depend_new_value (gchar *name, ZifDependFlag flag, gchar *version)
 /**
  * zif_depend_ref:
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 ZifDepend *
 zif_depend_ref (ZifDepend *depend)
@@ -99,7 +99,7 @@ zif_depend_ref (ZifDepend *depend)
 /**
  * zif_depend_unref:
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 ZifDepend *
 zif_depend_unref (ZifDepend *depend)
@@ -118,7 +118,7 @@ zif_depend_unref (ZifDepend *depend)
 /**
  * zif_depend_to_string:
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 gchar *
 zif_depend_to_string (const ZifDepend *depend)

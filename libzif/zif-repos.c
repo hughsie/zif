@@ -62,7 +62,7 @@ static gpointer zif_repos_object = NULL;
  *
  * Return value: Our personal error quark.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 GQuark
 zif_repos_error_quark (void)
@@ -83,7 +83,7 @@ zif_repos_error_quark (void)
  *
  * Return value: %TRUE for success, %FALSE for failure
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 gboolean
 zif_repos_set_repos_dir (ZifRepos *repos, const gchar *repos_dir, GError **error)
@@ -186,7 +186,7 @@ out:
  *
  * Return value: %TRUE for success, %FALSE for failure
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 gboolean
 zif_repos_load (ZifRepos *repos, ZifState *state, GError **error)
@@ -311,7 +311,7 @@ out:
  *
  * Return value: a list of #ZifStore's
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 GPtrArray *
 zif_repos_get_stores (ZifRepos *repos, ZifState *state, GError **error)
@@ -350,7 +350,7 @@ out:
  *
  * Return value: a list of #ZifStore's
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 GPtrArray *
 zif_repos_get_stores_enabled (ZifRepos *repos, ZifState *state, GError **error)
@@ -396,7 +396,7 @@ out:
  *
  * Return value: A #ZifStoreRemote object, or %NULL
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 ZifStoreRemote *
 zif_repos_get_store (ZifRepos *repos, const gchar *id, ZifState *state, GError **error)
@@ -508,7 +508,7 @@ zif_repos_init (ZifRepos *repos)
  *
  * Return value: A new #ZifRepos class instance.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 ZifRepos *
 zif_repos_new (void)

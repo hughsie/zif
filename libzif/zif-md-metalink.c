@@ -267,7 +267,7 @@ out:
  *
  * Return value: the uris to use as an array of strings
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 GPtrArray *
 zif_md_metalink_get_uris (ZifMdMetalink *md, guint threshold,
@@ -386,7 +386,7 @@ zif_md_metalink_init (ZifMdMetalink *md)
  *
  * Return value: A new #ZifMdMetalink class instance.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 ZifMdMetalink *
 zif_md_metalink_new (void)

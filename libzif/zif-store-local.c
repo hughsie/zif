@@ -76,7 +76,7 @@ static gpointer zif_store_local_object = NULL;
  *
  * Return value: %TRUE for success, %FALSE for failure
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 gboolean
 zif_store_local_set_prefix (ZifStoreLocal *store, const gchar *prefix, GError **error)
@@ -1136,7 +1136,7 @@ zif_store_local_init (ZifStoreLocal *store)
  *
  * Return value: A new #ZifStoreLocal class instance.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 ZifStoreLocal *
 zif_store_local_new (void)

@@ -418,18 +418,18 @@ zif_store_remote_ensure_parent_dir_exists (const gchar *filename, GError **error
 /**
  * zif_store_remote_download:
  * @store: the #ZifStoreRemote object
- * @filename: the state filename to download, e.g. "Packages/hal-0.0.1.rpm"
+ * @filename: the state filename to download, e.g. "Packages/hal-0.1.0.rpm"
  * @directory: the directory to put the downloaded file, e.g. "/var/cache/zif"
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Downloads a remote package to a local directory.
- * NOTE: if @filename is "Packages/hal-0.0.1.rpm" and @directory is "/var/cache/zif"
- * then the downloaded file will "/var/cache/zif/hal-0.0.1.rpm"
+ * NOTE: if @filename is "Packages/hal-0.1.0.rpm" and @directory is "/var/cache/zif"
+ * then the downloaded file will "/var/cache/zif/hal-0.1.0.rpm"
  *
  * Return value: %TRUE for success, %FALSE for failure
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 gboolean
 zif_store_remote_download (ZifStoreRemote *store, const gchar *filename, const gchar *directory,
@@ -560,7 +560,7 @@ out:
  *
  * Return value: a %ZifUpdate, or %NULL for failure
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 ZifUpdate *
 zif_store_remote_get_update_detail (ZifStoreRemote *store, const gchar *package_id,
@@ -1515,7 +1515,7 @@ out:
  * zif_store_remote_set_from_file:
  * @state: a #ZifState to use for progress reporting
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 gboolean
 zif_store_remote_set_from_file (ZifStoreRemote *store, const gchar *repo_filename, const gchar *id,
@@ -1590,7 +1590,7 @@ out:
  *
  * Return value: %TRUE for success, %FALSE for failure
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 gboolean
 zif_store_remote_set_enabled (ZifStoreRemote *store, gboolean enabled, GError **error)
@@ -2709,7 +2709,7 @@ out:
  *
  * Return value: %TRUE or %FALSE
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 gboolean
 zif_store_remote_is_devel (ZifStoreRemote *store, ZifState *state, GError **error)
@@ -2781,7 +2781,7 @@ zif_store_remote_get_id (ZifStore *store)
  *
  * Return value: The repository name, e.g. "Fedora"
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 const gchar *
 zif_store_remote_get_name (ZifStoreRemote *store, ZifState *state, GError **error)
@@ -2825,7 +2825,7 @@ out:
  *
  * Return value: %TRUE or %FALSE
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 gboolean
 zif_store_remote_get_enabled (ZifStoreRemote *store, ZifState *state, GError **error)
@@ -3050,7 +3050,7 @@ out:
  *
  * Return value: A new #ZifStoreRemote class instance.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 ZifStoreRemote *
 zif_store_remote_new (void)

@@ -125,7 +125,7 @@ G_DEFINE_TYPE (ZifState, zif_state, G_TYPE_OBJECT)
  *
  * Return value: Our personal error quark.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 GQuark
 zif_state_error_quark (void)
@@ -142,7 +142,7 @@ zif_state_error_quark (void)
  * @error_handler_cb: a #ZifStateErrorHandlerCb which returns %FALSE if the error is fatal
  * @user_data: the user_data to be passed to the #ZifStateErrorHandlerCb
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 void
 zif_state_set_error_handler (ZifState *state, ZifStateErrorHandlerCb error_handler_cb, gpointer user_data)
@@ -158,7 +158,7 @@ zif_state_set_error_handler (ZifState *state, ZifStateErrorHandlerCb error_handl
  *
  * Return value: %FALSE if the error is fatal, %TRUE otherwise
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 gboolean
 zif_state_error_handler (ZifState *state, const GError *error)
@@ -211,7 +211,7 @@ zif_state_print_parent_chain (ZifState *state, guint level)
  *
  * Return value: the #GCancellable or %NULL
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 GCancellable *
 zif_state_get_cancellable (ZifState *state)
@@ -231,7 +231,7 @@ zif_state_get_cancellable (ZifState *state)
  * function as a cancellable is created for you at when you request it.
  * It's also safe to call this function more that once if you need to.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 void
 zif_state_set_cancellable (ZifState *state, GCancellable *cancellable)
@@ -250,7 +250,7 @@ zif_state_set_cancellable (ZifState *state, GCancellable *cancellable)
  *
  * Return value: %TRUE if the translation has a chance of being cancelled
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 gboolean
 zif_state_get_allow_cancel (ZifState *state)
@@ -266,7 +266,7 @@ zif_state_get_allow_cancel (ZifState *state)
  *
  * Set is this sub task can be cancelled safely.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 void
 zif_state_set_allow_cancel (ZifState *state, gboolean allow_cancel)
@@ -295,7 +295,7 @@ zif_state_set_allow_cancel (ZifState *state, gboolean allow_cancel)
  *
  * Return value: %TRUE if the signal was propagated, %FALSE for failure
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 gboolean
 zif_state_set_percentage (ZifState *state, guint percentage)
@@ -331,7 +331,7 @@ out:
  *
  * Return value: A percentage value, or G_MAXUINT for error
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 guint
 zif_state_get_percentage (ZifState *state)
@@ -434,7 +434,7 @@ zif_state_child_allow_cancel_cb (ZifState *child, gboolean allow_cancel, ZifStat
  *
  * Return value: %TRUE for success, %FALSE for failure
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 gboolean
 zif_state_reset (ZifState *state)
@@ -479,7 +479,7 @@ zif_state_reset (ZifState *state)
  *
  * Return value: a new %ZifState or %NULL for failure
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 ZifState *
 zif_state_get_child (ZifState *state)
@@ -524,7 +524,7 @@ zif_state_get_child (ZifState *state)
  *
  * Return value: %TRUE for success, %FALSE for failure
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 gboolean
 zif_state_set_number_steps_real (ZifState *state, guint steps, const gchar *strloc)
@@ -561,7 +561,7 @@ zif_state_set_number_steps_real (ZifState *state, guint steps, const gchar *strl
  *
  * Return value: %TRUE for success, %FALSE for failure
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 gboolean
 zif_state_done_real (ZifState *state, GError **error, const gchar *strloc)
@@ -648,7 +648,7 @@ out:
  *
  * Return value: %TRUE for success, %FALSE for failure
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 gboolean
 zif_state_finished_real (ZifState *state, GError **error, const gchar *strloc)
@@ -771,7 +771,7 @@ zif_state_init (ZifState *state)
  *
  * Return value: A new #ZifState class instance.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 ZifState *
 zif_state_new (void)

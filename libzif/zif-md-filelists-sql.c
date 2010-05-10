@@ -408,7 +408,7 @@ zif_md_filelists_sql_init (ZifMdFilelistsSql *md)
  *
  * Return value: A new #ZifMdFilelistsSql class instance.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 ZifMdFilelistsSql *
 zif_md_filelists_sql_new (void)

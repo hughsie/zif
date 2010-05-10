@@ -470,7 +470,7 @@ out:
  *
  * Return value: %TRUE for success, %FALSE for failure
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 gboolean
 zif_package_local_set_from_header (ZifPackageLocal *pkg, Header header, GError **error)
@@ -528,7 +528,7 @@ zif_package_local_rpmrc_to_string (rpmRC rc)
  *
  * Return value: %TRUE for success, %FALSE for failure
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 gboolean
 zif_package_local_set_from_filename (ZifPackageLocal *pkg, const gchar *filename, GError **error)
@@ -650,7 +650,7 @@ zif_package_local_init (ZifPackageLocal *pkg)
  *
  * Return value: A new #ZifPackageLocal class instance.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 ZifPackageLocal *
 zif_package_local_new (void)

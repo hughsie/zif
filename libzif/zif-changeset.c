@@ -65,7 +65,7 @@ G_DEFINE_TYPE (ZifChangeset, zif_changeset, G_TYPE_OBJECT)
  *
  * Return value: the date of the update, or 0 for unset.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 guint64
 zif_changeset_get_date (ZifChangeset *changeset)
@@ -82,7 +82,7 @@ zif_changeset_get_date (ZifChangeset *changeset)
  *
  * Return value: A string value, or %NULL.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 const gchar *
 zif_changeset_get_author (ZifChangeset *changeset)
@@ -99,7 +99,7 @@ zif_changeset_get_author (ZifChangeset *changeset)
  *
  * Return value: A string value, or %NULL.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 const gchar *
 zif_changeset_get_description (ZifChangeset *changeset)
@@ -116,7 +116,7 @@ zif_changeset_get_description (ZifChangeset *changeset)
  *
  * Return value: A string value, or %NULL.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 const gchar *
 zif_changeset_get_version (ZifChangeset *changeset)
@@ -132,7 +132,7 @@ zif_changeset_get_version (ZifChangeset *changeset)
  *
  * Sets the changeset date status.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 void
 zif_changeset_set_date (ZifChangeset *changeset, guint64 date)
@@ -148,7 +148,7 @@ zif_changeset_set_date (ZifChangeset *changeset, guint64 date)
  *
  * Sets the changeset author.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 void
 zif_changeset_set_author (ZifChangeset *changeset, const gchar *author)
@@ -167,7 +167,7 @@ zif_changeset_set_author (ZifChangeset *changeset, const gchar *author)
  *
  * Sets the changeset description.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 void
 zif_changeset_set_description (ZifChangeset *changeset, const gchar *description)
@@ -186,7 +186,7 @@ zif_changeset_set_description (ZifChangeset *changeset, const gchar *description
  *
  * Sets the date the changeset was version.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 void
 zif_changeset_set_version (ZifChangeset *changeset, const gchar *version)
@@ -208,7 +208,7 @@ zif_changeset_set_version (ZifChangeset *changeset, const gchar *version)
  *
  * Return value: %TRUE if the data was parsed correctly
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 gboolean
 zif_changeset_parse_header (ZifChangeset *changeset, const gchar *header, GError **error)
@@ -328,7 +328,7 @@ zif_changeset_class_init (ZifChangesetClass *klass)
 	/**
 	 * ZifChangeset:date:
 	 *
-	 * Since: 0.0.1
+	 * Since: 0.1.0
 	 */
 	pspec = g_param_spec_uint64 ("date", NULL, NULL,
 				     0, G_MAXUINT64, 0,
@@ -338,7 +338,7 @@ zif_changeset_class_init (ZifChangesetClass *klass)
 	/**
 	 * ZifChangeset:author:
 	 *
-	 * Since: 0.0.1
+	 * Since: 0.1.0
 	 */
 	pspec = g_param_spec_string ("author", NULL, NULL,
 				     NULL,
@@ -348,7 +348,7 @@ zif_changeset_class_init (ZifChangesetClass *klass)
 	/**
 	 * ZifChangeset:description:
 	 *
-	 * Since: 0.0.1
+	 * Since: 0.1.0
 	 */
 	pspec = g_param_spec_string ("description", NULL, NULL,
 				     NULL,
@@ -358,7 +358,7 @@ zif_changeset_class_init (ZifChangesetClass *klass)
 	/**
 	 * ZifChangeset:version:
 	 *
-	 * Since: 0.0.1
+	 * Since: 0.1.0
 	 */
 	pspec = g_param_spec_string ("version", NULL, NULL,
 				     NULL,
@@ -386,7 +386,7 @@ zif_changeset_init (ZifChangeset *changeset)
  *
  * Return value: A new #ZifChangeset class instance.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 ZifChangeset *
 zif_changeset_new (void)

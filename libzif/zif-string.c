@@ -52,7 +52,7 @@ struct ZifString {
  *
  * Return value: New allocated object
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 ZifString *
 zif_string_new (const gchar *value)
@@ -73,7 +73,7 @@ zif_string_new (const gchar *value)
  *
  * Return value: New allocated object
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 ZifString *
 zif_string_new_value (gchar *value)
@@ -94,7 +94,7 @@ zif_string_new_value (gchar *value)
  *
  * Return value: string value
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 const gchar *
 zif_string_get_value (ZifString *string)
@@ -111,7 +111,7 @@ zif_string_get_value (ZifString *string)
  *
  * Return value: the #ZifString object
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 ZifString *
 zif_string_ref (ZifString *string)
@@ -130,7 +130,7 @@ zif_string_ref (ZifString *string)
  *
  * Return value: the #ZifString object
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 ZifString *
 zif_string_unref (ZifString *string)

@@ -838,7 +838,7 @@ zif_md_primary_xml_init (ZifMdPrimaryXml *md)
  *
  * Return value: A new #ZifMdPrimaryXml class instance.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 ZifMdPrimaryXml *
 zif_md_primary_xml_new (void)

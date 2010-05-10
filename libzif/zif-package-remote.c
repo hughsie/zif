@@ -71,7 +71,7 @@ G_DEFINE_TYPE (ZifPackageRemote, zif_package_remote, ZIF_TYPE_PACKAGE)
  *
  * Return value: %TRUE for success, %FALSE for failure
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 gboolean
 zif_package_remote_set_from_repo (ZifPackageRemote *pkg, guint length, gchar **type, gchar **data, const gchar *repo_id, GError **error)
@@ -159,7 +159,7 @@ out:
  *
  * Return value: the pkgid hash.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 const gchar *
 zif_package_remote_get_pkgid (ZifPackageRemote *pkg)
@@ -175,7 +175,7 @@ zif_package_remote_get_pkgid (ZifPackageRemote *pkg)
  *
  * Sets the pkgid used internally to track the package item.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 void
 zif_package_remote_set_pkgid (ZifPackageRemote *pkg, const gchar *pkgid)
@@ -194,7 +194,7 @@ zif_package_remote_set_pkgid (ZifPackageRemote *pkg, const gchar *pkgid)
  * Sets the store used to create this package, which we may need of we ever
  * need to ensure() data at runtime.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 void
 zif_package_remote_set_store_remote (ZifPackageRemote *pkg, ZifStoreRemote *store)
@@ -288,7 +288,7 @@ zif_package_remote_init (ZifPackageRemote *pkg)
  *
  * Return value: A new #ZifPackageRemote class instance.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 ZifPackageRemote *
 zif_package_remote_new (void)

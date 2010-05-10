@@ -48,7 +48,7 @@
  *
  * Return value: Our personal error quark.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 GQuark
 zif_utils_error_quark (void)
@@ -66,7 +66,7 @@ zif_utils_error_quark (void)
  *
  * Return value: %TRUE if we initialised correctly
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 gboolean
 zif_init (void)
@@ -90,7 +90,7 @@ zif_init (void)
  *
  * Return value: %TRUE for positive, %FALSE for negative
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 gboolean
 zif_boolean_from_text (const gchar *text)
@@ -109,7 +109,7 @@ zif_boolean_from_text (const gchar *text)
  *
  * Print an array of strings to %STDOUT.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 void
 zif_list_print_array (GPtrArray *array)
@@ -151,7 +151,7 @@ zif_package_id_build (const gchar *name, const gchar *version,
  *
  * Return value: The PackageId value, or %NULL if invalid
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 gchar *
 zif_package_id_from_nevra (const gchar *name, guint epoch, const gchar *version, const gchar *release, const gchar *arch, const gchar *data)
@@ -217,7 +217,7 @@ zif_package_convert_evr (gchar *evr, const gchar **epoch, const gchar **version,
  *
  * Return value: 1 for a>b, 0 for a==b, -1 for b>a
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 gint
 zif_compare_evr (const gchar *a, const gchar *b)
@@ -452,7 +452,7 @@ out:
  *
  * Return value: %TRUE if the file was decompressed
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 gboolean
 zif_file_decompress (const gchar *in, const gchar *out, ZifState *state, GError **error)
@@ -491,7 +491,7 @@ out:
  *
  * Return value: %TRUE if the file was decompressed
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 gboolean
 zif_file_untar (const gchar *filename, const gchar *directory, GError **error)
@@ -580,7 +580,7 @@ out:
  *
  * Return value: the uncompressed file name, e.g. /lib/dave.tar, use g_free() to free.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 gchar *
 zif_file_get_uncompressed_name (const gchar *filename)
@@ -610,7 +610,7 @@ zif_file_get_uncompressed_name (const gchar *filename)
  *
  * Return value: %TRUE if the file needs decompression
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 gboolean
 zif_file_is_compressed_name (const gchar *filename)
@@ -634,7 +634,7 @@ zif_file_is_compressed_name (const gchar *filename)
  *
  * Return value: a GStrv or %NULL if invalid, use g_strfreev() to free
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 gchar **
 zif_package_id_split (const gchar *package_id)
@@ -723,8 +723,8 @@ zif_utils_test (EggTest *test)
 	 ****************           NEVRA          ******************
 	 ************************************************************/
 	egg_test_title (test, "no epoch");
-	package_id = zif_package_id_from_nevra ("kernel", 0, "0.0.1", "1", "i386", "fedora");
-	if (g_strcmp0 (package_id, "kernel;0.0.1-1;i386;fedora") == 0)
+	package_id = zif_package_id_from_nevra ("kernel", 0, "0.1.0", "1", "i386", "fedora");
+	if (g_strcmp0 (package_id, "kernel;0.1.0-1;i386;fedora") == 0)
 		egg_test_success (test, NULL);
 	else
 		egg_test_failed (test, "incorrect package_id '%s'", package_id);
@@ -732,8 +732,8 @@ zif_utils_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "epoch value");
-	package_id = zif_package_id_from_nevra ("kernel", 2, "0.0.1", "1", "i386", "fedora");
-	if (g_strcmp0 (package_id, "kernel;2:0.0.1-1;i386;fedora") == 0)
+	package_id = zif_package_id_from_nevra ("kernel", 2, "0.1.0", "1", "i386", "fedora");
+	if (g_strcmp0 (package_id, "kernel;2:0.1.0-1;i386;fedora") == 0)
 		egg_test_success (test, NULL);
 	else
 		egg_test_failed (test, "incorrect package_id '%s'", package_id);
@@ -811,7 +811,7 @@ zif_utils_test (EggTest *test)
 
 	/************************************************************/
 	egg_test_title (test, "compare new epoch");
-	val = zif_compare_evr ("1:0.0.1-1", "1.0.2-2");
+	val = zif_compare_evr ("1:0.1.0-1", "1.0.2-2");
 	egg_test_assert (test, (val == 1));
 
 	/************************************************************/

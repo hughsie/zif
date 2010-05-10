@@ -67,7 +67,7 @@ G_DEFINE_TYPE (ZifMonitor, zif_monitor, G_TYPE_OBJECT)
  *
  * Return value: Our personal error quark.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 GQuark
 zif_monitor_error_quark (void)
@@ -102,7 +102,7 @@ zif_monitor_file_monitor_cb (GFileMonitor *file_monitor, GFile *file, GFile *oth
  *
  * Return value: %TRUE for success, %FALSE for failure
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 gboolean
 zif_monitor_add_watch (ZifMonitor *monitor, const gchar *filename, GError **error)
@@ -187,7 +187,7 @@ zif_monitor_init (ZifMonitor *monitor)
  *
  * Return value: A new #ZifMonitor class instance.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 ZifMonitor *
 zif_monitor_new (void)

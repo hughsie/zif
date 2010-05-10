@@ -373,7 +373,7 @@ zif_md_other_sql_init (ZifMdOtherSql *md)
  *
  * Return value: A new #ZifMdOtherSql class instance.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 ZifMdOtherSql *
 zif_md_other_sql_new (void)

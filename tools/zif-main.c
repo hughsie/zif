@@ -1351,7 +1351,7 @@ main (int argc, char *argv[])
 	if (g_strcmp0 (mode, "localinstall") == 0) {
 		if (value == NULL) {
 			g_print ("specify a filename");
-			value = "/home/hughsie/rpmbuild/REPOS/fedora/11/i386/dum-0.0.1-0.8.20090511git.fc11.i586.rpm";
+			value = "/home/hughsie/rpmbuild/REPOS/fedora/11/i386/zif-0.1.0-0.8.20090511git.fc11.i586.rpm";
 			//goto out;
 		}
 		pk_progress_bar_start (progressbar, "Installing");

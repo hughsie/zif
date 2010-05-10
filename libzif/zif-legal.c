@@ -58,7 +58,7 @@ static gpointer zif_legal_object = NULL;
  *
  * Return value: Our personal error quark.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 GQuark
 zif_legal_error_quark (void)
@@ -144,7 +144,7 @@ zif_legal_is_free_part (ZifLegal *legal, const gchar *string)
  *
  * Return value: %FALSE for failure to load legal data.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 gboolean
 zif_legal_is_free (ZifLegal *legal, const gchar *string, gboolean *is_free, GError **error)
@@ -226,7 +226,7 @@ out:
  *
  * Sets the filename to use as the system wide legal file.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 void
 zif_legal_set_filename (ZifLegal *legal, const gchar *filename)
@@ -297,7 +297,7 @@ zif_legal_init (ZifLegal *legal)
  *
  * Return value: A new #ZifLegal class instance.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 ZifLegal *
 zif_legal_new (void)

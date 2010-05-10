@@ -490,7 +490,7 @@ out:
  *
  * Return value: #GPtrArray of #ZifUpdate's, free with g_ptr_array_unref()
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 GPtrArray *
 zif_md_updateinfo_get_detail (ZifMdUpdateinfo *md,
@@ -530,7 +530,7 @@ out:
  *
  * Return value: #GPtrArray of #ZifUpdate's, free with g_ptr_array_unref()
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 GPtrArray *
 zif_md_updateinfo_get_detail_for_package (ZifMdUpdateinfo *md, const gchar *package_id,
@@ -650,7 +650,7 @@ zif_md_updateinfo_init (ZifMdUpdateinfo *md)
  *
  * Return value: A new #ZifMdUpdateinfo class instance.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 ZifMdUpdateinfo *
 zif_md_updateinfo_new (void)

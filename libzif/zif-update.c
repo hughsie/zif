@@ -124,7 +124,7 @@ zif_update_kind_to_string (ZifUpdateState kind)
  *
  * Return value: the state of update, e.g. %PK_UPDATE_STATE_ENUM_STABLE.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 ZifUpdateState
 zif_update_get_state (ZifUpdate *update)
@@ -141,7 +141,7 @@ zif_update_get_state (ZifUpdate *update)
  *
  * Return value: the state of update, e.g. %PK_INFO_ENUM_SECURITY.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 ZifUpdateKind
 zif_update_get_kind (ZifUpdate *update)
@@ -158,7 +158,7 @@ zif_update_get_kind (ZifUpdate *update)
  *
  * Return value: A string value, or %NULL.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 const gchar *
 zif_update_get_id (ZifUpdate *update)
@@ -175,7 +175,7 @@ zif_update_get_id (ZifUpdate *update)
  *
  * Return value: A string value, or %NULL.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 const gchar *
 zif_update_get_title (ZifUpdate *update)
@@ -192,7 +192,7 @@ zif_update_get_title (ZifUpdate *update)
  *
  * Return value: A string value, or %NULL.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 const gchar *
 zif_update_get_description (ZifUpdate *update)
@@ -209,7 +209,7 @@ zif_update_get_description (ZifUpdate *update)
  *
  * Return value: A string value, or %NULL.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 const gchar *
 zif_update_get_issued (ZifUpdate *update)
@@ -226,7 +226,7 @@ zif_update_get_issued (ZifUpdate *update)
  *
  * Return value: %TRUE for a reboot.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 gboolean
 zif_update_get_reboot (ZifUpdate *update)
@@ -243,7 +243,7 @@ zif_update_get_reboot (ZifUpdate *update)
  *
  * Return value: A #GPtrArray of #ZifUpdateInfo, or %NULL.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 GPtrArray *
 zif_update_get_update_infos (ZifUpdate *update)
@@ -260,7 +260,7 @@ zif_update_get_update_infos (ZifUpdate *update)
  *
  * Return value: A #GPtrArray of #ZifPackage, or %NULL.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 GPtrArray *
 zif_update_get_packages (ZifUpdate *update)
@@ -277,7 +277,7 @@ zif_update_get_packages (ZifUpdate *update)
  *
  * Return value: A #GPtrArray of #ZifChangeset's, or %NULL.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 GPtrArray *
 zif_update_get_changelog (ZifUpdate *update)
@@ -293,7 +293,7 @@ zif_update_get_changelog (ZifUpdate *update)
  *
  * Sets the update state status.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 void
 zif_update_set_state (ZifUpdate *update, ZifUpdateState state)
@@ -309,7 +309,7 @@ zif_update_set_state (ZifUpdate *update, ZifUpdateState state)
  *
  * Sets the kind of update.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 void
 zif_update_set_kind (ZifUpdate *update, ZifUpdateKind kind)
@@ -325,7 +325,7 @@ zif_update_set_kind (ZifUpdate *update, ZifUpdateKind kind)
  *
  * Sets the update ID.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 void
 zif_update_set_id (ZifUpdate *update, const gchar *id)
@@ -344,7 +344,7 @@ zif_update_set_id (ZifUpdate *update, const gchar *id)
  *
  * Sets the update title.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 void
 zif_update_set_title (ZifUpdate *update, const gchar *title)
@@ -363,7 +363,7 @@ zif_update_set_title (ZifUpdate *update, const gchar *title)
  *
  * Sets the update description.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 void
 zif_update_set_description (ZifUpdate *update, const gchar *description)
@@ -382,7 +382,7 @@ zif_update_set_description (ZifUpdate *update, const gchar *description)
  *
  * Sets the time the update was issued.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 void
 zif_update_set_issued (ZifUpdate *update, const gchar *issued)
@@ -401,7 +401,7 @@ zif_update_set_issued (ZifUpdate *update, const gchar *issued)
  *
  * Sets the update reboot status
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 void
 zif_update_set_reboot (ZifUpdate *update, gboolean reboot)
@@ -418,7 +418,7 @@ zif_update_set_reboot (ZifUpdate *update, gboolean reboot)
  *
  * Adds some update info to the update.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 void
 zif_update_add_update_info (ZifUpdate *update, ZifUpdateInfo *update_info)
@@ -435,7 +435,7 @@ zif_update_add_update_info (ZifUpdate *update, ZifUpdateInfo *update_info)
  *
  * Adds some update info to the update.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 void
 zif_update_add_package (ZifUpdate *update, ZifPackage *package)
@@ -452,7 +452,7 @@ zif_update_add_package (ZifUpdate *update, ZifPackage *package)
  *
  * Adds a changeset to the update.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 void
 zif_update_add_changeset (ZifUpdate *update, ZifChangeset *changeset)
@@ -545,7 +545,7 @@ zif_update_class_init (ZifUpdateClass *klass)
 	/**
 	 * ZifUpdate:state:
 	 *
-	 * Since: 0.0.1
+	 * Since: 0.1.0
 	 */
 	pspec = g_param_spec_uint ("state", NULL, NULL,
 				   0, G_MAXUINT, 0,
@@ -555,7 +555,7 @@ zif_update_class_init (ZifUpdateClass *klass)
 	/**
 	 * ZifUpdate:kind:
 	 *
-	 * Since: 0.0.1
+	 * Since: 0.1.0
 	 */
 	pspec = g_param_spec_uint ("kind", NULL, NULL,
 				   0, G_MAXUINT, 0,
@@ -565,7 +565,7 @@ zif_update_class_init (ZifUpdateClass *klass)
 	/**
 	 * ZifUpdate:id:
 	 *
-	 * Since: 0.0.1
+	 * Since: 0.1.0
 	 */
 	pspec = g_param_spec_string ("id", NULL, NULL,
 				     NULL,
@@ -575,7 +575,7 @@ zif_update_class_init (ZifUpdateClass *klass)
 	/**
 	 * ZifUpdate:title:
 	 *
-	 * Since: 0.0.1
+	 * Since: 0.1.0
 	 */
 	pspec = g_param_spec_string ("title", NULL, NULL,
 				     NULL,
@@ -585,7 +585,7 @@ zif_update_class_init (ZifUpdateClass *klass)
 	/**
 	 * ZifUpdate:description:
 	 *
-	 * Since: 0.0.1
+	 * Since: 0.1.0
 	 */
 	pspec = g_param_spec_string ("description", NULL, NULL,
 				     NULL,
@@ -595,7 +595,7 @@ zif_update_class_init (ZifUpdateClass *klass)
 	/**
 	 * ZifUpdate:issued:
 	 *
-	 * Since: 0.0.1
+	 * Since: 0.1.0
 	 */
 	pspec = g_param_spec_string ("issued", NULL, NULL,
 				     NULL,
@@ -605,7 +605,7 @@ zif_update_class_init (ZifUpdateClass *klass)
 	/**
 	 * ZifUpdate:reboot:
 	 *
-	 * Since: 0.0.1
+	 * Since: 0.1.0
 	 */
 	pspec = g_param_spec_boolean ("reboot", NULL, NULL,
 				      FALSE,
@@ -639,7 +639,7 @@ zif_update_init (ZifUpdate *update)
  *
  * Return value: A new #ZifUpdate class instance.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 ZifUpdate *
 zif_update_new (void)

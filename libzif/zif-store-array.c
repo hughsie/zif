@@ -100,7 +100,7 @@ zif_role_to_string (ZifRole role)
  *
  * Return value: %TRUE for success, %FALSE for failure
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 gboolean
 zif_store_array_add_store (GPtrArray *store_array, ZifStore *store)
@@ -120,7 +120,7 @@ zif_store_array_add_store (GPtrArray *store_array, ZifStore *store)
  *
  * Return value: %TRUE for success, %FALSE for failure
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 gboolean
 zif_store_array_add_stores (GPtrArray *store_array, GPtrArray *stores)
@@ -150,7 +150,7 @@ zif_store_array_add_stores (GPtrArray *store_array, GPtrArray *stores)
  *
  * Return value: %TRUE for success, %FALSE for failure
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 gboolean
 zif_store_array_add_local (GPtrArray *store_array, ZifState *state, GError **error)
@@ -174,7 +174,7 @@ zif_store_array_add_local (GPtrArray *store_array, ZifState *state, GError **err
  *
  * Return value: %TRUE for success, %FALSE for failure
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 gboolean
 zif_store_array_add_remote (GPtrArray *store_array, ZifState *state, GError **error)
@@ -215,7 +215,7 @@ out:
  *
  * Return value: %TRUE for success, %FALSE for failure
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 gboolean
 zif_store_array_add_remote_enabled (GPtrArray *store_array, ZifState *state, GError **error)
@@ -351,7 +351,7 @@ out:
  *
  * Return value: A single #ZifPackage or %NULL
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 ZifPackage *
 zif_store_array_find_package (GPtrArray *store_array, const gchar *package_id, ZifState *state, GError **error)
@@ -428,7 +428,7 @@ out:
  *
  * Return value: %TRUE for success, %FALSE for failure
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 gboolean
 zif_store_array_clean (GPtrArray *store_array,
@@ -493,7 +493,7 @@ out:
  *
  * Return value: %TRUE for success, %FALSE for failure
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 gboolean
 zif_store_array_refresh (GPtrArray *store_array, gboolean force,
@@ -558,7 +558,7 @@ out:
  *
  * Return value: an array of #ZifPackage's
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 GPtrArray *
 zif_store_array_resolve (GPtrArray *store_array, gchar **search,
@@ -580,7 +580,7 @@ zif_store_array_resolve (GPtrArray *store_array, gchar **search,
  *
  * Return value: an array of #ZifPackage's
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 GPtrArray *
 zif_store_array_search_name (GPtrArray *store_array, gchar **search,
@@ -602,7 +602,7 @@ zif_store_array_search_name (GPtrArray *store_array, gchar **search,
  *
  * Return value: an array of #ZifPackage's
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 GPtrArray *
 zif_store_array_search_details (GPtrArray *store_array, gchar **search,
@@ -624,7 +624,7 @@ zif_store_array_search_details (GPtrArray *store_array, gchar **search,
  *
  * Return value: an array of #ZifPackage's
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 GPtrArray *
 zif_store_array_search_group (GPtrArray *store_array, gchar **group_enum,
@@ -646,7 +646,7 @@ zif_store_array_search_group (GPtrArray *store_array, gchar **group_enum,
  *
  * Return value: an array of #ZifPackage's
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 GPtrArray *
 zif_store_array_search_category (GPtrArray *store_array, gchar **group_id,
@@ -699,7 +699,7 @@ out:
  *
  * Return value: an array of #ZifPackage's
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 GPtrArray *
 zif_store_array_search_file (GPtrArray *store_array, gchar **search,
@@ -720,7 +720,7 @@ zif_store_array_search_file (GPtrArray *store_array, gchar **search,
  *
  * Return value: an array of #ZifPackage's
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 GPtrArray *
 zif_store_array_get_packages (GPtrArray *store_array,
@@ -742,7 +742,7 @@ zif_store_array_get_packages (GPtrArray *store_array,
  *
  * Return value: an array of #ZifPackage's
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 GPtrArray *
 zif_store_array_get_updates (GPtrArray *store_array, GPtrArray *packages,
@@ -764,7 +764,7 @@ zif_store_array_get_updates (GPtrArray *store_array, GPtrArray *packages,
  *
  * Return value: an array of #ZifPackage's
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 GPtrArray *
 zif_store_array_what_provides (GPtrArray *store_array, gchar **search,
@@ -791,7 +791,7 @@ zif_store_array_what_provides (GPtrArray *store_array, gchar **search,
  *
  * Return value: an array of #ZifCategory's
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 GPtrArray *
 zif_store_array_get_categories (GPtrArray *store_array,
@@ -849,7 +849,7 @@ out:
  *
  * Return value: A new #GPtrArray class instance.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 GPtrArray *
 zif_store_array_new (void)

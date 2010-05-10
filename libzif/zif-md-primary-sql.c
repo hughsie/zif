@@ -612,7 +612,7 @@ zif_md_primary_sql_init (ZifMdPrimarySql *md)
  *
  * Return value: A new #ZifMdPrimarySql class instance.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 ZifMdPrimarySql *
 zif_md_primary_sql_new (void)

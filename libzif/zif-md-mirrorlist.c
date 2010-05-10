@@ -129,7 +129,7 @@ out:
  *
  * Return value: the uris to use as an array of strings
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 GPtrArray *
 zif_md_mirrorlist_get_uris (ZifMdMirrorlist *md, ZifState *state, GError **error)
@@ -229,7 +229,7 @@ zif_md_mirrorlist_init (ZifMdMirrorlist *md)
  *
  * Return value: A new #ZifMdMirrorlist class instance.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 ZifMdMirrorlist *
 zif_md_mirrorlist_new (void)

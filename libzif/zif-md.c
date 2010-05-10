@@ -74,7 +74,7 @@ G_DEFINE_TYPE (ZifMd, zif_md, G_TYPE_OBJECT)
  *
  * Return value: Our personal error quark.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 GQuark
 zif_md_error_quark (void)
@@ -93,7 +93,7 @@ zif_md_error_quark (void)
  *
  * Return value: the repo id.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 const gchar *
 zif_md_get_id (ZifMd *md)
@@ -110,7 +110,7 @@ zif_md_get_id (ZifMd *md)
  *
  * Return value: the filename
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 const gchar *
 zif_md_get_filename (ZifMd *md)
@@ -127,7 +127,7 @@ zif_md_get_filename (ZifMd *md)
  *
  * Return value: the location
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 const gchar *
 zif_md_get_location (ZifMd *md)
@@ -144,7 +144,7 @@ zif_md_get_location (ZifMd *md)
  *
  * Return value: the type
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 ZifMdType
 zif_md_get_mdtype (ZifMd *md)
@@ -161,7 +161,7 @@ zif_md_get_mdtype (ZifMd *md)
  *
  * Return value: the filename
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 const gchar *
 zif_md_get_filename_uncompressed (ZifMd *md)
@@ -179,7 +179,7 @@ zif_md_get_filename_uncompressed (ZifMd *md)
  *
  * Return value: %TRUE for success, %FALSE for failure
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 gboolean
 zif_md_set_filename (ZifMd *md, const gchar *filename)
@@ -205,7 +205,7 @@ zif_md_set_filename (ZifMd *md, const gchar *filename)
  * Sets the maximum age of the metadata file. Any files older than this will
  * be deleted and re-downloaded.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 void
 zif_md_set_max_age (ZifMd *md, guint64 max_age)
@@ -223,7 +223,7 @@ zif_md_set_max_age (ZifMd *md, guint64 max_age)
  *
  * Return value: %TRUE for success, %FALSE for failure
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 gboolean
 zif_md_set_timestamp (ZifMd *md, guint timestamp)
@@ -246,7 +246,7 @@ zif_md_set_timestamp (ZifMd *md, guint timestamp)
  *
  * Return value: %TRUE for success, %FALSE for failure
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 gboolean
 zif_md_set_location (ZifMd *md, const gchar *location)
@@ -269,7 +269,7 @@ zif_md_set_location (ZifMd *md, const gchar *location)
  *
  * Return value: %TRUE for success, %FALSE for failure
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 gboolean
 zif_md_set_checksum (ZifMd *md, const gchar *checksum)
@@ -292,7 +292,7 @@ zif_md_set_checksum (ZifMd *md, const gchar *checksum)
  *
  * Return value: %TRUE for success, %FALSE for failure
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 gboolean
 zif_md_set_checksum_uncompressed (ZifMd *md, const gchar *checksum_uncompressed)
@@ -315,7 +315,7 @@ zif_md_set_checksum_uncompressed (ZifMd *md, const gchar *checksum_uncompressed)
  *
  * Return value: %TRUE for success, %FALSE for failure
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 gboolean
 zif_md_set_checksum_type (ZifMd *md, GChecksumType checksum_type)
@@ -337,7 +337,7 @@ zif_md_set_checksum_type (ZifMd *md, GChecksumType checksum_type)
  *
  * Return value: %TRUE for success, %FALSE for failure
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 gboolean
 zif_md_set_mdtype (ZifMd *md, ZifMdType type)
@@ -384,7 +384,7 @@ out:
  *
  * Return value: %TRUE for success, %FALSE for failure
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 gboolean
 zif_md_set_id (ZifMd *md, const gchar *id)
@@ -406,7 +406,7 @@ zif_md_set_id (ZifMd *md, const gchar *id)
  *
  * Return value: %TRUE for success, %FALSE for failure
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 gboolean
 zif_md_set_store_remote (ZifMd *md, ZifStoreRemote *remote)
@@ -428,7 +428,7 @@ zif_md_set_store_remote (ZifMd *md, ZifStoreRemote *remote)
  *
  * Return value: A #ZifStoreRemote or %NULL for unset
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 ZifStoreRemote *
 zif_md_get_store_remote (ZifMd *md)
@@ -473,7 +473,7 @@ out:
  *
  * Return value: %TRUE for success, %FALSE for failure
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 gboolean
 zif_md_load (ZifMd *md, ZifState *state, GError **error)
@@ -637,7 +637,7 @@ out:
  *
  * Return value: %TRUE for success, %FALSE for failure
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 gboolean
 zif_md_unload (ZifMd *md, ZifState *state, GError **error)
@@ -668,7 +668,7 @@ zif_md_unload (ZifMd *md, ZifState *state, GError **error)
  *
  * Return value: an array of #ZifPackageRemote's
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 GPtrArray *
 zif_md_resolve (ZifMd *md, gchar **search, ZifState *state, GError **error)
@@ -704,7 +704,7 @@ out:
  *
  * Return value: a string list of pkgId's
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 GPtrArray *
 zif_md_search_file (ZifMd *md, gchar **search, ZifState *state, GError **error)
@@ -739,7 +739,7 @@ out:
  *
  * Return value: an array of #ZifPackageRemote's
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 GPtrArray *
 zif_md_search_name (ZifMd *md, gchar **search, ZifState *state, GError **error)
@@ -774,7 +774,7 @@ out:
  *
  * Return value: an array of #ZifPackageRemote's
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 GPtrArray *
 zif_md_search_details (ZifMd *md, gchar **search, ZifState *state, GError **error)
@@ -809,7 +809,7 @@ out:
  *
  * Return value: an array of #ZifPackageRemote's
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 GPtrArray *
 zif_md_search_group (ZifMd *md, gchar **search, ZifState *state, GError **error)
@@ -844,7 +844,7 @@ out:
  *
  * Return value: an array of #ZifPackageRemote's
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 GPtrArray *
 zif_md_search_pkgid (ZifMd *md, gchar **search, ZifState *state, GError **error)
@@ -879,7 +879,7 @@ out:
  *
  * Return value: an array of #ZifPackageRemote's
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 GPtrArray *
 zif_md_what_provides (ZifMd *md, gchar **search,
@@ -915,7 +915,7 @@ out:
  *
  * Return value: an array of #ZifPackageRemote's
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 GPtrArray *
 zif_md_find_package (ZifMd *md, const gchar *package_id, ZifState *state, GError **error)
@@ -950,7 +950,7 @@ out:
  *
  * Return value: an array of #ZifChangeset's
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 GPtrArray *
 zif_md_get_changelog (ZifMd *md, const gchar *pkgid, ZifState *state, GError **error)
@@ -985,7 +985,7 @@ out:
  *
  * Return value: an array of strings, free with g_ptr_array_unref()
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 GPtrArray *
 zif_md_get_files (ZifMd *md, ZifPackage *package, ZifState *state, GError **error)
@@ -1019,7 +1019,7 @@ out:
  *
  * Return value: an array of #ZifPackageRemote's
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 GPtrArray *
 zif_md_get_packages (ZifMd *md, ZifState *state, GError **error)
@@ -1052,7 +1052,7 @@ out:
  *
  * Return value: %TRUE for success, %FALSE for failure
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 gboolean
 zif_md_clean (ZifMd *md, GError **error)
@@ -1121,7 +1121,7 @@ out:
 /**
  * zif_md_type_to_text:
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 const gchar *
 zif_md_type_to_text (ZifMdType type)
@@ -1164,7 +1164,7 @@ zif_md_type_to_text (ZifMdType type)
  *
  * Return value: %TRUE for success, %FALSE for failure
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 gboolean
 zif_md_file_check (ZifMd *md, gboolean use_uncompressed, ZifState *state, GError **error)
@@ -1348,7 +1348,7 @@ zif_md_init (ZifMd *md)
  *
  * Return value: A new #ZifMd class instance.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 ZifMd *
 zif_md_new (void)

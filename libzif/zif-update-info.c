@@ -63,7 +63,7 @@ G_DEFINE_TYPE (ZifUpdateInfo, zif_update_info, G_TYPE_OBJECT)
  *
  * Return value: the kind of update info, e.g. %ZIF_UPDATE_INFO_KIND_CVE.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 ZifUpdateInfoKind
 zif_update_info_get_kind (ZifUpdateInfo *update_info)
@@ -80,7 +80,7 @@ zif_update_info_get_kind (ZifUpdateInfo *update_info)
  *
  * Return value: A string value, or %NULL.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 const gchar *
 zif_update_info_get_url (ZifUpdateInfo *update_info)
@@ -97,7 +97,7 @@ zif_update_info_get_url (ZifUpdateInfo *update_info)
  *
  * Return value: A string value, or %NULL.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 const gchar *
 zif_update_info_get_title (ZifUpdateInfo *update_info)
@@ -113,7 +113,7 @@ zif_update_info_get_title (ZifUpdateInfo *update_info)
  *
  * Sets the update_info kind status.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 void
 zif_update_info_set_kind (ZifUpdateInfo *update_info, ZifUpdateInfoKind kind)
@@ -129,7 +129,7 @@ zif_update_info_set_kind (ZifUpdateInfo *update_info, ZifUpdateInfoKind kind)
  *
  * Sets the update info URL.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 void
 zif_update_info_set_url (ZifUpdateInfo *update_info, const gchar *url)
@@ -148,7 +148,7 @@ zif_update_info_set_url (ZifUpdateInfo *update_info, const gchar *url)
  *
  * Sets the update info title.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 void
 zif_update_info_set_title (ZifUpdateInfo *update_info, const gchar *title)
@@ -262,7 +262,7 @@ zif_update_info_class_init (ZifUpdateInfoClass *klass)
 	/**
 	 * ZifUpdateInfo:kind:
 	 *
-	 * Since: 0.0.1
+	 * Since: 0.1.0
 	 */
 	pspec = g_param_spec_uint ("kind", NULL, NULL,
 				   0, G_MAXUINT, 0,
@@ -272,7 +272,7 @@ zif_update_info_class_init (ZifUpdateInfoClass *klass)
 	/**
 	 * ZifUpdateInfo:url:
 	 *
-	 * Since: 0.0.1
+	 * Since: 0.1.0
 	 */
 	pspec = g_param_spec_string ("url", NULL, NULL,
 				     NULL,
@@ -282,7 +282,7 @@ zif_update_info_class_init (ZifUpdateInfoClass *klass)
 	/**
 	 * ZifUpdateInfo:title:
 	 *
-	 * Since: 0.0.1
+	 * Since: 0.1.0
 	 */
 	pspec = g_param_spec_string ("title", NULL, NULL,
 				     NULL,
@@ -308,7 +308,7 @@ zif_update_info_init (ZifUpdateInfo *update_info)
  *
  * Return value: A new #ZifUpdateInfo class instance.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 ZifUpdateInfo *
 zif_update_info_new (void)

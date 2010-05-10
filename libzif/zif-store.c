@@ -44,7 +44,7 @@ G_DEFINE_TYPE (ZifStore, zif_store, G_TYPE_OBJECT)
  *
  * Return value: Our personal error quark.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 GQuark
 zif_store_error_quark (void)
@@ -65,7 +65,7 @@ zif_store_error_quark (void)
  *
  * Return value: %TRUE for success, %FALSE for failure
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 gboolean
 zif_store_load (ZifStore *store, ZifState *state, GError **error)
@@ -95,7 +95,7 @@ zif_store_load (ZifStore *store, ZifState *state, GError **error)
  *
  * Return value: %TRUE for success, %FALSE for failure
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 gboolean
 zif_store_clean (ZifStore *store, ZifState *state, GError **error)
@@ -126,7 +126,7 @@ zif_store_clean (ZifStore *store, ZifState *state, GError **error)
  *
  * Return value: %TRUE for success, %FALSE for failure
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 gboolean
 zif_store_refresh (ZifStore *store, gboolean force, ZifState *state, GError **error)
@@ -157,7 +157,7 @@ zif_store_refresh (ZifStore *store, gboolean force, ZifState *state, GError **er
  *
  * Return value: an array of #ZifPackage's
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 GPtrArray *
 zif_store_search_name (ZifStore *store, gchar **search, ZifState *state, GError **error)
@@ -189,7 +189,7 @@ zif_store_search_name (ZifStore *store, gchar **search, ZifState *state, GError 
  *
  * Return value: an array of #ZifPackage's
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 GPtrArray *
 zif_store_search_category (ZifStore *store, gchar **search, ZifState *state, GError **error)
@@ -221,7 +221,7 @@ zif_store_search_category (ZifStore *store, gchar **search, ZifState *state, GEr
  *
  * Return value: an array of #ZifPackage's
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 GPtrArray *
 zif_store_search_details (ZifStore *store, gchar **search, ZifState *state, GError **error)
@@ -252,7 +252,7 @@ zif_store_search_details (ZifStore *store, gchar **search, ZifState *state, GErr
  *
  * Return value: an array of #ZifPackage's
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 GPtrArray *
 zif_store_search_group (ZifStore *store, gchar **search, ZifState *state, GError **error)
@@ -284,7 +284,7 @@ zif_store_search_group (ZifStore *store, gchar **search, ZifState *state, GError
  *
  * Return value: an array of #ZifPackage's
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 GPtrArray *
 zif_store_search_file (ZifStore *store, gchar **search, ZifState *state, GError **error)
@@ -316,7 +316,7 @@ zif_store_search_file (ZifStore *store, gchar **search, ZifState *state, GError 
  *
  * Return value: an array of #ZifPackage's
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 GPtrArray *
 zif_store_resolve (ZifStore *store, gchar **search, ZifState *state, GError **error)
@@ -348,7 +348,7 @@ zif_store_resolve (ZifStore *store, gchar **search, ZifState *state, GError **er
  *
  * Return value: an array of #ZifPackage's
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 GPtrArray *
 zif_store_what_provides (ZifStore *store, gchar **search, ZifState *state, GError **error)
@@ -379,7 +379,7 @@ zif_store_what_provides (ZifStore *store, gchar **search, ZifState *state, GErro
  *
  * Return value: an array of #ZifPackage's
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 GPtrArray *
 zif_store_get_packages (ZifStore *store, ZifState *state, GError **error)
@@ -410,7 +410,7 @@ zif_store_get_packages (ZifStore *store, ZifState *state, GError **error)
  *
  * Return value: an array of #ZifPackage's
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 GPtrArray *
 zif_store_get_updates (ZifStore *store, GPtrArray *packages,
@@ -443,7 +443,7 @@ zif_store_get_updates (ZifStore *store, GPtrArray *packages,
  *
  * Return value: A single #ZifPackage or %NULL
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 ZifPackage *
 zif_store_find_package (ZifStore *store, const gchar *package_id, ZifState *state, GError **error)
@@ -474,7 +474,7 @@ zif_store_find_package (ZifStore *store, const gchar *package_id, ZifState *stat
  *
  * Return value: an array of #ZifCategory's
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 GPtrArray *
 zif_store_get_categories (ZifStore *store, ZifState *state, GError **error)
@@ -502,7 +502,7 @@ zif_store_get_categories (ZifStore *store, ZifState *state, GError **error)
  *
  * Return value: A text ID, or %NULL
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 const gchar *
 zif_store_get_id (ZifStore *store)
@@ -524,7 +524,7 @@ zif_store_get_id (ZifStore *store)
  *
  * Prints all the objects in the store.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 void
 zif_store_print (ZifStore *store)
@@ -575,7 +575,7 @@ zif_store_init (ZifStore *store)
  *
  * Return value: A new #ZifStore class instance.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 ZifStore *
 zif_store_new (void)

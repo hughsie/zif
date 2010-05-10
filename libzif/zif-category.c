@@ -72,7 +72,7 @@ G_DEFINE_TYPE (ZifCategory, zif_category, G_TYPE_OBJECT)
  *
  * Return value: the string value, or %NULL for unset.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 const gchar *
 zif_category_get_parent_id (ZifCategory *category)
@@ -88,7 +88,7 @@ zif_category_get_parent_id (ZifCategory *category)
  *
  * Sets the parent category id.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 void
 zif_category_set_parent_id (ZifCategory *category, const gchar *parent_id)
@@ -106,7 +106,7 @@ zif_category_set_parent_id (ZifCategory *category, const gchar *parent_id)
  *
  * Return value: the string value, or %NULL for unset.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 const gchar *
 zif_category_get_id (ZifCategory *category)
@@ -122,7 +122,7 @@ zif_category_get_id (ZifCategory *category)
  *
  * Sets the id specific to this category.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 void
 zif_category_set_id (ZifCategory *category, const gchar *cat_id)
@@ -140,7 +140,7 @@ zif_category_set_id (ZifCategory *category, const gchar *cat_id)
  *
  * Return value: the string value, or %NULL for unset.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 const gchar *
 zif_category_get_name (ZifCategory *category)
@@ -156,7 +156,7 @@ zif_category_get_name (ZifCategory *category)
  *
  * Sets the name.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 void
 zif_category_set_name (ZifCategory *category, const gchar *name)
@@ -174,7 +174,7 @@ zif_category_set_name (ZifCategory *category, const gchar *name)
  *
  * Return value: the string value, or %NULL for unset.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 const gchar *
 zif_category_get_summary (ZifCategory *category)
@@ -190,7 +190,7 @@ zif_category_get_summary (ZifCategory *category)
  *
  * Sets the summary.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 void
 zif_category_set_summary (ZifCategory *category, const gchar *summary)
@@ -208,7 +208,7 @@ zif_category_set_summary (ZifCategory *category, const gchar *summary)
  *
  * Return value: the string value, or %NULL for unset.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 const gchar *
 zif_category_get_icon (ZifCategory *category)
@@ -224,7 +224,7 @@ zif_category_get_icon (ZifCategory *category)
  *
  * Sets the icon filename.
  *
- * Since: 0.0.1
+ * Since: 0.1.0
  **/
 void
 zif_category_set_icon (ZifCategory *category, const gchar *icon)
