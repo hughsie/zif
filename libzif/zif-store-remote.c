@@ -420,6 +420,31 @@ zif_store_remote_ensure_parent_dir_exists (const gchar *filename, GError **error
 }
 
 /**
+ * zif_store_remote_copy:
+ **/
+static gboolean
+zif_store_remote_copy (ZifStoreRemote *store, const gchar *uri, const gchar *filename,
+		       ZifState *state, GError **error)
+{
+	gboolean ret;
+	GFile *source;
+	GFile *dest;
+	GCancellable *cancellable;
+
+	/* just copy */
+	source = g_file_new_for_path (uri);
+	dest = g_file_new_for_path (filename);
+	cancellable = zif_state_get_cancellable (state);
+	ret = g_file_copy (source, dest, G_FILE_COPY_OVERWRITE, cancellable, NULL, NULL, error);
+	if (!ret)
+		goto out;
+out:
+	g_object_unref (source);
+	g_object_unref (dest);
+	return ret;
+}
+
+/**
  * zif_store_remote_download:
  * @store: the #ZifStoreRemote object
  * @filename: the state filename to download, e.g. "Packages/hal-0.1.0.rpm"
@@ -520,14 +545,20 @@ zif_store_remote_download (ZifStoreRemote *store, const gchar *filename, const g
 		baseurl = g_ptr_array_index (store->priv->baseurls, i);
 		uri = g_build_filename (baseurl, filename, NULL);
 
-		/* try download */
-		zif_state_reset (state_local);
-		ret = zif_store_remote_download_try (store, uri, filename_local, state_local, &error_local);
-		if (!ret) {
-			egg_debug ("failed to download (non-fatal): %s", error_local->message);
-			g_clear_error (&error_local);
+		/* local file */
+		if (g_str_has_prefix (baseurl, "/")) {
+			ret = zif_store_remote_copy (store, uri, filename_local, state_local, error);
+			if (!ret)
+				goto out;
+		} else {
+			/* download remote file */
+			zif_state_reset (state_local);
+			ret = zif_store_remote_download_try (store, uri, filename_local, state_local, &error_local);
+			if (!ret) {
+				egg_debug ("failed to download (non-fatal): %s", error_local->message);
+				g_clear_error (&error_local);
+			}
 		}
-
 		/* free */
 		g_free (uri);
 
