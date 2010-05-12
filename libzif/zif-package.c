@@ -941,8 +941,9 @@ zif_package_get_group (ZifPackage *package, ZifState *state, GError **error)
 {
 	gboolean ret;
 
-	g_return_val_if_fail (ZIF_IS_PACKAGE (package), 0);
-	g_return_val_if_fail (error == NULL || *error == NULL, 0);
+	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
+	g_return_val_if_fail (package->priv->package_id_split != NULL, NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* not exists */
 	if (package->priv->group == NULL) {
@@ -951,8 +952,6 @@ zif_package_get_group (ZifPackage *package, ZifState *state, GError **error)
 			return NULL;
 	}
 
-	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
-	g_return_val_if_fail (package->priv->package_id_split != NULL, NULL);
 	return zif_string_get_value (package->priv->group);
 }
 
@@ -976,6 +975,7 @@ zif_package_get_size (ZifPackage *package, ZifState *state, GError **error)
 	gboolean ret;
 
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), 0);
+	g_return_val_if_fail (package->priv->package_id_split != NULL, 0);
 	g_return_val_if_fail (error == NULL || *error == NULL, 0);
 
 	if (package->priv->size == 0) {
@@ -984,8 +984,6 @@ zif_package_get_size (ZifPackage *package, ZifState *state, GError **error)
 			return 0;
 	}
 
-	g_return_val_if_fail (ZIF_IS_PACKAGE (package), 0);
-	g_return_val_if_fail (package->priv->package_id_split != NULL, 0);
 	return package->priv->size;
 }
 

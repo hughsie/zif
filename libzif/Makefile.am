@@ -38,11 +38,14 @@ libzif_include_HEADERS =					\
 	zif-package-remote.h					\
 	zif-changeset.h						\
 	zif-store.h						\
+	zif-category.h						\
 	zif-store-local.h					\
 	zif-store-remote.h					\
 	zif-store-array.h					\
 	zif-repos.h						\
 	zif-utils.h						\
+	zif-update.h						\
+	zif-update-info.h						\
 	zif-groups.h						\
 	zif-config.h						\
 	zif-monitor.h						\

@@ -270,14 +270,13 @@ zif_package_local_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, ZifSt
 	GPtrArray *flags;
 	GPtrArray *names;
 	GPtrArray *versions;
-	gboolean ret = TRUE;
+	gboolean ret = FALSE;
 	Header header = ZIF_PACKAGE_LOCAL(pkg)->priv->header;
 
 	/* eigh? */
 	if (header == NULL) {
 		g_set_error (error, ZIF_PACKAGE_ERROR, ZIF_PACKAGE_ERROR_FAILED,
 			     "no header for %s", zif_package_get_id (pkg));
-		ret = FALSE;
 		goto out;
 	}
 
@@ -292,13 +291,11 @@ zif_package_local_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, ZifSt
 			dirnames = zif_get_header_string_array (header, RPMTAG_DIRNAMES);
 			fileindex = zif_get_header_uint32_index (header, RPMTAG_DIRINDEXES, basenames->len);
 			if (basenames->len != fileindex->len) {
-				ret = FALSE;
 				g_set_error_literal (error, ZIF_PACKAGE_ERROR, ZIF_PACKAGE_ERROR_FAILED,
 						     "internal error, basenames length is not the same as index length, possibly corrupt db?");
 				goto out;
 			}
 			if (fileindex->len > fileindex->len) {
-				ret = FALSE;
 				g_set_error_literal (error, ZIF_PACKAGE_ERROR, ZIF_PACKAGE_ERROR_FAILED,
 						     "internal error, fileindex length is bigger than index length, possibly corrupt db?");
 				goto out;
@@ -330,6 +327,7 @@ zif_package_local_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, ZifSt
 			zif_package_set_files (pkg, files);
 			g_ptr_array_unref (files);
 		}
+
 	} else if (type == ZIF_PACKAGE_ENSURE_TYPE_SUMMARY) {
 		/* summary */
 		tmp = zif_get_header_string (header, RPMTAG_SUMMARY);
@@ -377,12 +375,13 @@ zif_package_local_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, ZifSt
 		text = zif_package_get_category (pkg, state, error);
 		if (text == NULL)
 			goto out;
-		group = zif_groups_get_group_for_cat (ZIF_PACKAGE_LOCAL (pkg)->priv->groups, text, NULL);
-		if (group != NULL) {
-			tmp = zif_string_new (group);
-			zif_package_set_group (pkg, tmp);
-			zif_string_unref (tmp);
-		}
+		group = zif_groups_get_group_for_cat (ZIF_PACKAGE_LOCAL(pkg)->priv->groups, text, error);
+		if (group == NULL)
+			goto out;
+
+		tmp = zif_string_new (group);
+		zif_package_set_group (pkg, tmp);
+		zif_string_unref (tmp);
 
 	} else if (type == ZIF_PACKAGE_ENSURE_TYPE_REQUIRES) {
 		/* requires */
@@ -456,6 +455,9 @@ zif_package_local_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, ZifSt
 			g_ptr_array_unref (flags);
 		}
 	}
+
+	/* success */
+	ret = TRUE;
 out:
 	return ret;
 }
