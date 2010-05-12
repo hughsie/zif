@@ -663,7 +663,7 @@ out:
  *
  * Return value: %TRUE if the PackageID was well formed.
  *
- * Since: 0.5.0
+ * Since: 0.1.0
  **/
 gboolean
 zif_package_id_check (const gchar *package_id)
@@ -690,6 +690,68 @@ zif_package_id_check (const gchar *package_id)
 	/* all okay */
 	g_strfreev (sections);
 	return TRUE;
+}
+
+/**
+ * zif_time_string_to_seconds:
+ * @value: the yum time string, e.g. "7h"
+ *
+ * Converts a yum time string into the number of seconds.
+ *
+ * Return value: the number of seconds, or zero for failure to parse.
+ *
+ * Since: 0.1.0
+ **/
+guint
+zif_time_string_to_seconds (const gchar *value)
+{
+	guint len;
+	guint timeval = 0;
+	gchar suffix;
+	gchar *value_copy = NULL;
+	gchar *endptr = NULL;
+
+	g_return_val_if_fail (value != NULL, 0);
+
+	/* long enough */
+	len = strlen (value);
+	if (len < 2)
+		goto out;
+
+	/* yum-speak for "never" */
+	if (g_strcmp0 (value, "-1") == 0)
+		goto out;
+
+	/* get suffix */
+	suffix = value[len-1];
+
+	/* remove suffix */
+	value_copy = g_strdup (value);
+	value_copy[len-1] = '\0';
+
+	/* convert to number */
+	timeval = g_ascii_strtoull (value_copy, &endptr, 10);
+	if (value_copy == endptr) {
+		egg_warning ("failed to convert %s", value_copy);
+		goto out;
+	}
+
+	/* seconds, minutes, hours, days */
+	if (suffix == 's')
+		timeval *= 1;
+	else if (suffix == 'm')
+		timeval *= 60;
+	else if (suffix == 'h')
+		timeval *= 60*60;
+	else if (suffix == 'd')
+		timeval *= 24*60*60;
+	else {
+		egg_warning ("unknown suffix: '%c'", suffix);
+		timeval = 0;
+	}
+out:
+	g_free (value_copy);
+	return timeval;
 }
 
 /***************************************************************************
@@ -850,6 +912,41 @@ zif_utils_test (EggTest *test)
 		egg_test_failed (test, "failed: %s", error->message);
 		g_error_free (error);
 	}
+
+	/************************************************************/
+	egg_test_title (test, "convert time (invalid)");
+	time = zif_time_string_to_seconds ("");
+	egg_test_assert (test, (time == 0));
+
+	/************************************************************/
+	egg_test_title (test, "convert time (no suffix)");
+	time = zif_time_string_to_seconds ("10");
+	egg_test_assert (test, (time == 0));
+
+	/************************************************************/
+	egg_test_title (test, "convert time (invalid suffix)");
+	time = zif_time_string_to_seconds ("10f");
+	egg_test_assert (test, (time == 0));
+
+	/************************************************************/
+	egg_test_title (test, "convert time (seconds)");
+	time = zif_time_string_to_seconds ("10s");
+	egg_test_assert (test, (time == 10));
+
+	/************************************************************/
+	egg_test_title (test, "convert time (minutes)");
+	time = zif_time_string_to_seconds ("10m");
+	egg_test_assert (test, (time == 600));
+
+	/************************************************************/
+	egg_test_title (test, "convert time (hours)");
+	time = zif_time_string_to_seconds ("10h");
+	egg_test_assert (test, (time == 36000));
+
+	/************************************************************/
+	egg_test_title (test, "convert time (days)");
+	time = zif_time_string_to_seconds ("10d");
+	egg_test_assert (test, (time == 864000));
 
 	g_object_unref (state);
 

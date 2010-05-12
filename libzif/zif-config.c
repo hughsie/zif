@@ -240,62 +240,6 @@ out:
 }
 
 /**
- * zif_config_string_to_time:
- *
- * Converts: 10s to 10
- *           10m to 600 (10*60)
- *           10h to 36000 (10*60*60)
- *           10d to 864000 (10*60*60*24)
- **/
-static guint
-zif_config_string_to_time (const gchar *value)
-{
-	guint len;
-	guint timeval = 0;
-	gchar suffix;
-	gchar *value_copy = NULL;
-	gchar *endptr = NULL;
-
-	g_return_val_if_fail (value != NULL, FALSE);
-
-	/* long enough */
-	len = strlen (value);
-	if (len < 2)
-		goto out;
-
-	/* get suffix */
-	suffix = value[len-1];
-
-	/* remove suffix */
-	value_copy = g_strdup (value);
-	value_copy[len-1] = '\0';
-
-	/* convert to number */
-	timeval = g_ascii_strtoull (value_copy, &endptr, 10);
-	if (value_copy == endptr) {
-		egg_warning ("failed to convert %s", value_copy);
-		goto out;
-	}
-
-	/* seconds, minutes, hours, days */
-	if (suffix == 's')
-		timeval *= 1;
-	else if (suffix == 'm')
-		timeval *= 60;
-	else if (suffix == 'h')
-		timeval *= 60*60;
-	else if (suffix == 'd')
-		timeval *= 24*60*60;
-	else {
-		egg_warning ("unknown suffix: '%c'", suffix);
-		timeval = 0;
-	}
-out:
-	g_free (value_copy);
-	return timeval;
-}
-
-/**
  * zif_config_get_time:
  * @config: the #ZifConfig object
  * @key: the key name to retrieve, e.g. "metadata_expire"
@@ -323,7 +267,7 @@ zif_config_get_time (ZifConfig *config, const gchar *key, GError **error)
 		goto out;
 
 	/* convert to time */
-	timeval = zif_config_string_to_time (value);
+	timeval = zif_time_string_to_seconds (value);
 out:
 	g_free (value);
 	return timeval;
@@ -805,41 +749,6 @@ zif_config_test (EggTest *test)
 		egg_test_success (test, NULL);
 	else
 		egg_test_failed (test, "invalid value '%s'", array[0]);
-
-	/************************************************************/
-	egg_test_title (test, "convert time (invalid)");
-	time = zif_config_string_to_time ("");
-	egg_test_assert (test, (time == 0));
-
-	/************************************************************/
-	egg_test_title (test, "convert time (no suffix)");
-	time = zif_config_string_to_time ("10");
-	egg_test_assert (test, (time == 0));
-
-	/************************************************************/
-	egg_test_title (test, "convert time (invalid suffix)");
-	time = zif_config_string_to_time ("10f");
-	egg_test_assert (test, (time == 0));
-
-	/************************************************************/
-	egg_test_title (test, "convert time (seconds)");
-	time = zif_config_string_to_time ("10s");
-	egg_test_assert (test, (time == 10));
-
-	/************************************************************/
-	egg_test_title (test, "convert time (minutes)");
-	time = zif_config_string_to_time ("10m");
-	egg_test_assert (test, (time == 600));
-
-	/************************************************************/
-	egg_test_title (test, "convert time (hours)");
-	time = zif_config_string_to_time ("10h");
-	egg_test_assert (test, (time == 36000));
-
-	/************************************************************/
-	egg_test_title (test, "convert time (days)");
-	time = zif_config_string_to_time ("10d");
-	egg_test_assert (test, (time == 864000));
 
 	g_object_unref (config);
 
