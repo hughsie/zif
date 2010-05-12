@@ -1169,6 +1169,8 @@ zif_store_remote_refresh (ZifStore *store, gboolean force, ZifState *state, GErr
 	GError *error_local = NULL;
 	const gchar *filename;
 	ZifState *state_local = NULL;
+	ZifState *state_loop = NULL;
+	ZifState *state_tmp = NULL;
 	ZifStoreRemote *remote = ZIF_STORE_REMOTE (store);
 	ZifMd *md;
 	guint i;
@@ -1185,7 +1187,7 @@ zif_store_remote_refresh (ZifStore *store, gboolean force, ZifState *state, GErr
 	}
 
 	/* setup state with the correct number of steps */
-	zif_state_set_number_steps (state, (ZIF_MD_TYPE_UNKNOWN * 3) + 2);
+	zif_state_set_number_steps (state, 3);
 
 	/* not locked */
 	ret = zif_lock_is_locked (remote->priv->lock, NULL);
@@ -1195,10 +1197,8 @@ zif_store_remote_refresh (ZifStore *store, gboolean force, ZifState *state, GErr
 		goto out;
 	}
 
-	/* get local state object */
-	state_local = zif_state_get_child (state);
-
 	/* download new repomd file */
+	state_local = zif_state_get_child (state);
 	ret = zif_store_remote_download (remote, "repodata/repomd.xml", remote->priv->directory, state_local, &error_local);
 	if (!ret) {
 		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
@@ -1227,41 +1227,63 @@ zif_store_remote_refresh (ZifStore *store, gboolean force, ZifState *state, GErr
 	if (!ret)
 		goto out;
 
+	/* do in nested completion */
+	state_local = zif_state_get_child (state);
+	zif_state_set_number_steps (state_local, ZIF_MD_TYPE_UNKNOWN);
+
 	/* refresh each repo type */
 	for (i=0; i<ZIF_MD_TYPE_UNKNOWN; i++) {
+
+		/* do in nested completion */
+		state_loop = zif_state_get_child (state_local);
+		zif_state_set_number_steps (state_loop, 3);
+
+		/* get md */
 		md = zif_store_remote_get_md_from_type (remote, i);
 		if (md == NULL) {
 			egg_debug ("failed to get local store for %s", zif_md_type_to_text (i));
-			continue;
+			ret = zif_state_finished (state_loop, error);
+			if (!ret)
+				goto out;
+			goto skip;
 		}
 
 		/* get filename */
 		filename = zif_md_get_location (md);
 		if (filename == NULL) {
 			egg_warning ("no filename set for %s", zif_md_type_to_text (i));
-			continue;
+			ret = zif_state_finished (state_loop, error);
+			if (!ret)
+				goto out;
+			goto skip;
 		}
 
 		/* does current uncompressed file equal what repomd says it should be */
-		state_local = zif_state_get_child (state);
-		ret = zif_md_file_check (md, TRUE, state_local, &error_local);
+		state_tmp = zif_state_get_child (state_loop);
+		ret = zif_md_file_check (md, TRUE, state_tmp, &error_local);
 		if (!ret) {
 			egg_warning ("failed to verify md: %s", error_local->message);
 			g_clear_error (&error_local);
+			ret = zif_state_finished (state_tmp, error);
+			if (!ret)
+				goto out;
 		}
 		if (ret && !force) {
 			egg_debug ("%s is okay, and we're not forcing", zif_md_type_to_text (i));
-			continue;
+			ret = zif_state_finished (state_loop, error);
+			if (!ret)
+				goto out;
+			goto skip;
 		}
 
 		/* this section done */
-		ret = zif_state_done (state, error);
+		ret = zif_state_done (state_loop, error);
 		if (!ret)
 			goto out;
 
 		/* download new file */
-		state_local = zif_state_get_child (state);
-		ret = zif_store_remote_download (remote, filename, remote->priv->directory, state_local, &error_local);
+		state_tmp = zif_state_get_child (state_loop);
+		ret = zif_store_remote_download (remote, filename, remote->priv->directory, state_tmp, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 				     "failed to refresh %s (%s): %s", zif_md_type_to_text (i), filename, error_local->message);
@@ -1270,14 +1292,14 @@ zif_store_remote_refresh (ZifStore *store, gboolean force, ZifState *state, GErr
 		}
 
 		/* this section done */
-		ret = zif_state_done (state, error);
+		ret = zif_state_done (state_loop, error);
 		if (!ret)
 			goto out;
 
 		/* decompress */
-		state_local = zif_state_get_child (state);
+		state_tmp = zif_state_get_child (state_loop);
 		filename = zif_md_get_filename (md);
-		ret = zif_store_file_decompress (filename, state_local, &error_local);
+		ret = zif_store_file_decompress (filename, state_tmp, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 				     "failed to decompress %s for %s: %s",
@@ -1285,13 +1307,17 @@ zif_store_remote_refresh (ZifStore *store, gboolean force, ZifState *state, GErr
 			g_error_free (error_local);
 			goto out;
 		}
-
+skip:
 		/* this section done */
-		ret = zif_state_done (state, error);
+		ret = zif_state_done (state_local, error);
 		if (!ret)
 			goto out;
 	}
 
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 out:
 	return ret;
 }
@@ -1313,7 +1339,6 @@ zif_store_remote_load (ZifStore *store, ZifState *state, GError **error)
 	gchar *temp;
 	gchar *filename;
 	gchar *media_root;
-//	ZifState *state_local;
 	ZifStoreRemote *remote = ZIF_STORE_REMOTE (store);
 
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), FALSE);
@@ -1542,6 +1567,12 @@ zif_store_remote_clean (ZifStore *store, ZifState *state, GError **error)
 		/* clean md */
 		ret = zif_md_clean (md, &error_local);
 		if (!ret) {
+			if (error_local->domain == ZIF_MD_ERROR &&
+			    error_local->code == ZIF_MD_ERROR_NO_FILENAME) {
+				egg_warning ("failed to clean as no filename for %s", remote->priv->id);
+				g_clear_error (&error_local);
+				goto skip;
+			}
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 				     "failed to clean %s: %s", zif_md_type_to_text (i), error_local->message);
 			g_error_free (error_local);
