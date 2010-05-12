@@ -567,17 +567,17 @@ zif_store_remote_download (ZifStoreRemote *store, const gchar *filename, const g
 			break;
 	}
 
-	/* this section done */
-	ret = zif_state_done (state, error);
-	if (!ret)
-		goto out;
-
 	/* nothing */
 	if (!ret) {
 		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 			     "failed to download %s from any sources", filename);
 		goto out;
 	}
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 out:
 	g_free (basename);
 	g_free (filename_local);
