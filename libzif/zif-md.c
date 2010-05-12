@@ -1039,7 +1039,7 @@ zif_md_clean (ZifMd *md, GError **error)
 	/* get filename */
 	filename = zif_md_get_filename (md);
 	if (filename == NULL) {
-		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED,
+		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_NO_FILENAME,
 			     "failed to get filename for %s", zif_md_type_to_text (md->priv->type));
 		ret = FALSE;
 		goto out;
@@ -1062,7 +1062,7 @@ zif_md_clean (ZifMd *md, GError **error)
 	/* get filename */
 	filename = zif_md_get_filename_uncompressed (md);
 	if (filename == NULL) {
-		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED,
+		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_NO_FILENAME,
 			     "failed to get uncompressed filename for %s", zif_md_type_to_text (md->priv->type));
 		ret = FALSE;
 		goto out;
