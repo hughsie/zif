@@ -41,6 +41,7 @@
 #include "zif-monitor.h"
 #include "zif-package.h"
 #include "zif-package-remote.h"
+#include "zif-media.h"
 #include "zif-md-comps.h"
 #include "zif-md-updateinfo.h"
 #include "zif-md-filelists-sql.h"
@@ -81,6 +82,8 @@ struct _ZifStoreRemotePrivate
 	gchar			*metalink;
 	gchar			*cache_dir;		/* /var/cache/yum */
 	gchar			*repo_filename;		/* /etc/yum.repos.d/fedora.repo */
+	gchar			*media_id;		/* 1273587559.563492 */
+	guint			 metadata_expire;	/* in seconds */
 	gboolean		 enabled;
 	gboolean		 loaded;
 	gboolean		 loaded_metadata;
@@ -96,6 +99,7 @@ struct _ZifStoreRemotePrivate
 	ZifConfig		*config;
 	ZifMonitor		*monitor;
 	ZifLock			*lock;
+	ZifMedia		*media;
 	GPtrArray		*packages;
 	/* temp data for the xml parser */
 	ZifMdType		 parser_type;
@@ -1273,9 +1277,11 @@ zif_store_remote_load (ZifStore *store, ZifState *state, GError **error)
 	GKeyFile *file = NULL;
 	gboolean ret = TRUE;
 	gchar *enabled = NULL;
+	gchar *metadata_expire = NULL;
 	GError *error_local = NULL;
 	gchar *temp;
 	gchar *filename;
+	gchar *media_root;
 //	ZifState *state_local;
 	ZifStoreRemote *remote = ZIF_STORE_REMOTE (store);
 
@@ -1322,18 +1328,45 @@ zif_store_remote_load (ZifStore *store, ZifState *state, GError **error)
 		goto out;
 	}
 
-	/* enabled */
-	enabled = g_key_file_get_string (file, remote->priv->id, "enabled", &error_local);
-	if (enabled == NULL) {
-		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
-			     "failed to get enabled: %s", error_local->message);
-		g_error_free (error_local);
-		ret = FALSE;
-		goto out;
+	/* media id, for matching in .discinfo */
+	remote->priv->media_id = g_key_file_get_string (file, remote->priv->id, "mediaid", NULL);
+
+	/* the value to expire the cache by */
+	metadata_expire = g_key_file_get_string (file, remote->priv->id, "metadata_expire", NULL);
+	if (metadata_expire != NULL)
+		remote->priv->metadata_expire = zif_time_string_to_seconds (metadata_expire);
+
+	/* enabled is required for non-media repos */
+	if (remote->priv->media_id == NULL) {
+		enabled = g_key_file_get_string (file, remote->priv->id, "enabled", &error_local);
+		if (enabled == NULL) {
+			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+				     "failed to get enabled: %s", error_local->message);
+			g_error_free (error_local);
+			ret = FALSE;
+			goto out;
+		}
+	} else {
+		enabled = g_key_file_get_string (file, remote->priv->id, "enabled", NULL);
 	}
 
-	/* convert to bool */
-	remote->priv->enabled = zif_boolean_from_text (enabled);
+	/* convert to bool, otherwise assume valid */
+	if (enabled != NULL)
+		remote->priv->enabled = zif_boolean_from_text (enabled);
+	else
+		remote->priv->enabled = TRUE;
+
+	/* find the baseurl for this device */
+	if (remote->priv->media_id != NULL) {
+		/* find the root for the media id */
+		media_root = zif_media_get_root_from_id (remote->priv->media, remote->priv->media_id);
+		if (media_root != NULL) {
+			g_ptr_array_add (remote->priv->baseurls, media_root);
+		} else {
+			egg_warning ("cannot find media %s, disabling source", remote->priv->media_id);
+			remote->priv->enabled = FALSE;
+		}
+	}
 
 	/* expand out */
 	remote->priv->name_expanded = zif_config_expand_substitutions (remote->priv->config, remote->priv->name, NULL);
@@ -1385,9 +1418,10 @@ zif_store_remote_load (ZifStore *store, ZifState *state, GError **error)
 	if (remote->priv->enabled &&
 	    remote->priv->baseurls->len == 0 &&
 	    remote->priv->metalink == NULL &&
-	    remote->priv->mirrorlist == NULL) {
+	    remote->priv->mirrorlist == NULL &&
+	    remote->priv->media_id == NULL) {
 		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
-				     "baseurl, metalink or mirrorlist required");
+				     "baseurl, mediaid, metalink or mirrorlist required");
 		ret = FALSE;
 		goto out;
 	}
@@ -1400,6 +1434,7 @@ zif_store_remote_load (ZifStore *store, ZifState *state, GError **error)
 	if (!ret)
 		goto out;
 out:
+	g_free (metadata_expire);
 	g_free (enabled);
 	if (file != NULL)
 		g_key_file_free (file);
@@ -2937,6 +2972,7 @@ zif_store_remote_finalize (GObject *object)
 	g_object_unref (store->priv->config);
 	g_object_unref (store->priv->monitor);
 	g_object_unref (store->priv->lock);
+	g_object_unref (store->priv->media);
 
 	g_ptr_array_unref (store->priv->baseurls);
 
@@ -3000,6 +3036,7 @@ zif_store_remote_init (ZifStoreRemote *store)
 	store->priv->config = zif_config_new ();
 	store->priv->monitor = zif_monitor_new ();
 	store->priv->lock = zif_lock_new ();
+	store->priv->media = zif_media_new ();
 	store->priv->md_filelists_sql = ZIF_MD (zif_md_filelists_sql_new ());
 	store->priv->md_filelists_xml = ZIF_MD (zif_md_filelists_xml_new ());
 	store->priv->md_other_sql = ZIF_MD (zif_md_other_sql_new ());

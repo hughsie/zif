@@ -79,6 +79,8 @@ libzif_la_SOURCES =						\
 	zif-store-remote.h					\
 	zif-md.c						\
 	zif-md.h						\
+	zif-media.c						\
+	zif-media.h						\
 	zif-md-filelists-sql.c					\
 	zif-md-filelists-sql.h					\
 	zif-md-filelists-xml.c					\
