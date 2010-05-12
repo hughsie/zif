@@ -237,6 +237,13 @@ out:
 
 /**
  * zif_download_set_proxy:
+ * @download: the #ZifDownload object
+ * @http_proxy: the HTTP proxy, e.g. "http://10.0.0.1:8080"
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Sets the proxy used for downloading files.
+ *
+ * Return value: %TRUE for success, %FALSE for failure
  *
  * Since: 0.1.0
  **/
