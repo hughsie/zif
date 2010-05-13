@@ -256,6 +256,7 @@ zif_store_array_repos_search (GPtrArray *store_array, ZifRole role, gchar **sear
 	gboolean ret;
 	guint i, j;
 	GPtrArray *array = NULL;
+	GPtrArray *array_results = NULL;
 	GPtrArray *part;
 	ZifStore *store;
 	ZifPackage *package;
@@ -304,8 +305,6 @@ zif_store_array_repos_search (GPtrArray *store_array, ZifRole role, gchar **sear
 		else {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 				     "internal error, no such role: %s", zif_role_to_string (role));
-			g_ptr_array_unref (array);
-			array = NULL;
 			goto out;
 		}
 		if (part == NULL) {
@@ -320,8 +319,6 @@ zif_store_array_repos_search (GPtrArray *store_array, ZifRole role, gchar **sear
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 				     "failed to %s in %s: %s", zif_role_to_string (role), zif_store_get_id (store), error_local->message);
 			g_error_free (error_local);
-			g_ptr_array_unref (array);
-			array = NULL;
 			goto out;
 		}
 
@@ -336,8 +333,13 @@ skip_error:
 		if (!ret)
 			goto out;
 	}
+
+	/* we're done */
+	array_results = g_ptr_array_ref (array);
 out:
-	return array;
+	if (array != NULL)
+		g_ptr_array_unref (array);
+	return array_results;
 }
 
 /**
