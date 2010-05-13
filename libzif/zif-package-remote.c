@@ -211,6 +211,9 @@ zif_package_remote_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, ZifS
 {
 	gboolean ret = TRUE;
 	GPtrArray *array = NULL;
+	ZifString *tmp;
+	const gchar *text;
+	const gchar *group;
 	ZifPackageRemote *pkg_remote = ZIF_PACKAGE_REMOTE (pkg);
 
 	if (type == ZIF_PACKAGE_ENSURE_TYPE_FILES) {
@@ -224,6 +227,19 @@ zif_package_remote_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, ZifS
 
 		/* set for this package */
 		zif_package_set_files (pkg, array);
+
+	} else if (type == ZIF_PACKAGE_ENSURE_TYPE_GROUP) {
+		/* group */
+		text = zif_package_get_category (pkg, state, error);
+		if (text == NULL)
+			goto out;
+		group = zif_groups_get_group_for_cat (pkg_remote->priv->groups, text, error);
+		if (group == NULL)
+			goto out;
+
+		tmp = zif_string_new (group);
+		zif_package_set_group (pkg, tmp);
+		zif_string_unref (tmp);
 	} else {
 		g_set_error (error, 1, 0,
 			     "Getting ensure type '%s' not supported on a ZifPackageRemote",
