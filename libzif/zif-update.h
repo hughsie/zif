@@ -53,6 +53,9 @@ typedef enum {
 
 typedef enum {
 	ZIF_UPDATE_KIND_BUGFIX,
+	ZIF_UPDATE_KIND_SECURITY,
+	ZIF_UPDATE_KIND_ENHANCEMENT,
+	ZIF_UPDATE_KIND_NEWPACKAGE,
 	ZIF_UPDATE_KIND_UNKNOWN
 } ZifUpdateKind;
 
@@ -75,9 +78,9 @@ ZifUpdate		*zif_update_new			(void);
 
 /* utility functions */
 ZifUpdateState		 zif_update_state_from_string	(const gchar		*state);
-ZifUpdateState		 zif_update_kind_from_string	(const gchar		*kind);
+ZifUpdateKind		 zif_update_kind_from_string	(const gchar		*kind);
 const gchar		*zif_update_state_to_string	(ZifUpdateState		 state);
-const gchar		*zif_update_kind_to_string	(ZifUpdateState		 kind);
+const gchar		*zif_update_kind_to_string	(ZifUpdateKind		 kind);
 
 /* public getters */
 ZifUpdateState		 zif_update_get_state		(ZifUpdate		*update);

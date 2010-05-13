@@ -97,6 +97,7 @@ zif_md_updateinfo_parser_start_element (GMarkupParseContext *context, const gcha
 	guint i;
 	GError *error_local = NULL;
 	gchar *package_id = NULL;
+	ZifUpdateKind update_kind;
 	ZifMdUpdateinfo *updateinfo = user_data;
 
 	g_return_if_fail (ZIF_IS_MD_UPDATEINFO (updateinfo));
@@ -120,8 +121,10 @@ zif_md_updateinfo_parser_start_element (GMarkupParseContext *context, const gcha
 							      zif_update_state_from_string (attribute_values[i]));
 				}
 				if (g_strcmp0 (element_name, "type") == 0) {
-					zif_update_set_kind (updateinfo->priv->update_temp,
-							     zif_update_kind_from_string (attribute_values[i]));
+					update_kind = zif_update_kind_from_string (attribute_values[i]);
+					if (update_kind == ZIF_UPDATE_KIND_UNKNOWN)
+						egg_warning ("failed to match update kind from: %s", attribute_values[i]);
+					zif_update_set_kind (updateinfo->priv->update_temp, update_kind);
 				}
 			}
 			goto out;

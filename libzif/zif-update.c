@@ -83,11 +83,17 @@ zif_update_state_from_string (const gchar *state)
 /**
  * zif_update_kind_from_string:
  **/
-ZifUpdateState
+ZifUpdateKind
 zif_update_kind_from_string (const gchar *kind)
 {
 	if (g_strcmp0 (kind, "bugfix") == 0)
 		return ZIF_UPDATE_KIND_BUGFIX;
+	if (g_strcmp0 (kind, "security") == 0)
+		return ZIF_UPDATE_KIND_SECURITY;
+	if (g_strcmp0 (kind, "enhancement") == 0)
+		return ZIF_UPDATE_KIND_ENHANCEMENT;
+	if (g_strcmp0 (kind, "newpackage") == 0)
+		return ZIF_UPDATE_KIND_NEWPACKAGE;
 	egg_warning ("unknown update kind: %s", kind);
 	return ZIF_UPDATE_KIND_UNKNOWN;
 }
@@ -109,10 +115,16 @@ zif_update_state_to_string (ZifUpdateState state)
  * zif_update_kind_to_string:
  **/
 const gchar *
-zif_update_kind_to_string (ZifUpdateState kind)
+zif_update_kind_to_string (ZifUpdateKind kind)
 {
 	if (kind == ZIF_UPDATE_KIND_BUGFIX)
 		return "bugfix";
+	if (kind == ZIF_UPDATE_KIND_SECURITY)
+		return "security";
+	if (kind == ZIF_UPDATE_KIND_ENHANCEMENT)
+		return "enhancement";
+	if (kind == ZIF_UPDATE_KIND_NEWPACKAGE)
+		return "newpackage";
 	return NULL;
 }
 
