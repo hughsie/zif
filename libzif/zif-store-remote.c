@@ -2129,6 +2129,9 @@ zif_store_remote_search_category (ZifStore *store, gchar **group_id, ZifState *s
 			if (error_local->code == ZIF_STORE_ERROR_FAILED_TO_FIND) {
 				g_clear_error (&error_local);
 				egg_debug ("Failed to find %s installed or in repo %s", name, remote->priv->id);
+				ret = zif_state_finished (state_loop, error);
+				if (!ret)
+					goto out;
 				goto ignore_error;
 			}
 
