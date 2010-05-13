@@ -7,7 +7,7 @@ Name: zif
 Description: Zif is a simple library on top of rpm
 Version: @VERSION@
 Requires.private: gthread-2.0
-Requires: glib-2.0, gobject-2.0, sqlite3
+Requires: glib-2.0, gobject-2.0, sqlite3, libarchive
 Libs: -L${libdir} -lzif
 Cflags: -I${includedir}/libzif
 
