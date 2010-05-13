@@ -209,7 +209,7 @@ zif_package_remote_set_store_remote (ZifPackageRemote *pkg, ZifStoreRemote *stor
 static gboolean
 zif_package_remote_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, ZifState *state, GError **error)
 {
-	gboolean ret = TRUE;
+	gboolean ret = FALSE;
 	GPtrArray *array = NULL;
 	ZifString *tmp;
 	const gchar *text;
@@ -220,10 +220,8 @@ zif_package_remote_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, ZifS
 
 		/* get the file list for this package */
 		array = zif_store_remote_get_files (pkg_remote->priv->store_remote, pkg, state, error);
-		if (array == NULL) {
-			ret = FALSE;
+		if (array == NULL)
 			goto out;
-		}
 
 		/* set for this package */
 		zif_package_set_files (pkg, array);
@@ -244,8 +242,11 @@ zif_package_remote_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, ZifS
 		g_set_error (error, 1, 0,
 			     "Getting ensure type '%s' not supported on a ZifPackageRemote",
 			     zif_package_ensure_type_to_string (type));
-		ret = FALSE;
+		goto out;
 	}
+
+	/* success */
+	ret = TRUE;
 out:
 	if (array != NULL)
 		g_ptr_array_unref (array);
