@@ -148,6 +148,8 @@ zif_package_array_get_newest (GPtrArray *array, GError **error)
 	guint i;
 	gint retval;
 
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
 	/* no results */
 	if (array->len == 0) {
 		g_set_error_literal (error, ZIF_PACKAGE_ERROR, ZIF_PACKAGE_ERROR_FAILED,
@@ -265,6 +267,7 @@ zif_package_download (ZifPackage *package, const gchar *directory, ZifState *sta
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), FALSE);
 	g_return_val_if_fail (directory != NULL, FALSE);
 	g_return_val_if_fail (package->priv->package_id_split != NULL, FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
 	/* check we are not installed */
 	if (package->priv->installed) {
@@ -336,6 +339,7 @@ zif_package_get_update_detail (ZifPackage *package, ZifState *state, GError **er
 
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
 	g_return_val_if_fail (package->priv->package_id_split != NULL, NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* check we are not installed */
 	if (package->priv->installed) {

@@ -520,6 +520,7 @@ zif_md_comps_get_categories (ZifMdComps *md,
 	ZifCategory *category;
 
 	g_return_val_if_fail (ZIF_IS_MD_COMPS (md), NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* if not already loaded, load */
 	if (!md->priv->loaded) {

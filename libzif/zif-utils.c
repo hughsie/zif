@@ -461,6 +461,7 @@ zif_file_decompress (const gchar *in, const gchar *out, ZifState *state, GError 
 
 	g_return_val_if_fail (in != NULL, FALSE);
 	g_return_val_if_fail (out != NULL, FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
 	/* bz2 */
 	if (g_str_has_suffix (in, "bz2")) {

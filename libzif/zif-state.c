@@ -571,6 +571,7 @@ zif_state_done_real (ZifState *state, GError **error, const gchar *strloc)
 	gdouble elapsed;
 
 	g_return_val_if_fail (ZIF_IS_STATE (state), FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
 	/* are we cancelled */
 	if (g_cancellable_is_cancelled (state->priv->cancellable)) {
@@ -654,6 +655,7 @@ gboolean
 zif_state_finished_real (ZifState *state, GError **error, const gchar *strloc)
 {
 	g_return_val_if_fail (ZIF_IS_STATE (state), FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
 	/* are we cancelled */
 	if (g_cancellable_is_cancelled (state->priv->cancellable)) {

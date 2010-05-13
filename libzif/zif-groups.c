@@ -100,6 +100,7 @@ zif_groups_set_mapping_file (ZifGroups *groups, const gchar *mapping_file, GErro
 	g_return_val_if_fail (groups->priv->mapping_file == NULL, FALSE);
 	g_return_val_if_fail (!groups->priv->loaded, FALSE);
 	g_return_val_if_fail (mapping_file != NULL, FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
 	/* check file exists */
 	ret = g_file_test (mapping_file, G_FILE_TEST_IS_REGULAR);
@@ -147,6 +148,7 @@ zif_groups_load (ZifGroups *groups, GError **error)
 
 	g_return_val_if_fail (ZIF_IS_GROUPS (groups), FALSE);
 	g_return_val_if_fail (groups->priv->categories->len == 0, FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
 	/* already loaded */
 	if (groups->priv->loaded)
@@ -213,7 +215,8 @@ zif_groups_get_groups (ZifGroups *groups, GError **error)
 	GError *error_local = NULL;
 	gboolean ret;
 
-	g_return_val_if_fail (ZIF_IS_GROUPS (groups), 0);
+	g_return_val_if_fail (ZIF_IS_GROUPS (groups), NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* if not already loaded, load */
 	if (!groups->priv->loaded) {

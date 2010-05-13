@@ -620,6 +620,8 @@ zif_store_remote_get_update_detail (ZifStoreRemote *store, const gchar *package_
 	const gchar *version;
 	gchar *to_array[] = { NULL, NULL };
 
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
 	/* setup state */
 	if (store->priv->loaded_metadata)
 		zif_state_set_number_steps (state, 4);

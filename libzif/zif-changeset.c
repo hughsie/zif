@@ -218,6 +218,10 @@ zif_changeset_parse_header (ZifChangeset *changeset, const gchar *header, GError
 	gchar *found;
 	guint len;
 
+	g_return_val_if_fail (ZIF_IS_CHANGESET (changeset), FALSE);
+	g_return_val_if_fail (header != NULL, FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
 	/* check if there is a version field */
 	len = strlen (header);
 	if (header[len-1] == '>') {

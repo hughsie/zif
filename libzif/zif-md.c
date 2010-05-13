@@ -455,6 +455,9 @@ zif_md_load (ZifMd *md, ZifState *state, GError **error)
 	ZifMdClass *klass = ZIF_MD_GET_CLASS (md);
 	ZifState *state_local;
 
+	g_return_val_if_fail (ZIF_IS_MD (md), FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
 	/* no support */
 	if (klass->load == NULL) {
 		g_set_error_literal (error, ZIF_MD_ERROR, ZIF_MD_ERROR_NO_SUPPORT,

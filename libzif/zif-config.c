@@ -101,6 +101,7 @@ zif_config_get_string (ZifConfig *config, const gchar *key, GError **error)
 
 	g_return_val_if_fail (ZIF_IS_CONFIG (config), NULL);
 	g_return_val_if_fail (key != NULL, NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* not loaded yet */
 	if (!config->priv->loaded) {
@@ -316,6 +317,7 @@ zif_config_expand_substitutions (ZifConfig *config, const gchar *text, GError **
 
 	g_return_val_if_fail (ZIF_IS_CONFIG (config), NULL);
 	g_return_val_if_fail (text != NULL, NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* get data */
 	basearch = zif_config_get_string (config, "basearch", error);
