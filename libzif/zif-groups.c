@@ -210,7 +210,7 @@ out:
 GPtrArray *
 zif_groups_get_groups (ZifGroups *groups, GError **error)
 {
-	GError *error_local;
+	GError *error_local = NULL;
 	gboolean ret;
 
 	g_return_val_if_fail (ZIF_IS_GROUPS (groups), 0);
@@ -245,7 +245,7 @@ zif_groups_get_categories (ZifGroups *groups, GError **error)
 {
 	guint i;
 	GPtrArray *array = NULL;
-	GError *error_local;
+	GError *error_local = NULL;
 	gboolean ret;
 
 	g_return_val_if_fail (ZIF_IS_GROUPS (groups), NULL);
@@ -286,7 +286,7 @@ const gchar *
 zif_groups_get_group_for_cat (ZifGroups *groups, const gchar *cat, GError **error)
 {
 	const gchar *group = NULL;
-	GError *error_local;
+	GError *error_local = NULL;
 	gboolean ret;
 
 	g_return_val_if_fail (ZIF_IS_GROUPS (groups), NULL);

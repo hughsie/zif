@@ -771,7 +771,7 @@ zif_utils_test (EggTest *test)
 	const gchar *v;
 	const gchar *r;
 	gchar *filename;
-	GError *error;
+	GError *error = NULL;
 	ZifState *state;
 
 	if (!egg_test_start (test, "ZifUtils"))
