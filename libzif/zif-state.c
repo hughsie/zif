@@ -614,11 +614,10 @@ zif_state_done_real (ZifState *state, GError **error, const gchar *strloc)
 	if (state->priv->child != NULL) {
 		ZifStatePrivate *child_priv = state->priv->child->priv;
 		if (child_priv->current != child_priv->steps) {
-			g_set_error (error, ZIF_STATE_ERROR, ZIF_STATE_ERROR_INVALID,
-				     "child is at %i/%i steps and parent done [%s]",
-				     child_priv->current, child_priv->steps, strloc);
+			g_print ("child is at %i/%i steps and parent done [%s]\n",
+				 child_priv->current, child_priv->steps, strloc);
 			zif_state_print_parent_chain (state->priv->child, 0);
-			ret = FALSE;
+			ret = TRUE;
 			/* do not abort, as we want to clean this up */
 		}
 	}
