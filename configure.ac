@@ -193,6 +193,8 @@ tools/Makefile
 docs/Makefile
 docs/api/Makefile
 docs/api/version.xml
+data/Makefile
+data/tests/Makefile
 ])
 AC_OUTPUT
 

@@ -661,28 +661,3 @@ zif_update_new (void)
 	return ZIF_UPDATE (update);
 }
 
-/***************************************************************************
- ***                          MAKE CHECK TESTS                           ***
- ***************************************************************************/
-#ifdef EGG_TEST
-#include "egg-test.h"
-
-void
-zif_update_test (EggTest *test)
-{
-	ZifUpdate *update;
-
-	if (!egg_test_start (test, "ZifUpdate"))
-		return;
-
-	/************************************************************/
-	egg_test_title (test, "get update");
-	update = zif_update_new ();
-	egg_test_assert (test, update != NULL);
-
-	g_object_unref (update);
-
-	egg_test_end (test);
-}
-#endif
-

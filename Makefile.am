@@ -1,6 +1,7 @@
 SUBDIRS = 						\
 	libzif						\
 	docs						\
+	data						\
 	tools
 
 security-check:

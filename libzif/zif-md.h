@@ -165,6 +165,7 @@ void		 zif_md_set_max_age			(ZifMd		*md,
 const gchar	*zif_md_type_to_text			(ZifMdType	 type);
 
 /* getters */
+gboolean	 zif_md_get_is_loaded			(ZifMd		*md);
 ZifStoreRemote	*zif_md_get_store_remote		(ZifMd		*md);
 const gchar	*zif_md_get_id				(ZifMd		*md);
 ZifMdType	 zif_md_get_mdtype			(ZifMd		*md);

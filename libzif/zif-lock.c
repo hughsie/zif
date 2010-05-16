@@ -78,26 +78,40 @@ zif_lock_error_quark (void)
  * zif_lock_get_pid:
  **/
 static guint
-zif_lock_get_pid (ZifLock *lock)
+zif_lock_get_pid (ZifLock *lock, GError **error)
 {
 	gboolean ret;
-	GError *error = NULL;
+	GError *error_local = NULL;
 	guint64 pid = 0;
 	gchar *contents = NULL;
 	gchar *endptr = NULL;
 
 	g_return_val_if_fail (ZIF_IS_LOCK (lock), FALSE);
 
+	/* get default filename */
+	if (lock->priv->filename == NULL)
+		lock->priv->filename = zif_config_get_string (lock->priv->config, "pidfile", &error_local);
+	if (lock->priv->filename == NULL) {
+		g_set_error (error, ZIF_LOCK_ERROR, ZIF_LOCK_ERROR_FAILED,
+			     "lock file not set: %s", error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
 	/* file doesn't exists */
 	ret = g_file_test (lock->priv->filename, G_FILE_TEST_EXISTS);
-	if (!ret)
+	if (!ret) {
+		g_set_error_literal (error, ZIF_LOCK_ERROR, ZIF_LOCK_ERROR_FAILED,
+				     "lock file not present");
 		goto out;
+	}
 
 	/* get contents */
-	ret = g_file_get_contents (lock->priv->filename, &contents, NULL, &error);
+	ret = g_file_get_contents (lock->priv->filename, &contents, NULL, &error_local);
 	if (!ret) {
-		egg_warning ("failed to get data: %s", error->message);
-		g_error_free (error);
+		g_set_error (error, ZIF_LOCK_ERROR, ZIF_LOCK_ERROR_FAILED,
+			     "lock file not set: %s", error_local->message);
+		g_error_free (error_local);
 		goto out;
 	}
 
@@ -106,18 +120,19 @@ zif_lock_get_pid (ZifLock *lock)
 
 	/* failed to parse */
 	if (contents == endptr) {
-		egg_warning ("failed to parse pid: %s", contents);
+		g_set_error (error, ZIF_LOCK_ERROR, ZIF_LOCK_ERROR_FAILED,
+			     "failed to parse pid: %s", contents);
 		pid = 0;
 		goto out;
 	}
 
 	/* too large */
 	if (pid > G_MAXUINT) {
-		egg_warning ("pid too large %" G_GUINT64_FORMAT, pid);
+		g_set_error (error, ZIF_LOCK_ERROR, ZIF_LOCK_ERROR_FAILED,
+			     "pid too large %" G_GUINT64_FORMAT, pid);
 		pid = 0;
 		goto out;
 	}
-
 out:
 	g_free (contents);
 	return (guint) pid;
@@ -152,7 +167,7 @@ zif_lock_is_locked (ZifLock *lock, guint *pid)
 	}
 
 	/* get pid */
-	pid_tmp = zif_lock_get_pid (lock);
+	pid_tmp = zif_lock_get_pid (lock, NULL);
 	if (pid_tmp == 0)
 		goto out;
 
@@ -204,10 +219,13 @@ zif_lock_set_locked (ZifLock *lock, guint *pid, GError **error)
 		goto out;
 	}
 
-	/* no lock file set */
+	/* get default filename */
+	if (lock->priv->filename == NULL)
+		lock->priv->filename = zif_config_get_string (lock->priv->config, "pidfile", &error_local);
 	if (lock->priv->filename == NULL) {
-		g_set_error_literal (error, ZIF_LOCK_ERROR, ZIF_LOCK_ERROR_FAILED,
-				     "lock file not set");
+		g_set_error (error, ZIF_LOCK_ERROR, ZIF_LOCK_ERROR_FAILED,
+			     "lock file not set: %s", error_local->message);
+		g_error_free (error_local);
 		ret = FALSE;
 		goto out;
 	}
@@ -252,6 +270,7 @@ zif_lock_set_unlocked (ZifLock *lock, GError **error)
 	guint pid = 0;
 	guint pid_tmp;
 	gint retval;
+	GError *error_local = NULL;
 
 	g_return_val_if_fail (ZIF_IS_LOCK (lock), FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
@@ -280,6 +299,17 @@ zif_lock_set_unlocked (ZifLock *lock, GError **error)
 	}
 
 skip_checks:
+
+	/* get default filename */
+	if (lock->priv->filename == NULL)
+		lock->priv->filename = zif_config_get_string (lock->priv->config, "pidfile", &error_local);
+	if (lock->priv->filename == NULL) {
+		g_set_error (error, ZIF_LOCK_ERROR, ZIF_LOCK_ERROR_FAILED,
+			     "lock file not set: %s", error_local->message);
+		g_error_free (error_local);
+		ret = FALSE;
+		goto out;
+	}
 
 	/* remove file */
 	retval = g_unlink (lock->priv->filename);
@@ -336,15 +366,10 @@ zif_lock_class_init (ZifLockClass *klass)
 static void
 zif_lock_init (ZifLock *lock)
 {
-	GError *error = NULL;
 	lock->priv = ZIF_LOCK_GET_PRIVATE (lock);
 	lock->priv->self_locked = FALSE;
 	lock->priv->config = zif_config_new ();
-	lock->priv->filename = zif_config_get_string (lock->priv->config, "pidfile", &error);
-	if (lock->priv->filename == NULL) {
-		egg_warning ("failed to get pidfile: %s", error->message);
-		g_error_free (error);
-	}
+	lock->priv->filename = NULL;
 }
 
 /**
@@ -365,94 +390,4 @@ zif_lock_new (void)
 	}
 	return ZIF_LOCK (zif_lock_object);
 }
-
-/***************************************************************************
- ***                          MAKE CHECK TESTS                           ***
- ***************************************************************************/
-#ifdef EGG_TEST
-#include "egg-test.h"
-
-void
-zif_lock_test (EggTest *test)
-{
-	ZifLock *lock;
-	ZifConfig *config;
-	gboolean ret;
-	GError *error = NULL;
-	gchar *pidfile;
-	guint pid = 0;
-
-	if (!egg_test_start (test, "ZifLock"))
-		return;
-
-	/************************************************************/
-	egg_test_title (test, "get config");
-	config = zif_config_new ();
-	egg_test_assert (test, config != NULL);
-
-	/************************************************************/
-	egg_test_title (test, "set filename");
-	ret = zif_config_set_filename (config, "../test/etc/yum.conf", &error);
-	if (ret)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "failed to set filename '%s'", error->message);
-
-	/************************************************************/
-	egg_test_title (test, "get lock");
-	lock = zif_lock_new ();
-	egg_test_assert (test, lock != NULL);
-
-	/************************************************************/
-	egg_test_title (test, "get pidfile");
-	pidfile = zif_config_get_string (config, "pidfile", NULL);
-	if (g_strcmp0 (pidfile, "../test/run/zif.lock") == 0)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "invalid value '%s'", pidfile);
-
-	/* remove file */
-	g_unlink (pidfile);
-
-	/************************************************************/
-	egg_test_title (test, "ensure non-locked");
-	ret = zif_lock_is_locked (lock, &pid);
-	egg_test_assert (test, !ret);
-
-	/************************************************************/
-	egg_test_title (test, "unlock not yet locked lock");
-	ret = zif_lock_set_unlocked (lock, NULL);
-	egg_test_assert (test, !ret);
-
-	/************************************************************/
-	egg_test_title (test, "lock that should succeed");
-	ret = zif_lock_set_locked (lock, &pid, NULL);
-	egg_test_assert (test, ret);
-
-	/************************************************************/
-	egg_test_title (test, "ensure locked");
-	ret = zif_lock_is_locked (lock, &pid);
-	egg_test_assert (test, ret);
-
-	/************************************************************/
-	egg_test_title (test, "ensure pid is us");
-	egg_test_assert (test, (pid == getpid ()));
-
-	/************************************************************/
-	egg_test_title (test, "unlock that should succeed");
-	ret = zif_lock_set_unlocked (lock, NULL);
-	egg_test_assert (test, ret);
-
-	/************************************************************/
-	egg_test_title (test, "unlock again that should fail");
-	ret = zif_lock_set_unlocked (lock, NULL);
-	egg_test_assert (test, !ret);
-
-	g_object_unref (lock);
-	g_object_unref (config);
-	g_free (pidfile);
-
-	egg_test_end (test);
-}
-#endif
 

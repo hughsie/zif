@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="utf-8"?>
+<metalink version="3.0" xmlns="http://www.metalinker.org/" type="dynamic" pubdate="Fri, 07 May 20.1.02:48:59 GMT" generator="mirrormanager" xmlns:mm0="http://fedorahosted.org/mirrormanager">
+  <files>
+    <file name="repomd.xml">
+      <mm0:timestamp>1273142426</mm0:timestamp>
+      <size>4402</size>
+      <verification>
+        <hash type="md5">5891f821263ecfd8e83a75151a884fad</hash>
+        <hash type="sha1">74c793df435c3ee32a1ad92b950c7da0a053434f</hash>
+        <hash type="sha256">d807acfc56f224aa2d192b0d15978199f8d4b3a2ab551b2c35e1cffb5d9c0a61</hash>
+        <hash type="sha512">011f732cd00f633c145e0d80c48ac967eb0a02bc3835fe00372c5a47d1fb31d23f77048bd9e8d902164858f40763b19575446bbf1a8871e741d783366e5bb7bb</hash>
+      </verification>
+      <mm0:alternates>
+        <mm0:alternate>
+            <mm0:timestamp>1273055956</mm0:timestamp>
+            <size>4403</size>
+            <verification>
+              <hash type="md5">b400358307d51bad02abefe137876548</hash>
+              <hash type="sha1">af6339b8a86b660e21a9170f18f993c89cf39402</hash>
+              <hash type="sha256">c74aa77a1c2f6979c825b328569cf23b57daf1d7b089f13d35b0d21761476362</hash>
+              <hash type="sha512">c14ba99806fd4774eb9f5cbce6e9f7f9be7c5094b048adc64dd0d01f2705628af711aee9322e74cd7de891566a17df99c48f5ecb5f319fa8699d234e6f7e7dd3</hash>
+            </verification>
+        </mm0:alternate>
+        <mm0:alternate>
+            <mm0:timestamp>1272970301</mm0:timestamp>
+            <size>4403</size>
+            <verification>
+              <hash type="md5">1bdc64827cd86f835c5e15f40946f06c</hash>
+              <hash type="sha1">aea2e790cbcc273bf04075242a314c07cb0412f5</hash>
+              <hash type="sha256">c2db422cf6979b1da84b6a88bd203d5bbb7076cd226a84303c5471b334ba8164</hash>
+              <hash type="sha512">e1b5d496b6f11d532a334ad59d88972ecf95dfdbcad4101eaae3e037767dee2ee7c65d3c36628e3b3c5a3188e6c8f4d115c09bd89ff6f61112bfb06c2639a911</hash>
+            </verification>
+        </mm0:alternate>
+        <mm0:alternate>
+            <mm0:timestamp>1272882428</mm0:timestamp>
+            <size>4397</size>
+            <verification>
+              <hash type="md5">53a10336c70c7428610d5cb5d6cd7f14</hash>
+              <hash type="sha1">5764b855e2b4489c7aae931fc200d09922e3e835</hash>
+              <hash type="sha256">b2cf86bb50f91501f9295d97c31d96b9920d9098b0f7088dafe96b171c5cd3f8</hash>
+              <hash type="sha512">a4e850fb8895a4f634aa4d36d751ecf59cca42dc35a6bf6691c5150ef4977cb66e6eac54d0a6e4bb57902f5dfac51a47e1ce35c26b138f09b1c5698add8cac19</hash>
+            </verification>
+        </mm0:alternate>
+        <mm0:alternate>
+            <mm0:timestamp>1272795971</mm0:timestamp>
+            <size>4397</size>
+            <verification>
+              <hash type="md5">5928d07044adb79848ca61b4bee85a49</hash>
+              <hash type="sha1">82e7277c96ef1acc7ee2edf8fe19a12024907e9a</hash>
+              <hash type="sha256">4f3aed8009748cfaf83e1d352cef4cee0f60e937a42a6791a6b24bb40bcc325f</hash>
+              <hash type="sha512">697585b1d779f8c027751c16bdb215758e5412ce44e918fb41ffc9f66387accbde4f69ddf3cf18ae635a896c716af95b578f58f34c84aa171655cb7756c89591</hash>
+            </verification>
+        </mm0:alternate>
+        <mm0:alternate>
+            <mm0:timestamp>1272708937</mm0:timestamp>
+            <size>4397</size>
+            <verification>
+              <hash type="md5">de1a79e8176ff31c9b12ea584c9c1270</hash>
+              <hash type="sha1">115f6b625fd9167f537397507db6c78c86c304e6</hash>
+              <hash type="sha256">2f3a2c89eebf6d005fc06add1a3d4d530c3036b0ae8c3ba333da78807843d182</hash>
+              <hash type="sha512">3f0510d810f89d3d4441603bc603cb1c2ecb6436ba9d77b67dca37b7d50c25eca019552bd49a33248ed01c3aee053527d01494305b482dddd5ef34742215eaca</hash>
+            </verification>
+        </mm0:alternate>
+        <mm0:alternate>
+            <mm0:timestamp>1272675862</mm0:timestamp>
+            <size>4403</size>
+            <verification>
+              <hash type="md5">e0c89e2fd9585ad6bdc2f75f90f3a9b3</hash>
+              <hash type="sha1">5aed2b71ed3df24436ea3cd0b9f3df0ae9c47f91</hash>
+              <hash type="sha256">84070f24875b56b7d3fe9cf463a8d869bb9da6087698e08544dabc1af4cd17c8</hash>
+              <hash type="sha512">ec1f24b0a7a2575b374078d26b40499fd6fb800e5684f238138a30475efab78deacf6840c12e381ea5d1140bab47402e59814403212aa5f4bd46b7508a2c7232</hash>
+            </verification>
+        </mm0:alternate>
+      </mm0:alternates>
+      <resources maxconnections="1">
+        <url protocol="http" type="http" location="GB" preference="100">http://www.mirrorservice.org/sites/download.fedora.redhat.com/pub/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="ftp" type="ftp" location="GB" preference="100">ftp://ftp.mirrorservice.org/sites/download.fedora.redhat.com/pub/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="rsync" type="rsync" location="GB" preference="100">rsync://rsync.mirrorservice.org/download.fedora.redhat.com/pub/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="http" type="http" location="GB" preference="99">http://mirror.bytemark.co.uk/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="rsync" type="rsync" location="GB" preference="99">rsync://mirror.bytemark.co.uk/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="ftp" type="ftp" location="GB" preference="99">ftp://mirror.bytemark.co.uk/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="rsync" type="rsync" location="GB" preference="98">rsync://mirror01.th.ifl.net/fedora/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="http" type="http" location="GB" preference="98">http://mirror01.th.ifl.net/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="ftp" type="ftp" location="GB" preference="98">ftp://mirror01.th.ifl.net/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="ftp" type="ftp" location="CH" preference="97">ftp://mirror.switch.ch/mirror/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="http" type="http" location="CH" preference="97">http://mirror.switch.ch/ftp/mirror/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="http" type="http" location="ES" preference="96">http://mirror.uv.es/mirror/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="ftp" type="ftp" location="ES" preference="96">ftp://mirror.uv.es/mirror/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="http" type="http" location="CZ" preference="95">http://ftp.fi.muni.cz/pub/linux/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="ftp" type="ftp" location="CZ" preference="95">ftp://ftp.linux.cz/pub/linux/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="ftp" type="ftp" location="CZ" preference="95">ftp://ftp.fi.muni.cz/pub/linux/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="rsync" type="rsync" location="CZ" preference="95">rsync://ftp.fi.muni.cz/pub/linux/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="http" type="http" location="CZ" preference="95">http://ftp.linux.cz/pub/linux/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="rsync" type="rsync" location="CZ" preference="95">rsync://ftp.linux.cz/pub/linux/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="ftp" type="ftp" location="CZ" preference="95">ftp://ftp6.linux.cz/pub/linux/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="http" type="http" location="IT" preference="94">http://fedora.mirror.garr.it/mirrors/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="http" type="http" location="IE" preference="93">http://ftp.heanet.ie/pub/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="rsync" type="rsync" location="IE" preference="93">rsync://ftp.heanet.ie/pub/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="ftp" type="ftp" location="IE" preference="93">ftp://ftp.heanet.ie/pub/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="ftp" type="ftp" location="RO" preference="92">ftp://ftp.roedu.net/mirrors/fedora.redhat.com/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="http" type="http" location="RO" preference="92">http://ftp.roedu.net/mirrors/fedora.redhat.com/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="http" type="http" location="DE" preference="91">http://mirror1.atrpms.net/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="ftp" type="ftp" location="PT" preference="90">ftp://ftp.up.pt/pub/fedora/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="http" type="http" location="PT" preference="90">http://ftp.up.pt/fedora/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="http" type="http" location="FR" preference="89">http://mirrors.ircam.fr/pub/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="ftp" type="ftp" location="FR" preference="89">ftp://mirrors.ircam.fr/pub/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="rsync" type="rsync" location="FR" preference="89">rsync://mirrors.ircam.fr/fedora-linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="http" type="http" location="BY" preference="88">http://mirror.datacenter.by/pub/fedora/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="ftp" type="ftp" location="GR" preference="87">ftp://ftp.cc.uoc.gr/pub/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="http" type="http" location="GR" preference="87">http://ftp.cc.uoc.gr/pub/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="http" type="http" location="ES" preference="86">http://ftp.udc.es/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="ftp" type="ftp" location="DK" preference="85">ftp://ftp.crc.dk/pub/mirrors/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="http" type="http" location="DK" preference="85">http://ftp.crc.dk/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="rsync" type="rsync" location="DK" preference="85">rsync://ftp.crc.dk/Fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="http" type="http" location="FR" preference="84">http://mirror.ovh.net/download.fedora.redhat.com/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="ftp" type="ftp" location="FR" preference="84">ftp://mirror.ovh.net/download.fedora.redhat.com/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="rsync" type="rsync" location="FR" preference="84">rsync://mirror.ovh.net/download.fedora.redhat.com/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="ftp" type="ftp" location="DE" preference="83">ftp://fedora.tu-chemnitz.de/pub/linux/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="http" type="http" location="DE" preference="83">http://fedora.tu-chemnitz.de/pub/linux/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="http" type="http" location="SE" preference="82">http://ftp.df.lth.se/pub/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="ftp" type="ftp" location="SE" preference="82">ftp://ftp.df.lth.se/pub/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="rsync" type="rsync" location="SE" preference="82">rsync://ftp.df.lth.se/pub/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="ftp" type="ftp" location="CZ" preference="81">ftp://ftp.sh.cvut.cz/MIRRORS/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="http" type="http" location="CZ" preference="81">http://ftp.sh.cvut.cz/MIRRORS/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="rsync" type="rsync" location="CZ" preference="81">rsync://ftp.sh.cvut.cz/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="http" type="http" location="NO" preference="80">http://fedora.uib.no/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="ftp" type="ftp" location="NO" preference="80">ftp://fedora.uib.no/pub/Linux/Distributions/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="http" type="http" location="PL" preference="79">http://ftp.ps.pl/pub/Linux/fedora-linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="ftp" type="ftp" location="PL" preference="79">ftp://ftp.ps.pl/pub/Linux/fedora-linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="http" type="http" location="DE" preference="78">http://mirror2.atrpms.net/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="ftp" type="ftp" location="PL" preference="77">ftp://ftp.icm.edu.pl/pub/Linux/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="http" type="http" location="PL" preference="77">http://ftp.icm.edu.pl/pub/Linux/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="rsync" type="rsync" location="PL" preference="77">rsync://ftp.icm.edu.pl/pub/Linux/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="http" type="http" location="CZ" preference="76">http://mirror.karneval.cz/pub/linux/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="ftp" type="ftp" location="CZ" preference="76">ftp://mirror.karneval.cz/pub/linux/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="rsync" type="rsync" location="CZ" preference="76">rsync://mirror.karneval.cz/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="http" type="http" location="DE" preference="75">http://vesta.informatik.rwth-aachen.de/ftp/pub/Linux/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="ftp" type="ftp" location="DE" preference="75">ftp://vesta.informatik.rwth-aachen.de/pub/Linux/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="http" type="http" location="CZ" preference="74">http://sunsite.mff.cuni.cz/MIRRORS/fedora.redhat.com/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="ftp" type="ftp" location="CZ" preference="74">ftp://sunsite.mff.cuni.cz/MIRRORS/fedora.redhat.com/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="http" type="http" location="CZ" preference="74">http://ultra.linux.cz/MIRRORS/fedora.redhat.com/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="rsync" type="rsync" location="CZ" preference="74">rsync://sunsite.mff.cuni.cz/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="http" type="http" location="FR" preference="73">http://fr2.rpmfind.net/linux/fedora/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="ftp" type="ftp" location="FR" preference="73">ftp://fr2.rpmfind.net/linux/fedora/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="rsync" type="rsync" location="FR" preference="73">rsync://fr2.rpmfind.net/linux/fedora/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="http" type="http" location="DE" preference="72">http://ftp-stud.hs-esslingen.de/pub/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="ftp" type="ftp" location="DE" preference="72">ftp://ftp-stud.hs-esslingen.de/pub/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="rsync" type="rsync" location="DE" preference="72">rsync://ftp-stud.hs-esslingen.de/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="http" type="http" location="NL" preference="71">http://ftp.nluug.nl/pub/os/Linux/distr/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="rsync" type="rsync" location="NL" preference="71">rsync://ftp.nluug.nl/Fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="ftp" type="ftp" location="NL" preference="71">ftp://ftp.nluug.nl/pub/os/Linux/distr/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="http" type="http" location="FR" preference="70">http://ftp.lip6.fr/ftp/pub/linux/distributions/fedora/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="ftp" type="ftp" location="FR" preference="70">ftp://ftp.lip6.fr/pub/linux/distributions/fedora/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="ftp" type="ftp" location="FR" preference="69">ftp://ftp.ciril.fr/pub/linux/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="rsync" type="rsync" location="FR" preference="69">rsync://ftp.ciril.fr/pub/linux/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="http" type="http" location="FR" preference="68">http://fedora.univ-nantes.fr/fedora.redhat.com/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="ftp" type="ftp" location="FR" preference="68">ftp://fedora.univ-nantes.fr/fedora.redhat.com/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="rsync" type="rsync" location="FR" preference="68">rsync://fedora.univ-nantes.fr/fedora/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="rsync" type="rsync" location="NL" preference="67">rsync://mirrors.nl.eu.kernel.org/fedora/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="ftp" type="ftp" location="NL" preference="67">ftp://mirrors.nl.eu.kernel.org/fedora/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="http" type="http" location="NL" preference="67">http://mirrors.nl.eu.kernel.org/fedora/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="ftp" type="ftp" location="NL" preference="66">ftp://alviss.et.tudelft.nl/pub/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="ftp" type="ftp" location="FI" preference="65">ftp://ftp.funet.fi/pub/mirrors/fedora.redhat.com/pub/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="http" type="http" location="FI" preference="65">http://ftp.funet.fi/pub/mirrors/fedora.redhat.com/pub/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="rsync" type="rsync" location="FI" preference="65">rsync://ftp.funet.fi/ftp/pub/mirrors/fedora.redhat.com/pub/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="rsync" type="rsync" location="SE" preference="64">rsync://mirrors.se.eu.kernel.org/fedora/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="ftp" type="ftp" location="SE" preference="64">ftp://mirrors.se.eu.kernel.org/fedora/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="http" type="http" location="SE" preference="64">http://mirrors.se.eu.kernel.org/fedora/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="ftp" type="ftp" location="NL" preference="63">ftp://ftp.tudelft.nl/pub/Linux/download.fedora.redhat.com/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="http" type="http" location="NL" preference="63">http://ftp.tudelft.nl/download.fedora.redhat.com/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="http" type="http" location="PL" preference="62">http://sunsite.icm.edu.pl/pub/Linux/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="http" type="http" location="ES" preference="61">http://ftp.gui.uva.es/sites/fedora.redhat.com/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="ftp" type="ftp" location="ES" preference="61">ftp://ftp.gui.uva.es/sites/fedora.redhat.com/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="rsync" type="rsync" location="ES" preference="61">rsync://ftp.gui.uva.es/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="ftp" type="ftp" location="SK" preference="60">ftp://ftp.upjs.sk/pub/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="http" type="http" location="SK" preference="60">http://ftp.upjs.sk/pub/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="rsync" type="rsync" location="DE" preference="59">rsync://ftp.informatik.uni-frankfurt.de/fedora/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="ftp" type="ftp" location="DE" preference="59">ftp://ftp.informatik.uni-frankfurt.de/pub/Mirrors/fedora/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="http" type="http" location="DE" preference="59">http://ftp.informatik.uni-frankfurt.de/fedora/development/13/i386/os/repodata/repomd.xml</url>
+        <url protocol="http" type="http" location="DE" preference="58">http://mirror.andreas-mueller.com/pub/fedora/linux/development/13/i386/os/repodata/repomd.xml</url>
+      </resources>
+    </file>
+  </files>
+</metalink>

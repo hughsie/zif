@@ -86,6 +86,23 @@ zif_md_error_quark (void)
 }
 
 /**
+ * zif_md_get_is_loaded:
+ * @md: the #ZifMd object
+ *
+ * Gets if the metadata has already been loaded.
+ *
+ * Return value: %TRUE if the repo is loaded.
+ *
+ * Since: 0.1.0
+ **/
+gboolean
+zif_md_get_is_loaded (ZifMd *md)
+{
+	g_return_val_if_fail (ZIF_IS_MD (md), FALSE);
+	return md->priv->loaded;
+}
+
+/**
  * zif_md_get_id:
  * @md: the #ZifMd object
  *
@@ -481,7 +498,7 @@ zif_md_load (ZifMd *md, ZifState *state, GError **error)
 	}
 
 	/* display any warning */
-	egg_warning ("failed checksum for uncompressed: %s", error_local->message);
+	egg_debug ("failed checksum for uncompressed: %s", error_local->message);
 	g_clear_error (&error_local);
 	zif_state_reset (state_local);
 
@@ -504,9 +521,6 @@ zif_md_load (ZifMd *md, ZifState *state, GError **error)
 		egg_warning ("failed checksum for compressed: %s", error_local->message);
 		g_clear_error (&error_local);
 
-		/* delete file if it exists */
-		zif_md_delete_file (md->priv->filename);
-
 		/* if not online, then this is fatal */
 		ret = zif_config_get_boolean (md->priv->config, "network", NULL);
 		if (!ret) {
@@ -515,6 +529,9 @@ zif_md_load (ZifMd *md, ZifState *state, GError **error)
 				     zif_md_type_to_text (md->priv->type), md->priv->id);
 			goto out;
 		}
+
+		/* delete file if it exists */
+		zif_md_delete_file (md->priv->filename);
 
 		/* download file */
 		state_local = zif_state_get_child (state);
@@ -595,6 +612,9 @@ skip_compressed_check:
 	ret = zif_state_finished (state, error);
 	if (!ret)
 		goto out;
+
+	/* all okay */
+	md->priv->loaded = TRUE;
 out:
 	g_free (dirname);
 	return ret;
@@ -1330,53 +1350,4 @@ zif_md_new (void)
 	md = g_object_new (ZIF_TYPE_MD, NULL);
 	return ZIF_MD (md);
 }
-
-/***************************************************************************
- ***                          MAKE CHECK TESTS                           ***
- ***************************************************************************/
-#ifdef EGG_TEST
-#include "egg-test.h"
-
-void
-zif_md_test (EggTest *test)
-{
-	ZifMd *md;
-	gboolean ret;
-	GError *error = NULL;
-	ZifState *state;
-
-	if (!egg_test_start (test, "ZifMd"))
-		return;
-
-	/* use */
-	state = zif_state_new ();
-
-	/************************************************************/
-	egg_test_title (test, "get store_remote md");
-	md = zif_md_new ();
-	egg_test_assert (test, md != NULL);
-
-	/************************************************************/
-	egg_test_title (test, "loaded");
-	egg_test_assert (test, !md->priv->loaded);
-
-	/************************************************************/
-	egg_test_title (test, "load");
-	zif_md_set_id (md, "fedora");
-	ret = zif_md_load (md, state, &error);
-	if (ret)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "failed to load '%s'", error->message);
-
-	/************************************************************/
-	egg_test_title (test, "loaded");
-	egg_test_assert (test, md->priv->loaded);
-
-	g_object_unref (md);
-	g_object_unref (state);
-
-	egg_test_end (test);
-}
-#endif
 

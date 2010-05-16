@@ -313,28 +313,3 @@ zif_package_remote_new (void)
 	return ZIF_PACKAGE_REMOTE (pkg);
 }
 
-/***************************************************************************
- ***                          MAKE CHECK TESTS                           ***
- ***************************************************************************/
-#ifdef EGG_TEST
-#include "egg-test.h"
-
-void
-zif_package_remote_test (EggTest *test)
-{
-	ZifPackageRemote *pkg;
-
-	if (!egg_test_start (test, "ZifPackageRemote"))
-		return;
-
-	/************************************************************/
-	egg_test_title (test, "get package_remote");
-	pkg = zif_package_remote_new ();
-	egg_test_assert (test, pkg != NULL);
-
-	g_object_unref (pkg);
-
-	egg_test_end (test);
-}
-#endif
-

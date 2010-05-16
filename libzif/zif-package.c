@@ -1433,28 +1433,3 @@ zif_package_new (void)
 	return ZIF_PACKAGE (package);
 }
 
-/***************************************************************************
- ***                          MAKE CHECK TESTS                           ***
- ***************************************************************************/
-#ifdef EGG_TEST
-#include "egg-test.h"
-
-void
-zif_package_test (EggTest *test)
-{
-	ZifPackage *package;
-
-	if (!egg_test_start (test, "ZifPackage"))
-		return;
-
-	/************************************************************/
-	egg_test_title (test, "get package");
-	package = zif_package_new ();
-	egg_test_assert (test, package != NULL);
-
-	g_object_unref (package);
-
-	egg_test_end (test);
-}
-#endif
-

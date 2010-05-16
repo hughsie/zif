@@ -45,7 +45,7 @@ libzif_include_HEADERS =					\
 	zif-repos.h						\
 	zif-utils.h						\
 	zif-update.h						\
-	zif-update-info.h						\
+	zif-update-info.h					\
 	zif-groups.h						\
 	zif-config.h						\
 	zif-monitor.h						\
@@ -56,8 +56,8 @@ libzif_la_SOURCES =						\
 	egg-debug.h						\
 	zif-lock.c						\
 	zif-lock.h						\
-	zif-state.c					\
-	zif-state.h					\
+	zif-state.c						\
+	zif-state.h						\
 	zif-changeset.c						\
 	zif-changeset.h						\
 	zif-string.c						\
@@ -145,9 +145,8 @@ check_PROGRAMS =						\
 	zif-self-test
 
 zif_self_test_SOURCES =						\
-	$(libzif_la_SOURCES)					\
-	egg-test.h						\
-	egg-test.c						\
+	egg-debug.h						\
+	egg-debug.c						\
 	zif-self-test.c						\
 	$(NULL)
 
@@ -159,9 +158,10 @@ zif_self_test_LDADD =						\
 	$(RPM_LIBS)						\
 	$(SOUP_LIBS)						\
 	$(ARCHIVE_LIBS)						\
+	$(lib_LTLIBRARIES)					\
 	$(SQLITE_LIBS)
 
-zif_self_test_CFLAGS = -DEGG_TEST $(AM_CFLAGS)
+zif_self_test_CFLAGS = -DEGG_TEST $(AM_CFLAGS) $(WARNINGFLAGS_C)
 
 TESTS = zif-self-test
 endif

@@ -72,6 +72,10 @@ gboolean	 zif_file_is_compressed_name	(const gchar	*filename);
 gchar		**zif_package_id_split		(const gchar	*package_id);
 gboolean	 zif_package_id_check		(const gchar	*package_id);
 guint		 zif_time_string_to_seconds	(const gchar	*value);
+gboolean	 zif_package_convert_evr	(gchar		*evr,
+						 const gchar	**epoch,
+						 const gchar	**version,
+						 const gchar	**release);
 
 G_END_DECLS
 

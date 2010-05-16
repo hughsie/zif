@@ -172,10 +172,16 @@ zif_package_id_from_nevra (const gchar *name, guint epoch, const gchar *version,
 
 /**
  * zif_package_convert_evr:
+ * @evr: epoch, version, release
+ * @epoch: the package epoch
+ * @version: the package version
+ * @release: the package release
  *
  * Modifies evr, so pass in copy
+ *
+ * Return value: %TRUE if the EVR was parsed
  **/
-static gboolean
+gboolean
 zif_package_convert_evr (gchar *evr, const gchar **epoch, const gchar **version, const gchar **release)
 {
 	gchar *find;
@@ -232,7 +238,7 @@ zif_compare_evr (const gchar *a, const gchar *b)
 	g_return_val_if_fail (b != NULL, 0);
 
 	/* exactly the same, optimise */
-	if (strcmp (a, b) == 0)
+	if (g_strcmp0 (a, b) == 0)
 		goto out;
 
 	/* copy */
@@ -754,205 +760,4 @@ out:
 	g_free (value_copy);
 	return timeval;
 }
-
-/***************************************************************************
- ***                          MAKE CHECK TESTS                           ***
- ***************************************************************************/
-#ifdef EGG_TEST
-#include "egg-test.h"
-
-void
-zif_utils_test (EggTest *test)
-{
-	gchar *package_id;
-	gboolean ret;
-	gchar *evr;
-	gint val;
-	const gchar *e;
-	const gchar *v;
-	const gchar *r;
-	gchar *filename;
-	guint time;
-	GError *error = NULL;
-	ZifState *state;
-
-	if (!egg_test_start (test, "ZifUtils"))
-		return;
-
-	state = zif_state_new ();
-
-	/************************************************************
-	 ****************           NEVRA          ******************
-	 ************************************************************/
-	egg_test_title (test, "no epoch");
-	package_id = zif_package_id_from_nevra ("kernel", 0, "0.1.0", "1", "i386", "fedora");
-	if (g_strcmp0 (package_id, "kernel;0.1.0-1;i386;fedora") == 0)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "incorrect package_id '%s'", package_id);
-	g_free (package_id);
-
-	/************************************************************/
-	egg_test_title (test, "epoch value");
-	package_id = zif_package_id_from_nevra ("kernel", 2, "0.1.0", "1", "i386", "fedora");
-	if (g_strcmp0 (package_id, "kernel;2:0.1.0-1;i386;fedora") == 0)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "incorrect package_id '%s'", package_id);
-	g_free (package_id);
-
-	/************************************************************/
-	egg_test_title (test, "init");
-	ret = zif_init ();
-	egg_test_assert (test, ret);
-
-	/************************************************************/
-	egg_test_title (test, "bool to text true (1)");
-	ret = zif_boolean_from_text ("1");
-	egg_test_assert (test, ret);
-
-	/************************************************************/
-	egg_test_title (test, "bool to text true (2)");
-	ret = zif_boolean_from_text ("TRUE");
-	egg_test_assert (test, ret);
-
-	/************************************************************/
-	egg_test_title (test, "bool to text false");
-	ret = zif_boolean_from_text ("false");
-	egg_test_assert (test, !ret);
-
-	/************************************************************/
-	egg_test_title (test, "bool to text blank");
-	ret = zif_boolean_from_text ("");
-	egg_test_assert (test, !ret);
-
-	/************************************************************/
-	egg_test_title (test, "convert evr");
-	evr = g_strdup ("7:1.0.0-6");
-	zif_package_convert_evr (evr, &e, &v, &r);
-	if (g_strcmp0 (e, "7") == 0 && g_strcmp0 (v, "1.0.0") == 0 && g_strcmp0 (r, "6") == 0)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "incorrect evr '%s','%s','%s'", e, v, r);
-	g_free (evr);
-
-	/************************************************************/
-	egg_test_title (test, "convert evr no epoch");
-	evr = g_strdup ("1.0.0-6");
-	zif_package_convert_evr (evr, &e, &v, &r);
-	if (e == NULL && g_strcmp0 (v, "1.0.0") == 0 && g_strcmp0 (r, "6") == 0)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "incorrect evr '%s','%s','%s'", e, v, r);
-	g_free (evr);
-
-	/************************************************************/
-	egg_test_title (test, "convert evr no epoch or release");
-	evr = g_strdup ("1.0.0");
-	zif_package_convert_evr (evr, &e, &v, &r);
-	if (e == NULL && g_strcmp0 (v, "1.0.0") == 0 && r == NULL)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "incorrect evr '%s','%s','%s'", e, v, r);
-	g_free (evr);
-
-	/************************************************************/
-	egg_test_title (test, "compare same");
-	val = zif_compare_evr ("1:1.0.2-3", "1:1.0.2-3");
-	egg_test_assert (test, (val == 0));
-
-	/************************************************************/
-	egg_test_title (test, "compare right heavy");
-	val = zif_compare_evr ("1:1.0.2-3", "1:1.0.2-4");
-	egg_test_assert (test, (val == -1));
-
-	/************************************************************/
-	egg_test_title (test, "compare new release");
-	val = zif_compare_evr ("1:1.0.2-4", "1:1.0.2-3");
-	egg_test_assert (test, (val == 1));
-
-	/************************************************************/
-	egg_test_title (test, "compare new epoch");
-	val = zif_compare_evr ("1:0.1.0-1", "1.0.2-2");
-	egg_test_assert (test, (val == 1));
-
-	/************************************************************/
-	egg_test_title (test, "compare new version");
-	val = zif_compare_evr ("1.0.2-1", "1.0.1-1");
-	egg_test_assert (test, (val == 1));
-
-	/************************************************************/
-	egg_test_title (test, "get uncompressed name from compressed");
-	filename = zif_file_get_uncompressed_name ("/dave/moo.sqlite.gz");
-	egg_test_assert (test, (g_strcmp0 (filename, "/dave/moo.sqlite") == 0));
-	g_free (filename);
-
-	/************************************************************/
-	egg_test_title (test, "get uncompressed name from uncompressed");
-	filename = zif_file_get_uncompressed_name ("/dave/moo.sqlite");
-	egg_test_assert (test, (g_strcmp0 (filename, "/dave/moo.sqlite") == 0));
-	g_free (filename);
-
-	/************************************************************/
-	egg_test_title (test, "decompress gz");
-	ret = zif_file_decompress ("../test/cache/fedora/cf940a26805152e5f675edd695022d890241aba057a4a4a97a0b46618a51c482-comps-rawhide.xml.gz",
-				   "/tmp/comps-rawhide.xml", state, &error);
-	if (ret)
-		egg_test_success (test, NULL);
-	else {
-		egg_test_failed (test, "failed: %s", error->message);
-		g_error_free (error);
-	}
-
-	/************************************************************/
-	egg_test_title (test, "decompress bz2");
-	ret = zif_file_decompress ("../test/cache/fedora/35d817e2bac701525fa72cec57387a2e3457bf32642adeee1e345cc180044c86-primary.sqlite.bz2",
-				   "/tmp/moo.sqlite", state, &error);
-	if (ret)
-		egg_test_success (test, NULL);
-	else {
-		egg_test_failed (test, "failed: %s", error->message);
-		g_error_free (error);
-	}
-
-	/************************************************************/
-	egg_test_title (test, "convert time (invalid)");
-	time = zif_time_string_to_seconds ("");
-	egg_test_assert (test, (time == 0));
-
-	/************************************************************/
-	egg_test_title (test, "convert time (no suffix)");
-	time = zif_time_string_to_seconds ("10");
-	egg_test_assert (test, (time == 0));
-
-	/************************************************************/
-	egg_test_title (test, "convert time (invalid suffix)");
-	time = zif_time_string_to_seconds ("10f");
-	egg_test_assert (test, (time == 0));
-
-	/************************************************************/
-	egg_test_title (test, "convert time (seconds)");
-	time = zif_time_string_to_seconds ("10s");
-	egg_test_assert (test, (time == 10));
-
-	/************************************************************/
-	egg_test_title (test, "convert time (minutes)");
-	time = zif_time_string_to_seconds ("10m");
-	egg_test_assert (test, (time == 600));
-
-	/************************************************************/
-	egg_test_title (test, "convert time (hours)");
-	time = zif_time_string_to_seconds ("10h");
-	egg_test_assert (test, (time == 36000));
-
-	/************************************************************/
-	egg_test_title (test, "convert time (days)");
-	time = zif_time_string_to_seconds ("10d");
-	egg_test_assert (test, (time == 864000));
-
-	g_object_unref (state);
-
-	egg_test_end (test);
-}
-#endif
 

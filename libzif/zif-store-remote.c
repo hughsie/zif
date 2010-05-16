@@ -1032,7 +1032,7 @@ zif_store_remote_load_metadata (ZifStoreRemote *store, ZifState *state, GError *
 		ret = zif_config_get_boolean (store->priv->config, "network", NULL);
 		if (!ret) {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED_AS_OFFLINE,
-				     "failed to download repomd as offline");
+				     "failed to download %s as offline", store->priv->repomd_filename);
 			goto out;
 		}
 
@@ -1538,7 +1538,7 @@ zif_store_remote_clean (ZifStore *store, ZifState *state, GError **error)
 		ret = zif_store_remote_load_metadata (remote, state_local, &error_local);
 		if (!ret) {
 			/* ignore this error */
-			g_print ("failed to load xml: %s\n", error_local->message);
+			g_print ("failed to load metadata xml: %s\n", error_local->message);
 			g_error_free (error_local);
 			ret = TRUE;
 			goto out;
@@ -1860,7 +1860,7 @@ zif_store_remote_search_name (ZifStore *store, gchar **search, ZifState *state, 
 		ret = zif_store_remote_load_metadata (remote, state_local, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
-				     "failed to load xml: %s", error_local->message);
+				     "failed to load metadata xml: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
@@ -1919,7 +1919,7 @@ zif_store_remote_search_details (ZifStore *store, gchar **search, ZifState *stat
 		ret = zif_store_remote_load_metadata (remote, state_local, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
-				     "failed to load xml: %s", error_local->message);
+				     "failed to load metadata xml: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
@@ -2063,7 +2063,7 @@ zif_store_remote_search_category (ZifStore *store, gchar **group_id, ZifState *s
 		ret = zif_store_remote_load_metadata (remote, state_local, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
-				     "failed to load xml: %s", error_local->message);
+				     "failed to load metadata xml: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
@@ -2200,7 +2200,7 @@ zif_store_remote_search_group (ZifStore *store, gchar **search, ZifState *state,
 		ret = zif_store_remote_load_metadata (remote, state_local, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
-				     "failed to load xml: %s", error_local->message);
+				     "failed to load metadata xml: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
@@ -2260,7 +2260,7 @@ zif_store_remote_find_package (ZifStore *store, const gchar *package_id, ZifStat
 		ret = zif_store_remote_load_metadata (remote, state_local, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
-				     "failed to load xml: %s", error_local->message);
+				     "failed to load metadata xml: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
@@ -2344,7 +2344,7 @@ zif_store_remote_get_packages (ZifStore *store, ZifState *state, GError **error)
 		ret = zif_store_remote_load_metadata (remote, state_local, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
-				     "failed to load xml: %s", error_local->message);
+				     "failed to load metadata xml: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
@@ -2410,7 +2410,7 @@ zif_store_remote_get_categories (ZifStore *store, ZifState *state, GError **erro
 		ret = zif_store_remote_load_metadata (remote, state_local, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
-				     "failed to load xml: %s", error_local->message);
+				     "failed to load metadata xml: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
@@ -2548,7 +2548,7 @@ zif_store_remote_get_updates (ZifStore *store, GPtrArray *packages,
 		ret = zif_store_remote_load_metadata (remote, state_local, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
-				     "failed to load xml: %s", error_local->message);
+				     "failed to load metadata xml: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
@@ -2668,7 +2668,7 @@ zif_store_remote_what_provides (ZifStore *store, gchar **search,
 		ret = zif_store_remote_load_metadata (remote, state_local, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
-				     "failed to load xml: %s", error_local->message);
+				     "failed to load metadata xml: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
@@ -2733,7 +2733,7 @@ zif_store_remote_search_file (ZifStore *store, gchar **search, ZifState *state, 
 		ret = zif_store_remote_load_metadata (remote, state_local, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
-				     "failed to load xml: %s", error_local->message);
+				     "failed to load metadata xml: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
@@ -3163,304 +3163,4 @@ zif_store_remote_new (void)
 	store = g_object_new (ZIF_TYPE_STORE_REMOTE, NULL);
 	return ZIF_STORE_REMOTE (store);
 }
-
-/***************************************************************************
- ***                          MAKE CHECK TESTS                           ***
- ***************************************************************************/
-#ifdef EGG_TEST
-#include "egg-test.h"
-#include "zif-groups.h"
-
-void
-zif_store_remote_test (EggTest *test)
-{
-	ZifGroups *groups;
-	ZifStoreRemote *store;
-	ZifStoreLocal *store_local;
-	GPtrArray *packages;
-	ZifConfig *config;
-	ZifLock *lock;
-	ZifState *state;
-	GPtrArray *array;
-	gboolean ret;
-	GError *error = NULL;
-	const gchar *id;
-	ZifCategory *category;
-	guint i;
-	const gchar *in_array[] = { NULL, NULL };
-
-	if (!egg_test_start (test, "ZifStoreRemote"))
-		return;
-
-	/* set this up as dummy */
-	config = zif_config_new ();
-	zif_config_set_filename (config, "../test/etc/yum.conf", NULL);
-
-	/* use state object */
-	state = zif_state_new ();
-
-	/************************************************************/
-	egg_test_title (test, "get store");
-	store = zif_store_remote_new ();
-	egg_test_assert (test, store != NULL);
-
-	/************************************************************/
-	egg_test_title (test, "get lock");
-	lock = zif_lock_new ();
-	egg_test_assert (test, lock != NULL);
-
-	/************************************************************/
-	egg_test_title (test, "lock");
-	ret = zif_lock_set_locked (lock, NULL, NULL);
-	egg_test_assert (test, ret);
-
-	/************************************************************/
-	egg_test_title (test, "load from a file");
-	zif_state_reset (state);
-	ret = zif_store_remote_set_from_file (store, "../test/repos/fedora.repo", "fedora", state, &error);
-	if (ret)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "failed to load '%s'", error->message);
-
-	/* setup state */
-	groups = zif_groups_new ();
-	zif_groups_set_mapping_file (groups, "../test/share/yum-comps-groups.conf", NULL);
-	store_local = zif_store_local_new ();
-	zif_store_local_set_prefix (store_local, "/", NULL);
-
-	/************************************************************/
-	egg_test_title (test, "get updates");
-	zif_state_reset (state);
-	packages = zif_store_get_packages (ZIF_STORE (store_local), state, &error);
-	if (packages == NULL)
-		egg_test_failed (test, "failed to get local store: %s", error->message);
-	zif_package_array_filter_newest (packages);
-	zif_state_reset (state);
-	array = zif_store_remote_get_updates (ZIF_STORE (store), packages, state, &error);
-	if (array == NULL)
-		egg_test_failed (test, "no data: %s", error->message);
-	else if (array->len > 0)
-		egg_test_success (test, NULL);
-	else
-		egg_test_success (test, "no updates"); //TODO: failure
-	g_ptr_array_unref (array);
-	g_ptr_array_unref (packages);
-
-	/************************************************************/
-	egg_test_title (test, "is devel");
-	ret = zif_store_remote_is_devel (store, state, NULL);
-	egg_test_assert (test, !ret);
-
-	/************************************************************/
-	egg_test_title (test, "is enabled");
-	ret = zif_store_remote_get_enabled (store, state, NULL);
-	egg_test_assert (test, ret);
-
-	/************************************************************/
-	egg_test_title (test, "get id");
-	id = zif_store_get_id (ZIF_STORE (store));
-	if (g_strcmp0 (id, "fedora") == 0)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "invalid id '%s'", id);
-
-	/************************************************************/
-	egg_test_title (test, "get name");
-	id = zif_store_remote_get_name (store, state, NULL);
-	if (g_strcmp0 (id, "Fedora 11 - i386") == 0)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "invalid name '%s'", id);
-
-	/************************************************************/
-	egg_test_title (test, "load metadata");
-	zif_state_reset (state);
-	ret = zif_store_remote_load (ZIF_STORE (store), state, &error);
-	if (ret)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "failed to load metadata '%s'", error->message);
-
-	/************************************************************/
-	egg_test_title (test, "resolve");
-	zif_state_reset (state);
-	in_array[0] = "kernel";
-	array = zif_store_remote_resolve (ZIF_STORE (store), (gchar**)in_array, state, &error);
-	if (array != NULL)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "failed to resolve '%s'", error->message);
-
-	/************************************************************/
-	egg_test_title (test, "correct number");
-	if (array->len >= 1)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "incorrect length %i", array->len);
-
-	g_ptr_array_unref (array);
-
-	/************************************************************/
-	egg_test_title (test, "search name");
-	zif_state_reset (state);
-	in_array[0] = "power-manager";
-	array = zif_store_remote_search_name (ZIF_STORE (store), (gchar**)in_array, state, &error);
-	if (array != NULL)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "failed to search name '%s'", error->message);
-
-	/************************************************************/
-	egg_test_title (test, "search name correct number");
-	if (array->len == 3)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "incorrect length %i", array->len);
-
-	g_ptr_array_unref (array);
-
-	/************************************************************/
-	egg_test_title (test, "search details");
-	zif_state_reset (state);
-	in_array[0] = "browser plugin";
-	array = zif_store_remote_search_details (ZIF_STORE (store), (gchar**)in_array, state, &error);
-	if (array != NULL)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "failed to search details '%s'", error->message);
-
-	/************************************************************/
-	egg_test_title (test, "search details correct number");
-	if (array->len == 5)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "incorrect length %i", array->len);
-
-	g_ptr_array_unref (array);
-
-	/************************************************************/
-	egg_test_title (test, "search file");
-	zif_state_reset (state);
-	in_array[0] = "/usr/bin/gnome-power-manager";
-	array = zif_store_remote_search_file (ZIF_STORE (store), (gchar**)in_array, state, &error);
-	if (array != NULL)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "failed to search details '%s'", error->message);
-
-	/************************************************************/
-	egg_test_title (test, "search file correct number");
-	if (array->len == 1)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "incorrect length %i", array->len);
-
-	g_ptr_array_unref (array);
-
-	/************************************************************/
-	egg_test_title (test, "set disabled");
-	ret = zif_store_remote_set_enabled (store, FALSE, &error);
-	if (ret)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "failed to disable '%s'", error->message);
-
-	/************************************************************/
-	egg_test_title (test, "is enabled");
-	ret = zif_store_remote_get_enabled (store, state, NULL);
-	egg_test_assert (test, !ret);
-
-	/************************************************************/
-	egg_test_title (test, "set enabled");
-	ret = zif_store_remote_set_enabled (store, TRUE, &error);
-	if (ret)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "failed to enable '%s'", error->message);
-
-	/************************************************************/
-	egg_test_title (test, "is enabled");
-	ret = zif_store_remote_get_enabled (store, state, NULL);
-	egg_test_assert (test, ret);
-
-	/************************************************************/
-	egg_test_title (test, "get packages");
-	zif_state_reset (state);
-	array = zif_store_remote_get_packages (ZIF_STORE (store), state, &error);
-	if (array != NULL)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "failed to get packages '%s'", error->message);
-
-	/************************************************************/
-	egg_test_title (test, "correct number");
-	if (array->len > 10000)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "incorrect length %i", array->len);
-
-	g_ptr_array_unref (array);
-
-	/************************************************************/
-	egg_test_title (test, "get categories");
-	zif_state_reset (state);
-	array = zif_store_remote_get_categories (ZIF_STORE (store), state, &error);
-	if (array == NULL)
-		egg_test_failed (test, "no data: %s", error->message);
-	else if (array->len > 0)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "no categories"); //TODO: failure
-
-	/* get first object */
-	category = g_ptr_array_index (array, 0);
-
-	/************************************************************/
-	egg_test_title (test, "test parent_id");
-	if (zif_category_get_parent_id (category) == NULL)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "incorrect data: %s", zif_category_get_parent_id (category));
-
-	/************************************************************/
-	egg_test_title (test, "test cat_id");
-	if (g_strcmp0 (zif_category_get_id (category), "language-support") == 0)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "incorrect data: %s", zif_category_get_id (category));
-
-	/************************************************************/
-	egg_test_title (test, "test name");
-	if (g_strcmp0 (zif_category_get_name (category), "Languages") == 0)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "incorrect data: %s", zif_category_get_name (category));
-
-	g_ptr_array_unref (array);
-
-	/************************************************************/
-	egg_test_title (test, "search category");
-	zif_state_reset (state);
-	in_array[0] = "admin-tools";
-	array = zif_store_remote_search_category (ZIF_STORE (store), (gchar**)in_array, state, &error);
-	if (array == NULL)
-		egg_test_failed (test, "no data: %s", error->message);
-	else if (array->len > 0)
-		egg_test_success (test, NULL);
-	else
-		egg_test_failed (test, "no results");
-
-	g_ptr_array_unref (array);
-
-	g_object_unref (store);
-	g_object_unref (config);
-	g_object_unref (lock);
-	g_object_unref (state);
-	g_object_unref (groups);
-	g_object_unref (store_local);
-
-	egg_test_end (test);
-}
-#endif
 
