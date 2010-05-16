@@ -772,6 +772,7 @@ zif_utils_test (EggTest *test)
 	const gchar *v;
 	const gchar *r;
 	gchar *filename;
+	guint time;
 	GError *error = NULL;
 	ZifState *state;
 

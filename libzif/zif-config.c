@@ -642,7 +642,6 @@ zif_config_test (EggTest *test)
 	gboolean ret;
 	GError *error = NULL;
 	gchar *value;
-	guint time;
 	guint len;
 	gchar **array;
 
