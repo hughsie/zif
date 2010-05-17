@@ -369,9 +369,7 @@ zif_repos_get_stores_enabled (ZifRepos *repos, ZifState *state, GError **error)
 {
 	GPtrArray *array = NULL;
 	GError *error_local = NULL;
-	ZifStoreRemote *store;
 	gboolean ret;
-	guint i;
 
 	g_return_val_if_fail (ZIF_IS_REPOS (repos), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
@@ -388,11 +386,7 @@ zif_repos_get_stores_enabled (ZifRepos *repos, ZifState *state, GError **error)
 	}
 
 	/* make a copy */
-	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
-	for (i=0; i<repos->priv->enabled->len; i++) {
-		store = g_ptr_array_index (repos->priv->enabled, i);
-		g_ptr_array_add (array, g_object_ref (store));
-	}
+	array = g_ptr_array_ref (repos->priv->enabled);
 out:
 	return array;
 }
