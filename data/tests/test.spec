@@ -11,7 +11,7 @@ BuildArch: noarch
 This is a test package.
 
 %install
-install -D %{SOURCE0} $RPM_BUILD_ROOT/%{_datadir}/%{name}-%{version}/README
+install -Dp %{SOURCE0} $RPM_BUILD_ROOT/%{_datadir}/%{name}-%{version}/README
 
 %files
 %defattr(-,root,root)
