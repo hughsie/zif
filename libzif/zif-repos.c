@@ -176,6 +176,15 @@ out:
 	return ret;
 }
 
+/*
+ * zif_repos_sort_store_cb:
+ */
+static gint
+zif_repos_sort_store_cb (ZifStore **store1, ZifStore **store2)
+{
+	return g_strcmp0 (zif_store_get_id (*store1), zif_store_get_id (*store2));
+}
+
 /**
  * zif_repos_load:
  * @repos: the #ZifRepos object
@@ -265,6 +274,9 @@ zif_repos_load (ZifRepos *repos, ZifState *state, GError **error)
 	/* we failed one file, abandon attempt */
 	if (!ret)
 		goto out;
+
+	/* need to sort by id predictably */
+	g_ptr_array_sort (repos->priv->list, (GCompareFunc) zif_repos_sort_store_cb);
 
 	/* find enabled */
 	for (i=0; i<repos->priv->list->len; i++) {
