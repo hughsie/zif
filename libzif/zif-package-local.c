@@ -461,6 +461,23 @@ out:
 }
 
 /**
+ * zif_package_local_get_header:
+ * @pkg: the #ZifPackageLocal object
+ *
+ * Gets the RPM header object for the package.
+ *
+ * Return value: a rpm Header structure, or %NULL if unset
+ *
+ * Since: 0.1.0
+ **/
+Header
+zif_package_local_get_header (ZifPackageLocal *pkg)
+{
+	g_return_val_if_fail (ZIF_IS_PACKAGE_LOCAL (pkg), NULL);
+	return pkg->priv->header;
+}
+
+/**
  * zif_package_local_set_from_header:
  * @pkg: the #ZifPackageLocal object
  * @header: a rpm Header structure
