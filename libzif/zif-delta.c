@@ -40,6 +40,7 @@
 
 struct _ZifDeltaPrivate
 {
+	gchar			*id;
 	guint64			 size;
 	gchar			*filename;
 	gchar			*sequence;
@@ -48,6 +49,7 @@ struct _ZifDeltaPrivate
 
 enum {
 	PROP_0,
+	PROP_ID,
 	PROP_SIZE,
 	PROP_FILENAME,
 	PROP_SEQUENCE,
@@ -56,6 +58,23 @@ enum {
 };
 
 G_DEFINE_TYPE (ZifDelta, zif_delta, G_TYPE_OBJECT)
+
+/**
+ * zif_delta_get_id:
+ * @delta: the #ZifDelta object
+ *
+ * Gets the id for this delta.
+ *
+ * Return value: A string value, or %NULL.
+ *
+ * Since: 0.1.0
+ **/
+const gchar *
+zif_delta_get_id (ZifDelta *delta)
+{
+	g_return_val_if_fail (ZIF_IS_DELTA (delta), NULL);
+	return delta->priv->id;
+}
 
 /**
  * zif_delta_get_size:
@@ -123,6 +142,25 @@ zif_delta_get_checksum (ZifDelta *delta)
 {
 	g_return_val_if_fail (ZIF_IS_DELTA (delta), NULL);
 	return delta->priv->checksum;
+}
+
+/**
+ * zif_delta_set_id:
+ * @delta: the #ZifDelta object
+ * @id: the delta id
+ *
+ * Sets the delta id.
+ *
+ * Since: 0.1.0
+ **/
+void
+zif_delta_set_id (ZifDelta *delta, const gchar *id)
+{
+	g_return_if_fail (ZIF_IS_DELTA (delta));
+	g_return_if_fail (id != NULL);
+	g_return_if_fail (delta->priv->id == NULL);
+
+	delta->priv->id = g_strdup (id);
 }
 
 /**
@@ -208,6 +246,9 @@ zif_delta_get_property (GObject *object, guint prop_id, GValue *value, GParamSpe
 	ZifDeltaPrivate *priv = delta->priv;
 
 	switch (prop_id) {
+	case PROP_ID:
+		g_value_set_string (value, priv->id);
+		break;
 	case PROP_SIZE:
 		g_value_set_uint64 (value, priv->size);
 		break;
@@ -246,6 +287,7 @@ zif_delta_finalize (GObject *object)
 	g_return_if_fail (ZIF_IS_DELTA (object));
 	delta = ZIF_DELTA (object);
 
+	g_free (delta->priv->id);
 	g_free (delta->priv->filename);
 	g_free (delta->priv->sequence);
 	g_free (delta->priv->checksum);
@@ -264,6 +306,16 @@ zif_delta_class_init (ZifDeltaClass *klass)
 	object_class->finalize = zif_delta_finalize;
 	object_class->get_property = zif_delta_get_property;
 	object_class->set_property = zif_delta_set_property;
+
+	/**
+	 * ZifDelta:id:
+	 *
+	 * Since: 0.1.0
+	 */
+	pspec = g_param_spec_string ("id", NULL, NULL,
+				     NULL,
+				     G_PARAM_READABLE);
+	g_object_class_install_property (object_class, PROP_ID, pspec);
 
 	/**
 	 * ZifDelta:size:
@@ -315,6 +367,7 @@ static void
 zif_delta_init (ZifDelta *delta)
 {
 	delta->priv = ZIF_DELTA_GET_PRIVATE (delta);
+	delta->priv->id = NULL;
 	delta->priv->size = 0;
 	delta->priv->filename = NULL;
 	delta->priv->sequence = NULL;

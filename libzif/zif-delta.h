@@ -58,12 +58,15 @@ GType			 zif_delta_get_type		(void);
 ZifDelta		*zif_delta_new			(void);
 
 /* public getters */
+const gchar		*zif_delta_get_id		(ZifDelta		*delta);
 guint64			 zif_delta_get_size		(ZifDelta		*delta);
 const gchar		*zif_delta_get_filename		(ZifDelta		*delta);
 const gchar		*zif_delta_get_sequence		(ZifDelta		*delta);
 const gchar		*zif_delta_get_checksum		(ZifDelta		*delta);
 
 /* internal setters: TODO, in seporate -internal header file */
+void			 zif_delta_set_id		(ZifDelta		*delta,
+							 const gchar		*id);
 void			 zif_delta_set_size		(ZifDelta		*delta,
 							 guint64		 size);
 void			 zif_delta_set_filename		(ZifDelta		*delta,

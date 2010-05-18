@@ -53,11 +53,11 @@
     <location href="repodata/primary.xml.gz"/>
   </data>
   <data type="prestodelta">
-    <checksum type="sha256">521b16256b03f708faa16735faeb724df48eb2562ba044c595add16e23288979</checksum>
+    <checksum type="sha256">157db37dce190775ff083cb51043e55da6e4abcabfe00584d2a69cc8fd327cae</checksum>
     <timestamp>1257935116</timestamp>
     <size>1327</size>
     <open-size>5088</open-size>
-    <open-checksum type="sha256">3ee7964cf43427aa7612b690b024441d18f5cd95f8573a16753d12a3f82ed966</open-checksum>
+    <open-checksum type="sha256">64b7472f40d355efde22c2156bdebb9c5babe8f35a9f26c6c1ca6b510031d485</open-checksum>
     <location href="repodata/prestodelta.xml.gz"/>
   </data>
   <data type="group_gz">

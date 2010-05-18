@@ -30,16 +30,18 @@
 #include "zif-category.h"
 #include "zif-changeset.h"
 #include "zif-config.h"
+#include "zif-delta.h"
 #include "zif-depend.h"
 #include "zif-download.h"
 #include "zif-groups.h"
 #include "zif.h"
 #include "zif-legal.h"
 #include "zif-lock.h"
+#include "zif-md.h"
 #include "zif-md-comps.h"
+#include "zif-md-delta.h"
 #include "zif-md-filelists-sql.h"
 #include "zif-md-filelists-xml.h"
-#include "zif-md.h"
 #include "zif-md-metalink.h"
 #include "zif-md-mirrorlist.h"
 #include "zif-md-other-sql.h"
@@ -855,6 +857,47 @@ zif_md_updateinfo_func (void)
 }
 
 static void
+zif_md_delta_func (void)
+{
+	ZifMdDelta *md;
+	GError *error = NULL;
+	ZifState *state;
+	ZifDelta *delta;
+	gchar *filename;
+
+	state = zif_state_new ();
+
+	md = zif_md_delta_new ();
+	g_assert (md != NULL);
+	g_assert (!zif_md_get_is_loaded (ZIF_MD (md)));
+
+	zif_md_set_id (ZIF_MD (md), "fedora");
+	zif_md_set_mdtype (ZIF_MD (md), ZIF_MD_TYPE_UPDATEINFO);
+	filename = zif_test_get_data_file ("fedora/prestodelta.xml.gz");
+	zif_md_set_filename (ZIF_MD (md), filename);
+	g_free (filename);
+	zif_md_set_checksum_type (ZIF_MD (md), G_CHECKSUM_SHA256);
+	zif_md_set_checksum (ZIF_MD (md), "157db37dce190775ff083cb51043e55da6e4abcabfe00584d2a69cc8fd327cae");
+	zif_md_set_checksum_uncompressed (ZIF_MD (md), "64b7472f40d355efde22c2156bdebb9c5babe8f35a9f26c6c1ca6b510031d485");
+
+	delta = zif_md_delta_search_for_package (md,
+						 "test;0.1-3.fc13;noarch;fedora",
+						 "test;0.1-1.fc13;noarch;fedora",
+						 state, &error);
+	g_assert_no_error (error);
+	g_assert (delta != NULL);
+	g_assert (zif_md_get_is_loaded (ZIF_MD (md)));
+	g_assert_cmpstr (zif_delta_get_filename (delta), ==, "drpms/test-0.1-1.fc13_0.1-3.fc13.i686.drpm");
+	g_assert_cmpstr (zif_delta_get_sequence (delta), ==, "test-0.1-1.fc13-9942652a8896b437f4ad8ab930cd32080230");
+	g_assert_cmpstr (zif_delta_get_checksum (delta), ==, "000a2b879f9e52e96a6b3c7279b32afbf163cd90ec3887d03aef8aa115f45000");
+	g_assert_cmpint (zif_delta_get_size (delta), ==, 81396);
+
+	g_object_unref (delta);
+	g_object_unref (md);
+	g_object_unref (state);
+}
+
+static void
 zif_monitor_test_file_monitor_cb (ZifMonitor *monitor, GMainLoop *loop)
 {
 	g_main_loop_quit (loop);
@@ -1618,6 +1661,7 @@ if (0)	g_test_add_func ("/zif/download", zif_download_func);
 	g_test_add_func ("/zif/lock", zif_lock_func);
 	g_test_add_func ("/zif/md", zif_md_func);
 	g_test_add_func ("/zif/md-comps", zif_md_comps_func);
+	g_test_add_func ("/zif/md-delta", zif_md_delta_func);
 	g_test_add_func ("/zif/md-filelists-sql", zif_md_filelists_sql_func);
 	g_test_add_func ("/zif/md-filelists-xml", zif_md_filelists_xml_func);
 	g_test_add_func ("/zif/md-metalink", zif_md_metalink_func);

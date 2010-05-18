@@ -96,6 +96,8 @@ libzif_la_SOURCES =						\
 	zif-md-primary-xml.h					\
 	zif-md-metalink.c					\
 	zif-md-metalink.h					\
+	zif-md-delta.c						\
+	zif-md-delta.h						\
 	zif-md-mirrorlist.c					\
 	zif-md-mirrorlist.h					\
 	zif-md-comps.c						\
