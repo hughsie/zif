@@ -1352,8 +1352,8 @@ zif_package_finalize (GObject *object)
 	g_return_if_fail (ZIF_IS_PACKAGE (object));
 	package = ZIF_PACKAGE (object);
 
-	g_free (package->priv->package_id_split);
 	g_free (package->priv->package_id);
+	g_strfreev (package->priv->package_id_split);
 	if (package->priv->summary != NULL)
 		zif_string_unref (package->priv->summary);
 	if (package->priv->description != NULL)

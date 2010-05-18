@@ -551,7 +551,7 @@ zif_package_local_set_from_filename (ZifPackageLocal *pkg, const gchar *filename
 	rpmRC rc;
 	FD_t fd = NULL;
 	Header hdr = NULL;
-	rpmts ts;
+	rpmts ts = NULL;
 	gboolean ret = FALSE;
 	GError *error_local = NULL;
 
@@ -597,19 +597,12 @@ zif_package_local_set_from_filename (ZifPackageLocal *pkg, const gchar *filename
 		g_error_free (error_local);
 		goto out;
 	}
-
-	/* close the database used by the transaction */
-	rc = rpmtsCloseDB (ts);
-	if (rc != RPMRC_OK) {
-		g_set_error (error, ZIF_PACKAGE_ERROR, ZIF_PACKAGE_ERROR_FAILED,
-			     "failed to close: %s", zif_package_local_rpmrc_to_string (rc));
-		ret = FALSE;
-		goto out;
-	}
 out:
 	/* close header and file */
+	if (ts != NULL)
+		rpmtsFree (ts);
 	if (hdr != NULL)
-		headerFree (hdr);
+		headerUnlink (hdr);
 	if (fd != NULL)
 		Fclose (fd);
 	return ret;

@@ -1295,6 +1295,7 @@ zif_md_finalize (GObject *object)
 
 	g_free (md->priv->id);
 	g_free (md->priv->filename);
+	g_free (md->priv->filename_uncompressed);
 	g_free (md->priv->location);
 	g_free (md->priv->checksum);
 	g_free (md->priv->checksum_uncompressed);

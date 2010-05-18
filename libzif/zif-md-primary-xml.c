@@ -289,6 +289,10 @@ zif_md_primary_xml_parser_end_element (GMarkupParseContext *context, const gchar
 				goto out;
 			}
 			primary_xml->priv->package_temp = NULL;
+			g_free (primary_xml->priv->package_name_temp);
+			g_free (primary_xml->priv->package_version_temp);
+			g_free (primary_xml->priv->package_release_temp);
+			g_free (primary_xml->priv->package_arch_temp);
 			goto out;
 		}
 
@@ -451,6 +455,8 @@ zif_md_primary_xml_load (ZifMd *md, ZifState *state, GError **error)
 	/* we don't need to keep syncing */
 	primary_xml->priv->loaded = TRUE;
 out:
+	if (context != NULL)
+		g_markup_parse_context_free (context);
 	g_free (contents);
 	return primary_xml->priv->loaded;
 }

@@ -86,12 +86,6 @@ zif_test_get_data_file (const gchar *filename)
 	if (ret)
 		return full;
 	g_free (full);
-
-//	full = g_build_filename ("..", "..", "..", "data", "tests", filename, NULL);
-//	ret = g_file_test (full, G_FILE_TEST_EXISTS);
-//	if (ret)
-//		return full;
-//	g_free (full);
 	return NULL;
 }
 
@@ -1376,7 +1370,7 @@ zif_store_remote_func (void)
 	g_free (pidfile);
 
 	filename = zif_test_get_data_file (".");
-	zif_config_set_local (config, "cachedir", pidfile, NULL);
+	zif_config_set_local (config, "cachedir", filename, NULL);
 	g_free (filename);
 
 	/* use state object */

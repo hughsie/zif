@@ -134,10 +134,10 @@ zif_store_local_load (ZifStore *store, ZifState *state, GError **error)
 {
 	gint retval;
 	gboolean ret = TRUE;
-	rpmdbMatchIterator mi;
+	rpmdbMatchIterator mi = NULL;
 	Header header;
 	ZifPackageLocal *package;
-	rpmdb db;
+	rpmdb db = NULL;
 	GError *error_local = NULL;
 	ZifStoreLocal *local = ZIF_STORE_LOCAL (store);
 
@@ -193,8 +193,6 @@ zif_store_local_load (ZifStore *store, ZifState *state, GError **error)
 		}
 		g_ptr_array_add (local->priv->packages, package);
 	} while (TRUE);
-	rpmdbFreeIterator (mi);
-	rpmdbClose (db);
 
 	/* this section done */
 	ret = zif_state_done (state, error);
@@ -204,6 +202,12 @@ zif_store_local_load (ZifStore *store, ZifState *state, GError **error)
 	/* okay */
 	local->priv->loaded = TRUE;
 out:
+	if (db != NULL) {
+		rpmdbClose (db);
+		rpmdbUnlink (db, NULL);
+	}
+	if (mi != NULL)
+		rpmdbFreeIterator (mi);
 	return ret;
 }
 

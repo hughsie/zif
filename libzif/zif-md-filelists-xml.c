@@ -319,6 +319,8 @@ zif_md_filelists_xml_load (ZifMd *md, ZifState *state, GError **error)
 	/* we don't need to keep syncing */
 	filelists_xml->priv->loaded = TRUE;
 out:
+	if (context != NULL)
+		g_markup_parse_context_free (context);
 	g_free (contents);
 	return filelists_xml->priv->loaded;
 }

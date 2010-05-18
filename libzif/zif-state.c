@@ -540,6 +540,7 @@ zif_state_set_number_steps_real (ZifState *state, guint steps, const gchar *strl
 	}
 
 	/* set id */
+	g_free (state->priv->id);
 	state->priv->id = g_strdup_printf ("%s", strloc);
 
 	/* imply reset */
@@ -697,6 +698,7 @@ zif_state_finalize (GObject *object)
 	state = ZIF_STATE (object);
 
 	/* unref child too */
+	g_free (state->priv->id);
 	zif_state_reset (state);
 	if (state->priv->parent != NULL)
 		g_object_unref (state->priv->parent);
@@ -747,6 +749,7 @@ static void
 zif_state_init (ZifState *state)
 {
 	state->priv = ZIF_STATE_GET_PRIVATE (state);
+	state->priv->id = NULL;
 	state->priv->child = NULL;
 	state->priv->parent = NULL;
 	state->priv->cancellable = NULL;
