@@ -615,6 +615,7 @@ main (int argc, char *argv[])
 	gchar *http_proxy = NULL;
 	gchar *repos_dir = NULL;
 	gchar *max_age = NULL;
+	gchar *root = NULL;
 	gchar **split;
 	const gchar *to_array[] = { NULL, NULL };
 
@@ -625,6 +626,8 @@ main (int argc, char *argv[])
 			_("Work offline when possible"), NULL },
 		{ "config", 'c', 0, G_OPTION_ARG_STRING, &config_file,
 			_("Use different config file"), NULL },
+		{ "root", 'c', 0, G_OPTION_ARG_STRING, &root,
+			_("Use different rpm database root"), NULL },
 		{ "proxy", 'p', 0, G_OPTION_ARG_STRING, &http_proxy,
 			_("Proxy server setting"), NULL },
 		{ "age", 'a', 0, G_OPTION_ARG_INT, &age,
@@ -696,6 +699,8 @@ main (int argc, char *argv[])
 	/* fallback */
 	if (config_file == NULL)
 		config_file = g_strdup ("/etc/yum.conf");
+	if (root == NULL)
+		root = g_strdup ("/");
 
 	/* ZifConfig */
 	config = zif_config_new ();
@@ -752,7 +757,7 @@ main (int argc, char *argv[])
 
 	/* ZifStoreLocal */
 	store_local = zif_store_local_new ();
-	ret = zif_store_local_set_prefix (store_local, "/", &error);
+	ret = zif_store_local_set_prefix (store_local, root, &error);
 	if (!ret) {
 		egg_error ("failed to set prefix: %s", error->message);
 		g_error_free (error);
@@ -1918,6 +1923,7 @@ out:
 	}
 
 	g_object_unref (progressbar);
+	g_free (root);
 	g_free (repos_dir);
 	g_free (http_proxy);
 	g_free (config_file);
