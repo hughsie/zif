@@ -1237,7 +1237,9 @@ zif_store_local_func (void)
 	zif_state_reset (state);
 	to_array[0] = "kernel";
 	g_test_timer_start ();
-	array = zif_store_resolve (ZIF_STORE (store), (gchar**)to_array, state, NULL);
+	array = zif_store_resolve (ZIF_STORE (store), (gchar**)to_array, state, &error);
+	g_assert_no_error (error);
+	g_assert (array != NULL);
 	elapsed = g_test_timer_elapsed ();
 	g_assert_cmpint (array->len, >=, 1);
 	g_ptr_array_unref (array);
@@ -1245,19 +1247,25 @@ zif_store_local_func (void)
 
 	zif_state_reset (state);
 	to_array[0] = "gnome-p";
-	array = zif_store_search_name (ZIF_STORE (store), (gchar**)to_array, state, NULL);
+	array = zif_store_search_name (ZIF_STORE (store), (gchar**)to_array, state, &error);
+	g_assert_no_error (error);
+	g_assert (array != NULL);
 	g_assert_cmpint (array->len, >, 10);
 	g_ptr_array_unref (array);
 
 	zif_state_reset (state);
 	to_array[0] = "manage packages";
-	array = zif_store_search_details (ZIF_STORE (store), (gchar**)to_array, state, NULL);
+	array = zif_store_search_details (ZIF_STORE (store), (gchar**)to_array, state, &error);
+	g_assert_no_error (error);
+	g_assert (array != NULL);
 	g_assert_cmpint (array->len, ==, 1);
 	g_ptr_array_unref (array);
 
 	zif_state_reset (state);
 	to_array[0] = "config(PackageKit)";
-	array = zif_store_what_provides (ZIF_STORE (store), (gchar**)to_array, state, NULL);
+	array = zif_store_what_provides (ZIF_STORE (store), (gchar**)to_array, state, &error);
+	g_assert_no_error (error);
+	g_assert (array != NULL);
 	g_assert_cmpint (array->len, ==, 1);
 
 	/* get this package */
