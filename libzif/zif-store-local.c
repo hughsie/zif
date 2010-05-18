@@ -189,7 +189,7 @@ zif_store_local_load (ZifStore *store, ZifState *state, GError **error)
 				     "failed to set from header: %s", error_local->message);
 			g_error_free (error_local);
 			g_object_unref (package);
-			break;
+			goto out;
 		}
 		g_ptr_array_add (local->priv->packages, package);
 	} while (TRUE);
