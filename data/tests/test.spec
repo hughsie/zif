@@ -6,6 +6,7 @@ URL: http://people.freedesktop.org/~hughsient/releases/
 Source0: README
 License: GPLv2+
 BuildArch: noarch
+Provides: Test(Interface)
 
 %description
 This is a test package.

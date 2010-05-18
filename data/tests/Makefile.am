@@ -25,5 +25,6 @@ CLEANFILES =	\
 	fedora/other.sqlite					\
 	fedora/filelists.sqlite					\
 	fedora/filelists.xml					\
+	fedora/comps-fedora.xml					\
 	${NULL}
 

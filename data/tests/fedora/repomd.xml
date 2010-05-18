@@ -62,8 +62,8 @@
   </data>
   <data type="group_gz">
     <location href="repodata/comps-fedora.xml.gz"/>
-    <checksum type="sha256">0fc98ee3fbc39c2fce8310388b95acd73301f56e12ff3e0a06e35c3f279200dc</checksum>
-    <open-checksum type="sha256">14f17b894303b4dc9683511104848f75d98cea8f76c107bf25e1b4db5741f6a8</open-checksum>
+    <checksum type="sha256">02493204cfd99c1cab1c812344dfebbeeadbe0ae04ace5ad338e1d045dd564f1</checksum>
+    <open-checksum type="sha256">1523fcdb34bb65f9f0964176d00b8ea6590febddb54521bf289f0d22e86d5fca</open-checksum>
     <timestamp>1257935776</timestamp>
   </data>
   <data type="group">

@@ -447,8 +447,8 @@ zif_md_comps_func (void)
 	zif_md_set_mdtype (ZIF_MD (md), ZIF_MD_TYPE_COMPS);
 	zif_md_set_filename (ZIF_MD (md), filename);
 	zif_md_set_checksum_type (ZIF_MD (md), G_CHECKSUM_SHA256);
-	zif_md_set_checksum (ZIF_MD (md), "0fc98ee3fbc39c2fce8310388b95acd73301f56e12ff3e0a06e35c3f279200dc");
-	zif_md_set_checksum_uncompressed (ZIF_MD (md), "14f17b894303b4dc9683511104848f75d98cea8f76c107bf25e1b4db5741f6a8");
+	zif_md_set_checksum (ZIF_MD (md), "02493204cfd99c1cab1c812344dfebbeeadbe0ae04ace5ad338e1d045dd564f1");
+	zif_md_set_checksum_uncompressed (ZIF_MD (md), "1523fcdb34bb65f9f0964176d00b8ea6590febddb54521bf289f0d22e86d5fca");
 	g_free (filename);
 
 	array = zif_md_comps_get_categories (md, state, &error);
@@ -478,7 +478,7 @@ zif_md_comps_func (void)
 	g_assert_cmpint (array->len, ==, 2);
 
 	id = g_ptr_array_index (array, 0);
-	g_assert_cmpstr (id, ==, "gnome-packagekit");
+	g_assert_cmpstr (id, ==, "test");
 	g_ptr_array_unref (array);
 
 	g_object_unref (md);
@@ -1215,7 +1215,9 @@ zif_store_local_func (void)
 	g_assert_no_error (error);
 	g_assert (ret);
 
-	ret = zif_store_local_set_prefix (store, "/", &error);
+	filename = zif_test_get_data_file ("root");
+	zif_store_local_set_prefix (store, filename, NULL);
+	g_free (filename);
 	g_assert_no_error (error);
 	g_assert (ret);
 
@@ -1235,26 +1237,26 @@ zif_store_local_func (void)
 	g_assert_cmpint (elapsed, <, 10);
 
 	zif_state_reset (state);
-	to_array[0] = "kernel";
+	to_array[0] = "test";
 	g_test_timer_start ();
 	array = zif_store_resolve (ZIF_STORE (store), (gchar**)to_array, state, &error);
 	g_assert_no_error (error);
 	g_assert (array != NULL);
 	elapsed = g_test_timer_elapsed ();
-	g_assert_cmpint (array->len, >=, 1);
+	g_assert_cmpint (array->len, ==, 1);
 	g_ptr_array_unref (array);
 	g_assert_cmpint (elapsed, <, 1000);
 
 	zif_state_reset (state);
-	to_array[0] = "gnome-p";
+	to_array[0] = "te";
 	array = zif_store_search_name (ZIF_STORE (store), (gchar**)to_array, state, &error);
 	g_assert_no_error (error);
 	g_assert (array != NULL);
-	g_assert_cmpint (array->len, >, 10);
+	g_assert_cmpint (array->len, ==, 1);
 	g_ptr_array_unref (array);
 
 	zif_state_reset (state);
-	to_array[0] = "manage packages";
+	to_array[0] = "Test package";
 	array = zif_store_search_details (ZIF_STORE (store), (gchar**)to_array, state, &error);
 	g_assert_no_error (error);
 	g_assert (array != NULL);
@@ -1262,7 +1264,7 @@ zif_store_local_func (void)
 	g_ptr_array_unref (array);
 
 	zif_state_reset (state);
-	to_array[0] = "config(PackageKit)";
+	to_array[0] = "Test(Interface)";
 	array = zif_store_what_provides (ZIF_STORE (store), (gchar**)to_array, state, &error);
 	g_assert_no_error (error);
 	g_assert (array != NULL);
@@ -1273,13 +1275,13 @@ zif_store_local_func (void)
 
 	package_id = zif_package_get_id (package);
 	split = zif_package_id_split (package_id);
-	g_assert_cmpstr (split[ZIF_PACKAGE_ID_NAME], ==, "PackageKit");
+	g_assert_cmpstr (split[ZIF_PACKAGE_ID_NAME], ==, "test");
 	g_strfreev (split);
 
 	g_assert (g_str_has_suffix (zif_package_get_package_id (package), ";installed"));
 
 	zif_state_reset (state);
-	g_assert_cmpstr (zif_package_get_summary (package, state, NULL), ==, "Package management service");
+	g_assert_cmpstr (zif_package_get_summary (package, state, NULL), ==, "Test package");
 
 	zif_state_reset (state);
 	g_assert_cmpstr (zif_package_get_license (package, state, NULL), ==, "GPLv2+");
@@ -1288,7 +1290,7 @@ zif_store_local_func (void)
 	g_assert_cmpstr (zif_package_get_category (package, state, NULL), !=, NULL);
 
 	g_assert (!zif_package_is_devel (package));
-//	g_assert (!zif_package_is_gui (package));
+	g_assert (!zif_package_is_gui (package));
 	g_assert (zif_package_is_installed (package));
 	g_assert (zif_package_is_free (package));
 
@@ -1360,7 +1362,9 @@ zif_store_remote_func (void)
 	zif_groups_set_mapping_file (groups, filename, NULL);
 	g_free (filename);
 	store_local = zif_store_local_new ();
-	zif_store_local_set_prefix (store_local, "/", NULL);
+	filename = zif_test_get_data_file ("root");
+	zif_store_local_set_prefix (store_local, filename, NULL);
+	g_free (filename);
 
 	zif_state_reset (state);
 	packages = zif_store_get_packages (ZIF_STORE (store_local), state, &error);
