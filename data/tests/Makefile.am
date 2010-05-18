@@ -11,12 +11,13 @@ EXTRA_DIST =							\
 	yum-comps-groups.conf					\
 	repos/fedora-updates.repo				\
 	repos/fedora.repo					\
-	fedora/updateinfo.xml					\
-	fedora/primary.xml.gz					\
-	fedora/other.sqlite.bz2					\
-	fedora/filelists.xml.gz					\
-	fedora/filelists.sqlite.bz2				\
 	fedora/comps-fedora.xml.gz				\
+	fedora/filelists.sqlite.bz2				\
+	fedora/filelists.xml.gz					\
+	fedora/other.sqlite.bz2					\
+	fedora/prestodelta.xml.gz				\
+	fedora/primary.xml.gz					\
+	fedora/updateinfo.xml					\
 	${NULL}
 
 CLEANFILES =	\
