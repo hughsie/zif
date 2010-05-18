@@ -211,19 +211,15 @@ zif_package_local_get_depends_from_name_flags_version (GPtrArray *names, GPtrArr
 	/* create requires */
 	array = g_ptr_array_new_with_free_func ((GDestroyNotify) zif_depend_unref);
 	for (i=0; i<names->len; i++) {
-		name = g_ptr_array_index (names, i);
-		version = g_ptr_array_index (versions, i);
-
-		/* no version string */
-		if (version == NULL || version[0] == '\0') {
-			depend = zif_depend_new (name, ZIF_DEPEND_FLAG_ANY, NULL);
-			g_ptr_array_add (array, depend);
-			continue;
-		}
 
 		/* ignore rpmlib flags */
 		rpmflags = GPOINTER_TO_UINT (g_ptr_array_index (flags, i));
 		if ((rpmflags & RPMSENSE_RPMLIB) > 0)
+			continue;
+
+		/* only used internally */
+		if ((rpmflags & RPMSENSE_PROVIDES) > 0 ||
+		    (rpmflags & RPMSENSE_CONFLICTS) > 0)
 			continue;
 
 		/* convert to enums */
@@ -237,8 +233,10 @@ zif_package_local_get_depends_from_name_flags_version (GPtrArray *names, GPtrArr
 		}
 
 		/* unknown */
+		name = g_ptr_array_index (names, i);
+		version = g_ptr_array_index (versions, i);
 		if (flag == ZIF_DEPEND_FLAG_UNKNOWN) {
-//			egg_debug ("ignoring %s %s %s", name, zif_depend_flag_to_string (flag), version);
+			egg_debug ("ignoring %s %s %s", name, zif_depend_flag_to_string (flag), version);
 			continue;
 		}
 
