@@ -177,10 +177,7 @@ dnl - Build self tests
 dnl ---------------------------------------------------------------------------
 AC_ARG_ENABLE(tests, AS_HELP_STRING([--enable-tests],[enable unit test code]),
 	      enable_tests=$enableval,enable_tests=yes)
-AM_CONDITIONAL(EGG_BUILD_TESTS, test x$enable_tests = xyes)
-if test x$enable_tests = xyes; then
-	AC_DEFINE(EGG_BUILD_TESTS,1,[Build test code])
-fi
+AM_CONDITIONAL(ZIF_BUILD_TESTS, test x$enable_tests = xyes)
 
 dnl ---------------------------------------------------------------------------
 dnl - Makefiles, etc.

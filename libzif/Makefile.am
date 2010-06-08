@@ -144,7 +144,7 @@ libzif_la_LDFLAGS =						\
 libzif_la_CFLAGS =						\
 	$(WARNINGFLAGS_C)
 
-if EGG_BUILD_TESTS
+if ZIF_BUILD_TESTS
 check_PROGRAMS =						\
 	zif-self-test
 
