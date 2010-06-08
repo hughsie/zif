@@ -177,6 +177,9 @@ pk_progress_bar_draw_pulse_bar (ZifProgressBar *self)
 		self->priv->pulse_state.position = 1;
 		self->priv->pulse_state.move_forward = TRUE;
 		self->priv->timer_id = g_timeout_add (ZIF_PROGRESS_BAR_PULSE_TIMEOUT, (GSourceFunc) pk_progress_bar_pulse_bar, self);
+#if GLIB_CHECK_VERSION(2,25,8)
+		g_source_set_name_by_id (self->priv->timer_id, "[ZifProgressBar] pulse");
+#endif
 	}
 }
 
