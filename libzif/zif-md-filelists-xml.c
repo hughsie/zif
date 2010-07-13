@@ -252,7 +252,7 @@ zif_md_filelists_xml_parser_text (GMarkupParseContext *context, const gchar *tex
 			goto out;
 		}
 		if (filelists_xml->priv->section_list == ZIF_MD_FILELISTS_XML_SECTION_LIST_PACKAGE) {
-			if (filelists_xml->priv->section_list == ZIF_MD_FILELISTS_XML_SECTION_LIST_PACKAGE_FILE) {
+			if (filelists_xml->priv->section_list_package == ZIF_MD_FILELISTS_XML_SECTION_LIST_PACKAGE_FILE) {
 				g_ptr_array_add (filelists_xml->priv->array_temp, g_strdup (text));
 				goto out;
 			};

@@ -101,9 +101,9 @@ struct _ZifStoreRemotePrivate
 	ZifLock			*lock;
 	ZifMedia		*media;
 	GPtrArray		*packages;
-	/* temp data for the xml parser */
 	ZifMdType		 parser_type;
-	ZifMdType		 parser_section;
+	/* temp data for the xml parser */
+	ZifStoreRemoteParserSection parser_section;
 };
 
 G_DEFINE_TYPE (ZifStoreRemote, zif_store_remote, ZIF_TYPE_STORE)
