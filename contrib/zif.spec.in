@@ -1,4 +1,3 @@
-%define glib2_version           2.16.1
 %define alphatag                #ALPHATAG#
 
 Summary:   Simple wrapper for rpm
@@ -6,16 +5,20 @@ Name:      zif
 Version:   #VERSION#
 Release:   0.#BUILD#%{?alphatag}%{?dist}
 License:   GPLv2+
-Group:     System Environment/Libraries
-URL:       http://www.packagekit.org
+URL:       http://github.com/hughsie/zif
 Source0:   http://www.packagekit.org/releases/%{name}-%{version}.tar.gz
-BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
-BuildRequires: glib2-devel >= %{glib2_version}
+BuildRequires: glib2-devel >= 2.16.1
+BuildRequires: rpm-devel
 BuildRequires: sqlite-devel
+BuildRequires: libsoup-devel
 BuildRequires: libtool
+BuildRequires: libarchive-devel
 BuildRequires: docbook-utils
 BuildRequires: gnome-doc-utils
+BuildRequires: gtk-doc
+BuildRequires: bzip2-devel
+BuildRequires: zlib-devel
 
 Requires(post): /sbin/ldconfig
 Requires(postun): /sbin/ldconfig
@@ -45,14 +48,9 @@ GLib headers and libraries for zif.
 make %{?_smp_mflags}
 
 %install
-rm -rf $RPM_BUILD_ROOT
 make install DESTDIR=$RPM_BUILD_ROOT
 
-rm -f $RPM_BUILD_ROOT%{_libdir}/libzif*.a
 rm -f $RPM_BUILD_ROOT%{_libdir}/libzif*.la
-
-%clean
-rm -rf $RPM_BUILD_ROOT
 
 %post -p /sbin/ldconfig
 
