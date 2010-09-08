@@ -162,6 +162,15 @@ else
 fi
 
 dnl ---------------------------------------------------------------------------
+dnl - Is docbook2man available?
+dnl ---------------------------------------------------------------------------
+AC_PATH_PROG(DOCBOOK2MAN, docbook2man, no)
+if test "$DOCBOOK2MAN" = "no" ; then
+	AC_MSG_WARN([docbook2man not found, will not be able to build man documentation])
+fi
+AM_CONDITIONAL(HAVE_DOCBOOK2MAN, [test "$DOCBOOK2MAN" != "no"])
+
+dnl ---------------------------------------------------------------------------
 dnl - Make paths available for source files
 dnl ---------------------------------------------------------------------------
 AC_SUBST(SYSCONFDIR, $sysconfdir)
@@ -190,6 +199,7 @@ tools/Makefile
 docs/Makefile
 docs/api/Makefile
 docs/api/version.xml
+man/Makefile
 data/Makefile
 data/tests/Makefile
 ])

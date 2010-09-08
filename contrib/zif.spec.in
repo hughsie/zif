@@ -67,6 +67,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/gtk-doc/html/zif/index.sgml
 %{_datadir}/gtk-doc/html/zif/*.png
 %{_datadir}/gtk-doc/html/zif/*.html
+%{_datadir}/man/man1/*.1.gz
 
 %files devel
 %defattr(-,root,root,-)

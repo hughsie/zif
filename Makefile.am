@@ -2,6 +2,7 @@ SUBDIRS = 						\
 	libzif						\
 	docs						\
 	data						\
+	man						\
 	tools
 
 security-check:
