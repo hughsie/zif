@@ -1,0 +1,58 @@
+zif Release Notes
+
+1. Write NEWS entries for zif in the same format as usual.
+
+git shortlog zif_0_1_0.. | grep -i -v trivial | grep -v Merge > NEWS.new
+
+--------------------------------------------------------------------------------
+Version 0.1.0
+~~~~~~~~~~~~~
+Released: 2010-xx-xx
+
+Notes:
+
+Translations:
+
+New Features:
+
+Bugfixes:
+--------------------------------------------------------------------------------
+
+3. Update library version if new ABI or API in configure.ac
+
+4. Commit changes in zif git:
+
+git commit -a -m "Release version 0.1.0"
+git tag -s -f -m "Release 0.1.0" zif_0_1_0
+<gpg password>
+git push --tags
+git push
+
+5. run 'make dist'
+
+6. Upload tarball to:
+
+scp *.tar.* packagekit.org:/srv/www/html/releases/
+
+7. Do post release version bump in configure.ac
+
+8. Commit trivial changes:
+
+git commit -a -m "trivial: post release version bump"
+git push
+
+9. Upload new html sources
+
+10. Send an email to packagekit@lists.freedesktop.org
+
+=================================================
+Subject: zif 0.1.0 released!
+
+Today I released zif 0.1.0.
+
+zif release notes:
+
+Tarballs available here: http://www.packagekit.org/releases/
+
+=================================================
+
