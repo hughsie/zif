@@ -143,7 +143,7 @@ zif_md_primary_sql_sqlite_create_package_cb (void *data, gint argc, gchar **argv
 	if (ret) {
 		g_ptr_array_add (fldata->packages, package);
 	} else {
-		egg_error ("failed to add: %s", argv[1]);
+		egg_warning ("failed to add: %s", argv[1]);
 		g_object_unref (package);
 	}
 
