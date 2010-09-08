@@ -2426,6 +2426,12 @@ zif_store_remote_get_categories (ZifStore *store, ZifState *state, GError **erro
 	if (location == NULL) {
 		/* empty array, as we want success */
 		array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
+
+		/* this section done */
+		ret = zif_state_finished (state, error);
+		if (!ret)
+			goto out;
+
 		goto out;
 	}
 
