@@ -1,11 +1,24 @@
 Version 0.1.0
 ~~~~~~~~~~~~~
-Released: 2010-xx-xx
+Released: 2010-09-08
 
 Notes:
-
-Translations:
+ * Zif is a simple yum-compatible library that only provides read-only
+   access to the rpm database and the Fedora metadata for PackageKit.
+ * Zif is not designed as a replacement to yum, or to be used by end users.
 
 New Features:
-
-Bugfixes:
+ - Modern GObject library with GCancellation and GError
+ - Full state support for accurate progress reporting
+ - Remote, installed and local packages handled as abstract packages
+ - Local and remote sources handled using an abstract sack
+ - Self test program (248 tests)
+ - Shares the yum lock
+ - Uses librpm to get data from rpm
+ - Reads and updates yum metadata (primary, filelists, updateinfo, other,
+   metalink, mirrorlist, comps)
+ - Reads standard yum repo files
+ - Reads a subset of comps for distro-specific groups
+ - Uses optional metalink/mirrorlist repository handling
+ - Uses yum.conf main config file
+ - Uses the PackageKit categories->group mapping file
