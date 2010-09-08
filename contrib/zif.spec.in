@@ -38,7 +38,7 @@ GLib headers and libraries for zif.
 
 %build
 %configure \
-	--enable-gtk-doc \
+        --enable-gtk-doc \
         --disable-static \
         --disable-dependency-tracking
 
