@@ -447,6 +447,12 @@ zif_repos_get_store (ZifRepos *repos, const gchar *id, ZifState *state, GError *
 			break;
 		}
 	}
+
+	/* we found nothing */
+	if (store == NULL) {
+		g_set_error (error, ZIF_REPOS_ERROR, ZIF_REPOS_ERROR_FAILED,
+			     "failed to find store '%s'", id);
+	}
 out:
 	return store;
 }
