@@ -424,6 +424,7 @@ zif_md_func (void)
 	g_assert (!zif_md_get_is_loaded (ZIF_MD (md)));
 
 	/* you can't load a baseclass */
+	zif_md_set_id (md, "old-name-no-error");
 	zif_md_set_id (md, "fedora");
 	ret = zif_md_load (md, state, &error);
 	g_assert_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_NO_SUPPORT);

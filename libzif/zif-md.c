@@ -200,13 +200,14 @@ void
 zif_md_set_filename (ZifMd *md, const gchar *filename)
 {
 	g_return_if_fail (ZIF_IS_MD (md));
-	g_return_if_fail (md->priv->filename == NULL);
 	g_return_if_fail (filename != NULL);
 
 	/* this is the compressed name */
+	g_free (md->priv->filename);
 	md->priv->filename = g_strdup (filename);
 
 	/* this is the uncompressed name */
+	g_free (md->priv->filename_uncompressed);
 	md->priv->filename_uncompressed = zif_file_get_uncompressed_name (filename);
 }
 
@@ -240,7 +241,6 @@ void
 zif_md_set_timestamp (ZifMd *md, guint timestamp)
 {
 	g_return_if_fail (ZIF_IS_MD (md));
-	g_return_if_fail (md->priv->timestamp == 0);
 	g_return_if_fail (timestamp != 0);
 
 	/* save new value */
@@ -260,10 +260,10 @@ void
 zif_md_set_location (ZifMd *md, const gchar *location)
 {
 	g_return_if_fail (ZIF_IS_MD (md));
-	g_return_if_fail (md->priv->location == NULL);
 	g_return_if_fail (location != NULL);
 
 	/* save new value */
+	g_free (md->priv->location);
 	md->priv->location = g_strdup (location);
 }
 
@@ -280,10 +280,10 @@ void
 zif_md_set_checksum (ZifMd *md, const gchar *checksum)
 {
 	g_return_if_fail (ZIF_IS_MD (md));
-	g_return_if_fail (md->priv->checksum == NULL);
 	g_return_if_fail (checksum != NULL);
 
 	/* save new value */
+	g_free (md->priv->checksum);
 	md->priv->checksum = g_strdup (checksum);
 }
 
@@ -300,10 +300,10 @@ void
 zif_md_set_checksum_uncompressed (ZifMd *md, const gchar *checksum_uncompressed)
 {
 	g_return_if_fail (ZIF_IS_MD (md));
-	g_return_if_fail (md->priv->checksum_uncompressed == NULL);
 	g_return_if_fail (checksum_uncompressed != NULL);
 
 	/* save new value */
+	g_free (md->priv->checksum_uncompressed);
 	md->priv->checksum_uncompressed = g_strdup (checksum_uncompressed);
 }
 
@@ -320,7 +320,6 @@ void
 zif_md_set_checksum_type (ZifMd *md, GChecksumType checksum_type)
 {
 	g_return_if_fail (ZIF_IS_MD (md));
-	g_return_if_fail (md->priv->checksum_type == 0);
 
 	/* save new value */
 	md->priv->checksum_type = checksum_type;
@@ -339,7 +338,6 @@ void
 zif_md_set_mdtype (ZifMd *md, ZifMdType type)
 {
 	g_return_if_fail (ZIF_IS_MD (md));
-	g_return_if_fail (md->priv->type == ZIF_MD_TYPE_UNKNOWN);
 	g_return_if_fail (type != ZIF_MD_TYPE_UNKNOWN);
 
 	/* save new value */
@@ -381,9 +379,9 @@ void
 zif_md_set_id (ZifMd *md, const gchar *id)
 {
 	g_return_if_fail (ZIF_IS_MD (md));
-	g_return_if_fail (md->priv->id == NULL);
 	g_return_if_fail (id != NULL);
 
+	g_free (md->priv->id);
 	md->priv->id = g_strdup (id);
 }
 
@@ -400,10 +398,9 @@ void
 zif_md_set_store_remote (ZifMd *md, ZifStoreRemote *remote)
 {
 	g_return_if_fail (ZIF_IS_MD (md));
-	g_return_if_fail (md->priv->remote == NULL);
 	g_return_if_fail (remote != NULL);
 
-	/* do not take a reference, else the parent device never goes away */
+	/* do not take a reference, else the parent never goes away */
 	md->priv->remote = remote;
 }
 
