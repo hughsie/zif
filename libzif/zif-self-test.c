@@ -486,6 +486,12 @@ zif_md_comps_func (void)
 	g_assert (array != NULL);
 	g_assert_cmpint (array->len, ==, 2);
 
+	/* and with full category id */
+	array = zif_md_comps_get_packages_for_group (md, "apps;admin-tools", state, &error);
+	g_assert_no_error (error);
+	g_assert (array != NULL);
+	g_assert_cmpint (array->len, ==, 2);
+
 	id = g_ptr_array_index (array, 0);
 	g_assert_cmpstr (id, ==, "test");
 	g_ptr_array_unref (array);

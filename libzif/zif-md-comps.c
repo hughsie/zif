@@ -675,6 +675,7 @@ zif_md_comps_get_packages_for_group (ZifMdComps *md, const gchar *group_id,
 	GError *error_local = NULL;
 	const ZifMdCompsGroupData *data;
 	const gchar *packagename;
+	const gchar *group_id_child;
 
 	g_return_val_if_fail (ZIF_IS_MD_COMPS (md), NULL);
 	g_return_val_if_fail (group_id != NULL, NULL);
@@ -691,13 +692,20 @@ zif_md_comps_get_packages_for_group (ZifMdComps *md, const gchar *group_id,
 		}
 	}
 
+	/* if we pass a parent;child, we only want to care about the child */
+	group_id_child = g_strstr_len (group_id, -1, ";");
+	if (group_id_child != NULL)
+		group_id_child++;
+	else
+		group_id_child = group_id;
+
 	/* get packages in this group */
 	len = md->priv->array_groups->len;
 	for (i=0; i<len; i++) {
 		data = g_ptr_array_index (md->priv->array_groups, i);
 
 		/* category matches */
-		if (g_strcmp0 (group_id, data->id) == 0) {
+		if (g_strcmp0 (group_id_child, data->id) == 0) {
 			array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_free);
 			for (j=0; j<data->packagelist->len; j++) {
 				packagename = g_ptr_array_index (data->packagelist, j);
