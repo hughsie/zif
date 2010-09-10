@@ -665,6 +665,39 @@ out:
 }
 
 /**
+ * zif_package_id_get_name:
+ * @package_id: the ; delimited PackageID to split
+ *
+ * Gets the package name for a PackageID. This is 9x faster than using
+ * zif_package_id_split() where you only need the %ZIF_PACKAGE_ID_NAME
+ * component.
+ *
+ * Return value: a string or %NULL if invalid, use g_free() to free
+ *
+ * Since: 0.1.1
+ **/
+gchar *
+zif_package_id_get_name (const gchar *package_id)
+{
+	gchar *name = NULL;
+	guint i;
+
+	/* invalid */
+	if (package_id == NULL || package_id[0] == '\0')
+		goto out;
+
+	/* find the first ; char */
+	for (i=1; package_id[i] != '\0'; i++) {
+		if (package_id[i] == ';') {
+			name = g_strndup (package_id, i);
+			goto out;
+		}
+	}
+out:
+	return name;
+}
+
+/**
  * zif_package_id_check:
  * @package_id: the PackageID to check
  *

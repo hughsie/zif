@@ -221,7 +221,7 @@ zif_store_local_search_name (ZifStore *store, gchar **search, ZifState *state, G
 	GPtrArray *array = NULL;
 	ZifPackage *package;
 	const gchar *package_id;
-	gchar **split;
+	gchar *split_name;
 	GError *error_local = NULL;
 	gboolean ret;
 	ZifState *state_local = NULL;
@@ -278,14 +278,14 @@ zif_store_local_search_name (ZifStore *store, gchar **search, ZifState *state, G
 	for (i=0;i<local->priv->packages->len;i++) {
 		package = g_ptr_array_index (local->priv->packages, i);
 		package_id = zif_package_get_id (package);
-		split = zif_package_id_split (package_id);
+		split_name = zif_package_id_get_name (package_id);
 		for (j=0; search[j] != NULL; j++) {
-			if (strcasestr (split[ZIF_PACKAGE_ID_NAME], search[j]) != NULL) {
+			if (strcasestr (split_name, search[j]) != NULL) {
 				g_ptr_array_add (array, g_object_ref (package));
 				break;
 			}
 		}
-		g_strfreev (split);
+		g_free (split_name);
 
 		/* this section done */
 		ret = zif_state_done (state_local, error);
@@ -401,7 +401,7 @@ zif_store_local_search_details (ZifStore *store, gchar **search, ZifState *state
 	ZifPackage *package;
 	const gchar *package_id;
 	const gchar *description;
-	gchar **split;
+	gchar *split_name;
 	GError *error_local = NULL;
 	gboolean ret;
 	ZifState *state_local = NULL;
@@ -461,9 +461,9 @@ zif_store_local_search_details (ZifStore *store, gchar **search, ZifState *state
 		package_id = zif_package_get_id (package);
 		state_loop = zif_state_get_child (state_local);
 		description = zif_package_get_description (package, state_loop, NULL);
-		split = zif_package_id_split (package_id);
+		split_name = zif_package_id_get_name (package_id);
 		for (j=0; search[j] != NULL; j++) {
-			if (strcasestr (split[ZIF_PACKAGE_ID_NAME], search[j]) != NULL) {
+			if (strcasestr (split_name, search[j]) != NULL) {
 				g_ptr_array_add (array, g_object_ref (package));
 				break;
 			} else if (strcasestr (description, search[j]) != NULL) {
@@ -471,7 +471,7 @@ zif_store_local_search_details (ZifStore *store, gchar **search, ZifState *state
 				break;
 			}
 		}
-		g_strfreev (split);
+		g_free (split_name);
 
 		/* this section done */
 		ret = zif_state_done (state_local, error);
@@ -685,7 +685,7 @@ zif_store_local_resolve (ZifStore *store, gchar **search, ZifState *state, GErro
 	const gchar *package_id;
 	GError *error_local = NULL;
 	gboolean ret;
-	gchar **split;
+	gchar *split_name;
 	ZifState *state_local = NULL;
 	ZifStoreLocal *local = ZIF_STORE_LOCAL (store);
 
@@ -740,14 +740,14 @@ zif_store_local_resolve (ZifStore *store, gchar **search, ZifState *state, GErro
 	for (i=0;i<local->priv->packages->len;i++) {
 		package = g_ptr_array_index (local->priv->packages, i);
 		package_id = zif_package_get_id (package);
-		split = zif_package_id_split (package_id);
+		split_name = zif_package_id_get_name (package_id);
 		for (j=0; search[j] != NULL; j++) {
-			if (strcmp (split[ZIF_PACKAGE_ID_NAME], search[j]) == 0) {
+			if (strcmp (split_name, search[j]) == 0) {
 				g_ptr_array_add (array, g_object_ref (package));
 				break;
 			}
 		}
-		g_strfreev (split);
+		g_free (split_name);
 
 		/* this section done */
 		ret = zif_state_done (state_local, error);

@@ -1582,6 +1582,14 @@ zif_utils_func (void)
 	gchar *filename;
 	GError *error = NULL;
 	ZifState *state;
+	const gchar *package_id_const = "totem;0.1.2;i386;fedora";
+	guint i;
+	GTimer *timer;
+	gchar **split;
+	gchar *name;
+	const guint iterations = 100000;
+	gdouble time_split;
+	gdouble time_iter;
 
 	state = zif_state_new ();
 
@@ -1658,6 +1666,26 @@ zif_utils_func (void)
 	g_assert_cmpint (zif_time_string_to_seconds ("10h"), ==, 36000);
 	g_assert_cmpint (zif_time_string_to_seconds ("10d"), ==, 864000);
 
+	/* get the time it takes to split a million strings */
+	timer = g_timer_new ();
+	for (i=0; i<iterations; i++) {
+		split = zif_package_id_split (package_id_const);
+		g_strfreev (split);
+	}
+	time_split = g_timer_elapsed (timer, NULL);
+
+	/* get the time it takes to iterate a million strings */
+	g_timer_reset (timer);
+	for (i=0; i<iterations; i++) {
+		name = zif_package_id_get_name (package_id_const);
+		g_free (name);
+	}
+	time_iter = g_timer_elapsed (timer, NULL);
+
+	/* ensure iter is faster by at least 5 times */
+	g_assert_cmpfloat (time_iter * 5, <, time_split);
+
+	g_timer_destroy (timer);
 	g_object_unref (state);
 }
 

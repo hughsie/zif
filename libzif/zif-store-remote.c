@@ -616,7 +616,7 @@ zif_store_remote_get_update_detail (ZifStoreRemote *store, const gchar *package_
 	ZifMd *md;
 	ZifPackage *package_installed = NULL;
 	ZifUpdate *update = NULL;
-	gchar **split = NULL;
+	gchar *split_name = NULL;
 	gchar **split_installed = NULL;
 	ZifStoreLocal *store_local = NULL;
 	const gchar *version;
@@ -706,9 +706,9 @@ zif_store_remote_get_update_detail (ZifStoreRemote *store, const gchar *package_
 
 	/* get the newest installed package with this name */
 	state_local = zif_state_get_child (state);
-	split = zif_package_id_split (package_id);
+	split_name = zif_package_id_get_name (package_id);
 	store_local = zif_store_local_new ();
-	to_array[0] = split[ZIF_PACKAGE_ID_NAME];
+	to_array[0] = split_name;
 	array_installed = zif_store_resolve (ZIF_STORE (store_local), to_array, state_local, &error_local);
 	if (array_installed == NULL) {
 		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
@@ -744,7 +744,7 @@ zif_store_remote_get_update_detail (ZifStoreRemote *store, const gchar *package_
 	if (!ret)
 		goto out;
 out:
-	g_strfreev (split);
+	g_free (split_name);
 	g_strfreev (split_installed);
 	if (changelog != NULL)
 		g_ptr_array_unref (changelog);
@@ -2561,6 +2561,7 @@ zif_store_remote_get_updates (ZifStore *store, GPtrArray *packages,
 	const gchar *package_id_update;
 	ZifStoreRemote *remote = ZIF_STORE_REMOTE (store);
 	ZifState *state_local;
+	gchar *split_name;
 	gchar **split;
 	gchar **split_update;
 	ZifMd *primary;
@@ -2608,13 +2609,12 @@ zif_store_remote_get_updates (ZifStore *store, GPtrArray *packages,
 	for (i=0; i<packages->len; i++) {
 		package = ZIF_PACKAGE (g_ptr_array_index (packages, i));
 		package_id = zif_package_get_id (package);
-		split = zif_package_id_split (package_id);
-		if (split == NULL) {
+		split_name = zif_package_id_get_name (package_id);
+		if (split_name == NULL) {
 			egg_warning ("failed to split %s", package_id);
 			continue;
 		}
-		resolve_array[i] = g_strdup (split[ZIF_PACKAGE_ID_NAME]);
-		g_strfreev (split);
+		resolve_array[i] = split_name;
 	}
 
 	/* resolve all of them in one fell swoop */
