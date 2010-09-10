@@ -1031,6 +1031,12 @@ zif_repos_func (void)
 	g_assert (array != NULL);
 	g_assert_cmpint (array->len, ==, 2);
 
+	/* check returns error for invalid */
+	store = zif_repos_get_store (repos, "does-not-exist", state, &error);
+	g_assert (store == NULL);
+	g_assert_error (error, ZIF_REPOS_ERROR, ZIF_REPOS_ERROR_FAILED);
+	g_clear_error (&error);
+
 	/* get ref for next test */
 	store = g_object_ref (g_ptr_array_index (array, 0));
 	g_ptr_array_unref (array);
