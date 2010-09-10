@@ -1817,6 +1817,8 @@ zif_store_remote_resolve (ZifStore *store, gchar **search, ZifState *state, GErr
 	state_local = zif_state_get_child (state);
 	primary = zif_store_remote_get_primary (remote);
 	array = zif_md_resolve (primary, search, state_local, error);
+	if (array == NULL)
+		goto out;
 
 	/* this section done */
 	ret = zif_state_done (state, error);
@@ -1876,6 +1878,8 @@ zif_store_remote_search_name (ZifStore *store, gchar **search, ZifState *state, 
 	state_local = zif_state_get_child (state);
 	md = zif_store_remote_get_primary (remote);
 	array = zif_md_search_name (md, search, state_local, error);
+	if (array == NULL)
+		goto out;
 
 	/* this section done */
 	ret = zif_state_done (state, error);
@@ -1935,6 +1939,8 @@ zif_store_remote_search_details (ZifStore *store, gchar **search, ZifState *stat
 	state_local = zif_state_get_child (state);
 	md = zif_store_remote_get_primary (remote);
 	array = zif_md_search_details (md, search, state_local, error);
+	if (array == NULL)
+		goto out;
 
 	/* this section done */
 	ret = zif_state_done (state, error);
