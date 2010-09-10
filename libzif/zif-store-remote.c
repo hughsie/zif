@@ -2226,10 +2226,12 @@ zif_store_remote_search_group (ZifStore *store, gchar **search, ZifState *state,
 		goto out;
 	}
 
-	/* no results for this group enum */
+	/* no results for this group enum is not fatal */
 	if (array_tmp->len == 0) {
-		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
-			     "failed to get categories for group '%s'", search[0]);
+		ret = zif_state_finished (state, error);
+		if (!ret)
+			goto out;
+		array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 		goto out;
 	}
 
