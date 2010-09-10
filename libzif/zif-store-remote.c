@@ -32,6 +32,7 @@
 #endif
 
 #include <glib.h>
+#include <glib/gstdio.h>
 #include <stdlib.h>
 #include <gio/gio.h>
 
@@ -475,6 +476,7 @@ zif_store_remote_download (ZifStoreRemote *store, const gchar *filename, const g
 	gchar *basename = NULL;
 	const gchar *baseurl;
 	ZifState *state_local;
+	gboolean done_repomd_confirm = FALSE;
 
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), FALSE);
 	g_return_val_if_fail (store->priv->id != NULL, FALSE);
@@ -497,6 +499,8 @@ zif_store_remote_download (ZifStoreRemote *store, const gchar *filename, const g
 		ret = FALSE;
 		goto out;
 	}
+
+repomd_confirm:
 
 	/* setup state */
 	if (store->priv->loaded_metadata)
@@ -569,10 +573,29 @@ zif_store_remote_download (ZifStoreRemote *store, const gchar *filename, const g
 			break;
 	}
 
+	/* we failed to get the metadata from any source, so try to refresh the repomd.xml */
+	if (!ret && !done_repomd_confirm) {
+
+		/* we might go backwards */
+		ret = zif_state_reset (state);
+		if (!ret)
+			goto out;
+
+		/* delete invalid repomd */
+		store->priv->loaded_metadata = FALSE;
+		g_unlink (store->priv->repomd_filename);
+
+		/* only retry this once */
+		done_repomd_confirm = TRUE;
+		egg_debug ("confirming repomd.xml as repodata file does not exist");
+
+		goto repomd_confirm;
+	}
+
 	/* nothing */
 	if (!ret) {
 		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
-			     "failed to download %s from any sources", filename);
+			     "failed to download %s from any sources (and after confirming repomd)", filename);
 		goto out;
 	}
 
