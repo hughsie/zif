@@ -27,6 +27,10 @@
  * not enumerated and are custom to the vendor. The mapping from categories
  * to groups (and vice versa) is done with a mapping file which has to be
  * set using zif_groups_set_mapping_file() before any queries are done.
+ *
+ * In zif parlance, a group is a single string, e.g. "education" and
+ * a category is two strings, a parent and chld that are joined with a
+ * delimiter, e.g. "apps;education".
  */
 
 #ifdef HAVE_CONFIG_H
@@ -269,6 +273,64 @@ zif_groups_get_categories (ZifGroups *groups, GError **error)
 	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_free);
 	for (i=0; i<groups->priv->categories->len; i++)
 		g_ptr_array_add (array, g_strdup (g_ptr_array_index (groups->priv->categories, i)));
+out:
+	return array;
+}
+
+/**
+ * zif_groups_get_cats_for_group:
+ * @groups: the #ZifGroups object
+ * @group_enum: the group enumeration, e.g. "education"
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Gets all the categories that map to to this group enumeration.
+ *
+ * Return value: category list as an array of strings, free with g_ptr_array_unref()
+ *
+ * Since: 0.1.1
+ **/
+GPtrArray *
+zif_groups_get_cats_for_group (ZifGroups *groups, const gchar *group_enum, GError **error)
+{
+	guint i;
+	GPtrArray *array = NULL;
+	GError *error_local = NULL;
+	gboolean ret;
+	ZifGroupsPrivate *priv;
+	const gchar *category;
+	const gchar *group;
+
+	g_return_val_if_fail (ZIF_IS_GROUPS (groups), NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+	/* get private instance */
+	priv = groups->priv;
+
+	/* if not already loaded, load */
+	if (!priv->loaded) {
+		ret = zif_groups_load (groups, &error_local);
+		if (!ret) {
+			g_set_error (error, ZIF_GROUPS_ERROR, ZIF_GROUPS_ERROR_FAILED,
+				     "failed to load config file: %s", error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+	}
+
+	/* create results array, as even missing groups do not end in failure */
+	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_free);
+
+	/* go through categories and get groups, if they match, then add */
+	for (i=0; i < priv->categories->len; i++) {
+		category = g_ptr_array_index (priv->categories, i);
+
+		/* get cat -> group mapping */
+		group = (const gchar *)g_hash_table_lookup (groups->priv->hash, category);
+
+		/* add to results array */
+		if (g_strcmp0 (group, group_enum) == 0)
+			g_ptr_array_add (array, g_strdup (category));;
+	}
 out:
 	return array;
 }

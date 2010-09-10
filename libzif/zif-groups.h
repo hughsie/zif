@@ -70,6 +70,9 @@ GPtrArray	*zif_groups_get_groups		(ZifGroups	*groups,
 						 GError		**error);
 GPtrArray	*zif_groups_get_categories	(ZifGroups	*groups,
 						 GError		**error);
+GPtrArray	*zif_groups_get_cats_for_group	(ZifGroups	*groups,
+						 const gchar	*group_enum,
+						 GError		**error);
 const gchar	*zif_groups_get_group_for_cat	(ZifGroups	*groups,
 						 const gchar	*cat,
 						 GError		**error);

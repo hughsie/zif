@@ -284,6 +284,7 @@ zif_groups_func (void)
 	GPtrArray *array;
 	GError *error = NULL;
 	const gchar *group;
+	const gchar *category;
 	gchar *filename;
 
 	groups = zif_groups_new ();
@@ -299,17 +300,29 @@ zif_groups_func (void)
 	g_assert_no_error (error);
 	g_assert (ret);
 
-	array = zif_groups_get_groups (groups, NULL);
+	array = zif_groups_get_groups (groups, &error);
+	g_assert_no_error (error);
+	g_assert (array != NULL);
 	group = g_ptr_array_index (array, 0);
-	g_assert (groups != NULL);
 	g_assert_cmpstr (group, ==, "admin-tools");
 
-	array = zif_groups_get_categories (groups, NULL);
+	array = zif_groups_get_categories (groups, &error);
+	g_assert_no_error (error);
+	g_assert (array != NULL);
 	g_assert_cmpint (array->len, >, 100);
 	g_ptr_array_unref (array);
 
-	group = zif_groups_get_group_for_cat (groups, "language-support;kashubian-support", NULL);
+	group = zif_groups_get_group_for_cat (groups, "language-support;kashubian-support", &error);
+	g_assert_no_error (error);
 	g_assert_cmpstr (group, ==, "localization");
+
+	array = zif_groups_get_cats_for_group (groups, "localization", &error);
+	g_assert_no_error (error);
+	g_assert (array != NULL);
+	g_assert_cmpint (array->len, >, 50);
+	category = g_ptr_array_index (array, 0);
+	g_assert_cmpstr (category, ==, "base-system;input-methods");
+	g_ptr_array_unref (array);
 
 	g_object_unref (groups);
 }
