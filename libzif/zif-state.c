@@ -106,6 +106,7 @@ struct _ZifStatePrivate
 	GTimer			*timer;
 	ZifStateErrorHandlerCb	 error_handler_cb;
 	gpointer		 error_handler_user_data;
+	gboolean		 enable_profile;
 };
 
 enum {
@@ -445,7 +446,10 @@ zif_state_reset (ZifState *state)
 	state->priv->steps = 0;
 	state->priv->current = 0;
 	state->priv->last_percentage = 0;
-	g_timer_start (state->priv->timer);
+
+	/* only use the timer if profiling; it's expensive */
+	if (state->priv->enable_profile)
+		g_timer_start (state->priv->timer);
 
 	/* disconnect client */
 	if (state->priv->percentage_child_id != 0) {
@@ -543,8 +547,11 @@ zif_state_set_number_steps_real (ZifState *state, guint steps, const gchar *strl
 	g_free (state->priv->id);
 	state->priv->id = g_strdup_printf ("%s", strloc);
 
+	/* only use the timer if profiling; it's expensive */
+	if (state->priv->enable_profile)
+		g_timer_start (state->priv->timer);
+
 	/* imply reset */
-	g_timer_start (state->priv->timer);
 	zif_state_reset (state);
 
 	/* set steps */
@@ -593,14 +600,16 @@ zif_state_done_real (ZifState *state, GError **error, const gchar *strloc)
 	}
 
 	/* check the interval was too big in allow_cancel false mode */
-	if (!state->priv->allow_cancel_changed_state && state->priv->current > 0) {
-		elapsed = g_timer_elapsed (state->priv->timer, NULL);
-		if (elapsed > 0.1f) {
-			egg_warning ("%.1fms between zif_state_done() and no zif_state_set_allow_cancel()", elapsed * 1000);
-			zif_state_print_parent_chain (state, 0);
+	if (state->priv->enable_profile) {
+		if (!state->priv->allow_cancel_changed_state && state->priv->current > 0) {
+			elapsed = g_timer_elapsed (state->priv->timer, NULL);
+			if (elapsed > 0.1f) {
+				egg_warning ("%.1fms between zif_state_done() and no zif_state_set_allow_cancel()", elapsed * 1000);
+				zif_state_print_parent_chain (state, 0);
+			}
 		}
+		g_timer_start (state->priv->timer);
 	}
-	g_timer_start (state->priv->timer);
 
 	/* is already at 100%? */
 	if (state->priv->current == state->priv->steps) {
