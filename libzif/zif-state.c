@@ -322,10 +322,8 @@ zif_state_set_percentage (ZifState *state, guint percentage)
 	state->priv->last_percentage = percentage;
 
 	/* are we so low we don't care */
-	if (state->priv->global_share < 0.01) {
-		egg_warning ("skipping percentage signal emit");
+	if (state->priv->global_share < 0.01)
 		goto out;
-	}
 
 	/* emit */
 	g_signal_emit (state, signals [SIGNAL_PERCENTAGE_CHANGED], 0, percentage);
@@ -356,10 +354,8 @@ static gboolean
 zif_state_set_subpercentage (ZifState *state, guint percentage)
 {
 	/* are we so low we don't care */
-	if (state->priv->global_share < 0.01) {
-		egg_warning ("skipping subpercentage signal emit");
+	if (state->priv->global_share < 0.01)
 		goto out;
-	}
 
 	/* just emit */
 	g_signal_emit (state, signals [SIGNAL_SUBPERCENTAGE_CHANGED], 0, percentage);
