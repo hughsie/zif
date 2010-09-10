@@ -107,6 +107,7 @@ struct _ZifStatePrivate
 	ZifStateErrorHandlerCb	 error_handler_cb;
 	gpointer		 error_handler_user_data;
 	gboolean		 enable_profile;
+	gdouble			 global_share;
 };
 
 enum {
@@ -317,9 +318,17 @@ zif_state_set_percentage (ZifState *state, guint percentage)
 		zif_state_set_allow_cancel (state, TRUE);
 	}
 
-	/* emit and save */
-	g_signal_emit (state, signals [SIGNAL_PERCENTAGE_CHANGED], 0, percentage);
+	/* save */
 	state->priv->last_percentage = percentage;
+
+	/* are we so low we don't care */
+	if (state->priv->global_share < 0.01) {
+		egg_warning ("skipping percentage signal emit");
+		goto out;
+	}
+
+	/* emit */
+	g_signal_emit (state, signals [SIGNAL_PERCENTAGE_CHANGED], 0, percentage);
 out:
 	return TRUE;
 }
@@ -346,8 +355,15 @@ zif_state_get_percentage (ZifState *state)
 static gboolean
 zif_state_set_subpercentage (ZifState *state, guint percentage)
 {
+	/* are we so low we don't care */
+	if (state->priv->global_share < 0.01) {
+		egg_warning ("skipping subpercentage signal emit");
+		goto out;
+	}
+
 	/* just emit */
 	g_signal_emit (state, signals [SIGNAL_SUBPERCENTAGE_CHANGED], 0, percentage);
+out:
 	return TRUE;
 }
 
@@ -475,6 +491,17 @@ zif_state_reset (ZifState *state)
 }
 
 /**
+ * zif_state_set_global_share:
+ **/
+static void
+zif_state_set_global_share (ZifState *state, gdouble global_share)
+{
+	g_return_if_fail (ZIF_IS_STATE (state));
+	state->priv->global_share = global_share;
+	egg_debug ("global share now %lf%%", global_share * 100.0f);
+}
+
+/**
  * zif_state_get_child:
  * @state: the #ZifState object
  *
@@ -514,6 +541,9 @@ zif_state_get_child (ZifState *state)
 	/* reset child */
 	child->priv->current = 0;
 	child->priv->last_percentage = 0;
+
+	/* set the global share on the new child */
+	zif_state_set_global_share (child, state->priv->global_share);
 
 	return child;
 }
@@ -556,6 +586,9 @@ zif_state_set_number_steps_real (ZifState *state, guint steps, const gchar *strl
 
 	/* set steps */
 	state->priv->steps = steps;
+
+	/* global share just got smaller */
+	state->priv->global_share /= steps;
 
 	return TRUE;
 }
@@ -773,6 +806,7 @@ zif_state_init (ZifState *state)
 	state->priv->percentage_child_id = 0;
 	state->priv->subpercentage_child_id = 0;
 	state->priv->allow_cancel_child_id = 0;
+	state->priv->global_share = 1.0f;
 	state->priv->timer = g_timer_new ();
 }
 
