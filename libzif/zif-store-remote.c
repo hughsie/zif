@@ -35,15 +35,12 @@
 #include <stdlib.h>
 #include <gio/gio.h>
 
+#include "zif-category.h"
 #include "zif-config.h"
 #include "zif-download.h"
+#include "zif-groups.h"
 #include "zif-lock.h"
-#include "zif-monitor.h"
-#include "zif-package.h"
-#include "zif-package-remote.h"
-#include "zif-media.h"
 #include "zif-md-comps.h"
-#include "zif-md-updateinfo.h"
 #include "zif-md-filelists-sql.h"
 #include "zif-md-filelists-xml.h"
 #include "zif-md-metalink.h"
@@ -51,11 +48,15 @@
 #include "zif-md-other-sql.h"
 #include "zif-md-primary-sql.h"
 #include "zif-md-primary-xml.h"
+#include "zif-md-updateinfo.h"
+#include "zif-media.h"
+#include "zif-monitor.h"
+#include "zif-package.h"
+#include "zif-package-remote.h"
 #include "zif-store.h"
 #include "zif-store-local.h"
 #include "zif-store-remote.h"
 #include "zif-utils.h"
-#include "zif-category.h"
 
 #include "egg-debug.h"
 
@@ -100,6 +101,7 @@ struct _ZifStoreRemotePrivate
 	ZifMonitor		*monitor;
 	ZifLock			*lock;
 	ZifMedia		*media;
+	ZifGroups		*groups;
 	GPtrArray		*packages;
 	ZifMdType		 parser_type;
 	/* temp data for the xml parser */
@@ -2170,12 +2172,14 @@ out:
 static GPtrArray *
 zif_store_remote_search_group (ZifStore *store, gchar **search, ZifState *state, GError **error)
 {
+	guint i;
 	gboolean ret;
 	GError *error_local = NULL;
 	GPtrArray *array = NULL;
+	GPtrArray *array_tmp = NULL;
+	gchar **search_cats = NULL;
 	ZifStoreRemote *remote = ZIF_STORE_REMOTE (store);
 	ZifState *state_local;
-	ZifMd *primary;
 
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), NULL);
 	g_return_val_if_fail (remote->priv->id != NULL, NULL);
@@ -2211,15 +2215,43 @@ zif_store_remote_search_group (ZifStore *store, gchar **search, ZifState *state,
 			goto out;
 	}
 
+	/* we can't just use zif_md_primary_*_search_group() as this searches
+	 * by *rpm* group, which isn't what we want -- instead we need to get
+	 * the list of categories for each group, and then return results. */
+	array_tmp = zif_groups_get_cats_for_group (remote->priv->groups, search[0], error);
+	if (array_tmp == NULL) {
+		ret = zif_state_finished (state, error);
+		if (!ret)
+			goto out;
+		goto out;
+	}
+
+	/* no results for this group enum */
+	if (array_tmp->len == 0) {
+		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+			     "failed to get categories for group '%s'", search[0]);
+		goto out;
+	}
+
+	/* convert from pointer array to (gchar **) */
+	search_cats = g_new0 (gchar *, array_tmp->len + 1);
+	for (i=0; i < array_tmp->len; i++)
+		search_cats[i] = g_strdup (g_ptr_array_index (array_tmp, i));
+
+	/* now search by category */
 	state_local = zif_state_get_child (state);
-	primary = zif_store_remote_get_primary (remote);
-	array = zif_md_search_group (primary, search, state_local, error);
+	array = zif_store_remote_search_category (store, search_cats, state_local, error);
+	if (array == NULL)
+		goto out;
 
 	/* this section done */
 	ret = zif_state_done (state, error);
 	if (!ret)
 		goto out;
 out:
+	if (array_tmp != NULL)
+		g_ptr_array_unref (array_tmp);
+	g_strfreev (search_cats);
 	return array;
 }
 
@@ -3046,6 +3078,7 @@ zif_store_remote_finalize (GObject *object)
 	g_object_unref (store->priv->monitor);
 	g_object_unref (store->priv->lock);
 	g_object_unref (store->priv->media);
+	g_object_unref (store->priv->groups);
 
 	g_ptr_array_unref (store->priv->baseurls);
 
@@ -3110,6 +3143,7 @@ zif_store_remote_init (ZifStoreRemote *store)
 	store->priv->monitor = zif_monitor_new ();
 	store->priv->lock = zif_lock_new ();
 	store->priv->media = zif_media_new ();
+	store->priv->groups = zif_groups_new ();
 	store->priv->md_filelists_sql = ZIF_MD (zif_md_filelists_sql_new ());
 	store->priv->md_filelists_xml = ZIF_MD (zif_md_filelists_xml_new ());
 	store->priv->md_other_sql = ZIF_MD (zif_md_other_sql_new ());
