@@ -199,9 +199,16 @@ zif_cmd_get_depends (const gchar *package_name, ZifState *state)
 	guint i, j;
 	gchar **split;
 	const gchar *to_array[] = { NULL, NULL };
+	GString *string;
+
+	/* setup progressbar */
+	pk_progress_bar_start (progressbar, "Getting depends");
+
+	/* use a temp string to get output results */
+	string = g_string_new ("");
 
 	/* setup state */
-	zif_state_set_number_steps (state, 3);
+	zif_state_set_number_steps (state, 4);
 
 	/* add all stores */
 	store_array = zif_store_array_new ();
@@ -270,7 +277,7 @@ zif_cmd_get_depends (const gchar *package_name, ZifState *state)
 
 		require = g_ptr_array_index (requires, i);
 		require_str = zif_depend_to_string (require);
-		g_print ("  dependency: %s\n", require_str);
+		g_string_append_printf (string, "  dependency: %s\n", require_str);
 		g_free (require_str);
 
 		/* find the package providing the depend */
@@ -287,7 +294,11 @@ zif_cmd_get_depends (const gchar *package_name, ZifState *state)
 			package = g_ptr_array_index (provides, j);
 			package_id = zif_package_get_id (package);
 			split = zif_package_id_split (package_id);
-			g_print ("   provider: %s-%s.%s (%s)\n", split[ZIF_PACKAGE_ID_NAME], split[ZIF_PACKAGE_ID_VERSION], split[ZIF_PACKAGE_ID_ARCH], split[ZIF_PACKAGE_ID_DATA]);
+			g_string_append_printf (string, "   provider: %s-%s.%s (%s)\n",
+						split[ZIF_PACKAGE_ID_NAME],
+						split[ZIF_PACKAGE_ID_VERSION],
+						split[ZIF_PACKAGE_ID_ARCH],
+						split[ZIF_PACKAGE_ID_DATA]);
 			g_strfreev (split);
 		}
 		g_ptr_array_unref (provides);
@@ -302,7 +313,14 @@ zif_cmd_get_depends (const gchar *package_name, ZifState *state)
 	ret = zif_state_done (state, &error);
 	if (!ret)
 		goto out;
+
+	/* no more progressbar */
+	pk_progress_bar_end (progressbar);
+
+	/* success */
+	g_print ("%s", string->str);
 out:
+	g_string_free (string, TRUE);
 	if (requires != NULL)
 		g_ptr_array_unref (requires);
 	if (array != NULL)
@@ -1103,11 +1121,7 @@ main (int argc, char *argv[])
 			g_print ("specify a package name\n");
 			goto out;
 		}
-		pk_progress_bar_start (progressbar, "Getting depends");
 		zif_cmd_get_depends (value, state);
-
-		/* no more progressbar */
-		pk_progress_bar_end (progressbar);
 		goto out;
 	}
 	if (g_strcmp0 (mode, "download") == 0) {
