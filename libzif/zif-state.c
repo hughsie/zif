@@ -151,6 +151,10 @@ zif_state_set_error_handler (ZifState *state, ZifStateErrorHandlerCb error_handl
 {
 	state->priv->error_handler_cb = error_handler_cb;
 	state->priv->error_handler_user_data = user_data;
+
+	/* if there is an existing child, set the handler on this too */
+	if (state->priv->child != NULL)
+		zif_state_set_error_handler (state->priv->child, error_handler_cb, user_data);
 }
 
 /**
@@ -165,9 +169,19 @@ zif_state_set_error_handler (ZifState *state, ZifStateErrorHandlerCb error_handl
 gboolean
 zif_state_error_handler (ZifState *state, const GError *error)
 {
-	if (state->priv->error_handler_cb == NULL)
-		return FALSE;
-	return state->priv->error_handler_cb (error, state->priv->error_handler_user_data);
+	gboolean ret = FALSE;
+
+	/* no handler */
+	if (state->priv->error_handler_cb == NULL) {
+		g_debug ("no error handler installed");
+		goto out;
+	}
+
+	/* run the handler */
+	ret = state->priv->error_handler_cb (error, state->priv->error_handler_user_data);
+	g_debug ("error handler reported %s", ret ? "IGNORE" : "FAILURE");
+out:
+	return ret;
 }
 
 
@@ -540,6 +554,13 @@ zif_state_get_child (ZifState *state)
 
 	/* set the global share on the new child */
 	zif_state_set_global_share (child, state->priv->global_share);
+
+	/* set the error handler if one exists on the child */
+	if (state->priv->error_handler_cb != NULL) {
+		zif_state_set_error_handler (child,
+					     state->priv->error_handler_cb,
+					     state->priv->error_handler_user_data);
+	}
 
 	return child;
 }

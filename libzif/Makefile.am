@@ -14,6 +14,7 @@ INCLUDES = \
 	-DEGG_VERBOSE="\"ZIF_VERBOSE\""				\
 	-DEGG_LOGGING="\"ZIF_LOGGING\""				\
 	-DEGG_CONSOLE="\"ZIF_CONSOLE\""				\
+	-DG_LOG_DOMAIN=\"Zif\"					\
 	-DLOCALSTATEDIR=\""$(localstatedir)"\" 			\
 	-DPACKAGE_DATA_DIR=\""$(datadir)"\"			\
 	-DPACKAGE_LOCALE_DIR=\""$(prefix)/$(DATADIRNAME)/locale"\"

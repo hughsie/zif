@@ -309,7 +309,8 @@ zif_store_array_repos_search (GPtrArray *store_array, ZifRole role, gchar **sear
 		}
 		if (part == NULL) {
 			/* do we need to skip this error */
-			if (zif_state_error_handler (state, error_local)) {
+			ret = zif_state_error_handler (state, error_local);
+			if (ret) {
 				g_clear_error (&error_local);
 				ret = zif_state_finished (state_local, error);
 				if (!ret)

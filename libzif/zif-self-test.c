@@ -1098,12 +1098,21 @@ zif_state_test_allow_cancel_changed_cb (ZifState *state, gboolean allow_cancel, 
 	_allow_cancel_updates++;
 }
 
+static gboolean
+zif_state_error_handler_cb (const GError *error, gpointer user_data)
+{
+	/* emit a warning, this isn't fatal */
+	g_debug ("ignoring errors: %s", error->message);
+	return TRUE;
+}
+
 static void
 zif_state_func (void)
 {
 	ZifState *state;
 	ZifState *child;
 	gboolean ret;
+	GError *error = NULL;
 
 	state = zif_state_new ();
 	g_assert (state != NULL);
@@ -1219,6 +1228,40 @@ zif_state_func (void)
 	/* ensure 1 updates for state with one step and ensure using child value as parent */
 	g_assert (_updates == 1);
 	g_assert (_last_percent == 33);
+
+	g_object_unref (state);
+	g_object_unref (child);
+
+	/* test error ignoring */
+	state = zif_state_new ();
+	error = g_error_new (1, 0, "this is error: %i", 999);
+	ret = zif_state_error_handler (state, error);
+	g_assert (!ret);
+
+	/* ensure child also fails */
+	child = zif_state_get_child (state);
+	ret = zif_state_error_handler (child, error);
+	g_assert (!ret);
+
+	/* pass all errors */
+	zif_state_set_error_handler (state, zif_state_error_handler_cb, NULL);
+	ret = zif_state_error_handler (state, error);
+	g_assert (ret);
+
+	/* ensure existing child also gets error handler passed down to it */
+	ret = zif_state_error_handler (child, error);
+	g_assert (ret);
+
+	g_object_unref (state);
+	g_object_unref (child);
+
+	/* test new child gets error handler passed to it */
+	state = zif_state_new ();
+	error = g_error_new (1, 0, "this is error: %i", 999);
+	zif_state_set_error_handler (state, zif_state_error_handler_cb, NULL);
+	child = zif_state_get_child (state);
+	ret = zif_state_error_handler (child, error);
+	g_assert (ret);
 
 	g_object_unref (state);
 	g_object_unref (child);
