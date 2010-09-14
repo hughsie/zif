@@ -253,7 +253,7 @@ zif_update_get_reboot (ZifUpdate *update)
  *
  * Gets the update info for this update.
  *
- * Return value: A #GPtrArray of #ZifUpdateInfo, or %NULL.
+ * Return value: A refcounted #GPtrArray of #ZifUpdateInfo, or %NULL. Free with g_ptr_array_unref().
  *
  * Since: 0.1.0
  **/
@@ -261,7 +261,7 @@ GPtrArray *
 zif_update_get_update_infos (ZifUpdate *update)
 {
 	g_return_val_if_fail (ZIF_IS_UPDATE (update), NULL);
-	return update->priv->update_infos;
+	return g_ptr_array_ref (update->priv->update_infos);
 }
 
 /**
@@ -270,7 +270,7 @@ zif_update_get_update_infos (ZifUpdate *update)
  *
  * Gets the packages for this update.
  *
- * Return value: A #GPtrArray of #ZifPackage, or %NULL.
+ * Return value: A refcounted #GPtrArray of #ZifPackage, or %NULL. Free with g_ptr_array_unref().
  *
  * Since: 0.1.0
  **/
@@ -278,7 +278,7 @@ GPtrArray *
 zif_update_get_packages (ZifUpdate *update)
 {
 	g_return_val_if_fail (ZIF_IS_UPDATE (update), NULL);
-	return update->priv->packages;
+	return g_ptr_array_ref (update->priv->packages);
 }
 
 /**
@@ -287,7 +287,7 @@ zif_update_get_packages (ZifUpdate *update)
  *
  * Gets the changelog for this update.
  *
- * Return value: A #GPtrArray of #ZifChangeset's, or %NULL.
+ * Return value: A refcounted #GPtrArray of #ZifChangeset's, or %NULL. Free with g_ptr_array_unref().
  *
  * Since: 0.1.0
  **/
@@ -295,7 +295,7 @@ GPtrArray *
 zif_update_get_changelog (ZifUpdate *update)
 {
 	g_return_val_if_fail (ZIF_IS_UPDATE (update), NULL);
-	return update->priv->changelog;
+	return g_ptr_array_ref (update->priv->changelog);
 }
 
 /**
