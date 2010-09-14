@@ -566,7 +566,7 @@ zif_state_get_child (ZifState *state)
 }
 
 /**
- * zif_state_set_number_steps:
+ * zif_state_set_number_steps_real:
  * @state: the #ZifState object
  * @steps: The number of sub-tasks in this transaction
  *
@@ -611,7 +611,7 @@ zif_state_set_number_steps_real (ZifState *state, guint steps, const gchar *strl
 }
 
 /**
- * zif_state_done:
+ * zif_state_done_real:
  * @state: the #ZifState object
  * @error: A #GError or %NULL
  *
@@ -700,7 +700,7 @@ out:
 }
 
 /**
- * zif_state_finished:
+ * zif_state_finished_real:
  * @state: the #ZifState object
  * @error: A #GError or %NULL
  *
