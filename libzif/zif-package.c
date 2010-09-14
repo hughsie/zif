@@ -653,6 +653,60 @@ zif_package_get_name (ZifPackage *package)
 }
 
 /**
+ * zif_package_get_version:
+ * @package: the #ZifPackage object
+ *
+ * Gets the package version.
+ *
+ * Return value: the package version, e.g. "0.1.2".
+ *
+ * Since: 0.1.1
+ **/
+const gchar *
+zif_package_get_version (ZifPackage *package)
+{
+	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
+	g_return_val_if_fail (package->priv->package_id_split != NULL, NULL);
+	return package->priv->package_id_split[ZIF_PACKAGE_ID_VERSION];
+}
+
+/**
+ * zif_package_get_arch:
+ * @package: the #ZifPackage object
+ *
+ * Gets the package architecture, e.g. "i386".
+ *
+ * Return value: the package architecture.
+ *
+ * Since: 0.1.1
+ **/
+const gchar *
+zif_package_get_arch (ZifPackage *package)
+{
+	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
+	g_return_val_if_fail (package->priv->package_id_split != NULL, NULL);
+	return package->priv->package_id_split[ZIF_PACKAGE_ID_ARCH];
+}
+
+/**
+ * zif_package_get_data:
+ * @package: the #ZifPackage object
+ *
+ * Gets the package source data, e.g. "fedora".
+ *
+ * Return value: the package data.
+ *
+ * Since: 0.1.1
+ **/
+const gchar *
+zif_package_get_data (ZifPackage *package)
+{
+	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
+	g_return_val_if_fail (package->priv->package_id_split != NULL, NULL);
+	return package->priv->package_id_split[ZIF_PACKAGE_ID_DATA];
+}
+
+/**
  * zif_package_get_package_id:
  * @package: the #ZifPackage object
  *
