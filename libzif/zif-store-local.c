@@ -669,6 +669,11 @@ zif_store_local_search_file (ZifStore *store, gchar **search, ZifState *state, G
 		if (!ret)
 			goto out;
 	}
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 out:
 	return array;
 }
