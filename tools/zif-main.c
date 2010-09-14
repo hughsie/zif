@@ -580,6 +580,34 @@ zif_main_sigint_cb (int sig)
 }
 
 /**
+ * zif_strpad:
+ **/
+static gchar *
+zif_strpad (const gchar *data, guint length)
+{
+	gint size;
+	guint data_len;
+	gchar *text;
+	gchar *padding;
+
+	if (data == NULL)
+		return g_strnfill (length, ' ');
+
+	/* ITS4: ignore, only used for formatting */
+	data_len = strlen (data);
+
+	/* calculate */
+	size = (length - data_len);
+	if (size <= 0)
+		return g_strdup (data);
+
+	padding = g_strnfill (size, ' ');
+	text = g_strdup_printf ("%s%s", data, padding);
+	g_free (padding);
+	return text;
+}
+
+/**
  * main:
  **/
 int
@@ -1387,6 +1415,10 @@ main (int argc, char *argv[])
 		goto out;
 	}
 	if (g_strcmp0 (mode, "repolist") == 0) {
+		guint max_length = 0;
+		guint length;
+		gchar *id_pad;
+
 		pk_progress_bar_start (progressbar, "Getting repo list");
 
 		/* get list */
@@ -1400,13 +1432,24 @@ main (int argc, char *argv[])
 		/* no more progressbar */
 		pk_progress_bar_end (progressbar);
 
+		/* get maximum id string length */
+		for (i=0; i<array->len; i++) {
+			store_remote = g_ptr_array_index (array, i);
+			/* ITS4: ignore, only used for formatting */
+			length = strlen (zif_store_get_id (ZIF_STORE (store_remote)));
+			if (length > max_length)
+				max_length = length;
+		}
+
 		/* print */
 		for (i=0; i<array->len; i++) {
 			store_remote = g_ptr_array_index (array, i);
-			g_print ("%s\t\t%s\t\t%s\n",
-				 zif_store_get_id (ZIF_STORE (store_remote)),
-				 zif_store_remote_get_enabled (store_remote, state, NULL) ? "enabled" : "disabled",
+			id_pad = zif_strpad (zif_store_get_id (ZIF_STORE (store_remote)), max_length);
+			g_print ("%s\t%s\t%s\n",
+				 id_pad,
+				 zif_store_remote_get_enabled (store_remote, state, NULL) ? "enabled " : "disabled",
 				 zif_store_remote_get_name (store_remote, state, NULL));
+			g_free (id_pad);
 		}
 
 		g_ptr_array_unref (array);
