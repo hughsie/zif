@@ -684,6 +684,8 @@ main (int argc, char *argv[])
 		"  help           Display a helpful usage message\n"
 		"  refreshcache   Generate the metadata cache\n"
 		"  repolist       Display the configured software repositories\n"
+		"  repoenable     Enable a specific software repository\n"
+		"  repodisable    Disable a specific software repository\n"
 		"  resolve        Find a given package name\n"
 		"  searchcategory Search package details for the given category\n"
 		"  searchdetails  Search package details for the given string\n"
@@ -1453,6 +1455,93 @@ main (int argc, char *argv[])
 		}
 
 		g_ptr_array_unref (array);
+		goto out;
+	}
+	if (g_strcmp0 (mode, "repoenable") == 0) {
+		if (value == NULL) {
+			g_print ("specify a repo name\n");
+			goto out;
+		}
+
+		pk_progress_bar_start (progressbar, "Enabling repo");
+
+		/* setup state with the correct number of steps */
+		zif_state_set_number_steps (state, 2);
+
+		/* get repo */
+		state_local = zif_state_get_child (state);
+		store_remote = zif_repos_get_store (repos, value, state_local, &error);
+		if (store_remote == NULL) {
+			g_print ("failed to find repo: %s\n", error->message);
+			g_error_free (error);
+			goto out;
+		}
+
+		/* this section done */
+		ret = zif_state_done (state, &error);
+		if (!ret)
+			goto out;
+
+		/* change the enabled state */
+		ret = zif_store_remote_set_enabled (store_remote, TRUE, &error);
+		if (!ret) {
+			g_print ("failed to change repo state: %s\n", error->message);
+			g_error_free (error);
+			goto out;
+		}
+
+		/* this section done */
+		ret = zif_state_done (state, &error);
+		if (!ret)
+			goto out;
+
+		/* no more progressbar */
+		pk_progress_bar_end (progressbar);
+
+		goto out;
+	}
+	if (g_strcmp0 (mode, "repodisable") == 0) {
+		if (value == NULL) {
+			g_print ("specify a repo name\n");
+			goto out;
+		}
+
+
+		pk_progress_bar_start (progressbar, "Disabling repo");
+
+		/* setup state with the correct number of steps */
+		zif_state_set_number_steps (state, 2);
+
+		/* get repo */
+		state_local = zif_state_get_child (state);
+		store_remote = zif_repos_get_store (repos, value, state_local, &error);
+		if (store_remote == NULL) {
+			g_print ("failed to find repo: %s\n", error->message);
+			g_error_free (error);
+			goto out;
+		}
+
+		/* this section done */
+		ret = zif_state_done (state, &error);
+		if (!ret)
+			goto out;
+
+		/* change the enabled state */
+		ret = zif_store_remote_set_enabled (store_remote, FALSE, &error);
+		if (!ret) {
+			g_print ("failed to change repo state: %s\n", error->message);
+			g_error_free (error);
+			goto out;
+		}
+
+		/* this section done */
+		ret = zif_state_done (state, &error);
+		if (!ret)
+			goto out;
+
+		/* no more progressbar */
+		pk_progress_bar_end (progressbar);
+
 		goto out;
 	}
 	if (g_strcmp0 (mode, "resolve") == 0) {
