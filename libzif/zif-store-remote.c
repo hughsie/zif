@@ -2367,7 +2367,8 @@ zif_store_remote_find_package (ZifStore *store, const gchar *package_id, ZifStat
 	/* return ref to package */
 	package = g_object_ref (g_ptr_array_index (array, 0));
 out:
-	g_ptr_array_unref (array);
+	if (array != NULL)
+		g_ptr_array_unref (array);
 	return package;
 }
 
