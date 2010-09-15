@@ -112,6 +112,13 @@ zif_md_updateinfo_parser_start_element (GMarkupParseContext *context, const gcha
 		/* start of update */
 		if (g_strcmp0 (element_name, "update") == 0) {
 			updateinfo->priv->section = ZIF_MD_UPDATEINFO_SECTION_UPDATE;
+
+			/* already exists -- how? */
+			if (updateinfo->priv->update_temp != NULL) {
+				egg_warning ("failed to add %s",
+					     zif_update_get_id (updateinfo->priv->update_temp));
+				g_object_unref (updateinfo->priv->update_temp);
+			}
 			updateinfo->priv->update_temp = zif_update_new ();
 
 			/* find the update type as a bonus */
@@ -181,6 +188,13 @@ zif_md_updateinfo_parser_start_element (GMarkupParseContext *context, const gcha
 
 		} else if (updateinfo->priv->section_group == ZIF_MD_UPDATEINFO_SECTION_UPDATE_REFERENCES) {
 			if (g_strcmp0 (element_name, "reference") == 0) {
+
+				/* already exists -- how? */
+				if (updateinfo->priv->update_info_temp != NULL) {
+					egg_warning ("failed to add %s",
+						     zif_update_info_get_title (updateinfo->priv->update_info_temp));
+					g_object_unref (updateinfo->priv->update_info_temp);
+				}
 				updateinfo->priv->update_info_temp = zif_update_info_new ();
 
 				/* find the details about the info */
@@ -227,6 +241,12 @@ zif_md_updateinfo_parser_start_element (GMarkupParseContext *context, const gcha
 				ZifString *string;
 				gboolean ret;
 
+				/* already exists -- how? */
+				if (updateinfo->priv->package_temp != NULL) {
+					egg_warning ("failed to add %s",
+						     zif_package_get_id (updateinfo->priv->package_temp));
+					g_object_unref (updateinfo->priv->package_temp);
+				}
 				updateinfo->priv->package_temp = zif_package_new ();
 
 				/* find the details about the package */
