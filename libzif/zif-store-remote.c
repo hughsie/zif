@@ -751,9 +751,17 @@ zif_store_remote_get_update_detail (ZifStoreRemote *store, const gchar *package_
 	if (!ret)
 		goto out;
 
-	/* get newest, ignore error */
-	package_installed = zif_package_array_get_newest (array_installed, NULL);
-	split_installed = zif_package_id_split (zif_package_get_package_id (package_installed));
+	/* something found, so get newest */
+	if (array_installed->len != 0) {
+		package_installed = zif_package_array_get_newest (array_installed, &error_local);
+		if (package_installed == NULL) {
+			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+				     "failed to get newest for %s: %s", package_id, error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+		split_installed = zif_package_id_split (zif_package_get_package_id (package_installed));
+	}
 
 	/* add the changesets (the changelog) to the update */
 	update = g_object_ref (g_ptr_array_index (array, 0));
@@ -762,10 +770,12 @@ zif_store_remote_get_update_detail (ZifStoreRemote *store, const gchar *package_
 		zif_update_add_changeset (update, changeset);
 
 		/* abort when the changeset is older than what we have installed */
-		version = zif_changeset_get_version (changeset);
-		if (version != NULL &&
-		    zif_compare_evr (split_installed[ZIF_PACKAGE_ID_VERSION], version) >= 0)
-			break;
+		if (split_installed != NULL) {
+			version = zif_changeset_get_version (changeset);
+			if (version != NULL &&
+			    zif_compare_evr (split_installed[ZIF_PACKAGE_ID_VERSION], version) >= 0)
+				break;
+		}
 	}
 
 	/* this section done */
