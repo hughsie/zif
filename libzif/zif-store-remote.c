@@ -649,9 +649,9 @@ zif_store_remote_get_update_detail (ZifStoreRemote *store, const gchar *package_
 
 	/* setup state */
 	if (store->priv->loaded_metadata)
-		zif_state_set_number_steps (state, 4);
-	else
 		zif_state_set_number_steps (state, 5);
+	else
+		zif_state_set_number_steps (state, 6);
 
 	/* if not already loaded, load */
 	if (!store->priv->loaded_metadata) {
@@ -688,8 +688,14 @@ zif_store_remote_get_update_detail (ZifStoreRemote *store, const gchar *package_
 		goto out;
 	}
 
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
 	/* get ZifPackage for package-id */
 	md = zif_store_remote_get_primary (store);
+	state_local = zif_state_get_child (state);
 	packages = zif_md_find_package (md, package_id, state_local, &error_local);
 	if (packages == NULL) {
 		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
