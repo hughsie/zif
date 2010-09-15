@@ -3,11 +3,11 @@
   <revision>1257930816</revision>
   <data type="other_db">
     <location href="repodata/other.sqlite.bz2"/>
-    <checksum type="sha256">bc58c56b371a83dc546c86e1796d83b9ff78adbf733873c815c3fe5dd48b0d56</checksum>
+    <checksum type="sha256">b3ea68a8eed49d16ffaf9eb486095e15641fb43dcd33ef2424fbeed27adc416b</checksum>
     <timestamp>1257935171.0</timestamp>
     <size>5543063</size>
     <open-size>23892992</open-size>
-    <open-checksum type="sha256">c378618f9764ff9fa271a40b962a0c3569ff274e741ada2342d0fe3554614488</open-checksum>
+    <open-checksum type="sha256">08df4b69b8304e24f17cb17d22f2fa328511eacad91ce5b92c03d7acb94c41d7</open-checksum>
     <database_version>10</database_version>
   </data>
   <data type="other">
@@ -70,5 +70,11 @@
     <location href="repodata/comps-fedora.xml"/>
     <checksum type="sha256">0ce6ef4807c0c4042b44cd8e2c612c8b6dddc26d80fabcb485ca7a85cedb9116</checksum>
     <timestamp>1257935776</timestamp>
+  </data>
+  <data type="updateinfo">
+    <location href="repodata/updateinfo.xml.gz"/>
+    <checksum type="sha256">8dce3986a1841860db16b8b5a3cb603110825252b80a6eb436e5f647e5346955</checksum>
+    <timestamp>1284438472</timestamp>
+    <open-checksum type="sha256">2ad5aa9d99f475c4950f222696ebf492e6d15844660987e7877a66352098a723</open-checksum>
   </data>
 </repomd>

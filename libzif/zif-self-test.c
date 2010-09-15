@@ -712,8 +712,8 @@ zif_md_other_sql_func (void)
 	zif_md_set_filename (ZIF_MD (md), filename);
 	g_free (filename);
 	zif_md_set_checksum_type (ZIF_MD (md), G_CHECKSUM_SHA256);
-	zif_md_set_checksum (ZIF_MD (md), "bac99e15f810ae46cd8a93e833722767ae6bf63e33d43abfdb5b88c5c55073cc");
-	zif_md_set_checksum_uncompressed (ZIF_MD (md), "0a3b48c78bd28f4e8eb9d1e0611fcaf07249c32f0261ef49130ba3a286e90c4a");
+	zif_md_set_checksum (ZIF_MD (md), "b3ea68a8eed49d16ffaf9eb486095e15641fb43dcd33ef2424fbeed27adc416b");
+	zif_md_set_checksum_uncompressed (ZIF_MD (md), "08df4b69b8304e24f17cb17d22f2fa328511eacad91ce5b92c03d7acb94c41d7");
 	ret = zif_md_load (ZIF_MD (md), state, &error);
 	g_assert_no_error (error);
 	g_assert (ret);
@@ -849,11 +849,12 @@ zif_md_updateinfo_func (void)
 
 	zif_md_set_id (ZIF_MD (md), "fedora");
 	zif_md_set_mdtype (ZIF_MD (md), ZIF_MD_TYPE_UPDATEINFO);
-	filename = zif_test_get_data_file ("fedora/updateinfo.xml");
+	filename = zif_test_get_data_file ("fedora/updateinfo.xml.gz");
 	zif_md_set_filename (ZIF_MD (md), filename);
 	g_free (filename);
 	zif_md_set_checksum_type (ZIF_MD (md), G_CHECKSUM_SHA256);
-	zif_md_set_checksum_uncompressed (ZIF_MD (md), "4fa3657a79af078c588e2ab181ab0a3a156c6008a084d85edccaf6c57d67d47d");
+	zif_md_set_checksum (ZIF_MD (md), "8dce3986a1841860db16b8b5a3cb603110825252b80a6eb436e5f647e5346955");
+	zif_md_set_checksum_uncompressed (ZIF_MD (md), "2ad5aa9d99f475c4950f222696ebf492e6d15844660987e7877a66352098a723");
 	array = zif_md_updateinfo_get_detail_for_package (md, "device-mapper-libs;1.02.27-7.fc10;ppc64;fedora", state, &error);
 	g_assert_no_error (error);
 	g_assert (array != NULL);
@@ -1322,7 +1323,7 @@ zif_store_local_func (void)
 	g_assert (ret);
 
 	filename = zif_test_get_data_file ("root");
-	zif_store_local_set_prefix (store, filename, NULL);
+	zif_store_local_set_prefix (store, filename, &error);
 	g_free (filename);
 	g_assert_no_error (error);
 	g_assert (ret);
