@@ -596,6 +596,7 @@ zif_md_updateinfo_get_detail_for_package (ZifMdUpdateinfo *md, const gchar *pack
 		/* have we matched on any entries */
 		ret = FALSE;
 
+		/* get the list of packages updated but this update */
 		array_tmp = zif_update_get_packages (update);
 		for (j=0; j<array_tmp->len; j++) {
 			package = g_ptr_array_index (array_tmp, j);
@@ -611,6 +612,7 @@ zif_md_updateinfo_get_detail_for_package (ZifMdUpdateinfo *md, const gchar *pack
 				array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 			g_ptr_array_add (array, g_object_ref (update));
 		}
+		g_ptr_array_unref (array_tmp);
 	}
 
 	/* nothing found */
