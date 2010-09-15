@@ -431,7 +431,7 @@ zif_md_updateinfo_unload (ZifMd *md, ZifState *state, GError **error)
 static gboolean
 zif_md_updateinfo_load (ZifMd *md, ZifState *state, GError **error)
 {
-	gboolean ret = TRUE;
+	gboolean ret = FALSE;
 	gchar *contents = NULL;
 	const gchar *filename;
 	gsize size;
@@ -448,8 +448,10 @@ zif_md_updateinfo_load (ZifMd *md, ZifState *state, GError **error)
 	g_return_val_if_fail (ZIF_IS_MD_UPDATEINFO (md), FALSE);
 
 	/* already loaded */
-	if (updateinfo->priv->loaded)
+	if (updateinfo->priv->loaded) {
+		ret = TRUE;
 		goto out;
+	}
 
 	/* get filename */
 	filename = zif_md_get_filename_uncompressed (md);
