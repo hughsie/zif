@@ -56,6 +56,7 @@ struct _ZifConfigPrivate
 	GKeyFile		*keyfile;
 	gboolean		 loaded;
 	ZifMonitor		*monitor;
+	guint			 monitor_changed_id;
 	GHashTable		*hash;
 	gchar			**basearch_list;
 };
@@ -578,6 +579,8 @@ zif_config_finalize (GObject *object)
 
 	g_key_file_free (config->priv->keyfile);
 	g_hash_table_unref (config->priv->hash);
+	g_signal_handler_disconnect (config->priv->monitor,
+				     config->priv->monitor_changed_id);
 	g_object_unref (config->priv->monitor);
 	g_strfreev (config->priv->basearch_list);
 
@@ -607,7 +610,9 @@ zif_config_init (ZifConfig *config)
 	config->priv->hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
 	config->priv->basearch_list = NULL;
 	config->priv->monitor = zif_monitor_new ();
-	g_signal_connect (config->priv->monitor, "changed", G_CALLBACK (zif_config_file_monitor_cb), config);
+	config->priv->monitor_changed_id =
+		g_signal_connect (config->priv->monitor, "changed",
+				  G_CALLBACK (zif_config_file_monitor_cb), config);
 }
 
 /**

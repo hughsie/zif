@@ -61,6 +61,7 @@ struct _ZifGroupsPrivate
 	GHashTable		*hash;
 	gchar			*mapping_file;
 	ZifMonitor		*monitor;
+	guint			 monitor_changed_id;
 };
 
 G_DEFINE_TYPE (ZifGroups, zif_groups, G_TYPE_OBJECT)
@@ -408,6 +409,7 @@ zif_groups_finalize (GObject *object)
 	g_ptr_array_unref (groups->priv->categories);
 	g_hash_table_unref (groups->priv->hash);
 	g_free (groups->priv->mapping_file);
+	g_signal_handler_disconnect (groups->priv->monitor, groups->priv->monitor_changed_id);
 	g_object_unref (groups->priv->monitor);
 
 	G_OBJECT_CLASS (zif_groups_parent_class)->finalize (object);
@@ -437,7 +439,9 @@ zif_groups_init (ZifGroups *groups)
 	groups->priv->categories = g_ptr_array_new_with_free_func ((GDestroyNotify) g_free);
 	groups->priv->hash = g_hash_table_new_full (g_str_hash, g_str_equal, (GDestroyNotify) g_free, (GDestroyNotify) g_free);
 	groups->priv->monitor = zif_monitor_new ();
-	g_signal_connect (groups->priv->monitor, "changed", G_CALLBACK (zif_groups_file_monitor_cb), groups);
+	groups->priv->monitor_changed_id =
+		g_signal_connect (groups->priv->monitor, "changed",
+				  G_CALLBACK (zif_groups_file_monitor_cb), groups);
 }
 
 /**

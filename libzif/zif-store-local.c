@@ -60,6 +60,7 @@ struct _ZifStoreLocalPrivate
 	ZifGroups		*groups;
 	ZifMonitor		*monitor;
 	ZifLock			*lock;
+	guint			 monitor_changed_id;
 };
 
 
@@ -1101,6 +1102,7 @@ zif_store_local_finalize (GObject *object)
 
 	g_ptr_array_unref (store->priv->packages);
 	g_object_unref (store->priv->groups);
+	g_signal_handler_disconnect (store->priv->monitor, store->priv->monitor_changed_id);
 	g_object_unref (store->priv->monitor);
 	g_object_unref (store->priv->lock);
 	g_free (store->priv->prefix);
@@ -1148,7 +1150,9 @@ zif_store_local_init (ZifStoreLocal *store)
 	store->priv->lock = zif_lock_new ();
 	store->priv->prefix = NULL;
 	store->priv->loaded = FALSE;
-	g_signal_connect (store->priv->monitor, "changed", G_CALLBACK (zif_store_local_file_monitor_cb), store);
+	store->priv->monitor_changed_id =
+		g_signal_connect (store->priv->monitor, "changed",
+				  G_CALLBACK (zif_store_local_file_monitor_cb), store);
 }
 
 /**

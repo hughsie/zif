@@ -52,6 +52,7 @@ struct _ZifReposPrivate
 	ZifMonitor		*monitor;
 	GPtrArray		*list;
 	GPtrArray		*enabled;
+	guint			 monitor_changed_id;
 };
 
 G_DEFINE_TYPE (ZifRepos, zif_repos, G_TYPE_OBJECT)
@@ -481,6 +482,7 @@ zif_repos_finalize (GObject *object)
 	g_return_if_fail (ZIF_IS_REPOS (object));
 	repos = ZIF_REPOS (object);
 
+	g_signal_handler_disconnect (repos->priv->monitor, repos->priv->monitor_changed_id);
 	g_object_unref (repos->priv->monitor);
 	g_free (repos->priv->repos_dir);
 
@@ -512,7 +514,9 @@ zif_repos_init (ZifRepos *repos)
 	repos->priv->list = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	repos->priv->enabled = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	repos->priv->monitor = zif_monitor_new ();
-	g_signal_connect (repos->priv->monitor, "changed", G_CALLBACK (zif_repos_file_monitor_cb), repos);
+	repos->priv->monitor_changed_id =
+		g_signal_connect (repos->priv->monitor, "changed",
+				  G_CALLBACK (zif_repos_file_monitor_cb), repos);
 }
 
 /**

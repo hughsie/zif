@@ -48,6 +48,7 @@ struct _ZifLegalPrivate
 	ZifMonitor		*monitor;
 	GHashTable		*hash;
 	gchar			*filename;
+	guint			 monitor_changed_id;
 };
 
 G_DEFINE_TYPE (ZifLegal, zif_legal, G_TYPE_OBJECT)
@@ -261,6 +262,7 @@ zif_legal_finalize (GObject *object)
 	legal = ZIF_LEGAL (object);
 
 	g_hash_table_unref (legal->priv->hash);
+	g_signal_handler_disconnect (legal->priv->monitor, legal->priv->monitor_changed_id);
 	g_object_unref (legal->priv->monitor);
 	g_free (legal->priv->filename);
 
@@ -289,7 +291,9 @@ zif_legal_init (ZifLegal *legal)
 	legal->priv->hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
 	legal->priv->filename = NULL;
 	legal->priv->monitor = zif_monitor_new ();
-	g_signal_connect (legal->priv->monitor, "changed", G_CALLBACK (zif_legal_file_monitor_cb), legal);
+	legal->priv->monitor_changed_id =
+		g_signal_connect (legal->priv->monitor, "changed",
+				  G_CALLBACK (zif_legal_file_monitor_cb), legal);
 }
 
 /**
