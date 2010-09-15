@@ -585,8 +585,9 @@ zif_state_set_number_steps_real (ZifState *state, guint steps, const gchar *strl
 
 	/* did we call done on a state that did not have a size set? */
 	if (state->priv->steps != 0) {
-		egg_warning ("steps already set (%i)! [%s]",
-			     state->priv->steps, strloc);
+		egg_warning ("steps already set to %i, can't set %i! [%s]",
+			     state->priv->steps, steps, strloc);
+		zif_state_print_parent_chain (state, 0);
 		return FALSE;
 	}
 
