@@ -41,7 +41,6 @@
 #include "zif-config.h"
 #include "zif-package.h"
 #include "zif-repos.h"
-#include "zif-groups.h"
 #include "zif-string.h"
 #include "zif-legal.h"
 
@@ -49,10 +48,6 @@
 
 struct _ZifPackagePrivate
 {
-	ZifConfig		*config;
-	ZifLegal		*legal;
-	ZifGroups		*groups;
-	ZifRepos		*repos;
 	gchar			**package_id_split;
 	gchar			*package_id;
 	ZifString		*summary;
@@ -238,8 +233,11 @@ static ZifStoreRemote *
 zif_package_get_store_for_package (ZifPackage *package, ZifState *state, GError **error)
 {
 	ZifStoreRemote *store_remote;
-	store_remote = zif_repos_get_store (package->priv->repos, package->priv->package_id_split[ZIF_PACKAGE_ID_DATA],
+	ZifRepos *repos;
+	repos = zif_repos_new ();
+	store_remote = zif_repos_get_store (repos, package->priv->package_id_split[ZIF_PACKAGE_ID_DATA],
 					    state, error);
+	g_object_unref (repos);
 	return store_remote;
 }
 
@@ -546,19 +544,22 @@ zif_package_is_native (ZifPackage *package)
 	guint i;
 	const gchar *arch;
 	gboolean ret = FALSE;
+	ZifConfig *config;
 
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), FALSE);
 	g_return_val_if_fail (package->priv->package_id_split != NULL, FALSE);
 
 	/* is package in arch array */
 	arch = package->priv->package_id_split[ZIF_PACKAGE_ID_ARCH];
-	array = zif_config_get_basearch_array (package->priv->config);
+	config = zif_config_new ();
+	array = zif_config_get_basearch_array (config);
 	for (i=0; array[i] != NULL; i++) {
 		if (g_strcmp0 (array[i], arch) == 0) {
 			ret = TRUE;
 			break;
 		}
 	}
+	g_object_unref (config);
 	return ret;
 }
 
@@ -599,12 +600,14 @@ zif_package_is_free (ZifPackage *package)
 	GError *error = NULL;
 	gboolean ret;
 	gboolean is_free = FALSE;
+	ZifLegal *legal;
 
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), FALSE);
 	g_return_val_if_fail (package->priv->package_id_split != NULL, FALSE);
 
 	/* see if license is free */
-	ret = zif_legal_is_free (package->priv->legal,
+	legal = zif_legal_new ();
+	ret = zif_legal_is_free (legal,
 				 zif_string_get_value (package->priv->license),
 				 &is_free, &error);
 	if (!ret) {
@@ -613,6 +616,7 @@ zif_package_is_free (ZifPackage *package)
 		goto out;
 	}
 out:
+	g_object_unref (legal);
 	return is_free;
 }
 
@@ -1426,10 +1430,6 @@ zif_package_finalize (GObject *object)
 		g_ptr_array_unref (package->priv->requires);
 	if (package->priv->provides != NULL)
 		g_ptr_array_unref (package->priv->provides);
-	g_object_unref (package->priv->repos);
-	g_object_unref (package->priv->groups);
-	g_object_unref (package->priv->config);
-	g_object_unref (package->priv->legal);
 
 	G_OBJECT_CLASS (zif_package_parent_class)->finalize (object);
 }
@@ -1466,10 +1466,6 @@ zif_package_init (ZifPackage *package)
 	package->priv->installed = FALSE;
 	package->priv->group = NULL;
 	package->priv->size = 0;
-	package->priv->repos = zif_repos_new ();
-	package->priv->groups = zif_groups_new ();
-	package->priv->config = zif_config_new ();
-	package->priv->legal = zif_legal_new ();
 }
 
 /**
