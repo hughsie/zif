@@ -508,7 +508,6 @@ zif_state_set_global_share (ZifState *state, gdouble global_share)
 {
 	g_return_if_fail (ZIF_IS_STATE (state));
 	state->priv->global_share = global_share;
-	egg_debug ("global share now %lf%%", global_share * 100.0f);
 }
 
 /**
