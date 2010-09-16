@@ -711,24 +711,6 @@ main (int argc, char *argv[])
 		"  searchgroup    Search packages in the given group\n"
 		"  searchname     Search package name for the given string\n"
 		"  whatprovides   Find what package provides the given value\n"
-		/* backwards compat */
-		"\nThe following commands are provided for backwards compatibility.\n"
-		"  check-update   Alias to getupdates\n"
-		"  deplist        Alias to getdepends\n"
-		"  info           Alias to getdetails\n"
-		"  list           Alias to getpackages\n"
-		"  provides       Alias to whatprovides\n"
-		"  resolvedep     Alias to whatprovides\n"
-		"  search         Alias to searchdetails\n"
-		"  makecache      Alias to refreshcache\n"
-		/* not even started yet */
-		"\nThese won't work just yet...\n"
-		"  erase          Remove a package or packages from your system\n"
-		"  install        Install a package or packages on your system\n"
-		"  localinstall   Install a local RPM\n"
-		"  reinstall      Reinstall a package\n"
-		"  update         Update a package or packages on your system\n"
-		"  upgrade        Alias to update\n" /* backwards */
 		);
 
 	g_option_context_add_main_entries (context, options, NULL);
@@ -856,7 +838,7 @@ main (int argc, char *argv[])
 
 	mode = argv[1];
 	value = argv[2];
-	if (g_strcmp0 (mode, "getupdates") == 0 || g_strcmp0 (mode, "check-update") == 0) {
+	if (g_strcmp0 (mode, "getupdates") == 0) {
 
 		pk_progress_bar_start (progressbar, "Getting updates");
 
@@ -1115,7 +1097,7 @@ main (int argc, char *argv[])
 
 		goto out;
 	}
-	if (g_strcmp0 (mode, "getdepends") == 0 || g_strcmp0 (mode, "deplist") == 0) {
+	if (g_strcmp0 (mode, "getdepends") == 0) {
 
 		if (value == NULL) {
 			g_print ("specify a package name\n");
@@ -1240,7 +1222,7 @@ main (int argc, char *argv[])
 		g_print ("%s", options_help);
 		goto out;
 	}
-	if (g_strcmp0 (mode, "getdetails") == 0 || g_strcmp0 (mode, "info") == 0) {
+	if (g_strcmp0 (mode, "getdetails") == 0) {
 		const gchar *package_id;
 		const gchar *summary;
 		const gchar *description;
@@ -1342,7 +1324,7 @@ main (int argc, char *argv[])
 		g_print ("not yet supported\n");
 		goto out;
 	}
-	if (g_strcmp0 (mode, "list") == 0 || g_strcmp0 (mode, "getpackages") == 0) {
+	if (g_strcmp0 (mode, "getpackages") == 0) {
 
 		pk_progress_bar_start (progressbar, "Getting packages");
 
@@ -1417,7 +1399,7 @@ main (int argc, char *argv[])
 		g_print ("not yet supported\n");
 		goto out;
 	}
-	if (g_strcmp0 (mode, "makecache") == 0 || g_strcmp0 (mode, "refreshcache") == 0) {
+	if (g_strcmp0 (mode, "refreshcache") == 0) {
 
 		pk_progress_bar_start (progressbar, "Refreshing cache");
 		zif_cmd_refresh_cache (state, FALSE);
@@ -1743,7 +1725,7 @@ main (int argc, char *argv[])
 		g_ptr_array_unref (array);
 		goto out;
 	}
-	if (g_strcmp0 (mode, "searchdetails") == 0 || g_strcmp0 (mode, "search") == 0) {
+	if (g_strcmp0 (mode, "searchdetails") == 0) {
 		if (value == NULL) {
 			g_print ("specify a search term\n");
 			goto out;
@@ -1972,7 +1954,7 @@ main (int argc, char *argv[])
 		g_ptr_array_unref (array);
 		goto out;
 	}
-	if (g_strcmp0 (mode, "resolvedep") == 0 || g_strcmp0 (mode, "whatprovides") == 0 || g_strcmp0 (mode, "provides") == 0) {
+	if (g_strcmp0 (mode, "whatprovides") == 0) {
 		if (value == NULL) {
 			g_print ("specify a search term\n");
 			goto out;
@@ -2032,7 +2014,7 @@ main (int argc, char *argv[])
 		g_ptr_array_unref (array);
 		goto out;
 	}
-	if (g_strcmp0 (mode, "update") == 0 || g_strcmp0 (mode, "upgrade") == 0) {
+	if (g_strcmp0 (mode, "update") == 0) {
 		if (value == NULL) {
 			g_print ("specify a package name\n");
 			goto out;
