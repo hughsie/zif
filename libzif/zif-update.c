@@ -469,9 +469,30 @@ zif_update_add_package (ZifUpdate *update, ZifPackage *package)
 void
 zif_update_add_changeset (ZifUpdate *update, ZifChangeset *changeset)
 {
+	guint i;
+	guint64 date;
+	guint64 date_tmp;
+	ZifChangeset *changeset_tmp;
+
 	g_return_if_fail (ZIF_IS_UPDATE (update));
 	g_return_if_fail (changeset != NULL);
+
+	/* check this changeset hasn't already been added */
+	date = zif_changeset_get_date (changeset);
+	for (i=0; i < update->priv->changelog->len; i++) {
+		changeset_tmp = g_ptr_array_index (update->priv->changelog, i);
+		date_tmp = zif_changeset_get_date (changeset_tmp);
+		if (date == date_tmp) {
+			egg_warning ("Already added changeset %i to %s",
+				     (int)date_tmp, zif_update_get_id (update));
+			goto out;
+		}
+	}
+
+	/* all okay */
 	g_ptr_array_add (update->priv->changelog, g_object_ref (changeset));
+out:
+	return;
 }
 
 /**
