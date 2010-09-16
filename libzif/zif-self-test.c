@@ -988,9 +988,6 @@ zif_package_func (void)
 	g_free (filename);
 
 	state = zif_state_new ();
-	package = zif_package_new ();
-	g_assert (package != NULL);
-
 
 	lock = zif_lock_new ();
 	ret = zif_lock_set_locked (lock, NULL, &error);
@@ -1013,6 +1010,21 @@ zif_package_func (void)
 	g_assert (ret);
 
 	/* set a package ID that does not exist */
+	package = zif_package_new ();
+	ret = zif_package_set_id (package, "hal;2.30.1-1.fc13;i686;fedora", &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	/* get the update detail */
+	zif_state_reset (state);
+	update = zif_package_get_update_detail (package, state, &error);
+	g_assert_error (error, ZIF_PACKAGE_ERROR, ZIF_PACKAGE_ERROR_FAILED);
+	g_assert (update == NULL);
+	g_object_unref (package);
+	g_clear_error (&error);
+
+	/* set a package ID that does exist */
+	package = zif_package_new ();
 	ret = zif_package_set_id (package, "gnome-power-manager;2.30.1-1.fc13;i686;fedora", &error);
 	g_assert_no_error (error);
 	g_assert (ret);
