@@ -960,12 +960,85 @@ zif_monitor_func (void)
 static void
 zif_package_func (void)
 {
+	gboolean ret;
+	gchar *filename;
+	gchar *pidfile;
+	GError *error = NULL;
+	GPtrArray *changelog;
+	ZifConfig *config;
+	ZifLock *lock;
 	ZifPackage *package;
+	ZifRepos *repos;
+	ZifState *state;
+	ZifStoreLocal *store;
+	ZifUpdate *update;
 
+	/* set this up as dummy */
+	config = zif_config_new ();
+	filename = zif_test_get_data_file ("yum.conf");
+	zif_config_set_filename (config, filename, NULL);
+	g_free (filename);
+
+	pidfile = g_build_filename (g_get_tmp_dir (), "zif.lock", NULL);
+	zif_config_set_local (config, "pidfile", pidfile, NULL);
+	g_free (pidfile);
+
+	filename = zif_test_get_data_file (".");
+	zif_config_set_local (config, "cachedir", filename, NULL);
+	g_free (filename);
+
+	state = zif_state_new ();
 	package = zif_package_new ();
 	g_assert (package != NULL);
 
+
+	lock = zif_lock_new ();
+	ret = zif_lock_set_locked (lock, NULL, &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	store = zif_store_local_new ();
+	g_assert (store != NULL);
+	filename = zif_test_get_data_file ("root");
+	zif_store_local_set_prefix (store, filename, &error);
+	g_free (filename);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	repos = zif_repos_new ();
+	filename = zif_test_get_data_file ("repos");
+	ret = zif_repos_set_repos_dir (repos, filename, &error);
+	g_free (filename);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	/* set a package ID that does not exist */
+	ret = zif_package_set_id (package, "gnome-power-manager;2.30.1-1.fc13;i686;fedora", &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	/* get the update detail */
+	zif_state_reset (state);
+	update = zif_package_get_update_detail (package, state, &error);
+	g_assert_no_error (error);
+	g_assert (update != NULL);
+	g_assert_cmpstr (zif_update_get_id (update), ==, "FEDORA-2010-9999");
+
+	changelog = zif_update_get_changelog (update);
+	g_assert (changelog != NULL);
+	g_assert_cmpint (changelog->len, ==, 1);
+
+	/* set to unlocked */
+	g_assert (zif_lock_set_unlocked (lock, NULL));
+
+	g_ptr_array_unref (changelog);
+	g_object_unref (update);
+	g_object_unref (repos);
+	g_object_unref (store);
+	g_object_unref (lock);
 	g_object_unref (package);
+	g_object_unref (state);
+	g_object_unref (config);
 }
 
 static void
