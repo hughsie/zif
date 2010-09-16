@@ -331,6 +331,7 @@ zif_package_get_update_detail (ZifPackage *package, ZifState *state, GError **er
 {
 	gboolean ret;
 	ZifUpdate *update = NULL;
+	ZifUpdate *update_tmp = NULL;
 	ZifStoreRemote *store_remote = NULL;
 	GError *error_local = NULL;
 	ZifState *state_local = NULL;
@@ -366,8 +367,8 @@ zif_package_get_update_detail (ZifPackage *package, ZifState *state, GError **er
 
 	/* download from the store */
 	state_local = zif_state_get_child (state);
-	update = zif_store_remote_get_update_detail (store_remote, package->priv->package_id, state_local, &error_local);
-	if (update == NULL) {
+	update_tmp = zif_store_remote_get_update_detail (store_remote, package->priv->package_id, state_local, &error_local);
+	if (update_tmp == NULL) {
 		g_set_error (error, ZIF_PACKAGE_ERROR, ZIF_PACKAGE_ERROR_FAILED,
 			     "cannot get update detail from store: %s", error_local->message);
 		g_error_free (error_local);
@@ -378,9 +379,14 @@ zif_package_get_update_detail (ZifPackage *package, ZifState *state, GError **er
 	ret = zif_state_done (state, error);
 	if (!ret)
 		goto out;
+
+	/* success */
+	update = g_object_ref (update_tmp);
 out:
 	if (store_remote != NULL)
 		g_object_unref (store_remote);
+	if (update_tmp != NULL)
+		g_object_unref (update_tmp);
 	return update;
 }
 
