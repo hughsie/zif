@@ -235,23 +235,20 @@ zif_store_remote_parser_start_element (GMarkupParseContext *context, const gchar
 				else if (g_strcmp0 (attribute_values[i], "updateinfo") == 0)
 					store->priv->parser_type = ZIF_MD_TYPE_UPDATEINFO;
 				else {
-					if (error != NULL) {
-						/* we didn't recognise the file type */
-						string = g_string_new ("");
-						g_string_append_printf (string, "unhandled data type '%s', expecting ", attribute_values[i]);
+					/* we ignore anything else, but print an error to the console */
+					string = g_string_new ("");
+					g_string_append_printf (string, "unhandled data type '%s', expecting ", attribute_values[i]);
 
-						/* list all the types we support */
-						for (j=0; j<ZIF_MD_TYPE_UNKNOWN; j++)
-							g_string_append_printf (string, "%s, ", zif_md_type_to_text (j));
+					/* list all the types we support */
+					for (j=0; j<ZIF_MD_TYPE_UNKNOWN; j++)
+						g_string_append_printf (string, "%s, ", zif_md_type_to_text (j));
 
-						/* remove triling comma and space */
-						g_string_set_size (string, string->len - 2);
+					/* remove triling comma and space */
+					g_string_set_size (string, string->len - 2);
 
-						/* return error */
-						g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
-							     "%s", string->str);
-						g_string_free (string, TRUE);
-					}
+					/* return error */
+					egg_warning ("%s", string->str);
+					g_string_free (string, TRUE);
 				}
 				break;
 			}
