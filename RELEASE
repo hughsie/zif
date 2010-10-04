@@ -5,7 +5,7 @@ zif Release Notes
 git shortlog zif_0_1_0.. | grep -i -v trivial | grep -v Merge > NEWS.new
 
 --------------------------------------------------------------------------------
-Version 0.1.0
+Version 0.1.1
 ~~~~~~~~~~~~~
 Released: 2010-xx-xx
 
@@ -22,8 +22,8 @@ Bugfixes:
 
 4. Commit changes in zif git:
 
-git commit -a -m "Release version 0.1.0"
-git tag -s -f -m "Release 0.1.0" zif_0_1_0
+git commit -a -m "Release version 0.1.1"
+git tag -s -f -m "Release 0.1.1" zif_0_1_1
 <gpg password>
 git push --tags
 git push
@@ -46,9 +46,9 @@ git push
 10. Send an email to packagekit@lists.freedesktop.org
 
 =================================================
-Subject: zif 0.1.0 released!
+Subject: zif 0.1.1 released!
 
-Today I released zif 0.1.0.
+Today I released zif 0.1.1.
 
 zif release notes:
 

@@ -1,3 +1,31 @@
+Version 0.1.1
+~~~~~~~~~~~~~
+Released: 2010-10-04
+
+New Features:
+ - Avoid state warnings when doing GetCategories (Richard Hughes)
+ - Return an error from zif_repos_get_store() when the repo could not be found (Richard Hughes)
+ - Add zif_groups_get_cats_for_group() to get the categories for an enumerated group (Richard Hughes)
+ - If we pass a full category_id ('apps;education') to zif_md_comps_get_packages_for_group() only consider the child (Richard Hughes)
+ - Disable profiling by default in ZifState to speed up SearchGroup by 26% (Richard Hughes)
+ - When we do zif_store_search_group() we want to use the enumerated groups, not the rpm groups (Richard Hughes)
+ - Add zif_package_id_get_name() which is 9x faster than zif_package_id_split() where only the name is required (Richard Hughes)
+ - Only propagate ZifState up to 1% resolution, which speeds up an incredible 18% on pretty much every action (Richard Hughes)
+ - Don't trample the GError if the metadata search fails (Richard Hughes)
+ - If a required metadata file does not exist, then re-download the repomd.xml and reload the store (Richard Hughes)
+ - Ensure error handlers get set on child ZifState objects (Richard Hughes)
+ - Make the output of 'zif repolist' aligned (Richard Hughes)
+ - Add 'repoenable' and 'repodisable' commands to the zif command line tool (Richard Hughes)
+ - Remove a state child warning when doing GetDepends() (Richard Hughes)
+ - Do not mix up results with the progressbar when doing 'zif getdepends' (Richard Hughes)
+ - Return refcounted arrays from ZifUpdate (Richard Hughes)
+ - Add ZifPackage C accessors for version, arch and data (Richard Hughes)
+ - Fix a ZifState warning in zif_store_remote_get_update_detail() (Richard Hughes)
+ - Don't abort with an error when zif_store_remote_get_update_detail() can't find an installed package (Richard Hughes)
+ - Only instantiate helper singletons when required in ZifPackage (Richard Hughes)
+ - Refuse to add duplicate ZifChangesets to a ZifUpdate (Richard Hughes)
+ - Do not abort if the repomd.xml has additional unknown metadata types (Richard Hughes)
+
 Version 0.1.0
 ~~~~~~~~~~~~~
 Released: 2010-09-08
