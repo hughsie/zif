@@ -20,18 +20,15 @@ BuildRequires: gtk-doc
 BuildRequires: bzip2-devel
 BuildRequires: zlib-devel
 
-Requires(post): /sbin/ldconfig
-Requires(postun): /sbin/ldconfig
-
 %description
-zif is a simple wrapper around rpm
+Zif is a simple yum-compatible library that only provides read-only
+access to the rpm database and the Fedora metadata for PackageKit.
+
+Zif is not designed as a replacement to yum, nor to be used by end users.
 
 %package devel
 Summary: GLib Libraries and headers for zif
-Group: Development/Libraries
 Requires: %{name} = %{version}-%{release}
-Requires: pkgconfig
-Requires: sqlite-devel
 
 %description devel
 GLib headers and libraries for zif.
@@ -61,21 +58,15 @@ rm -f $RPM_BUILD_ROOT%{_libdir}/libzif*.la
 %doc README AUTHORS NEWS COPYING
 %{_bindir}/zif
 %{_libdir}/*libzif*.so.*
-%{_datadir}/gtk-doc/html/zif/style.css
-%{_datadir}/gtk-doc/html/zif/index.sgml
-%{_datadir}/gtk-doc/html/zif/*.png
-%{_datadir}/gtk-doc/html/zif/*.html
-%{_datadir}/man/man1/*.1.gz
+%{_mandir}/man1/*.1.gz
 
 %files devel
 %defattr(-,root,root,-)
-%doc README AUTHORS NEWS COPYING
 %{_libdir}/libzif*.so
 %{_libdir}/pkgconfig/zif.pc
 %dir %{_includedir}/libzif
 %{_includedir}/libzif/*.h
-%{_datadir}/gtk-doc/html/zif/zif.devhelp
-%{_datadir}/gtk-doc/html/zif/zif.devhelp2
+%{_datadir}/gtk-doc
 
 %changelog
 * #LONGDATE# Richard Hughes <richard@hughsie.com> #VERSION#-0.#BUILD##ALPHATAG#

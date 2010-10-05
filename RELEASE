@@ -48,9 +48,8 @@ git push
 =================================================
 Subject: zif 0.1.1 released!
 
-Today I released zif 0.1.1.
-
-zif release notes:
+Zif is a simple yum-compatible library that only provides read-only
+access to the rpm database and the Fedora metadata for PackageKit.
 
 Tarballs available here: http://www.packagekit.org/releases/
 
