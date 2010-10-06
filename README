@@ -40,7 +40,7 @@ of date. We'll aim to do as much as we can without bothering the user.
 So, if we're writing a shim library, it makes sense to be in the same language
 as PackageKit itself (C), to avoid all the spawning and watching of processes.
 This was all the backend actions can be run in threads, which are managed by the
-daemon. It also makes sense to make it distribution specific. SMART does a
+daemon. It also makes sense to make it distribution specific. Smart does a
 wonderful job of trying to join all the distros together, but because of it's
 genericness means we loose all the top-down way of thinking.
 
