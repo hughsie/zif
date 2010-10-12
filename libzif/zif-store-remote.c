@@ -1214,6 +1214,7 @@ zif_store_remote_refresh (ZifStore *store, gboolean force, ZifState *state, GErr
 	ZifStoreRemote *remote = ZIF_STORE_REMOTE (store);
 	ZifMd *md;
 	guint i;
+	gboolean repo_verified;
 
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), FALSE);
 	g_return_val_if_fail (remote->priv->id != NULL, FALSE);
@@ -1300,15 +1301,15 @@ zif_store_remote_refresh (ZifStore *store, gboolean force, ZifState *state, GErr
 
 		/* does current uncompressed file equal what repomd says it should be */
 		state_tmp = zif_state_get_child (state_loop);
-		ret = zif_md_file_check (md, TRUE, state_tmp, &error_local);
-		if (!ret) {
+		repo_verified = zif_md_file_check (md, TRUE, state_tmp, &error_local);
+		if (!repo_verified) {
 			egg_warning ("failed to verify md: %s", error_local->message);
 			g_clear_error (&error_local);
 			ret = zif_state_finished (state_tmp, error);
 			if (!ret)
 				goto out;
 		}
-		if (ret && !force) {
+		if (repo_verified && !force) {
 			egg_debug ("%s is okay, and we're not forcing", zif_md_type_to_text (i));
 			ret = zif_state_finished (state_loop, error);
 			if (!ret)
