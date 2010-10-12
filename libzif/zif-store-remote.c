@@ -1348,6 +1348,11 @@ zif_store_remote_refresh (ZifStore *store, gboolean force, ZifState *state, GErr
 			g_error_free (error_local);
 			goto out;
 		}
+
+		/* this section done */
+		ret = zif_state_done (state_loop, error);
+		if (!ret)
+			goto out;
 skip:
 		/* this section done */
 		ret = zif_state_done (state_local, error);
