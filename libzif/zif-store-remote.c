@@ -1200,6 +1200,91 @@ out:
 }
 
 /**
+ * zif_store_remote_refresh_md:
+ **/
+static gboolean
+zif_store_remote_refresh_md (ZifStoreRemote *remote, ZifMd *md, gboolean force, ZifState *state, GError **error)
+{
+	const gchar *filename;
+	gboolean repo_verified;
+	gboolean ret;
+	GError *error_local = NULL;
+	ZifState *state_local = NULL;
+
+	/* setup progress */
+	zif_state_set_number_steps (state, 3);
+
+	/* get filename */
+	filename = zif_md_get_location (md);
+	if (filename == NULL) {
+		egg_debug ("no filename set for %s",
+			   zif_md_type_to_text (zif_md_get_mdtype (md)));
+		ret = zif_state_finished (state, error);
+		goto out;
+	}
+
+	/* does current uncompressed file equal what repomd says it should be */
+	state_local = zif_state_get_child (state);
+	repo_verified = zif_md_file_check (md, TRUE, state_local, &error_local);
+	if (!repo_verified) {
+		egg_warning ("failed to verify md: %s", error_local->message);
+		g_clear_error (&error_local);
+		ret = zif_state_finished (state_local, error);
+		goto out;
+	}
+	if (repo_verified && !force) {
+		egg_debug ("%s is okay, and we're not forcing",
+			   zif_md_type_to_text (zif_md_get_mdtype (md)));
+		ret = zif_state_finished (state, error);
+		goto out;
+	}
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* download new file */
+	state_local = zif_state_get_child (state);
+	ret = zif_store_remote_download (remote, filename, remote->priv->directory, state_local, &error_local);
+	if (!ret) {
+		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+			     "failed to refresh %s (%s): %s",
+			     zif_md_type_to_text (zif_md_get_mdtype (md)),
+			     filename,
+			     error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* decompress */
+	state_local = zif_state_get_child (state);
+	filename = zif_md_get_filename (md);
+	ret = zif_store_file_decompress (filename, state_local, &error_local);
+	if (!ret) {
+		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+			     "failed to decompress %s for %s: %s",
+			     filename,
+			     zif_md_type_to_text (zif_md_get_mdtype (md)),
+			     error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+out:
+	return ret;
+}
+
+/**
  * zif_store_remote_refresh:
  **/
 static gboolean
@@ -1207,14 +1292,11 @@ zif_store_remote_refresh (ZifStore *store, gboolean force, ZifState *state, GErr
 {
 	gboolean ret = FALSE;
 	GError *error_local = NULL;
-	const gchar *filename;
 	ZifState *state_local = NULL;
 	ZifState *state_loop = NULL;
-	ZifState *state_tmp = NULL;
 	ZifStoreRemote *remote = ZIF_STORE_REMOTE (store);
 	ZifMd *md;
 	guint i;
-	gboolean repo_verified;
 
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), FALSE);
 	g_return_val_if_fail (remote->priv->id != NULL, FALSE);
@@ -1275,85 +1357,18 @@ zif_store_remote_refresh (ZifStore *store, gboolean force, ZifState *state, GErr
 	/* refresh each repo type */
 	for (i=0; i<ZIF_MD_TYPE_UNKNOWN; i++) {
 
-		/* do in nested completion */
-		state_loop = zif_state_get_child (state_local);
-		zif_state_set_number_steps (state_loop, 3);
-
 		/* get md */
 		md = zif_store_remote_get_md_from_type (remote, i);
 		if (md == NULL) {
 			egg_debug ("failed to get local store for %s", zif_md_type_to_text (i));
-			ret = zif_state_finished (state_loop, error);
-			if (!ret)
-				goto out;
-			goto skip;
-		}
-
-		/* get filename */
-		filename = zif_md_get_location (md);
-		if (filename == NULL) {
-			egg_warning ("no filename set for %s", zif_md_type_to_text (i));
-			ret = zif_state_finished (state_loop, error);
-			if (!ret)
-				goto out;
-			goto skip;
-		}
-
-		/* does current uncompressed file equal what repomd says it should be */
-		state_tmp = zif_state_get_child (state_loop);
-		repo_verified = zif_md_file_check (md, TRUE, state_tmp, &error_local);
-		if (!repo_verified) {
-			egg_warning ("failed to verify md: %s", error_local->message);
-			g_clear_error (&error_local);
-			ret = zif_state_finished (state_tmp, error);
+		} else {
+			/* refresh this md object */
+			state_loop = zif_state_get_child (state_local);
+			ret = zif_store_remote_refresh_md (remote, md, force, state_loop, error);
 			if (!ret)
 				goto out;
 		}
-		if (repo_verified && !force) {
-			egg_debug ("%s is okay, and we're not forcing", zif_md_type_to_text (i));
-			ret = zif_state_finished (state_loop, error);
-			if (!ret)
-				goto out;
-			goto skip;
-		}
 
-		/* this section done */
-		ret = zif_state_done (state_loop, error);
-		if (!ret)
-			goto out;
-
-		/* download new file */
-		state_tmp = zif_state_get_child (state_loop);
-		ret = zif_store_remote_download (remote, filename, remote->priv->directory, state_tmp, &error_local);
-		if (!ret) {
-			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
-				     "failed to refresh %s (%s): %s", zif_md_type_to_text (i), filename, error_local->message);
-			g_error_free (error_local);
-			goto out;
-		}
-
-		/* this section done */
-		ret = zif_state_done (state_loop, error);
-		if (!ret)
-			goto out;
-
-		/* decompress */
-		state_tmp = zif_state_get_child (state_loop);
-		filename = zif_md_get_filename (md);
-		ret = zif_store_file_decompress (filename, state_tmp, &error_local);
-		if (!ret) {
-			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
-				     "failed to decompress %s for %s: %s",
-				     filename, zif_md_type_to_text (i), error_local->message);
-			g_error_free (error_local);
-			goto out;
-		}
-
-		/* this section done */
-		ret = zif_state_done (state_loop, error);
-		if (!ret)
-			goto out;
-skip:
 		/* this section done */
 		ret = zif_state_done (state_local, error);
 		if (!ret)

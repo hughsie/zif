@@ -1340,6 +1340,7 @@ zif_state_func (void)
 
 	g_object_unref (state);
 	g_object_unref (child);
+	g_clear_error (&error);
 
 	/* test new child gets error handler passed to it */
 	state = zif_state_new ();
@@ -1347,6 +1348,25 @@ zif_state_func (void)
 	zif_state_set_error_handler (state, zif_state_error_handler_cb, NULL);
 	child = zif_state_get_child (state);
 	ret = zif_state_error_handler (child, error);
+	g_assert (ret);
+
+	g_object_unref (state);
+	g_object_unref (child);
+	g_clear_error (&error);
+
+	/* check straight finish */
+	state = zif_state_new ();
+	zif_state_set_number_steps (state, 3);
+
+	child = zif_state_get_child (state);
+	zif_state_set_number_steps (child, 3);
+	ret = zif_state_finished (child, &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	/* parent step done after child finish */
+	ret = zif_state_done (state, &error);
+	g_assert_no_error (error);
 	g_assert (ret);
 
 	g_object_unref (state);
