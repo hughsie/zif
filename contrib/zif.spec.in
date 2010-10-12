@@ -29,6 +29,8 @@ Zif is not designed as a replacement to yum, nor to be used by end users.
 %package devel
 Summary: GLib Libraries and headers for zif
 Requires: %{name} = %{version}-%{release}
+Requires: bzip2-devel
+Requires: zlib-devel
 
 %description devel
 GLib headers and libraries for zif.
