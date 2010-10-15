@@ -144,10 +144,7 @@ check_PROGRAMS =						\
 	zif-self-test
 
 zif_self_test_SOURCES =						\
-	egg-debug.h						\
-	egg-debug.c						\
-	zif-self-test.c						\
-	$(NULL)
+	zif-self-test.c
 
 zif_self_test_LDADD =						\
 	$(GLIB_LIBS)						\

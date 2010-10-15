@@ -783,10 +783,9 @@ zif_time_string_to_seconds (const gchar *value)
 		timeval *= 60*60;
 	else if (suffix == 'd')
 		timeval *= 24*60*60;
-	else {
-		g_warning ("unknown suffix: '%c'", suffix);
+	else
 		timeval = 0;
-	}
+
 out:
 	g_free (value_copy);
 	return timeval;

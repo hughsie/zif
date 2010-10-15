@@ -39,7 +39,6 @@ CFILE_GLOB=$(top_srcdir)/libzif/zif-*.c
 IGNORE_HFILES =						\
 	config.h					\
 	zif-marshal.h					\
-	egg-debug.h					\
 	$(NULL)
 
 # Images to copy into HTML directory.

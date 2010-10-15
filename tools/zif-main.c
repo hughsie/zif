@@ -661,26 +661,19 @@ zif_log_handler_cb (const gchar *log_domain, GLogLevelFlags log_level,
 	gchar str_time[255];
 	time_t the_time;
 
-	/* not us */
-	if (g_strcmp0 (log_domain, "Zif") != 0) {
-		g_log_default_handler (log_domain, log_level, message, user_data);
-		g_error ("%s", log_domain);
-		return;
-	}
-
 	/* header always in green */
 	time (&the_time);
 	strftime (str_time, 254, "%H:%M:%S", localtime (&the_time));
 	g_print ("%c[%dmTI:%s\t", 0x1B, 32, str_time);
 
-	/* all warnings are fatal */
-	if (log_level != G_LOG_LEVEL_DEBUG) {
+	/* critical is also in red */
+	if (log_level == G_LOG_LEVEL_CRITICAL ||
+	    log_level == G_LOG_LEVEL_ERROR) {
 		g_print ("%c[%dm%s\n%c[%dm", 0x1B, 31, message, 0x1B, 0);
-		exit (1);
+	} else {
+		/* debug in blue */
+		g_print ("%c[%dm%s\n%c[%dm", 0x1B, 34, message, 0x1B, 0);
 	}
-
-	/* debug in blue */
-	g_print ("%c[%dm%s\n%c[%dm", 0x1B, 34, message, 0x1B, 0);
 }
 
 /**
@@ -783,6 +776,7 @@ main (int argc, char *argv[])
 
 	/* verbose? */
 	if (verbose) {
+		g_log_set_fatal_mask (NULL, G_LOG_LEVEL_ERROR | G_LOG_LEVEL_CRITICAL);
 		g_log_set_handler ("Zif", G_LOG_LEVEL_ERROR |
 					  G_LOG_LEVEL_CRITICAL |
 					  G_LOG_LEVEL_DEBUG |

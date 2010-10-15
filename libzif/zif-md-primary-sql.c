@@ -133,7 +133,7 @@ zif_md_primary_sql_sqlite_create_package_cb (void *data, gint argc, gchar **argv
 		/* this is not set in a test harness */
 		zif_package_remote_set_store_remote (package, store_remote);
 	} else {
-		g_warning ("no remote store for %s", argv[1]);
+		g_debug ("no remote store for %s, which is okay as we're in make check", argv[1]);
 	}
 
 	/* add */
