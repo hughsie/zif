@@ -37,8 +37,6 @@
 #include "zif-download.h"
 #include "zif-state.h"
 
-#include "egg-debug.h"
-
 #define ZIF_DOWNLOAD_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_DOWNLOAD, ZifDownloadPrivate))
 
 /**
@@ -91,18 +89,18 @@ zif_download_file_got_chunk_cb (SoupMessage *msg, SoupBuffer *chunk, ZifDownload
 
 	/* how can this happen */
 	if (header_size < body_length) {
-		egg_warning ("length=%i/%i", body_length, header_size);
+		g_warning ("length=%i/%i", body_length, header_size);
 		goto out;
 	}
 
 	/* calulate percentage */
 	percentage = (100 * body_length) / header_size;
 	if (percentage == 100) {
-		egg_warning ("ignoring percentage: %i", percentage);
+		g_warning ("ignoring percentage: %i", percentage);
 		goto out;
 	}
 
-	egg_debug ("DOWNLOAD: %i%% (%i, %i) - %p, %p", percentage, body_length, header_size, msg, download);
+	g_debug ("DOWNLOAD: %i%% (%i, %i) - %p, %p", percentage, body_length, header_size, msg, download);
 	zif_state_set_percentage (download->priv->state, percentage);
 
 out:
@@ -115,7 +113,7 @@ out:
 static void
 zif_download_file_finished_cb (SoupMessage *msg, ZifDownload *download)
 {
-	egg_debug ("done!");
+	g_debug ("done!");
 	g_object_unref (download->priv->msg);
 	download->priv->msg = NULL;
 }
@@ -130,12 +128,12 @@ zif_download_cancelled_cb (GCancellable *cancellable, ZifDownload *download)
 
 	/* check we have a download */
 	if (download->priv->msg == NULL) {
-		egg_debug ("nothing to cancel");
+		g_debug ("nothing to cancel");
 		return;
 	}
 
 	/* cancel */
-	egg_warning ("cancelling download");
+	g_warning ("cancelling download");
 	soup_session_cancel_message (download->priv->session, download->priv->msg, SOUP_STATUS_CANCELLED);
 }
 
@@ -264,7 +262,7 @@ zif_download_set_proxy (ZifDownload *download, const gchar *http_proxy, GError *
 
 	/* setup the session */
 	if (http_proxy != NULL) {
-		egg_debug ("using proxy %s", http_proxy);
+		g_debug ("using proxy %s", http_proxy);
 		proxy = soup_uri_new (http_proxy);
 	}
 	download->priv->session = soup_session_sync_new_with_options (SOUP_SESSION_PROXY_URI, proxy,

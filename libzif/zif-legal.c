@@ -38,8 +38,6 @@
 #include "zif-legal.h"
 #include "zif-monitor.h"
 
-#include "egg-debug.h"
-
 #define ZIF_LEGAL_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_LEGAL, ZifLegalPrivate))
 
 struct _ZifLegalPrivate
@@ -113,7 +111,7 @@ zif_legal_load (ZifLegal *legal, GError **error)
 		g_hash_table_insert (legal->priv->hash, g_strdup (lines[i]), GINT_TO_POINTER(1));
 
 	/* how many licenses? */
-	egg_debug ("Added %i licenses to database", i);
+	g_debug ("Added %i licenses to database", i);
 	legal->priv->loaded = TRUE;
 out:
 	g_free (data);
@@ -215,7 +213,7 @@ zif_legal_is_free (ZifLegal *legal, const gchar *string, gboolean *is_free, GErr
 	/* otherwise okay */
 	*is_free = TRUE;
 out:
-	egg_debug ("string %s is %s", string, *is_free ? "FREE" : "NONFREE");
+	g_debug ("string %s is %s", string, *is_free ? "FREE" : "NONFREE");
 	g_strfreev (groups);
 	return ret;
 }
@@ -246,7 +244,7 @@ zif_legal_set_filename (ZifLegal *legal, const gchar *filename)
 static void
 zif_legal_file_monitor_cb (ZifMonitor *monitor, ZifLegal *legal)
 {
-	egg_warning ("legal file changed");
+	g_warning ("legal file changed");
 	g_hash_table_remove_all (legal->priv->hash);
 	legal->priv->loaded = FALSE;
 }

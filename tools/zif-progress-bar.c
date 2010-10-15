@@ -24,8 +24,6 @@
 
 #include "zif-progress-bar.h"
 
-#include "egg-debug.h"
-
 #define ZIF_PROGRESS_BAR_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_PROGRESS_BAR, ZifProgressBarPrivate))
 
 typedef struct {
@@ -113,7 +111,7 @@ pk_progress_bar_set_percentage (ZifProgressBar *self, guint percentage)
 
 	/* check for old value */
 	if (percentage == self->priv->percentage) {
-		egg_debug ("skipping as the same");
+		g_debug ("skipping as the same");
 		goto out;
 	}
 
@@ -204,7 +202,7 @@ pk_progress_bar_set_value (ZifProgressBar *self, guint value)
 
 	/* check for old value */
 	if (value == self->priv->value) {
-		egg_debug ("skipping as the same");
+		g_debug ("skipping as the same");
 		goto out;
 	}
 

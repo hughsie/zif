@@ -33,8 +33,6 @@
 
 #include <glib.h>
 
-#include "egg-debug.h"
-
 #include "zif-utils.h"
 #include "zif-string.h"
 

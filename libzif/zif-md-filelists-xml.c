@@ -56,8 +56,6 @@ typedef enum {
 #include "zif-md-filelists-xml.h"
 #include "zif-package-remote.h"
 
-#include "egg-debug.h"
-
 #define ZIF_MD_FILELISTS_XML_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_MD_FILELISTS_XML, ZifMdFilelistsXmlPrivate))
 
 /**
@@ -110,7 +108,7 @@ zif_md_filelists_xml_parser_start_element (GMarkupParseContext *context, const g
 			goto out;
 		}
 
-		egg_warning ("unhandled element: %s", element_name);
+		g_warning ("unhandled element: %s", element_name);
 		goto out;
 	}
 
@@ -132,7 +130,7 @@ zif_md_filelists_xml_parser_start_element (GMarkupParseContext *context, const g
 				goto out;
 			}
 
-			egg_warning ("unhandled update list tag: %s", element_name);
+			g_warning ("unhandled update list tag: %s", element_name);
 			goto out;
 
 		}
@@ -147,13 +145,13 @@ zif_md_filelists_xml_parser_start_element (GMarkupParseContext *context, const g
 				filelists_xml->priv->section_list_package = ZIF_MD_FILELISTS_XML_SECTION_LIST_PACKAGE_FILE;
 				goto out;
 			}
-			egg_warning ("unhandled update package tag: %s", element_name);
+			g_warning ("unhandled update package tag: %s", element_name);
 			goto out;
 		}
-		egg_warning ("unhandled package tag: %s", element_name);
+		g_warning ("unhandled package tag: %s", element_name);
 	}
 
-	egg_warning ("unhandled base tag: %s", element_name);
+	g_warning ("unhandled base tag: %s", element_name);
 
 out:
 	return;
@@ -170,7 +168,7 @@ zif_md_filelists_xml_parser_end_element (GMarkupParseContext *context, const gch
 
 	/* no element */
 	if (filelists_xml->priv->section == ZIF_MD_FILELISTS_XML_SECTION_UNKNOWN) {
-		egg_warning ("unhandled base end tag: %s", element_name);
+		g_warning ("unhandled base end tag: %s", element_name);
 		goto out;
 	}
 
@@ -185,7 +183,7 @@ zif_md_filelists_xml_parser_end_element (GMarkupParseContext *context, const gch
 				filelists_xml->priv->section = ZIF_MD_FILELISTS_XML_SECTION_UNKNOWN;
 				goto out;
 			}
-			egg_warning ("unhandled outside tag: %s", element_name);
+			g_warning ("unhandled outside tag: %s", element_name);
 			goto out;
 		}
 
@@ -206,7 +204,7 @@ zif_md_filelists_xml_parser_end_element (GMarkupParseContext *context, const gch
 					filelists_xml->priv->section_list = ZIF_MD_FILELISTS_XML_SECTION_LIST_UNKNOWN;
 					goto out;
 				}
-				egg_warning ("unhandled package tag: %s", element_name);
+				g_warning ("unhandled package tag: %s", element_name);
 				goto out;
 			}
 
@@ -215,18 +213,18 @@ zif_md_filelists_xml_parser_end_element (GMarkupParseContext *context, const gch
 					filelists_xml->priv->section_list_package = ZIF_MD_FILELISTS_XML_SECTION_LIST_PACKAGE_UNKNOWN;
 					goto out;
 				}
-				egg_warning ("unhandled end of file tag: %s", element_name);
+				g_warning ("unhandled end of file tag: %s", element_name);
 				goto out;
 			}
-			egg_warning ("unhandled end of package tag: %s", element_name);
+			g_warning ("unhandled end of package tag: %s", element_name);
 			goto out;
 		}
 
-		egg_warning ("unhandled update end tag: %s", element_name);
+		g_warning ("unhandled update end tag: %s", element_name);
 		goto out;
 	}
 
-	egg_warning ("unhandled end tag: %s", element_name);
+	g_warning ("unhandled end tag: %s", element_name);
 out:
 	return;
 }
@@ -248,7 +246,7 @@ zif_md_filelists_xml_parser_text (GMarkupParseContext *context, const gchar *tex
 	/* group section */
 	if (filelists_xml->priv->section == ZIF_MD_FILELISTS_XML_SECTION_LIST) {
 		if (filelists_xml->priv->section_list == ZIF_MD_FILELISTS_XML_SECTION_LIST_UNKNOWN) {
-			egg_warning ("not saving: %s", text);
+			g_warning ("not saving: %s", text);
 			goto out;
 		}
 		if (filelists_xml->priv->section_list == ZIF_MD_FILELISTS_XML_SECTION_LIST_PACKAGE) {
@@ -256,10 +254,10 @@ zif_md_filelists_xml_parser_text (GMarkupParseContext *context, const gchar *tex
 				g_ptr_array_add (filelists_xml->priv->array_temp, g_strdup (text));
 				goto out;
 			};
-			egg_warning ("not saving: %s", text);
+			g_warning ("not saving: %s", text);
 			goto out;
 		}
-		egg_warning ("not saving: %s", text);
+		g_warning ("not saving: %s", text);
 		goto out;
 	}
 out:
@@ -301,7 +299,7 @@ zif_md_filelists_xml_load (ZifMd *md, ZifState *state, GError **error)
 	}
 
 	/* open database */
-	egg_debug ("filename = %s", filename);
+	g_debug ("filename = %s", filename);
 	zif_state_set_allow_cancel (state, FALSE);
 	ret = g_file_get_contents (filename, &contents, &size, error);
 	if (!ret)

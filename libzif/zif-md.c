@@ -41,8 +41,6 @@
 #include "zif-md.h"
 #include "zif-config.h"
 
-#include "egg-debug.h"
-
 #define ZIF_MD_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_MD, ZifMdPrivate))
 
 /**
@@ -357,7 +355,7 @@ zif_md_set_mdtype (ZifMd *md, ZifMdType type)
 
 	/* check we've got the needed data */
 	if (md->priv->location != NULL && (md->priv->checksum == NULL || md->priv->timestamp == 0)) {
-		egg_warning ("cannot load md for %s (loc=%s, checksum=%s, checksum_open=%s, timestamp=%i)",
+		g_warning ("cannot load md for %s (loc=%s, checksum=%s, checksum_open=%s, timestamp=%i)",
 			     zif_md_type_to_text (type), md->priv->location,
 			     md->priv->checksum, md->priv->checksum_uncompressed, md->priv->timestamp);
 		goto out;
@@ -435,12 +433,12 @@ zif_md_delete_file (const gchar *filename)
 	if (!ret)
 		goto out;
 
-	egg_warning ("deleting %s", filename);
+	g_warning ("deleting %s", filename);
 
 	/* remove */
 	retval = g_unlink (filename);
 	if (retval != 0) {
-		egg_warning ("failed to delete %s", filename);
+		g_warning ("failed to delete %s", filename);
 		ret = FALSE;
 	}
 out:
@@ -495,7 +493,7 @@ zif_md_load (ZifMd *md, ZifState *state, GError **error)
 	}
 
 	/* display any warning */
-	egg_debug ("failed checksum for uncompressed: %s", error_local->message);
+	g_debug ("failed checksum for uncompressed: %s", error_local->message);
 	g_clear_error (&error_local);
 	zif_state_reset (state_local);
 
@@ -515,7 +513,7 @@ zif_md_load (ZifMd *md, ZifState *state, GError **error)
 			goto out;
 		}
 
-		egg_warning ("failed checksum for compressed: %s", error_local->message);
+		g_warning ("failed checksum for compressed: %s", error_local->message);
 		g_clear_error (&error_local);
 
 		/* if not online, then this is fatal */
@@ -567,7 +565,7 @@ zif_md_load (ZifMd *md, ZifState *state, GError **error)
 		zif_md_delete_file (md->priv->filename_uncompressed);
 
 		/* decompress file */
-		egg_debug ("decompressing file");
+		g_debug ("decompressing file");
 		state_local = zif_state_get_child (state);
 		ret = zif_file_decompress (md->priv->filename, md->priv->filename_uncompressed,
 					   state_local, &error_local);
@@ -1181,7 +1179,7 @@ zif_md_file_check (ZifMd *md, gboolean use_uncompressed, ZifState *state, GError
 	/* metalink has no checksum... */
 	if (md->priv->type == ZIF_MD_TYPE_METALINK ||
 	    md->priv->type == ZIF_MD_TYPE_MIRRORLIST) {
-		egg_debug ("skipping checksum check on %s", zif_md_type_to_text (md->priv->type));
+		g_debug ("skipping checksum check on %s", zif_md_type_to_text (md->priv->type));
 		ret = zif_state_finished (state, error);
 		goto out;
 	}
@@ -1214,7 +1212,7 @@ zif_md_file_check (ZifMd *md, gboolean use_uncompressed, ZifState *state, GError
 	/* check age */
 	modified = g_file_info_get_attribute_uint64 (file_info, G_FILE_ATTRIBUTE_TIME_MODIFIED);
 	age = time (NULL) - modified;
-	egg_debug ("age of %s is %" G_GUINT64_FORMAT " hours (max-age=%" G_GUINT64_FORMAT " seconds)",
+	g_debug ("age of %s is %" G_GUINT64_FORMAT " hours (max-age=%" G_GUINT64_FORMAT " seconds)",
 		   filename, age / (60 * 60), md->priv->max_age);
 	ret = (md->priv->max_age == 0 || age < md->priv->max_age);
 	if (!ret) {
@@ -1262,7 +1260,7 @@ zif_md_file_check (ZifMd *md, gboolean use_uncompressed, ZifState *state, GError
 			     "checksum incorrect, wanted %s, got %s for %s", checksum_wanted, checksum, filename);
 		goto out;
 	}
-	egg_debug ("%s checksum correct (%s)", filename, checksum_wanted);
+	g_debug ("%s checksum correct (%s)", filename, checksum_wanted);
 
 	/* this section done */
 	ret = zif_state_done (state, error);

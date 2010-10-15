@@ -38,8 +38,6 @@
 
 #include "zif-media.h"
 
-#include "egg-debug.h"
-
 #define ZIF_MEDIA_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_MEDIA, ZifMediaPrivate))
 
 struct _ZifMediaPrivate
@@ -74,14 +72,14 @@ zif_media_get_root_for_mount (GMount *mount, const gchar *media_id)
 
 	/* .discinfo exists */
 	ret = g_file_query_exists (discinfo, NULL);
-	egg_warning ("checking for %s: %s", discinfo_path, ret ? "yes" : "no");
+	g_warning ("checking for %s: %s", discinfo_path, ret ? "yes" : "no");
 	if (!ret)
 		goto out;
 
 	/* we match media_id? */
 	ret = g_file_load_contents (discinfo, NULL, &contents, NULL, NULL, &error);
 	if (!ret) {
-		egg_warning ("failed to get contents: %s", error->message);
+		g_warning ("failed to get contents: %s", error->message);
 		g_error_free (error);
 		goto out;
 	}
@@ -89,14 +87,14 @@ zif_media_get_root_for_mount (GMount *mount, const gchar *media_id)
 	/* split data */
 	lines = g_strsplit (contents, "\n", -1);
 	if (g_strv_length (lines) < 4) {
-		egg_warning ("not enough data in .discinfo");
+		g_warning ("not enough data in .discinfo");
 		goto out;
 	}
 
 	/* matches */
 	ret = (g_strcmp0 (lines[0], media_id) == 0);
 	if (!ret) {
-		egg_warning ("failed to match media id");
+		g_warning ("failed to match media id");
 		goto out;
 	}
 

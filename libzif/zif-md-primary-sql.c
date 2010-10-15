@@ -42,8 +42,6 @@
 #include "zif-package-remote.h"
 #include "zif-utils.h"
 
-#include "egg-debug.h"
-
 #define ZIF_MD_PRIMARY_SQL_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_MD_PRIMARY_SQL, ZifMdPrimarySqlPrivate))
 
 /**
@@ -101,10 +99,10 @@ zif_md_primary_sql_load (ZifMd *md, ZifState *state, GError **error)
 
 	/* open database */
 	zif_state_set_allow_cancel (state, FALSE);
-	egg_debug ("filename = %s", filename);
+	g_debug ("filename = %s", filename);
 	rc = sqlite3_open (filename, &primary_sql->priv->db);
 	if (rc != 0) {
-		egg_warning ("Can't open database: %s\n", sqlite3_errmsg (primary_sql->priv->db));
+		g_warning ("Can't open database: %s\n", sqlite3_errmsg (primary_sql->priv->db));
 		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_BAD_SQL,
 			     "can't open database: %s", sqlite3_errmsg (primary_sql->priv->db));
 		goto out;
@@ -135,7 +133,7 @@ zif_md_primary_sql_sqlite_create_package_cb (void *data, gint argc, gchar **argv
 		/* this is not set in a test harness */
 		zif_package_remote_set_store_remote (package, store_remote);
 	} else {
-		egg_warning ("no remote store for %s", argv[1]);
+		g_warning ("no remote store for %s", argv[1]);
 	}
 
 	/* add */
@@ -143,7 +141,7 @@ zif_md_primary_sql_sqlite_create_package_cb (void *data, gint argc, gchar **argv
 	if (ret) {
 		g_ptr_array_add (fldata->packages, package);
 	} else {
-		egg_warning ("failed to add: %s", argv[1]);
+		g_warning ("failed to add: %s", argv[1]);
 		g_object_unref (package);
 	}
 
@@ -393,11 +391,11 @@ zif_md_primary_sql_sqlite_pkgkey_cb (void *data, gint argc, gchar **argv, gchar 
 		if (g_strcmp0 (col_name[i], "pkgKey") == 0) {
 			pkgkey = g_ascii_strtoull (argv[i], &endptr, 10);
 			if (argv[i] == endptr)
-				egg_warning ("failed to parse pkgKey %s", argv[i]);
+				g_warning ("failed to parse pkgKey %s", argv[i]);
 			else
 				g_ptr_array_add (array, GUINT_TO_POINTER (pkgkey));
 		} else {
-			egg_warning ("unrecognized: %s=%s", col_name[i], argv[i]);
+			g_warning ("unrecognized: %s=%s", col_name[i], argv[i]);
 		}
 	}
 	return 0;
@@ -485,9 +483,9 @@ zif_md_primary_sql_what_provides (ZifMd *md, gchar **search,
 
 		/* check we only got one result */
 		if (array_tmp->len == 0) {
-			egg_warning ("no package for pkgKey %i", pkgkey);
+			g_warning ("no package for pkgKey %i", pkgkey);
 		} else if (array_tmp->len > 1 || array_tmp->len == 0) {
-			egg_warning ("more than one package for pkgKey %i", pkgkey);
+			g_warning ("more than one package for pkgKey %i", pkgkey);
 		} else {
 			package = g_ptr_array_index (array_tmp, 0);
 			g_ptr_array_add (array, g_object_ref (package));

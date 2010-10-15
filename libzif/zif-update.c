@@ -32,8 +32,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "egg-debug.h"
-
 #include "zif-update.h"
 
 #define ZIF_UPDATE_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_UPDATE, ZifUpdatePrivate))
@@ -76,7 +74,7 @@ zif_update_state_from_string (const gchar *state)
 		return ZIF_UPDATE_STATE_UNKNOWN;
 	if (g_strcmp0 (state, "testing") == 0)
 		return ZIF_UPDATE_STATE_TESTING;
-	egg_warning ("unknown update state: %s", state);
+	g_warning ("unknown update state: %s", state);
 	return ZIF_UPDATE_STATE_UNKNOWN;
 }
 
@@ -94,7 +92,7 @@ zif_update_kind_from_string (const gchar *kind)
 		return ZIF_UPDATE_KIND_ENHANCEMENT;
 	if (g_strcmp0 (kind, "newpackage") == 0)
 		return ZIF_UPDATE_KIND_NEWPACKAGE;
-	egg_warning ("unknown update kind: %s", kind);
+	g_warning ("unknown update kind: %s", kind);
 	return ZIF_UPDATE_KIND_UNKNOWN;
 }
 
@@ -483,7 +481,7 @@ zif_update_add_changeset (ZifUpdate *update, ZifChangeset *changeset)
 		changeset_tmp = g_ptr_array_index (update->priv->changelog, i);
 		date_tmp = zif_changeset_get_date (changeset_tmp);
 		if (date == date_tmp) {
-			egg_warning ("Already added changeset %i to %s",
+			g_warning ("Already added changeset %i to %s",
 				     (int)date_tmp, zif_update_get_id (update));
 			goto out;
 		}

@@ -34,8 +34,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "egg-debug.h"
-
 #include "zif-utils.h"
 #include "zif-package-remote.h"
 #include "zif-groups.h"
@@ -99,7 +97,7 @@ zif_package_remote_set_from_repo (ZifPackageRemote *pkg, guint length, gchar **t
 		} else if (g_strcmp0 (type[i], "epoch") == 0) {
 			epoch = g_ascii_strtoull (data[i], &endptr, 10);
 			if (data[i] == endptr)
-				egg_warning ("failed to parse epoch %s", data[i]);
+				g_warning ("failed to parse epoch %s", data[i]);
 		} else if (g_strcmp0 (type[i], "version") == 0) {
 			version = data[i];
 		} else if (g_strcmp0 (type[i], "release") == 0) {
@@ -135,7 +133,7 @@ zif_package_remote_set_from_repo (ZifPackageRemote *pkg, guint length, gchar **t
 			zif_package_set_location_href (ZIF_PACKAGE (pkg), string);
 			zif_string_unref (string);
 		} else {
-			egg_warning ("unrecognized: %s=%s", type[i], data[i]);
+			g_warning ("unrecognized: %s=%s", type[i], data[i]);
 		}
 	}
 

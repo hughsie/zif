@@ -41,8 +41,6 @@
 #include "zif-utils.h"
 #include "zif-monitor.h"
 
-#include "egg-debug.h"
-
 #define ZIF_REPOS_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_REPOS, ZifReposPrivate))
 
 struct _ZifReposPrivate
@@ -467,7 +465,7 @@ zif_repos_file_monitor_cb (ZifMonitor *monitor, ZifRepos *repos)
 	g_ptr_array_set_size (repos->priv->list, 0);
 	g_ptr_array_set_size (repos->priv->enabled, 0);
 	repos->priv->loaded = FALSE;
-	egg_debug ("repo file changed");
+	g_debug ("repo file changed");
 }
 
 /**

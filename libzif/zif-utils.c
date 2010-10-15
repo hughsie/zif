@@ -38,8 +38,6 @@
 #include <bzlib.h>
 #include <zlib.h>
 
-#include "egg-debug.h"
-
 #include "zif-utils.h"
 #include "zif-package.h"
 
@@ -75,7 +73,7 @@ zif_init (void)
 
 	retval = rpmReadConfigFiles (NULL, NULL);
 	if (retval != 0) {
-		egg_warning ("failed to read config files");
+		g_warning ("failed to read config files");
 		return FALSE;
 	}
 
@@ -574,7 +572,7 @@ out:
 	/* switch back to PWD */
 	retval = chdir (buf);
 	if (retval != 0)
-		egg_warning ("cannot chdir back!");
+		g_warning ("cannot chdir back!");
 
 	return ret;
 }
@@ -718,7 +716,7 @@ zif_package_id_check (const gchar *package_id)
 	/* UTF8 */
 	ret = g_utf8_validate (package_id, -1, NULL);
 	if (!ret) {
-		egg_warning ("invalid UTF8!");
+		g_warning ("invalid UTF8!");
 		return FALSE;
 	}
 
@@ -772,7 +770,7 @@ zif_time_string_to_seconds (const gchar *value)
 	/* convert to number */
 	timeval = g_ascii_strtoull (value_copy, &endptr, 10);
 	if (value_copy == endptr) {
-		egg_warning ("failed to convert %s", value_copy);
+		g_warning ("failed to convert %s", value_copy);
 		goto out;
 	}
 
@@ -786,7 +784,7 @@ zif_time_string_to_seconds (const gchar *value)
 	else if (suffix == 'd')
 		timeval *= 24*60*60;
 	else {
-		egg_warning ("unknown suffix: '%c'", suffix);
+		g_warning ("unknown suffix: '%c'", suffix);
 		timeval = 0;
 	}
 out:

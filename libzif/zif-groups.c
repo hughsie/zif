@@ -44,8 +44,6 @@
 #include "zif-groups.h"
 #include "zif-monitor.h"
 
-#include "egg-debug.h"
-
 #define ZIF_GROUPS_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_GROUPS, ZifGroupsPrivate))
 
 /**
@@ -161,7 +159,7 @@ zif_groups_load (ZifGroups *groups, GError **error)
 
 	/* no mapping file */
 	if (groups->priv->mapping_file == NULL) {
-		egg_warning ("no mapping file, so cannot load group lists");
+		g_warning ("no mapping file, so cannot load group lists");
 		goto out;
 	}
 
@@ -392,7 +390,7 @@ zif_groups_file_monitor_cb (ZifMonitor *monitor, ZifGroups *groups)
 	g_ptr_array_set_size (groups->priv->categories, 0);
 	g_hash_table_remove_all (groups->priv->hash);
 
-	egg_debug ("mapping file changed");
+	g_debug ("mapping file changed");
 }
 
 /**

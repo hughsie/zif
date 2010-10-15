@@ -35,8 +35,6 @@
 #include <rpm/rpmdb.h>
 #include <rpm/rpmts.h>
 
-#include "egg-debug.h"
-
 #include "zif-utils.h"
 #include "zif-package.h"
 #include "zif-package-local.h"
@@ -236,7 +234,7 @@ zif_package_local_get_depends_from_name_flags_version (GPtrArray *names, GPtrArr
 		name = g_ptr_array_index (names, i);
 		version = g_ptr_array_index (versions, i);
 		if (flag == ZIF_DEPEND_FLAG_UNKNOWN) {
-			egg_debug ("ignoring %s %s %s", name, zif_depend_flag_to_string (flag), version);
+			g_debug ("ignoring %s %s %s", name, zif_depend_flag_to_string (flag), version);
 			continue;
 		}
 
@@ -304,7 +302,7 @@ zif_package_local_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, ZifSt
 				guint idx;
 				idx = GPOINTER_TO_UINT (g_ptr_array_index (fileindex, i));
 				if (idx > dirnames->len) {
-					egg_warning ("index bigger than dirnames (%i > %i) for package %s [%s], i=%i, dn=%i, bn=%i, fi=%i",
+					g_warning ("index bigger than dirnames (%i > %i) for package %s [%s], i=%i, dn=%i, bn=%i, fi=%i",
 						     idx, dirnames->len, zif_package_get_package_id (pkg),
 						     (const gchar *) g_ptr_array_index (basenames, i),
 						     i, dirnames->len, basenames->len, fileindex->len);
@@ -342,7 +340,7 @@ zif_package_local_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, ZifSt
 		/* description */
 		tmp = zif_get_header_string (header, RPMTAG_DESCRIPTION);
 		if (tmp == NULL) {
-			egg_warning ("no description for %s", zif_package_get_id (pkg));
+			g_warning ("no description for %s", zif_package_get_id (pkg));
 			tmp = zif_string_new ("");
 		}
 		zif_package_set_description (pkg, tmp);

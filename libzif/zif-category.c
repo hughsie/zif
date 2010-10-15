@@ -32,8 +32,6 @@
 
 #include "zif-category.h"
 
-#include "egg-debug.h"
-
 static void     zif_category_finalize	(GObject     *object);
 
 #define ZIF_CATEGORY_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_CATEGORY, ZifCategoryPrivate))

@@ -32,8 +32,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "egg-debug.h"
-
 #include "zif-update-info.h"
 
 #define ZIF_UPDATE_INFO_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_UPDATE_INFO, ZifUpdateInfoPrivate))

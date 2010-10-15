@@ -42,8 +42,6 @@
 #include "zif-md-other-sql.h"
 #include "zif-package-remote.h"
 
-#include "egg-debug.h"
-
 #define ZIF_MD_OTHER_SQL_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_MD_OTHER_SQL, ZifMdOtherSqlPrivate))
 
 /**
@@ -95,10 +93,10 @@ zif_md_other_sql_load (ZifMd *md, ZifState *state, GError **error)
 
 	/* open database */
 	zif_state_set_allow_cancel (state, FALSE);
-	egg_debug ("filename = %s", filename);
+	g_debug ("filename = %s", filename);
 	rc = sqlite3_open (filename, &other_sql->priv->db);
 	if (rc != 0) {
-		egg_warning ("Can't open database: %s\n", sqlite3_errmsg (other_sql->priv->db));
+		g_warning ("Can't open database: %s\n", sqlite3_errmsg (other_sql->priv->db));
 		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_BAD_SQL,
 			     "can't open database: %s", sqlite3_errmsg (other_sql->priv->db));
 		goto out;
@@ -132,13 +130,13 @@ zif_md_other_sql_sqlite_create_changelog_cb (void *data, gint argc, gchar **argv
 		if (g_strcmp0 (col_name[i], "date") == 0) {
 			date = g_ascii_strtoull (argv[i], &endptr, 10);
 			if (argv[i] == endptr)
-				egg_warning ("failed to parse date %s", argv[i]);
+				g_warning ("failed to parse date %s", argv[i]);
 		} else if (g_strcmp0 (col_name[i], "author") == 0) {
 			author = argv[i];
 		} else if (g_strcmp0 (col_name[i], "changelog") == 0) {
 			changelog = argv[i];
 		} else {
-			egg_warning ("unrecognized: %s=%s", col_name[i], argv[i]);
+			g_warning ("unrecognized: %s=%s", col_name[i], argv[i]);
 		}
 	}
 
@@ -148,7 +146,7 @@ zif_md_other_sql_sqlite_create_changelog_cb (void *data, gint argc, gchar **argv
 	zif_changeset_set_description (changeset, changelog);
 	ret = zif_changeset_parse_header (changeset, author, &error);
 	if (!ret) {
-		egg_warning ("failed to parse header: %s", error->message);
+		g_warning ("failed to parse header: %s", error->message);
 		g_error_free (error);
 		goto out;
 	}
@@ -204,11 +202,11 @@ zif_md_other_sql_sqlite_pkgkey_cb (void *data, gint argc, gchar **argv, gchar **
 		if (g_strcmp0 (col_name[i], "pkgKey") == 0) {
 			pkgkey = g_ascii_strtoull (argv[i], &endptr, 10);
 			if (argv[i] == endptr)
-				egg_warning ("could not parse pkgKey '%s'", argv[i]);
+				g_warning ("could not parse pkgKey '%s'", argv[i]);
 			else
 				g_ptr_array_add (array, GUINT_TO_POINTER (pkgkey));
 		} else {
-			egg_warning ("unrecognized: %s=%s", col_name[i], argv[i]);
+			g_warning ("unrecognized: %s=%s", col_name[i], argv[i]);
 		}
 	}
 	return 0;
@@ -297,7 +295,7 @@ zif_md_other_sql_get_changelog (ZifMd *md, const gchar *pkgid,
 
 		/* no results */
 		if (array_tmp->len == 0)
-			egg_warning ("no changelog for pkgKey %i", pkgkey);
+			g_warning ("no changelog for pkgKey %i", pkgkey);
 		for (j=0; j<array_tmp->len; j++) {
 			changeset = g_ptr_array_index (array_tmp, j);
 			g_ptr_array_add (array, g_object_ref (changeset));

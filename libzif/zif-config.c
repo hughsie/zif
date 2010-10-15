@@ -47,8 +47,6 @@
 #include "zif-utils.h"
 #include "zif-monitor.h"
 
-#include "egg-debug.h"
-
 #define ZIF_CONFIG_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_CONFIG, ZifConfigPrivate))
 
 struct _ZifConfigPrivate
@@ -563,7 +561,7 @@ out:
 static void
 zif_config_file_monitor_cb (ZifMonitor *monitor, ZifConfig *config)
 {
-	egg_warning ("config file changed");
+	g_warning ("config file changed");
 	config->priv->loaded = FALSE;
 }
 

@@ -9,10 +9,7 @@ INCLUDES =						\
 	-DVERSION="\"$(VERSION)\"" 			\
 	-DPACKAGE_LOCALE_DIR=\"$(localedir)\"		\
 	-DZIF_DATA=\"$(pkggdatadir)\"			\
-	-DEGG_LOG_FILE=\""$(ZIF_LOG_DIR)/zif"\"		\
-	-DEGG_VERBOSE="\"ZIF_VERBOSE\""			\
-	-DEGG_LOGGING="\"ZIF_LOGGING\""			\
-	-DEGG_CONSOLE="\"ZIF_CONSOLE\""			\
+	-DG_LOG_DOMAIN=\"Zif\"				\
 	-I$(top_srcdir)/libzif
 
 ZIF_LIBS =						\
@@ -22,8 +19,6 @@ bin_PROGRAMS =						\
 	zif
 
 zif_SOURCES =						\
-	egg-debug.c					\
-	egg-debug.h					\
 	zif-progress-bar.c				\
 	zif-progress-bar.h				\
 	egg-debug.h					\

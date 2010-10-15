@@ -59,8 +59,6 @@
 #include "zif-store-remote.h"
 #include "zif-utils.h"
 
-#include "egg-debug.h"
-
 #define ZIF_STORE_REMOTE_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_STORE_REMOTE, ZifStoreRemotePrivate))
 
 #define ZIF_STORE_REMOTE_LINK_MAX_AGE		60*60*24*30
@@ -247,7 +245,7 @@ zif_store_remote_parser_start_element (GMarkupParseContext *context, const gchar
 					g_string_set_size (string, string->len - 2);
 
 					/* return error */
-					egg_warning ("%s", string->str);
+					g_warning ("%s", string->str);
 					g_string_free (string, TRUE);
 				}
 				break;
@@ -362,7 +360,7 @@ zif_store_remote_download_try (ZifStoreRemote *store, const gchar *uri, const gc
 
 	/* download object */
 	download = zif_download_new ();
-	egg_debug ("trying to download %s and save to %s", uri, filename);
+	g_debug ("trying to download %s and save to %s", uri, filename);
 	ret = zif_download_file (download, uri, filename, state, &error_local);
 	if (!ret) {
 		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
@@ -412,7 +410,7 @@ zif_store_remote_ensure_parent_dir_exists (const gchar *filename, GError **error
 	gchar *dirname = NULL;
 	dirname = g_path_get_dirname (filename);
 	if (!g_file_test (dirname, G_FILE_TEST_EXISTS)) {
-		egg_debug ("creating directory %s", dirname);
+		g_debug ("creating directory %s", dirname);
 		g_mkdir_with_parents (dirname, 0777);
 	}
 	g_free (dirname);
@@ -558,7 +556,7 @@ repomd_confirm:
 			zif_state_reset (state_local);
 			ret = zif_store_remote_download_try (store, uri, filename_local, state_local, &error_local);
 			if (!ret) {
-				egg_debug ("failed to download (non-fatal): %s", error_local->message);
+				g_debug ("failed to download (non-fatal): %s", error_local->message);
 				g_clear_error (&error_local);
 			}
 		}
@@ -584,7 +582,7 @@ repomd_confirm:
 
 		/* only retry this once */
 		done_repomd_confirm = TRUE;
-		egg_debug ("confirming repomd.xml as repodata file does not exist");
+		g_debug ("confirming repomd.xml as repodata file does not exist");
 
 		goto repomd_confirm;
 	}
@@ -1115,7 +1113,7 @@ zif_store_remote_load_metadata (ZifStoreRemote *store, ZifState *state, GError *
 		md = zif_store_remote_get_md_from_type (store, i);
 		if (md == NULL) {
 			/* TODO: until we've created ZifMdComps and ZifMdOther we'll get warnings here */
-			egg_debug ("failed to get local store for %s with %s", zif_md_type_to_text (i), store->priv->id);
+			g_debug ("failed to get local store for %s with %s", zif_md_type_to_text (i), store->priv->id);
 			continue;
 		}
 
@@ -1137,7 +1135,7 @@ zif_store_remote_load_metadata (ZifStoreRemote *store, ZifState *state, GError *
 
 		/* location not set */
 		if (location == NULL) {
-			egg_debug ("no location set for %s with %s", zif_md_type_to_text (i), store->priv->id);
+			g_debug ("no location set for %s with %s", zif_md_type_to_text (i), store->priv->id);
 			continue;
 		}
 
@@ -1185,7 +1183,7 @@ zif_store_file_decompress (const gchar *filename, ZifState *state, GError **erro
 	/* only do for compressed filenames */
 	compressed = zif_file_is_compressed_name (filename);
 	if (!compressed) {
-		egg_debug ("%s not compressed", filename);
+		g_debug ("%s not compressed", filename);
 		goto out;
 	}
 
@@ -1217,7 +1215,7 @@ zif_store_remote_refresh_md (ZifStoreRemote *remote, ZifMd *md, gboolean force, 
 	/* get filename */
 	filename = zif_md_get_location (md);
 	if (filename == NULL) {
-		egg_debug ("no filename set for %s",
+		g_debug ("no filename set for %s",
 			   zif_md_type_to_text (zif_md_get_mdtype (md)));
 		ret = zif_state_finished (state, error);
 		goto out;
@@ -1227,13 +1225,13 @@ zif_store_remote_refresh_md (ZifStoreRemote *remote, ZifMd *md, gboolean force, 
 	state_local = zif_state_get_child (state);
 	repo_verified = zif_md_file_check (md, TRUE, state_local, &error_local);
 	if (!repo_verified) {
-		egg_warning ("failed to verify md: %s", error_local->message);
+		g_warning ("failed to verify md: %s", error_local->message);
 		g_clear_error (&error_local);
 		ret = zif_state_finished (state_local, error);
 		goto out;
 	}
 	if (repo_verified && !force) {
-		egg_debug ("%s is okay, and we're not forcing",
+		g_debug ("%s is okay, and we're not forcing",
 			   zif_md_type_to_text (zif_md_get_mdtype (md)));
 		ret = zif_state_finished (state, error);
 		goto out;
@@ -1360,7 +1358,7 @@ zif_store_remote_refresh (ZifStore *store, gboolean force, ZifState *state, GErr
 		/* get md */
 		md = zif_store_remote_get_md_from_type (remote, i);
 		if (md == NULL) {
-			egg_debug ("failed to get local store for %s", zif_md_type_to_text (i));
+			g_debug ("failed to get local store for %s", zif_md_type_to_text (i));
 		} else {
 			/* refresh this md object */
 			state_loop = zif_state_get_child (state_local);
@@ -1480,7 +1478,7 @@ zif_store_remote_load (ZifStore *store, ZifState *state, GError **error)
 		if (media_root != NULL) {
 			g_ptr_array_add (remote->priv->baseurls, media_root);
 		} else {
-			egg_warning ("cannot find media %s, disabling source", remote->priv->media_id);
+			g_warning ("cannot find media %s, disabling source", remote->priv->media_id);
 			remote->priv->enabled = FALSE;
 		}
 	}
@@ -1614,14 +1612,14 @@ zif_store_remote_clean (ZifStore *store, ZifState *state, GError **error)
 		md = zif_store_remote_get_md_from_type (remote, i);
 		if (md == NULL) {
 			/* TODO: until we've created ZifMdComps and ZifMdOther we'll get warnings here */
-			egg_debug ("failed to get local store for %s with %s", zif_md_type_to_text (i), remote->priv->id);
+			g_debug ("failed to get local store for %s with %s", zif_md_type_to_text (i), remote->priv->id);
 			goto skip;
 		}
 
 		/* location not set */
 		location = zif_md_get_location (md);
 		if (location == NULL) {
-			egg_debug ("no location set for %s with %s", zif_md_type_to_text (i), remote->priv->id);
+			g_debug ("no location set for %s with %s", zif_md_type_to_text (i), remote->priv->id);
 			goto skip;
 		}
 
@@ -1630,7 +1628,7 @@ zif_store_remote_clean (ZifStore *store, ZifState *state, GError **error)
 		if (!ret) {
 			if (error_local->domain == ZIF_MD_ERROR &&
 			    error_local->code == ZIF_MD_ERROR_NO_FILENAME) {
-				egg_warning ("failed to clean as no filename for %s", remote->priv->id);
+				g_warning ("failed to clean as no filename for %s", remote->priv->id);
 				g_clear_error (&error_local);
 				goto skip;
 			}
@@ -1700,7 +1698,7 @@ zif_store_remote_set_from_file (ZifStoreRemote *store, const gchar *repo_filenam
 	}
 
 	/* save */
-	egg_debug ("setting store %s", id);
+	g_debug ("setting store %s", id);
 	store->priv->id = g_strdup (id);
 	store->priv->repo_filename = g_strdup (repo_filename);
 	store->priv->directory = g_build_filename (store->priv->cache_dir, store->priv->id, NULL);
@@ -2193,7 +2191,7 @@ zif_store_remote_search_category (ZifStore *store, gchar **group_id, ZifState *s
 			/* ignore when package isn't present */
 			if (error_local->code == ZIF_STORE_ERROR_FAILED_TO_FIND) {
 				g_clear_error (&error_local);
-				egg_debug ("Failed to find %s installed or in repo %s", name, remote->priv->id);
+				g_debug ("Failed to find %s installed or in repo %s", name, remote->priv->id);
 				ret = zif_state_finished (state_loop, error);
 				if (!ret)
 					goto out;
@@ -2677,7 +2675,7 @@ zif_store_remote_get_updates (ZifStore *store, GPtrArray *packages,
 		package_id = zif_package_get_id (package);
 		split_name = zif_package_id_get_name (package_id);
 		if (split_name == NULL) {
-			egg_warning ("failed to split %s", package_id);
+			g_warning ("failed to split %s", package_id);
 			continue;
 		}
 		resolve_array[i] = split_name;
@@ -2716,7 +2714,7 @@ zif_store_remote_get_updates (ZifStore *store, GPtrArray *packages,
 				package_id_update = zif_package_get_id (update);
 				split = zif_package_id_split (package_id);
 				split_update = zif_package_id_split (package_id_update);
-				egg_debug ("*** update %s from %s to %s",
+				g_debug ("*** update %s from %s to %s",
 					   split[ZIF_PACKAGE_ID_NAME],
 					   split[ZIF_PACKAGE_ID_VERSION],
 					   split_update[ZIF_PACKAGE_ID_VERSION]);
@@ -3106,7 +3104,7 @@ zif_store_remote_file_monitor_cb (ZifMonitor *monitor, ZifStoreRemote *store)
 	store->priv->mirrorlist = NULL;
 	store->priv->metalink = NULL;
 
-	egg_debug ("store file changed");
+	g_debug ("store file changed");
 }
 
 /**
@@ -3226,7 +3224,7 @@ zif_store_remote_init (ZifStoreRemote *store)
 	/* get cache */
 	cache_dir = zif_config_get_string (store->priv->config, "cachedir", &error);
 	if (cache_dir == NULL) {
-		egg_warning ("failed to get cachedir: %s", error->message);
+		g_warning ("failed to get cachedir: %s", error->message);
 		g_error_free (error);
 		goto out;
 	}
@@ -3234,7 +3232,7 @@ zif_store_remote_init (ZifStoreRemote *store)
 	/* expand */
 	store->priv->cache_dir = zif_config_expand_substitutions (store->priv->config, cache_dir, &error);
 	if (store->priv->cache_dir == NULL) {
-		egg_warning ("failed to get expand substitutions: %s", error->message);
+		g_warning ("failed to get expand substitutions: %s", error->message);
 		g_error_free (error);
 		goto out;
 	}

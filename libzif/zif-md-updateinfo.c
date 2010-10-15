@@ -40,8 +40,6 @@
 #include "zif-update-info.h"
 #include "zif-utils.h"
 
-#include "egg-debug.h"
-
 #define ZIF_MD_UPDATEINFO_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_MD_UPDATEINFO, ZifMdUpdateinfoPrivate))
 
 typedef enum {
@@ -115,7 +113,7 @@ zif_md_updateinfo_parser_start_element (GMarkupParseContext *context, const gcha
 
 			/* already exists -- how? */
 			if (updateinfo->priv->update_temp != NULL) {
-				egg_warning ("failed to add %s",
+				g_warning ("failed to add %s",
 					     zif_update_get_id (updateinfo->priv->update_temp));
 				g_object_unref (updateinfo->priv->update_temp);
 			}
@@ -130,14 +128,14 @@ zif_md_updateinfo_parser_start_element (GMarkupParseContext *context, const gcha
 				if (g_strcmp0 (element_name, "type") == 0) {
 					update_kind = zif_update_kind_from_string (attribute_values[i]);
 					if (update_kind == ZIF_UPDATE_KIND_UNKNOWN)
-						egg_warning ("failed to match update kind from: %s", attribute_values[i]);
+						g_warning ("failed to match update kind from: %s", attribute_values[i]);
 					zif_update_set_kind (updateinfo->priv->update_temp, update_kind);
 				}
 			}
 			goto out;
 		}
 
-		egg_warning ("unhandled element: %s", element_name);
+		g_warning ("unhandled element: %s", element_name);
 
 		goto out;
 	}
@@ -183,7 +181,7 @@ zif_md_updateinfo_parser_start_element (GMarkupParseContext *context, const gcha
 				updateinfo->priv->section_group = ZIF_MD_UPDATEINFO_SECTION_UPDATE_PKGLIST;
 				goto out;
 			}
-			egg_warning ("unhandled update base tag: %s", element_name);
+			g_warning ("unhandled update base tag: %s", element_name);
 			goto out;
 
 		} else if (updateinfo->priv->section_group == ZIF_MD_UPDATEINFO_SECTION_UPDATE_REFERENCES) {
@@ -191,7 +189,7 @@ zif_md_updateinfo_parser_start_element (GMarkupParseContext *context, const gcha
 
 				/* already exists -- how? */
 				if (updateinfo->priv->update_info_temp != NULL) {
-					egg_warning ("failed to add %s",
+					g_warning ("failed to add %s",
 						     zif_update_info_get_title (updateinfo->priv->update_info_temp));
 					g_object_unref (updateinfo->priv->update_info_temp);
 				}
@@ -216,7 +214,7 @@ zif_md_updateinfo_parser_start_element (GMarkupParseContext *context, const gcha
 				goto out;
 			}
 
-			egg_warning ("unhandled references tag: %s", element_name);
+			g_warning ("unhandled references tag: %s", element_name);
 			goto out;
 
 		} else if (updateinfo->priv->section_group == ZIF_MD_UPDATEINFO_SECTION_UPDATE_PKGLIST) {
@@ -243,7 +241,7 @@ zif_md_updateinfo_parser_start_element (GMarkupParseContext *context, const gcha
 
 				/* already exists -- how? */
 				if (updateinfo->priv->package_temp != NULL) {
-					egg_warning ("failed to add %s",
+					g_warning ("failed to add %s",
 						     zif_package_get_id (updateinfo->priv->package_temp));
 					g_object_unref (updateinfo->priv->package_temp);
 				}
@@ -270,7 +268,7 @@ zif_md_updateinfo_parser_start_element (GMarkupParseContext *context, const gcha
 				package_id = zif_package_id_from_nevra (name, epoch, version, release, arch, data);
 				ret = zif_package_set_id (updateinfo->priv->package_temp, package_id, &error_local);
 				if (!ret) {
-					egg_warning ("failed to set %s: %s", package_id, error_local->message);
+					g_warning ("failed to set %s: %s", package_id, error_local->message);
 					g_error_free (error_local);
 					goto out;
 				}
@@ -280,13 +278,13 @@ zif_md_updateinfo_parser_start_element (GMarkupParseContext *context, const gcha
 				goto out;
 			}
 
-			egg_warning ("unexpected pklist tag: %s", element_name);
+			g_warning ("unexpected pklist tag: %s", element_name);
 		}
 
-		egg_warning ("unexpected update tag: %s", element_name);
+		g_warning ("unexpected update tag: %s", element_name);
 	}
 
-	egg_warning ("unhandled base tag: %s", element_name);
+	g_warning ("unhandled base tag: %s", element_name);
 
 out:
 	g_free (package_id);
@@ -309,7 +307,7 @@ zif_md_updateinfo_parser_end_element (GMarkupParseContext *context, const gchar 
 		if (g_strcmp0 (element_name, "updates") == 0)
 			goto out;
 
-		egg_warning ("unhandled base end tag: %s", element_name);
+		g_warning ("unhandled base end tag: %s", element_name);
 	}
 
 	/* update element */
@@ -342,7 +340,7 @@ zif_md_updateinfo_parser_end_element (GMarkupParseContext *context, const gchar 
 				updateinfo->priv->section_group = ZIF_MD_UPDATEINFO_SECTION_UPDATE_UNKNOWN;
 				goto out;
 			}
-			egg_warning ("unhandled reboot_suggested end tag: %s", element_name);
+			g_warning ("unhandled reboot_suggested end tag: %s", element_name);
 			goto out;
 		}
 
@@ -360,7 +358,7 @@ zif_md_updateinfo_parser_end_element (GMarkupParseContext *context, const gchar 
 				updateinfo->priv->update_info_temp = NULL;
 				goto out;
 			}
-			egg_warning ("unhandled references end tag: %s", element_name);
+			g_warning ("unhandled references end tag: %s", element_name);
 			goto out;
 		}
 
@@ -389,14 +387,14 @@ zif_md_updateinfo_parser_end_element (GMarkupParseContext *context, const gchar 
 				goto out;
 			}
 
-			egg_warning ("unhandled pkglist end tag: %s", element_name);
+			g_warning ("unhandled pkglist end tag: %s", element_name);
 		}
 
-		egg_warning ("unhandled update end tag: %s", element_name);
+		g_warning ("unhandled update end tag: %s", element_name);
 		goto out;
 	}
 
-	egg_warning ("unhandled end tag: %s", element_name);
+	g_warning ("unhandled end tag: %s", element_name);
 out:
 	return;
 }
@@ -482,7 +480,7 @@ zif_md_updateinfo_load (ZifMd *md, ZifState *state, GError **error)
 	}
 
 	/* open database */
-	egg_debug ("filename = %s", filename);
+	g_debug ("filename = %s", filename);
 
 	/* get repo contents */
 	zif_state_set_allow_cancel (state, FALSE);

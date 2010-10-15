@@ -39,8 +39,6 @@
 #include "zif-utils.h"
 #include "zif-monitor.h"
 
-#include "egg-debug.h"
-
 #define ZIF_MONITOR_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_MONITOR, ZifMonitorPrivate))
 
 /**
@@ -86,7 +84,7 @@ zif_monitor_file_monitor_cb (GFileMonitor *file_monitor, GFile *file, GFile *oth
 {
 	gchar *filename;
 	filename = g_file_get_path (file);
-	egg_debug ("file changed: %s", filename);
+	g_debug ("file changed: %s", filename);
 	g_signal_emit (monitor, signals [ZIF_MONITOR_SIGNAL_CHANGED], 0);
 	g_free (filename);
 }

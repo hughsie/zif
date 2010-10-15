@@ -38,8 +38,6 @@
 #include "zif-md-comps.h"
 #include "zif-category.h"
 
-#include "egg-debug.h"
-
 #define ZIF_MD_COMPS_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_MD_COMPS, ZifMdCompsPrivate))
 
 typedef enum {
@@ -277,7 +275,7 @@ zif_md_comps_parser_end_element (GMarkupParseContext *context, const gchar *elem
 		g_ptr_array_add (comps->priv->array_groups, comps->priv->group_data_temp);
 
 		if (FALSE)
-		egg_debug ("added GROUP '%s' name:%s, desc:%s, visible:%i, list=%p",
+		g_debug ("added GROUP '%s' name:%s, desc:%s, visible:%i, list=%p",
 			   comps->priv->group_data_temp->id,
 			   comps->priv->group_data_temp->name,
 			   comps->priv->group_data_temp->description,
@@ -296,7 +294,7 @@ zif_md_comps_parser_end_element (GMarkupParseContext *context, const gchar *elem
 		g_ptr_array_add (comps->priv->array_categories, comps->priv->category_data_temp);
 
 		if (FALSE)
-		egg_debug ("added CATEGORY '%s' name:%s, desc:%s, list=%p",
+		g_debug ("added CATEGORY '%s' name:%s, desc:%s, list=%p",
 			   comps->priv->category_data_temp->id,
 			   comps->priv->category_data_temp->name,
 			   comps->priv->category_data_temp->description,
@@ -439,7 +437,7 @@ zif_md_comps_load (ZifMd *md, ZifState *state, GError **error)
 	}
 
 	/* open database */
-	egg_debug ("filename = %s", filename);
+	g_debug ("filename = %s", filename);
 
 	/* get repo contents */
 	zif_state_set_allow_cancel (state, FALSE);

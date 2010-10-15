@@ -84,8 +84,6 @@
 #include "zif-utils.h"
 #include "zif-state.h"
 
-#include "egg-debug.h"
-
 #define ZIF_STATE_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_STATE, ZifStatePrivate))
 
 struct _ZifStatePrivate
@@ -120,7 +118,6 @@ enum {
 static guint signals [SIGNAL_LAST] = { 0 };
 
 G_DEFINE_TYPE (ZifState, zif_state, G_TYPE_OBJECT)
-
 
 /**
  * zif_state_error_quark:
@@ -184,7 +181,6 @@ out:
 	return ret;
 }
 
-
 /**
  * zif_state_discrete_to_percent:
  * @discrete: The discrete level
@@ -201,7 +197,7 @@ zif_state_discrete_to_percent (guint discrete, guint steps)
 	if (discrete > steps)
 		return 100;
 	if (steps == 0) {
-		egg_warning ("steps is 0!");
+		g_warning ("steps is 0!");
 		return 0;
 	}
 	return ((gfloat) discrete * (100.0f / (gfloat) (steps)));
@@ -322,13 +318,13 @@ zif_state_set_percentage (ZifState *state, guint percentage)
 
 	/* is it less */
 	if (percentage < state->priv->last_percentage) {
-		egg_warning ("percentage cannot go down from %i to %i on %p!", state->priv->last_percentage, percentage, state);
+		g_warning ("percentage cannot go down from %i to %i on %p!", state->priv->last_percentage, percentage, state);
 		return FALSE;
 	}
 
 	/* we're done, so we're not preventing cancellation anymore */
 	if (percentage == 100 && !state->priv->allow_cancel) {
-		egg_debug ("done, so allow cancel 1 for %p", state);
+		g_debug ("done, so allow cancel 1 for %p", state);
 		zif_state_set_allow_cancel (state, TRUE);
 	}
 
@@ -395,7 +391,7 @@ zif_state_child_percentage_changed_cb (ZifState *child, guint percentage, ZifSta
 
 	/* did we call done on a state that did not have a size set? */
 	if (state->priv->steps == 0) {
-		egg_warning ("done on a state %p that did not have a size set!", state);
+		g_warning ("done on a state %p that did not have a size set!", state);
 		return;
 	}
 
@@ -404,7 +400,7 @@ zif_state_child_percentage_changed_cb (ZifState *child, guint percentage, ZifSta
 
 	/* already at >= 100% */
 	if (state->priv->current >= state->priv->steps) {
-		egg_warning ("already at %i/%i steps on %p", state->priv->current, state->priv->steps, state);
+		g_warning ("already at %i/%i steps on %p", state->priv->current, state->priv->steps, state);
 		return;
 	}
 
@@ -414,7 +410,7 @@ zif_state_child_percentage_changed_cb (ZifState *child, guint percentage, ZifSta
 	/* get the range between the parent step and the next parent step */
 	range = zif_state_discrete_to_percent (state->priv->current+1, state->priv->steps) - offset;
 	if (range < 0.01) {
-		egg_warning ("range=%f (from %i to %i), should be impossible", range, state->priv->current+1, state->priv->steps);
+		g_warning ("range=%f (from %i to %i), should be impossible", range, state->priv->current+1, state->priv->steps);
 		return;
 	}
 
@@ -584,7 +580,7 @@ zif_state_set_number_steps_real (ZifState *state, guint steps, const gchar *strl
 
 	/* did we call done on a state that did not have a size set? */
 	if (state->priv->steps != 0) {
-		egg_warning ("steps already set to %i, can't set %i! [%s]",
+		g_warning ("steps already set to %i, can't set %i! [%s]",
 			     state->priv->steps, steps, strloc);
 		zif_state_print_parent_chain (state, 0);
 		return FALSE;
@@ -654,7 +650,7 @@ zif_state_done_real (ZifState *state, GError **error, const gchar *strloc)
 		if (!state->priv->allow_cancel_changed_state && state->priv->current > 0) {
 			elapsed = g_timer_elapsed (state->priv->timer, NULL);
 			if (elapsed > 0.1f) {
-				egg_warning ("%.1fms between zif_state_done() and no zif_state_set_allow_cancel()", elapsed * 1000);
+				g_warning ("%.1fms between zif_state_done() and no zif_state_set_allow_cancel()", elapsed * 1000);
 				zif_state_print_parent_chain (state, 0);
 			}
 		}

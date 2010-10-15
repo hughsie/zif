@@ -34,8 +34,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "egg-debug.h"
-
 #include "zif-depend.h"
 #include "zif-utils.h"
 #include "zif-config.h"
@@ -206,7 +204,7 @@ zif_package_array_filter_newest (GPtrArray *packages)
 
 		/* the new package is older */
 		if (zif_package_compare (package, package_tmp) < 0) {
-			egg_debug ("%s is older than %s, so ignoring it",
+			g_debug ("%s is older than %s, so ignoring it",
 				   zif_package_get_id (package), zif_package_get_id (package_tmp));
 			g_ptr_array_remove_index_fast (packages, i);
 			ret = TRUE;
@@ -214,8 +212,8 @@ zif_package_array_filter_newest (GPtrArray *packages)
 		}
 
 		ret = TRUE;
-		egg_debug ("removing %s", zif_package_get_id (package_tmp));
-		egg_debug ("adding %s", zif_package_get_id (package));
+		g_debug ("removing %s", zif_package_get_id (package_tmp));
+		g_debug ("adding %s", zif_package_get_id (package));
 
 		/* remove the old one */
 		g_hash_table_remove (hash, zif_package_get_name (package_tmp));
@@ -617,7 +615,7 @@ zif_package_is_free (ZifPackage *package)
 				 zif_string_get_value (package->priv->license),
 				 &is_free, &error);
 	if (!ret) {
-		egg_warning ("failed to get free status: %s", error->message);
+		g_warning ("failed to get free status: %s", error->message);
 		g_error_free (error);
 		goto out;
 	}

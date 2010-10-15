@@ -27,8 +27,6 @@
 #include <unistd.h>
 #include <sys/types.h>
 
-#include "egg-debug.h"
-
 #include "zif-progress-bar.h"
 
 #define ZIF_MAIN_LOCKING_RETRIES	10
@@ -587,7 +585,7 @@ static void
 zif_main_sigint_cb (int sig)
 {
 	GCancellable *cancellable;
-	egg_debug ("Handling SIGINT");
+	g_debug ("Handling SIGINT");
 
 	/* restore default ASAP, as the cancels might hang */
 	signal (SIGINT, SIG_DFL);
@@ -623,6 +621,47 @@ zif_strpad (const gchar *data, guint length)
 	text = g_strdup_printf ("%s%s", data, padding);
 	g_free (padding);
 	return text;
+}
+
+/**
+ * zif_log_ignore_cb:
+ **/
+static void
+zif_log_ignore_cb (const gchar *log_domain, GLogLevelFlags log_level,
+		   const gchar *message, gpointer user_data)
+{
+}
+
+/**
+ * zif_log_handler_cb:
+ **/
+static void
+zif_log_handler_cb (const gchar *log_domain, GLogLevelFlags log_level,
+		    const gchar *message, gpointer user_data)
+{
+	gchar str_time[255];
+	time_t the_time;
+
+	/* not us */
+	if (g_strcmp0 (log_domain, "Zif") != 0) {
+		g_log_default_handler (log_domain, log_level, message, user_data);
+		g_error ("%s", log_domain);
+		return;
+	}
+
+	/* header always in green */
+	time (&the_time);
+	strftime (str_time, 254, "%H:%M:%S", localtime (&the_time));
+	g_print ("%c[%dmTI:%s\t", 0x1B, 32, str_time);
+
+	/* all warnings are fatal */
+	if (log_level != G_LOG_LEVEL_DEBUG) {
+		g_print ("%c[%dm%s\n%c[%dm", 0x1B, 31, message, 0x1B, 0);
+		exit (1);
+	}
+
+	/* debug in blue */
+	g_print ("%c[%dm%s\n%c[%dm", 0x1B, 34, message, 0x1B, 0);
 }
 
 /**
@@ -724,7 +763,17 @@ main (int argc, char *argv[])
 	signal (SIGINT, zif_main_sigint_cb);
 
 	/* verbose? */
-	egg_debug_init (verbose);
+	if (verbose) {
+		g_log_set_handler ("Zif", G_LOG_LEVEL_ERROR |
+					  G_LOG_LEVEL_CRITICAL |
+					  G_LOG_LEVEL_DEBUG |
+					  G_LOG_LEVEL_WARNING,
+				   zif_log_handler_cb, NULL);
+	} else {
+		/* hide all debugging */
+		g_log_set_handler ("Zif", G_LOG_LEVEL_DEBUG,
+				   zif_log_ignore_cb, NULL);
+	}
 
 	/* fallback */
 	if (config_file == NULL)
@@ -736,7 +785,7 @@ main (int argc, char *argv[])
 	config = zif_config_new ();
 	ret = zif_config_set_filename (config, config_file, &error);
 	if (!ret) {
-		egg_error ("failed to set config: %s", error->message);
+		g_error ("failed to set config: %s", error->message);
 		g_error_free (error);
 		goto out;
 	}
@@ -767,7 +816,7 @@ main (int argc, char *argv[])
 			break;
 		g_print ("Failed to lock on try %i of %i, already locked by PID %i (sleeping for %i seconds)\n",
 			 i+1, ZIF_MAIN_LOCKING_RETRIES, pid, ZIF_MAIN_LOCKING_DELAY);
-		egg_debug ("failed to lock: %s", error->message);
+		g_debug ("failed to lock: %s", error->message);
 		g_clear_error (&error);
 		g_usleep (ZIF_MAIN_LOCKING_DELAY * G_USEC_PER_SEC);
 	}
@@ -780,7 +829,7 @@ main (int argc, char *argv[])
 	download = zif_download_new ();
 	ret = zif_download_set_proxy (download, http_proxy, &error);
 	if (!ret) {
-		egg_error ("failed to set proxy: %s", error->message);
+		g_error ("failed to set proxy: %s", error->message);
 		g_error_free (error);
 		goto out;
 	}
@@ -789,7 +838,7 @@ main (int argc, char *argv[])
 	store_local = zif_store_local_new ();
 	ret = zif_store_local_set_prefix (store_local, root, &error);
 	if (!ret) {
-		egg_error ("failed to set prefix: %s", error->message);
+		g_error ("failed to set prefix: %s", error->message);
 		g_error_free (error);
 		goto out;
 	}
@@ -798,13 +847,13 @@ main (int argc, char *argv[])
 	repos = zif_repos_new ();
 	repos_dir = zif_config_get_string (config, "reposdir", &error);
 	if (repos_dir == NULL) {
-		egg_error ("failed to get repos dir: %s", error->message);
+		g_error ("failed to get repos dir: %s", error->message);
 		g_error_free (error);
 		goto out;
 	}
 	ret = zif_repos_set_repos_dir (repos, repos_dir, &error);
 	if (!ret) {
-		egg_error ("failed to set repos dir: %s", error->message);
+		g_error ("failed to set repos dir: %s", error->message);
 		g_error_free (error);
 		goto out;
 	}
@@ -813,7 +862,7 @@ main (int argc, char *argv[])
 	groups = zif_groups_new ();
 	ret = zif_groups_set_mapping_file (groups, "/usr/share/PackageKit/helpers/yum/yum-comps-groups.conf", &error);
 	if (!ret) {
-		egg_error ("failed to set mapping file: %s", error->message);
+		g_error ("failed to set mapping file: %s", error->message);
 		g_error_free (error);
 		goto out;
 	}
@@ -853,7 +902,7 @@ main (int argc, char *argv[])
 			g_error_free (error);
 			goto out;
 		}
-		egg_debug ("searching with %i packages", packages->len);
+		g_debug ("searching with %i packages", packages->len);
 
 		/* this section done */
 		ret = zif_state_done (state, &error);
@@ -1389,7 +1438,7 @@ main (int argc, char *argv[])
 		package = ZIF_PACKAGE (zif_package_local_new ());
 		ret = zif_package_local_set_from_filename (ZIF_PACKAGE_LOCAL (package), value, &error);
 		if (!ret)
-			egg_error ("failed: %s", error->message);
+			g_error ("failed: %s", error->message);
 		zif_package_print (package);
 		g_object_unref (package);
 
@@ -1501,7 +1550,6 @@ main (int argc, char *argv[])
 			g_print ("specify a repo name\n");
 			goto out;
 		}
-
 
 		pk_progress_bar_start (progressbar, "Disabling repo");
 
@@ -2044,7 +2092,7 @@ out:
 		GError *error_local = NULL;
 		ret = zif_lock_set_unlocked (lock, &error_local);
 		if (!ret) {
-			egg_warning ("failed to unlock: %s", error_local->message);
+			g_warning ("failed to unlock: %s", error_local->message);
 			g_error_free (error_local);
 		}
 		g_object_unref (lock);

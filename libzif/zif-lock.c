@@ -38,8 +38,6 @@
 #include "zif-lock.h"
 #include "zif-config.h"
 
-#include "egg-debug.h"
-
 #define ZIF_LOCK_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_LOCK, ZifLockPrivate))
 
 /**

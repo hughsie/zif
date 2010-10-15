@@ -39,8 +39,6 @@
 #include "zif-delta.h"
 #include "zif-utils.h"
 
-#include "egg-debug.h"
-
 #define ZIF_MD_DELTA_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_MD_DELTA, ZifMdDeltaPrivate))
 
 typedef enum {
@@ -130,7 +128,7 @@ zif_md_delta_parser_start_element (GMarkupParseContext *context, const gchar *el
 			/* use this as the key for the hash table */
 			package_id = zif_package_id_from_nevra (name, epoch, version, release, arch,
 								zif_md_get_id (ZIF_MD(delta)));
-			egg_debug ("adding update package_id=%s", package_id);
+			g_debug ("adding update package_id=%s", package_id);
 
 			/* we carry this around so we can add deltas to it */
 			delta->priv->array_temp = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
@@ -142,7 +140,7 @@ zif_md_delta_parser_start_element (GMarkupParseContext *context, const gchar *el
 			goto out;
 		}
 
-		egg_warning ("unhandled element: %s", element_name);
+		g_warning ("unhandled element: %s", element_name);
 		goto out;
 	}
 
@@ -169,12 +167,12 @@ zif_md_delta_parser_start_element (GMarkupParseContext *context, const gchar *el
 									zif_md_get_id (ZIF_MD(delta)));
 				zif_delta_set_id (delta->priv->delta_temp, package_id);
 				g_ptr_array_add (delta->priv->array_temp, delta->priv->delta_temp);
-				egg_debug ("adding delta package_id=%s", package_id);
+				g_debug ("adding delta package_id=%s", package_id);
 
 				goto out;
 			}
 
-			egg_warning ("unhandled newpackage-unknown base tag: %s", element_name);
+			g_warning ("unhandled newpackage-unknown base tag: %s", element_name);
 			goto out;
 		}
 
@@ -195,14 +193,14 @@ zif_md_delta_parser_start_element (GMarkupParseContext *context, const gchar *el
 				delta->priv->section_newpackage_delta = ZIF_MD_DELTA_XML_NEWPACKAGE_DELTA_CHECKSUM;
 				goto out;
 			}
-			egg_warning ("unhandled newpackage-delta base tag: %s", element_name);
+			g_warning ("unhandled newpackage-delta base tag: %s", element_name);
 			goto out;
 		}
-		egg_warning ("unexpected delta tag: %s", element_name);
+		g_warning ("unexpected delta tag: %s", element_name);
 		goto out;
 	}
 
-	egg_warning ("unhandled base tag: %s", element_name);
+	g_warning ("unhandled base tag: %s", element_name);
 
 out:
 	g_free (package_id);
@@ -225,7 +223,7 @@ zif_md_delta_parser_end_element (GMarkupParseContext *context, const gchar *elem
 		if (g_strcmp0 (element_name, "prestodelta") == 0)
 			goto out;
 
-		egg_warning ("unhandled base end tag: %s", element_name);
+		g_warning ("unhandled base end tag: %s", element_name);
 		goto out;
 	}
 
@@ -243,7 +241,7 @@ zif_md_delta_parser_end_element (GMarkupParseContext *context, const gchar *elem
 				goto out;
 			}
 
-			egg_warning ("unhandled newpackage-unknown end tag: %s", element_name);
+			g_warning ("unhandled newpackage-unknown end tag: %s", element_name);
 			goto out;
 		}
 
@@ -257,7 +255,7 @@ zif_md_delta_parser_end_element (GMarkupParseContext *context, const gchar *elem
 					delta->priv->delta_temp = NULL;
 					goto out;
 				}
-				egg_warning ("unhandled newpackage-delta-unknown end tag: %s", element_name);
+				g_warning ("unhandled newpackage-delta-unknown end tag: %s", element_name);
 				goto out;
 			}
 
@@ -268,7 +266,7 @@ zif_md_delta_parser_end_element (GMarkupParseContext *context, const gchar *elem
 					delta->priv->section_newpackage_delta = ZIF_MD_DELTA_XML_NEWPACKAGE_DELTA_UNKNOWN;
 					goto out;
 				}
-				egg_warning ("unhandled newpackage-delta-filename end tag: %s", element_name);
+				g_warning ("unhandled newpackage-delta-filename end tag: %s", element_name);
 				goto out;
 			}
 
@@ -279,7 +277,7 @@ zif_md_delta_parser_end_element (GMarkupParseContext *context, const gchar *elem
 					delta->priv->section_newpackage_delta = ZIF_MD_DELTA_XML_NEWPACKAGE_DELTA_UNKNOWN;
 					goto out;
 				}
-				egg_warning ("unhandled newpackage-delta-checksum end tag: %s", element_name);
+				g_warning ("unhandled newpackage-delta-checksum end tag: %s", element_name);
 				goto out;
 			}
 
@@ -290,7 +288,7 @@ zif_md_delta_parser_end_element (GMarkupParseContext *context, const gchar *elem
 					delta->priv->section_newpackage_delta = ZIF_MD_DELTA_XML_NEWPACKAGE_DELTA_UNKNOWN;
 					goto out;
 				}
-				egg_warning ("unhandled newpackage-delta-sequence end tag: %s", element_name);
+				g_warning ("unhandled newpackage-delta-sequence end tag: %s", element_name);
 				goto out;
 			}
 
@@ -301,19 +299,19 @@ zif_md_delta_parser_end_element (GMarkupParseContext *context, const gchar *elem
 					delta->priv->section_newpackage_delta = ZIF_MD_DELTA_XML_NEWPACKAGE_DELTA_UNKNOWN;
 					goto out;
 				}
-				egg_warning ("unhandled newpackage-delta-size end tag: %s", element_name);
+				g_warning ("unhandled newpackage-delta-size end tag: %s", element_name);
 				goto out;
 			}
 
-			egg_warning ("unhandled newpackage-delta end tag: %s", element_name);
+			g_warning ("unhandled newpackage-delta end tag: %s", element_name);
 			goto out;
 		}
 
-		egg_warning ("unhandled delta end tag: %s", element_name);
+		g_warning ("unhandled delta end tag: %s", element_name);
 		goto out;
 	}
 
-	egg_warning ("unhandled end tag: %s", element_name);
+	g_warning ("unhandled end tag: %s", element_name);
 out:
 	return;
 }
@@ -351,10 +349,10 @@ zif_md_delta_parser_text (GMarkupParseContext *context, const gchar *text, gsize
 				zif_delta_set_size (delta->priv->delta_temp, atoi (text));
 				goto out;
 			}
-			egg_warning ("unhandled newpackage-delta text tag: %s", text);
+			g_warning ("unhandled newpackage-delta text tag: %s", text);
 			goto out;
 		}
-		egg_warning ("unhandled newpackage text tag: %s", text);
+		g_warning ("unhandled newpackage text tag: %s", text);
 		goto out;
 	}
 out:
@@ -406,7 +404,7 @@ zif_md_delta_load (ZifMd *md, ZifState *state, GError **error)
 	}
 
 	/* open database */
-	egg_debug ("filename = %s", filename);
+	g_debug ("filename = %s", filename);
 
 	/* get repo contents */
 	zif_state_set_allow_cancel (state, FALSE);

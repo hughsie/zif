@@ -46,8 +46,6 @@
 #include "zif-repos.h"
 #include "zif-category.h"
 
-#include "egg-debug.h"
-
 typedef enum {
 	ZIF_ROLE_GET_PACKAGES,
 	ZIF_ROLE_GET_UPDATES,
@@ -447,7 +445,7 @@ zif_store_array_clean (GPtrArray *store_array,
 
 	/* nothing to do */
 	if (store_array->len == 0) {
-		egg_debug ("nothing to do");
+		g_debug ("nothing to do");
 		goto out;
 	}
 
@@ -512,7 +510,7 @@ zif_store_array_refresh (GPtrArray *store_array, gboolean force,
 
 	/* nothing to do */
 	if (store_array->len == 0) {
-		egg_debug ("nothing to do");
+		g_debug ("nothing to do");
 		goto out;
 	}
 

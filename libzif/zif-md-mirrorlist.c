@@ -38,8 +38,6 @@
 #include "zif-md-mirrorlist.h"
 #include "zif-config.h"
 
-#include "egg-debug.h"
-
 #define ZIF_MD_MIRRORLIST_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_MD_MIRRORLIST, ZifMdMirrorlistPrivate))
 
 /**
@@ -94,7 +92,7 @@ zif_md_mirrorlist_load (ZifMd *md, ZifState *state, GError **error)
 	}
 
 	/* open database */
-	egg_debug ("filename = %s", filename);
+	g_debug ("filename = %s", filename);
 
 	/* get repo contents */
 	zif_state_set_allow_cancel (state, FALSE);

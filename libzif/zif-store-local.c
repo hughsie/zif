@@ -48,8 +48,6 @@
 #include "zif-lock.h"
 #include "zif-utils.h"
 
-#include "egg-debug.h"
-
 #define ZIF_STORE_LOCAL_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_STORE_LOCAL, ZifStoreLocalPrivate))
 
 struct _ZifStoreLocalPrivate
@@ -62,7 +60,6 @@ struct _ZifStoreLocalPrivate
 	ZifLock			*lock;
 	guint			 monitor_changed_id;
 };
-
 
 G_DEFINE_TYPE (ZifStoreLocal, zif_store_local, ZIF_TYPE_STORE)
 static gpointer zif_store_local_object = NULL;
@@ -104,7 +101,7 @@ zif_store_local_set_prefix (ZifStoreLocal *store, const gchar *prefix, GError **
 
 	/* empty cache */
 	if (store->priv->loaded) {
-		egg_debug ("abandoning cache");
+		g_debug ("abandoning cache");
 		g_ptr_array_set_size (store->priv->packages, 0);
 		store->priv->loaded = FALSE;
 	}
@@ -178,7 +175,7 @@ zif_store_local_load (ZifStore *store, ZifState *state, GError **error)
 	/* get list */
 	mi = rpmdbInitIterator (db, RPMDBI_PACKAGES, NULL, 0);
 	if (mi == NULL)
-		egg_warning ("failed to get iterator");
+		g_warning ("failed to get iterator");
 	do {
 		header = rpmdbNextIterator (mi);
 		if (header == NULL)
@@ -354,7 +351,7 @@ zif_store_local_search_category (ZifStore *store, gchar **search, ZifState *stat
 
 	/* check we have packages */
 	if (local->priv->packages->len == 0) {
-		egg_warning ("no packages in sack, so nothing to do!");
+		g_warning ("no packages in sack, so nothing to do!");
 		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_ARRAY_IS_EMPTY,
 				     "no packages in local sack");
 		goto out;
@@ -445,7 +442,7 @@ zif_store_local_search_details (ZifStore *store, gchar **search, ZifState *state
 
 	/* check we have packages */
 	if (local->priv->packages->len == 0) {
-		egg_warning ("no packages in sack, so nothing to do!");
+		g_warning ("no packages in sack, so nothing to do!");
 		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_ARRAY_IS_EMPTY,
 				     "no packages in local sack");
 		goto out;
@@ -540,7 +537,7 @@ zif_store_local_search_group (ZifStore *store, gchar **search, ZifState *state, 
 
 	/* check we have packages */
 	if (local->priv->packages->len == 0) {
-		egg_warning ("no packages in sack, so nothing to do!");
+		g_warning ("no packages in sack, so nothing to do!");
 		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_ARRAY_IS_EMPTY,
 				     "no packages in local sack");
 		goto out;
@@ -630,7 +627,7 @@ zif_store_local_search_file (ZifStore *store, gchar **search, ZifState *state, G
 
 	/* check we have packages */
 	if (local->priv->packages->len == 0) {
-		egg_warning ("no packages in sack, so nothing to do!");
+		g_warning ("no packages in sack, so nothing to do!");
 		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_ARRAY_IS_EMPTY,
 				     "no packages in local sack");
 		goto out;
@@ -731,7 +728,7 @@ zif_store_local_resolve (ZifStore *store, gchar **search, ZifState *state, GErro
 
 	/* check we have packages */
 	if (local->priv->packages->len == 0) {
-		egg_warning ("no packages in sack, so nothing to do!");
+		g_warning ("no packages in sack, so nothing to do!");
 		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_ARRAY_IS_EMPTY,
 				     "no packages in local sack");
 		goto out;
@@ -823,7 +820,7 @@ zif_store_local_what_provides (ZifStore *store, gchar **search, ZifState *state,
 
 	/* check we have packages */
 	if (local->priv->packages->len == 0) {
-		egg_warning ("no packages in sack, so nothing to do!");
+		g_warning ("no packages in sack, so nothing to do!");
 		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_ARRAY_IS_EMPTY,
 				     "no packages in local sack");
 		goto out;
@@ -912,7 +909,7 @@ zif_store_local_get_packages (ZifStore *store, ZifState *state, GError **error)
 
 	/* check we have packages */
 	if (local->priv->packages->len == 0) {
-		egg_warning ("no packages in sack, so nothing to do!");
+		g_warning ("no packages in sack, so nothing to do!");
 		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_ARRAY_IS_EMPTY,
 				     "no packages in local sack");
 		goto out;
@@ -993,7 +990,7 @@ zif_store_local_find_package (ZifStore *store, const gchar *package_id, ZifState
 
 	/* check we have packages */
 	if (local->priv->packages->len == 0) {
-		egg_warning ("no packages in sack, so nothing to do!");
+		g_warning ("no packages in sack, so nothing to do!");
 		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_ARRAY_IS_EMPTY,
 				     "no packages in local sack");
 		goto out;
@@ -1085,7 +1082,7 @@ zif_store_local_file_monitor_cb (ZifMonitor *monitor, ZifStoreLocal *store)
 
 	g_ptr_array_set_size (store->priv->packages, 0);
 
-	egg_debug ("rpmdb changed");
+	g_debug ("rpmdb changed");
 }
 
 /**

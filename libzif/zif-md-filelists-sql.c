@@ -41,8 +41,6 @@
 #include "zif-md-filelists-sql.h"
 #include "zif-package-remote.h"
 
-#include "egg-debug.h"
-
 #define ZIF_MD_FILELISTS_SQL_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_MD_FILELISTS_SQL, ZifMdFilelistsSqlPrivate))
 
 /**
@@ -99,10 +97,10 @@ zif_md_filelists_sql_load (ZifMd *md, ZifState *state, GError **error)
 
 	/* open database */
 	zif_state_set_allow_cancel (state, FALSE);
-	egg_debug ("filename = %s", filename);
+	g_debug ("filename = %s", filename);
 	rc = sqlite3_open (filename, &filelists->priv->db);
 	if (rc != 0) {
-		egg_warning ("Can't open database: %s\n", sqlite3_errmsg (filelists->priv->db));
+		g_warning ("Can't open database: %s\n", sqlite3_errmsg (filelists->priv->db));
 		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_BAD_SQL,
 			     "can't open database: %s", sqlite3_errmsg (filelists->priv->db));
 		goto out;
@@ -148,7 +146,7 @@ zif_md_filelists_sql_sqlite_get_pkgkey_cb (void *data, gint argc, gchar **argv, 
 
 	/* either is undereferencable */
 	if (filenames_r == NULL || id_r == NULL) {
-		egg_warning ("no file data");
+		g_warning ("no file data");
 		goto out;
 	}
 
@@ -157,7 +155,7 @@ zif_md_filelists_sql_sqlite_get_pkgkey_cb (void *data, gint argc, gchar **argv, 
 	for (i=0; filenames[i] != NULL ;i++) {
 		/* do we match */
 		if (g_strcmp0 (fldata->filename, filenames[i]) == 0) {
-			egg_debug ("found %s for %s", filenames[i], *id_r);
+			g_debug ("found %s for %s", filenames[i], *id_r);
 			g_ptr_array_add (fldata->array, GUINT_TO_POINTER (atoi (*id_r)));
 		}
 	}
@@ -187,7 +185,7 @@ zif_md_filelists_sql_sqlite_get_files_cb (void *data, gint argc, gchar **argv, g
 
 	/* check for invalid entries */
 	if (filename == NULL || dirname == NULL) {
-		egg_warning ("failed on %p, %p", filename, dirname);
+		g_warning ("failed on %p, %p", filename, dirname);
 		return 0;
 	}
 
@@ -300,7 +298,7 @@ zif_md_filelists_sql_search_file (ZifMd *md, gchar **search,
 	/* split the search term into directory and filename */
 	dirname = g_path_get_dirname (search[0]);
 	filename = g_path_get_basename (search[0]);
-	egg_debug ("dirname=%s, filename=%s", dirname, filename);
+	g_debug ("dirname=%s, filename=%s", dirname, filename);
 
 	/* create data struct we can pass to the callback */
 	data = g_new0 (ZifMdFilelistsSqlData, 1);

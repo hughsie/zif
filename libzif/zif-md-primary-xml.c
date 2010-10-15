@@ -66,8 +66,6 @@ typedef enum {
 #include "zif-md-primary-xml.h"
 #include "zif-package-remote.h"
 
-#include "egg-debug.h"
-
 #define ZIF_MD_PRIMARY_XML_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_MD_PRIMARY_XML, ZifMdPrimaryXmlPrivate))
 
 /**
@@ -101,7 +99,6 @@ zif_md_primary_xml_unload (ZifMd *md, ZifState *state, GError **error)
 	return ret;
 }
 
-
 /**
  * zif_md_primary_xml_parser_start_element:
  **/
@@ -129,7 +126,7 @@ zif_md_primary_xml_parser_start_element (GMarkupParseContext *context, const gch
 			goto out;
 		}
 
-		egg_warning ("unhandled element: %s", element_name);
+		g_warning ("unhandled element: %s", element_name);
 
 		goto out;
 	}
@@ -219,7 +216,7 @@ zif_md_primary_xml_parser_start_element (GMarkupParseContext *context, const gch
 				primary_xml->priv->section_package = ZIF_MD_PRIMARY_XML_SECTION_PACKAGE_OBSOLETES;
 				goto out;
 			}
-			egg_warning ("unhandled update base tag: %s", element_name);
+			g_warning ("unhandled update base tag: %s", element_name);
 			goto out;
 
 		} else if (primary_xml->priv->section_package == ZIF_MD_PRIMARY_XML_SECTION_PACKAGE_REQUIRES) {
@@ -236,10 +233,10 @@ zif_md_primary_xml_parser_start_element (GMarkupParseContext *context, const gch
 			}
 			goto out;
 		}
-		egg_warning ("unhandled package tag: %s", element_name);
+		g_warning ("unhandled package tag: %s", element_name);
 	}
 
-	egg_warning ("unhandled base tag: %s", element_name);
+	g_warning ("unhandled base tag: %s", element_name);
 
 out:
 	return;
@@ -262,7 +259,7 @@ zif_md_primary_xml_parser_end_element (GMarkupParseContext *context, const gchar
 		/* end of list */
 		if (g_strcmp0 (element_name, "metadata") == 0)
 			goto out;
-		egg_warning ("unhandled base end tag: %s", element_name);
+		g_warning ("unhandled base end tag: %s", element_name);
 	}
 
 	/* update element */
@@ -283,7 +280,7 @@ zif_md_primary_xml_parser_end_element (GMarkupParseContext *context, const gchar
 			if (ret) {
 				g_ptr_array_add (primary_xml->priv->array, primary_xml->priv->package_temp);
 			} else {
-				egg_warning ("failed to set %s: %s", package_id, error_local->message);
+				g_warning ("failed to set %s: %s", package_id, error_local->message);
 				g_object_unref (primary_xml->priv->package_temp);
 				g_error_free (error_local);
 				goto out;
@@ -327,11 +324,11 @@ zif_md_primary_xml_parser_end_element (GMarkupParseContext *context, const gchar
 			goto out;
 		}
 
-		egg_warning ("unhandled update end tag: %s", element_name);
+		g_warning ("unhandled update end tag: %s", element_name);
 		goto out;
 	}
 
-	egg_warning ("unhandled end tag: %s", element_name);
+	g_warning ("unhandled end tag: %s", element_name);
 out:
 	g_free (package_id);
 	return;
@@ -393,7 +390,7 @@ zif_md_primary_xml_parser_text (GMarkupParseContext *context, const gchar *text,
 			zif_package_remote_set_pkgid (ZIF_PACKAGE_REMOTE (primary_xml->priv->package_temp), text);
 			goto out;
 		}
-		egg_warning ("not saving: %s", text);
+		g_warning ("not saving: %s", text);
 		goto out;
 	}
 out:
@@ -437,7 +434,7 @@ zif_md_primary_xml_load (ZifMd *md, ZifState *state, GError **error)
 	}
 
 	/* open database */
-	egg_debug ("filename = %s", filename);
+	g_debug ("filename = %s", filename);
 	zif_state_set_allow_cancel (state, FALSE);
 	ret = g_file_get_contents (filename, &contents, &size, error);
 	if (!ret)
@@ -596,13 +593,13 @@ zif_md_primary_xml_search_details_cb (ZifPackage *package, gpointer user_data)
 	name = zif_package_get_name (package);
 	summary = zif_package_get_summary (package, state_tmp, &error);
 	if (summary == NULL) {
-		egg_warning ("failed to get summary: %s", error->message);
+		g_warning ("failed to get summary: %s", error->message);
 		g_error_free (error);
 		goto out;
 	}
 	description = zif_package_get_description (package, state_tmp, &error);
 	if (description == NULL) {
-		egg_warning ("failed to get description: %s", error->message);
+		g_warning ("failed to get description: %s", error->message);
 		g_error_free (error);
 		goto out;
 	}
@@ -651,7 +648,7 @@ zif_md_primary_xml_search_group_cb (ZifPackage *package, gpointer user_data)
 	state_tmp = zif_state_new ();
 	value = zif_package_get_category (package, state_tmp, &error);
 	if (value == NULL) {
-		egg_warning ("failed to get category: %s", error->message);
+		g_warning ("failed to get category: %s", error->message);
 		g_error_free (error);
 		goto out;
 	}
@@ -720,7 +717,7 @@ zif_md_primary_xml_what_provides_cb (ZifPackage *package, gpointer user_data)
 	state_tmp = zif_state_new ();
 	array = zif_package_get_provides (package, state_tmp, &error);
 	if (array == NULL) {
-		egg_warning ("failed to get provides: %s", error->message);
+		g_warning ("failed to get provides: %s", error->message);
 		g_error_free (error);
 		goto out;
 	}

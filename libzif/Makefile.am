@@ -10,10 +10,6 @@ INCLUDES = \
 	-I$(top_builddir)/libzif				\
 	-I.							\
 	-DZIF_COMPILATION					\
-	-DEGG_LOG_FILE=\""$(PK_LOG_DIR)/zif"\"			\
-	-DEGG_VERBOSE="\"ZIF_VERBOSE\""				\
-	-DEGG_LOGGING="\"ZIF_LOGGING\""				\
-	-DEGG_CONSOLE="\"ZIF_CONSOLE\""				\
 	-DG_LOG_DOMAIN=\"Zif\"					\
 	-DLOCALSTATEDIR=\""$(localstatedir)"\" 			\
 	-DPACKAGE_DATA_DIR=\""$(datadir)"\"			\
@@ -53,8 +49,6 @@ libzif_include_HEADERS =					\
 	zif-download.h
 
 libzif_la_SOURCES =						\
-	egg-debug.c						\
-	egg-debug.h						\
 	zif-lock.c						\
 	zif-lock.h						\
 	zif-state.c						\

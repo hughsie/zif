@@ -39,8 +39,6 @@
 #include "zif-md-metalink.h"
 #include "zif-config.h"
 
-#include "egg-debug.h"
-
 #define ZIF_MD_METALINK_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_MD_METALINK, ZifMdMetalinkPrivate))
 
 typedef enum {
@@ -161,13 +159,13 @@ zif_md_metalink_parser_text (GMarkupParseContext *context, const gchar *text, gs
 
 	/* shouldn't happen */
 	if (metalink->priv->temp == NULL) {
-		egg_warning ("no data, so cannot save %s!", text);
+		g_warning ("no data, so cannot save %s!", text);
 		goto out;
 	}
 
 	/* save uri */
 	if (metalink->priv->temp->uri != NULL) {
-		egg_warning ("previously set uri to '%s', cannot overwrite with '%s'", metalink->priv->temp->uri, text);
+		g_warning ("previously set uri to '%s', cannot overwrite with '%s'", metalink->priv->temp->uri, text);
 		goto out;
 	}
 
@@ -232,7 +230,7 @@ zif_md_metalink_load (ZifMd *md, ZifState *state, GError **error)
 	}
 
 	/* open database */
-	egg_debug ("filename = %s", filename);
+	g_debug ("filename = %s", filename);
 
 	/* get repo contents */
 	zif_state_set_allow_cancel (state, FALSE);

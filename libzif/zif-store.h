@@ -112,7 +112,6 @@ struct _ZifStoreClass
 	void		 (*print)		(ZifStore		*store);
 };
 
-
 typedef enum {
 	ZIF_STORE_ERROR_FAILED,
 	ZIF_STORE_ERROR_FAILED_AS_OFFLINE,
