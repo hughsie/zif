@@ -38,10 +38,11 @@ static ZifProgressBar *progressbar;
  * zif_print_package:
  **/
 static void
-zif_print_package (ZifPackage *package)
+zif_print_package (ZifPackage *package, guint padding)
 {
 	const gchar *package_id;
 	const gchar *summary;
+	gchar *padding_str;
 	ZifState *state_tmp;
 	gchar **split;
 
@@ -49,12 +50,18 @@ zif_print_package (ZifPackage *package)
 	split = zif_package_id_split (package_id);
 	state_tmp = zif_state_new ();
 	summary = zif_package_get_summary (package, state_tmp, NULL);
-	g_print ("%s-%s.%s (%s)\t%s\n",
+	if (padding > 0) {
+		padding_str = g_strnfill (padding - strlen (package_id), ' ');
+	} else {
+		padding_str = g_strnfill (2, ' ');
+	}
+	g_print ("%s-%s.%s (%s)%s%s\n",
 		 split[ZIF_PACKAGE_ID_NAME],
 		 split[ZIF_PACKAGE_ID_VERSION],
 		 split[ZIF_PACKAGE_ID_ARCH],
 		 split[ZIF_PACKAGE_ID_DATA],
-		 summary);
+		 padding_str, summary);
+	g_free (padding_str);
 	g_strfreev (split);
 	g_object_unref (state_tmp);
 }
@@ -65,12 +72,24 @@ zif_print_package (ZifPackage *package)
 static void
 zif_print_packages (GPtrArray *array)
 {
-	guint i;
+	guint i, j;
+	guint max = 0;
+	const gchar *package_id;
 	ZifPackage *package;
 
+	/* get the padding required */
 	for (i=0;i<array->len;i++) {
 		package = g_ptr_array_index (array, i);
-		zif_print_package (package);
+		package_id = zif_package_get_id (package);
+		j = strlen (package_id);
+		if (j > max)
+			max = j;
+	}
+
+	/* print the packages */
+	for (i=0;i<array->len;i++) {
+		package = g_ptr_array_index (array, i);
+		zif_print_package (package, max + 2);
 	}
 }
 
@@ -1710,7 +1729,7 @@ main (int argc, char *argv[])
 		/* no more progressbar */
 		pk_progress_bar_end (progressbar);
 
-		zif_print_package (package);
+		zif_print_package (package, 0);
 		g_object_unref (package);
 		goto out;
 	}
