@@ -2850,6 +2850,8 @@ zif_store_remote_what_provides (ZifStore *store, gchar **search,
 	primary = zif_store_remote_get_primary (remote);
 	array = zif_md_what_provides (primary, search,
 				      state_local, error);
+	if (array == NULL)
+		goto out;
 
 	/* this section done */
 	ret = zif_state_done (state, error);
