@@ -88,16 +88,14 @@ zif_download_file_got_chunk_cb (SoupMessage *msg, SoupBuffer *chunk, ZifDownload
 	body_length = (guint) msg->response_body->length;
 	header_size = soup_message_headers_get_content_length (msg->response_headers);
 
-	/* how can this happen */
-	if (header_size < body_length) {
-		g_warning ("length=%i/%i", body_length, header_size);
+	/* size is not known */
+	if (header_size < body_length)
 		goto out;
-	}
 
 	/* calulate percentage */
 	percentage = (100 * body_length) / header_size;
 	if (percentage == 100) {
-		g_warning ("ignoring percentage: %i", percentage);
+		g_debug ("ignoring percentage: %i", percentage);
 		goto out;
 	}
 
