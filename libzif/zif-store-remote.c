@@ -967,6 +967,51 @@ out:
 }
 
 /**
+ * zif_store_remote_download_repomd:
+ * @store: the #ZifStoreRemote object
+ * @state: a #ZifState to use for progress reporting
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Redownloads a new repomd file, which contains the links to all new
+ * metadata with the new checksums.
+ *
+ * Return value: %TRUE for failure
+ *
+ * Since: 0.1.2
+ **/
+gboolean
+zif_store_remote_download_repomd (ZifStoreRemote *store, ZifState *state, GError **error)
+{
+	gboolean ret;
+	GError *error_local = NULL;
+
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), FALSE);
+	g_return_val_if_fail (store->priv->id != NULL, FALSE);
+
+	/* if not online, then this is fatal */
+	ret = zif_config_get_boolean (store->priv->config, "network", NULL);
+	if (!ret) {
+		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED_AS_OFFLINE,
+			     "failed to download %s as offline", store->priv->repomd_filename);
+		goto out;
+	}
+
+	/* download new file */
+	store->priv->loaded_metadata = TRUE;
+	ret = zif_store_remote_download (store, "repodata/repomd.xml", store->priv->directory, state, &error_local);
+	store->priv->loaded_metadata = FALSE;
+	if (!ret) {
+		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+			     "failed to download missing repomd: %s", error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+out:
+	return ret;
+}
+
+/**
  * zif_store_remote_load_metadata:
  *
  * This function does the following things:
@@ -1064,25 +1109,10 @@ zif_store_remote_load_metadata (ZifStoreRemote *store, ZifState *state, GError *
 	/* repomd file does not exist */
 	ret = g_file_test (store->priv->repomd_filename, G_FILE_TEST_EXISTS);
 	if (!ret) {
-		/* if not online, then this is fatal */
-		ret = zif_config_get_boolean (store->priv->config, "network", NULL);
-		if (!ret) {
-			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED_AS_OFFLINE,
-				     "failed to download %s as offline", store->priv->repomd_filename);
-			goto out;
-		}
-
-		/* download new file */
 		state_local = zif_state_get_child (state);
-		store->priv->loaded_metadata = TRUE;
-		ret = zif_store_remote_download (store, "repodata/repomd.xml", store->priv->directory, state_local, &error_local);
-		store->priv->loaded_metadata = FALSE;
-		if (!ret) {
-			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
-				     "failed to download missing repomd: %s", error_local->message);
-			g_error_free (error_local);
+		ret = zif_store_remote_download_repomd (store, state_local, error);
+		if (!ret)
 			goto out;
-		}
 	}
 
 	/* this section done */

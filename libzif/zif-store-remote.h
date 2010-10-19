@@ -84,6 +84,9 @@ gboolean	 zif_store_remote_download		(ZifStoreRemote		*store,
 							 const gchar		*directory,
 							 ZifState		*state,
 							 GError			**error);
+gboolean	 zif_store_remote_download_repomd	(ZifStoreRemote		*store,
+							 ZifState		*state,
+							 GError			**error);
 ZifUpdate	*zif_store_remote_get_update_detail	(ZifStoreRemote		*store,
 							 const gchar		*package_id,
 							 ZifState		*state,

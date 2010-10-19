@@ -525,6 +525,23 @@ zif_md_load (ZifMd *md, ZifState *state, GError **error)
 			goto out;
 		}
 
+		/* reget repomd in case it's changed */
+		g_debug ("regetting repomd as checksum was invalid");
+		ret = zif_store_remote_download_repomd (md->priv->remote, state_local, &error_local);
+		if (!ret) {
+			g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED_DOWNLOAD,
+				     "failed to download repomd after failing checksum: %s", error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+		ret = zif_store_load (ZIF_STORE (md->priv->remote), state_local, &error_local);
+		if (!ret) {
+			g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED_DOWNLOAD,
+				     "failed to load repomd after downloading new copy: %s", error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+
 		/* delete file if it exists */
 		zif_md_delete_file (md->priv->filename);
 
@@ -535,6 +552,7 @@ zif_md_load (ZifMd *md, ZifState *state, GError **error)
 		if (!ret) {
 			g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED_DOWNLOAD,
 				     "failed to download missing compressed file: %s", error_local->message);
+			g_error_free (error_local);
 			goto out;
 		}
 
