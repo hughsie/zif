@@ -312,6 +312,8 @@ zif_state_set_allow_cancel (ZifState *state, gboolean allow_cancel)
 gboolean
 zif_state_set_percentage (ZifState *state, guint percentage)
 {
+	gboolean ret = FALSE;
+
 	/* is it the same */
 	if (percentage == state->priv->last_percentage)
 		goto out;
@@ -319,7 +321,7 @@ zif_state_set_percentage (ZifState *state, guint percentage)
 	/* is it less */
 	if (percentage < state->priv->last_percentage) {
 		g_warning ("percentage cannot go down from %i to %i on %p!", state->priv->last_percentage, percentage, state);
-		return FALSE;
+		goto out;
 	}
 
 	/* we're done, so we're not preventing cancellation anymore */
@@ -337,8 +339,11 @@ zif_state_set_percentage (ZifState *state, guint percentage)
 
 	/* emit */
 	g_signal_emit (state, signals [SIGNAL_PERCENTAGE_CHANGED], 0, percentage);
+
+	/* success */
+	ret = TRUE;
 out:
-	return TRUE;
+	return ret;
 }
 
 /**
