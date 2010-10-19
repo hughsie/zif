@@ -133,6 +133,8 @@ zif_repos_get_for_filename (ZifRepos *repos, const gchar *filename, ZifState *st
 	gchar *path;
 	guint i;
 
+	g_return_val_if_fail (zif_state_valid (state), FALSE);
+
 	/* find all the id's in this file */
 	file = g_key_file_new ();
 	path = g_build_filename (repos->priv->repos_dir, filename, NULL);
@@ -210,6 +212,7 @@ zif_repos_load (ZifRepos *repos, ZifState *state, GError **error)
 
 	g_return_val_if_fail (ZIF_IS_REPOS (repos), FALSE);
 	g_return_val_if_fail (repos->priv->repos_dir != NULL, FALSE);
+	g_return_val_if_fail (zif_state_valid (state), FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
 	/* already loaded */
@@ -332,6 +335,7 @@ zif_repos_get_stores (ZifRepos *repos, ZifState *state, GError **error)
 	gboolean ret;
 
 	g_return_val_if_fail (ZIF_IS_REPOS (repos), NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* if not already loaded, load */
@@ -371,6 +375,7 @@ zif_repos_get_stores_enabled (ZifRepos *repos, ZifState *state, GError **error)
 	gboolean ret;
 
 	g_return_val_if_fail (ZIF_IS_REPOS (repos), NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* if not already loaded, load */
@@ -415,6 +420,7 @@ zif_repos_get_store (ZifRepos *repos, const gchar *id, ZifState *state, GError *
 
 	g_return_val_if_fail (ZIF_IS_REPOS (repos), NULL);
 	g_return_val_if_fail (id != NULL, NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* if not already loaded, load */

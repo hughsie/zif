@@ -293,6 +293,7 @@ zif_file_decompress_zlib (const gchar *in, const gchar *out, ZifState *state, GE
 
 	g_return_val_if_fail (in != NULL, FALSE);
 	g_return_val_if_fail (out != NULL, FALSE);
+	g_return_val_if_fail (zif_state_valid (state), FALSE);
 
 	/* get cancellable */
 	cancellable = zif_state_get_cancellable (state);
@@ -371,6 +372,7 @@ zif_file_decompress_bz2 (const gchar *in, const gchar *out, ZifState *state, GEr
 
 	g_return_val_if_fail (in != NULL, FALSE);
 	g_return_val_if_fail (out != NULL, FALSE);
+	g_return_val_if_fail (zif_state_valid (state), FALSE);
 
 	/* get cancellable */
 	cancellable = zif_state_get_cancellable (state);
@@ -466,6 +468,7 @@ zif_file_decompress (const gchar *in, const gchar *out, ZifState *state, GError 
 	g_return_val_if_fail (in != NULL, FALSE);
 	g_return_val_if_fail (out != NULL, FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+	g_return_val_if_fail (zif_state_valid (state), FALSE);
 
 	/* bz2 */
 	if (g_str_has_suffix (in, "bz2")) {

@@ -347,6 +347,38 @@ out:
 }
 
 /**
+ * zif_state_valid:
+ * @state: the #ZifState object
+ *
+ * Returns if the %ZifState is a valid object and ready for use.
+ * This is very useful in self-testing situations like:
+ * {{{
+ * g_return_val_if_fail (zif_state_valid (md), FALSE);
+ * }}}
+ *
+ * Return value: %TRUE if the %ZifState is okay to use, and has not been
+ * already used.
+ *
+ * Since: 0.1.2
+ **/
+gboolean
+zif_state_valid (ZifState *state)
+{
+	ZifStatePrivate *priv = state->priv;
+	if (priv->steps != 0) {
+		zif_state_print_parent_chain (state, 0);
+		g_warning ("steps not zero");
+		return FALSE;
+	}
+	if (priv->current != 0) {
+		zif_state_print_parent_chain (state, 0);
+		g_warning ("current not zero");
+		return FALSE;
+	}
+	return TRUE;
+}
+
+/**
  * zif_state_get_percentage:
  * @state: the #ZifState object
  *

@@ -84,6 +84,7 @@ zif_md_primary_sql_load (ZifMd *md, ZifState *state, GError **error)
 	ZifMdPrimarySql *primary_sql = ZIF_MD_PRIMARY_SQL (md);
 
 	g_return_val_if_fail (ZIF_IS_MD_PRIMARY_SQL (md), FALSE);
+	g_return_val_if_fail (zif_state_valid (state), FALSE);
 
 	/* already loaded */
 	if (primary_sql->priv->loaded)
@@ -165,6 +166,8 @@ zif_md_primary_sql_search (ZifMdPrimarySql *md, const gchar *statement,
 	GError *error_local = NULL;
 	ZifMdPrimarySqlData *data = NULL;
 	GPtrArray *array = NULL;
+
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 
 	/* if not already loaded, load */
 	if (!md->priv->loaded) {
@@ -259,6 +262,7 @@ zif_md_primary_sql_resolve (ZifMd *md, gchar **search, ZifState *state, GError *
 	ZifMdPrimarySql *md_primary_sql = ZIF_MD_PRIMARY_SQL (md);
 
 	g_return_val_if_fail (ZIF_IS_MD_PRIMARY_SQL (md), NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* simple name match */
@@ -279,6 +283,7 @@ zif_md_primary_sql_search_name (ZifMd *md, gchar **search, ZifState *state, GErr
 	ZifMdPrimarySql *md_primary_sql = ZIF_MD_PRIMARY_SQL (md);
 
 	g_return_val_if_fail (ZIF_IS_MD_PRIMARY_SQL (md), NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* fuzzy name match */
@@ -300,6 +305,7 @@ zif_md_primary_sql_search_details (ZifMd *md, gchar **search, ZifState *state, G
 	ZifMdPrimarySql *md_primary_sql = ZIF_MD_PRIMARY_SQL (md);
 
 	g_return_val_if_fail (ZIF_IS_MD_PRIMARY_SQL (md), NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* fuzzy details match */
@@ -323,6 +329,7 @@ zif_md_primary_sql_search_group (ZifMd *md, gchar **search, ZifState *state, GEr
 	ZifMdPrimarySql *md_primary_sql = ZIF_MD_PRIMARY_SQL (md);
 
 	g_return_val_if_fail (ZIF_IS_MD_PRIMARY_SQL (md), NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* simple group match */
@@ -344,6 +351,7 @@ zif_md_primary_sql_search_pkgid (ZifMd *md, gchar **search, ZifState *state, GEr
 	ZifMdPrimarySql *md_primary_sql = ZIF_MD_PRIMARY_SQL (md);
 
 	g_return_val_if_fail (ZIF_IS_MD_PRIMARY_SQL (md), NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* simple pkgid match */
@@ -366,6 +374,7 @@ zif_md_primary_sql_search_pkgkey (ZifMd *md, guint pkgkey,
 	ZifMdPrimarySql *md_primary_sql = ZIF_MD_PRIMARY_SQL (md);
 
 	g_return_val_if_fail (ZIF_IS_MD_PRIMARY_SQL (md), NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* search with predicate */
@@ -422,6 +431,8 @@ zif_md_primary_sql_what_provides (ZifMd *md, gchar **search,
 	ZifState *state_loop;
 	ZifPackage *package;
 	ZifMdPrimarySql *md_primary_sql = ZIF_MD_PRIMARY_SQL (md);
+
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 
 	/* setup state */
 	if (md_primary_sql->priv->loaded)
@@ -523,6 +534,7 @@ zif_md_primary_sql_find_package (ZifMd *md, const gchar *package_id, ZifState *s
 	ZifMdPrimarySql *md_primary_sql = ZIF_MD_PRIMARY_SQL (md);
 
 	g_return_val_if_fail (ZIF_IS_MD_PRIMARY_SQL (md), NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* search with predicate, TODO: search version (epoch+release) */
@@ -546,6 +558,7 @@ zif_md_primary_sql_get_packages (ZifMd *md, ZifState *state, GError **error)
 	ZifMdPrimarySql *md_primary_sql = ZIF_MD_PRIMARY_SQL (md);
 
 	g_return_val_if_fail (ZIF_IS_MD_PRIMARY_SQL (md), NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* search with predicate */

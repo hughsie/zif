@@ -358,6 +358,8 @@ zif_store_remote_download_try (ZifStoreRemote *store, const gchar *uri, const gc
 	gchar *contents = NULL;
 	gsize length;
 
+	g_return_val_if_fail (zif_state_valid (state), FALSE);
+
 	/* download object */
 	download = zif_download_new ();
 	g_debug ("trying to download %s and save to %s", uri, filename);
@@ -429,6 +431,8 @@ zif_store_remote_copy (ZifStoreRemote *store, const gchar *uri, const gchar *fil
 	GFile *dest;
 	GCancellable *cancellable;
 
+	g_return_val_if_fail (zif_state_valid (state), FALSE);
+
 	/* just copy */
 	source = g_file_new_for_path (uri);
 	dest = g_file_new_for_path (filename);
@@ -477,6 +481,7 @@ zif_store_remote_download (ZifStoreRemote *store, const gchar *filename, const g
 	g_return_val_if_fail (store->priv->id != NULL, FALSE);
 	g_return_val_if_fail (filename != NULL, FALSE);
 	g_return_val_if_fail (directory != NULL, FALSE);
+	g_return_val_if_fail (zif_state_valid (state), FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
 	/* if not online, then this is fatal */
@@ -640,6 +645,7 @@ zif_store_remote_get_update_detail (ZifStoreRemote *store, const gchar *package_
 	const gchar *version;
 	gchar *to_array[] = { NULL, NULL };
 
+	g_return_val_if_fail (zif_state_valid (state), FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* setup state */
@@ -810,6 +816,8 @@ zif_store_remote_add_metalink (ZifStoreRemote *store, ZifState *state, GError **
 	ZifState *state_local;
 	ZifDownload *download = NULL;
 
+	g_return_val_if_fail (zif_state_valid (state), FALSE);
+
 	/* if we're loading the metadata with an empty cache, the file won't yet exist. So download it */
 	filename = zif_md_get_filename_uncompressed (store->priv->md_metalink);
 	if (filename == NULL) {
@@ -893,6 +901,8 @@ zif_store_remote_add_mirrorlist (ZifStoreRemote *store, ZifState *state, GError 
 	gboolean ret = FALSE;
 	ZifState *state_local;
 	ZifDownload *download = NULL;
+
+	g_return_val_if_fail (zif_state_valid (state), FALSE);
 
 	/* if we're loading the metadata with an empty cache, the file won't yet exist. So download it */
 	filename = zif_md_get_filename_uncompressed (store->priv->md_mirrorlist);
@@ -988,6 +998,7 @@ zif_store_remote_download_repomd (ZifStoreRemote *store, ZifState *state, GError
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), FALSE);
 	g_return_val_if_fail (store->priv->id != NULL, FALSE);
+	g_return_val_if_fail (zif_state_valid (state), FALSE);
 
 	/* if not online, then this is fatal */
 	ret = zif_config_get_boolean (store->priv->config, "network", NULL);
@@ -1047,6 +1058,7 @@ zif_store_remote_load_metadata (ZifStoreRemote *store, ZifState *state, GError *
 	};
 
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), FALSE);
+	g_return_val_if_fail (zif_state_valid (state), FALSE);
 
 	/* not locked */
 	ret = zif_lock_is_locked (store->priv->lock, NULL);
@@ -1210,6 +1222,8 @@ zif_store_file_decompress (const gchar *filename, ZifState *state, GError **erro
 	gboolean compressed;
 	gchar *filename_uncompressed = NULL;
 
+	g_return_val_if_fail (zif_state_valid (state), FALSE);
+
 	/* only do for compressed filenames */
 	compressed = zif_file_is_compressed_name (filename);
 	if (!compressed) {
@@ -1238,6 +1252,8 @@ zif_store_remote_refresh_md (ZifStoreRemote *remote, ZifMd *md, gboolean force, 
 	gboolean ret;
 	GError *error_local = NULL;
 	ZifState *state_local = NULL;
+
+	g_return_val_if_fail (zif_state_valid (state), FALSE);
 
 	/* setup progress */
 	zif_state_set_number_steps (state, 3);
@@ -1328,6 +1344,7 @@ zif_store_remote_refresh (ZifStore *store, gboolean force, ZifState *state, GErr
 
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), FALSE);
 	g_return_val_if_fail (remote->priv->id != NULL, FALSE);
+	g_return_val_if_fail (zif_state_valid (state), FALSE);
 
 	/* if not online, then this is fatal */
 	ret = zif_config_get_boolean (remote->priv->config, "network", NULL);
@@ -1433,6 +1450,7 @@ zif_store_remote_load (ZifStore *store, ZifState *state, GError **error)
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), FALSE);
 	g_return_val_if_fail (remote->priv->id != NULL, FALSE);
 	g_return_val_if_fail (remote->priv->repo_filename != NULL, FALSE);
+	g_return_val_if_fail (zif_state_valid (state), FALSE);
 
 	/* not locked */
 	ret = zif_lock_is_locked (remote->priv->lock, NULL);
@@ -1604,6 +1622,7 @@ zif_store_remote_clean (ZifStore *store, ZifState *state, GError **error)
 
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), FALSE);
 	g_return_val_if_fail (remote->priv->id != NULL, FALSE);
+	g_return_val_if_fail (zif_state_valid (state), FALSE);
 
 	/* not locked */
 	ret = zif_lock_is_locked (remote->priv->lock, NULL);
@@ -1717,6 +1736,7 @@ zif_store_remote_set_from_file (ZifStoreRemote *store, const gchar *repo_filenam
 	g_return_val_if_fail (id != NULL, FALSE);
 	g_return_val_if_fail (store->priv->id == NULL, FALSE);
 	g_return_val_if_fail (!store->priv->loaded, FALSE);
+	g_return_val_if_fail (zif_state_valid (state), FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
 	/* not locked */
@@ -1867,6 +1887,7 @@ zif_store_remote_resolve (ZifStore *store, gchar **search, ZifState *state, GErr
 
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), NULL);
 	g_return_val_if_fail (remote->priv->id != NULL, NULL);
+	g_return_val_if_fail (zif_state_valid (state), FALSE);
 
 	/* not locked */
 	ret = zif_lock_is_locked (remote->priv->lock, NULL);
@@ -1928,6 +1949,7 @@ zif_store_remote_search_name (ZifStore *store, gchar **search, ZifState *state, 
 
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), NULL);
 	g_return_val_if_fail (remote->priv->id != NULL, NULL);
+	g_return_val_if_fail (zif_state_valid (state), FALSE);
 
 	/* not locked */
 	ret = zif_lock_is_locked (remote->priv->lock, NULL);
@@ -1989,6 +2011,7 @@ zif_store_remote_search_details (ZifStore *store, gchar **search, ZifState *stat
 
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), NULL);
 	g_return_val_if_fail (remote->priv->id != NULL, NULL);
+	g_return_val_if_fail (zif_state_valid (state), FALSE);
 
 	/* not locked */
 	ret = zif_lock_is_locked (remote->priv->lock, NULL);
@@ -2048,6 +2071,8 @@ zif_store_remote_search_category_resolve (ZifStore *store, const gchar *name, Zi
 	ZifPackage *package = NULL;
 	ZifState *state_local;
 	const gchar *to_array[] = { NULL, NULL };
+
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 
 	store_local = zif_store_local_new ();
 
@@ -2135,6 +2160,7 @@ zif_store_remote_search_category (ZifStore *store, gchar **group_id, ZifState *s
 
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), NULL);
 	g_return_val_if_fail (remote->priv->id != NULL, NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 
 	/* not locked */
 	ret = zif_lock_is_locked (remote->priv->lock, NULL);
@@ -2274,6 +2300,7 @@ zif_store_remote_search_group (ZifStore *store, gchar **search, ZifState *state,
 
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), NULL);
 	g_return_val_if_fail (remote->priv->id != NULL, NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 
 	/* not locked */
 	ret = zif_lock_is_locked (remote->priv->lock, NULL);
@@ -2364,6 +2391,7 @@ zif_store_remote_find_package (ZifStore *store, const gchar *package_id, ZifStat
 
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), NULL);
 	g_return_val_if_fail (remote->priv->id != NULL, NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 
 	/* not locked */
 	ret = zif_lock_is_locked (remote->priv->lock, NULL);
@@ -2449,6 +2477,7 @@ zif_store_remote_get_packages (ZifStore *store, ZifState *state, GError **error)
 
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), NULL);
 	g_return_val_if_fail (remote->priv->id != NULL, NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 
 	/* not locked */
 	ret = zif_lock_is_locked (remote->priv->lock, NULL);
@@ -2515,6 +2544,7 @@ zif_store_remote_get_categories (ZifStore *store, ZifState *state, GError **erro
 
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), NULL);
 	g_return_val_if_fail (remote->priv->id != NULL, NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 
 	/* not locked */
 	ret = zif_lock_is_locked (remote->priv->lock, NULL);
@@ -2661,6 +2691,8 @@ zif_store_remote_get_updates (ZifStore *store, GPtrArray *packages,
 	ZifMd *primary;
 	gchar **resolve_array = NULL;
 
+	g_return_val_if_fail (zif_state_valid (state), NULL);
+
 	/* not locked */
 	ret = zif_lock_is_locked (remote->priv->lock, NULL);
 	if (!ret) {
@@ -2780,6 +2812,8 @@ zif_store_remote_what_provides (ZifStore *store, gchar **search,
 	ZifStoreRemote *remote = ZIF_STORE_REMOTE (store);
 	ZifMd *primary;
 
+	g_return_val_if_fail (zif_state_valid (state), NULL);
+
 	/* not locked */
 	ret = zif_lock_is_locked (remote->priv->lock, NULL);
 	if (!ret) {
@@ -2844,6 +2878,8 @@ zif_store_remote_search_file (ZifStore *store, gchar **search, ZifState *state, 
 	ZifMd *primary;
 	ZifMd *filelists;
 	const gchar *to_array[] = { NULL, NULL };
+
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 
 	/* not locked */
 	ret = zif_lock_is_locked (remote->priv->lock, NULL);
@@ -2953,6 +2989,7 @@ zif_store_remote_is_devel (ZifStoreRemote *store, ZifState *state, GError **erro
 
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), FALSE);
 	g_return_val_if_fail (store->priv->id != NULL, FALSE);
+	g_return_val_if_fail (zif_state_valid (state), FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
 	/* not locked */
@@ -3025,6 +3062,7 @@ zif_store_remote_get_name (ZifStoreRemote *store, ZifState *state, GError **erro
 
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), NULL);
 	g_return_val_if_fail (store->priv->id != NULL, NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* not locked */
@@ -3069,6 +3107,7 @@ zif_store_remote_get_enabled (ZifStoreRemote *store, ZifState *state, GError **e
 
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), FALSE);
 	g_return_val_if_fail (store->priv->id != NULL, FALSE);
+	g_return_val_if_fail (zif_state_valid (state), FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
 	/* not locked */
@@ -3103,6 +3142,7 @@ zif_store_remote_get_files (ZifStoreRemote *store, ZifPackage *package,
 	ZifMd *filelists;
 
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	filelists = zif_store_remote_get_filelists (store);

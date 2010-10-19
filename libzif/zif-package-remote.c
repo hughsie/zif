@@ -214,6 +214,8 @@ zif_package_remote_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, ZifS
 	const gchar *group;
 	ZifPackageRemote *pkg_remote = ZIF_PACKAGE_REMOTE (pkg);
 
+	g_return_val_if_fail (zif_state_valid (state), FALSE);
+
 	if (type == ZIF_PACKAGE_ENSURE_TYPE_FILES) {
 
 		/* get the file list for this package */

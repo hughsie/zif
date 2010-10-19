@@ -164,6 +164,7 @@ zif_download_file (ZifDownload *download, const gchar *uri, const gchar *filenam
 	GCancellable *cancellable;
 
 	g_return_val_if_fail (ZIF_IS_DOWNLOAD (download), FALSE);
+	g_return_val_if_fail (zif_state_valid (state), FALSE);
 	g_return_val_if_fail (uri != NULL, FALSE);
 	g_return_val_if_fail (filename != NULL, FALSE);
 	g_return_val_if_fail (download->priv->msg == NULL, FALSE);

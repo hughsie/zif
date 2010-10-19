@@ -71,6 +71,7 @@ zif_store_load (ZifStore *store, ZifState *state, GError **error)
 	ZifStoreClass *klass = ZIF_STORE_GET_CLASS (store);
 
 	g_return_val_if_fail (ZIF_IS_STORE (store), FALSE);
+	g_return_val_if_fail (zif_state_valid (state), FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
 	/* no support */
@@ -101,6 +102,7 @@ zif_store_clean (ZifStore *store, ZifState *state, GError **error)
 	ZifStoreClass *klass = ZIF_STORE_GET_CLASS (store);
 
 	g_return_val_if_fail (ZIF_IS_STORE (store), FALSE);
+	g_return_val_if_fail (zif_state_valid (state), FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
 	/* no support */
@@ -132,6 +134,7 @@ zif_store_refresh (ZifStore *store, gboolean force, ZifState *state, GError **er
 	ZifStoreClass *klass = ZIF_STORE_GET_CLASS (store);
 
 	g_return_val_if_fail (ZIF_IS_STORE (store), FALSE);
+	g_return_val_if_fail (zif_state_valid (state), FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
 	/* no support */
@@ -164,6 +167,7 @@ zif_store_search_name (ZifStore *store, gchar **search, ZifState *state, GError 
 
 	g_return_val_if_fail (ZIF_IS_STORE (store), NULL);
 	g_return_val_if_fail (search != NULL, NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* no support */
@@ -196,6 +200,7 @@ zif_store_search_category (ZifStore *store, gchar **search, ZifState *state, GEr
 
 	g_return_val_if_fail (ZIF_IS_STORE (store), NULL);
 	g_return_val_if_fail (search != NULL, NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* no support */
@@ -228,6 +233,8 @@ zif_store_search_details (ZifStore *store, gchar **search, ZifState *state, GErr
 
 	g_return_val_if_fail (ZIF_IS_STORE (store), NULL);
 	g_return_val_if_fail (search != NULL, NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* no support */
 	if (klass->search_details == NULL) {
@@ -259,6 +266,7 @@ zif_store_search_group (ZifStore *store, gchar **search, ZifState *state, GError
 
 	g_return_val_if_fail (ZIF_IS_STORE (store), NULL);
 	g_return_val_if_fail (search != NULL, NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* no support */
@@ -291,6 +299,7 @@ zif_store_search_file (ZifStore *store, gchar **search, ZifState *state, GError 
 
 	g_return_val_if_fail (ZIF_IS_STORE (store), NULL);
 	g_return_val_if_fail (search != NULL, NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* no support */
@@ -323,6 +332,7 @@ zif_store_resolve (ZifStore *store, gchar **search, ZifState *state, GError **er
 
 	g_return_val_if_fail (ZIF_IS_STORE (store), NULL);
 	g_return_val_if_fail (search != NULL, NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* no support */
@@ -355,6 +365,7 @@ zif_store_what_provides (ZifStore *store, gchar **search, ZifState *state, GErro
 
 	g_return_val_if_fail (ZIF_IS_STORE (store), NULL);
 	g_return_val_if_fail (search != NULL, NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* no support */
@@ -385,6 +396,7 @@ zif_store_get_packages (ZifStore *store, ZifState *state, GError **error)
 	ZifStoreClass *klass = ZIF_STORE_GET_CLASS (store);
 
 	g_return_val_if_fail (ZIF_IS_STORE (store), NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* no support */
@@ -419,6 +431,7 @@ zif_store_get_updates (ZifStore *store, GPtrArray *packages,
 	g_return_val_if_fail (ZIF_IS_STORE (store), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 	g_return_val_if_fail (packages != NULL, NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 
 	/* no support */
 	if (klass->get_updates == NULL) {
@@ -450,6 +463,7 @@ zif_store_find_package (ZifStore *store, const gchar *package_id, ZifState *stat
 
 	g_return_val_if_fail (ZIF_IS_STORE (store), NULL);
 	g_return_val_if_fail (package_id != NULL, NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* no support */
@@ -480,6 +494,7 @@ zif_store_get_categories (ZifStore *store, ZifState *state, GError **error)
 	ZifStoreClass *klass = ZIF_STORE_GET_CLASS (store);
 
 	g_return_val_if_fail (ZIF_IS_STORE (store), NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* no support */

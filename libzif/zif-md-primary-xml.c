@@ -420,6 +420,7 @@ zif_md_primary_xml_load (ZifMd *md, ZifState *state, GError **error)
 	};
 
 	g_return_val_if_fail (ZIF_IS_MD_PRIMARY_XML (md), FALSE);
+	g_return_val_if_fail (zif_state_valid (state), FALSE);
 
 	/* already loaded */
 	if (primary_xml->priv->loaded)
@@ -478,6 +479,7 @@ zif_md_primary_xml_filter (ZifMd *md, ZifPackageFilterFunc filter_func, gpointer
 	ZifMdPrimaryXml *md_primary = ZIF_MD_PRIMARY_XML (md);
 
 	g_return_val_if_fail (ZIF_IS_MD_PRIMARY_XML (md), NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* setup state */
@@ -543,6 +545,7 @@ zif_md_primary_xml_resolve_cb (ZifPackage *package, gpointer user_data)
 static GPtrArray *
 zif_md_primary_xml_resolve (ZifMd *md, gchar **search, ZifState *state, GError **error)
 {
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 	return zif_md_primary_xml_filter (md, zif_md_primary_xml_resolve_cb, (gpointer) search,
 					  state, error);
 }
@@ -570,6 +573,7 @@ zif_md_primary_xml_search_name_cb (ZifPackage *package, gpointer user_data)
 static GPtrArray *
 zif_md_primary_xml_search_name (ZifMd *md, gchar **search, ZifState *state, GError **error)
 {
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 	return zif_md_primary_xml_filter (md, zif_md_primary_xml_search_name_cb, (gpointer) search,
 					  state, error);
 }
@@ -628,6 +632,7 @@ out:
 static GPtrArray *
 zif_md_primary_xml_search_details (ZifMd *md, gchar **search, ZifState *state, GError **error)
 {
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 	return zif_md_primary_xml_filter (md, zif_md_primary_xml_search_details_cb, (gpointer) search,
 					  state, error);
 }
@@ -669,6 +674,7 @@ out:
 static GPtrArray *
 zif_md_primary_xml_search_group (ZifMd *md, gchar **search, ZifState *state, GError **error)
 {
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 	return zif_md_primary_xml_filter (md, zif_md_primary_xml_search_group_cb, (gpointer) search,
 					  state, error);
 }
@@ -696,6 +702,7 @@ zif_md_primary_xml_search_pkgid_cb (ZifPackage *package, gpointer user_data)
 static GPtrArray *
 zif_md_primary_xml_search_pkgid (ZifMd *md, gchar **search, ZifState *state, GError **error)
 {
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 	return zif_md_primary_xml_filter (md, zif_md_primary_xml_search_pkgid_cb, (gpointer) search,
 					  state, error);
 }
@@ -746,6 +753,7 @@ static GPtrArray *
 zif_md_primary_xml_what_provides (ZifMd *md, gchar **search,
 				  ZifState *state, GError **error)
 {
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 	return zif_md_primary_xml_filter (md, zif_md_primary_xml_what_provides_cb, (gpointer) search,
 					  state, error);
 }
@@ -768,6 +776,7 @@ zif_md_primary_xml_find_package_cb (ZifPackage *package, gpointer user_data)
 static GPtrArray *
 zif_md_primary_xml_find_package (ZifMd *md, const gchar *package_id, ZifState *state, GError **error)
 {
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 	return zif_md_primary_xml_filter (md, zif_md_primary_xml_find_package_cb, (gpointer) package_id,
 					  state, error);
 }

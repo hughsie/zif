@@ -100,6 +100,7 @@ gboolean	 zif_state_finished_real		(ZifState		*state,
 							 const gchar		*strloc)
 							 G_GNUC_WARN_UNUSED_RESULT;
 gboolean	 zif_state_reset			(ZifState		*state);
+gboolean	 zif_state_valid			(ZifState		*state);
 
 /* cancellation */
 GCancellable	*zif_state_get_cancellable		(ZifState		*state);

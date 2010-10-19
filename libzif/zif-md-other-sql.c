@@ -78,6 +78,7 @@ zif_md_other_sql_load (ZifMd *md, ZifState *state, GError **error)
 	ZifMdOtherSql *other_sql = ZIF_MD_OTHER_SQL (md);
 
 	g_return_val_if_fail (ZIF_IS_MD_OTHER_SQL (md), FALSE);
+	g_return_val_if_fail (zif_state_valid (state), FALSE);
 
 	/* already loaded */
 	if (other_sql->priv->loaded)
@@ -170,6 +171,8 @@ zif_md_other_sql_search_pkgkey (ZifMdOtherSql *md, guint pkgkey,
 	gint rc;
 	GPtrArray *array = NULL;
 
+	g_return_val_if_fail (zif_state_valid (state), NULL);
+
 	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	statement = g_strdup_printf ("SELECT author, date, changelog FROM changelog WHERE pkgKey = '%i' ORDER BY date DESC", pkgkey);
 	rc = sqlite3_exec (md->priv->db, statement, zif_md_other_sql_sqlite_create_changelog_cb, array, &error_msg);
@@ -233,6 +236,8 @@ zif_md_other_sql_get_changelog (ZifMd *md, const gchar *pkgid,
 	ZifState *state_loop;
 	ZifChangeset *changeset;
 	ZifMdOtherSql *md_other_sql = ZIF_MD_OTHER_SQL (md);
+
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 
 	/* setup state */
 	if (md_other_sql->priv->loaded)

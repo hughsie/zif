@@ -464,6 +464,7 @@ zif_md_updateinfo_load (ZifMd *md, ZifState *state, GError **error)
 	ZifMdUpdateinfo *updateinfo = ZIF_MD_UPDATEINFO (md);
 
 	g_return_val_if_fail (ZIF_IS_MD_UPDATEINFO (md), FALSE);
+	g_return_val_if_fail (zif_state_valid (state), FALSE);
 
 	/* already loaded */
 	if (updateinfo->priv->loaded) {
@@ -526,6 +527,7 @@ zif_md_updateinfo_get_detail (ZifMdUpdateinfo *md,
 	GError *error_local = NULL;
 
 	g_return_val_if_fail (ZIF_IS_MD_UPDATEINFO (md), NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* if not already loaded, load */
@@ -573,6 +575,7 @@ zif_md_updateinfo_get_detail_for_package (ZifMdUpdateinfo *md, const gchar *pack
 
 	g_return_val_if_fail (ZIF_IS_MD_UPDATEINFO (md), NULL);
 	g_return_val_if_fail (package_id != NULL, NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* if not already loaded, load */

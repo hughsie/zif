@@ -269,6 +269,8 @@ zif_package_local_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, ZifSt
 	gboolean ret = FALSE;
 	Header header = ZIF_PACKAGE_LOCAL(pkg)->priv->header;
 
+	g_return_val_if_fail (zif_state_valid (state), FALSE);
+
 	/* eigh? */
 	if (header == NULL) {
 		g_set_error (error, ZIF_PACKAGE_ERROR, ZIF_PACKAGE_ERROR_FAILED,

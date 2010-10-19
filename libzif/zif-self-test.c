@@ -473,6 +473,7 @@ zif_md_comps_func (void)
 	g_assert_cmpstr (zif_category_get_summary (category), ==, "Applications to perform a variety of tasks");
 	g_ptr_array_unref (array);
 
+	zif_state_reset (state);
 	array = zif_md_comps_get_groups_for_category (md, "apps", state, &error);
 	g_assert_no_error (error);
 	g_assert (array != NULL);
@@ -482,12 +483,14 @@ zif_md_comps_func (void)
 	g_assert_cmpstr (zif_category_get_id (category), ==, "admin-tools");
 	g_ptr_array_unref (array);
 
+	zif_state_reset (state);
 	array = zif_md_comps_get_packages_for_group (md, "admin-tools", state, &error);
 	g_assert_no_error (error);
 	g_assert (array != NULL);
 	g_assert_cmpint (array->len, ==, 2);
 
 	/* and with full category id */
+	zif_state_reset (state);
 	array = zif_md_comps_get_packages_for_group (md, "apps;admin-tools", state, &error);
 	g_assert_no_error (error);
 	g_assert (array != NULL);
@@ -532,6 +535,7 @@ zif_md_filelists_sql_func (void)
 	g_assert (ret);
 	g_assert (zif_md_get_is_loaded (ZIF_MD (md)));
 
+	zif_state_reset (state);
 	array = zif_md_search_file (ZIF_MD (md), (gchar**)data, state, &error);
 	g_assert_no_error (error);
 	g_assert (array != NULL);
@@ -623,6 +627,7 @@ zif_md_metalink_func (void)
 	g_assert (ret);
 	g_assert (zif_md_get_is_loaded (ZIF_MD (md)));
 
+	zif_state_reset (state);
 	array = zif_md_metalink_get_uris (md, 50, state, &error);
 	g_assert_no_error (error);
 	g_assert (array != NULL);
@@ -670,6 +675,7 @@ zif_md_mirrorlist_func (void)
 	g_assert (ret);
 	g_assert (zif_md_get_is_loaded (ZIF_MD (md)));
 
+	zif_state_reset (state);
 	array = zif_md_mirrorlist_get_uris (md, state, &error);
 	g_assert_no_error (error);
 	g_assert (array != NULL);
@@ -771,6 +777,7 @@ zif_md_primary_sql_func (void)
 	g_assert (ret);
 	g_assert (zif_md_get_is_loaded (ZIF_MD (md)));
 
+	zif_state_reset (state);
 	array = zif_md_resolve (ZIF_MD (md), (gchar**)data, state, &error);
 	g_assert_no_error (error);
 	g_assert (array != NULL);
@@ -1132,12 +1139,14 @@ zif_repos_func (void)
 	g_assert_cmpint (array->len, ==, 2);
 	g_ptr_array_unref (array);
 
+	zif_state_reset (state);
 	array = zif_repos_get_stores_enabled (repos, state, &error);
 	g_assert_no_error (error);
 	g_assert (array != NULL);
 	g_assert_cmpint (array->len, ==, 2);
 
 	/* check returns error for invalid */
+	zif_state_reset (state);
 	store = zif_repos_get_store (repos, "does-not-exist", state, &error);
 	g_assert (store == NULL);
 	g_assert_error (error, ZIF_REPOS_ERROR, ZIF_REPOS_ERROR_FAILED);
@@ -1148,6 +1157,7 @@ zif_repos_func (void)
 	g_ptr_array_unref (array);
 	basearch = zif_config_get_string (config, "basearch", NULL);
 
+	zif_state_reset (state);
 	if (g_strcmp0 (basearch, "i386") == 0)
 		g_assert_cmpstr (zif_store_remote_get_name (store, state, NULL), ==, "Fedora 13 - i386");
 	else
@@ -1590,7 +1600,9 @@ zif_store_remote_func (void)
 	g_ptr_array_unref (array);
 	g_ptr_array_unref (packages);
 
+	zif_state_reset (state);
 	g_assert (!zif_store_remote_is_devel (store, state, NULL));
+	zif_state_reset (state);
 	g_assert (zif_store_remote_get_enabled (store, state, NULL));
 	g_assert_cmpstr (zif_store_get_id (ZIF_STORE (store)), ==, "fedora");
 
@@ -1638,11 +1650,13 @@ zif_store_remote_func (void)
 	ret = zif_store_remote_set_enabled (store, FALSE, &error);
 	g_assert_no_error (error);
 	g_assert (ret);
+	zif_state_reset (state);
 	g_assert (!zif_store_remote_get_enabled (store, state, NULL));
 
 	ret = zif_store_remote_set_enabled (store, TRUE, &error);
 	g_assert_no_error (error);
 	g_assert (ret);
+	zif_state_reset (state);
 	g_assert (zif_store_remote_get_enabled (store, state, NULL));
 
 	zif_state_reset (state);

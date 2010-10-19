@@ -82,6 +82,7 @@ zif_md_filelists_sql_load (ZifMd *md, ZifState *state, GError **error)
 	ZifMdFilelistsSql *filelists = ZIF_MD_FILELISTS_SQL (md);
 
 	g_return_val_if_fail (ZIF_IS_MD_FILELISTS_SQL (md), FALSE);
+	g_return_val_if_fail (zif_state_valid (state), FALSE);
 
 	/* already loaded */
 	if (filelists->priv->loaded)
@@ -212,6 +213,8 @@ zif_md_filelists_sql_get_files (ZifMd *md, ZifPackage *package,
 	GPtrArray *files = NULL;
 	ZifMdFilelistsSql *md_filelists_sql = ZIF_MD_FILELISTS_SQL (md);
 
+	g_return_val_if_fail (zif_state_valid (state), NULL);
+
 	/* if not already loaded, load */
 	if (!md_filelists_sql->priv->loaded) {
 		ret = zif_md_load (md, state, &error_local);
@@ -282,6 +285,7 @@ zif_md_filelists_sql_search_file (ZifMd *md, gchar **search,
 	ZifMdFilelistsSqlData *data = NULL;
 
 	g_return_val_if_fail (ZIF_IS_MD_FILELISTS_SQL (md), NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* if not already loaded, load */

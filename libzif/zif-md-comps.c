@@ -423,6 +423,7 @@ zif_md_comps_load (ZifMd *md, ZifState *state, GError **error)
 	ZifMdComps *comps = ZIF_MD_COMPS (md);
 
 	g_return_val_if_fail (ZIF_IS_MD_COMPS (md), FALSE);
+	g_return_val_if_fail (zif_state_valid (state), FALSE);
 
 	/* already loaded */
 	if (comps->priv->loaded)
@@ -518,6 +519,7 @@ zif_md_comps_get_categories (ZifMdComps *md,
 	ZifCategory *category;
 
 	g_return_val_if_fail (ZIF_IS_MD_COMPS (md), NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* if not already loaded, load */
@@ -602,6 +604,7 @@ zif_md_comps_get_groups_for_category (ZifMdComps *md, const gchar *category_id,
 
 	g_return_val_if_fail (ZIF_IS_MD_COMPS (md), NULL);
 	g_return_val_if_fail (category_id != NULL, NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* if not already loaded, load */
@@ -677,6 +680,7 @@ zif_md_comps_get_packages_for_group (ZifMdComps *md, const gchar *group_id,
 
 	g_return_val_if_fail (ZIF_IS_MD_COMPS (md), NULL);
 	g_return_val_if_fail (group_id != NULL, NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* if not already loaded, load */

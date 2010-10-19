@@ -78,6 +78,7 @@ zif_md_mirrorlist_load (ZifMd *md, ZifState *state, GError **error)
 	ZifMdMirrorlist *mirrorlist = ZIF_MD_MIRRORLIST (md);
 
 	g_return_val_if_fail (ZIF_IS_MD_MIRRORLIST (md), FALSE);
+	g_return_val_if_fail (zif_state_valid (state), FALSE);
 
 	/* already loaded */
 	if (mirrorlist->priv->loaded)
@@ -142,6 +143,7 @@ zif_md_mirrorlist_get_uris (ZifMdMirrorlist *md, ZifState *state, GError **error
 	ZifMdMirrorlist *mirrorlist = ZIF_MD_MIRRORLIST (md);
 
 	g_return_val_if_fail (ZIF_IS_MD_MIRRORLIST (md), NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* if not already loaded, load */

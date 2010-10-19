@@ -285,6 +285,7 @@ zif_md_filelists_xml_load (ZifMd *md, ZifState *state, GError **error)
 	};
 
 	g_return_val_if_fail (ZIF_IS_MD_FILELISTS_XML (md), FALSE);
+	g_return_val_if_fail (zif_state_valid (state), FALSE);
 
 	/* already loaded */
 	if (filelists_xml->priv->loaded)
@@ -343,6 +344,7 @@ zif_md_filelists_xml_get_files (ZifMd *md, ZifPackage *package,
 	ZifMdFilelistsXml *md_filelists = ZIF_MD_FILELISTS_XML (md);
 
 	g_return_val_if_fail (ZIF_IS_MD_FILELISTS_XML (md), NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* setup state */
@@ -419,6 +421,7 @@ zif_md_filelists_xml_search_file (ZifMd *md, gchar **search,
 	ZifMdFilelistsXml *md_filelists = ZIF_MD_FILELISTS_XML (md);
 
 	g_return_val_if_fail (ZIF_IS_MD_FILELISTS_XML (md), NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* setup state */

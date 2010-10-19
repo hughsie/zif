@@ -155,6 +155,8 @@ zif_store_array_add_local (GPtrArray *store_array, ZifState *state, GError **err
 {
 	ZifStoreLocal *store;
 
+	g_return_val_if_fail (zif_state_valid (state), FALSE);
+
 	store = zif_store_local_new ();
 	zif_store_array_add_store (store_array, ZIF_STORE (store));
 	g_object_unref (store);
@@ -181,6 +183,8 @@ zif_store_array_add_remote (GPtrArray *store_array, ZifState *state, GError **er
 	ZifRepos *repos;
 	GError *error_local = NULL;
 	gboolean ret = TRUE;
+
+	g_return_val_if_fail (zif_state_valid (state), FALSE);
 
 	/* get stores */
 	repos = zif_repos_new ();
@@ -223,6 +227,8 @@ zif_store_array_add_remote_enabled (GPtrArray *store_array, ZifState *state, GEr
 	GError *error_local = NULL;
 	gboolean ret = TRUE;
 
+	g_return_val_if_fail (zif_state_valid (state), FALSE);
+
 	/* get stores */
 	repos = zif_repos_new ();
 	array = zif_repos_get_stores_enabled (repos, state, &error_local);
@@ -260,6 +266,8 @@ zif_store_array_repos_search (GPtrArray *store_array, ZifRole role, gchar **sear
 	ZifPackage *package;
 	GError *error_local = NULL;
 	ZifState *state_local = NULL;
+
+	g_return_val_if_fail (zif_state_valid (state), FALSE);
 
 	/* nothing to do */
 	if (store_array->len == 0) {
@@ -364,6 +372,7 @@ zif_store_array_find_package (GPtrArray *store_array, const gchar *package_id, Z
 	GError *error_local = NULL;
 	ZifState *state_local = NULL;
 
+	g_return_val_if_fail (zif_state_valid (state), FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* nothing to do */
@@ -441,6 +450,7 @@ zif_store_array_clean (GPtrArray *store_array,
 	GError *error_local = NULL;
 	ZifState *state_local = NULL;
 
+	g_return_val_if_fail (zif_state_valid (state), FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
 	/* nothing to do */
@@ -506,6 +516,7 @@ zif_store_array_refresh (GPtrArray *store_array, gboolean force,
 	GError *error_local = NULL;
 	ZifState *state_local = NULL;
 
+	g_return_val_if_fail (zif_state_valid (state), FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
 	/* nothing to do */
@@ -565,6 +576,7 @@ GPtrArray *
 zif_store_array_resolve (GPtrArray *store_array, gchar **search,
 			 ZifState *state, GError **error)
 {
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 	return zif_store_array_repos_search (store_array, ZIF_ROLE_RESOLVE, search,
 					     state, error);
@@ -587,6 +599,7 @@ GPtrArray *
 zif_store_array_search_name (GPtrArray *store_array, gchar **search,
 			     ZifState *state, GError **error)
 {
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 	return zif_store_array_repos_search (store_array, ZIF_ROLE_SEARCH_NAME, search,
 					     state, error);
@@ -609,6 +622,7 @@ GPtrArray *
 zif_store_array_search_details (GPtrArray *store_array, gchar **search,
 				ZifState *state, GError **error)
 {
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 	return zif_store_array_repos_search (store_array, ZIF_ROLE_SEARCH_DETAILS, search,
 					     state, error);
@@ -631,6 +645,7 @@ GPtrArray *
 zif_store_array_search_group (GPtrArray *store_array, gchar **group_enum,
 			      ZifState *state, GError **error)
 {
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 	return zif_store_array_repos_search (store_array, ZIF_ROLE_SEARCH_GROUP, group_enum,
 					     state, error);
@@ -660,6 +675,7 @@ zif_store_array_search_category (GPtrArray *store_array, gchar **group_id,
 	const gchar *package_id_tmp;
 	gchar **split;
 
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* get all results from all repos */
@@ -706,6 +722,7 @@ GPtrArray *
 zif_store_array_search_file (GPtrArray *store_array, gchar **search,
 			     ZifState *state, GError **error)
 {
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 	return zif_store_array_repos_search (store_array, ZIF_ROLE_SEARCH_FILE, search,
 					     state, error);
@@ -727,6 +744,7 @@ GPtrArray *
 zif_store_array_get_packages (GPtrArray *store_array,
 			      ZifState *state, GError **error)
 {
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 	return zif_store_array_repos_search (store_array, ZIF_ROLE_GET_PACKAGES, NULL,
 					     state, error);
@@ -749,6 +767,7 @@ GPtrArray *
 zif_store_array_get_updates (GPtrArray *store_array, GPtrArray *packages,
 			     ZifState *state, GError **error)
 {
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 	return zif_store_array_repos_search (store_array, ZIF_ROLE_GET_UPDATES, (gchar **) packages,
 					     state, error);
@@ -771,6 +790,7 @@ GPtrArray *
 zif_store_array_what_provides (GPtrArray *store_array, gchar **search,
 				       ZifState *state, GError **error)
 {
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* if this is a path, then we use the file list and treat like a SearchFile */
@@ -807,6 +827,7 @@ zif_store_array_get_categories (GPtrArray *store_array,
 	gchar *cat_id;
 	gchar *cat_id_tmp;
 
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* get all results from all repos */
