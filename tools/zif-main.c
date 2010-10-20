@@ -702,6 +702,7 @@ main (int argc, char *argv[])
 	ZifGroups *groups = NULL;
 	ZifState *state = NULL;
 	ZifState *state_local = NULL;
+	ZifState *state_loop = NULL;
 	ZifLock *lock = NULL;
 	guint i;
 	guint pid;
@@ -719,7 +720,6 @@ main (int argc, char *argv[])
 	gchar *repos_dir = NULL;
 	gchar *max_age = NULL;
 	gchar *root = NULL;
-	gchar **split;
 	const gchar *to_array[] = { NULL, NULL };
 
 	const GOptionEntry options[] = {
@@ -974,7 +974,6 @@ main (int argc, char *argv[])
 			ZifChangeset *changeset;
 			GPtrArray *update_infos;
 			GPtrArray *changelog;
-			ZifState *state_loop;
 			guint j;
 
 			package = g_ptr_array_index (array, i);
@@ -1291,7 +1290,6 @@ main (int argc, char *argv[])
 		goto out;
 	}
 	if (g_strcmp0 (mode, "getdetails") == 0) {
-		const gchar *package_id;
 		const gchar *summary;
 		const gchar *description;
 		const gchar *license;
@@ -1301,7 +1299,7 @@ main (int argc, char *argv[])
 		pk_progress_bar_start (progressbar, "Getting details");
 
 		/* setup state with the correct number of steps */
-		zif_state_set_number_steps (state, 3);
+		zif_state_set_number_steps (state, 4);
 
 		/* add both local and remote packages */
 		store_array = zif_store_array_new ();
@@ -1353,28 +1351,44 @@ main (int argc, char *argv[])
 			g_print ("no package found\n");
 			goto out;
 		}
-		package = g_ptr_array_index (array, 0);
 
-		package_id = zif_package_get_id (package);
-		split = zif_package_id_split (package_id);
 		state_local = zif_state_get_child (state);
-		summary = zif_package_get_summary (package, state_local, NULL);
-		description = zif_package_get_description (package, state_local, NULL);
-		license = zif_package_get_license (package, state_local, NULL);
-		url = zif_package_get_url (package, state_local, NULL);
-		size = zif_package_get_size (package, state_local, NULL);
+		zif_state_set_number_steps (state_local, array->len);
 
-		g_print ("Name\t : %s\n", split[ZIF_PACKAGE_ID_NAME]);
-		g_print ("Version\t : %s\n", split[ZIF_PACKAGE_ID_VERSION]);
-		g_print ("Arch\t : %s\n", split[ZIF_PACKAGE_ID_ARCH]);
-		g_print ("Size\t : %" G_GUINT64_FORMAT " bytes\n", size);
-		g_print ("Repo\t : %s\n", split[ZIF_PACKAGE_ID_DATA]);
-		g_print ("Summary\t : %s\n", summary);
-		g_print ("URL\t : %s\n", url);
-		g_print ("License\t : %s\n", license);
-		g_print ("Description\t : %s\n", description);
+		/* no more progressbar */
+		pk_progress_bar_end (progressbar);
 
-		g_strfreev (split);
+		for (i=0; i<array->len; i++) {
+			package = g_ptr_array_index (array, i);
+
+			state_loop = zif_state_get_child (state_local);
+			summary = zif_package_get_summary (package, state_loop, NULL);
+			description = zif_package_get_description (package, state_loop, NULL);
+			license = zif_package_get_license (package, state_loop, NULL);
+			url = zif_package_get_url (package, state_loop, NULL);
+			size = zif_package_get_size (package, state_loop, NULL);
+
+			g_print ("Name\t : %s\n", zif_package_get_name (package));
+			g_print ("Version\t : %s\n", zif_package_get_version (package));
+			g_print ("Arch\t : %s\n", zif_package_get_arch (package));
+			g_print ("Size\t : %" G_GUINT64_FORMAT " bytes\n", size);
+			g_print ("Repo\t : %s\n", zif_package_get_data (package));
+			g_print ("Summary\t : %s\n", summary);
+			g_print ("URL\t : %s\n", url);
+			g_print ("License\t : %s\n", license);
+			g_print ("Description\t : %s\n", description);
+
+			/* this section done */
+			ret = zif_state_done (state_local, &error);
+			if (!ret)
+				goto out;
+		}
+
+		/* this section done */
+		ret = zif_state_done (state, &error);
+		if (!ret)
+			goto out;
+
 		g_ptr_array_unref (array);
 		goto out;
 	}
