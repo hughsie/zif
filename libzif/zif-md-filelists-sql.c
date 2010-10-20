@@ -302,7 +302,7 @@ zif_md_filelists_sql_search_file (ZifMd *md, gchar **search,
 	/* split the search term into directory and filename */
 	dirname = g_path_get_dirname (search[0]);
 	filename = g_path_get_basename (search[0]);
-	g_debug ("dirname=%s, filename=%s", dirname, filename);
+	g_debug ("find in %s dirname=%s, filename=%s", zif_md_get_id (md), dirname, filename);
 
 	/* create data struct we can pass to the callback */
 	data = g_new0 (ZifMdFilelistsSqlData, 1);
