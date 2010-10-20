@@ -273,14 +273,17 @@ zif_md_filelists_sql_search_file (ZifMd *md, gchar **search,
 				  ZifState *state, GError **error)
 {
 	GPtrArray *array = NULL;
+	GPtrArray *array_tmp = NULL;
+	GPtrArray *pkgkey_array = NULL;
 	gchar *statement = NULL;
 	gchar *error_msg = NULL;
 	gint rc;
 	gboolean ret;
-	guint i;
+	guint i, j;
 	GError *error_local = NULL;
 	gchar *filename = NULL;
 	gchar *dirname = NULL;
+	ZifState *state_local;
 	ZifMdFilelistsSql *md_filelists_sql = ZIF_MD_FILELISTS_SQL (md);
 	ZifMdFilelistsSqlData *data = NULL;
 
@@ -288,46 +291,69 @@ zif_md_filelists_sql_search_file (ZifMd *md, gchar **search,
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
+	/* set steps */
+	zif_state_set_number_steps (state, 1 + !md_filelists_sql->priv->loaded + g_strv_length (search));
+
 	/* if not already loaded, load */
 	if (!md_filelists_sql->priv->loaded) {
-		ret = zif_md_load (md, state, &error_local);
+		state_local = zif_state_get_child (state);
+		ret = zif_md_load (md, state_local, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED_TO_LOAD,
 				     "failed to load store file: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
+
+		/* done */
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
 	}
 
-	/* split the search term into directory and filename */
-	dirname = g_path_get_dirname (search[0]);
-	filename = g_path_get_basename (search[0]);
-	g_debug ("find in %s dirname=%s, filename=%s", zif_md_get_id (md), dirname, filename);
+	/* search each part of the array */
+	pkgkey_array = g_ptr_array_new ();
+	for (j=0; search[j] != NULL; j++) {
 
-	/* create data struct we can pass to the callback */
-	data = g_new0 (ZifMdFilelistsSqlData, 1);
-	data->filename = g_path_get_basename (search[0]);
-	data->array = g_ptr_array_new ();
+		/* split the search term into directory and filename */
+		dirname = g_path_get_dirname (search[j]);
+		filename = g_path_get_basename (search[j]);
+		g_debug ("find in %s dirname=%s, filename=%s", zif_md_get_id (md), dirname, filename);
 
-	/* populate _array with guint pkgKey */
-	statement = g_strdup_printf ("SELECT filenames, pkgKey FROM filelist WHERE dirname = '%s'", dirname);
-	rc = sqlite3_exec (md_filelists_sql->priv->db, statement, zif_md_filelists_sql_sqlite_get_pkgkey_cb, data, &error_msg);
-	g_free (statement);
-	if (rc != SQLITE_OK) {
-		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_BAD_SQL,
-			     "SQL error (failed to get keys): %s\n", error_msg);
-		sqlite3_free (error_msg);
-		goto out;
+		/* create data struct we can pass to the callback */
+		data = g_new0 (ZifMdFilelistsSqlData, 1);
+		data->filename = g_path_get_basename (search[j]);
+		data->array = pkgkey_array;
+
+		/* populate _array with guint pkgKey */
+		statement = g_strdup_printf ("SELECT filenames, pkgKey FROM filelist WHERE dirname = '%s'", dirname);
+		rc = sqlite3_exec (md_filelists_sql->priv->db, statement, zif_md_filelists_sql_sqlite_get_pkgkey_cb, data, &error_msg);
+		g_free (statement);
+		g_free (dirname);
+		g_free (filename);
+		g_free (data->filename);
+		g_free (data);
+		if (rc != SQLITE_OK) {
+			g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_BAD_SQL,
+				     "SQL error (failed to get keys for %s): %s\n", search[j], error_msg);
+			sqlite3_free (error_msg);
+			goto out;
+		}
+
+		/* done */
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
 	}
 
 	/* convert each pkgKey */
-	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_free);
-	for (i=0; i<data->array->len; i++) {
+	array_tmp = g_ptr_array_new_with_free_func ((GDestroyNotify) g_free);
+	for (i=0; i<pkgkey_array->len; i++) {
 		guint key;
 		gchar *pkgid = NULL;
 
 		/* convert the pkgKey to a pkgId */
-		key = GPOINTER_TO_UINT (g_ptr_array_index (data->array, i));
+		key = GPOINTER_TO_UINT (g_ptr_array_index (pkgkey_array, i));
 		statement = g_strdup_printf ("SELECT pkgId FROM packages WHERE pkgKey = %i LIMIT 1", key);
 		rc = sqlite3_exec (md_filelists_sql->priv->db, statement, zif_md_filelists_sql_sqlite_get_id_cb, &pkgid, &error_msg);
 		g_free (statement);
@@ -346,16 +372,21 @@ zif_md_filelists_sql_search_file (ZifMd *md, gchar **search,
 		}
 
 		/* added to tracked array, so no need to free pkgid */
-		g_ptr_array_add (array, pkgid);
+		g_ptr_array_add (array_tmp, pkgid);
 	}
+
+	/* done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* success */
+	array = g_ptr_array_ref (array_tmp);
 out:
-	if (data != NULL) {
-		g_free (data->filename);
-		g_ptr_array_unref (data->array);
-		g_free (data);
-	}
-	g_free (dirname);
-	g_free (filename);
+	if (pkgkey_array != NULL)
+		g_ptr_array_unref (pkgkey_array);
+	if (array_tmp != NULL)
+		g_ptr_array_unref (array_tmp);
 	return array;
 }
 
