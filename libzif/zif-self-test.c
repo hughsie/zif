@@ -972,6 +972,7 @@ zif_package_func (void)
 	gchar *pidfile;
 	GError *error = NULL;
 	GPtrArray *changelog;
+	GPtrArray *array;
 	ZifConfig *config;
 	ZifLock *lock;
 	ZifPackage *package;
@@ -1021,6 +1022,12 @@ zif_package_func (void)
 	ret = zif_package_set_id (package, "hal;2.30.1-1.fc13;i686;fedora", &error);
 	g_assert_no_error (error);
 	g_assert (ret);
+
+	/* this is a base class, so this should fail */
+	array = zif_package_get_files (package, state, &error);
+	g_assert_error (error, ZIF_PACKAGE_ERROR, ZIF_PACKAGE_ERROR_FAILED);
+	g_assert (array == NULL);
+	g_clear_error (&error);
 
 	/* get the update detail */
 	zif_state_reset (state);
