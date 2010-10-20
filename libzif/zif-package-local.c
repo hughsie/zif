@@ -300,7 +300,7 @@ zif_package_local_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, ZifSt
 			}
 
 			files = g_ptr_array_new_with_free_func (g_free);
-			for (i=0; i<basenames->len-2 /* why -1? I'm not sure */; i++) {
+			for (i=0; i<basenames->len-1 /* why -1? I'm not sure */; i++) {
 				guint idx;
 				idx = GPOINTER_TO_UINT (g_ptr_array_index (fileindex, i));
 				if (idx > dirnames->len) {

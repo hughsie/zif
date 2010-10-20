@@ -1399,7 +1399,7 @@ zif_store_local_func (void)
 	guint elapsed;
 	const gchar *package_id;
 	gchar **split;
-	const gchar *to_array[] = { NULL, NULL };
+	const gchar *to_array[] = { NULL, NULL, NULL };
 	gchar *filename;
 	gchar *pidfile;
 
@@ -1460,6 +1460,7 @@ zif_store_local_func (void)
 
 	zif_state_reset (state);
 	to_array[0] = "test";
+	to_array[1] = NULL;
 	g_test_timer_start ();
 	array = zif_store_resolve (ZIF_STORE (store), (gchar**)to_array, state, &error);
 	g_assert_no_error (error);
@@ -1471,6 +1472,7 @@ zif_store_local_func (void)
 
 	zif_state_reset (state);
 	to_array[0] = "te";
+	to_array[1] = NULL;
 	array = zif_store_search_name (ZIF_STORE (store), (gchar**)to_array, state, &error);
 	g_assert_no_error (error);
 	g_assert (array != NULL);
@@ -1478,7 +1480,18 @@ zif_store_local_func (void)
 	g_ptr_array_unref (array);
 
 	zif_state_reset (state);
+	to_array[0] = "/usr/share/test-0.1/README";
+	to_array[1] = "/usr/share/depend-0.1/README";
+	to_array[2] = NULL;
+	array = zif_store_search_file (ZIF_STORE (store), (gchar**)to_array, state, &error);
+	g_assert_no_error (error);
+	g_assert (array != NULL);
+	g_assert_cmpint (array->len, ==, 2);
+	g_ptr_array_unref (array);
+
+	zif_state_reset (state);
 	to_array[0] = "Test package";
+	to_array[1] = NULL;
 	array = zif_store_search_details (ZIF_STORE (store), (gchar**)to_array, state, &error);
 	g_assert_no_error (error);
 	g_assert (array != NULL);

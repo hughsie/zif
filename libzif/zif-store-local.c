@@ -588,6 +588,7 @@ zif_store_local_search_file (ZifStore *store, gchar **search, ZifState *state, G
 {
 	guint i, j, l;
 	GPtrArray *array = NULL;
+	GPtrArray *array_tmp = NULL;
 	ZifPackage *package;
 	GPtrArray *files;
 	GError *error_local = NULL;
@@ -644,7 +645,7 @@ zif_store_local_search_file (ZifStore *store, gchar **search, ZifState *state, G
 	zif_state_set_number_steps (state_local, local->priv->packages->len);
 
 	/* iterate list */
-	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
+	array_tmp = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	for (i=0;i<local->priv->packages->len;i++) {
 		package = g_ptr_array_index (local->priv->packages, i);
 		state_loop = zif_state_get_child (state_local);
@@ -653,15 +654,13 @@ zif_store_local_search_file (ZifStore *store, gchar **search, ZifState *state, G
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 				     "failed to get file lists: %s", error_local->message);
 			g_error_free (error_local);
-			g_ptr_array_unref (array);
-			array = NULL;
-			break;
+			goto out;
 		}
 		for (j=0; j<files->len; j++) {
 			filename = g_ptr_array_index (files, j);
 			for (l=0; search[l] != NULL; l++) {
 				if (g_strcmp0 (search[l], filename) == 0) {
-					g_ptr_array_add (array, g_object_ref (package));
+					g_ptr_array_add (array_tmp, g_object_ref (package));
 					break;
 				}
 			}
@@ -678,7 +677,12 @@ zif_store_local_search_file (ZifStore *store, gchar **search, ZifState *state, G
 	ret = zif_state_done (state, error);
 	if (!ret)
 		goto out;
+
+	/* success */
+	array = g_ptr_array_ref (array_tmp);
 out:
+	if (array_tmp != NULL)
+		g_ptr_array_unref (array_tmp);
 	return array;
 }
 
