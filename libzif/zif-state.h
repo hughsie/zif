@@ -49,6 +49,14 @@ struct _ZifState
 	ZifStatePrivate	*priv;
 };
 
+typedef enum {
+	ZIF_STATE_ACTION_DOWNLOADING,
+	ZIF_STATE_ACTION_CHECKING,
+	ZIF_STATE_ACTION_LOADING_REPOS,
+	ZIF_STATE_ACTION_DECOMPRESSING,
+	ZIF_STATE_ACTION_UNKNOWN
+} ZifStateAction;
+
 struct _ZifStateClass
 {
 	GObjectClass	 parent_class;
@@ -59,6 +67,9 @@ struct _ZifStateClass
 							 guint		 value);
 	void		(* allow_cancel_changed)	(ZifState	*state,
 							 gboolean	 allow_cancel);
+	void		(* action_changed)		(ZifState	*state,
+							 ZifStateAction	 action,
+							 const gchar	*action_hint);
 	/* Padding for future expansion */
 	void (*_zif_reserved1) (void);
 	void (*_zif_reserved2) (void);
@@ -91,6 +102,13 @@ gboolean	 zif_state_set_number_steps_real	(ZifState		*state,
 gboolean	 zif_state_set_percentage		(ZifState		*state,
 							 guint			 percentage);
 guint		 zif_state_get_percentage		(ZifState		*state);
+gboolean	 zif_state_action_start			(ZifState		*state,
+							 ZifStateAction		 action,
+							 const gchar		*action_hint);
+gboolean	 zif_state_action_stop			(ZifState		*state);
+const gchar	*zif_state_action_to_string		(ZifStateAction		 action);
+ZifStateAction	 zif_state_get_action			(ZifState		*state);
+const gchar	*zif_state_get_action_hint		(ZifState		*state);
 gboolean	 zif_state_done_real			(ZifState		*state,
 							 GError			 **error,
 							 const gchar		*strloc)

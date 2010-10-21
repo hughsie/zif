@@ -94,12 +94,6 @@ zif_download_file_got_chunk_cb (SoupMessage *msg, SoupBuffer *chunk, ZifDownload
 
 	/* calulate percentage */
 	percentage = (100 * body_length) / header_size;
-	if (percentage == 100) {
-		g_debug ("ignoring percentage: %i", percentage);
-		goto out;
-	}
-
-	/* only print if we cared */
 	ret = zif_state_set_percentage (download->priv->state, percentage);
 	if (ret)
 		g_debug ("download: %i%% (%i, %i) - %p, %p", percentage, body_length, header_size, msg, download);
@@ -203,6 +197,9 @@ zif_download_file (ZifDownload *download, const gchar *uri, const gchar *filenam
 
 	/* request */
 //	soup_message_set_flags (msg, SOUP_MESSAGE_NO_REDIRECT);
+
+	/* set action */
+	zif_state_action_start (state, ZIF_STATE_ACTION_DOWNLOADING, filename);
 
 	/* send sync */
 	soup_session_send_message (download->priv->session, msg);

@@ -470,6 +470,9 @@ zif_file_decompress (const gchar *in, const gchar *out, ZifState *state, GError 
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 	g_return_val_if_fail (zif_state_valid (state), FALSE);
 
+	/* set action */
+	zif_state_action_start (state, ZIF_STATE_ACTION_DECOMPRESSING, in);
+
 	/* bz2 */
 	if (g_str_has_suffix (in, "bz2")) {
 		ret = zif_file_decompress_bz2 (in, out, state, error);

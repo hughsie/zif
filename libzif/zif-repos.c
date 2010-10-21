@@ -219,6 +219,9 @@ zif_repos_load (ZifRepos *repos, ZifState *state, GError **error)
 	if (repos->priv->loaded)
 		goto out;
 
+	/* set action */
+	zif_state_action_start (state, ZIF_STATE_ACTION_LOADING_REPOS, NULL);
+
 	/* search repos dir */
 	dir = g_dir_open (repos->priv->repos_dir, 0, &error_local);
 	if (dir == NULL) {

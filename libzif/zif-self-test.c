@@ -1179,6 +1179,7 @@ zif_repos_func (void)
 }
 
 static guint _allow_cancel_updates = 0;
+static guint _action_updates = 0;
 static guint _last_percent = 0;
 static guint _last_subpercent = 0;
 
@@ -1201,6 +1202,12 @@ zif_state_test_allow_cancel_changed_cb (ZifState *state, gboolean allow_cancel, 
 	_allow_cancel_updates++;
 }
 
+static void
+zif_state_test_action_changed_cb (ZifState *state, ZifStateAction action, gpointer data)
+{
+	_action_updates++;
+}
+
 static gboolean
 zif_state_error_handler_cb (const GError *error, gpointer user_data)
 {
@@ -1215,15 +1222,21 @@ zif_state_func (void)
 	ZifState *state;
 	ZifState *child;
 	gboolean ret;
+	guint i;
 	GError *error = NULL;
+
+	for (i=0; i<ZIF_STATE_ACTION_UNKNOWN ;i++)
+		g_assert (zif_state_action_to_string (i) != NULL);
 
 	state = zif_state_new ();
 	g_assert (state != NULL);
 	g_signal_connect (state, "percentage-changed", G_CALLBACK (zif_state_test_percentage_changed_cb), NULL);
 	g_signal_connect (state, "subpercentage-changed", G_CALLBACK (zif_state_test_subpercentage_changed_cb), NULL);
 	g_signal_connect (state, "allow-cancel-changed", G_CALLBACK (zif_state_test_allow_cancel_changed_cb), NULL);
+	g_signal_connect (state, "action-changed", G_CALLBACK (zif_state_test_action_changed_cb), NULL);
 
 	g_assert (zif_state_get_allow_cancel (state));
+	g_assert_cmpint (zif_state_get_action (state), ==, ZIF_STATE_ACTION_UNKNOWN);
 
 	zif_state_set_allow_cancel (state, TRUE);
 	g_assert (zif_state_get_allow_cancel (state));
@@ -1231,6 +1244,18 @@ zif_state_func (void)
 	zif_state_set_allow_cancel (state, FALSE);
 	g_assert (!zif_state_get_allow_cancel (state));
 	g_assert ((_allow_cancel_updates == 1));
+
+	/* stop never started */
+	g_assert (!zif_state_action_stop (state));
+
+	/* repeated */
+	g_assert (zif_state_action_start (state, ZIF_STATE_ACTION_DOWNLOADING, NULL));
+	g_assert (!zif_state_action_start (state, ZIF_STATE_ACTION_DOWNLOADING, NULL));
+	g_assert_cmpint (zif_state_get_action (state), ==, ZIF_STATE_ACTION_DOWNLOADING);
+	g_assert (zif_state_action_stop (state));
+	g_assert_cmpint (zif_state_get_action (state), ==, ZIF_STATE_ACTION_UNKNOWN);
+	g_assert_cmpint (_action_updates, ==, 2);
+	g_assert_cmpstr (zif_state_action_to_string (ZIF_STATE_ACTION_DOWNLOADING), ==, "downloading");
 
 	ret = zif_state_set_number_steps (state, 5);
 	g_assert (ret);
@@ -1259,12 +1284,14 @@ zif_state_func (void)
 	/* reset */
 	_updates = 0;
 	_allow_cancel_updates = 0;
+	_action_updates = 0;
 	state = zif_state_new ();
 	zif_state_set_allow_cancel (state, TRUE);
 	zif_state_set_number_steps (state, 2);
 	g_signal_connect (state, "percentage-changed", G_CALLBACK (zif_state_test_percentage_changed_cb), NULL);
 	g_signal_connect (state, "subpercentage-changed", G_CALLBACK (zif_state_test_subpercentage_changed_cb), NULL);
 	g_signal_connect (state, "allow-cancel-changed", G_CALLBACK (zif_state_test_allow_cancel_changed_cb), NULL);
+	g_signal_connect (state, "action-changed", G_CALLBACK (zif_state_test_action_changed_cb), NULL);
 
 	// state: |-----------------------|-----------------------|
 	// step1: |-----------------------|
@@ -1293,8 +1320,15 @@ zif_state_func (void)
 	g_assert ((_updates == 2));
 	g_assert ((_last_percent == 75));
 
+	/* child action */
+	g_assert (zif_state_action_start (state, ZIF_STATE_ACTION_DOWNLOADING, NULL));
+
 	/* CHILD UPDATE */
 	ret = zif_state_done (child, NULL);
+
+	g_assert (!zif_state_action_stop (state));
+	g_assert_cmpint (zif_state_get_action (state), ==, ZIF_STATE_ACTION_UNKNOWN);
+	g_assert_cmpint (_action_updates, ==, 2);
 
 	g_assert_cmpint (_updates, ==, 3);
 	g_assert ((_last_percent == 100));

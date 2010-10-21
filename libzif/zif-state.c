@@ -81,6 +81,7 @@
 
 #include <glib.h>
 
+#include "zif-marshal.h"
 #include "zif-utils.h"
 #include "zif-state.h"
 
@@ -96,6 +97,7 @@ struct _ZifStatePrivate
 	gulong			 percentage_child_id;
 	gulong			 subpercentage_child_id;
 	gulong			 allow_cancel_child_id;
+	gulong			 action_child_id;
 	gchar			*id;
 	gboolean		 allow_cancel_changed_state;
 	gboolean		 allow_cancel;
@@ -106,12 +108,16 @@ struct _ZifStatePrivate
 	gpointer		 error_handler_user_data;
 	gboolean		 enable_profile;
 	gdouble			 global_share;
+	ZifStateAction		 action;
+	gchar			*action_hint;
+	ZifStateAction		 last_action;
 };
 
 enum {
 	SIGNAL_PERCENTAGE_CHANGED,
 	SIGNAL_SUBPERCENTAGE_CHANGED,
-	SIGNAL_ALLOW_CANCEL,
+	SIGNAL_ALLOW_CANCEL_CHANGED,
+	SIGNAL_ACTION_CHANGED,
 	SIGNAL_LAST
 };
 
@@ -293,7 +299,7 @@ zif_state_set_allow_cancel (ZifState *state, gboolean allow_cancel)
 	state->priv->allow_cancel = allow_cancel;
 
 	/* just emit if both this and child is okay */
-	g_signal_emit (state, signals [SIGNAL_ALLOW_CANCEL], 0,
+	g_signal_emit (state, signals [SIGNAL_ALLOW_CANCEL_CHANGED], 0,
 		       state->priv->allow_cancel && state->priv->allow_cancel_child);
 }
 
@@ -328,6 +334,12 @@ zif_state_set_percentage (ZifState *state, guint percentage)
 	if (percentage == 100 && !state->priv->allow_cancel) {
 		g_debug ("done, so allow cancel 1 for %p", state);
 		zif_state_set_allow_cancel (state, TRUE);
+	}
+
+	/* automatically cancel any action */
+	if (percentage == 100 && state->priv->action != ZIF_STATE_ACTION_UNKNOWN) {
+		g_debug ("done, so cancelling action %s", zif_state_action_to_string (state->priv->action));
+		zif_state_action_stop (state);
 	}
 
 	/* save */
@@ -412,6 +424,153 @@ out:
 }
 
 /**
+ * zif_state_action_start:
+ * @state: the #ZifState object
+ * @action: A %ZifStateAction, e.g. %ZIF_STATE_ACTION_DECOMPRESSING
+ * @action_hint: A hint on what the action is doing, e.g. "/var/cache/yum/i386/15/koji/primary.sqlite"
+ *
+ * Sets the action which is being performed. This is emitted up the chain
+ * to any parent %ZifState objects, using the action-changed signal.
+ *
+ * If a %ZifState reaches 100% then it is automatically stopped with a
+ * call to zif_state_action_stop().
+ *
+ * It is allowed to call zif_state_action_start() more than once for a
+ * given %ZifState instance.
+ *
+ * Return value: %TRUE if the signal was propagated, %FALSE for failure
+ *
+ * Since: 0.1.2
+ **/
+gboolean
+zif_state_action_start (ZifState *state, ZifStateAction action, const gchar *action_hint)
+{
+	g_return_val_if_fail (ZIF_IS_STATE (state), FALSE);
+
+	/* ignore this */
+	if (action == ZIF_STATE_ACTION_UNKNOWN) {
+		g_warning ("cannot set action ZIF_STATE_ACTION_UNKNOWN");
+		return FALSE;
+	}
+
+	/* is different? */
+	if (state->priv->action == action &&
+	    g_strcmp0 (action_hint, state->priv->action_hint) == 0) {
+		g_debug ("same action as before, ignoring");
+		return FALSE;
+	}
+
+	/* remember for stop */
+	state->priv->last_action = state->priv->action;
+
+	/* save hint */
+	g_free (state->priv->action_hint);
+	state->priv->action_hint = g_strdup (action_hint);
+
+	/* save */
+	state->priv->action = action;
+
+	/* just emit */
+	g_signal_emit (state, signals [SIGNAL_ACTION_CHANGED], 0, action, action_hint);
+	return TRUE;
+}
+
+/**
+ * zif_state_action_stop:
+ * @state: the #ZifState object
+ *
+ * Returns the ZifState to it's previous value.
+ * It is not expected you will ever need to use this funtion.
+ *
+ * Return value: %TRUE if the signal was propagated, %FALSE for failure
+ *
+ * Since: 0.1.2
+ **/
+gboolean
+zif_state_action_stop (ZifState *state)
+{
+	g_return_val_if_fail (ZIF_IS_STATE (state), FALSE);
+
+	/* nothing ever set */
+	if (state->priv->action == ZIF_STATE_ACTION_UNKNOWN) {
+		g_debug ("cannot unset action ZIF_STATE_ACTION_UNKNOWN");
+		return FALSE;
+	}
+
+	/* pop and reset */
+	state->priv->action = state->priv->last_action;
+	state->priv->last_action = ZIF_STATE_ACTION_UNKNOWN;
+	if (state->priv->action_hint != NULL) {
+		g_free (state->priv->action_hint);
+		state->priv->action_hint = NULL;
+	}
+
+	/* just emit */
+	g_signal_emit (state, signals [SIGNAL_ACTION_CHANGED], 0, state->priv->action, NULL);
+	return TRUE;
+}
+
+/**
+ * zif_state_get_action_hint:
+ * @state: the #ZifState object
+ *
+ * Gets the action hint, which may be useful to the users.
+ *
+ * Return value: The action hint, e.g. "/var/cache/yum/i386/15/koji/primary.sqlite"
+ *
+ * Since: 0.1.2
+ **/
+const gchar *
+zif_state_get_action_hint (ZifState *state)
+{
+	g_return_val_if_fail (ZIF_IS_STATE (state), NULL);
+	return state->priv->action_hint;
+}
+
+/**
+ * zif_state_get_action:
+ * @state: the #ZifState object
+ *
+ * Gets the last set action value.
+ *
+ * Return value: A %ZifStateAction, e.g. %ZIF_STATE_ACTION_DECOMPRESSING
+ *
+ * Since: 0.1.2
+ **/
+ZifStateAction
+zif_state_get_action (ZifState *state)
+{
+	g_return_val_if_fail (ZIF_IS_STATE (state), ZIF_STATE_ACTION_UNKNOWN);
+	return state->priv->action;
+}
+
+/**
+ * zif_state_action_to_string:
+ * @action: a %ZifStateAction value
+ *
+ * Converts the %ZifStateAction to a string.
+ *
+ * Return value: a const string, or %NULL for unknown.
+ *
+ * Since: 0.1.2
+ **/
+const gchar *
+zif_state_action_to_string (ZifStateAction action)
+{
+	if (action == ZIF_STATE_ACTION_CHECKING)
+		return "checking";
+	if (action == ZIF_STATE_ACTION_DOWNLOADING)
+		return "downloading";
+	if(action == ZIF_STATE_ACTION_LOADING_REPOS)
+		return "loading-repos";
+	if(action == ZIF_STATE_ACTION_DECOMPRESSING)
+		return "decompressing";
+	if (action == ZIF_STATE_ACTION_UNKNOWN)
+		return "unknown";
+	return NULL;
+}
+
+/**
  * zif_state_child_percentage_changed_cb:
  **/
 static void
@@ -477,14 +636,27 @@ zif_state_child_subpercentage_changed_cb (ZifState *child, guint percentage, Zif
  * zif_state_child_allow_cancel_changed_cb:
  **/
 static void
-zif_state_child_allow_cancel_cb (ZifState *child, gboolean allow_cancel, ZifState *state)
+zif_state_child_allow_cancel_changed_cb (ZifState *child, gboolean allow_cancel, ZifState *state)
 {
 	/* save */
 	state->priv->allow_cancel_child = allow_cancel;
 
 	/* just emit if both this and child is okay */
-	g_signal_emit (state, signals [SIGNAL_ALLOW_CANCEL], 0,
+	g_signal_emit (state, signals [SIGNAL_ALLOW_CANCEL_CHANGED], 0,
 		       state->priv->allow_cancel && state->priv->allow_cancel_child);
+}
+
+/**
+ * zif_state_child_action_changed_cb:
+ **/
+static void
+zif_state_child_action_changed_cb (ZifState *child, ZifStateAction action, const gchar *action_hint, ZifState *state)
+{
+	/* save */
+	state->priv->action = action;
+
+	/* just emit */
+	g_signal_emit (state, signals [SIGNAL_ACTION_CHANGED], 0, action, action_hint);
 }
 
 /**
@@ -523,6 +695,10 @@ zif_state_reset (ZifState *state)
 	if (state->priv->allow_cancel_child_id != 0) {
 		g_signal_handler_disconnect (state->priv->child, state->priv->allow_cancel_child_id);
 		state->priv->allow_cancel_child_id = 0;
+	}
+	if (state->priv->action_child_id != 0) {
+		g_signal_handler_disconnect (state->priv->child, state->priv->action_child_id);
+		state->priv->action_child_id = 0;
 	}
 
 	/* unref child */
@@ -567,6 +743,7 @@ zif_state_get_child (ZifState *state)
 		g_signal_handler_disconnect (state->priv->child, state->priv->percentage_child_id);
 		g_signal_handler_disconnect (state->priv->child, state->priv->subpercentage_child_id);
 		g_signal_handler_disconnect (state->priv->child, state->priv->allow_cancel_child_id);
+		g_signal_handler_disconnect (state->priv->child, state->priv->action_child_id);
 		g_object_unref (state->priv->child);
 	}
 
@@ -579,7 +756,9 @@ zif_state_get_child (ZifState *state)
 	state->priv->subpercentage_child_id =
 		g_signal_connect (child, "subpercentage-changed", G_CALLBACK (zif_state_child_subpercentage_changed_cb), state);
 	state->priv->allow_cancel_child_id =
-		g_signal_connect (child, "allow-cancel-changed", G_CALLBACK (zif_state_child_allow_cancel_cb), state);
+		g_signal_connect (child, "allow-cancel-changed", G_CALLBACK (zif_state_child_allow_cancel_changed_cb), state);
+	state->priv->action_child_id =
+		g_signal_connect (child, "action-changed", G_CALLBACK (zif_state_child_action_changed_cb), state);
 
 	/* reset child */
 	child->priv->current = 0;
@@ -792,6 +971,7 @@ zif_state_finalize (GObject *object)
 
 	/* unref child too */
 	g_free (state->priv->id);
+	g_free (state->priv->action_hint);
 	zif_state_reset (state);
 	if (state->priv->parent != NULL)
 		g_object_unref (state->priv->parent);
@@ -825,12 +1005,19 @@ zif_state_class_init (ZifStateClass *klass)
 			      NULL, NULL, g_cclosure_marshal_VOID__UINT,
 			      G_TYPE_NONE, 1, G_TYPE_UINT);
 
-	signals [SIGNAL_ALLOW_CANCEL] =
+	signals [SIGNAL_ALLOW_CANCEL_CHANGED] =
 		g_signal_new ("allow-cancel-changed",
 			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,
 			      G_STRUCT_OFFSET (ZifStateClass, allow_cancel_changed),
 			      NULL, NULL, g_cclosure_marshal_VOID__BOOLEAN,
 			      G_TYPE_NONE, 1, G_TYPE_BOOLEAN);
+
+	signals [SIGNAL_ACTION_CHANGED] =
+		g_signal_new ("action-changed",
+			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,
+			      G_STRUCT_OFFSET (ZifStateClass, action_changed),
+			      NULL, NULL, zif_marshal_VOID__UINT_STRING,
+			      G_TYPE_NONE, 2, G_TYPE_UINT, G_TYPE_STRING);
 
 	g_type_class_add_private (klass, sizeof (ZifStatePrivate));
 }
@@ -857,7 +1044,10 @@ zif_state_init (ZifState *state)
 	state->priv->percentage_child_id = 0;
 	state->priv->subpercentage_child_id = 0;
 	state->priv->allow_cancel_child_id = 0;
+	state->priv->action_child_id = 0;
 	state->priv->global_share = 1.0f;
+	state->priv->action = ZIF_STATE_ACTION_UNKNOWN;
+	state->priv->last_action = ZIF_STATE_ACTION_UNKNOWN;
 	state->priv->timer = g_timer_new ();
 }
 

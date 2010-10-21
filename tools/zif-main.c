@@ -122,6 +122,17 @@ zif_state_allow_cancel_changed_cb (ZifState *state, gboolean allow_cancel, gpoin
 }
 
 /**
+ * zif_state_action_changed_cb:
+ **/
+static void
+zif_state_action_changed_cb (ZifState *state, ZifStateAction action, const gchar *action_hint, gpointer data)
+{
+	if (action == ZIF_STATE_ACTION_UNKNOWN)
+		return;
+	g_print ("\n%s: %s\n", zif_state_action_to_string (action), action_hint != NULL ? action_hint : "");
+}
+
+/**
  * zif_cmd_download:
  **/
 static gboolean
@@ -891,6 +902,7 @@ main (int argc, char *argv[])
 	g_signal_connect (state, "percentage-changed", G_CALLBACK (zif_state_percentage_changed_cb), NULL);
 	g_signal_connect (state, "subpercentage-changed", G_CALLBACK (zif_state_subpercentage_changed_cb), NULL);
 	g_signal_connect (state, "allow-cancel-changed", G_CALLBACK (zif_state_allow_cancel_changed_cb), NULL);
+	g_signal_connect (state, "action-changed", G_CALLBACK (zif_state_action_changed_cb), NULL);
 
 	/* for the signal handler */
 	_state = state;

@@ -1315,6 +1315,9 @@ zif_md_file_check (ZifMd *md, gboolean use_uncompressed, ZifState *state, GError
 		goto out;
 	}
 
+	/* set action */
+	zif_state_action_start (state, ZIF_STATE_ACTION_CHECKING, filename);
+
 	/* get contents */
 	ret = g_file_load_contents (file, cancellable, &data, &length, NULL, &error_local);
 	if (!ret) {

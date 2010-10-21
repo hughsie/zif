@@ -27,7 +27,7 @@ libzif_includedir = $(includedir)/libzif
 libzif_include_HEADERS =					\
 	zif.h							\
 	zif-lock.h						\
-	zif-state.h					\
+	zif-state.h						\
 	zif-string.h						\
 	zif-depend.h						\
 	zif-package.h						\
@@ -75,6 +75,8 @@ libzif_la_SOURCES =						\
 	zif-store-local.h					\
 	zif-store-remote.c					\
 	zif-store-remote.h					\
+	zif-marshal.c						\
+	zif-marshal.h						\
 	zif-md.c						\
 	zif-md.h						\
 	zif-media.c						\
@@ -120,6 +122,19 @@ libzif_la_SOURCES =						\
 	zif-download.c						\
 	zif-download.h
 
+zif-marshal.c: zif-marshal.list
+	echo "#include \"zif-marshal.h\"" > $@ && \
+	@GLIB_GENMARSHAL@ $< --prefix=zif_marshal --body >> $@
+
+zif-marshal.h: zif-marshal.list
+	@GLIB_GENMARSHAL@ $< --prefix=zif_marshal --header > $@
+
+BUILT_SOURCES = 						\
+	zif-marshal.c						\
+	zif-marshal.h
+
+CLEANFILES = $(BUILT_SOURCES)
+
 libzif_la_LIBADD =						\
 	$(GLIB_LIBS)						\
 	$(SQLITE_LIBS)						\
@@ -163,6 +178,7 @@ TESTS = zif-self-test
 endif
 
 EXTRA_DIST =							\
+	zif-marshal.list					\
 	zif.pc.in
 
 clean-local:
