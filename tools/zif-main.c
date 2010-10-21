@@ -746,28 +746,28 @@ main (int argc, char *argv[])
 	context = g_option_context_new ("ZIF Console Program");
 	g_option_context_set_summary (context, 
 		/* new */
-		"  clean          Remove cached data\n"
-		"  download       Download a package\n"
-		"  findpackage    Find a given package given the ID\n"
-		"  getcategories  Returns the list of categories\n"
-		"  getdepends     List a package's dependencies\n"
-		"  getdetails     Display details about a package or group of packages\n"
-		"  getfiles       List the files in a package\n"
-		"  getgroups      Get the groups the system supports\n"
-		"  getpackages    List all packages\n"
-		"  getupdates     Check for available package updates\n"
-		"  help           Display a helpful usage message\n"
-		"  refreshcache   Generate the metadata cache\n"
-		"  repolist       Display the configured software repositories\n"
-		"  repoenable     Enable a specific software repository\n"
-		"  repodisable    Disable a specific software repository\n"
-		"  resolve        Find a given package name\n"
-		"  searchcategory Search package details for the given category\n"
-		"  searchdetails  Search package details for the given string\n"
-		"  searchfile     Search packages for the given filename\n"
-		"  searchgroup    Search packages in the given group\n"
-		"  searchname     Search package name for the given string\n"
-		"  whatprovides   Find what package provides the given value\n"
+		"  clean           Remove cached data\n"
+		"  download        Download a package\n"
+		"  find-package    Find a given package given the ID\n"
+		"  get-categories  Returns the list of categories\n"
+		"  get-depends     List a package's dependencies\n"
+		"  get-details     Display details about a package or group of packages\n"
+		"  get-files       List the files in a package\n"
+		"  get-groups      Get the groups the system supports\n"
+		"  get-packages    List all packages\n"
+		"  get-updates     Check for available package updates\n"
+		"  help            Display a helpful usage message\n"
+		"  refresh-cache   Generate the metadata cache\n"
+		"  repo-list       Display the configured software repositories\n"
+		"  repo-enable     Enable a specific software repository\n"
+		"  repo-disable    Disable a specific software repository\n"
+		"  resolve         Find a given package name\n"
+		"  search-category Search package details for the given category\n"
+		"  search-details  Search package details for the given string\n"
+		"  search-file     Search packages for the given filename\n"
+		"  search-group    Search packages in the given group\n"
+		"  search-name     Search package name for the given string\n"
+		"  what-provides   Find what package provides the given value\n"
 		);
 
 	g_option_context_add_main_entries (context, options, NULL);
@@ -906,7 +906,7 @@ main (int argc, char *argv[])
 
 	mode = argv[1];
 	value = argv[2];
-	if (g_strcmp0 (mode, "getupdates") == 0) {
+	if (g_strcmp0 (mode, "get-updates") == 0) {
 
 		pk_progress_bar_start (progressbar, "Getting updates");
 
@@ -1039,7 +1039,7 @@ main (int argc, char *argv[])
 
 		goto out;
 	}
-	if (g_strcmp0 (mode, "getcategories") == 0) {
+	if (g_strcmp0 (mode, "get-categories") == 0) {
 		ZifCategory *obj;
 
 		pk_progress_bar_start (progressbar, "Getting categories");
@@ -1103,7 +1103,7 @@ main (int argc, char *argv[])
 		goto out;
 	}
 
-	if (g_strcmp0 (mode, "getgroups") == 0) {
+	if (g_strcmp0 (mode, "get-groups") == 0) {
 		const gchar *text;
 
 		/* get bitfield */
@@ -1164,7 +1164,7 @@ main (int argc, char *argv[])
 
 		goto out;
 	}
-	if (g_strcmp0 (mode, "getdepends") == 0) {
+	if (g_strcmp0 (mode, "get-depends") == 0) {
 
 		if (value == NULL) {
 			g_print ("specify a package name\n");
@@ -1189,7 +1189,7 @@ main (int argc, char *argv[])
 		g_print ("not yet supported\n");
 		goto out;
 	}
-	if (g_strcmp0 (mode, "getfiles") == 0) {
+	if (g_strcmp0 (mode, "get-files") == 0) {
 		GPtrArray *files;
 
 		if (value == NULL) {
@@ -1269,15 +1269,15 @@ main (int argc, char *argv[])
 		g_ptr_array_unref (array);
 		goto out;
 	}
-	if (g_strcmp0 (mode, "groupinfo") == 0) {
+	if (g_strcmp0 (mode, "group-info") == 0) {
 		g_print ("not yet supported\n");
 		goto out;
 	}
-	if (g_strcmp0 (mode, "groupinstall") == 0) {
+	if (g_strcmp0 (mode, "group-install") == 0) {
 		g_print ("not yet supported\n");
 		goto out;
 	}
-	if (g_strcmp0 (mode, "grouplist") == 0) {
+	if (g_strcmp0 (mode, "group-list") == 0) {
 		g_print ("not yet supported\n");
 		goto out;
 	}
@@ -1289,7 +1289,7 @@ main (int argc, char *argv[])
 		g_print ("%s", options_help);
 		goto out;
 	}
-	if (g_strcmp0 (mode, "getdetails") == 0) {
+	if (g_strcmp0 (mode, "get-details") == 0) {
 		const gchar *summary;
 		const gchar *description;
 		const gchar *license;
@@ -1406,7 +1406,7 @@ main (int argc, char *argv[])
 		g_print ("not yet supported\n");
 		goto out;
 	}
-	if (g_strcmp0 (mode, "getpackages") == 0) {
+	if (g_strcmp0 (mode, "get-packages") == 0) {
 
 		pk_progress_bar_start (progressbar, "Getting packages");
 
@@ -1461,7 +1461,7 @@ main (int argc, char *argv[])
 		g_ptr_array_unref (array);
 		goto out;
 	}
-	if (g_strcmp0 (mode, "localinstall") == 0) {
+	if (g_strcmp0 (mode, "local-install") == 0) {
 		if (value == NULL) {
 			g_print ("specify a filename");
 			value = "/home/hughsie/rpmbuild/REPOS/fedora/11/i386/zif-0.1.0-0.8.20090511git.fc11.i586.rpm";
@@ -1481,7 +1481,7 @@ main (int argc, char *argv[])
 		g_print ("not yet supported\n");
 		goto out;
 	}
-	if (g_strcmp0 (mode, "refreshcache") == 0) {
+	if (g_strcmp0 (mode, "refresh-cache") == 0) {
 
 		pk_progress_bar_start (progressbar, "Refreshing cache");
 		zif_cmd_refresh_cache (state, FALSE);
@@ -1494,7 +1494,7 @@ main (int argc, char *argv[])
 		g_print ("not yet supported\n");
 		goto out;
 	}
-	if (g_strcmp0 (mode, "repolist") == 0) {
+	if (g_strcmp0 (mode, "repo-list") == 0) {
 		guint max_length = 0;
 		guint length;
 		gchar *id_pad;
@@ -1535,7 +1535,7 @@ main (int argc, char *argv[])
 		g_ptr_array_unref (array);
 		goto out;
 	}
-	if (g_strcmp0 (mode, "repoenable") == 0) {
+	if (g_strcmp0 (mode, "repo-enable") == 0) {
 		if (value == NULL) {
 			g_print ("specify a repo name\n");
 			goto out;
@@ -1578,7 +1578,7 @@ main (int argc, char *argv[])
 
 		goto out;
 	}
-	if (g_strcmp0 (mode, "repodisable") == 0) {
+	if (g_strcmp0 (mode, "repo-disable") == 0) {
 		if (value == NULL) {
 			g_print ("specify a repo name\n");
 			goto out;
@@ -1681,7 +1681,7 @@ main (int argc, char *argv[])
 		g_ptr_array_unref (array);
 		goto out;
 	}
-	if (g_strcmp0 (mode, "findpackage") == 0) {
+	if (g_strcmp0 (mode, "find-package") == 0) {
 		if (value == NULL) {
 			g_print ("specify a package_id\n");
 			goto out;
@@ -1747,7 +1747,7 @@ main (int argc, char *argv[])
 		g_object_unref (package);
 		goto out;
 	}
-	if (g_strcmp0 (mode, "searchname") == 0) {
+	if (g_strcmp0 (mode, "search-name") == 0) {
 		if (value == NULL) {
 			g_print ("specify a search term\n");
 			goto out;
@@ -1806,7 +1806,7 @@ main (int argc, char *argv[])
 		g_ptr_array_unref (array);
 		goto out;
 	}
-	if (g_strcmp0 (mode, "searchdetails") == 0) {
+	if (g_strcmp0 (mode, "search-details") == 0) {
 		if (value == NULL) {
 			g_print ("specify a search term\n");
 			goto out;
@@ -1867,7 +1867,7 @@ main (int argc, char *argv[])
 		g_ptr_array_unref (array);
 		goto out;
 	}
-	if (g_strcmp0 (mode, "searchfile") == 0) {
+	if (g_strcmp0 (mode, "search-file") == 0) {
 		if (value == NULL) {
 			g_print ("specify a filename\n");
 			goto out;
@@ -1928,7 +1928,7 @@ main (int argc, char *argv[])
 		g_ptr_array_unref (array);
 		goto out;
 	}
-	if (g_strcmp0 (mode, "searchgroup") == 0) {
+	if (g_strcmp0 (mode, "search-group") == 0) {
 		if (value == NULL) {
 			g_print ("specify a search term\n");
 			goto out;
@@ -1988,7 +1988,7 @@ main (int argc, char *argv[])
 		g_ptr_array_unref (array);
 		goto out;
 	}
-	if (g_strcmp0 (mode, "searchcategory") == 0) {
+	if (g_strcmp0 (mode, "search-category") == 0) {
 		if (value == NULL) {
 			g_print ("specify a category\n");
 			goto out;
@@ -2035,7 +2035,7 @@ main (int argc, char *argv[])
 		g_ptr_array_unref (array);
 		goto out;
 	}
-	if (g_strcmp0 (mode, "whatprovides") == 0) {
+	if (g_strcmp0 (mode, "what-provides") == 0) {
 		if (value == NULL) {
 			g_print ("specify a search term\n");
 			goto out;
