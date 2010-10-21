@@ -1271,12 +1271,12 @@ zif_store_remote_refresh_md (ZifStoreRemote *remote, ZifMd *md, gboolean force, 
 	state_local = zif_state_get_child (state);
 	repo_verified = zif_md_file_check (md, TRUE, state_local, &error_local);
 	if (!repo_verified) {
-		g_warning ("failed to verify md: %s", error_local->message);
+		g_debug ("failed to verify md: %s, so will attempt update", error_local->message);
 		g_clear_error (&error_local);
 		ret = zif_state_finished (state_local, error);
-		goto out;
-	}
-	if (repo_verified && !force) {
+		if (!ret)
+			goto out;
+	} else if (!force) {
 		g_debug ("%s is okay, and we're not forcing",
 			   zif_md_type_to_text (zif_md_get_mdtype (md)));
 		ret = zif_state_finished (state, error);
