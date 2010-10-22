@@ -56,6 +56,7 @@ struct _ZifPackagePrivate
 	ZifString		*location_href;
 	ZifString		*group;
 	guint64			 size;
+	guint64			 time_file;
 	GPtrArray		*files;
 	GPtrArray		*requires;
 	GPtrArray		*provides;
@@ -1163,6 +1164,39 @@ zif_package_get_provides (ZifPackage *package, ZifState *state, GError **error)
 
 	/* return refcounted */
 	return g_ptr_array_ref (package->priv->provides);
+}
+
+/**
+ * zif_package_set_time_file:
+ * @package: the #ZifPackage object
+ * @time_file: the unix time the file was created
+ *
+ * Sets the UNIX time the file was created.
+ *
+ * Since: 0.1.2
+ **/
+void
+zif_package_set_time_file (ZifPackage *package, guint64 time_file)
+{
+	g_return_if_fail (ZIF_IS_PACKAGE (package));
+	package->priv->time_file = time_file;
+}
+
+/**
+ * zif_package_get_time_file:
+ * @package: the #ZifPackage object
+ *
+ * Get the time the file was created.
+ *
+ * Return value: the UNIX time, or 0 for unknown.
+ *
+ * Since: 0.1.2
+ **/
+guint64
+zif_package_get_time_file (ZifPackage *package)
+{
+	g_return_val_if_fail (ZIF_IS_PACKAGE (package), 0);
+	return package->priv->time_file;
 }
 
 /**

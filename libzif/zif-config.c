@@ -121,13 +121,17 @@ zif_config_get_string (ZifConfig *config, const gchar *key, GError **error)
 	if (value != NULL)
 		goto out;
 
-	/* special keys, FIXME: add to yum */
+	/* special keys */
 	if (g_strcmp0 (key, "reposdir") == 0) {
 		value = g_strdup ("/etc/yum.repos.d");
 		goto free_error;
 	}
 	if (g_strcmp0 (key, "pidfile") == 0) {
 		value = g_strdup ("/var/run/yum.pid");
+		goto free_error;
+	}
+	if (g_strcmp0 (key, "recent") == 0) {
+		value = g_strdup ("7");
 		goto free_error;
 	}
 

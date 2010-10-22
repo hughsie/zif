@@ -151,7 +151,8 @@ zif_md_primary_sql_sqlite_create_package_cb (void *data, gint argc, gchar **argv
 
 #define ZIF_MD_PRIMARY_SQL_HEADER "SELECT pkgId, name, arch, version, " \
 				  "epoch, release, summary, description, url, " \
-				  "rpm_license, rpm_group, size_package, location_href FROM packages"
+				  "rpm_license, rpm_group, size_package, location_href, "\
+				  "time_file FROM packages"
 
 /**
  * zif_md_primary_sql_search:

@@ -129,6 +129,7 @@ GPtrArray		*zif_package_get_requires	(ZifPackage	*package,
 GPtrArray		*zif_package_get_provides	(ZifPackage	*package,
 							 ZifState	*state,
 							 GError		**error);
+guint64			 zif_package_get_time_file	(ZifPackage	*package);
 
 /* internal setters */
 gboolean		 zif_package_set_id		(ZifPackage	*package,
@@ -159,6 +160,8 @@ void			 zif_package_set_requires	(ZifPackage	*package,
 							 GPtrArray	*requires);
 void			 zif_package_set_provides	(ZifPackage	*package,
 							 GPtrArray	*provides);
+void			 zif_package_set_time_file	(ZifPackage	*package,
+							 guint64	 time_file);
 /* actions */
 gboolean		 zif_package_download		(ZifPackage	*package,
 							 const gchar	*directory,

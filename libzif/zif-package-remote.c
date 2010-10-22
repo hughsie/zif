@@ -84,6 +84,7 @@ zif_package_remote_set_from_repo (ZifPackageRemote *pkg, guint length, gchar **t
 	gchar *package_id = NULL;
 	ZifString *string;
 	gchar *endptr = NULL;
+	guint64 time_file = 0;
 
 	g_return_val_if_fail (ZIF_IS_PACKAGE_REMOTE (pkg), FALSE);
 	g_return_val_if_fail (type != NULL, FALSE);
@@ -132,6 +133,11 @@ zif_package_remote_set_from_repo (ZifPackageRemote *pkg, guint length, gchar **t
 			string = zif_string_new (data[i]);
 			zif_package_set_location_href (ZIF_PACKAGE (pkg), string);
 			zif_string_unref (string);
+		} else if (g_strcmp0 (type[i], "time_file") == 0) {
+			time_file = g_ascii_strtoull (data[i], &endptr, 10);
+			if (data[i] == endptr)
+				g_warning ("failed to parse time_file %s", data[i]);
+			zif_package_set_time_file (ZIF_PACKAGE (pkg), time_file);
 		} else {
 			g_warning ("unrecognized: %s=%s", type[i], data[i]);
 		}

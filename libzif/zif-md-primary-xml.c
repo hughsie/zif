@@ -141,8 +141,7 @@ zif_md_primary_xml_parser_start_element (GMarkupParseContext *context, const gch
 			    g_strcmp0 (element_name, "rpm:vendor") == 0 ||
 			    g_strcmp0 (element_name, "rpm:buildhost") == 0 ||
 			    g_strcmp0 (element_name, "rpm:header-range") == 0 ||
-			    g_strcmp0 (element_name, "rpm:sourcerpm") == 0 ||
-			    g_strcmp0 (element_name, "time") == 0) {
+			    g_strcmp0 (element_name, "rpm:sourcerpm") == 0) {
 				primary_xml->priv->section_package = ZIF_MD_PRIMARY_XML_SECTION_PACKAGE_UNKNOWN;
 				goto out;
 			}
@@ -188,6 +187,15 @@ zif_md_primary_xml_parser_start_element (GMarkupParseContext *context, const gch
 				for (i=0; attribute_names[i] != NULL; i++) {
 					if (g_strcmp0 (attribute_names[i], "package") == 0) {
 						zif_package_set_size (primary_xml->priv->package_temp, atoi (attribute_values[i]));
+					}
+				}
+				goto out;
+			}
+			if (g_strcmp0 (element_name, "time") == 0) {
+				primary_xml->priv->section_package = ZIF_MD_PRIMARY_XML_SECTION_PACKAGE_VERSION;
+				for (i=0; attribute_names[i] != NULL; i++) {
+					if (g_strcmp0 (attribute_names[i], "file") == 0) {
+						zif_package_set_time_file (primary_xml->priv->package_temp, atoi (attribute_values[i]));
 					}
 				}
 				goto out;
