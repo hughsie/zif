@@ -134,6 +134,10 @@ zif_config_get_string (ZifConfig *config, const gchar *key, GError **error)
 		value = g_strdup ("7");
 		goto free_error;
 	}
+	if (g_strcmp0 (key, "retries") == 0) {
+		value = g_strdup ("3");
+		goto free_error;
+	}
 
 	/* special rpmkeys */
 	if (g_strcmp0 (key, "osinfo") == 0) {

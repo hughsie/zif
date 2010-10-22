@@ -1,0 +1,4 @@
+[invalid]
+name=Invalid
+baseurl=http://canihazpopcorn.cats/repodata
+enabled=true

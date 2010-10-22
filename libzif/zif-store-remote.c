@@ -84,6 +84,7 @@ struct _ZifStoreRemotePrivate
 	gchar			*repo_filename;		/* /etc/yum.repos.d/fedora.repo */
 	gchar			*media_id;		/* 1273587559.563492 */
 	guint			 metadata_expire;	/* in seconds */
+	guint			 download_retries;
 	gboolean		 enabled;
 	gboolean		 loaded;
 	gboolean		 loaded_metadata;
@@ -365,7 +366,7 @@ zif_store_remote_download_try (ZifStoreRemote *store, const gchar *uri, const gc
 	g_debug ("trying to download %s and save to %s", uri, filename);
 	ret = zif_download_file (download, uri, filename, state, &error_local);
 	if (!ret) {
-		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED_TO_DOWNLOAD,
 			     "failed to download %s from %s: %s", filename, uri, error_local->message);
 		g_error_free (error_local);
 		goto out;
@@ -375,7 +376,7 @@ zif_store_remote_download_try (ZifStoreRemote *store, const gchar *uri, const gc
 	zif_state_set_allow_cancel (state, FALSE);
 	ret = g_file_get_contents (filename, &contents, &length, &error_local);
 	if (!ret) {
-		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED_TO_DOWNLOAD,
 			     "failed to download %s from %s: %s (unable to read file)", filename, uri, error_local->message);
 		g_error_free (error_local);
 		goto out;
@@ -383,7 +384,7 @@ zif_store_remote_download_try (ZifStoreRemote *store, const gchar *uri, const gc
 
 	/* check we have some data */
 	if (length == 0) {
-		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED_TO_DOWNLOAD,
 			     "failed to download %s from %s: no data", filename, uri);
 		ret = FALSE;
 		goto out;
@@ -391,7 +392,7 @@ zif_store_remote_download_try (ZifStoreRemote *store, const gchar *uri, const gc
 
 	/* check this really isn't a fancy 404 page */
 	if (g_str_has_prefix (contents, "<html>")) {
-		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED_TO_DOWNLOAD,
 			     "failed to download %s from %s: invalid file", filename, uri);
 		ret = FALSE;
 		goto out;
@@ -475,7 +476,6 @@ zif_store_remote_download (ZifStoreRemote *store, const gchar *filename, const g
 	gchar *basename = NULL;
 	const gchar *baseurl;
 	ZifState *state_local;
-	gboolean done_repomd_confirm = FALSE;
 
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), FALSE);
 	g_return_val_if_fail (store->priv->id != NULL, FALSE);
@@ -513,7 +513,7 @@ repomd_confirm:
 		state_local = zif_state_get_child (state);
 		ret = zif_store_remote_load_metadata (store, state_local, &error_local);
 		if (!ret) {
-			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+			g_set_error (error, error_local->domain, error_local->code,
 				     "failed to load metadata: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
@@ -561,7 +561,8 @@ repomd_confirm:
 			zif_state_reset (state_local);
 			ret = zif_store_remote_download_try (store, uri, filename_local, state_local, &error_local);
 			if (!ret) {
-				g_debug ("failed to download (non-fatal): %s", error_local->message);
+				g_debug ("failed to download on attempt %i (non-fatal): %s",
+					 store->priv->download_retries, error_local->message);
 				g_clear_error (&error_local);
 			}
 		}
@@ -574,7 +575,7 @@ repomd_confirm:
 	}
 
 	/* we failed to get the metadata from any source, so try to refresh the repomd.xml */
-	if (!ret && !done_repomd_confirm) {
+	if (!ret && store->priv->download_retries > 1) {
 
 		/* we might go backwards */
 		ret = zif_state_reset (state);
@@ -585,8 +586,8 @@ repomd_confirm:
 		store->priv->loaded_metadata = FALSE;
 		g_unlink (store->priv->repomd_filename);
 
-		/* only retry this once */
-		done_repomd_confirm = TRUE;
+		/* retry this a few times */
+		store->priv->download_retries--;
 		g_debug ("confirming repomd.xml as repodata file does not exist");
 
 		goto repomd_confirm;
@@ -594,8 +595,8 @@ repomd_confirm:
 
 	/* nothing */
 	if (!ret) {
-		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
-			     "failed to download %s from any sources (and after confirming repomd)", filename);
+		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED_TO_DOWNLOAD,
+			     "failed to download %s from any sources (and after retrying)", filename);
 		goto out;
 	}
 
@@ -659,7 +660,7 @@ zif_store_remote_get_update_detail (ZifStoreRemote *store, const gchar *package_
 		state_local = zif_state_get_child (state);
 		ret = zif_store_remote_load_metadata (store, state_local, &error_local);
 		if (!ret) {
-			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+			g_set_error (error, error_local->domain, error_local->code,
 				     "failed to load metadata: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
@@ -842,7 +843,7 @@ zif_store_remote_add_metalink (ZifStoreRemote *store, ZifState *state, GError **
 		download = zif_download_new ();
 		ret = zif_download_file (download, store->priv->metalink, filename, state_local, &error_local);
 		if (!ret) {
-			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED_TO_DOWNLOAD,
 				     "failed to download %s from %s: %s", filename, store->priv->metalink, error_local->message);
 			g_error_free (error_local);
 			goto out;
@@ -1013,7 +1014,7 @@ zif_store_remote_download_repomd (ZifStoreRemote *store, ZifState *state, GError
 	ret = zif_store_remote_download (store, "repodata/repomd.xml", store->priv->directory, state, &error_local);
 	store->priv->loaded_metadata = FALSE;
 	if (!ret) {
-		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+		g_set_error (error, error_local->domain, error_local->code,
 			     "failed to download missing repomd: %s", error_local->message);
 		g_error_free (error_local);
 		goto out;
@@ -1080,7 +1081,7 @@ zif_store_remote_load_metadata (ZifStoreRemote *store, ZifState *state, GError *
 		state_local = zif_state_get_child (state);
 		ret = zif_store_remote_add_mirrorlist (store, state_local, &error_local);
 		if (!ret) {
-			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+			g_set_error (error, error_local->domain, error_local->code,
 				     "failed to add mirrorlist: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
@@ -1097,7 +1098,7 @@ zif_store_remote_load_metadata (ZifStoreRemote *store, ZifState *state, GError *
 		state_local = zif_state_get_child (state);
 		ret = zif_store_remote_add_metalink (store, state_local, &error_local);
 		if (!ret) {
-			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+			g_set_error (error, error_local->domain, error_local->code,
 				     "failed to add metalink: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
@@ -1292,7 +1293,7 @@ zif_store_remote_refresh_md (ZifStoreRemote *remote, ZifMd *md, gboolean force, 
 	state_local = zif_state_get_child (state);
 	ret = zif_store_remote_download (remote, filename, remote->priv->directory, state_local, &error_local);
 	if (!ret) {
-		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+		g_set_error (error, error_local->domain, error_local->code,
 			     "failed to refresh %s (%s): %s",
 			     zif_md_type_to_text (zif_md_get_mdtype (md)),
 			     filename,
@@ -1369,7 +1370,7 @@ zif_store_remote_refresh (ZifStore *store, gboolean force, ZifState *state, GErr
 	state_local = zif_state_get_child (state);
 	ret = zif_store_remote_download (remote, "repodata/repomd.xml", remote->priv->directory, state_local, &error_local);
 	if (!ret) {
-		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+		g_set_error (error, error_local->domain, error_local->code,
 			     "failed to download repomd: %s", error_local->message);
 		g_error_free (error_local);
 		goto out;
@@ -1384,7 +1385,7 @@ zif_store_remote_refresh (ZifStore *store, gboolean force, ZifState *state, GErr
 	state_local = zif_state_get_child (state);
 	ret = zif_store_remote_load_metadata (remote, state_local, &error_local);
 	if (!ret) {
-		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+		g_set_error (error, error_local->domain, error_local->code,
 			     "failed to load updated metadata: %s", error_local->message);
 		g_error_free (error_local);
 		goto out;
@@ -1644,7 +1645,7 @@ zif_store_remote_clean (ZifStore *store, ZifState *state, GError **error)
 		ret = zif_store_remote_load_metadata (remote, state_local, &error_local);
 		if (!ret) {
 			/* ignore this error */
-			g_print ("failed to load metadata xml: %s\n", error_local->message);
+			g_debug ("failed to load metadata xml: %s\n", error_local->message);
 			g_error_free (error_local);
 			ret = TRUE;
 			goto out;
@@ -1776,7 +1777,7 @@ zif_store_remote_set_from_file (ZifStoreRemote *store, const gchar *repo_filenam
 	/* get data */
 	ret = zif_store_remote_load (ZIF_STORE (store), state, &error_local);
 	if (!ret) {
-		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+		g_set_error (error, error_local->domain, error_local->code,
 			     "failed to load %s: %s", id, error_local->message);
 		g_error_free (error_local);
 		goto out;
@@ -1908,7 +1909,7 @@ zif_store_remote_resolve (ZifStore *store, gchar **search, ZifState *state, GErr
 		state_local = zif_state_get_child (state);
 		ret = zif_store_remote_load_metadata (remote, state_local, &error_local);
 		if (!ret) {
-			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+			g_set_error (error, error_local->domain, error_local->code,
 				     "failed to load metadata for %s: %s", remote->priv->id, error_local->message);
 			g_error_free (error_local);
 			goto out;
@@ -1970,7 +1971,7 @@ zif_store_remote_search_name (ZifStore *store, gchar **search, ZifState *state, 
 		state_local = zif_state_get_child (state);
 		ret = zif_store_remote_load_metadata (remote, state_local, &error_local);
 		if (!ret) {
-			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+			g_set_error (error, error_local->domain, error_local->code,
 				     "failed to load metadata xml: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
@@ -2032,7 +2033,7 @@ zif_store_remote_search_details (ZifStore *store, gchar **search, ZifState *stat
 		state_local = zif_state_get_child (state);
 		ret = zif_store_remote_load_metadata (remote, state_local, &error_local);
 		if (!ret) {
-			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+			g_set_error (error, error_local->domain, error_local->code,
 				     "failed to load metadata xml: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
@@ -2181,7 +2182,7 @@ zif_store_remote_search_category (ZifStore *store, gchar **group_id, ZifState *s
 		state_local = zif_state_get_child (state);
 		ret = zif_store_remote_load_metadata (remote, state_local, &error_local);
 		if (!ret) {
-			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+			g_set_error (error, error_local->domain, error_local->code,
 				     "failed to load metadata xml: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
@@ -2254,7 +2255,7 @@ zif_store_remote_search_category (ZifStore *store, gchar **group_id, ZifState *s
 				goto ignore_error;
 			}
 
-			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+			g_set_error (error, error_local->domain, error_local->code,
 				     "failed to get resolve %s for %s: %s", name, group_id[0], error_local->message);
 			g_error_free (error_local);
 
@@ -2321,7 +2322,7 @@ zif_store_remote_search_group (ZifStore *store, gchar **search, ZifState *state,
 		state_local = zif_state_get_child (state);
 		ret = zif_store_remote_load_metadata (remote, state_local, &error_local);
 		if (!ret) {
-			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+			g_set_error (error, error_local->domain, error_local->code,
 				     "failed to load metadata xml: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
@@ -2412,7 +2413,7 @@ zif_store_remote_find_package (ZifStore *store, const gchar *package_id, ZifStat
 		state_local = zif_state_get_child (state);
 		ret = zif_store_remote_load_metadata (remote, state_local, &error_local);
 		if (!ret) {
-			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+			g_set_error (error, error_local->domain, error_local->code,
 				     "failed to load metadata xml: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
@@ -2498,7 +2499,7 @@ zif_store_remote_get_packages (ZifStore *store, ZifState *state, GError **error)
 		state_local = zif_state_get_child (state);
 		ret = zif_store_remote_load_metadata (remote, state_local, &error_local);
 		if (!ret) {
-			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+			g_set_error (error, error_local->domain, error_local->code,
 				     "failed to load metadata xml: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
@@ -2565,7 +2566,7 @@ zif_store_remote_get_categories (ZifStore *store, ZifState *state, GError **erro
 		state_local = zif_state_get_child (state);
 		ret = zif_store_remote_load_metadata (remote, state_local, &error_local);
 		if (!ret) {
-			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+			g_set_error (error, error_local->domain, error_local->code,
 				     "failed to load metadata xml: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
@@ -2712,7 +2713,7 @@ zif_store_remote_get_updates (ZifStore *store, GPtrArray *packages,
 		state_local = zif_state_get_child (state);
 		ret = zif_store_remote_load_metadata (remote, state_local, &error_local);
 		if (!ret) {
-			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+			g_set_error (error, error_local->domain, error_local->code,
 				     "failed to load metadata xml: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
@@ -2833,7 +2834,7 @@ zif_store_remote_what_provides (ZifStore *store, gchar **search,
 		state_local = zif_state_get_child (state);
 		ret = zif_store_remote_load_metadata (remote, state_local, &error_local);
 		if (!ret) {
-			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+			g_set_error (error, error_local->domain, error_local->code,
 				     "failed to load metadata xml: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
@@ -2902,7 +2903,7 @@ zif_store_remote_search_file (ZifStore *store, gchar **search, ZifState *state, 
 		state_local = zif_state_get_child (state);
 		ret = zif_store_remote_load_metadata (remote, state_local, &error_local);
 		if (!ret) {
-			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+			g_set_error (error, error_local->domain, error_local->code,
 				     "failed to load metadata xml: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
@@ -3006,7 +3007,7 @@ zif_store_remote_is_devel (ZifStoreRemote *store, ZifState *state, GError **erro
 	if (!store->priv->loaded) {
 		ret = zif_store_remote_load (ZIF_STORE (store), state, &error_local);
 		if (!ret) {
-			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+			g_set_error (error, error_local->domain, error_local->code,
 				     "failed to load store file: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
@@ -3079,7 +3080,7 @@ zif_store_remote_get_name (ZifStoreRemote *store, ZifState *state, GError **erro
 	if (!store->priv->loaded) {
 		ret = zif_store_remote_load (ZIF_STORE (store), state, &error_local);
 		if (!ret) {
-			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+			g_set_error (error, error_local->domain, error_local->code,
 				     "failed to load store file: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
@@ -3124,7 +3125,7 @@ zif_store_remote_get_enabled (ZifStoreRemote *store, ZifState *state, GError **e
 	if (!store->priv->loaded) {
 		ret = zif_store_remote_load (ZIF_STORE (store), state, &error_local);
 		if (!ret) {
-			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+			g_set_error (error, error_local->domain, error_local->code,
 				     "failed to load store file: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
@@ -3321,6 +3322,10 @@ zif_store_remote_init (ZifStoreRemote *store)
 		/* set MD type */
 		zif_md_set_mdtype (md, i);
 	}
+
+	/* set download retries */
+	store->priv->download_retries = zif_config_get_uint (store->priv->config,
+							     "retries", NULL);
 out:
 	g_free (cache_dir);
 }

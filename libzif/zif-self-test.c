@@ -1590,6 +1590,7 @@ zif_store_remote_func (void)
 	ZifConfig *config;
 	ZifLock *lock;
 	ZifState *state;
+	ZifDownload *download;
 	GPtrArray *array;
 	gboolean ret;
 	GError *error = NULL;
@@ -1744,7 +1745,30 @@ zif_store_remote_func (void)
 	g_assert_cmpint (array->len, >, 0);
 
 	g_ptr_array_unref (array);
+	g_object_unref (store);
 
+	/* location does not exist */
+	store = zif_store_remote_new ();
+	zif_state_reset (state);
+	filename = zif_test_get_data_file ("invalid.repo");
+	ret = zif_store_remote_set_from_file (store, filename, "invalid", state, &error);
+	g_free (filename);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	/* we want to fail the download */
+	g_assert (zif_config_set_local (config, "network", "1", NULL));
+	download = zif_download_new ();
+	g_assert (download != NULL);
+	g_assert (zif_download_set_proxy (download, NULL, NULL));
+
+	zif_state_reset (state);
+	in_array[0] = "/usr/bin/gnome-power-manager";
+	array = zif_store_search_file (ZIF_STORE (store), (gchar**)in_array, state, &error);
+	g_assert_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED_TO_DOWNLOAD);
+	g_assert (array == NULL);
+
+	g_object_unref (download);
 	g_object_unref (store);
 	g_object_unref (config);
 	g_object_unref (lock);

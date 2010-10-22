@@ -8,6 +8,7 @@ EXTRA_DIST =							\
 	mirrorlist.txt						\
 	metalink.xml						\
 	licenses.txt						\
+	invalid.repo						\
 	yum-comps-groups.conf					\
 	repos/fedora-updates.repo				\
 	repos/fedora.repo					\
