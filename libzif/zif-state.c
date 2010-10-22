@@ -936,14 +936,6 @@ zif_state_finished_real (ZifState *state, GError **error, const gchar *strloc)
 		return FALSE;
 	}
 
-	/* did we call done on a state that did not have a size set? */
-	if (state->priv->steps == 0) {
-		g_set_error (error, ZIF_STATE_ERROR, ZIF_STATE_ERROR_INVALID,
-			     "finished on a state %p that did not have a size set! [%s]",
-			     state, strloc);
-		return FALSE;
-	}
-
 	/* is already at 100%? */
 	if (state->priv->current == state->priv->steps)
 		goto out;
