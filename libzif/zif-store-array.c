@@ -323,8 +323,8 @@ zif_store_array_repos_search (GPtrArray *store_array, ZifRole role, gchar **sear
 					goto out;
 				goto skip_error;
 			}
-			g_set_error (error, error->domain, error->code,
-				     "failed to %s in %s: %s", zif_role_to_string (role), zif_store_get_id (store), error_local->message);
+			g_propagate_prefixed_error (error, error_local,
+				     "failed to %s in %s: ", zif_role_to_string (role), zif_store_get_id (store));
 			g_error_free (error_local);
 			goto out;
 		}
