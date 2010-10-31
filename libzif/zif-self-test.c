@@ -150,10 +150,10 @@ zif_config_func (void)
 	ret = zif_config_get_boolean (config, "exactarch", NULL);
 	g_assert (ret);
 
-	ret = zif_config_set_local (config, "cachedir", "/tmp/cache", NULL);
+	ret = zif_config_set_string (config, "cachedir", "/tmp/cache", NULL);
 	g_assert (ret);
 
-	ret = zif_config_set_local (config, "cachedir", "/tmp/cache", NULL);
+	ret = zif_config_set_string (config, "cachedir", "/tmp/cache", NULL);
 	g_assert (!ret);
 
 	value = zif_config_get_string (config, "cachedir", NULL);
@@ -387,7 +387,7 @@ zif_lock_func (void)
 
 	/* set this to somewhere we can write to */
 	pidfile = g_build_filename (g_get_tmp_dir (), "zif.lock", NULL);
-	zif_config_set_local (config, "pidfile", pidfile, NULL);
+	zif_config_set_string (config, "pidfile", pidfile, NULL);
 	g_assert_cmpstr (pidfile, ==, "/tmp/zif.lock");
 
 	/* remove file */
@@ -988,11 +988,11 @@ zif_package_func (void)
 	g_free (filename);
 
 	pidfile = g_build_filename (g_get_tmp_dir (), "zif.lock", NULL);
-	zif_config_set_local (config, "pidfile", pidfile, NULL);
+	zif_config_set_string (config, "pidfile", pidfile, NULL);
 	g_free (pidfile);
 
 	filename = zif_test_get_data_file (".");
-	zif_config_set_local (config, "cachedir", filename, NULL);
+	zif_config_set_string (config, "cachedir", filename, NULL);
 	g_free (filename);
 
 	state = zif_state_new ();
@@ -1119,7 +1119,7 @@ zif_repos_func (void)
 	g_free (filename);
 
 	pidfile = g_build_filename (g_get_tmp_dir (), "zif.lock", NULL);
-	zif_config_set_local (config, "pidfile", pidfile, NULL);
+	zif_config_set_string (config, "pidfile", pidfile, NULL);
 	g_free (pidfile);
 
 	lock = zif_lock_new ();
@@ -1451,7 +1451,7 @@ zif_store_local_func (void)
 	g_free (filename);
 
 	pidfile = g_build_filename (g_get_tmp_dir (), "zif.lock", NULL);
-	zif_config_set_local (config, "pidfile", pidfile, NULL);
+	zif_config_set_string (config, "pidfile", pidfile, NULL);
 	g_free (pidfile);
 
 	filename = zif_test_get_data_file ("licenses.txt");
@@ -1606,11 +1606,11 @@ zif_store_remote_func (void)
 	g_free (filename);
 
 	pidfile = g_build_filename (g_get_tmp_dir (), "zif.lock", NULL);
-	zif_config_set_local (config, "pidfile", pidfile, NULL);
+	zif_config_set_string (config, "pidfile", pidfile, NULL);
 	g_free (pidfile);
 
 	filename = zif_test_get_data_file (".");
-	zif_config_set_local (config, "cachedir", filename, NULL);
+	zif_config_set_string (config, "cachedir", filename, NULL);
 	g_free (filename);
 
 	/* use state object */
@@ -1757,7 +1757,7 @@ zif_store_remote_func (void)
 	g_assert (ret);
 
 	/* we want to fail the download */
-	g_assert (zif_config_set_local (config, "network", "1", NULL));
+	g_assert (zif_config_set_boolean (config, "network", TRUE, NULL));
 	download = zif_download_new ();
 	g_assert (download != NULL);
 	g_assert (zif_download_set_proxy (download, NULL, NULL));

@@ -463,7 +463,7 @@ zif_config_set_filename (ZifConfig *config, const gchar *filename, GError **erro
 		g_strdelimit (releasever, " ", '\0');
 
 		/* set local */
-		ret = zif_config_set_local (config, "releasever", releasever+15, &error_local);
+		ret = zif_config_set_string (config, "releasever", releasever+15, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_CONFIG_ERROR, ZIF_CONFIG_ERROR_FAILED,
 				     "failed to set distro release version: %s", error_local->message);
@@ -533,6 +533,8 @@ zif_config_reset_default (ZifConfig *config, GError **error)
  * @error: a #GError which is used on failure, or %NULL
  *
  * Sets a local value which is used in preference to the config value.
+ * This is deprecated. Use zif_config_set_string(), zif_config_set_uint()
+ * and zif_config_set_boolean() instead.
  *
  * Return value: %TRUE for success, %FALSE for failure
  *
@@ -540,6 +542,26 @@ zif_config_reset_default (ZifConfig *config, GError **error)
  **/
 gboolean
 zif_config_set_local (ZifConfig *config, const gchar *key, const gchar *value, GError **error)
+{
+	g_warning ("This is deprecated. Use zif_config_set_[string|uint|bool] instead");
+	return zif_config_set_string (config, key, value, error);
+}
+
+/**
+ * zif_config_set_string:
+ * @config: the #ZifConfig object
+ * @key: the key name to save, e.g. "keepcache"
+ * @value: the key data to save, e.g. "always"
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Sets a local value which is used in preference to the config value.
+ *
+ * Return value: %TRUE for success, %FALSE for failure
+ *
+ * Since: 0.1.2
+ **/
+gboolean
+zif_config_set_string (ZifConfig *config, const gchar *key, const gchar *value, GError **error)
 {
 	const gchar *value_tmp;
 	gboolean ret = TRUE;
@@ -560,6 +582,50 @@ zif_config_set_local (ZifConfig *config, const gchar *key, const gchar *value, G
 	/* insert into table */
 	g_hash_table_insert (config->priv->hash, g_strdup (key), g_strdup (value));
 out:
+	return ret;
+}
+
+/**
+ * zif_config_set_boolean:
+ * @config: the #ZifConfig object
+ * @key: the key name to save, e.g. "keepcache"
+ * @value: the key data, e.g. %TRUE
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Sets a local value which is used in preference to the config value.
+ * %TRUE is saved as "true" and %FALSE is saved as "false"
+ *
+ * Return value: %TRUE for success, %FALSE for failure
+ *
+ * Since: 0.1.2
+ **/
+gboolean
+zif_config_set_boolean (ZifConfig *config, const gchar *key, gboolean value, GError **error)
+{
+	return zif_config_set_string (config, key, value ? "true" : "false", error);
+}
+
+/**
+ * zif_config_set_uint:
+ * @config: the #ZifConfig object
+ * @key: the key name to save, e.g. "keepcache"
+ * @value: the key data, e.g. %TRUE
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Sets a local value which is used in preference to the config value.
+ *
+ * Return value: %TRUE for success, %FALSE for failure
+ *
+ * Since: 0.1.2
+ **/
+gboolean
+zif_config_set_uint (ZifConfig *config, const gchar *key, guint value, GError **error)
+{
+	gboolean ret;
+	gchar *temp;
+	temp = g_strdup_printf ("%i", value);
+	ret = zif_config_set_string (config, key, temp, error);
+	g_free (temp);
 	return ret;
 }
 

@@ -80,6 +80,18 @@ gboolean	 zif_config_set_local		(ZifConfig	*config,
 						 const gchar	*key,
 						 const gchar	*value,
 						 GError		**error);
+gboolean	 zif_config_set_string		(ZifConfig	*config,
+						 const gchar	*key,
+						 const gchar	*value,
+						 GError		**error);
+gboolean	 zif_config_set_boolean		(ZifConfig	*config,
+						 const gchar	*key,
+						 gboolean	 value,
+						 GError		**error);
+gboolean	 zif_config_set_uint		(ZifConfig	*config,
+						 const gchar	*key,
+						 guint		 value,
+						 GError		**error);
 gboolean	 zif_config_reset_default	(ZifConfig	*config,
 						 GError		**error);
 gchar		*zif_config_expand_substitutions (ZifConfig	*config,

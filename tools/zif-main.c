@@ -729,7 +729,6 @@ main (int argc, char *argv[])
 	gchar *config_file = NULL;
 	gchar *http_proxy = NULL;
 	gchar *repos_dir = NULL;
-	gchar *max_age = NULL;
 	gchar *root = NULL;
 	const gchar *to_array[] = { NULL, NULL };
 
@@ -822,14 +821,11 @@ main (int argc, char *argv[])
 
 	/* are we allowed to access the repos */
 	if (!offline)
-		zif_config_set_local (config, "network", "1", NULL);
+		zif_config_set_boolean (config, "network", TRUE, NULL);
 
 	/* set the maximum age of the repo data */
-	if (age > 0) {
-		max_age = g_strdup_printf ("%i", age);
-		zif_config_set_local (config, "max-age", max_age, NULL);
-		g_free (max_age);
-	}
+	if (age > 0)
+		zif_config_set_uint (config, "max-age", age, NULL);
 
 	/* are we root? */
 	uid = getuid ();
