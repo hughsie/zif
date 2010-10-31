@@ -131,7 +131,7 @@ zif_store_remote_checksum_type_from_text (const gchar *type)
  * zif_store_remote_get_primary:
  **/
 static ZifMd *
-zif_store_remote_get_primary (ZifStoreRemote *store)
+zif_store_remote_get_primary (ZifStoreRemote *store, GError **error)
 {
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), NULL);
 
@@ -140,7 +140,11 @@ zif_store_remote_get_primary (ZifStoreRemote *store)
 	if (zif_md_get_location (store->priv->md_primary_xml) != NULL)
 		return store->priv->md_primary_xml;
 
-	/* this should never happen */
+	/* no support */
+	g_set_error (error, ZIF_STORE_ERROR,
+		     ZIF_STORE_ERROR_FAILED,
+		     "remote store %s has no primary",
+		     store->priv->id);
 	return NULL;
 }
 
@@ -148,7 +152,7 @@ zif_store_remote_get_primary (ZifStoreRemote *store)
  * zif_store_remote_get_filelists:
  **/
 static ZifMd *
-zif_store_remote_get_filelists (ZifStoreRemote *store)
+zif_store_remote_get_filelists (ZifStoreRemote *store, GError **error)
 {
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), NULL);
 
@@ -157,7 +161,11 @@ zif_store_remote_get_filelists (ZifStoreRemote *store)
 	if (zif_md_get_location (store->priv->md_filelists_xml) != NULL)
 		return store->priv->md_filelists_xml;
 
-	/* this should never happen */
+	/* no support */
+	g_set_error (error, ZIF_STORE_ERROR,
+		     ZIF_STORE_ERROR_FAILED,
+		     "remote store %s has no filelists",
+		     store->priv->id);
 	return NULL;
 }
 
@@ -696,7 +704,9 @@ zif_store_remote_get_update_detail (ZifStoreRemote *store, const gchar *package_
 		goto out;
 
 	/* get ZifPackage for package-id */
-	md = zif_store_remote_get_primary (store);
+	md = zif_store_remote_get_primary (store, error);
+	if (md == NULL)
+		goto out;
 	state_local = zif_state_get_child (state);
 	packages = zif_md_find_package (md, package_id, state_local, &error_local);
 	if (packages == NULL) {
@@ -1922,7 +1932,9 @@ zif_store_remote_resolve (ZifStore *store, gchar **search, ZifState *state, GErr
 	}
 
 	state_local = zif_state_get_child (state);
-	primary = zif_store_remote_get_primary (remote);
+	primary = zif_store_remote_get_primary (remote, error);
+	if (primary == NULL)
+		goto out;
 	array = zif_md_resolve (primary, search, state_local, error);
 	if (array == NULL)
 		goto out;
@@ -1984,7 +1996,9 @@ zif_store_remote_search_name (ZifStore *store, gchar **search, ZifState *state, 
 	}
 
 	state_local = zif_state_get_child (state);
-	md = zif_store_remote_get_primary (remote);
+	md = zif_store_remote_get_primary (remote, error);
+	if (md == NULL)
+		goto out;
 	array = zif_md_search_name (md, search, state_local, error);
 	if (array == NULL)
 		goto out;
@@ -2046,7 +2060,9 @@ zif_store_remote_search_details (ZifStore *store, gchar **search, ZifState *stat
 	}
 
 	state_local = zif_state_get_child (state);
-	md = zif_store_remote_get_primary (remote);
+	md = zif_store_remote_get_primary (remote, error);
+	if (md == NULL)
+		goto out;
 	array = zif_md_search_details (md, search, state_local, error);
 	if (array == NULL)
 		goto out;
@@ -2427,7 +2443,9 @@ zif_store_remote_find_package (ZifStore *store, const gchar *package_id, ZifStat
 
 	/* search with predicate, TODO: search version (epoch+release) */
 	state_local = zif_state_get_child (state);
-	primary = zif_store_remote_get_primary (remote);
+	primary = zif_store_remote_get_primary (remote, error);
+	if (primary == NULL)
+		goto out;
 	array = zif_md_find_package (primary, package_id, state_local, &error_local);
 	if (array == NULL) {
 		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
@@ -2511,7 +2529,9 @@ zif_store_remote_get_packages (ZifStore *store, ZifState *state, GError **error)
 			goto out;
 	}
 
-	primary = zif_store_remote_get_primary (remote);
+	primary = zif_store_remote_get_primary (remote, error);
+	if (primary == NULL)
+		goto out;
 	state_local = zif_state_get_child (state);
 	array = zif_md_get_packages (primary, state_local, error);
 
@@ -2729,7 +2749,9 @@ zif_store_remote_get_updates (ZifStore *store, GPtrArray *packages,
 	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 
 	/* get primary */
-	primary = zif_store_remote_get_primary (remote);
+	primary = zif_store_remote_get_primary (remote, error);
+	if (primary == NULL)
+		goto out;
 
 	/* get the array of packages to resolve */
 	resolve_array = g_new0 (gchar *, packages->len + 1);
@@ -2848,7 +2870,9 @@ zif_store_remote_what_provides (ZifStore *store, gchar **search,
 
 	/* get details */
 	state_local = zif_state_get_child (state);
-	primary = zif_store_remote_get_primary (remote);
+	primary = zif_store_remote_get_primary (remote, error);
+	if (primary == NULL)
+		goto out;
 	array = zif_md_what_provides (primary, search,
 				      state_local, error);
 	if (array == NULL)
@@ -2917,7 +2941,9 @@ zif_store_remote_search_file (ZifStore *store, gchar **search, ZifState *state, 
 
 	/* gets a list of pkgId's that match this file */
 	state_local = zif_state_get_child (state);
-	filelists = zif_store_remote_get_filelists (remote);
+	filelists = zif_store_remote_get_filelists (remote, error);
+	if (filelists == NULL)
+		goto out;
 	pkgids = zif_md_search_file (filelists,
 				     search, state_local, &error_local);
 	if (pkgids == NULL) {
@@ -2933,7 +2959,9 @@ zif_store_remote_search_file (ZifStore *store, gchar **search, ZifState *state, 
 		goto out;
 
 	/* get primary */
-	primary = zif_store_remote_get_primary (remote);
+	primary = zif_store_remote_get_primary (remote, error);
+	if (primary == NULL)
+		goto out;
 
 	/* resolve the pkgId to a set of packages */
 	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
@@ -3143,13 +3171,18 @@ zif_store_remote_get_files (ZifStoreRemote *store, ZifPackage *package,
 			    ZifState *state, GError **error)
 {
 	ZifMd *filelists;
+	GPtrArray *array = NULL;
 
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
-	filelists = zif_store_remote_get_filelists (store);
-	return zif_md_get_files (filelists, package, state, error);
+	filelists = zif_store_remote_get_filelists (store, error);
+	if (filelists == NULL)
+		goto out;
+	array = zif_md_get_files (filelists, package, state, error);
+out:
+	return array;
 }
 
 /**
