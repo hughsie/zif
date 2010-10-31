@@ -1768,6 +1768,36 @@ zif_store_remote_func (void)
 	g_assert_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED_TO_DOWNLOAD);
 	g_assert (array == NULL);
 
+	g_object_unref (store);
+	g_clear_error (&error);
+
+	/* check with invalid repomd */
+	store = zif_store_remote_new ();
+	zif_state_reset (state);
+	filename = zif_test_get_data_file ("corrupt-repomd.repo");
+	ret = zif_store_remote_set_from_file (store, filename, "corrupt-repomd", state, &error);
+	g_free (filename);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	/* set the repomd.xml to junk */
+	ret = g_file_set_contents ("../data/tests/corrupt-repomd/repomd.xml",
+				   "<html><body><pre>invalid</pre></body></html>",
+				   -1, &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	/* ensure loading the metadata notices the junk data, and
+	 * re-downloads the repomd.xml from the location specified in
+	 * the corrupt-repomd.repo file */
+	zif_state_reset (state);
+	in_array[0] = "gnome-power-manager";
+	array = zif_store_resolve (ZIF_STORE (store), (gchar**)in_array, state, &error);
+	g_assert_no_error (error);
+	g_assert (array != NULL);
+	g_assert_cmpint (array->len, ==, 1);
+	g_ptr_array_unref (array);
+
 	g_object_unref (download);
 	g_object_unref (store);
 	g_object_unref (config);

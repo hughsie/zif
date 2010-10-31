@@ -1203,9 +1203,14 @@ zif_store_remote_load_metadata (ZifStoreRemote *store, ZifState *state, GError *
 
 	/* messed up repo file, this is fatal */
 	if (!primary_okay) {
-		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
-			     "failed to get primary metadata location for %s", store->priv->id);
-		ret = FALSE;
+		g_debug ("failed to get primary metadata location for %s, perhaps invalid", store->priv->id);
+
+		/* delete existing repomd */
+		g_unlink (store->priv->repomd_filename);
+
+		/* re-download repomd, but not from the same repo */
+		zif_state_reset (state);
+		ret = zif_store_remote_load_metadata (store, state, error);
 		goto out;
 	}
 
