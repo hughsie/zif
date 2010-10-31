@@ -284,22 +284,22 @@ out:
 /**
  * zif_config_strreplace:
  **/
-static gchar *
-zif_config_strreplace (const gchar *text, const gchar *find, const gchar *replace)
+static gboolean
+zif_config_strreplace (GString *string, const gchar *find, const gchar *replace)
 {
 	gchar **array;
-	gchar *retval;
+	gchar *value;
 
 	/* common case, not found */
-	if (g_strstr_len (text, -1, find) == NULL) {
-		return g_strdup (text);
-	}
+	if (g_strstr_len (string->str, -1, find) == NULL)
+		return FALSE;
 
 	/* split apart and rejoin with new delimiter */
-	array = g_strsplit (text, find, 0);
-	retval = g_strjoinv (replace, array);
+	array = g_strsplit (string->str, find, 0);
+	value = g_strjoinv (replace, array);
 	g_strfreev (array);
-	return retval;
+	g_string_assign (string, value);
+	return TRUE;
 }
 
 /**
@@ -319,8 +319,7 @@ zif_config_expand_substitutions (ZifConfig *config, const gchar *text, GError **
 {
 	gchar *basearch = NULL;
 	gchar *releasever = NULL;
-	gchar *name1 = NULL;
-	gchar *name2 = NULL;
+	GString *string = NULL;
 
 	g_return_val_if_fail (ZIF_IS_CONFIG (config), NULL);
 	g_return_val_if_fail (text != NULL, NULL);
@@ -336,14 +335,14 @@ zif_config_expand_substitutions (ZifConfig *config, const gchar *text, GError **
 		goto out;
 
 	/* do the replacements */
-	name1 = zif_config_strreplace (text, "$releasever", releasever);
-	name2 = zif_config_strreplace (name1, "$basearch", basearch);
-
+	string = g_string_new (text);
+	zif_config_strreplace (string, "$releasever", releasever);
+	zif_config_strreplace (string, "$basearch", basearch);
+	zif_config_strreplace (string, "$homedir", g_get_home_dir ());
 out:
 	g_free (basearch);
 	g_free (releasever);
-	g_free (name1);
-	return name2;
+	return g_string_free (string, FALSE);
 }
 
 /**
