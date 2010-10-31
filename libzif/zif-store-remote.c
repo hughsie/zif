@@ -1023,6 +1023,7 @@ zif_store_remote_download_repomd (ZifStoreRemote *store, ZifState *state, GError
 	store->priv->loaded_metadata = TRUE;
 	ret = zif_store_remote_download (store, "repodata/repomd.xml", store->priv->directory, state, &error_local);
 	store->priv->loaded_metadata = FALSE;
+
 	if (!ret) {
 		g_set_error (error, error_local->domain, error_local->code,
 			     "failed to download missing repomd: %s", error_local->message);
@@ -1034,18 +1035,10 @@ out:
 }
 
 /**
- * zif_store_remote_load_metadata:
- *
- * This function does the following things:
- *
- * - opens repomd.xml (downloading it if it doesn't exist)
- * - parses the contents, and populates the ZifMd types
- * - parses metalink and mirrorlink into lists of plain urls
- * - checks all the compressed metadata checksums are valid, else they are deleted
- * - checks all the uncompressed metadata checksums are valid, else they are deleted
+ * zif_store_remote_load_metadata_try:
  **/
 static gboolean
-zif_store_remote_load_metadata (ZifStoreRemote *store, ZifState *state, GError **error)
+zif_store_remote_load_metadata_try (ZifStoreRemote *store, ZifState *state, GError **error)
 {
 	guint i;
 	ZifState *state_local;
@@ -1067,21 +1060,6 @@ zif_store_remote_load_metadata (ZifStoreRemote *store, ZifState *state, GError *
 		NULL, /* passthrough */
 		NULL /* error */
 	};
-
-	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), FALSE);
-	g_return_val_if_fail (zif_state_valid (state), FALSE);
-
-	/* not locked */
-	ret = zif_lock_is_locked (store->priv->lock, NULL);
-	if (!ret) {
-		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_NOT_LOCKED,
-				     "not locked");
-		goto out;
-	}
-
-	/* already loaded */
-	if (store->priv->loaded_metadata)
-		goto out;
 
 	/* setup state */
 	zif_state_set_number_steps (state, 4);
@@ -1201,21 +1179,13 @@ zif_store_remote_load_metadata (ZifStoreRemote *store, ZifState *state, GError *
 		g_free (filename);
 	}
 
-	/* messed up repo file, this is fatal */
+	/* messed up repo file */
 	if (!primary_okay) {
-		g_debug ("failed to get primary metadata location for %s, perhaps invalid", store->priv->id);
-
-		/* delete existing repomd */
-		g_unlink (store->priv->repomd_filename);
-
-		/* re-download repomd, but not from the same repo */
-		zif_state_reset (state);
-		ret = zif_store_remote_load_metadata (store, state, error);
+		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+			     "failed to get primary metadata location for %s", store->priv->id);
+		ret = FALSE;
 		goto out;
 	}
-
-	/* all okay */
-	store->priv->loaded_metadata = TRUE;
 
 	/* this section done */
 	ret = zif_state_done (state, error);
@@ -1225,6 +1195,61 @@ out:
 	if (context != NULL)
 		g_markup_parse_context_free (context);
 	g_free (contents);
+	return ret;
+}
+
+/**
+ * zif_store_remote_load_metadata:
+ *
+ * This function does the following things:
+ *
+ * - opens repomd.xml (downloading it if it doesn't exist)
+ * - parses the contents, and populates the ZifMd types
+ * - parses metalink and mirrorlink into lists of plain urls
+ * - checks all the compressed metadata checksums are valid, else they are deleted
+ * - checks all the uncompressed metadata checksums are valid, else they are deleted
+ **/
+static gboolean
+zif_store_remote_load_metadata (ZifStoreRemote *store, ZifState *state, GError **error)
+{
+	gboolean ret;
+	GError *error_local = NULL;
+
+	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), FALSE);
+	g_return_val_if_fail (zif_state_valid (state), FALSE);
+
+	/* not locked */
+	ret = zif_lock_is_locked (store->priv->lock, NULL);
+	if (!ret) {
+		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_NOT_LOCKED,
+				     "not locked");
+		goto out;
+	}
+
+	/* already loaded */
+	if (store->priv->loaded_metadata)
+		goto out;
+
+	/* try to download metadata */
+	ret = zif_store_remote_load_metadata_try (store, state, &error_local);
+	if (!ret) {
+		g_debug ("failed to get primary metadata location for %s, retrying: %s",
+			 store->priv->id, error_local->message);
+		g_error_free (error_local);
+
+		/* delete existing repomd */
+		g_unlink (store->priv->repomd_filename);
+
+		/* re-download repomd, but not from the same repo */
+		zif_state_reset (state);
+		ret = zif_store_remote_load_metadata_try (store, state, error);
+		if (!ret)
+			goto out;
+	}
+
+	/* all okay */
+	store->priv->loaded_metadata = TRUE;
+out:
 	return ret;
 }
 
