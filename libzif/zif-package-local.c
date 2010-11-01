@@ -233,11 +233,6 @@ zif_package_local_get_depends_from_name_flags_version (GPtrArray *names, GPtrArr
 		/* unknown */
 		name = g_ptr_array_index (names, i);
 		version = g_ptr_array_index (versions, i);
-		if (flag == ZIF_DEPEND_FLAG_UNKNOWN) {
-			g_debug ("ignoring %s %s %s", name, zif_depend_flag_to_string (flag), version);
-			continue;
-		}
-
 		depend = zif_depend_new (name, flag, version);
 		g_ptr_array_add (array, depend);
 	}
