@@ -621,8 +621,10 @@ zif_main_sigint_cb (int sig)
 	signal (SIGINT, SIG_DFL);
 
 	/* cancel any tasks still running */
-	cancellable = zif_state_get_cancellable (_state);
-	g_cancellable_cancel (cancellable);
+	if (_state != NULL) {
+		cancellable = zif_state_get_cancellable (_state);
+		g_cancellable_cancel (cancellable);
+	}
 }
 
 /**
