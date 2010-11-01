@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*-
  *
- * Copyright (C) 2009 Richard Hughes <richard@hughsie.com>
+ * Copyright (C) 2009-2010 Richard Hughes <richard@hughsie.com>
  *
  * Licensed under the GNU General Public License Version 2
  *
@@ -1231,6 +1231,8 @@ zif_md_type_to_text (ZifMdType type)
 		return "prestodelta";
 	if (type == ZIF_MD_TYPE_UPDATEINFO)
 		return "updateinfo";
+	if (type == ZIF_MD_TYPE_PKGTAGS)
+		return "pkgtags";
 	return "unknown";
 }
 

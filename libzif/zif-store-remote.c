@@ -241,13 +241,15 @@ zif_store_remote_parser_start_element (GMarkupParseContext *context, const gchar
 					store->priv->parser_type = ZIF_MD_TYPE_PRESTODELTA;
 				else if (g_strcmp0 (attribute_values[i], "updateinfo") == 0)
 					store->priv->parser_type = ZIF_MD_TYPE_UPDATEINFO;
+				else if (g_strcmp0 (attribute_values[i], "pkgtags") == 0)
+					store->priv->parser_type = ZIF_MD_TYPE_PKGTAGS;
 				else {
 					/* we ignore anything else, but print an error to the console */
 					string = g_string_new ("");
 					g_string_append_printf (string, "unhandled data type '%s', expecting ", attribute_values[i]);
 
 					/* list all the types we support */
-					for (j=0; j<ZIF_MD_TYPE_UNKNOWN; j++)
+					for (j=1; j<ZIF_MD_TYPE_LAST; j++)
 						g_string_append_printf (string, "%s, ", zif_md_type_to_text (j));
 
 					/* remove triling comma and space */
@@ -1140,7 +1142,7 @@ zif_store_remote_load_metadata_try (ZifStoreRemote *store, ZifState *state, GErr
 	max_age = zif_config_get_uint (store->priv->config, "max-age", NULL);
 
 	/* set MD id and filename for each repo type */
-	for (i=0; i<ZIF_MD_TYPE_UNKNOWN; i++) {
+	for (i=1; i<ZIF_MD_TYPE_LAST; i++) {
 		md = zif_store_remote_get_md_from_type (store, i);
 		if (md == NULL) {
 			/* TODO: until we've created ZifMdComps and ZifMdOther we'll get warnings here */
@@ -1438,10 +1440,10 @@ zif_store_remote_refresh (ZifStore *store, gboolean force, ZifState *state, GErr
 
 	/* do in nested completion */
 	state_local = zif_state_get_child (state);
-	zif_state_set_number_steps (state_local, ZIF_MD_TYPE_UNKNOWN);
+	zif_state_set_number_steps (state_local, ZIF_MD_TYPE_LAST - 1);
 
 	/* refresh each repo type */
-	for (i=0; i<ZIF_MD_TYPE_UNKNOWN; i++) {
+	for (i=1; i<ZIF_MD_TYPE_LAST; i++) {
 
 		/* get md */
 		md = zif_store_remote_get_md_from_type (remote, i);
@@ -1675,9 +1677,9 @@ zif_store_remote_clean (ZifStore *store, ZifState *state, GError **error)
 
 	/* setup state with the correct number of steps */
 	if (remote->priv->loaded_metadata)
-		zif_state_set_number_steps (state, 1+ZIF_MD_TYPE_UNKNOWN);
+		zif_state_set_number_steps (state, ZIF_MD_TYPE_LAST);
 	else
-		zif_state_set_number_steps (state, 2+ZIF_MD_TYPE_UNKNOWN);
+		zif_state_set_number_steps (state, 1+ZIF_MD_TYPE_LAST);
 
 	/* load metadata */
 	if (!remote->priv->loaded_metadata) {
@@ -1698,7 +1700,7 @@ zif_store_remote_clean (ZifStore *store, ZifState *state, GError **error)
 	}
 
 	/* set MD id and filename for each repo type */
-	for (i=0; i<ZIF_MD_TYPE_UNKNOWN; i++) {
+	for (i=1; i<ZIF_MD_TYPE_LAST; i++) {
 		md = zif_store_remote_get_md_from_type (remote, i);
 		if (md == NULL) {
 			/* TODO: until we've created ZifMdComps and ZifMdOther we'll get warnings here */
@@ -1798,7 +1800,7 @@ zif_store_remote_set_from_file (ZifStoreRemote *store, const gchar *repo_filenam
 	store->priv->repomd_filename = g_build_filename (store->priv->cache_dir, store->priv->id, "repomd.xml", NULL);
 
 	/* set MD id for each repo type */
-	for (i=0; i<ZIF_MD_TYPE_UNKNOWN; i++) {
+	for (i=1; i<ZIF_MD_TYPE_LAST; i++) {
 		md = zif_store_remote_get_md_from_type (store, i);
 		if (md == NULL)
 			continue;
@@ -3374,7 +3376,7 @@ zif_store_remote_init (ZifStoreRemote *store)
 	}
 
 	/* set MD type on each repo */
-	for (i=0; i<ZIF_MD_TYPE_UNKNOWN; i++) {
+	for (i=1; i<ZIF_MD_TYPE_LAST; i++) {
 		md = zif_store_remote_get_md_from_type (store, i);
 		if (md == NULL)
 			continue;
