@@ -141,11 +141,11 @@ zif_get_header_string_array (Header header, rpmTag tag)
 	rpmtd td;
 
 	td = rpmtdNew ();
-	retval = headerGet (header, tag, td, HEADERGET_MINMEM);
+	retval = headerGet (header, tag, td, HEADERGET_DEFAULT);
 	if (retval != 1)
 		goto out;
 	array = g_ptr_array_new_with_free_func (g_free);
-	data = rpmtdGetString (td);
+	data = rpmtdNextString (td);
 	while (data != NULL) {
 		g_ptr_array_add (array, g_strdup (data));
 		data = rpmtdNextString (td);
@@ -300,7 +300,7 @@ zif_package_local_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, ZifSt
 			}
 
 			files = g_ptr_array_new_with_free_func (g_free);
-			for (i=0; i<basenames->len-1 /* why -1? I'm not sure */; i++) {
+			for (i=0; i<basenames->len; i++) {
 				guint idx;
 				idx = GPOINTER_TO_UINT (g_ptr_array_index (fileindex, i));
 				if (idx > dirnames->len) {

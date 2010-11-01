@@ -639,6 +639,7 @@ zif_store_local_search_file (ZifStore *store, gchar **search, ZifState *state, G
 				     "no packages in local sack");
 		goto out;
 	}
+	g_debug ("using %i local packages", local->priv->packages->len);
 
 	/* setup state with the correct number of steps */
 	state_local = zif_state_get_child (state);
