@@ -1,3 +1,32 @@
+Version 0.1.2
+~~~~~~~~~~~~~
+Released: 2010-11-01
+
+New Features:
+ - Add set_string(), set_boolean(), and set_uint() to ZifConfig (Richard Hughes)
+ - Add the concept of an 'action' on ZifState, so that we can show what zif is doing (Richard Hughes)
+ - Add zif_package_[s|g]et_time_file() so we can filter by newest (Richard Hughes)
+ - Add zif_state_valid() and get a lot more strict for ZifState problems (Richard Hughes)
+ - Show all packages when we match on multiple results from getdetail (Richard Hughes)
+
+Bugfixes:
+ - Add dependencies without a RPMSENSE flag (Richard Hughes)
+ - Add the correct build requires in the pkgconfig file (Richard Hughes)
+ - Correctly decode string lists using librpm (Richard Hughes)
+ - Do not print a warning when the total download size is not known (Richard Hughes)
+ - Do not segfault if a repo does not have filelists and we try to search for files (Richard Hughes)
+ - Fix an error path leading to a critical warning in zif_store_remote_what_provides() (Richard Hughes)
+ - Fix an infinite loop where repomd.xml isn't present, and not downloadable (Richard Hughes)
+ - Fix refresh on a remote store as no files were ever downloaded (Richard Hughes)
+ - Fix searching for more than one filename in local repos (Richard Hughes)
+ - If we download new repodata, ensure we also get a new repomd (Richard Hughes)
+ - It is valid to call zif_state_finished() on a ZifState that never had a size set (Richard Hughes)
+ - Only print downloading debugging if it resulted in a global percentage change (Richard Hughes)
+ - Recognise the pkgtags metadata type, and encode the unknown value into the ABI (Richard Hughes)
+ - Search for all the search terms in zif_md_filelists_sql_search_file() (Richard Hughes)
+ - Try to re-download the repomd at least once for any reason at all (Richard Hughes)
+ - When the repomd is invalid, try to re-download it (Richard Hughes)
+
 Version 0.1.1
 ~~~~~~~~~~~~~
 Released: 2010-10-04

@@ -19,7 +19,7 @@ m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
 # AGE		If libzif can be linked into executables which can be
 # 		built with previous versions of this library. Don't use.
 LT_CURRENT=1
-LT_REVISION=2
+LT_REVISION=3
 LT_AGE=0
 AC_SUBST(LT_CURRENT)
 AC_SUBST(LT_REVISION)
