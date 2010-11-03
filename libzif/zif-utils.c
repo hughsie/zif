@@ -137,7 +137,7 @@ zif_package_id_build (const gchar *name, const gchar *version,
 }
 
 /**
- * zif_package_id_from_header:
+ * zif_package_id_from_nevra:
  * @name: The package name, e.g. "hal"
  * @epoch: The package epoch, e.g. 1 or 0 for none.
  * @version: The package version, e.g. "1.0.0"

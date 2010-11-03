@@ -54,6 +54,11 @@ G_DEFINE_TYPE (ZifDepend, zif_depend, G_TYPE_OBJECT)
 
 /**
  * zif_depend_flag_to_string:
+ * @flag: the #ZifDependFlag
+ *
+ * Returns a string representation of the #ZifDependFlag.
+ *
+ * Return value: string value
  *
  * Since: 0.1.0
  **/
@@ -73,6 +78,11 @@ zif_depend_flag_to_string (ZifDependFlag flag)
 
 /**
  * zif_depend_to_string:
+ * @flag: a valid #ZifDependFlag object
+ *
+ * Returns a string representation of the #ZifDepend object.
+ *
+ * Return value: string value
  *
  * Since: 0.1.0
  **/
