@@ -4,6 +4,7 @@ zif.pc
 *.lo
 *.la
 *.o
+zif-version.h
 zif-marshal.c
 zif-marshal.h
 zif-self-test

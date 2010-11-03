@@ -46,6 +46,7 @@ libzif_include_HEADERS =					\
 	zif-groups.h						\
 	zif-config.h						\
 	zif-monitor.h						\
+	zif-version.h						\
 	zif-download.h
 
 libzif_la_SOURCES =						\
@@ -119,6 +120,7 @@ libzif_la_SOURCES =						\
 	zif-update-info.h					\
 	zif-monitor.c						\
 	zif-monitor.h						\
+	zif-version.h						\
 	zif-download.c						\
 	zif-download.h
 
@@ -178,6 +180,7 @@ TESTS = zif-self-test
 endif
 
 EXTRA_DIST =							\
+	zif-version.h.in					\
 	zif-marshal.list					\
 	zif.pc.in
 

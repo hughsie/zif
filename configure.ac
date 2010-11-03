@@ -1,10 +1,25 @@
 AC_PREREQ(2.63)
 
+m4_define([zif_major_version], [0])
+m4_define([zif_minor_version], [1])
+m4_define([zif_micro_version], [3])
+m4_define([zif_version],
+          [zif_major_version.zif_minor_version.zif_micro_version])
+
 AC_INIT([zif],[0.1.3])
 AC_CONFIG_SRCDIR(libzif)
 AM_INIT_AUTOMAKE(AC_PACKAGE_NAME, AC_PACKAGE_VERSION)
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
+
+ZIF_MAJOR_VERSION=zif_major_version
+ZIF_MINOR_VERSION=zif_minor_version
+ZIF_MICRO_VERSION=zif_micro_version
+ZIF_VERSION=zif_version
+AC_SUBST(ZIF_MAJOR_VERSION)
+AC_SUBST(ZIF_MINOR_VERSION)
+AC_SUBST(ZIF_MICRO_VERSION)
+AC_SUBST(ZIF_VERSION)
 
 # enable nice build output on automake1.11
 m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
@@ -195,6 +210,7 @@ AC_CONFIG_FILES([
 Makefile
 libzif/Makefile
 libzif/zif.pc
+libzif/zif-version.h
 tools/Makefile
 docs/Makefile
 docs/api/Makefile

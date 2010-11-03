@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*-
  *
- * Copyright (C) 2008 Richard Hughes <richard@hughsie.com>
+ * Copyright (C) 2010 Richard Hughes <richard@hughsie.com>
  *
  * Licensed under the GNU General Public License Version 2
  *
@@ -19,32 +19,26 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef __ZIF_H
-#define __ZIF_H
+#if !defined (__ZIF_H_INSIDE__) && !defined (ZIF_COMPILATION)
+#error "Only <zif.h> can be included directly."
+#endif
 
-#define __ZIF_H_INSIDE__
+#ifndef __ZIF_VERSION_H
+#define __ZIF_VERSION_H
 
-#include <zif-category.h>
-#include <zif-state.h>
-#include <zif-config.h>
-#include <zif-depend.h>
-#include <zif-download.h>
-#include <zif-groups.h>
-#include <zif-lock.h>
-#include <zif-package.h>
-#include <zif-package-local.h>
-#include <zif-package-remote.h>
-#include <zif-repos.h>
-#include <zif-store-array.h>
-#include <zif-store-local.h>
-#include <zif-store-remote.h>
-#include <zif-string.h>
-#include <zif-utils.h>
-#include <zif-update.h>
-#include <zif-update-info.h>
-#include <zif-version.h>
+/* compile time version
+ */
+#define ZIF_MAJOR_VERSION				(@ZIF_MAJOR_VERSION@)
+#define ZIF_MINOR_VERSION				(@ZIF_MINOR_VERSION@)
+#define ZIF_MICRO_VERSION				(@ZIF_MICRO_VERSION@)
 
-#undef __ZIF_H_INSIDE__
+/* check whether a Zif version equal to or greater than
+ * major.minor.micro.
+ */
+#define ZIF_CHECK_VERSION(major,minor,micro)    \
+    (ZIF_MAJOR_VERSION > (major) || \
+     (ZIF_MAJOR_VERSION == (major) && ZIF_MINOR_VERSION > (minor)) || \
+     (ZIF_MAJOR_VERSION == (major) && ZIF_MINOR_VERSION == (minor) && \
+      ZIF_MICRO_VERSION >= (micro)))
 
-#endif /* __ZIF_H */
-
+#endif /* __ZIF_VERSION_H */
