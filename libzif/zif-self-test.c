@@ -196,18 +196,16 @@ zif_depend_func (void)
 {
 	ZifDepend *depend;
 
-	depend = zif_depend_new ("kernel", ZIF_DEPEND_FLAG_GREATER, "2.6.0");
-	g_assert_cmpstr (depend->name, ==, "kernel");
-	g_assert_cmpint (depend->count, ==, 1);
+	depend = zif_depend_new ();
+	zif_depend_set_flag (depend, ZIF_DEPEND_FLAG_GREATER);
+	zif_depend_set_name (depend, "kernel");
+	zif_depend_set_version (depend, "2.6.0");
 
-	zif_depend_ref (depend);
-	g_assert (depend->count == 2);
+	g_assert_cmpstr (zif_depend_get_name (depend), ==, "kernel");
+	g_assert_cmpstr (zif_depend_get_version (depend), ==, "2.6.0");
+	g_assert_cmpint (zif_depend_get_flag (depend), ==, ZIF_DEPEND_FLAG_GREATER);
 
-	zif_depend_unref (depend);
-	g_assert (depend->count == 1);
-
-	depend = zif_depend_unref (depend);
-	g_assert (depend == NULL);
+	g_object_unref (depend);
 }
 
 static guint _updates = 0;

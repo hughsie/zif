@@ -739,9 +739,11 @@ zif_md_primary_xml_what_provides_cb (ZifPackage *package, gpointer user_data)
 
 	/* find a depends string */
 	for (i=0; i<array->len; i++) {
+		const gchar *name;
 		depend = g_ptr_array_index (array, i);
+		name = zif_depend_get_name (depend);
 		for (j=0; search[j] != NULL; j++) {
-			if (g_strcmp0 (depend->name, search[j]) == 0) {
+			if (g_strcmp0 (name, search[j]) == 0) {
 				ret = TRUE;
 				goto out;
 			}

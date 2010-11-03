@@ -407,7 +407,7 @@ zif_package_print (ZifPackage *package)
 {
 	guint i;
 	gchar *text;
-	const ZifDepend *depend;
+	ZifDepend *depend;
 	GPtrArray *array;
 
 	g_return_if_fail (ZIF_IS_PACKAGE (package));
@@ -493,9 +493,10 @@ zif_package_is_gui (ZifPackage *package)
 {
 	gboolean ret = FALSE;
 	guint i;
-	const ZifDepend *depend;
+	ZifDepend *depend;
 	GPtrArray *array;
 	ZifState *state_tmp;
+	const gchar *name;
 
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), FALSE);
 	g_return_val_if_fail (package->priv->package_id_split != NULL, FALSE);
@@ -507,8 +508,9 @@ zif_package_is_gui (ZifPackage *package)
 		goto out;
 	for (i=0; i<array->len; i++) {
 		depend = g_ptr_array_index (array, i);
-		if (g_strstr_len (depend->name, -1, "gtk") != NULL ||
-		    g_strstr_len (depend->name, -1, "kde") != NULL) {
+		name = zif_depend_get_name (depend);
+		if (g_strstr_len (name, -1, "gtk") != NULL ||
+		    g_strstr_len (name, -1, "kde") != NULL) {
 			ret = TRUE;
 			break;
 		}

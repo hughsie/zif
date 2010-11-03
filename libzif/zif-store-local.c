@@ -791,7 +791,7 @@ zif_store_local_what_provides (ZifStore *store, gchar **search, ZifState *state,
 	GPtrArray *provides;
 	GError *error_local = NULL;
 	gboolean ret;
-	const ZifDepend *provide;
+	ZifDepend *provide;
 	ZifState *state_local = NULL;
 	ZifState *state_loop = NULL;
 	ZifStoreLocal *local = ZIF_STORE_LOCAL (store);
@@ -850,9 +850,11 @@ zif_store_local_what_provides (ZifStore *store, gchar **search, ZifState *state,
 		state_loop = zif_state_get_child (state_local);
 		provides = zif_package_get_provides (package, state_loop, NULL);
 		for (j=0; j<provides->len; j++) {
+			const gchar *name;
 			provide = g_ptr_array_index (provides, j);
+			name = zif_depend_get_name (provide);
 			for (k=0; search[k] != NULL; k++) {
-				if (g_strcmp0 (provide->name, search[k]) == 0) {
+				if (g_strcmp0 (name, search[k]) == 0) {
 					g_ptr_array_add (array, g_object_ref (package));
 					break;
 				}

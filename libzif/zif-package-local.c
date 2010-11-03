@@ -207,7 +207,7 @@ zif_package_local_get_depends_from_name_flags_version (GPtrArray *names, GPtrArr
 	GPtrArray *array;
 
 	/* create requires */
-	array = g_ptr_array_new_with_free_func ((GDestroyNotify) zif_depend_unref);
+	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	for (i=0; i<names->len; i++) {
 
 		/* ignore rpmlib flags */
@@ -233,7 +233,10 @@ zif_package_local_get_depends_from_name_flags_version (GPtrArray *names, GPtrArr
 		/* unknown */
 		name = g_ptr_array_index (names, i);
 		version = g_ptr_array_index (versions, i);
-		depend = zif_depend_new (name, flag, version);
+		depend = zif_depend_new ();
+		zif_depend_set_flag (depend, flag);
+		zif_depend_set_name (depend, name);
+		zif_depend_set_version (depend, version);
 		g_ptr_array_add (array, depend);
 	}
 	return array;
@@ -380,7 +383,7 @@ zif_package_local_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, ZifSt
 		/* requires */
 		names = zif_get_header_string_array (header, RPMTAG_REQUIRENAME);
 		if (names == NULL) {
-			depends = g_ptr_array_new_with_free_func ((GDestroyNotify) zif_depend_unref);
+			depends = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 			zif_package_set_requires (pkg, depends);
 			g_ptr_array_unref (depends);
 		} else {
@@ -398,7 +401,7 @@ zif_package_local_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, ZifSt
 		/* provides */
 		names = zif_get_header_string_array (header, RPMTAG_PROVIDENAME);
 		if (names == NULL) {
-			depends = g_ptr_array_new_with_free_func ((GDestroyNotify) zif_depend_unref);
+			depends = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 			zif_package_set_provides (pkg, depends);
 			g_ptr_array_unref (depends);
 		} else {
@@ -416,7 +419,7 @@ zif_package_local_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, ZifSt
 		/* conflicts */
 		names = zif_get_header_string_array (header, RPMTAG_CONFLICTNAME);
 		if (names == NULL) {
-			depends = g_ptr_array_new_with_free_func ((GDestroyNotify) zif_depend_unref);
+			depends = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 			//zif_package_set_conflicts (pkg, depends);
 			g_ptr_array_unref (depends);
 		} else {
@@ -434,7 +437,7 @@ zif_package_local_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, ZifSt
 		/* obsoletes */
 		names = zif_get_header_string_array (header, RPMTAG_OBSOLETENAME);
 		if (names == NULL) {
-			depends = g_ptr_array_new_with_free_func ((GDestroyNotify) zif_depend_unref);
+			depends = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 			//zif_package_set_obsoletes (pkg, depends);
 			g_ptr_array_unref (depends);
 		} else {

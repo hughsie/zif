@@ -220,7 +220,7 @@ zif_cmd_get_depends (const gchar *package_name, ZifState *state)
 	ZifState *state_loop;
 	GPtrArray *store_array;
 	GPtrArray *requires = NULL;
-	const ZifDepend *require;
+	ZifDepend *require;
 	gchar *require_str;
 	GPtrArray *provides;
 	const gchar *package_id;
@@ -309,7 +309,7 @@ zif_cmd_get_depends (const gchar *package_name, ZifState *state)
 		g_free (require_str);
 
 		/* find the package providing the depend */
-		to_array[0] = require->name;
+		to_array[0] = zif_depend_get_name (require);
 		provides = zif_store_array_what_provides (store_array, (gchar**)to_array, state_loop, &error);
 		if (provides == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
