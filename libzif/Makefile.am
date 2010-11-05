@@ -41,6 +41,7 @@ libzif_include_HEADERS =					\
 	zif-store-array.h					\
 	zif-repos.h						\
 	zif-utils.h						\
+	zif-release.h						\
 	zif-update.h						\
 	zif-update-info.h					\
 	zif-upgrade.h						\
@@ -126,6 +127,8 @@ libzif_la_SOURCES =						\
 	zif-upgrade.h						\
 	zif-monitor.c						\
 	zif-monitor.h						\
+	zif-release.c						\
+	zif-release.h						\
 	zif-version.h						\
 	zif-download.c						\
 	zif-download.h

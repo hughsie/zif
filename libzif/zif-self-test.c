@@ -60,6 +60,7 @@
 #include "zif-store-local.h"
 #include "zif-store-remote.h"
 #include "zif-string.h"
+#include "zif-release.h"
 #include "zif-update.h"
 #include "zif-update-info.h"
 #include "zif-utils.h"
@@ -87,6 +88,59 @@ zif_test_get_data_file (const gchar *filename)
 		return full;
 	g_free (full);
 	return NULL;
+}
+
+static void
+zif_release_func (void)
+{
+	gboolean ret;
+	ZifRelease *release;
+	GPtrArray *array;
+	GError *error = NULL;
+	ZifState *state;
+	ZifUpgrade *upgrade;
+	ZifDownload *download;
+
+	state = zif_state_new ();
+	download = zif_download_new ();
+	zif_download_set_proxy (download, NULL, NULL);
+	release = zif_release_new ();
+	zif_release_set_filename (release, "/tmp/releases.txt");
+	zif_release_set_uri (release, "http://people.freedesktop.org/~hughsient/fedora/preupgrade/releases.txt");
+
+	/* ensure file is not present */
+	g_unlink ("/tmp/releases.txt");
+
+	/* get upgrades */
+	array = zif_release_get_upgrades (release, state, &error);
+	g_assert_no_error (error);
+	g_assert (array != NULL);
+	g_assert_cmpint (array->len, ==, 1);
+
+	/* get detail */
+	upgrade = g_ptr_array_index (array, 0);
+	g_assert_cmpstr (zif_upgrade_get_id (upgrade), ==, "Fedora 15 (Lovelock)");
+	g_assert_cmpstr (zif_upgrade_get_baseurl (upgrade), ==, NULL);
+	g_assert_cmpstr (zif_upgrade_get_mirrorlist (upgrade), ==,
+			"http://people.freedesktop.org/~hughsient/fedora/preupgrade/mirrorlist"
+			"?repo=fedora-15&arch=$basearch");
+	g_assert_cmpstr (zif_upgrade_get_install_mirrorlist (upgrade), ==,
+			 "http://people.freedesktop.org/~hughsient/fedora/preupgrade/installmirrorlist"
+			 "?path=pub/fedora/linux/releases/15/Fedora/$basearch/os");
+	g_assert_cmpint (zif_upgrade_get_version (upgrade), ==, 15);
+	g_assert (zif_upgrade_get_enabled (upgrade));
+	g_assert (zif_upgrade_get_stable (upgrade));
+
+	g_ptr_array_unref (array);
+
+	/* do a fake upgrade */
+	zif_state_reset (state);
+	ret = zif_release_upgrade_version (release, 15, state, &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	g_object_unref (release);
+	g_object_unref (download);
 }
 
 static void
@@ -2066,6 +2120,7 @@ main (int argc, char **argv)
 	g_test_add_func ("/zif/package-local", zif_package_local_func);
 	g_test_add_func ("/zif/package-remote", zif_package_remote_func);
 	g_test_add_func ("/zif/package", zif_package_func);
+	g_test_add_func ("/zif/release", zif_release_func);
 	g_test_add_func ("/zif/repos", zif_repos_func);
 	g_test_add_func ("/zif/state", zif_state_func);
 	g_test_add_func ("/zif/store-local", zif_store_local_func);

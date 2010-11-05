@@ -85,7 +85,7 @@ zif_upgrade_get_enabled (ZifUpgrade *upgrade)
  *
  * Gets the upgrade version.
  *
- * Return value: the enabled of upgrade, or 0 for unset.
+ * Return value: the version of the upgrade, or 0 for unset.
  *
  * Since: 0.1.3
  **/
@@ -93,7 +93,7 @@ guint
 zif_upgrade_get_version (ZifUpgrade *upgrade)
 {
 	g_return_val_if_fail (ZIF_IS_UPGRADE (upgrade), 0);
-	return upgrade->priv->enabled;
+	return upgrade->priv->version;
 }
 
 /**

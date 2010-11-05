@@ -1,0 +1,8 @@
+[Fedora 15 (Lovelock)]
+stable=True
+preupgrade-ok=True
+version=15
+mirrorlist=http://people.freedesktop.org/~hughsient/fedora/preupgrade/mirrorlist?repo=fedora-15&arch=$basearch
+installmirrorlist=http://people.freedesktop.org/~hughsient/fedora/preupgrade/installmirrorlist?path=pub/fedora/linux/releases/15/Fedora/$basearch/os
+baseurl=http://people.freedesktop.org/~hughsient/fedora/preupgrade/os
+
