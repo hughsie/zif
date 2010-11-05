@@ -43,6 +43,7 @@ libzif_include_HEADERS =					\
 	zif-utils.h						\
 	zif-update.h						\
 	zif-update-info.h					\
+	zif-upgrade.h						\
 	zif-groups.h						\
 	zif-config.h						\
 	zif-md.h						\
@@ -121,6 +122,8 @@ libzif_la_SOURCES =						\
 	zif-update.h						\
 	zif-update-info.c					\
 	zif-update-info.h					\
+	zif-upgrade.c						\
+	zif-upgrade.h						\
 	zif-monitor.c						\
 	zif-monitor.h						\
 	zif-version.h						\
