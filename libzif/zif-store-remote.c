@@ -392,14 +392,6 @@ zif_store_remote_download_try (ZifStoreRemote *store, const gchar *uri, const gc
 		goto out;
 	}
 
-	/* check we have some data */
-	if (length == 0) {
-		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED_TO_DOWNLOAD,
-			     "failed to download %s from %s: no data", filename, uri);
-		ret = FALSE;
-		goto out;
-	}
-
 	/* check this really isn't a fancy 404 page */
 	if (g_str_has_prefix (contents, "<html>")) {
 		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED_TO_DOWNLOAD,

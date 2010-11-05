@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*-
  *
- * Copyright (C) 2009 Richard Hughes <richard@hughsie.com>
+ * Copyright (C) 2009-2010 Richard Hughes <richard@hughsie.com>
  *
  * Licensed under the GNU General Public License Version 2
  *
@@ -30,6 +30,7 @@
 #include <gio/gio.h>
 
 #include "zif-state.h"
+#include "zif-md.h"
 
 G_BEGIN_DECLS
 
@@ -61,6 +62,12 @@ typedef enum {
 	ZIF_DOWNLOAD_ERROR_LAST
 } ZifDownloadError;
 
+typedef enum {
+	ZIF_DOWNLOAD_POLICY_LINEAR,
+	ZIF_DOWNLOAD_POLICY_RANDOM,
+	ZIF_DOWNLOAD_POLICY_LAST
+} ZifDownloadPolicy;
+
 GType		 zif_download_get_type			(void);
 GQuark		 zif_download_error_quark		(void);
 ZifDownload	*zif_download_new			(void);
@@ -72,6 +79,37 @@ gboolean	 zif_download_file			(ZifDownload		*download,
 							 const gchar		*filename,
 							 ZifState		*state,
 							 GError			**error);
+
+/* multiple mirror support */
+gboolean	 zif_download_location_add_uri		(ZifDownload		*download,
+							 const gchar		*uri,
+							 GError			**error);
+gboolean	 zif_download_location_add_array	(ZifDownload		*download,
+							 GPtrArray		*array,
+							 GError			**error);
+gboolean	 zif_download_location_add_md		(ZifDownload		*download,
+							 ZifMd			*md,
+							 ZifState		*state,
+							 GError			**error);
+gboolean	 zif_download_location_remove_uri	(ZifDownload		*download,
+							 const gchar		*uri,
+							 GError			**error);
+gboolean	 zif_download_location			(ZifDownload		*download,
+							 const gchar		*location,
+							 const gchar		*filename,
+							 ZifState		*state,
+							 GError			**error);
+gboolean	 zif_download_location_full		(ZifDownload		*download,
+							 const gchar		*location,
+							 const gchar		*filename,
+							 guint64		 size,
+							 const gchar		*content_type,
+							 GChecksumType		 checksum_type,
+							 const gchar		*checksum,
+							 ZifState		*state,
+							 GError			**error);
+void		 zif_download_location_set_policy	(ZifDownload		*download,
+							 ZifDownloadPolicy	 policy);
 
 G_END_DECLS
 

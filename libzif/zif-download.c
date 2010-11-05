@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*-
  *
- * Copyright (C) 2009 Richard Hughes <richard@hughsie.com>
+ * Copyright (C) 2009-2010 Richard Hughes <richard@hughsie.com>
  *
  * Licensed under the GNU General Public License Version 2
  *
@@ -36,6 +36,8 @@
 #include "zif-config.h"
 #include "zif-download.h"
 #include "zif-state.h"
+#include "zif-md-metalink.h"
+#include "zif-md-mirrorlist.h"
 
 #define ZIF_DOWNLOAD_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_DOWNLOAD, ZifDownloadPrivate))
 
@@ -51,6 +53,8 @@ struct _ZifDownloadPrivate
 	SoupMessage		*msg;
 	ZifState		*state;
 	ZifConfig		*config;
+	GPtrArray		*array;
+	ZifDownloadPolicy	 policy;
 };
 
 static gpointer zif_download_object = NULL;
@@ -127,8 +131,48 @@ zif_download_cancelled_cb (GCancellable *cancellable, ZifDownload *download)
 	}
 
 	/* cancel */
-	g_warning ("cancelling download");
+	g_debug ("cancelling download");
 	soup_session_cancel_message (download->priv->session, download->priv->msg, SOUP_STATUS_CANCELLED);
+}
+
+/**
+ * zif_download_check_content_type:
+ **/
+static gboolean
+zif_download_check_content_type (GFile *file, const gchar *content_type_expected, GError **error)
+{
+	GFileInfo *info;
+	gboolean ret = FALSE;
+	const gchar *content_type;
+	GError *error_local = NULL;
+
+	/* get content type */
+	info = g_file_query_info (file, G_FILE_ATTRIBUTE_STANDARD_CONTENT_TYPE, 0, NULL, &error_local);
+	if (info == NULL) {
+		g_set_error (error,
+			     ZIF_DOWNLOAD_ERROR,
+			     ZIF_DOWNLOAD_ERROR_FAILED,
+			     "failed to detect content type: %s",
+			     error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* check it's what we expect */
+	content_type = g_file_info_get_attribute_string (info, G_FILE_ATTRIBUTE_STANDARD_CONTENT_TYPE);
+	ret = g_strcmp0 (content_type, content_type_expected) == 0;
+	if (!ret) {
+		g_set_error (error,
+			     ZIF_DOWNLOAD_ERROR,
+			     ZIF_DOWNLOAD_ERROR_FAILED,
+			     "content type incorrect: got %s but expected %s",
+			     content_type, content_type_expected);
+		goto out;
+	}
+out:
+	if (info != NULL)
+		g_object_unref (info);
+	return ret;
 }
 
 /**
@@ -140,6 +184,9 @@ zif_download_cancelled_cb (GCancellable *cancellable, ZifDownload *download)
  * @error: a #GError which is used on failure, or %NULL
  *
  * Downloads a file.
+ *
+ * This function will return with an error if the downloaded file
+ * has zero size.
  *
  * Return value: %TRUE for success, %FALSE for failure
  *
@@ -208,6 +255,13 @@ zif_download_file (ZifDownload *download, const gchar *uri, const gchar *filenam
 	if (!SOUP_STATUS_IS_SUCCESSFUL (msg->status_code)) {
 		g_set_error (error, ZIF_DOWNLOAD_ERROR, ZIF_DOWNLOAD_ERROR_FAILED,
 			     "failed to get valid response for %s: %s", uri, soup_status_get_phrase (msg->status_code));
+		goto out;
+	}
+
+	/* empty file */
+	if (msg->response_body->length == 0) {
+		g_set_error_literal (error, ZIF_DOWNLOAD_ERROR, ZIF_DOWNLOAD_ERROR_FAILED,
+				     "remote file has zero size");
 		goto out;
 	}
 
@@ -280,6 +334,381 @@ out:
 }
 
 /**
+ * zif_download_location_array_get_index:
+ **/
+static guint
+zif_download_location_array_get_index (GPtrArray *array, const gchar *uri)
+{
+	guint i;
+	const gchar *uri_tmp;
+
+	/* find the uri */
+	for (i=0; i<array->len; i++) {
+		uri_tmp = g_ptr_array_index (array, i);
+		if (g_strcmp0 (uri_tmp, uri) == 0)
+			return i;
+	}
+	return G_MAXUINT;
+}
+
+/**
+ * zif_download_location_add_uri:
+ * @download: the #ZifDownload object
+ * @uri: the full mirror URI, e.g. http://dave.com/pub/
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Adds a URI to be used when using zif_download_location_full().
+ *
+ * Return value: %TRUE for success, %FALSE for failure
+ *
+ * Since: 0.1.3
+ **/
+gboolean
+zif_download_location_add_uri (ZifDownload *download, const gchar *uri, GError **error)
+{
+	g_return_val_if_fail (ZIF_IS_DOWNLOAD (download), FALSE);
+	g_return_val_if_fail (uri != NULL, FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+	/* already added */
+	if (zif_download_location_array_get_index (download->priv->array, uri) != G_MAXUINT) {
+		g_set_error (error,
+			     ZIF_DOWNLOAD_ERROR,
+			     ZIF_DOWNLOAD_ERROR_FAILED,
+			     "The URI %s as already been added", uri);
+		return FALSE;
+	}
+
+	/* add to array */
+	g_ptr_array_add (download->priv->array, g_strdup (uri));
+	return TRUE;
+}
+
+/**
+ * zif_download_location_add_array:
+ * @download: the #ZifDownload object
+ * @array: an array of URI string to add
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Adds an array of URIs to be used when using zif_download_location_full().
+ *
+ * Return value: %TRUE for success, %FALSE for failure
+ *
+ * Since: 0.1.3
+ **/
+gboolean
+zif_download_location_add_array (ZifDownload *download, GPtrArray *array, GError **error)
+{
+	guint i;
+	gboolean ret = TRUE;
+	const gchar *uri;
+
+	g_return_val_if_fail (ZIF_IS_DOWNLOAD (download), FALSE);
+	g_return_val_if_fail (array != NULL, FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+	/* add each uri */
+	for (i=0; i<array->len; i++) {
+		uri = g_ptr_array_index (array, i);
+		ret = zif_download_location_add_uri (download, uri, error);
+		if (!ret)
+			goto out;
+	}
+out:
+	return ret;
+}
+
+/**
+ * zif_download_location_add_md:
+ * @download: the #ZifDownload object
+ * @md: A valid #ZifMd object
+ * @state: a #ZifState to use for progress reporting
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Adds an metadata source to be used when using zif_download_location_full().
+ *
+ * Return value: %TRUE for success, %FALSE for failure
+ *
+ * Since: 0.1.3
+ **/
+gboolean
+zif_download_location_add_md (ZifDownload *download, ZifMd *md, ZifState *state, GError **error)
+{
+	GPtrArray *array = NULL;
+	gboolean ret = FALSE;
+
+	g_return_val_if_fail (ZIF_IS_DOWNLOAD (download), FALSE);
+	g_return_val_if_fail (md != NULL, FALSE);
+	g_return_val_if_fail (zif_state_valid (state), FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+	/* metalink */
+	if (zif_md_get_kind (md) == ZIF_MD_KIND_METALINK) {
+		array = zif_md_metalink_get_uris (ZIF_MD_METALINK (md), 999, state, error);
+		if (array == NULL)
+			goto out;
+		ret = zif_download_location_add_array (download, array, error);
+		goto out;
+	}
+
+	/* mirrorlist */
+	if (zif_md_get_kind (md) == ZIF_MD_KIND_MIRRORLIST) {
+		array = zif_md_mirrorlist_get_uris (ZIF_MD_MIRRORLIST (md), state, error);
+		if (array == NULL)
+			goto out;
+		ret = zif_download_location_add_array (download, array, error);
+		goto out;
+	}
+
+	/* nothing good to use */
+	g_set_error (error,
+		     ZIF_DOWNLOAD_ERROR,
+		     ZIF_DOWNLOAD_ERROR_FAILED,
+		     "md type %s is invalid", zif_md_kind_to_text (zif_md_get_kind (md)));
+out:
+	if (array != NULL)
+		g_ptr_array_unref (array);
+	return ret;
+}
+
+/**
+ * zif_download_location_remove_uri:
+ * @download: the #ZifDownload object
+ * @uri: The full URI to remove
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Removes a URI from the pool used to download files.
+ *
+ * Return value: %TRUE for success, %FALSE for failure
+ *
+ * Since: 0.1.3
+ **/
+gboolean
+zif_download_location_remove_uri (ZifDownload *download, const gchar *uri, GError **error)
+{
+	guint index;
+
+	g_return_val_if_fail (ZIF_IS_DOWNLOAD (download), FALSE);
+	g_return_val_if_fail (uri != NULL, FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+	/* does not exist */
+	index = zif_download_location_array_get_index (download->priv->array, uri);
+	if (index == G_MAXUINT) {
+		g_set_error (error,
+			     ZIF_DOWNLOAD_ERROR,
+			     ZIF_DOWNLOAD_ERROR_FAILED,
+			     "The URI %s does not already exist", uri);
+		return FALSE;
+	}
+
+	/* remove from array */
+	g_ptr_array_remove_index (download->priv->array, index);
+	return TRUE;
+}
+
+/**
+ * zif_download_location_full_try:
+ **/
+static gboolean
+zif_download_location_full_try (ZifDownload *download, const gchar *uri, const gchar *filename,
+				guint64 size, const gchar *content_type,
+				GChecksumType checksum_type, const gchar *checksum,
+				ZifState *state, GError **error)
+{
+	gboolean ret;
+	gchar *checksum_tmp = NULL;
+	gchar *data = NULL;
+	GFile *file;
+	GFileInfo *info_size = NULL;
+	gsize len;
+	guint64 size_tmp;
+
+	/* download */
+	file = g_file_new_for_path (filename);
+	ret = zif_download_file (download, uri, filename, state, error);
+	if (!ret)
+		goto out;
+
+	/* verify size */
+	if (size > 0) {
+		info_size = g_file_query_info (file, G_FILE_ATTRIBUTE_STANDARD_SIZE, 0, NULL, error);
+		if (info_size == NULL) {
+			ret = FALSE;
+			goto out;
+		}
+		size_tmp = g_file_info_get_attribute_uint64 (info_size, G_FILE_ATTRIBUTE_STANDARD_SIZE);
+		ret = (size_tmp == size);
+		if (!ret) {
+			g_set_error (error,
+				     ZIF_DOWNLOAD_ERROR,
+				     ZIF_DOWNLOAD_ERROR_FAILED,
+				     "incorrect size for %s: got %" G_GUINT64_FORMAT
+				     " but expected %" G_GUINT64_FORMAT,
+				     filename, size_tmp, size);
+			goto out;
+		}
+	}
+
+	/* check content type is what we expect */
+	if (content_type != NULL) {
+		ret = zif_download_check_content_type (file, content_type, error);
+		if (!ret)
+			goto out;
+	}
+
+	/* verify checksum */
+	if (checksum != NULL) {
+		ret = g_file_get_contents (filename, &data, &len, error);
+		if (!ret)
+			goto out;
+		checksum_tmp = g_compute_checksum_for_string (checksum_type, data, len);
+		ret = (g_strcmp0 (checksum_tmp, checksum) == 0);
+		if (!ret) {
+			g_set_error (error,
+				     ZIF_DOWNLOAD_ERROR,
+				     ZIF_DOWNLOAD_ERROR_FAILED,
+				     "incorrect checksum for %s: got %s but expected %s",
+				     filename, checksum_tmp, checksum);
+			goto out;
+		}
+	}
+out:
+	g_free (checksum_tmp);
+	g_free (data);
+	if (info_size != NULL)
+		g_object_unref (info_size);
+	g_object_unref (file);
+	return ret;
+}
+
+/**
+ * zif_download_location_full:
+ * @download: the #ZifDownload object
+ * @location: the location to add on to the end of the pool URIs
+ * @filename: the local filename to save to
+ * @size: the expected size in bytes, or 0
+ * @content_type: the expected content type of the file, or %NULL
+ * @checksum_type: the checksum type, e.g. %G_CHECKSUM_SHA256, or 0
+ * @checksum: the expected checksum of the file, or %NULL
+ * @state: a #ZifState to use for progress reporting
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Downloads a file using a pool of download servers, and then verifying
+ * it against what we are expecting.
+ *
+ * Return value: %TRUE for success, %FALSE for failure
+ *
+ * Since: 0.1.3
+ **/
+gboolean
+zif_download_location_full (ZifDownload *download, const gchar *location, const gchar *filename,
+			    guint64 size, const gchar *content_type, GChecksumType checksum_type, const gchar *checksum,
+			    ZifState *state, GError **error)
+{
+	gboolean ret = FALSE;
+	const gchar *uri;
+	gchar *uri_tmp;
+	guint index;
+	GPtrArray *array = NULL;
+	GError *error_local = NULL;
+
+	g_return_val_if_fail (ZIF_IS_DOWNLOAD (download), FALSE);
+	g_return_val_if_fail (location != NULL, FALSE);
+	g_return_val_if_fail (filename != NULL, FALSE);
+	g_return_val_if_fail (zif_state_valid (state), FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+	/* nothing in the pool */
+	array = download->priv->array;
+	if (array->len == 0) {
+		g_set_error_literal (error,
+				     ZIF_DOWNLOAD_ERROR,
+				     ZIF_DOWNLOAD_ERROR_FAILED,
+				     "The download pool is empty");
+		goto out;
+	}
+
+	/* keep trying until we get success */
+	while (array->len > 0) {
+
+		/* get the next mirror according to policy */
+		if (download->priv->policy == ZIF_DOWNLOAD_POLICY_RANDOM) {
+			index = g_random_int_range (0, array->len - 1);
+		} else {
+			index = 0;
+		}
+
+		/* form the full URL */
+		uri = g_ptr_array_index (array, index);
+		uri_tmp = g_build_filename (uri, location, NULL);
+
+		g_debug ("attempt to download %s", uri_tmp);
+		zif_state_reset (state);
+		ret = zif_download_location_full_try (download, uri_tmp, filename,
+						  size, content_type, checksum_type, checksum,
+						  state, &error_local);
+		if (!ret) {
+			g_debug ("failed to download %s: %s, so removing", uri, error_local->message);
+			g_clear_error (&error_local);
+			/* remove it (error is NULL as we know it exists, we just used it) */
+			zif_download_location_remove_uri (download, uri, NULL);
+		} else {
+			g_debug ("downloaded correct content %s into %s", uri_tmp, filename);
+		}
+
+		g_free (uri_tmp);
+		if (ret)
+			break;
+	}
+	if (!ret) {
+		g_set_error (error,
+			     ZIF_DOWNLOAD_ERROR,
+			     ZIF_DOWNLOAD_ERROR_FAILED,
+			     "Failed to download %s from any mirrors", location);
+		goto out;
+	}
+out:
+	return ret;
+}
+
+/**
+ * zif_download_location:
+ * @download: the #ZifDownload object
+ * @location: the location to add on to the end of the pool URIs
+ * @filename: the local filename to save to
+ * @state: a #ZifState to use for progress reporting
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Downloads a file using a pool of download servers.
+ *
+ * Return value: %TRUE for success, %FALSE for failure
+ *
+ * Since: 0.1.3
+ **/
+gboolean
+zif_download_location (ZifDownload *download, const gchar *location, const gchar *filename,
+		       ZifState *state, GError **error)
+{
+	return zif_download_location_full (download, location, filename, 0, NULL, 0, NULL, state, error);
+}
+
+/**
+ * zif_download_location_set_policy:
+ * @download: the #ZifDownload object
+ * @policy: the policy for choosing a URL, e.g. %ZIF_DOWNLOAD_POLICY_RANDOM
+ *
+ * Sets the policy for determining the next mirror to try.
+ *
+ * Since: 0.1.3
+ **/
+void
+zif_download_location_set_policy (ZifDownload *download, ZifDownloadPolicy policy)
+{
+	download->priv->policy = policy;
+}
+
+/**
  * zif_download_finalize:
  **/
 static void
@@ -297,6 +726,7 @@ zif_download_finalize (GObject *object)
 	if (download->priv->session != NULL)
 		g_object_unref (download->priv->session);
 	g_object_unref (download->priv->config);
+	g_ptr_array_unref (download->priv->array);
 
 	G_OBJECT_CLASS (zif_download_parent_class)->finalize (object);
 }
@@ -325,6 +755,8 @@ zif_download_init (ZifDownload *download)
 	download->priv->proxy = NULL;
 	download->priv->state = NULL;
 	download->priv->config = zif_config_new ();
+	download->priv->array = g_ptr_array_new_with_free_func (g_free);
+	download->priv->policy = ZIF_DOWNLOAD_POLICY_RANDOM;
 }
 
 /**

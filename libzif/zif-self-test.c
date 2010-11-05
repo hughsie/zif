@@ -249,15 +249,72 @@ zif_download_func (void)
 	download = zif_download_new ();
 	g_assert (download != NULL);
 	g_assert (zif_download_set_proxy (download, NULL, NULL));
-
 	state = zif_state_new ();
+	g_assert (state != NULL);
+
+	/* add something sensible, but it won't resolve later on */
+	ret = zif_download_location_add_uri (download, "http://www.bbc.co.uk/pub/", &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	/* add */
+	ret = zif_download_location_add_uri (download, "http://people.freedesktop.org/~hughsient/fedora/preupgrade/", &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	/* add another */
+	ret = zif_download_location_add_uri (download, "http://fubar.com/pub/", &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	/* remove non existant */
+	ret = zif_download_location_remove_uri (download, "http://fubar.com/davyjones/", &error);
+	g_assert_error (error, ZIF_DOWNLOAD_ERROR, ZIF_DOWNLOAD_ERROR_FAILED);
+	g_assert (!ret);
+	g_clear_error (&error);
+
+	/* remove fubar location */
+	ret = zif_download_location_remove_uri (download, "http://fubar.com/pub/", &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	/* download using the pool of uris (only the second will work) */
+	zif_download_location_set_policy (download, ZIF_DOWNLOAD_POLICY_LINEAR);
+	ret = zif_download_location_full (download,
+				      "releases.txt",
+				      "/tmp/releases.txt",
+				      502, /* size in bytes */
+				      "text/plain", /* content type */
+				      G_CHECKSUM_SHA256,
+				      "be576a7f62009169d9d10ad4d959d36db82411d18346c0ca543693c015ef8b46",
+				      state,
+				      &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	/* this failed to resolve, so this should have already been removed */
+	ret = zif_download_location_remove_uri (download, "http://www.bbc.co.uk/pub/", &error);
+	g_assert_error (error, ZIF_DOWNLOAD_ERROR, ZIF_DOWNLOAD_ERROR_FAILED);
+	g_assert (!ret);
+	g_clear_error (&error);
+
+	/* this exists in no mirror */
+	ret = zif_download_location (download, "releases.bad", "/tmp/releases.txt", state, &error);
+	g_assert_error (error, ZIF_DOWNLOAD_ERROR, ZIF_DOWNLOAD_ERROR_FAILED);
+	g_assert (!ret);
+	g_clear_error (&error);
+
+//FIXME
+goto out;
+
 	g_signal_connect (state, "percentage-changed", G_CALLBACK (zif_download_progress_changed), NULL);
 	cancellable = zif_state_get_cancellable (state);
 
 	g_cancellable_cancel (cancellable);
 
+	zif_state_reset (state);
 	ret = zif_download_file (download, "http://people.freedesktop.org/~hughsient/temp/Screenshot.png",
-				 g_get_tmp_dir (), state, &error);
+				 "/tmp/Screenshot.png", state, &error);
 	g_assert_no_error (error);
 	g_assert (ret);
 	g_assert_cmpint (_updates, >, 5);
@@ -267,9 +324,9 @@ zif_download_func (void)
 
 	zif_state_reset (state);
 	ret = zif_download_file (download, "http://people.freedesktop.org/~hughsient/temp/Screenshot.png",
-				 g_get_tmp_dir (), state, &error);
+				 "/tmp/Screenshot.png", state, &error);
 	g_assert (!ret);
-
+out:
 	g_object_unref (download);
 	g_object_unref (state);
 }
@@ -1990,7 +2047,7 @@ main (int argc, char **argv)
 	g_test_add_func ("/zif/changeset", zif_changeset_func);
 	g_test_add_func ("/zif/config", zif_config_func);
 	g_test_add_func ("/zif/depend", zif_depend_func);
-if (0)	g_test_add_func ("/zif/download", zif_download_func);
+	g_test_add_func ("/zif/download", zif_download_func);
 	g_test_add_func ("/zif/groups", zif_groups_func);
 	g_test_add_func ("/zif/legal", zif_legal_func);
 	g_test_add_func ("/zif/lock", zif_lock_func);
