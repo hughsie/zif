@@ -59,7 +59,7 @@ struct _ZifMdPrivate
 	gchar			*checksum;		/* of compressed file */
 	gchar			*checksum_uncompressed;	/* of uncompressed file */
 	GChecksumType		 checksum_type;
-	ZifMdType		 kind;
+	ZifMdKind		 kind;
 	ZifStoreRemote		*remote;
 	ZifConfig		*config;
 	guint64			 max_age;
@@ -160,7 +160,7 @@ zif_md_get_location (ZifMd *md)
 }
 
 /**
- * zif_md_get_mdtype:
+ * zif_md_get_kind:
  * @md: the #ZifMd object
  *
  * Gets the type of the repo.
@@ -169,10 +169,10 @@ zif_md_get_location (ZifMd *md)
  *
  * Since: 0.1.0
  **/
-ZifMdType
-zif_md_get_mdtype (ZifMd *md)
+ZifMdKind
+zif_md_get_kind (ZifMd *md)
 {
-	g_return_val_if_fail (ZIF_IS_MD (md), ZIF_MD_TYPE_UNKNOWN);
+	g_return_val_if_fail (ZIF_IS_MD (md), ZIF_MD_KIND_UNKNOWN);
 	return md->priv->kind;
 }
 
@@ -526,7 +526,7 @@ zif_md_load (ZifMd *md, ZifState *state, GError **error)
 		if (!ret) {
 			g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED_AS_OFFLINE,
 				     "failed to check %s checksum for %s and offline",
-				     zif_md_type_to_text (md->priv->kind), md->priv->id);
+				     zif_md_kind_to_text (md->priv->kind), md->priv->id);
 			goto out;
 		}
 
@@ -1118,7 +1118,7 @@ zif_md_clean (ZifMd *md, GError **error)
 	filename = zif_md_get_filename (md);
 	if (filename == NULL) {
 		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_NO_FILENAME,
-			     "failed to get filename for %s", zif_md_type_to_text (md->priv->kind));
+			     "failed to get filename for %s", zif_md_kind_to_text (md->priv->kind));
 		ret = FALSE;
 		goto out;
 	}
@@ -1141,7 +1141,7 @@ zif_md_clean (ZifMd *md, GError **error)
 	filename = zif_md_get_filename_uncompressed (md);
 	if (filename == NULL) {
 		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_NO_FILENAME,
-			     "failed to get uncompressed filename for %s", zif_md_type_to_text (md->priv->kind));
+			     "failed to get uncompressed filename for %s", zif_md_kind_to_text (md->priv->kind));
 		ret = FALSE;
 		goto out;
 	}
@@ -1167,38 +1167,38 @@ out:
 }
 
 /**
- * zif_md_type_to_text:
+ * zif_md_kind_to_text:
  *
  * Since: 0.1.0
  **/
 const gchar *
-zif_md_type_to_text (ZifMdType type)
+zif_md_kind_to_text (ZifMdKind type)
 {
-	if (type == ZIF_MD_TYPE_FILELISTS_XML)
+	if (type == ZIF_MD_KIND_FILELISTS_XML)
 		return "filelists";
-	if (type == ZIF_MD_TYPE_FILELISTS_SQL)
+	if (type == ZIF_MD_KIND_FILELISTS_SQL)
 		return "filelists_db";
-	if (type == ZIF_MD_TYPE_PRIMARY_XML)
+	if (type == ZIF_MD_KIND_PRIMARY_XML)
 		return "primary";
-	if (type == ZIF_MD_TYPE_PRIMARY_SQL)
+	if (type == ZIF_MD_KIND_PRIMARY_SQL)
 		return "primary_db";
-	if (type == ZIF_MD_TYPE_OTHER_XML)
+	if (type == ZIF_MD_KIND_OTHER_XML)
 		return "other";
-	if (type == ZIF_MD_TYPE_OTHER_SQL)
+	if (type == ZIF_MD_KIND_OTHER_SQL)
 		return "other_db";
-	if (type == ZIF_MD_TYPE_COMPS)
+	if (type == ZIF_MD_KIND_COMPS)
 		return "group";
-	if (type == ZIF_MD_TYPE_COMPS_GZ)
+	if (type == ZIF_MD_KIND_COMPS_GZ)
 		return "group_gz";
-	if (type == ZIF_MD_TYPE_METALINK)
+	if (type == ZIF_MD_KIND_METALINK)
 		return "metalink";
-	if (type == ZIF_MD_TYPE_MIRRORLIST)
+	if (type == ZIF_MD_KIND_MIRRORLIST)
 		return "mirrorlist";
-	if (type == ZIF_MD_TYPE_PRESTODELTA)
+	if (type == ZIF_MD_KIND_PRESTODELTA)
 		return "prestodelta";
-	if (type == ZIF_MD_TYPE_UPDATEINFO)
+	if (type == ZIF_MD_KIND_UPDATEINFO)
 		return "updateinfo";
-	if (type == ZIF_MD_TYPE_PKGTAGS)
+	if (type == ZIF_MD_KIND_PKGTAGS)
 		return "pkgtags";
 	return "unknown";
 }
@@ -1240,9 +1240,9 @@ zif_md_file_check (ZifMd *md, gboolean use_uncompressed, ZifState *state, GError
 	zif_state_set_number_steps (state, 2);
 
 	/* metalink has no checksum... */
-	if (md->priv->kind == ZIF_MD_TYPE_METALINK ||
-	    md->priv->kind == ZIF_MD_TYPE_MIRRORLIST) {
-		g_debug ("skipping checksum check on %s", zif_md_type_to_text (md->priv->kind));
+	if (md->priv->kind == ZIF_MD_KIND_METALINK ||
+	    md->priv->kind == ZIF_MD_KIND_MIRRORLIST) {
+		g_debug ("skipping checksum check on %s", zif_md_kind_to_text (md->priv->kind));
 		ret = zif_state_finished (state, error);
 		goto out;
 	}
@@ -1256,7 +1256,7 @@ zif_md_file_check (ZifMd *md, gboolean use_uncompressed, ZifState *state, GError
 	/* no checksum set */
 	if (filename == NULL) {
 		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED,
-			     "no filename for %s [%s]", md->priv->id, zif_md_type_to_text (md->priv->kind));
+			     "no filename for %s [%s]", md->priv->id, zif_md_kind_to_text (md->priv->kind));
 		ret = FALSE;
 		goto out;
 	}
@@ -1434,7 +1434,7 @@ zif_md_class_init (ZifMdClass *klass)
 	 * Since: 0.1.3
 	 */
 	pspec = g_param_spec_uint ("kind", NULL, NULL,
-				   ZIF_MD_TYPE_UNKNOWN, G_MAXUINT, 0,
+				   ZIF_MD_KIND_UNKNOWN, G_MAXUINT, 0,
 				   G_PARAM_CONSTRUCT | G_PARAM_READWRITE);
 	g_object_class_install_property (object_class, PROP_KIND, pspec);
 
@@ -1468,7 +1468,7 @@ static void
 zif_md_init (ZifMd *md)
 {
 	md->priv = ZIF_MD_GET_PRIVATE (md);
-	md->priv->kind = ZIF_MD_TYPE_UNKNOWN;
+	md->priv->kind = ZIF_MD_KIND_UNKNOWN;
 	md->priv->loaded = FALSE;
 	md->priv->id = NULL;
 	md->priv->filename = NULL;

@@ -103,7 +103,7 @@ struct _ZifStoreRemotePrivate
 	ZifMedia		*media;
 	ZifGroups		*groups;
 	GPtrArray		*packages;
-	ZifMdType		 parser_type;
+	ZifMdKind		 parser_type;
 	/* temp data for the xml parser */
 	ZifStoreRemoteParserSection parser_section;
 };
@@ -173,28 +173,28 @@ zif_store_remote_get_filelists (ZifStoreRemote *store, GError **error)
  * zif_store_remote_get_md_from_type:
  **/
 static ZifMd *
-zif_store_remote_get_md_from_type (ZifStoreRemote *store, ZifMdType type)
+zif_store_remote_get_md_from_type (ZifStoreRemote *store, ZifMdKind type)
 {
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), NULL);
-	g_return_val_if_fail (type != ZIF_MD_TYPE_UNKNOWN, NULL);
+	g_return_val_if_fail (type != ZIF_MD_KIND_UNKNOWN, NULL);
 
-	if (type == ZIF_MD_TYPE_FILELISTS_SQL)
+	if (type == ZIF_MD_KIND_FILELISTS_SQL)
 		return store->priv->md_filelists_sql;
-	if (type == ZIF_MD_TYPE_FILELISTS_XML)
+	if (type == ZIF_MD_KIND_FILELISTS_XML)
 		return store->priv->md_filelists_xml;
-	if (type == ZIF_MD_TYPE_PRIMARY_SQL)
+	if (type == ZIF_MD_KIND_PRIMARY_SQL)
 		return store->priv->md_primary_sql;
-	if (type == ZIF_MD_TYPE_PRIMARY_XML)
+	if (type == ZIF_MD_KIND_PRIMARY_XML)
 		return store->priv->md_primary_xml;
-	if (type == ZIF_MD_TYPE_OTHER_SQL)
+	if (type == ZIF_MD_KIND_OTHER_SQL)
 		return store->priv->md_other_sql;
-	if (type == ZIF_MD_TYPE_COMPS_GZ)
+	if (type == ZIF_MD_KIND_COMPS_GZ)
 		return store->priv->md_comps;
-	if (type == ZIF_MD_TYPE_UPDATEINFO)
+	if (type == ZIF_MD_KIND_UPDATEINFO)
 		return store->priv->md_updateinfo;
-	if (type == ZIF_MD_TYPE_METALINK)
+	if (type == ZIF_MD_KIND_METALINK)
 		return store->priv->md_metalink;
-	if (type == ZIF_MD_TYPE_MIRRORLIST)
+	if (type == ZIF_MD_KIND_MIRRORLIST)
 		return store->priv->md_mirrorlist;
 	return NULL;
 }
@@ -216,41 +216,41 @@ zif_store_remote_parser_start_element (GMarkupParseContext *context, const gchar
 	if (g_strcmp0 (element_name, "data") == 0) {
 
 		/* reset */
-		store->priv->parser_type = ZIF_MD_TYPE_UNKNOWN;
+		store->priv->parser_type = ZIF_MD_KIND_UNKNOWN;
 
 		/* find type */
 		for (i=0; attribute_names[i] != NULL; i++) {
 			if (g_strcmp0 (attribute_names[i], "type") == 0) {
 				if (g_strcmp0 (attribute_values[i], "primary") == 0)
-					store->priv->parser_type = ZIF_MD_TYPE_PRIMARY_XML;
+					store->priv->parser_type = ZIF_MD_KIND_PRIMARY_XML;
 				else if (g_strcmp0 (attribute_values[i], "primary_db") == 0)
-					store->priv->parser_type = ZIF_MD_TYPE_PRIMARY_SQL;
+					store->priv->parser_type = ZIF_MD_KIND_PRIMARY_SQL;
 				else if (g_strcmp0 (attribute_values[i], "filelists") == 0)
-					store->priv->parser_type = ZIF_MD_TYPE_FILELISTS_XML;
+					store->priv->parser_type = ZIF_MD_KIND_FILELISTS_XML;
 				else if (g_strcmp0 (attribute_values[i], "filelists_db") == 0)
-					store->priv->parser_type = ZIF_MD_TYPE_FILELISTS_SQL;
+					store->priv->parser_type = ZIF_MD_KIND_FILELISTS_SQL;
 				else if (g_strcmp0 (attribute_values[i], "other") == 0)
-					store->priv->parser_type = ZIF_MD_TYPE_OTHER_XML;
+					store->priv->parser_type = ZIF_MD_KIND_OTHER_XML;
 				else if (g_strcmp0 (attribute_values[i], "other_db") == 0)
-					store->priv->parser_type = ZIF_MD_TYPE_OTHER_SQL;
+					store->priv->parser_type = ZIF_MD_KIND_OTHER_SQL;
 				else if (g_strcmp0 (attribute_values[i], "group") == 0)
-					store->priv->parser_type = ZIF_MD_TYPE_COMPS;
+					store->priv->parser_type = ZIF_MD_KIND_COMPS;
 				else if (g_strcmp0 (attribute_values[i], "group_gz") == 0)
-					store->priv->parser_type = ZIF_MD_TYPE_COMPS_GZ;
+					store->priv->parser_type = ZIF_MD_KIND_COMPS_GZ;
 				else if (g_strcmp0 (attribute_values[i], "prestodelta") == 0)
-					store->priv->parser_type = ZIF_MD_TYPE_PRESTODELTA;
+					store->priv->parser_type = ZIF_MD_KIND_PRESTODELTA;
 				else if (g_strcmp0 (attribute_values[i], "updateinfo") == 0)
-					store->priv->parser_type = ZIF_MD_TYPE_UPDATEINFO;
+					store->priv->parser_type = ZIF_MD_KIND_UPDATEINFO;
 				else if (g_strcmp0 (attribute_values[i], "pkgtags") == 0)
-					store->priv->parser_type = ZIF_MD_TYPE_PKGTAGS;
+					store->priv->parser_type = ZIF_MD_KIND_PKGTAGS;
 				else {
 					/* we ignore anything else, but print an error to the console */
 					string = g_string_new ("");
 					g_string_append_printf (string, "unhandled data type '%s', expecting ", attribute_values[i]);
 
 					/* list all the types we support */
-					for (j=1; j<ZIF_MD_TYPE_LAST; j++)
-						g_string_append_printf (string, "%s, ", zif_md_type_to_text (j));
+					for (j=1; j<ZIF_MD_KIND_LAST; j++)
+						g_string_append_printf (string, "%s, ", zif_md_kind_to_text (j));
 
 					/* remove triling comma and space */
 					g_string_set_size (string, string->len - 2);
@@ -267,7 +267,7 @@ zif_store_remote_parser_start_element (GMarkupParseContext *context, const gchar
 	}
 
 	/* not a section we recognise */
-	if (store->priv->parser_type == ZIF_MD_TYPE_UNKNOWN)
+	if (store->priv->parser_type == ZIF_MD_KIND_UNKNOWN)
 		goto out;
 
 	/* get MetaData object */
@@ -326,7 +326,7 @@ zif_store_remote_parser_end_element (GMarkupParseContext *context, const gchar *
 	/* reset */
 	store->priv->parser_section = ZIF_STORE_REMOTE_PARSER_SECTION_UNKNOWN;
 	if (g_strcmp0 (element_name, "data") == 0)
-		store->priv->parser_type = ZIF_MD_TYPE_UNKNOWN;
+		store->priv->parser_type = ZIF_MD_KIND_UNKNOWN;
 }
 
 /**
@@ -340,7 +340,7 @@ zif_store_remote_parser_text (GMarkupParseContext *context, const gchar *text, g
 	ZifMd *md;
 	ZifStoreRemote *store = user_data;
 
-	if (store->priv->parser_type == ZIF_MD_TYPE_UNKNOWN)
+	if (store->priv->parser_type == ZIF_MD_KIND_UNKNOWN)
 		return;
 
 	/* get MetaData object */
@@ -1142,33 +1142,33 @@ zif_store_remote_load_metadata_try (ZifStoreRemote *store, ZifState *state, GErr
 	max_age = zif_config_get_uint (store->priv->config, "max-age", NULL);
 
 	/* set MD id and filename for each repo type */
-	for (i=1; i<ZIF_MD_TYPE_LAST; i++) {
+	for (i=1; i<ZIF_MD_KIND_LAST; i++) {
 		md = zif_store_remote_get_md_from_type (store, i);
 		if (md == NULL) {
 			/* TODO: until we've created ZifMdComps and ZifMdOther we'll get warnings here */
-			g_debug ("failed to get local store for %s with %s", zif_md_type_to_text (i), store->priv->id);
+			g_debug ("failed to get local store for %s with %s", zif_md_kind_to_text (i), store->priv->id);
 			continue;
 		}
 
 		/* no metalink? */
-		if (i == ZIF_MD_TYPE_METALINK)
+		if (i == ZIF_MD_KIND_METALINK)
 			continue;
 
 		/* no mirrorlist? */
-		if (i == ZIF_MD_TYPE_MIRRORLIST)
+		if (i == ZIF_MD_KIND_MIRRORLIST)
 			continue;
 
 		/* ensure we have at least one primary */
 		location = zif_md_get_location (md);
 		if (location != NULL &&
-		    (i == ZIF_MD_TYPE_PRIMARY_SQL ||
-		     i == ZIF_MD_TYPE_PRIMARY_XML)) {
+		    (i == ZIF_MD_KIND_PRIMARY_SQL ||
+		     i == ZIF_MD_KIND_PRIMARY_XML)) {
 			primary_okay = TRUE;
 		}
 
 		/* location not set */
 		if (location == NULL) {
-			g_debug ("no location set for %s with %s", zif_md_type_to_text (i), store->priv->id);
+			g_debug ("no location set for %s with %s", zif_md_kind_to_text (i), store->priv->id);
 			continue;
 		}
 
@@ -1305,7 +1305,7 @@ zif_store_remote_refresh_md (ZifStoreRemote *remote, ZifMd *md, gboolean force, 
 	filename = zif_md_get_location (md);
 	if (filename == NULL) {
 		g_debug ("no filename set for %s",
-			   zif_md_type_to_text (zif_md_get_mdtype (md)));
+			   zif_md_kind_to_text (zif_md_get_kind (md)));
 		ret = zif_state_finished (state, error);
 		goto out;
 	}
@@ -1321,7 +1321,7 @@ zif_store_remote_refresh_md (ZifStoreRemote *remote, ZifMd *md, gboolean force, 
 			goto out;
 	} else if (!force) {
 		g_debug ("%s is okay, and we're not forcing",
-			   zif_md_type_to_text (zif_md_get_mdtype (md)));
+			   zif_md_kind_to_text (zif_md_get_kind (md)));
 		ret = zif_state_finished (state, error);
 		goto out;
 	}
@@ -1337,7 +1337,7 @@ zif_store_remote_refresh_md (ZifStoreRemote *remote, ZifMd *md, gboolean force, 
 	if (!ret) {
 		g_set_error (error, error_local->domain, error_local->code,
 			     "failed to refresh %s (%s): %s",
-			     zif_md_type_to_text (zif_md_get_mdtype (md)),
+			     zif_md_kind_to_text (zif_md_get_kind (md)),
 			     filename,
 			     error_local->message);
 		g_error_free (error_local);
@@ -1357,7 +1357,7 @@ zif_store_remote_refresh_md (ZifStoreRemote *remote, ZifMd *md, gboolean force, 
 		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 			     "failed to decompress %s for %s: %s",
 			     filename,
-			     zif_md_type_to_text (zif_md_get_mdtype (md)),
+			     zif_md_kind_to_text (zif_md_get_kind (md)),
 			     error_local->message);
 		g_error_free (error_local);
 		goto out;
@@ -1440,15 +1440,15 @@ zif_store_remote_refresh (ZifStore *store, gboolean force, ZifState *state, GErr
 
 	/* do in nested completion */
 	state_local = zif_state_get_child (state);
-	zif_state_set_number_steps (state_local, ZIF_MD_TYPE_LAST - 1);
+	zif_state_set_number_steps (state_local, ZIF_MD_KIND_LAST - 1);
 
 	/* refresh each repo type */
-	for (i=1; i<ZIF_MD_TYPE_LAST; i++) {
+	for (i=1; i<ZIF_MD_KIND_LAST; i++) {
 
 		/* get md */
 		md = zif_store_remote_get_md_from_type (remote, i);
 		if (md == NULL) {
-			g_debug ("failed to get local store for %s", zif_md_type_to_text (i));
+			g_debug ("failed to get local store for %s", zif_md_kind_to_text (i));
 		} else {
 			/* refresh this md object */
 			state_loop = zif_state_get_child (state_local);
@@ -1677,9 +1677,9 @@ zif_store_remote_clean (ZifStore *store, ZifState *state, GError **error)
 
 	/* setup state with the correct number of steps */
 	if (remote->priv->loaded_metadata)
-		zif_state_set_number_steps (state, ZIF_MD_TYPE_LAST);
+		zif_state_set_number_steps (state, ZIF_MD_KIND_LAST);
 	else
-		zif_state_set_number_steps (state, 1+ZIF_MD_TYPE_LAST);
+		zif_state_set_number_steps (state, 1+ZIF_MD_KIND_LAST);
 
 	/* load metadata */
 	if (!remote->priv->loaded_metadata) {
@@ -1700,18 +1700,18 @@ zif_store_remote_clean (ZifStore *store, ZifState *state, GError **error)
 	}
 
 	/* set MD id and filename for each repo type */
-	for (i=1; i<ZIF_MD_TYPE_LAST; i++) {
+	for (i=1; i<ZIF_MD_KIND_LAST; i++) {
 		md = zif_store_remote_get_md_from_type (remote, i);
 		if (md == NULL) {
 			/* TODO: until we've created ZifMdComps and ZifMdOther we'll get warnings here */
-			g_debug ("failed to get local store for %s with %s", zif_md_type_to_text (i), remote->priv->id);
+			g_debug ("failed to get local store for %s with %s", zif_md_kind_to_text (i), remote->priv->id);
 			goto skip;
 		}
 
 		/* location not set */
 		location = zif_md_get_location (md);
 		if (location == NULL) {
-			g_debug ("no location set for %s with %s", zif_md_type_to_text (i), remote->priv->id);
+			g_debug ("no location set for %s with %s", zif_md_kind_to_text (i), remote->priv->id);
 			goto skip;
 		}
 
@@ -1725,7 +1725,7 @@ zif_store_remote_clean (ZifStore *store, ZifState *state, GError **error)
 				goto skip;
 			}
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
-				     "failed to clean %s: %s", zif_md_type_to_text (i), error_local->message);
+				     "failed to clean %s: %s", zif_md_kind_to_text (i), error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
@@ -1800,7 +1800,7 @@ zif_store_remote_set_from_file (ZifStoreRemote *store, const gchar *repo_filenam
 	store->priv->repomd_filename = g_build_filename (store->priv->cache_dir, store->priv->id, "repomd.xml", NULL);
 
 	/* set MD id for each repo type */
-	for (i=1; i<ZIF_MD_TYPE_LAST; i++) {
+	for (i=1; i<ZIF_MD_KIND_LAST; i++) {
 		md = zif_store_remote_get_md_from_type (store, i);
 		if (md == NULL)
 			continue;
@@ -3355,7 +3355,7 @@ zif_store_remote_init (ZifStoreRemote *store)
 	store->priv->md_mirrorlist = zif_md_mirrorlist_new ();
 	store->priv->md_comps = zif_md_comps_new ();
 	store->priv->md_updateinfo = zif_md_updateinfo_new ();
-	store->priv->parser_type = ZIF_MD_TYPE_UNKNOWN;
+	store->priv->parser_type = ZIF_MD_KIND_UNKNOWN;
 	store->priv->parser_section = ZIF_STORE_REMOTE_PARSER_SECTION_UNKNOWN;
 	g_signal_connect (store->priv->monitor, "changed", G_CALLBACK (zif_store_remote_file_monitor_cb), store);
 
@@ -3376,7 +3376,7 @@ zif_store_remote_init (ZifStoreRemote *store)
 	}
 
 	/* set set parent reference on each repo */
-	for (i=1; i<ZIF_MD_TYPE_LAST; i++) {
+	for (i=1; i<ZIF_MD_KIND_LAST; i++) {
 		md = zif_store_remote_get_md_from_type (store, i);
 		if (md != NULL)
 			zif_md_set_store_remote (md, store);

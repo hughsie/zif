@@ -110,22 +110,22 @@ struct _ZifMdClass
 
 /* types of metadata */
 typedef enum {
-	ZIF_MD_TYPE_UNKNOWN,
-	ZIF_MD_TYPE_PRIMARY_XML,
-	ZIF_MD_TYPE_PRIMARY_SQL,
-	ZIF_MD_TYPE_FILELISTS_XML,
-	ZIF_MD_TYPE_FILELISTS_SQL,
-	ZIF_MD_TYPE_OTHER_XML,
-	ZIF_MD_TYPE_OTHER_SQL,
-	ZIF_MD_TYPE_COMPS,
-	ZIF_MD_TYPE_COMPS_GZ,
-	ZIF_MD_TYPE_METALINK,
-	ZIF_MD_TYPE_MIRRORLIST,
-	ZIF_MD_TYPE_PRESTODELTA,
-	ZIF_MD_TYPE_UPDATEINFO,
-	ZIF_MD_TYPE_PKGTAGS,
-	ZIF_MD_TYPE_LAST
-} ZifMdType;
+	ZIF_MD_KIND_UNKNOWN,
+	ZIF_MD_KIND_PRIMARY_XML,
+	ZIF_MD_KIND_PRIMARY_SQL,
+	ZIF_MD_KIND_FILELISTS_XML,
+	ZIF_MD_KIND_FILELISTS_SQL,
+	ZIF_MD_KIND_OTHER_XML,
+	ZIF_MD_KIND_OTHER_SQL,
+	ZIF_MD_KIND_COMPS,
+	ZIF_MD_KIND_COMPS_GZ,
+	ZIF_MD_KIND_METALINK,
+	ZIF_MD_KIND_MIRRORLIST,
+	ZIF_MD_KIND_PRESTODELTA,
+	ZIF_MD_KIND_UPDATEINFO,
+	ZIF_MD_KIND_PKGTAGS,
+	ZIF_MD_KIND_LAST
+} ZifMdKind;
 
 typedef enum {
 	ZIF_MD_ERROR_FAILED,
@@ -162,13 +162,13 @@ void		 zif_md_set_checksum_type		(ZifMd		*md,
 							 GChecksumType	 checksum_type);
 void		 zif_md_set_max_age			(ZifMd		*md,
 							 guint64	 max_age);
-const gchar	*zif_md_type_to_text			(ZifMdType	 type);
+const gchar	*zif_md_kind_to_text			(ZifMdKind	 type);
 
 /* getters */
 gboolean	 zif_md_get_is_loaded			(ZifMd		*md);
 ZifStoreRemote	*zif_md_get_store_remote		(ZifMd		*md);
 const gchar	*zif_md_get_id				(ZifMd		*md);
-ZifMdType	 zif_md_get_mdtype			(ZifMd		*md);
+ZifMdKind	 zif_md_get_kind			(ZifMd		*md);
 const gchar	*zif_md_get_filename			(ZifMd		*md);
 const gchar	*zif_md_get_filename_uncompressed	(ZifMd		*md);
 const gchar	*zif_md_get_location			(ZifMd		*md);

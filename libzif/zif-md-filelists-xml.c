@@ -559,7 +559,7 @@ zif_md_filelists_xml_new (void)
 {
 	ZifMdFilelistsXml *md;
 	md = g_object_new (ZIF_TYPE_MD_FILELISTS_XML,
-			   "kind", ZIF_MD_TYPE_FILELISTS_XML,
+			   "kind", ZIF_MD_KIND_FILELISTS_XML,
 			   NULL);
 	return ZIF_MD (md);
 }

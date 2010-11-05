@@ -236,7 +236,7 @@ zif_md_mirrorlist_new (void)
 {
 	ZifMdMirrorlist *md;
 	md = g_object_new (ZIF_TYPE_MD_MIRRORLIST,
-			   "kind", ZIF_MD_TYPE_MIRRORLIST,
+			   "kind", ZIF_MD_KIND_MIRRORLIST,
 			   "location", "mirrorlist.txt",
 			   NULL);
 	return ZIF_MD (md);

@@ -448,7 +448,7 @@ zif_md_filelists_sql_new (void)
 {
 	ZifMdFilelistsSql *md;
 	md = g_object_new (ZIF_TYPE_MD_FILELISTS_SQL,
-			   "kind", ZIF_MD_TYPE_FILELISTS_SQL,
+			   "kind", ZIF_MD_KIND_FILELISTS_SQL,
 			   NULL);
 	return ZIF_MD (md);
 }

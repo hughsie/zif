@@ -383,7 +383,7 @@ zif_md_other_sql_new (void)
 {
 	ZifMdOtherSql *md;
 	md = g_object_new (ZIF_TYPE_MD_OTHER_SQL,
-			   "kind", ZIF_MD_TYPE_OTHER_SQL,
+			   "kind", ZIF_MD_KIND_OTHER_SQL,
 			   NULL);
 	return ZIF_MD (md);
 }

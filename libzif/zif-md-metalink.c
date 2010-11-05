@@ -393,7 +393,7 @@ zif_md_metalink_new (void)
 {
 	ZifMdMetalink *md;
 	md = g_object_new (ZIF_TYPE_MD_METALINK,
-			   "kind", ZIF_MD_TYPE_METALINK,
+			   "kind", ZIF_MD_KIND_METALINK,
 			   "location", "metalink.xml",
 			   NULL);
 	return ZIF_MD (md);
