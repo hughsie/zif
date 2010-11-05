@@ -45,6 +45,9 @@ libzif_include_HEADERS =					\
 	zif-update-info.h					\
 	zif-groups.h						\
 	zif-config.h						\
+	zif-md.h						\
+	zif-md-mirrorlist.h					\
+	zif-md-metalink.h					\
 	zif-monitor.h						\
 	zif-version.h						\
 	zif-download.h
