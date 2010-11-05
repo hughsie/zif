@@ -630,7 +630,9 @@ ZifMd *
 zif_md_primary_sql_new (void)
 {
 	ZifMdPrimarySql *md;
-	md = g_object_new (ZIF_TYPE_MD_PRIMARY_SQL, NULL);
+	md = g_object_new (ZIF_TYPE_MD_PRIMARY_SQL,
+			   "kind", ZIF_MD_TYPE_PRIMARY_SQL,
+			   NULL);
 	return ZIF_MD (md);
 }
 

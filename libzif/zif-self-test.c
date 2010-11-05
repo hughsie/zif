@@ -452,7 +452,6 @@ zif_md_comps_func (void)
 
 	filename = zif_test_get_data_file ("fedora/comps-fedora.xml.gz");
 	zif_md_set_id (md, "fedora");
-	zif_md_set_mdtype (md, ZIF_MD_TYPE_COMPS);
 	zif_md_set_filename (md, filename);
 	zif_md_set_checksum_type (md, G_CHECKSUM_SHA256);
 	zif_md_set_checksum (md, "02493204cfd99c1cab1c812344dfebbeeadbe0ae04ace5ad338e1d045dd564f1");
@@ -521,7 +520,6 @@ zif_md_filelists_sql_func (void)
 	g_assert (!zif_md_get_is_loaded (md));
 
 	zif_md_set_id (md, "fedora");
-	zif_md_set_mdtype (md, ZIF_MD_TYPE_FILELISTS_SQL);
 	zif_md_set_checksum_type (md, G_CHECKSUM_SHA256);
 	zif_md_set_checksum (md, "5a4b8374034cbf3e6ac654c19a613d74318da890bf22ebef3d2db90616dc5377");
 	zif_md_set_checksum_uncompressed (md, "498cd5a1abe685bb0bae6dab92b518649f62decfe227c28e810981f1126a2a5a");
@@ -567,7 +565,6 @@ zif_md_filelists_xml_func (void)
 	g_assert (!zif_md_get_is_loaded (md));
 
 	zif_md_set_id (md, "fedora");
-	zif_md_set_mdtype (md, ZIF_MD_TYPE_FILELISTS_XML);
 	zif_md_set_checksum_type (md, G_CHECKSUM_SHA256);
 	zif_md_set_checksum (md, "cadb324b10d395058ed22c9d984038927a3ea4ff9e0e798116be44b0233eaa49");
 	zif_md_set_checksum_uncompressed (md, "8018e177379ada1d380b4ebf800e7caa95ff8cf90fdd6899528266719bbfdeab");
@@ -616,7 +613,6 @@ zif_md_metalink_func (void)
 	g_assert (!zif_md_get_is_loaded (md));
 
 	zif_md_set_id (md, "fedora");
-	zif_md_set_mdtype (md, ZIF_MD_TYPE_METALINK);
 	filename = zif_test_get_data_file ("metalink.xml");
 	zif_md_set_filename (md, filename);
 	g_free (filename);
@@ -664,7 +660,6 @@ zif_md_mirrorlist_func (void)
 	g_assert (!zif_md_get_is_loaded (md));
 
 	zif_md_set_id (md, "fedora");
-	zif_md_set_mdtype (md, ZIF_MD_TYPE_MIRRORLIST);
 	filename = zif_test_get_data_file ("mirrorlist.txt");
 	zif_md_set_filename (md, filename);
 	g_free (filename);
@@ -711,7 +706,6 @@ zif_md_other_sql_func (void)
 	g_assert (!zif_md_get_is_loaded (md));
 
 	zif_md_set_id (md, "fedora");
-	zif_md_set_mdtype (md, ZIF_MD_TYPE_OTHER_SQL);
 	filename = zif_test_get_data_file ("fedora/other.sqlite.bz2");
 	zif_md_set_filename (md, filename);
 	g_free (filename);
@@ -763,7 +757,6 @@ zif_md_primary_sql_func (void)
 	g_assert (!zif_md_get_is_loaded (md));
 
 	zif_md_set_id (md, "fedora");
-	zif_md_set_mdtype (md, ZIF_MD_TYPE_PRIMARY_SQL);
 	zif_md_set_checksum_type (md, G_CHECKSUM_SHA256);
 	zif_md_set_checksum (md, "5fc0d46554ca677568efdb601181f45e348c969e2aa1fcaf559f6597304a90b0");
 	zif_md_set_checksum_uncompressed (md, "463c0279007959629293cdeda33ad30faf4d8c4ed0124c7c29cf895e4d07476d");
@@ -809,7 +802,6 @@ zif_md_primary_xml_func (void)
 	g_assert (!zif_md_get_is_loaded (md));
 
 	zif_md_set_id (md, "fedora");
-	zif_md_set_mdtype (md, ZIF_MD_TYPE_PRIMARY_XML);
 	zif_md_set_checksum_type (md, G_CHECKSUM_SHA256);
 	zif_md_set_checksum (md, "33a0eed8e12f445618756b18aa49d05ee30069d280d37b03a7a15d1ec954f833");
 	zif_md_set_checksum_uncompressed (md, "52e4c37b13b4b23ae96432962186e726550b19e93cf3cbf7bf55c2a673a20086");
@@ -853,7 +845,6 @@ zif_md_updateinfo_func (void)
 	g_assert (!zif_md_get_is_loaded (md));
 
 	zif_md_set_id (md, "fedora");
-	zif_md_set_mdtype (md, ZIF_MD_TYPE_UPDATEINFO);
 	filename = zif_test_get_data_file ("fedora/updateinfo.xml.gz");
 	zif_md_set_filename (md, filename);
 	g_free (filename);
@@ -892,7 +883,6 @@ zif_md_delta_func (void)
 	g_assert (!zif_md_get_is_loaded (md));
 
 	zif_md_set_id (md, "fedora");
-	zif_md_set_mdtype (md, ZIF_MD_TYPE_UPDATEINFO);
 	filename = zif_test_get_data_file ("fedora/prestodelta.xml.gz");
 	zif_md_set_filename (md, filename);
 	g_free (filename);

@@ -3375,17 +3375,11 @@ zif_store_remote_init (ZifStoreRemote *store)
 		goto out;
 	}
 
-	/* set MD type on each repo */
+	/* set set parent reference on each repo */
 	for (i=1; i<ZIF_MD_TYPE_LAST; i++) {
 		md = zif_store_remote_get_md_from_type (store, i);
-		if (md == NULL)
-			continue;
-
-		/* set parent reference */
-		zif_md_set_store_remote (md, store);
-
-		/* set MD type */
-		zif_md_set_mdtype (md, i);
+		if (md != NULL)
+			zif_md_set_store_remote (md, store);
 	}
 
 	/* set download retries */

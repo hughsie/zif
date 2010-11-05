@@ -686,7 +686,9 @@ ZifMd *
 zif_md_updateinfo_new (void)
 {
 	ZifMdUpdateinfo *md;
-	md = g_object_new (ZIF_TYPE_MD_UPDATEINFO, NULL);
+	md = g_object_new (ZIF_TYPE_MD_UPDATEINFO,
+			   "kind", ZIF_MD_TYPE_UPDATEINFO,
+			   NULL);
 	return ZIF_MD (md);
 }
 

@@ -144,8 +144,6 @@ GQuark		 zif_md_error_quark			(void);
 ZifMd		*zif_md_new				(void);
 
 /* setters */
-void		 zif_md_set_mdtype			(ZifMd		*md,
-							 ZifMdType	 kind);
 void		 zif_md_set_store_remote		(ZifMd		*md,
 							 ZifStoreRemote	*remote);
 void		 zif_md_set_id				(ZifMd		*md,

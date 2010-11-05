@@ -789,7 +789,9 @@ ZifMd *
 zif_md_comps_new (void)
 {
 	ZifMdComps *md;
-	md = g_object_new (ZIF_TYPE_MD_COMPS, NULL);
+	md = g_object_new (ZIF_TYPE_MD_COMPS,
+			   "kind", ZIF_MD_TYPE_COMPS,
+			   NULL);
 	return ZIF_MD (md);
 }
 

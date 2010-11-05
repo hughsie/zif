@@ -69,6 +69,7 @@ enum {
 	PROP_0,
 	PROP_KIND,
 	PROP_FILENAME,
+	PROP_LOCATION,
 	PROP_LAST
 };
 
@@ -328,47 +329,6 @@ zif_md_set_checksum_type (ZifMd *md, GChecksumType checksum_type)
 
 	/* save new value */
 	md->priv->checksum_type = checksum_type;
-}
-
-/**
- * zif_md_set_mdtype:
- * @md: the #ZifMd object
- * @type: the metadata type
- *
- * Sets the type of the metadata, e.g. ZIF_MD_TYPE_FILELISTS_SQL.
- *
- * Since: 0.1.0
- **/
-void
-zif_md_set_mdtype (ZifMd *md, ZifMdType kind)
-{
-	g_return_if_fail (ZIF_IS_MD (md));
-	g_return_if_fail (kind != ZIF_MD_TYPE_UNKNOWN);
-
-	/* save new value */
-	md->priv->kind = kind;
-
-	/* metalink is not specified in the repomd.xml file */
-	if (kind == ZIF_MD_TYPE_METALINK) {
-		zif_md_set_location (md, "metalink.xml");
-		goto out;
-	}
-
-	/* mirrorlist is not specified in the repomd.xml file */
-	if (kind == ZIF_MD_TYPE_MIRRORLIST) {
-		zif_md_set_location (md, "mirrorlist.txt");
-		goto out;
-	}
-
-	/* check we've got the needed data */
-	if (md->priv->location != NULL && (md->priv->checksum == NULL || md->priv->timestamp == 0)) {
-		g_warning ("cannot load md for %s (loc=%s, checksum=%s, checksum_open=%s, timestamp=%i)",
-			     zif_md_type_to_text (kind), md->priv->location,
-			     md->priv->checksum, md->priv->checksum_uncompressed, md->priv->timestamp);
-		goto out;
-	}
-out:
-	return;
 }
 
 /**
@@ -1398,6 +1358,9 @@ zif_md_get_property (GObject *object, guint prop_id, GValue *value, GParamSpec *
 	case PROP_FILENAME:
 		g_value_set_string (value, priv->filename);
 		break;
+	case PROP_LOCATION:
+		g_value_set_string (value, priv->location);
+		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
 		break;
@@ -1419,6 +1382,9 @@ zif_md_set_property (GObject *object, guint prop_id, const GValue *value, GParam
 		break;
 	case PROP_FILENAME:
 		zif_md_set_filename (md, g_value_get_string (value));
+		break;
+	case PROP_LOCATION:
+		zif_md_set_location (md, g_value_get_string (value));
 		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -1481,6 +1447,16 @@ zif_md_class_init (ZifMdClass *klass)
 				     NULL,
 				     G_PARAM_READWRITE);
 	g_object_class_install_property (object_class, PROP_FILENAME, pspec);
+
+	/**
+	 * ZifUpdate:location:
+	 *
+	 * Since: 0.1.3
+	 */
+	pspec = g_param_spec_string ("location", NULL, NULL,
+				     NULL,
+				     G_PARAM_READWRITE);
+	g_object_class_install_property (object_class, PROP_LOCATION, pspec);
 
 	g_type_class_add_private (klass, sizeof (ZifMdPrivate));
 }

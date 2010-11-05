@@ -868,7 +868,9 @@ ZifMd *
 zif_md_primary_xml_new (void)
 {
 	ZifMdPrimaryXml *md;
-	md = g_object_new (ZIF_TYPE_MD_PRIMARY_XML, NULL);
+	md = g_object_new (ZIF_TYPE_MD_PRIMARY_XML,
+			   "kind", ZIF_MD_TYPE_PRIMARY_XML,
+			   NULL);
 	return ZIF_MD (md);
 }
 

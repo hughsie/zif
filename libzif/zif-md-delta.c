@@ -575,7 +575,9 @@ ZifMd *
 zif_md_delta_new (void)
 {
 	ZifMdDelta *md;
-	md = g_object_new (ZIF_TYPE_MD_DELTA, NULL);
+	md = g_object_new (ZIF_TYPE_MD_DELTA,
+			   "kind", ZIF_MD_TYPE_PRESTODELTA,
+			   NULL);
 	return ZIF_MD (md);
 }
 
