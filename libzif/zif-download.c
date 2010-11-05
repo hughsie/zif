@@ -225,9 +225,11 @@ zif_download_file (ZifDownload *download, const gchar *uri, const gchar *filenam
 	gboolean ret = FALSE;
 	SoupURI *base_uri = NULL;
 	SoupMessage *msg = NULL;
+	GFile *file = NULL;
 	GError *error_local = NULL;
 	gulong cancellable_id = 0;
 	GCancellable *cancellable;
+	ZifDownloadError download_error = ZIF_DOWNLOAD_ERROR_FAILED;
 
 	g_return_val_if_fail (ZIF_IS_DOWNLOAD (download), FALSE);
 	g_return_val_if_fail (zif_state_valid (state), FALSE);
@@ -299,9 +301,18 @@ zif_download_file (ZifDownload *download, const gchar *uri, const gchar *filenam
 	}
 
 	/* write file */
-	ret = g_file_set_contents (filename, msg->response_body->data, msg->response_body->length, &error_local);
+	file = g_file_new_for_path (filename);
+	ret = g_file_replace_contents (file,
+				       msg->response_body->data,
+				       msg->response_body->length,
+				       NULL, FALSE,
+				       G_FILE_CREATE_NONE,
+				       NULL, NULL, &error_local);
 	if (!ret) {
-		g_set_error (error, ZIF_DOWNLOAD_ERROR, ZIF_DOWNLOAD_ERROR_FAILED,
+		/* some errors are special */
+		if (error_local->code == G_IO_ERROR_PERMISSION_DENIED)
+			download_error = ZIF_DOWNLOAD_ERROR_PERMISSION_DENIED;
+		g_set_error (error, ZIF_DOWNLOAD_ERROR, download_error,
 			     "failed to write file: %s",  error_local->message);
 		g_error_free (error_local);
 		goto out;
@@ -316,6 +327,8 @@ out:
 		soup_uri_free (base_uri);
 	if (msg != NULL)
 		g_object_unref (msg);
+	if (file != NULL)
+		g_object_unref (file);
 	return ret;
 }
 
@@ -646,6 +659,7 @@ zif_download_location_full (ZifDownload *download, const gchar *location, const 
 	guint index;
 	GPtrArray *array = NULL;
 	GError *error_local = NULL;
+	gboolean set_error = FALSE;
 
 	g_return_val_if_fail (ZIF_IS_DOWNLOAD (download), FALSE);
 	g_return_val_if_fail (location != NULL, FALSE);
@@ -686,6 +700,12 @@ zif_download_location_full (ZifDownload *download, const gchar *location, const 
 						  size, content_type, checksum_type, checksum,
 						  state, &error_local);
 		if (!ret) {
+			/* some errors really are fatal */
+			if (error_local->code == ZIF_DOWNLOAD_ERROR_PERMISSION_DENIED) {
+				g_propagate_error (error, error_local);
+				set_error = TRUE;
+				break;
+			}
 			g_debug ("failed to download %s: %s, so removing", uri, error_local->message);
 			g_clear_error (&error_local);
 			/* remove it (error is NULL as we know it exists, we just used it) */
@@ -698,7 +718,7 @@ zif_download_location_full (ZifDownload *download, const gchar *location, const 
 		if (ret)
 			break;
 	}
-	if (!ret) {
+	if (!ret && !set_error) {
 		g_set_error (error,
 			     ZIF_DOWNLOAD_ERROR,
 			     ZIF_DOWNLOAD_ERROR_FAILED,

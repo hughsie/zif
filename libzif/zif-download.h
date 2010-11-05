@@ -59,6 +59,7 @@ struct _ZifDownloadClass
 
 typedef enum {
 	ZIF_DOWNLOAD_ERROR_FAILED,
+	ZIF_DOWNLOAD_ERROR_PERMISSION_DENIED,
 	ZIF_DOWNLOAD_ERROR_LAST
 } ZifDownloadError;
 
