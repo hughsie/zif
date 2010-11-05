@@ -478,7 +478,7 @@ zif_download_location_add_md (ZifDownload *download, ZifMd *md, ZifState *state,
 
 	/* metalink */
 	if (zif_md_get_kind (md) == ZIF_MD_KIND_METALINK) {
-		array = zif_md_metalink_get_uris (ZIF_MD_METALINK (md), 999, state, error);
+		array = zif_md_metalink_get_uris (ZIF_MD_METALINK (md), 50, state, error);
 		if (array == NULL)
 			goto out;
 		ret = zif_download_location_add_array (download, array, error);
@@ -668,7 +668,10 @@ zif_download_location_full (ZifDownload *download, const gchar *location, const 
 
 		/* get the next mirror according to policy */
 		if (download->priv->policy == ZIF_DOWNLOAD_POLICY_RANDOM) {
-			index = g_random_int_range (0, array->len - 1);
+			if (array->len > 1)
+				index = g_random_int_range (0, array->len - 1);
+			else
+				index = 0;
 		} else {
 			index = 0;
 		}
@@ -739,7 +742,25 @@ zif_download_location (ZifDownload *download, const gchar *location, const gchar
 void
 zif_download_location_set_policy (ZifDownload *download, ZifDownloadPolicy policy)
 {
+	g_return_if_fail (ZIF_IS_DOWNLOAD (download));
 	download->priv->policy = policy;
+}
+
+/**
+ * zif_download_location_get_size:
+ * @download: the #ZifDownload object
+ *
+ * Gets the number of active mirrors we can use.
+ *
+ * Return value: the number or active URIs
+ *
+ * Since: 0.1.3
+ **/
+guint
+zif_download_location_get_size (ZifDownload *download)
+{
+	g_return_val_if_fail (ZIF_IS_DOWNLOAD (download), 0);
+	return download->priv->array->len;
 }
 
 /**

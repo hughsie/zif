@@ -110,6 +110,7 @@ gboolean	 zif_download_location_full		(ZifDownload		*download,
 							 GError			**error);
 void		 zif_download_location_set_policy	(ZifDownload		*download,
 							 ZifDownloadPolicy	 policy);
+guint		 zif_download_location_get_size		(ZifDownload		*download);
 
 G_END_DECLS
 
