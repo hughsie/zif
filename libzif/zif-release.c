@@ -310,12 +310,22 @@ out:
  * zif_release_add_kernel:
  **/
 static gboolean
-zif_release_add_kernel (ZifRelease *release, GError **error)
+zif_release_add_kernel (ZifRelease *release, ZifUpgrade *upgrade, GError **error)
 {
 	gboolean ret;
 	GError *error_local = NULL;
 	GString *cmdline = NULL;
+	gchar *title = NULL;
+	const gchar *arch = "i386"; //FIXME
 	ZifReleasePrivate *priv = release->priv;
+
+	/* yaboot (ppc) doesn't support spaces in titles */
+	if (g_str_has_prefix (arch, "ppc")) {
+		title = g_strdup ("upgrade");
+	} else {
+		title = g_strdup_printf ("Upgrade to Fedora %i",
+					 zif_upgrade_get_version (upgrade));
+	}
 
 	/* linux, TODO: use something else for ppc */
 	cmdline = g_string_new ("/sbin/grubby ");
@@ -326,7 +336,7 @@ zif_release_add_kernel (ZifRelease *release, GError **error)
 	g_string_append_printf (cmdline,
 			        "--initrd=%s/initrd.img ", priv->boot_dir);
 	g_string_append_printf (cmdline,
-			        "--title=\"Upgrade to Fedora 15\" ");
+			        "--title=\"%s\" ", title);
 	g_string_append_printf (cmdline,
 			        "--args=\"preupgrade stage2=%s/stage2.img ksdevice=link ip=dhcp ipv6=dhcp\"", priv->boot_dir);
 
@@ -346,7 +356,20 @@ zif_release_add_kernel (ZifRelease *release, GError **error)
 		g_error_free (error_local);
 		goto out;
 	}
+
+	/* ppc machines need to run ybin to activate changes */
+	if (g_str_has_prefix (arch, "ppc")) {
+		g_debug ("running ybin command");
+		ret = g_spawn_command_line_sync ("/sbin/ybin > /dev/null", NULL, NULL, NULL, &error_local);
+		if (!ret) {
+			g_set_error (error, ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED,
+				     "failed to run: %s", error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+	}
 out:
+	g_free (title);
 	if (cmdline != NULL)
 		g_string_free (cmdline, TRUE);
 	return ret;
@@ -916,7 +939,7 @@ zif_release_upgrade_version (ZifRelease *release, guint version, ZifState *state
 		goto out;
 
 	/* add the new kernel */
-	ret = zif_release_add_kernel (release, error);
+	ret = zif_release_add_kernel (release, upgrade, error);
 	if (!ret)
 		goto out;
 
