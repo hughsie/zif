@@ -526,7 +526,7 @@ zif_release_get_kernel_and_initrd (ZifRelease *release, guint version, ZifState 
 
 	/* check the checksum matches */
 	if (ret) {
-		ret = pk_release_checksum_matches_file (kernel_filename, kernel_checksum, &error_local);
+		ret = pk_release_checksum_matches_file (kernel_filename, kernel_checksum+7, &error_local);
 		if (!ret) {
 			g_debug ("failed kernel checksum: %s", error_local->message);
 			/* not fatal */
@@ -639,6 +639,7 @@ zif_release_upgrade_version (ZifRelease *release, guint version, ZifState *state
 	gboolean ret = FALSE;
 	ZifUpgrade *upgrade = NULL;
 	ZifState *state_local;
+	GFile *boot_file = NULL;
 	GError *error_local = NULL;
 	ZifReleasePrivate *priv;
 	ZifMd *md_mirrorlist = NULL;
@@ -656,6 +657,20 @@ zif_release_upgrade_version (ZifRelease *release, guint version, ZifState *state
 		g_set_error_literal (error, ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED,
 				     "no boot dir has been set; use zif_release_set_boot_dir()");
 		goto out;
+	}
+
+	/* ensure boot directory exists */
+	boot_file = g_file_new_for_path (priv->boot_dir);
+	ret = g_file_query_exists (boot_file, NULL);
+	if (!ret) {
+		g_debug ("%s does not exist, creating", priv->boot_dir);
+		ret = g_file_make_directory_with_parents (boot_file, NULL, &error_local);
+		if (!ret) {
+			g_set_error (error, ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED,
+				     "cannot create boot environment: %s", error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
 	}
 
 	/* 1. setup
@@ -756,6 +771,8 @@ out:
 		g_object_unref (md_mirrorlist);
 	if (upgrade != NULL)
 		g_object_unref (upgrade);
+	if (boot_file != NULL)
+		g_object_unref (boot_file);
 	return ret;
 }
 
