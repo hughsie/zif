@@ -40,6 +40,7 @@
 #include <zif-store-remote.h>
 #include <zif-string.h>
 #include <zif-utils.h>
+#include <zif-release.h>
 #include <zif-update.h>
 #include <zif-upgrade.h>
 #include <zif-md.h>

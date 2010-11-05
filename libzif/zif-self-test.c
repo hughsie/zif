@@ -100,12 +100,24 @@ zif_release_func (void)
 	ZifState *state;
 	ZifUpgrade *upgrade;
 	ZifDownload *download;
+	gchar *filename;
+	ZifConfig *config;
+
+	config = zif_config_new ();
+	g_assert (config != NULL);
+
+	filename = zif_test_get_data_file ("yum.conf");
+	ret = zif_config_set_filename (config, filename, &error);
+	g_free (filename);
+	g_assert_no_error (error);
+	g_assert (ret);
 
 	state = zif_state_new ();
 	download = zif_download_new ();
 	zif_download_set_proxy (download, NULL, NULL);
 	release = zif_release_new ();
-	zif_release_set_filename (release, "/tmp/releases.txt");
+	zif_release_set_cache_dir (release, "/tmp");
+	zif_release_set_boot_dir (release, "/tmp");
 	zif_release_set_uri (release, "http://people.freedesktop.org/~hughsient/fedora/preupgrade/releases.txt");
 
 	/* ensure file is not present */
@@ -139,6 +151,7 @@ zif_release_func (void)
 	g_assert_no_error (error);
 	g_assert (ret);
 
+	g_object_unref (config);
 	g_object_unref (release);
 	g_object_unref (download);
 }

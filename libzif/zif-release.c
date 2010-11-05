@@ -21,12 +21,14 @@
 
 /**
  * SECTION:zif-release
- * @short_description: A #ZifRelease object allows the user to check licenses
+ * @short_description: A #ZifRelease object allows the user check for
+ * distribution upgrades.
  *
- * #ZifRelease allows the user to see if a specific license string is free
- * according to the FSF.
- * Before checking any strings, the backing release file has to be set with
- * zif_release_set_filename() and any checks prior to that will fail.
+ * #ZifRelease allows the user to check for distribution upgrades and
+ * upgrade to the newest release.
+ *
+ * Before checking for upgrades, the releases release file has to be set
+ * with zif_release_set_cache_dir() and any checks prior to that will fail.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -34,10 +36,13 @@
 #endif
 
 #include <glib.h>
+#include <glib/gstdio.h>
 
+#include "zif-config.h"
 #include "zif-release.h"
 #include "zif-monitor.h"
 #include "zif-download.h"
+#include "zif-md-mirrorlist.h"
 
 #define ZIF_RELEASE_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_RELEASE, ZifReleasePrivate))
 
@@ -47,7 +52,8 @@ struct _ZifReleasePrivate
 	ZifMonitor		*monitor;
 	ZifDownload		*download;
 	GPtrArray		*array;
-	gchar			*filename;
+	gchar			*cache_dir;
+	gchar			*boot_dir;
 	gchar			*uri;
 	guint			 monitor_changed_id;
 };
@@ -84,20 +90,22 @@ zif_release_load (ZifRelease *release, ZifState *state, GError **error)
 	ZifUpgrade *upgrade;
 	guint i;
 	const gchar *temp;
+	gchar *filename = NULL;
 
 	/* nothing set */
-	if (release->priv->filename == NULL) {
+	if (release->priv->cache_dir == NULL) {
 		g_set_error_literal (error, ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED,
-				     "no release filename has been set; use zif_release_set_filename()");
+				     "no cache dir has been set; use zif_release_set_cache_dir()");
 		goto out;
 	}
 
 	/* download if it does not already exist */
-	ret = g_file_test (release->priv->filename, G_FILE_TEST_EXISTS);
+	filename = g_build_filename (release->priv->cache_dir, "releases.txt", NULL);
+	ret = g_file_test (filename, G_FILE_TEST_EXISTS);
 	if (!ret) {
 		ret = zif_download_file (release->priv->download,
 					 release->priv->uri,
-					 release->priv->filename,
+					 filename,
 					 state, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED,
@@ -108,7 +116,7 @@ zif_release_load (ZifRelease *release, ZifState *state, GError **error)
 	}
 
 	/* setup watch */
-	ret = zif_monitor_add_watch (release->priv->monitor, release->priv->filename, &error_local);
+	ret = zif_monitor_add_watch (release->priv->monitor, filename, &error_local);
 	if (!ret) {
 		g_set_error (error, ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED,
 			     "failed to setup watch: %s", error_local->message);
@@ -118,11 +126,11 @@ zif_release_load (ZifRelease *release, ZifState *state, GError **error)
 
 	/* open the releases file */
 	key_file = g_key_file_new ();
-	ret = g_key_file_load_from_file (key_file, release->priv->filename, 0, &error_local);
+	ret = g_key_file_load_from_file (key_file, filename, 0, &error_local);
 	if (!ret) {
 		g_set_error (error, ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED,
 			     "failed to open release info %s: %s",
-			     release->priv->filename, error_local->message);
+			     filename, error_local->message);
 		g_error_free (error_local);
 		goto out;
 	}
@@ -162,6 +170,7 @@ zif_release_load (ZifRelease *release, ZifState *state, GError **error)
 	/* done */
 	release->priv->loaded = TRUE;
 out:
+	g_free (filename);
 	g_strfreev (groups);
 	if (key_file != NULL)
 		g_key_file_free (key_file);
@@ -239,8 +248,7 @@ zif_release_get_upgrades_new (ZifRelease *release, guint version, ZifState *stat
 	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	for (i=0; i<release->priv->array->len; i++) {
 		upgrade = g_ptr_array_index (release->priv->array, i);
-		//FIXME: get from config file
-		if (zif_upgrade_get_version (upgrade) > 14)
+		if (zif_upgrade_get_version (upgrade) > version)
 			g_ptr_array_add (array, g_object_ref (upgrade));
 	}
 out:
@@ -265,12 +273,20 @@ zif_release_get_upgrade_for_version (ZifRelease *release, guint version, ZifStat
 {
 	GPtrArray *array = NULL;
 	guint i;
+	gboolean ret;
 	ZifUpgrade *upgrade = NULL;
 	ZifUpgrade *upgrade_tmp;
 
 	g_return_val_if_fail (ZIF_IS_RELEASE (release), NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+	/* not loaded yet */
+	if (!release->priv->loaded) {
+		ret = zif_release_load (release, state, error);
+		if (!ret)
+			goto out;
+	}
 
 	/* find upgrade */
 	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
@@ -292,6 +308,299 @@ out:
 }
 
 /**
+ * zif_release_add_kernel:
+ **/
+static gboolean
+zif_release_add_kernel (ZifRelease *release, GError **error)
+{
+	gboolean ret;
+	GError *error_local = NULL;
+	GString *cmdline = NULL;
+	ZifReleasePrivate *priv = release->priv;
+
+	/* linux, TODO: use something else for ppc */
+	cmdline = g_string_new ("grubby ");
+	g_string_append_printf (cmdline,
+			        "--make-default ");
+	g_string_append_printf (cmdline,
+			        "--add-kernel=%s/vmlinuz ", priv->boot_dir);
+	g_string_append_printf (cmdline,
+			        "--initrd=%s/initrd.img ", priv->boot_dir);
+	g_string_append_printf (cmdline,
+			        "--title=\"Upgrade to Fedora 15\" ");
+	g_string_append_printf (cmdline,
+			        "--args=\"preupgrade stage2=%s/stage2.img otherargs=fubar\"", priv->boot_dir);
+
+	/* we're not running as root */
+	if (!g_str_has_prefix (priv->boot_dir, "/boot")) {
+		g_debug ("not running grubby as not installing root, would have run '%s'", cmdline->str);
+		ret = TRUE;
+		goto out;
+	}
+
+	/* run the command */
+	g_debug ("running command %s", cmdline->str);
+	ret = g_spawn_command_line_sync (cmdline->str, NULL, NULL, NULL, &error_local);
+	if (!ret) {
+		g_set_error (error, ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED,
+			     "failed to add kernel: %s", error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+out:
+	if (cmdline != NULL)
+		g_string_free (cmdline, TRUE);
+	return ret;
+}
+
+/**
+ * zif_release_check_filesystem_size:
+ **/
+static gboolean
+zif_release_check_filesystem_size (const gchar *location, guint64 required_size, GError **error)
+{
+	GFile *file;
+	GFileInfo *info;
+	guint64 size;
+	gboolean ret = FALSE;
+
+	/* open file */
+	file = g_file_new_for_path (location);
+	info = g_file_query_info (file, G_FILE_ATTRIBUTE_FILESYSTEM_FREE,
+				  0, NULL, error);
+	if (info == NULL)
+		goto out;
+
+	/* check has attribute */
+	ret = !g_file_info_has_attribute (info, G_FILE_ATTRIBUTE_FILESYSTEM_FREE);
+	if (ret)
+		goto out;
+
+	/* get size on the file-system */
+	size = g_file_info_get_attribute_uint64 (info, G_FILE_ATTRIBUTE_FILESYSTEM_FREE);
+	if (size < required_size) {
+		g_set_error (error,
+			     ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED,
+			     "%s filesystem too small, requires %" G_GUINT64_FORMAT
+			     " got %" G_GUINT64_FORMAT,
+			     location, required_size, size);
+		goto out;
+	}
+
+	/* success */
+	ret = TRUE;
+out:
+	if (info != NULL)
+		g_object_unref (info);
+	g_object_unref (file);
+	return ret;
+}
+
+/**
+ * pk_release_checksum_matches_file:
+ **/
+static gboolean
+pk_release_checksum_matches_file (const gchar *filename, const gchar *sha256, GError **error)
+{
+	gboolean ret;
+	gchar *data = NULL;
+	gsize len;
+	const gchar *got;
+	GChecksum *checksum = NULL;
+
+	/* load file */
+	ret = g_file_get_contents (filename, &data, &len, error);
+	if (!ret)
+		goto out;
+	checksum = g_checksum_new (G_CHECKSUM_SHA256);
+	g_checksum_update (checksum, (guchar*)data, len);
+	got = g_checksum_get_string (checksum);
+	ret = (g_strcmp0 (sha256, got) == 0);
+	if (!ret) {
+		g_set_error (error, 1, 0, "checksum failed to match");
+		goto out;
+	}
+out:
+	g_free (data);
+	if (checksum != NULL)
+		g_checksum_free (checksum);
+	return ret;
+}
+
+/**
+ * zif_release_get_kernel_and_initrd:
+ **/
+static gboolean
+zif_release_get_kernel_and_initrd (ZifRelease *release, guint version, ZifState *state, GError **error)
+{
+	gboolean ret;
+	GError *error_local = NULL;
+	gchar *treeinfo_uri = NULL;
+	ZifConfig *config = NULL;
+	gchar *basearch = NULL;
+	gchar *images_section = NULL;
+	gchar *kernel = NULL;
+	gchar *kernel_checksum = NULL;
+	gchar *kernel_filename = NULL;
+	gchar *initrd = NULL;
+	gchar *initrd_checksum = NULL;
+	gchar *initrd_filename = NULL;
+	gchar *stage2 = NULL;
+	gchar *stage2_checksum = NULL;
+	gchar *treeinfo_filename = NULL;
+	GKeyFile *key_file_treeinfo = NULL;
+	gint version_tmp;
+	ZifReleasePrivate *priv = release->priv;
+
+	/* get .treeinfo from a mirror in the installmirrorlist */
+	treeinfo_filename = g_build_filename (priv->cache_dir, ".treeinfo", NULL);
+	ret = g_file_test (treeinfo_filename, G_FILE_TEST_EXISTS);
+	if (!ret) {
+		zif_state_reset (state); // TODO
+		ret = zif_download_location (priv->download, ".treeinfo", treeinfo_filename, state, &error_local);
+		if (!ret) {
+			g_set_error (error, ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED, "failed to download treeinfo: %s", error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+	}
+
+	/* parse the treeinfo file */
+	key_file_treeinfo = g_key_file_new ();
+	ret = g_key_file_load_from_file (key_file_treeinfo, treeinfo_filename, 0, &error_local);
+	if (!ret) {
+		g_set_error (error, ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED, "failed to open treeinfo: %s", error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* verify the version is sane */
+	version_tmp = g_key_file_get_integer (key_file_treeinfo, "general", "version", NULL);
+	if (version_tmp != (gint) version) {
+		g_set_error_literal (error, ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED, "treeinfo release differs from wanted release");
+		goto out;
+	}
+
+	/* get the correct section */
+	config = zif_config_new ();
+	basearch = zif_config_get_string (config, "basearch", NULL);
+	if (basearch == NULL) {
+		g_set_error_literal (error, ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED, "failed to get basearch");
+		goto out;
+	}
+	images_section = g_strdup_printf ("images-%s", basearch);
+
+	/* download the kernel, initrd and stage2 */
+	kernel = g_key_file_get_string (key_file_treeinfo, images_section, "kernel", NULL);
+	if (kernel == NULL) {
+		g_set_error_literal (error, ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED, "failed to get kernel section");
+		goto out;
+	}
+	initrd = g_key_file_get_string (key_file_treeinfo, images_section, "initrd", NULL);
+	if (initrd == NULL) {
+		g_set_error_literal (error, ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED, "failed to get initrd section");
+		goto out;
+	}
+	stage2 = g_key_file_get_string (key_file_treeinfo, "stage2", "mainimage", NULL);
+	if (stage2 == NULL) {
+		g_set_error_literal (error, ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED, "failed to get stage2 section");
+		goto out;
+	}
+	kernel_checksum = g_key_file_get_string (key_file_treeinfo, "checksums", kernel, NULL);
+	initrd_checksum = g_key_file_get_string (key_file_treeinfo, "checksums", initrd, NULL);
+	stage2_checksum = g_key_file_get_string (key_file_treeinfo, "checksums", stage2, NULL);
+
+	/* does kernel already exist */
+	kernel_filename = g_build_filename (priv->boot_dir, "vmlinuz", NULL);
+	ret = g_file_test (kernel_filename, G_FILE_TEST_EXISTS);
+
+	/* check the checksum matches */
+	if (ret) {
+		ret = pk_release_checksum_matches_file (kernel_filename, kernel_checksum, &error_local);
+		if (!ret) {
+			g_debug ("failed kernel checksum: %s", error_local->message);
+			/* not fatal */
+			g_clear_error (&error_local);
+			g_unlink (kernel_filename);
+		} else {
+			g_debug ("%s already exists and is correct", kernel_filename);
+		}
+	}
+
+	/* download kernel */
+	if (!ret) {
+		zif_state_reset (state); // TODO
+		ret = zif_download_location_full (priv->download, kernel, kernel_filename,
+						  0, "text/plain",
+						  G_CHECKSUM_SHA256, kernel_checksum+7,
+						  state, &error_local);
+		if (!ret) {
+			g_set_error (error, ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED, "failed to download kernel: %s", error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+	}
+
+	/* check downloaded kernel matches its checksum */
+	ret = pk_release_checksum_matches_file (kernel_filename, kernel_checksum+7, &error_local);
+	if (!ret) {
+		g_set_error (error, ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED, "failed kernel checksum: %s", error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* does initrd already exist */
+	initrd_filename = g_build_filename (priv->boot_dir, "initrd.img", NULL);
+	ret = g_file_test (initrd_filename, G_FILE_TEST_EXISTS);
+
+	/* check the checksum matches */
+	if (ret) {
+		ret = pk_release_checksum_matches_file (initrd_filename, initrd_checksum+7, &error_local);
+		if (!ret) {
+			g_debug ("failed initrd checksum: %s", error_local->message);
+			/* not fatal */
+			g_clear_error (&error_local);
+			g_unlink (initrd_filename);
+		} else {
+			g_debug ("%s already exists and is correct", initrd_filename);
+		}
+	}
+
+	/* download initrd */
+	if (!ret) {
+		zif_state_reset (state); // TODO
+		ret = zif_download_location_full (priv->download, initrd,
+						  initrd_filename,
+						  0, "application/x-extension-img",
+						  G_CHECKSUM_SHA256, initrd_checksum+7,
+						  state, &error_local);
+		if (!ret) {
+			g_set_error (error, ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED, "failed to download kernel: %s", error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+	}
+out:
+	g_free (stage2);
+	g_free (stage2_checksum);
+	g_free (kernel);
+	g_free (kernel_checksum);
+	g_free (kernel_filename);
+	g_free (initrd);
+	g_free (initrd_checksum);
+	g_free (initrd_filename);
+	g_free (images_section);
+	g_free (basearch);
+	g_free (treeinfo_filename);
+	if (config != NULL)
+		g_object_unref (config);
+	if (key_file_treeinfo != NULL)
+		g_key_file_free (key_file_treeinfo);
+	g_free (treeinfo_uri);
+	return ret;
+}
+
+/**
  * zif_release_upgrade_version:
  * @release: the #ZifRelease object
  * @version: a distribution version, e.g. 15
@@ -308,41 +617,127 @@ gboolean
 zif_release_upgrade_version (ZifRelease *release, guint version, ZifState *state, GError **error)
 {
 	gboolean ret = FALSE;
-	ZifUpgrade *upgrade;
+	ZifUpgrade *upgrade = NULL;
+	GError *error_local = NULL;
+	ZifReleasePrivate *priv;
+	ZifMd *md_mirrorlist = NULL;
 
 	g_return_val_if_fail (ZIF_IS_RELEASE (release), FALSE);
 	g_return_val_if_fail (zif_state_valid (state), FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
+	/* get private */
+	priv = release->priv;
+
+	/* nothing set */
+	if (priv->boot_dir == NULL) {
+		g_set_error_literal (error, ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED,
+				     "no boot dir has been set; use zif_release_set_boot_dir()");
+		goto out;
+	}
+
 	/* get the correct object */
-	upgrade = zif_release_get_upgrade_for_version	(release, version, state, error);
+	upgrade = zif_release_get_upgrade_for_version (release, version, state, error);
 	if (upgrade == NULL)
+		goto out;
+
+	/* check size */
+	ret = zif_release_check_filesystem_size (priv->boot_dir, 26*1024*1024, error);
+	if (!ret)
+		goto out;
+
+	/* check size */
+	ret = zif_release_check_filesystem_size ("/var/cache", 700*1024*1024, error);
+	if (!ret)
+		goto out;
+
+	/* get installmirrorlist */
+	zif_state_reset (state); // TODO
+	ret = zif_download_file (priv->download,
+				 zif_upgrade_get_install_mirrorlist (upgrade),
+				 "/tmp/installmirrorlist", state, &error_local);
+	if (!ret) {
+		g_set_error (error,
+			     ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED,
+			     "failed to download installmirrorlist: %s",
+			     error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* parse the installmirrorlist */
+	md_mirrorlist = zif_md_mirrorlist_new ();
+	zif_md_set_filename (md_mirrorlist, "/tmp/installmirrorlist");
+	zif_md_set_id (md_mirrorlist, "preupgrade-temp");
+	zif_state_reset (state); // TODO
+	ret = zif_download_location_add_md (priv->download, md_mirrorlist, state, &error_local);
+	if (!ret) {
+		g_set_error (error,
+			     ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED,
+			     "failed to add download location installmirrorlist: %s",
+			     error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* gets treeinfo, kernel and initrd */
+	ret = zif_release_get_kernel_and_initrd (release, version, state, error);
+	if (!ret)
+		goto out;
+
+	/* add the new kernel */
+	ret = zif_release_add_kernel (release, error);
+	if (!ret)
 		goto out;
 
 	/* success */
 	ret = TRUE;
 out:
+	if (md_mirrorlist != NULL)
+		g_object_unref (md_mirrorlist);
+	if (upgrade != NULL)
+		g_object_unref (upgrade);
 	return ret;
 }
 
 /**
- * zif_release_set_filename:
+ * zif_release_set_cache_dir:
  * @release: the #ZifRelease object
- * @filename: the system wide release file, e.g. "/var/cache/PackageKit/releases.txt"
+ * @cache_dir: the system wide release location, e.g. "/var/cache/PackageKit"
  *
- * Sets the filename to use as the local file cache.
+ * Sets the location to use as the local file cache.
  *
  * Since: 0.1.3
  **/
 void
-zif_release_set_filename (ZifRelease *release, const gchar *filename)
+zif_release_set_cache_dir (ZifRelease *release, const gchar *cache_dir)
 {
 	g_return_if_fail (ZIF_IS_RELEASE (release));
-	g_return_if_fail (filename != NULL);
+	g_return_if_fail (cache_dir != NULL);
 	g_return_if_fail (!release->priv->loaded);
 
-	g_free (release->priv->filename);
-	release->priv->filename = g_strdup (filename);
+	g_free (release->priv->cache_dir);
+	release->priv->cache_dir = g_strdup (cache_dir);
+}
+
+/**
+ * zif_release_set_boot_dir:
+ * @release: the #ZifRelease object
+ * @boot_dir: the system boot directory, e.g. "/boot/upgrade"
+ *
+ * Sets the location to use as the boot directory.
+ *
+ * Since: 0.1.3
+ **/
+void
+zif_release_set_boot_dir (ZifRelease *release, const gchar *boot_dir)
+{
+	g_return_if_fail (ZIF_IS_RELEASE (release));
+	g_return_if_fail (boot_dir != NULL);
+	g_return_if_fail (!release->priv->loaded);
+
+	g_free (release->priv->boot_dir);
+	release->priv->boot_dir = g_strdup (boot_dir);
 }
 
 /**
@@ -390,7 +785,8 @@ zif_release_finalize (GObject *object)
 	g_signal_handler_disconnect (release->priv->monitor, release->priv->monitor_changed_id);
 	g_object_unref (release->priv->monitor);
 	g_object_unref (release->priv->download);
-	g_free (release->priv->filename);
+	g_free (release->priv->cache_dir);
+	g_free (release->priv->boot_dir);
 	g_free (release->priv->uri);
 
 	G_OBJECT_CLASS (zif_release_parent_class)->finalize (object);
