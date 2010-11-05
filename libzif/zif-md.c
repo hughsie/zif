@@ -59,10 +59,17 @@ struct _ZifMdPrivate
 	gchar			*checksum;		/* of compressed file */
 	gchar			*checksum_uncompressed;	/* of uncompressed file */
 	GChecksumType		 checksum_type;
-	ZifMdType		 type;
+	ZifMdType		 kind;
 	ZifStoreRemote		*remote;
 	ZifConfig		*config;
 	guint64			 max_age;
+};
+
+enum {
+	PROP_0,
+	PROP_KIND,
+	PROP_FILENAME,
+	PROP_LAST
 };
 
 G_DEFINE_TYPE (ZifMd, zif_md, G_TYPE_OBJECT)
@@ -165,7 +172,7 @@ ZifMdType
 zif_md_get_mdtype (ZifMd *md)
 {
 	g_return_val_if_fail (ZIF_IS_MD (md), ZIF_MD_TYPE_UNKNOWN);
-	return md->priv->type;
+	return md->priv->kind;
 }
 
 /**
@@ -333,22 +340,22 @@ zif_md_set_checksum_type (ZifMd *md, GChecksumType checksum_type)
  * Since: 0.1.0
  **/
 void
-zif_md_set_mdtype (ZifMd *md, ZifMdType type)
+zif_md_set_mdtype (ZifMd *md, ZifMdType kind)
 {
 	g_return_if_fail (ZIF_IS_MD (md));
-	g_return_if_fail (type != ZIF_MD_TYPE_UNKNOWN);
+	g_return_if_fail (kind != ZIF_MD_TYPE_UNKNOWN);
 
 	/* save new value */
-	md->priv->type = type;
+	md->priv->kind = kind;
 
 	/* metalink is not specified in the repomd.xml file */
-	if (type == ZIF_MD_TYPE_METALINK) {
+	if (kind == ZIF_MD_TYPE_METALINK) {
 		zif_md_set_location (md, "metalink.xml");
 		goto out;
 	}
 
 	/* mirrorlist is not specified in the repomd.xml file */
-	if (type == ZIF_MD_TYPE_MIRRORLIST) {
+	if (kind == ZIF_MD_TYPE_MIRRORLIST) {
 		zif_md_set_location (md, "mirrorlist.txt");
 		goto out;
 	}
@@ -356,7 +363,7 @@ zif_md_set_mdtype (ZifMd *md, ZifMdType type)
 	/* check we've got the needed data */
 	if (md->priv->location != NULL && (md->priv->checksum == NULL || md->priv->timestamp == 0)) {
 		g_warning ("cannot load md for %s (loc=%s, checksum=%s, checksum_open=%s, timestamp=%i)",
-			     zif_md_type_to_text (type), md->priv->location,
+			     zif_md_type_to_text (kind), md->priv->location,
 			     md->priv->checksum, md->priv->checksum_uncompressed, md->priv->timestamp);
 		goto out;
 	}
@@ -559,7 +566,7 @@ zif_md_load (ZifMd *md, ZifState *state, GError **error)
 		if (!ret) {
 			g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED_AS_OFFLINE,
 				     "failed to check %s checksum for %s and offline",
-				     zif_md_type_to_text (md->priv->type), md->priv->id);
+				     zif_md_type_to_text (md->priv->kind), md->priv->id);
 			goto out;
 		}
 
@@ -1151,7 +1158,7 @@ zif_md_clean (ZifMd *md, GError **error)
 	filename = zif_md_get_filename (md);
 	if (filename == NULL) {
 		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_NO_FILENAME,
-			     "failed to get filename for %s", zif_md_type_to_text (md->priv->type));
+			     "failed to get filename for %s", zif_md_type_to_text (md->priv->kind));
 		ret = FALSE;
 		goto out;
 	}
@@ -1174,7 +1181,7 @@ zif_md_clean (ZifMd *md, GError **error)
 	filename = zif_md_get_filename_uncompressed (md);
 	if (filename == NULL) {
 		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_NO_FILENAME,
-			     "failed to get uncompressed filename for %s", zif_md_type_to_text (md->priv->type));
+			     "failed to get uncompressed filename for %s", zif_md_type_to_text (md->priv->kind));
 		ret = FALSE;
 		goto out;
 	}
@@ -1273,9 +1280,9 @@ zif_md_file_check (ZifMd *md, gboolean use_uncompressed, ZifState *state, GError
 	zif_state_set_number_steps (state, 2);
 
 	/* metalink has no checksum... */
-	if (md->priv->type == ZIF_MD_TYPE_METALINK ||
-	    md->priv->type == ZIF_MD_TYPE_MIRRORLIST) {
-		g_debug ("skipping checksum check on %s", zif_md_type_to_text (md->priv->type));
+	if (md->priv->kind == ZIF_MD_TYPE_METALINK ||
+	    md->priv->kind == ZIF_MD_TYPE_MIRRORLIST) {
+		g_debug ("skipping checksum check on %s", zif_md_type_to_text (md->priv->kind));
 		ret = zif_state_finished (state, error);
 		goto out;
 	}
@@ -1289,7 +1296,7 @@ zif_md_file_check (ZifMd *md, gboolean use_uncompressed, ZifState *state, GError
 	/* no checksum set */
 	if (filename == NULL) {
 		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED,
-			     "no filename for %s [%s]", md->priv->id, zif_md_type_to_text (md->priv->type));
+			     "no filename for %s [%s]", md->priv->id, zif_md_type_to_text (md->priv->kind));
 		ret = FALSE;
 		goto out;
 	}
@@ -1376,6 +1383,50 @@ out:
 }
 
 /**
+ * zif_md_get_property:
+ **/
+static void
+zif_md_get_property (GObject *object, guint prop_id, GValue *value, GParamSpec *pspec)
+{
+	ZifMd *md = ZIF_MD (object);
+	ZifMdPrivate *priv = md->priv;
+
+	switch (prop_id) {
+	case PROP_KIND:
+		g_value_set_uint (value, priv->kind);
+		break;
+	case PROP_FILENAME:
+		g_value_set_string (value, priv->filename);
+		break;
+	default:
+		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+		break;
+	}
+}
+
+/**
+ * zif_md_set_property:
+ **/
+static void
+zif_md_set_property (GObject *object, guint prop_id, const GValue *value, GParamSpec *pspec)
+{
+	ZifMd *md = ZIF_MD (object);
+	ZifMdPrivate *priv = md->priv;
+
+	switch (prop_id) {
+	case PROP_KIND:
+		priv->kind = g_value_get_uint (value);
+		break;
+	case PROP_FILENAME:
+		zif_md_set_filename (md, g_value_get_string (value));
+		break;
+	default:
+		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+		break;
+	}
+}
+
+/**
  * zif_md_finalize:
  **/
 static void
@@ -1405,8 +1456,32 @@ zif_md_finalize (GObject *object)
 static void
 zif_md_class_init (ZifMdClass *klass)
 {
+	GParamSpec *pspec;
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 	object_class->finalize = zif_md_finalize;
+	object_class->get_property = zif_md_get_property;
+	object_class->set_property = zif_md_set_property;
+
+	/**
+	 * ZifUpdate:kind:
+	 *
+	 * Since: 0.1.3
+	 */
+	pspec = g_param_spec_uint ("kind", NULL, NULL,
+				   ZIF_MD_TYPE_UNKNOWN, G_MAXUINT, 0,
+				   G_PARAM_CONSTRUCT | G_PARAM_READWRITE);
+	g_object_class_install_property (object_class, PROP_KIND, pspec);
+
+	/**
+	 * ZifUpdate:filename:
+	 *
+	 * Since: 0.1.3
+	 */
+	pspec = g_param_spec_string ("filename", NULL, NULL,
+				     NULL,
+				     G_PARAM_READWRITE);
+	g_object_class_install_property (object_class, PROP_FILENAME, pspec);
+
 	g_type_class_add_private (klass, sizeof (ZifMdPrivate));
 }
 
@@ -1417,7 +1492,7 @@ static void
 zif_md_init (ZifMd *md)
 {
 	md->priv = ZIF_MD_GET_PRIVATE (md);
-	md->priv->type = ZIF_MD_TYPE_UNKNOWN;
+	md->priv->kind = ZIF_MD_TYPE_UNKNOWN;
 	md->priv->loaded = FALSE;
 	md->priv->id = NULL;
 	md->priv->filename = NULL;
