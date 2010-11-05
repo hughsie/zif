@@ -176,6 +176,32 @@ out:
 }
 
 /**
+ * zif_download_local_copy:
+ **/
+static gboolean
+zif_download_local_copy (const gchar *uri, const gchar *filename, ZifState *state, GError **error)
+{
+	gboolean ret;
+	GFile *source;
+	GFile *dest;
+	GCancellable *cancellable;
+
+	g_return_val_if_fail (zif_state_valid (state), FALSE);
+
+	/* just copy */
+	source = g_file_new_for_path (uri);
+	dest = g_file_new_for_path (filename);
+	cancellable = zif_state_get_cancellable (state);
+	ret = g_file_copy (source, dest, G_FILE_COPY_OVERWRITE, cancellable, NULL, NULL, error);
+	if (!ret)
+		goto out;
+out:
+	g_object_unref (source);
+	g_object_unref (dest);
+	return ret;
+}
+
+/**
  * zif_download_file:
  * @download: the #ZifDownload object
  * @uri: the full remote URI
@@ -183,7 +209,8 @@ out:
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
- * Downloads a file.
+ * Downloads a file either from a remote site, or copying the file
+ * from the local filesystem.
  *
  * This function will return with an error if the downloaded file
  * has zero size.
@@ -196,7 +223,7 @@ gboolean
 zif_download_file (ZifDownload *download, const gchar *uri, const gchar *filename, ZifState *state, GError **error)
 {
 	gboolean ret = FALSE;
-	SoupURI *base_uri;
+	SoupURI *base_uri = NULL;
 	SoupMessage *msg = NULL;
 	GError *error_local = NULL;
 	gulong cancellable_id = 0;
@@ -209,6 +236,12 @@ zif_download_file (ZifDownload *download, const gchar *uri, const gchar *filenam
 	g_return_val_if_fail (download->priv->msg == NULL, FALSE);
 	g_return_val_if_fail (download->priv->session != NULL, FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+	/* local file */
+	if (g_str_has_prefix (uri, "/")) {
+		ret = zif_download_local_copy (uri, filename, state, error);
+		goto out;
+	}
 
 	/* save an instance of the state object */
 	download->priv->state = g_object_ref (state);
@@ -276,7 +309,8 @@ zif_download_file (ZifDownload *download, const gchar *uri, const gchar *filenam
 out:
 	if (cancellable_id != 0)
 		g_cancellable_disconnect (cancellable, cancellable_id);
-	g_object_unref (download->priv->state);
+	if (download->priv->state != NULL)
+		g_object_unref (download->priv->state);
 	download->priv->state = NULL;
 	if (base_uri != NULL)
 		soup_uri_free (base_uri);
