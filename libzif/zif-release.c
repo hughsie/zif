@@ -317,7 +317,7 @@ zif_release_add_kernel (ZifRelease *release, GError **error)
 	ZifReleasePrivate *priv = release->priv;
 
 	/* linux, TODO: use something else for ppc */
-	cmdline = g_string_new ("grubby ");
+	cmdline = g_string_new ("/sbin/grubby ");
 	g_string_append_printf (cmdline,
 			        "--make-default ");
 	g_string_append_printf (cmdline,
@@ -448,20 +448,32 @@ zif_release_get_kernel_and_initrd (ZifRelease *release, guint version, ZifState 
 	gchar *treeinfo_filename = NULL;
 	GKeyFile *key_file_treeinfo = NULL;
 	gint version_tmp;
+	ZifState *state_local;
 	ZifReleasePrivate *priv = release->priv;
+
+	/* 1. get treeinfo
+	 * 2. get kernel
+	 * 3. get initrd
+	 */
+	zif_state_set_number_steps (state, 3);
 
 	/* get .treeinfo from a mirror in the installmirrorlist */
 	treeinfo_filename = g_build_filename (priv->cache_dir, ".treeinfo", NULL);
 	ret = g_file_test (treeinfo_filename, G_FILE_TEST_EXISTS);
 	if (!ret) {
-		zif_state_reset (state); // TODO
-		ret = zif_download_location (priv->download, ".treeinfo", treeinfo_filename, state, &error_local);
+		state_local = zif_state_get_child (state);
+		ret = zif_download_location (priv->download, ".treeinfo", treeinfo_filename, state_local, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED, "failed to download treeinfo: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
 	}
+
+	/* done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 
 	/* parse the treeinfo file */
 	key_file_treeinfo = g_key_file_new ();
@@ -527,17 +539,22 @@ zif_release_get_kernel_and_initrd (ZifRelease *release, guint version, ZifState 
 
 	/* download kernel */
 	if (!ret) {
-		zif_state_reset (state); // TODO
+		state_local = zif_state_get_child (state);
 		ret = zif_download_location_full (priv->download, kernel, kernel_filename,
 						  0, "text/plain",
 						  G_CHECKSUM_SHA256, kernel_checksum+7,
-						  state, &error_local);
+						  state_local, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED, "failed to download kernel: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
 	}
+
+	/* done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 
 	/* check downloaded kernel matches its checksum */
 	ret = pk_release_checksum_matches_file (kernel_filename, kernel_checksum+7, &error_local);
@@ -566,18 +583,23 @@ zif_release_get_kernel_and_initrd (ZifRelease *release, guint version, ZifState 
 
 	/* download initrd */
 	if (!ret) {
-		zif_state_reset (state); // TODO
+		state_local = zif_state_get_child (state);
 		ret = zif_download_location_full (priv->download, initrd,
 						  initrd_filename,
 						  0, "application/x-extension-img",
 						  G_CHECKSUM_SHA256, initrd_checksum+7,
-						  state, &error_local);
+						  state_local, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED, "failed to download kernel: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
 	}
+
+	/* done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 out:
 	g_free (stage2);
 	g_free (stage2_checksum);
@@ -616,9 +638,11 @@ zif_release_upgrade_version (ZifRelease *release, guint version, ZifState *state
 {
 	gboolean ret = FALSE;
 	ZifUpgrade *upgrade = NULL;
+	ZifState *state_local;
 	GError *error_local = NULL;
 	ZifReleasePrivate *priv;
 	ZifMd *md_mirrorlist = NULL;
+	gchar *installmirrorlist_filename = NULL;
 
 	g_return_val_if_fail (ZIF_IS_RELEASE (release), FALSE);
 	g_return_val_if_fail (zif_state_valid (state), FALSE);
@@ -634,8 +658,17 @@ zif_release_upgrade_version (ZifRelease *release, guint version, ZifState *state
 		goto out;
 	}
 
+	/* 1. setup
+	 * 2. get installmirrorlist
+	 * 3. parse installmirrorlist
+	 * 4. download kernel and initrd
+	 * 5. install kernel
+	 */
+	zif_state_set_number_steps (state, 5);
+
 	/* get the correct object */
-	upgrade = zif_release_get_upgrade_for_version (release, version, state, error);
+	state_local = zif_state_get_child (state);
+	upgrade = zif_release_get_upgrade_for_version (release, version, state_local, error);
 	if (upgrade == NULL)
 		goto out;
 
@@ -649,11 +682,17 @@ zif_release_upgrade_version (ZifRelease *release, guint version, ZifState *state
 	if (!ret)
 		goto out;
 
+	/* done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
 	/* get installmirrorlist */
-	zif_state_reset (state); // TODO
+	state_local = zif_state_get_child (state);
+	installmirrorlist_filename = g_build_filename (priv->cache_dir, "installmirrorlist", NULL);
 	ret = zif_download_file (priv->download,
 				 zif_upgrade_get_install_mirrorlist (upgrade),
-				 "/tmp/installmirrorlist", state, &error_local);
+				 installmirrorlist_filename, state_local, &error_local);
 	if (!ret) {
 		g_set_error (error,
 			     ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED,
@@ -663,12 +702,17 @@ zif_release_upgrade_version (ZifRelease *release, guint version, ZifState *state
 		goto out;
 	}
 
+	/* done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
 	/* parse the installmirrorlist */
 	md_mirrorlist = zif_md_mirrorlist_new ();
-	zif_md_set_filename (md_mirrorlist, "/tmp/installmirrorlist");
+	zif_md_set_filename (md_mirrorlist, installmirrorlist_filename);
 	zif_md_set_id (md_mirrorlist, "preupgrade-temp");
-	zif_state_reset (state); // TODO
-	ret = zif_download_location_add_md (priv->download, md_mirrorlist, state, &error_local);
+	state_local = zif_state_get_child (state);
+	ret = zif_download_location_add_md (priv->download, md_mirrorlist, state_local, &error_local);
 	if (!ret) {
 		g_set_error (error,
 			     ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED,
@@ -678,8 +722,19 @@ zif_release_upgrade_version (ZifRelease *release, guint version, ZifState *state
 		goto out;
 	}
 
+	/* done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
 	/* gets treeinfo, kernel and initrd */
-	ret = zif_release_get_kernel_and_initrd (release, version, state, error);
+	state_local = zif_state_get_child (state);
+	ret = zif_release_get_kernel_and_initrd (release, version, state_local, error);
+	if (!ret)
+		goto out;
+
+	/* done */
+	ret = zif_state_done (state, error);
 	if (!ret)
 		goto out;
 
@@ -688,9 +743,15 @@ zif_release_upgrade_version (ZifRelease *release, guint version, ZifState *state
 	if (!ret)
 		goto out;
 
+	/* done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
 	/* success */
 	ret = TRUE;
 out:
+	g_free (installmirrorlist_filename);
 	if (md_mirrorlist != NULL)
 		g_object_unref (md_mirrorlist);
 	if (upgrade != NULL)
