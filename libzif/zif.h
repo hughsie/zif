@@ -41,6 +41,9 @@
 #include <zif-string.h>
 #include <zif-utils.h>
 #include <zif-update.h>
+#include <zif-md.h>
+#include <zif-md-mirrorlist.h>
+#include <zif-md-metalink.h>
 #include <zif-update-info.h>
 #include <zif-version.h>
 
