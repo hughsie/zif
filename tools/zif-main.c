@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*-
  *
- * Copyright (C) 2008 Richard Hughes <richard@hughsie.com>
+ * Copyright (C) 2008-2010 Richard Hughes <richard@hughsie.com>
  *
  * Licensed under the GNU General Public License Version 2
  *
@@ -26,6 +26,7 @@
 #include <zif.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <glib/gstdio.h>
 
 #include "zif-progress-bar.h"
 
@@ -712,10 +713,12 @@ main (int argc, char *argv[])
 	ZifState *state_local = NULL;
 	ZifState *state_loop = NULL;
 	ZifLock *lock = NULL;
+	ZifRelease *release = NULL;
 	guint i;
 	guint pid;
 	guint uid;
 	guint age = 0;
+	guint version;
 	GError *error = NULL;
 	ZifPackage *package;
 	const gchar *mode;
@@ -727,6 +730,7 @@ main (int argc, char *argv[])
 	gchar *http_proxy = NULL;
 	gchar *repos_dir = NULL;
 	gchar *root = NULL;
+	gchar **distro_id_split = NULL;
 	const gchar *to_array[] = { NULL, NULL };
 
 	const GOptionEntry options[] = {
@@ -763,6 +767,7 @@ main (int argc, char *argv[])
 		"  get-groups      Get the groups the system supports\n"
 		"  get-packages    List all packages\n"
 		"  get-updates     Check for available package updates\n"
+		"  get-upgrades    Check for newer operating system versions\n"
 		"  help            Display a helpful usage message\n"
 		"  refresh-cache   Generate the metadata cache\n"
 		"  repo-list       Display the configured software repositories\n"
@@ -774,6 +779,7 @@ main (int argc, char *argv[])
 		"  search-file     Search packages for the given filename\n"
 		"  search-group    Search packages in the given group\n"
 		"  search-name     Search package name for the given string\n"
+		"  upgrade         Upgrade the operating system to a newer version\n"
 		"  what-provides   Find what package provides the given value\n"
 		);
 
@@ -889,6 +895,12 @@ main (int argc, char *argv[])
 		g_error_free (error);
 		goto out;
 	}
+
+	/* ZifRelease */
+	release = zif_release_new ();
+	zif_release_set_boot_dir (release, "/boot/upgrade");
+	zif_release_set_cache_dir (release, "/var/cache/PackageKit");
+	zif_release_set_uri (release, "http://people.freedesktop.org/~hughsient/fedora/preupgrade/releases.txt");
 
 	/* ZifState */
 	state = zif_state_new ();
@@ -2111,6 +2123,76 @@ main (int argc, char *argv[])
 		g_print ("not yet supported\n");
 		goto out;
 	}
+	if (g_strcmp0 (mode, "get-upgrades") == 0) {
+		ZifUpgrade *upgrade;
+		pk_progress_bar_start (progressbar, "Getting upgrades");
+
+		version = zif_config_get_uint (config, "releasever", NULL);
+		array = zif_release_get_upgrades_new (release, version, state, &error);
+		if (array == NULL) {
+			g_warning ("FAILED: %s", error->message);
+			g_error_free (error);
+			goto out;
+		}
+
+		/* done with the bar */
+		pk_progress_bar_end (progressbar);
+
+		/* print the results */
+		g_print ("Distribution upgrades available:\n");
+		for (i=0; i<array->len; i++) {
+			upgrade = g_ptr_array_index (array, i);
+			if (!zif_upgrade_get_enabled (upgrade))
+				continue;
+			g_print ("%s\t[%s]\n",
+				 zif_upgrade_get_id (upgrade),
+				 zif_upgrade_get_stable (upgrade) ? "stable" : "unstable");
+		}
+		goto out;
+	}
+	if (g_strcmp0 (mode, "upgrade") == 0) {
+
+		if (value == NULL) {
+			g_print ("specify a distro name, e.g. 'fedora-9'\n");
+			goto out;
+		}
+		pk_progress_bar_start (progressbar, "Upgrading");
+
+		/* check valid */
+		distro_id_split = g_strsplit (value, "-", -1);
+		if (g_strv_length (distro_id_split) != 2) {
+			g_warning ("distribution id invalid");
+			goto out;
+		}
+
+		/* check fedora */
+		if (g_strcmp0 (distro_id_split[0], "fedora") != 0) {
+			g_warning ("only 'fedora' is supported");
+			goto out;
+		}
+
+		/* check release */
+		version = atoi (distro_id_split[1]);
+		if (version < 13 || version > 99) {
+			g_warning ("version number %i is invalid", version);
+			goto out;
+		}
+
+		/* do the upgrade */
+		ret = zif_release_upgrade_version (release, version, state, &error);
+		if (!ret) {
+			g_warning ("FAILED: %s", error->message);
+			g_error_free (error);
+			goto out;
+		}
+
+		/* clean up after ourselves */
+//		g_unlink ("/boot/upgrade/vmlinuz");
+//		g_unlink ("/boot/upgrade/initrd.img");
+
+		pk_progress_bar_end (progressbar);
+		goto out;
+	}
 	
 	g_print ("Nothing recognised\n");
 out:
@@ -2124,6 +2206,8 @@ out:
 		g_object_unref (repos);
 	if (config != NULL)
 		g_object_unref (config);
+	if (release != NULL)
+		g_object_unref (release);
 	if (state != NULL)
 		g_object_unref (state);
 	if (lock != NULL) {
@@ -2137,6 +2221,7 @@ out:
 	}
 
 	g_object_unref (progressbar);
+	g_strfreev (distro_id_split);
 	g_free (root);
 	g_free (repos_dir);
 	g_free (http_proxy);
