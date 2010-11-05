@@ -77,7 +77,6 @@ struct _ZifStoreRemotePrivate
 	gchar			*name_expanded;		/* Fedora 1386 */
 	gchar			*directory;		/* /var/cache/yum/fedora */
 	gchar			*repomd_filename;	/* /var/cache/yum/fedora/repomd.xml */
-	GPtrArray		*baseurls;		/* http://download.fedora.org/ */
 	gchar			*mirrorlist;
 	gchar			*metalink;
 	gchar			*cache_dir;		/* /var/cache/yum */
@@ -98,6 +97,7 @@ struct _ZifStoreRemotePrivate
 	ZifMd			*md_comps;
 	ZifMd			*md_updateinfo;
 	ZifConfig		*config;
+	ZifDownload		*download;
 	ZifMonitor		*monitor;
 	ZifLock			*lock;
 	ZifMedia		*media;
@@ -357,56 +357,6 @@ zif_store_remote_parser_text (GMarkupParseContext *context, const gchar *text, g
 }
 
 /**
- * zif_store_remote_download_try:
- **/
-static gboolean
-zif_store_remote_download_try (ZifStoreRemote *store, const gchar *uri, const gchar *filename,
-			       ZifState *state, GError **error)
-{
-	gboolean ret = FALSE;
-	GError *error_local = NULL;
-	ZifDownload *download = NULL;
-	gchar *contents = NULL;
-	gsize length;
-
-	g_return_val_if_fail (zif_state_valid (state), FALSE);
-
-	/* download object */
-	download = zif_download_new ();
-	g_debug ("trying to download %s and save to %s", uri, filename);
-	ret = zif_download_file (download, uri, filename, state, &error_local);
-	if (!ret) {
-		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED_TO_DOWNLOAD,
-			     "failed to download %s from %s: %s", filename, uri, error_local->message);
-		g_error_free (error_local);
-		goto out;
-	}
-
-	/* try to read it */
-	zif_state_set_allow_cancel (state, FALSE);
-	ret = g_file_get_contents (filename, &contents, &length, &error_local);
-	if (!ret) {
-		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED_TO_DOWNLOAD,
-			     "failed to download %s from %s: %s (unable to read file)", filename, uri, error_local->message);
-		g_error_free (error_local);
-		goto out;
-	}
-
-	/* check this really isn't a fancy 404 page */
-	if (g_str_has_prefix (contents, "<html>")) {
-		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED_TO_DOWNLOAD,
-			     "failed to download %s from %s: invalid file", filename, uri);
-		ret = FALSE;
-		goto out;
-	}
-
-out:
-	g_free (contents);
-	g_object_unref (download);
-	return ret;
-}
-
-/**
  * zif_store_remote_ensure_parent_dir_exists:
  **/
 static gboolean
@@ -422,32 +372,7 @@ zif_store_remote_ensure_parent_dir_exists (const gchar *filename, GError **error
 	return TRUE;
 }
 
-/**
- * zif_store_remote_copy:
- **/
-static gboolean
-zif_store_remote_copy (ZifStoreRemote *store, const gchar *uri, const gchar *filename,
-		       ZifState *state, GError **error)
-{
-	gboolean ret;
-	GFile *source;
-	GFile *dest;
-	GCancellable *cancellable;
 
-	g_return_val_if_fail (zif_state_valid (state), FALSE);
-
-	/* just copy */
-	source = g_file_new_for_path (uri);
-	dest = g_file_new_for_path (filename);
-	cancellable = zif_state_get_cancellable (state);
-	ret = g_file_copy (source, dest, G_FILE_COPY_OVERWRITE, cancellable, NULL, NULL, error);
-	if (!ret)
-		goto out;
-out:
-	g_object_unref (source);
-	g_object_unref (dest);
-	return ret;
-}
 
 /**
  * zif_store_remote_download:
@@ -469,14 +394,10 @@ gboolean
 zif_store_remote_download (ZifStoreRemote *store, const gchar *filename, const gchar *directory,
 			   ZifState *state, GError **error)
 {
-	guint i;
-	guint len;
 	gboolean ret = FALSE;
-	gchar *uri = NULL;
 	GError *error_local = NULL;
 	gchar *filename_local = NULL;
 	gchar *basename = NULL;
-	const gchar *baseurl;
 	ZifState *state_local;
 
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), FALSE);
@@ -498,6 +419,15 @@ zif_store_remote_download (ZifStoreRemote *store, const gchar *filename, const g
 	if (g_str_has_prefix (filename, "/")) {
 		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED_AS_OFFLINE,
 			     "filename %s' should not be an absolute path", filename);
+		ret = FALSE;
+		goto out;
+	}
+
+	/* check we got something */
+	if (zif_download_location_get_size (store->priv->download) == 0) {
+		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED_TO_DOWNLOAD,
+			     "no locations for %s, so can't download anything! [meta:%s, mirror:%s]",
+			     store->priv->id, store->priv->metalink, store->priv->mirrorlist);
 		ret = FALSE;
 		goto out;
 	}
@@ -528,9 +458,9 @@ repomd_confirm:
 	}
 
 	/* we need at least one baseurl */
-	if (store->priv->baseurls->len == 0) {
+	if (zif_download_location_get_size (store->priv->download) == 0) {
 		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
-			     "no baseurls for %s", store->priv->id);
+			     "no locations for %s", store->priv->id);
 		ret = FALSE;
 		goto out;
 	}
@@ -545,35 +475,12 @@ repomd_confirm:
 		goto out;
 
 	/* try to use all uris */
-	len = store->priv->baseurls->len;
 	state_local = zif_state_get_child (state);
-	for (i=0; i<len; i++) {
-
-		/* build url */
-		baseurl = g_ptr_array_index (store->priv->baseurls, i);
-		uri = g_build_filename (baseurl, filename, NULL);
-
-		/* local file */
-		if (g_str_has_prefix (baseurl, "/")) {
-			ret = zif_store_remote_copy (store, uri, filename_local, state_local, error);
-			if (!ret)
-				goto out;
-		} else {
-			/* download remote file */
-			zif_state_reset (state_local);
-			ret = zif_store_remote_download_try (store, uri, filename_local, state_local, &error_local);
-			if (!ret) {
-				g_debug ("failed to download on attempt %i (non-fatal): %s",
-					 store->priv->download_retries, error_local->message);
-				g_clear_error (&error_local);
-			}
-		}
-		/* free */
-		g_free (uri);
-
-		/* succeeded, otherwise retry with new mirrors */
-		if (ret)
-			break;
+	ret = zif_download_location (store->priv->download, filename, filename_local, state_local, &error_local);
+	if (!ret) {
+		g_debug ("failed to download on attempt %i (non-fatal): %s",
+			 store->priv->download_retries, error_local->message);
+		g_clear_error (&error_local);
 	}
 
 	/* we failed to get the metadata from any source, so try to refresh the repomd.xml */
@@ -812,14 +719,11 @@ out:
 static gboolean
 zif_store_remote_add_metalink (ZifStoreRemote *store, ZifState *state, GError **error)
 {
-	guint i;
 	GPtrArray *array = NULL;
 	GError *error_local = NULL;
-	const gchar *uri_tmp;
 	const gchar *filename;
 	gboolean ret = FALSE;
 	ZifState *state_local;
-	ZifDownload *download = NULL;
 
 	g_return_val_if_fail (zif_state_valid (state), FALSE);
 
@@ -844,8 +748,7 @@ zif_store_remote_add_metalink (ZifStoreRemote *store, ZifState *state, GError **
 			goto out;
 
 		/* download object directly, as we don't have the repo setup yet */
-		download = zif_download_new ();
-		ret = zif_download_file (download, store->priv->metalink, filename, state_local, &error_local);
+		ret = zif_download_file (store->priv->download, store->priv->metalink, filename, state_local, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED_TO_DOWNLOAD,
 				     "failed to download %s from %s: %s", filename, store->priv->metalink, error_local->message);
@@ -860,32 +763,17 @@ zif_store_remote_add_metalink (ZifStoreRemote *store, ZifState *state, GError **
 
 	/* get mirrors */
 	state_local = zif_state_get_child (state);
-	array = zif_md_metalink_get_uris (ZIF_MD_METALINK (store->priv->md_metalink), 50, state_local, &error_local);
-	if (array == NULL) {
-		ret = FALSE;
+	ret = zif_download_location_add_md (store->priv->download, store->priv->md_metalink, state_local, &error_local);
+	if (!ret) {
 		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 			     "failed to add mirrors from metalink: %s", error_local->message);
 		g_error_free (error_local);
 		goto out;
 	}
 
-	/* nothing here? */
-	if (array->len == 0) {
-		ret = FALSE;
-		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
-			     "failed to get any mirrors from metalink: %s", filename);
-		goto out;
-	}
-
 	ret = zif_state_done (state, error);
 	if (!ret)
 		goto out;
-
-	/* add array */
-	for (i=0; i<array->len; i++) {
-		uri_tmp = g_ptr_array_index (array, i);
-		g_ptr_array_add (store->priv->baseurls, g_strdup (uri_tmp));
-	}
 out:
 	if (array != NULL)
 		g_ptr_array_unref (array);
@@ -898,14 +786,11 @@ out:
 static gboolean
 zif_store_remote_add_mirrorlist (ZifStoreRemote *store, ZifState *state, GError **error)
 {
-	guint i;
 	GPtrArray *array = NULL;
 	GError *error_local = NULL;
-	const gchar *uri_tmp;
 	const gchar *filename;
 	gboolean ret = FALSE;
 	ZifState *state_local;
-	ZifDownload *download = NULL;
 
 	g_return_val_if_fail (zif_state_valid (state), FALSE);
 
@@ -930,8 +815,7 @@ zif_store_remote_add_mirrorlist (ZifStoreRemote *store, ZifState *state, GError 
 			goto out;
 
 		/* download object directly, as we don't have the repo setup yet */
-		download = zif_download_new ();
-		ret = zif_download_file (download, store->priv->mirrorlist, filename, state_local, &error_local);
+		ret = zif_download_file (store->priv->download, store->priv->mirrorlist, filename, state_local, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 				     "failed to download %s from %s: %s", filename, store->priv->mirrorlist, error_local->message);
@@ -946,35 +830,18 @@ zif_store_remote_add_mirrorlist (ZifStoreRemote *store, ZifState *state, GError 
 
 	/* get mirrors */
 	state_local = zif_state_get_child (state);
-	array = zif_md_mirrorlist_get_uris (ZIF_MD_MIRRORLIST (store->priv->md_mirrorlist), state_local, &error_local);
-	if (array == NULL) {
-		ret = FALSE;
+	ret = zif_download_location_add_md (store->priv->download, store->priv->md_mirrorlist, state_local, &error_local);
+	if (!ret) {
 		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 			     "failed to add mirrors from mirrorlist: %s", error_local->message);
 		g_error_free (error_local);
 		goto out;
 	}
 
-	/* nothing here? */
-	if (array->len == 0) {
-		ret = FALSE;
-		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
-			     "failed to get any mirrors from mirrorlist: %s", filename);
-		goto out;
-	}
-
 	ret = zif_state_done (state, error);
 	if (!ret)
 		goto out;
-
-	/* add array */
-	for (i=0; i<array->len; i++) {
-		uri_tmp = g_ptr_array_index (array, i);
-		g_ptr_array_add (store->priv->baseurls, g_strdup (uri_tmp));
-	}
 out:
-	if (download != NULL)
-		g_object_unref (download);
 	if (array != NULL)
 		g_ptr_array_unref (array);
 	return ret;
@@ -1085,15 +952,6 @@ zif_store_remote_load_metadata_try (ZifStoreRemote *store, ZifState *state, GErr
 			g_error_free (error_local);
 			goto out;
 		}
-	}
-
-	/* check we got something */
-	if (store->priv->baseurls->len == 0) {
-		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_ARRAY_IS_EMPTY,
-			     "no baseurls for %s, so can't download anything! [meta:%s, mirror:%s]",
-			     store->priv->id, store->priv->metalink, store->priv->mirrorlist);
-		ret = FALSE;
-		goto out;
 	}
 
 	/* this section done */
@@ -1480,6 +1338,7 @@ zif_store_remote_load (ZifStore *store, ZifState *state, GError **error)
 	gchar *temp;
 	gchar *filename;
 	gchar *media_root;
+	gboolean got_baseurl = FALSE;
 	ZifStoreRemote *remote = ZIF_STORE_REMOTE (store);
 
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), FALSE);
@@ -1559,7 +1418,7 @@ zif_store_remote_load (ZifStore *store, ZifState *state, GError **error)
 		/* find the root for the media id */
 		media_root = zif_media_get_root_from_id (remote->priv->media, remote->priv->media_id);
 		if (media_root != NULL) {
-			g_ptr_array_add (remote->priv->baseurls, media_root);
+			zif_download_location_add_uri (remote->priv->download, media_root, NULL);
 		} else {
 			g_warning ("cannot find media %s, disabling source", remote->priv->media_id);
 			remote->priv->enabled = FALSE;
@@ -1571,8 +1430,10 @@ zif_store_remote_load (ZifStore *store, ZifState *state, GError **error)
 
 	/* get base url (allowed to be blank) */
 	temp = g_key_file_get_string (file, remote->priv->id, "baseurl", NULL);
-	if (temp != NULL && temp[0] != '\0')
-		g_ptr_array_add (remote->priv->baseurls, zif_config_expand_substitutions (remote->priv->config, temp, NULL));
+	if (temp != NULL && temp[0] != '\0') {
+		zif_download_location_add_uri (remote->priv->download, zif_config_expand_substitutions (remote->priv->config, temp, NULL), NULL);
+		got_baseurl = TRUE;
+	}
 	g_free (temp);
 
 	/* get mirror list (allowed to be blank) */
@@ -1614,7 +1475,7 @@ zif_store_remote_load (ZifStore *store, ZifState *state, GError **error)
 
 	/* we need either a base url or mirror list for an enabled store */
 	if (remote->priv->enabled &&
-	    remote->priv->baseurls->len == 0 &&
+	    !got_baseurl &&
 	    remote->priv->metalink == NULL &&
 	    remote->priv->mirrorlist == NULL &&
 	    remote->priv->media_id == NULL) {
@@ -3220,7 +3081,6 @@ zif_store_remote_file_monitor_cb (ZifMonitor *monitor, ZifStoreRemote *store)
 	g_free (store->priv->name);
 	g_free (store->priv->name_expanded);
 	g_free (store->priv->repo_filename);
-	g_ptr_array_set_size (store->priv->baseurls, 0);
 	g_free (store->priv->mirrorlist);
 	g_free (store->priv->metalink);
 
@@ -3273,8 +3133,7 @@ zif_store_remote_finalize (GObject *object)
 	g_object_unref (store->priv->lock);
 	g_object_unref (store->priv->media);
 	g_object_unref (store->priv->groups);
-
-	g_ptr_array_unref (store->priv->baseurls);
+	g_object_unref (store->priv->download);
 
 	G_OBJECT_CLASS (zif_store_remote_parent_class)->finalize (object);
 }
@@ -3330,7 +3189,6 @@ zif_store_remote_init (ZifStoreRemote *store)
 	store->priv->name_expanded = NULL;
 	store->priv->enabled = FALSE;
 	store->priv->repo_filename = NULL;
-	store->priv->baseurls = g_ptr_array_new_with_free_func ((GDestroyNotify) g_free);
 	store->priv->mirrorlist = NULL;
 	store->priv->metalink = NULL;
 	store->priv->config = zif_config_new ();
@@ -3338,6 +3196,7 @@ zif_store_remote_init (ZifStoreRemote *store)
 	store->priv->lock = zif_lock_new ();
 	store->priv->media = zif_media_new ();
 	store->priv->groups = zif_groups_new ();
+	store->priv->download = zif_download_new ();
 	store->priv->md_filelists_sql = zif_md_filelists_sql_new ();
 	store->priv->md_filelists_xml = zif_md_filelists_xml_new ();
 	store->priv->md_other_sql = zif_md_other_sql_new ();
