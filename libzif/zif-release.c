@@ -271,7 +271,6 @@ out:
 ZifUpgrade *
 zif_release_get_upgrade_for_version (ZifRelease *release, guint version, ZifState *state, GError **error)
 {
-	GPtrArray *array = NULL;
 	guint i;
 	gboolean ret;
 	ZifUpgrade *upgrade = NULL;
@@ -289,7 +288,6 @@ zif_release_get_upgrade_for_version (ZifRelease *release, guint version, ZifStat
 	}
 
 	/* find upgrade */
-	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	for (i=0; i<release->priv->array->len; i++) {
 		upgrade_tmp = g_ptr_array_index (release->priv->array, i);
 		if (zif_upgrade_get_version (upgrade_tmp) == version) {
