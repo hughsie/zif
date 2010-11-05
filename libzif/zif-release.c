@@ -328,7 +328,7 @@ zif_release_add_kernel (ZifRelease *release, GError **error)
 	g_string_append_printf (cmdline,
 			        "--title=\"Upgrade to Fedora 15\" ");
 	g_string_append_printf (cmdline,
-			        "--args=\"preupgrade stage2=%s/stage2.img otherargs=fubar\"", priv->boot_dir);
+			        "--args=\"preupgrade stage2=%s/stage2.img ksdevice=link ip=dhcp ipv6=dhcp\"", priv->boot_dir);
 
 	/* we're not running as root */
 	if (!g_str_has_prefix (priv->boot_dir, "/boot")) {
