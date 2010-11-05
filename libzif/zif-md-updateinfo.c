@@ -682,11 +682,11 @@ zif_md_updateinfo_init (ZifMdUpdateinfo *md)
  *
  * Since: 0.1.0
  **/
-ZifMdUpdateinfo *
+ZifMd *
 zif_md_updateinfo_new (void)
 {
 	ZifMdUpdateinfo *md;
 	md = g_object_new (ZIF_TYPE_MD_UPDATEINFO, NULL);
-	return ZIF_MD_UPDATEINFO (md);
+	return ZIF_MD (md);
 }
 

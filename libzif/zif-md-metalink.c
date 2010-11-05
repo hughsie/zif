@@ -388,11 +388,11 @@ zif_md_metalink_init (ZifMdMetalink *md)
  *
  * Since: 0.1.0
  **/
-ZifMdMetalink *
+ZifMd *
 zif_md_metalink_new (void)
 {
 	ZifMdMetalink *md;
 	md = g_object_new (ZIF_TYPE_MD_METALINK, NULL);
-	return ZIF_MD_METALINK (md);
+	return ZIF_MD (md);
 }
 

@@ -54,8 +54,8 @@ struct _ZifMdFilelistsXmlClass
 	ZifMdClass				 parent_class;
 };
 
-GType			 zif_md_filelists_xml_get_type		(void);
-ZifMdFilelistsXml	*zif_md_filelists_xml_new		(void);
+GType		 zif_md_filelists_xml_get_type		(void);
+ZifMd		*zif_md_filelists_xml_new		(void);
 
 G_END_DECLS
 

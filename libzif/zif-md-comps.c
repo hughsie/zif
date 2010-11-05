@@ -785,11 +785,11 @@ zif_md_comps_init (ZifMdComps *md)
  *
  * Since: 0.1.0
  **/
-ZifMdComps *
+ZifMd *
 zif_md_comps_new (void)
 {
 	ZifMdComps *md;
 	md = g_object_new (ZIF_TYPE_MD_COMPS, NULL);
-	return ZIF_MD_COMPS (md);
+	return ZIF_MD (md);
 }
 

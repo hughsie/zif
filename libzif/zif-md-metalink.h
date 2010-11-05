@@ -55,7 +55,7 @@ struct _ZifMdMetalinkClass
 };
 
 GType		 zif_md_metalink_get_type		(void);
-ZifMdMetalink	*zif_md_metalink_new			(void);
+ZifMd		*zif_md_metalink_new			(void);
 GPtrArray	*zif_md_metalink_get_uris		(ZifMdMetalink		*md,
 							 guint			 threshold,
 							 ZifState		*state,

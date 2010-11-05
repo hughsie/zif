@@ -571,11 +571,11 @@ zif_md_delta_init (ZifMdDelta *md)
  *
  * Since: 0.1.0
  **/
-ZifMdDelta *
+ZifMd *
 zif_md_delta_new (void)
 {
 	ZifMdDelta *md;
 	md = g_object_new (ZIF_TYPE_MD_DELTA, NULL);
-	return ZIF_MD_DELTA (md);
+	return ZIF_MD (md);
 }
 

@@ -443,11 +443,11 @@ zif_md_filelists_sql_init (ZifMdFilelistsSql *md)
  *
  * Since: 0.1.0
  **/
-ZifMdFilelistsSql *
+ZifMd *
 zif_md_filelists_sql_new (void)
 {
 	ZifMdFilelistsSql *md;
 	md = g_object_new (ZIF_TYPE_MD_FILELISTS_SQL, NULL);
-	return ZIF_MD_FILELISTS_SQL (md);
+	return ZIF_MD (md);
 }
 

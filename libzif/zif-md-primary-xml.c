@@ -864,11 +864,11 @@ zif_md_primary_xml_init (ZifMdPrimaryXml *md)
  *
  * Since: 0.1.0
  **/
-ZifMdPrimaryXml *
+ZifMd *
 zif_md_primary_xml_new (void)
 {
 	ZifMdPrimaryXml *md;
 	md = g_object_new (ZIF_TYPE_MD_PRIMARY_XML, NULL);
-	return ZIF_MD_PRIMARY_XML (md);
+	return ZIF_MD (md);
 }
 

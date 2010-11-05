@@ -55,7 +55,7 @@ struct _ZifMdPrimaryXmlClass
 };
 
 GType		 zif_md_primary_xml_get_type		(void);
-ZifMdPrimaryXml	*zif_md_primary_xml_new			(void);
+ZifMd		*zif_md_primary_xml_new			(void);
 
 G_END_DECLS
 

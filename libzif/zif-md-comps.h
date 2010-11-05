@@ -55,7 +55,7 @@ struct _ZifMdCompsClass
 };
 
 GType		 zif_md_comps_get_type			(void);
-ZifMdComps	*zif_md_comps_new			(void);
+ZifMd		*zif_md_comps_new			(void);
 
 GPtrArray	*zif_md_comps_get_categories		(ZifMdComps		*md,
 							 ZifState		*state,

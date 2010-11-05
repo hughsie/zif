@@ -55,7 +55,7 @@ struct _ZifMdUpdateinfoClass
 };
 
 GType		 zif_md_updateinfo_get_type		(void);
-ZifMdUpdateinfo	*zif_md_updateinfo_new			(void);
+ZifMd		*zif_md_updateinfo_new			(void);
 
 GPtrArray	*zif_md_updateinfo_get_detail		(ZifMdUpdateinfo	*md,
 							 ZifState		*state,

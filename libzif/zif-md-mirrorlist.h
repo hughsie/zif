@@ -55,7 +55,7 @@ struct _ZifMdMirrorlistClass
 };
 
 GType		 zif_md_mirrorlist_get_type		(void);
-ZifMdMirrorlist *zif_md_mirrorlist_new			(void);
+ZifMd		*zif_md_mirrorlist_new			(void);
 GPtrArray	*zif_md_mirrorlist_get_uris		(ZifMdMirrorlist	*md,
 							 ZifState		*state,
 							 GError			**error);

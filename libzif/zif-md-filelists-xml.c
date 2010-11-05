@@ -554,11 +554,11 @@ zif_md_filelists_xml_init (ZifMdFilelistsXml *md)
  *
  * Since: 0.1.0
  **/
-ZifMdFilelistsXml *
+ZifMd *
 zif_md_filelists_xml_new (void)
 {
 	ZifMdFilelistsXml *md;
 	md = g_object_new (ZIF_TYPE_MD_FILELISTS_XML, NULL);
-	return ZIF_MD_FILELISTS_XML (md);
+	return ZIF_MD (md);
 }
 

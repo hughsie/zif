@@ -55,7 +55,7 @@ struct _ZifMdOtherSqlClass
 };
 
 GType		 zif_md_other_sql_get_type		(void);
-ZifMdOtherSql	*zif_md_other_sql_new			(void);
+ZifMd		*zif_md_other_sql_new			(void);
 
 G_END_DECLS
 

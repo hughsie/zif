@@ -57,7 +57,7 @@ struct _ZifMdDeltaClass
 };
 
 GType		 zif_md_delta_get_type			(void);
-ZifMdDelta	*zif_md_delta_new			(void);
+ZifMd		*zif_md_delta_new			(void);
 
 ZifDelta	*zif_md_delta_search_for_package 	(ZifMdDelta		*md,
 							 const gchar		*package_id_update,

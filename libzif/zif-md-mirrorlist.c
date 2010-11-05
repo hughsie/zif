@@ -231,11 +231,11 @@ zif_md_mirrorlist_init (ZifMdMirrorlist *md)
  *
  * Since: 0.1.0
  **/
-ZifMdMirrorlist *
+ZifMd *
 zif_md_mirrorlist_new (void)
 {
 	ZifMdMirrorlist *md;
 	md = g_object_new (ZIF_TYPE_MD_MIRRORLIST, NULL);
-	return ZIF_MD_MIRRORLIST (md);
+	return ZIF_MD (md);
 }
 

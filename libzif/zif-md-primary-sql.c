@@ -626,11 +626,11 @@ zif_md_primary_sql_init (ZifMdPrimarySql *md)
  *
  * Since: 0.1.0
  **/
-ZifMdPrimarySql *
+ZifMd *
 zif_md_primary_sql_new (void)
 {
 	ZifMdPrimarySql *md;
 	md = g_object_new (ZIF_TYPE_MD_PRIMARY_SQL, NULL);
-	return ZIF_MD_PRIMARY_SQL (md);
+	return ZIF_MD (md);
 }
 

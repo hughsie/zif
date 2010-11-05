@@ -54,8 +54,8 @@ struct _ZifMdFilelistsSqlClass
 	ZifMdClass				 parent_class;
 };
 
-GType			 zif_md_filelists_sql_get_type		(void);
-ZifMdFilelistsSql	*zif_md_filelists_sql_new		(void);
+GType		 zif_md_filelists_sql_get_type		(void);
+ZifMd		*zif_md_filelists_sql_new		(void);
 
 G_END_DECLS
 

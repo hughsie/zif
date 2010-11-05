@@ -378,11 +378,11 @@ zif_md_other_sql_init (ZifMdOtherSql *md)
  *
  * Since: 0.1.0
  **/
-ZifMdOtherSql *
+ZifMd *
 zif_md_other_sql_new (void)
 {
 	ZifMdOtherSql *md;
 	md = g_object_new (ZIF_TYPE_MD_OTHER_SQL, NULL);
-	return ZIF_MD_OTHER_SQL (md);
+	return ZIF_MD (md);
 }
 

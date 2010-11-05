@@ -55,7 +55,7 @@ struct _ZifMdPrimarySqlClass
 };
 
 GType		 zif_md_primary_sql_get_type		(void);
-ZifMdPrimarySql	*zif_md_primary_sql_new			(void);
+ZifMd		*zif_md_primary_sql_new			(void);
 
 G_END_DECLS
 
