@@ -320,6 +320,7 @@ zif_config_expand_substitutions (ZifConfig *config, const gchar *text, GError **
 	gchar *basearch = NULL;
 	gchar *releasever = NULL;
 	GString *string = NULL;
+	gchar *retval = NULL;
 
 	g_return_val_if_fail (ZIF_IS_CONFIG (config), NULL);
 	g_return_val_if_fail (text != NULL, NULL);
@@ -339,10 +340,13 @@ zif_config_expand_substitutions (ZifConfig *config, const gchar *text, GError **
 	zif_config_strreplace (string, "$releasever", releasever);
 	zif_config_strreplace (string, "$basearch", basearch);
 	zif_config_strreplace (string, "$homedir", g_get_home_dir ());
+
+	/* success */
+	retval = g_string_free (string, FALSE);
 out:
 	g_free (basearch);
 	g_free (releasever);
-	return g_string_free (string, FALSE);
+	return retval;
 }
 
 /**
