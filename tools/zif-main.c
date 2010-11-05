@@ -663,11 +663,6 @@ zif_log_ignore_cb (const gchar *log_domain, GLogLevelFlags log_level,
 		   const gchar *message, gpointer user_data)
 {
 }
-static void
-moo (void)
-{
-	g_test_bug (NULL);
-}
 
 /**
  * zif_log_handler_cb:
@@ -686,9 +681,9 @@ zif_log_handler_cb (const gchar *log_domain, GLogLevelFlags log_level,
 
 	/* critical is also in red */
 	if (log_level == G_LOG_LEVEL_CRITICAL ||
+	    log_level == G_LOG_LEVEL_WARNING ||
 	    log_level == G_LOG_LEVEL_ERROR) {
 		g_print ("%c[%dm%s\n%c[%dm", 0x1B, 31, message, 0x1B, 0);
-		moo ();
 	} else {
 		/* debug in blue */
 		g_print ("%c[%dm%s\n%c[%dm", 0x1B, 34, message, 0x1B, 0);
