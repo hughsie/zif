@@ -105,7 +105,9 @@ zif_release_load (ZifRelease *release, ZifState *state, GError **error)
 
 	/* nothing set */
 	if (release->priv->cache_dir == NULL) {
-		g_set_error_literal (error, ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED,
+		g_set_error_literal (error,
+				     ZIF_RELEASE_ERROR,
+				     ZIF_RELEASE_ERROR_SETUP_INVALID,
 				     "no cache dir has been set; use zif_release_set_cache_dir()");
 		goto out;
 	}
@@ -119,8 +121,11 @@ zif_release_load (ZifRelease *release, ZifState *state, GError **error)
 					 filename,
 					 state, &error_local);
 		if (!ret) {
-			g_set_error (error, ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED,
-				     "failed to download release info: %s", error_local->message);
+			g_set_error (error,
+				     ZIF_RELEASE_ERROR,
+				     ZIF_RELEASE_ERROR_DOWNLOAD_FAILED,
+				     "failed to download release info: %s",
+				     error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
@@ -129,8 +134,11 @@ zif_release_load (ZifRelease *release, ZifState *state, GError **error)
 	/* setup watch */
 	ret = zif_monitor_add_watch (release->priv->monitor, filename, &error_local);
 	if (!ret) {
-		g_set_error (error, ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED,
-			     "failed to setup watch: %s", error_local->message);
+		g_set_error (error,
+			     ZIF_RELEASE_ERROR,
+			     ZIF_RELEASE_ERROR_SETUP_INVALID,
+			     "failed to setup watch: %s",
+			     error_local->message);
 		g_error_free (error_local);
 		goto out;
 	}
@@ -139,7 +147,9 @@ zif_release_load (ZifRelease *release, ZifState *state, GError **error)
 	key_file = g_key_file_new ();
 	ret = g_key_file_load_from_file (key_file, filename, 0, &error_local);
 	if (!ret) {
-		g_set_error (error, ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED,
+		g_set_error (error,
+			     ZIF_RELEASE_ERROR,
+			     ZIF_RELEASE_ERROR_FILE_INVALID,
 			     "failed to open release info %s: %s",
 			     filename, error_local->message);
 		g_error_free (error_local);
@@ -149,7 +159,9 @@ zif_release_load (ZifRelease *release, ZifState *state, GError **error)
 	/* get all the sections in releases.txt */
 	groups = g_key_file_get_groups (key_file, NULL);
 	if (groups == NULL) {
-		g_set_error_literal (error, ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED,
+		g_set_error_literal (error,
+				     ZIF_RELEASE_ERROR,
+				     ZIF_RELEASE_ERROR_FILE_INVALID,
 				     "releases.txt has no groups");
 		goto out;
 	}
@@ -310,7 +322,7 @@ zif_release_get_upgrade_for_version (ZifRelease *release, guint version, ZifStat
 	/* nothing found */
 	g_set_error (error,
 		     ZIF_RELEASE_ERROR,
-		     ZIF_RELEASE_ERROR_FAILED,
+		     ZIF_RELEASE_ERROR_NOT_FOUND,
 		     "could not find upgrade version %i", version);
 out:
 	return upgrade;
@@ -371,7 +383,9 @@ zif_release_add_kernel (ZifRelease *release, ZifReleaseUpgradeData *data, GError
 	g_debug ("running command %s", cmdline->str);
 	ret = g_spawn_command_line_sync (cmdline->str, NULL, NULL, NULL, &error_local);
 	if (!ret) {
-		g_set_error (error, ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED,
+		g_set_error (error,
+			     ZIF_RELEASE_ERROR,
+			     ZIF_RELEASE_ERROR_SPAWN_FAILED,
 			     "failed to add kernel: %s", error_local->message);
 		g_error_free (error_local);
 		goto out;
@@ -382,7 +396,9 @@ zif_release_add_kernel (ZifRelease *release, ZifReleaseUpgradeData *data, GError
 		g_debug ("running ybin command");
 		ret = g_spawn_command_line_sync ("/sbin/ybin > /dev/null", NULL, NULL, NULL, &error_local);
 		if (!ret) {
-			g_set_error (error, ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED,
+			g_set_error (error,
+				     ZIF_RELEASE_ERROR,
+				     ZIF_RELEASE_ERROR_SPAWN_FAILED,
 				     "failed to run: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
@@ -421,7 +437,7 @@ zif_release_make_kernel_default_once (ZifRelease *release, GError **error)
 	if (!ret) {
 		g_set_error (error,
 			     ZIF_RELEASE_ERROR,
-			     ZIF_RELEASE_ERROR_FAILED,
+			     ZIF_RELEASE_ERROR_SPAWN_FAILED,
 			     "failed to make kernel default: %s",
 			     error_local->message);
 		g_error_free (error_local);
@@ -458,7 +474,8 @@ zif_release_check_filesystem_size (const gchar *location, guint64 required_size,
 	size = g_file_info_get_attribute_uint64 (info, G_FILE_ATTRIBUTE_FILESYSTEM_FREE);
 	if (size < required_size) {
 		g_set_error (error,
-			     ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED,
+			     ZIF_RELEASE_ERROR,
+			     ZIF_RELEASE_ERROR_LOW_DISKSPACE,
 			     "%s filesystem too small, requires %" G_GUINT64_FORMAT
 			     " got %" G_GUINT64_FORMAT,
 			     location, required_size, size);
@@ -538,7 +555,7 @@ zif_release_get_treeinfo (ZifRelease *release, ZifReleaseUpgradeData *data, ZifS
 		if (!ret) {
 			g_set_error (error,
 				     ZIF_RELEASE_ERROR,
-				     ZIF_RELEASE_ERROR_FAILED,
+				     ZIF_RELEASE_ERROR_DOWNLOAD_FAILED,
 				     "failed to download treeinfo: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
@@ -556,7 +573,7 @@ zif_release_get_treeinfo (ZifRelease *release, ZifReleaseUpgradeData *data, ZifS
 	if (!ret) {
 		g_set_error (error,
 			     ZIF_RELEASE_ERROR,
-			     ZIF_RELEASE_ERROR_FAILED,
+			     ZIF_RELEASE_ERROR_FILE_INVALID,
 			     "failed to open treeinfo: %s", error_local->message);
 		g_error_free (error_local);
 		goto out;
@@ -565,14 +582,20 @@ zif_release_get_treeinfo (ZifRelease *release, ZifReleaseUpgradeData *data, ZifS
 	/* verify the version is sane */
 	version_tmp = g_key_file_get_integer (data->key_file_treeinfo, "general", "version", NULL);
 	if (version_tmp != (gint) data->version) {
-		g_set_error_literal (error, ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED, "treeinfo release differs from wanted release");
+		g_set_error_literal (error,
+				     ZIF_RELEASE_ERROR,
+				     ZIF_RELEASE_ERROR_FILE_INVALID,
+				     "treeinfo release differs from wanted release");
 		goto out;
 	}
 
 	/* get the correct section */
 	basearch = zif_config_get_string (priv->config, "basearch", NULL);
 	if (basearch == NULL) {
-		g_set_error_literal (error, ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED, "failed to get basearch");
+		g_set_error_literal (error,
+				     ZIF_RELEASE_ERROR,
+				     ZIF_RELEASE_ERROR_FILE_INVALID,
+				     "failed to get basearch");
 		goto out;
 	}
 	data->images_section = g_strdup_printf ("images-%s", basearch);
@@ -604,7 +627,10 @@ zif_release_get_kernel (ZifRelease *release, ZifReleaseUpgradeData *data, ZifSta
 	/* get data */
 	kernel = g_key_file_get_string (data->key_file_treeinfo, data->images_section, "kernel", NULL);
 	if (kernel == NULL) {
-		g_set_error_literal (error, ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED, "failed to get kernel section");
+		g_set_error_literal (error,
+				     ZIF_RELEASE_ERROR,
+				     ZIF_RELEASE_ERROR_FILE_INVALID,
+				     "failed to get kernel section");
 		goto out;
 	}
 	checksum = g_key_file_get_string (data->key_file_treeinfo, "checksums", kernel, NULL);
@@ -630,7 +656,7 @@ zif_release_get_kernel (ZifRelease *release, ZifReleaseUpgradeData *data, ZifSta
 		if (!ret) {
 			g_set_error (error,
 				     ZIF_RELEASE_ERROR,
-				     ZIF_RELEASE_ERROR_FAILED,
+				     ZIF_RELEASE_ERROR_DOWNLOAD_FAILED,
 				     "failed to download kernel: %s",
 				     error_local->message);
 			g_error_free (error_local);
@@ -660,7 +686,10 @@ zif_release_get_initrd (ZifRelease *release, ZifReleaseUpgradeData *data, ZifSta
 	/* get data */
 	initrd = g_key_file_get_string (data->key_file_treeinfo, data->images_section, "initrd", NULL);
 	if (initrd == NULL) {
-		g_set_error_literal (error, ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED, "failed to get initrd section");
+		g_set_error_literal (error,
+				     ZIF_RELEASE_ERROR,
+				     ZIF_RELEASE_ERROR_FILE_INVALID,
+				     "failed to get initrd section");
 		goto out;
 	}
 	checksum = g_key_file_get_string (data->key_file_treeinfo, "checksums", initrd, NULL);
@@ -687,7 +716,7 @@ zif_release_get_initrd (ZifRelease *release, ZifReleaseUpgradeData *data, ZifSta
 		if (!ret) {
 			g_set_error (error,
 				     ZIF_RELEASE_ERROR,
-				     ZIF_RELEASE_ERROR_FAILED,
+				     ZIF_RELEASE_ERROR_DOWNLOAD_FAILED,
 				     "failed to download initrd: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
@@ -713,10 +742,13 @@ zif_release_get_stage2 (ZifRelease *release, ZifReleaseUpgradeData *data, ZifSta
 	gchar *filename = NULL;
 	ZifReleasePrivate *priv = release->priv;
 
-	/* download the kernel, initrd and stage2 */
+	/* get data */
 	stage2 = g_key_file_get_string (data->key_file_treeinfo, "stage2", "mainimage", NULL);
 	if (stage2 == NULL) {
-		g_set_error_literal (error, ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED, "failed to get stage2 section");
+		g_set_error_literal (error,
+				     ZIF_RELEASE_ERROR,
+				     ZIF_RELEASE_ERROR_FILE_INVALID,
+				     "failed to get stage2 section");
 		goto out;
 	}
 	checksum = g_key_file_get_string (data->key_file_treeinfo, "checksums", stage2, NULL);
@@ -743,7 +775,7 @@ zif_release_get_stage2 (ZifRelease *release, ZifReleaseUpgradeData *data, ZifSta
 		if (!ret) {
 			g_set_error (error,
 				     ZIF_RELEASE_ERROR,
-				     ZIF_RELEASE_ERROR_FAILED,
+				     ZIF_RELEASE_ERROR_DOWNLOAD_FAILED,
 				     "failed to download stage2: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
@@ -873,7 +905,9 @@ zif_release_write_kickstart (ZifRelease *release, GError **error)
 	/* get uuid */
 	uuid = zif_release_get_uuid ("/dev/root", &error_local);
 	if (uuid == NULL) {
-		g_set_error (error, ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED,
+		g_set_error (error,
+			     ZIF_RELEASE_ERROR,
+			     ZIF_RELEASE_ERROR_NO_UUID_FOR_ROOT,
 			     "failed to get uuid: %s", error_local->message);
 		g_error_free (error_local);
 		goto out;
@@ -901,7 +935,9 @@ zif_release_write_kickstart (ZifRelease *release, GError **error)
 				       NULL, FALSE, G_FILE_CREATE_REPLACE_DESTINATION,
 				       NULL, NULL, &error_local);
 	if (!ret) {
-		g_set_error (error, ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED,
+		g_set_error (error,
+			     ZIF_RELEASE_ERROR,
+			     ZIF_RELEASE_ERROR_WRITE_FAILED,
 			     "failed to write kickstart: %s",
 			     error_local->message);
 		g_error_free (error_local);
@@ -924,7 +960,9 @@ static gboolean
 zif_release_get_package_data (ZifRelease *release, ZifReleaseUpgradeData *data, ZifState *state, GError **error)
 {
 	//FIXME
-	g_set_error_literal (error, ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED,
+	g_set_error_literal (error,
+			     ZIF_RELEASE_ERROR,
+			     ZIF_RELEASE_ERROR_NOT_SUPPORTED,
 			     "getting the package data is not supported yet");
 	return FALSE;
 }
@@ -970,7 +1008,9 @@ zif_release_upgrade_version (ZifRelease *release, guint version, ZifReleaseUpgra
 
 	/* nothing set */
 	if (priv->boot_dir == NULL) {
-		g_set_error_literal (error, ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED,
+		g_set_error_literal (error,
+				     ZIF_RELEASE_ERROR,
+				     ZIF_RELEASE_ERROR_SETUP_INVALID,
 				     "no boot dir has been set; use zif_release_set_boot_dir()");
 		goto out;
 	}
@@ -982,8 +1022,11 @@ zif_release_upgrade_version (ZifRelease *release, guint version, ZifReleaseUpgra
 		g_debug ("%s does not exist, creating", priv->boot_dir);
 		ret = g_file_make_directory_with_parents (boot_file, NULL, &error_local);
 		if (!ret) {
-			g_set_error (error, ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED,
-				     "cannot create boot environment: %s", error_local->message);
+			g_set_error (error,
+				     ZIF_RELEASE_ERROR,
+				     ZIF_RELEASE_ERROR_WRITE_FAILED,
+				     "cannot create boot environment: %s",
+				     error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
@@ -1035,7 +1078,8 @@ zif_release_upgrade_version (ZifRelease *release, guint version, ZifReleaseUpgra
 				 installmirrorlist_filename, state_local, &error_local);
 	if (!ret) {
 		g_set_error (error,
-			     ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED,
+			     ZIF_RELEASE_ERROR,
+			     ZIF_RELEASE_ERROR_DOWNLOAD_FAILED,
 			     "failed to download installmirrorlist: %s",
 			     error_local->message);
 		g_error_free (error_local);
@@ -1055,7 +1099,8 @@ zif_release_upgrade_version (ZifRelease *release, guint version, ZifReleaseUpgra
 	ret = zif_download_location_add_md (priv->download, md_mirrorlist, state_local, &error_local);
 	if (!ret) {
 		g_set_error (error,
-			     ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED,
+			     ZIF_RELEASE_ERROR,
+			     ZIF_RELEASE_ERROR_DOWNLOAD_FAILED,
 			     "failed to add download location installmirrorlist: %s",
 			     error_local->message);
 		g_error_free (error_local);
