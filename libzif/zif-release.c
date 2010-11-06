@@ -892,7 +892,7 @@ zif_release_write_kickstart (ZifRelease *release, GError **error)
 	GFile *ks_file = NULL;
 	GString *string;
 	GError *error_local = NULL;
-	gboolean ret;
+	gboolean ret = FALSE;
 	gchar *uuid;
 	gchar *lang = NULL;
 	gchar *keymap = NULL;
