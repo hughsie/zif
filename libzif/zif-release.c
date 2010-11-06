@@ -834,9 +834,35 @@ out:
 }
 
 /**
+ * zif_release_get_package_data:
+ **/
+static gboolean
+zif_release_get_package_data (ZifRelease *release, ZifUpgrade *upgrade, ZifState *state, GError **error)
+{
+	//FIXME
+	g_set_error_literal (error, ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED,
+			     "getting the package data is not supported yet");
+	return FALSE;
+}
+
+/**
+ * zif_release_get_stage2:
+ **/
+static gboolean
+zif_release_get_stage2 (ZifRelease *release, ZifUpgrade *upgrade, ZifState *state, GError **error)
+{
+	//FIXME
+	g_set_error_literal (error, ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED,
+			     "getting the stage2 image is not supported yet");
+	return FALSE;
+}
+
+/**
  * zif_release_upgrade_version:
  * @release: the #ZifRelease object
  * @version: a distribution version, e.g. 15
+ * @upgrade_kind: a #ZifReleaseUpgradeKind, e.g. %ZIF_RELEASE_UPGRADE_KIND_MINIMAL
+ * 		  would only download the kernel and initrd, not the stage2 or the packages.
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -847,7 +873,7 @@ out:
  * Since: 0.1.3
  **/
 gboolean
-zif_release_upgrade_version (ZifRelease *release, guint version, ZifState *state, GError **error)
+zif_release_upgrade_version (ZifRelease *release, guint version, ZifReleaseUpgradeKind upgrade_kind, ZifState *state, GError **error)
 {
 	gboolean ret = FALSE;
 	ZifUpgrade *upgrade = NULL;
@@ -892,7 +918,12 @@ zif_release_upgrade_version (ZifRelease *release, guint version, ZifState *state
 	 * 4. download kernel and initrd
 	 * 5. install kernel
 	 */
-	zif_state_set_number_steps (state, 5);
+	if (upgrade_kind == ZIF_RELEASE_UPGRADE_KIND_MINIMAL)
+		zif_state_set_number_steps (state, 5);
+	else if (upgrade_kind == ZIF_RELEASE_UPGRADE_KIND_DEFAULT)
+		zif_state_set_number_steps (state, 6);
+	else if (upgrade_kind == ZIF_RELEASE_UPGRADE_KIND_COMPLETE)
+		zif_state_set_number_steps (state, 7);
 
 	/* get the correct object */
 	state_local = zif_state_get_child (state);
@@ -960,6 +991,37 @@ zif_release_upgrade_version (ZifRelease *release, guint version, ZifState *state
 	ret = zif_release_get_kernel_and_initrd (release, version, state_local, error);
 	if (!ret)
 		goto out;
+
+	/* gets stage2 */
+	if (upgrade_kind == ZIF_RELEASE_UPGRADE_KIND_DEFAULT ||
+	    upgrade_kind == ZIF_RELEASE_UPGRADE_KIND_COMPLETE) {
+
+		/* done */
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
+
+		/* gets stage2 */
+		state_local = zif_state_get_child (state);
+		ret = zif_release_get_stage2 (release, upgrade, state_local, error);
+		if (!ret)
+			goto out;
+	}
+
+	/* gets package data */
+	if (upgrade_kind == ZIF_RELEASE_UPGRADE_KIND_COMPLETE) {
+
+		/* done */
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
+
+		/* gets stage2 */
+		state_local = zif_state_get_child (state);
+		ret = zif_release_get_package_data (release, upgrade, state_local, error);
+		if (!ret)
+			goto out;
+	}
 
 	/* done */
 	ret = zif_state_done (state, error);

@@ -147,7 +147,9 @@ zif_release_func (void)
 
 	/* do a fake upgrade */
 	zif_state_reset (state);
-	ret = zif_release_upgrade_version (release, 15, state, &error);
+	ret = zif_release_upgrade_version (release, 15,
+					   ZIF_RELEASE_UPGRADE_KIND_MINIMAL,
+					   state, &error);
 	g_assert_no_error (error);
 	g_assert (ret);
 

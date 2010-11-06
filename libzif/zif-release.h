@@ -56,6 +56,13 @@ struct _ZifReleaseClass
 };
 
 typedef enum {
+	ZIF_RELEASE_UPGRADE_KIND_MINIMAL,
+	ZIF_RELEASE_UPGRADE_KIND_DEFAULT,
+	ZIF_RELEASE_UPGRADE_KIND_COMPLETE,
+	ZIF_RELEASE_UPGRADE_KIND_LAST
+} ZifReleaseUpgradeKind;
+
+typedef enum {
 	ZIF_RELEASE_ERROR_FAILED,
 	ZIF_RELEASE_ERROR_LAST
 } ZifReleaseError;
@@ -82,6 +89,7 @@ ZifUpgrade	*zif_release_get_upgrade_for_version	(ZifRelease	*release,
 							 GError		**error);
 gboolean	 zif_release_upgrade_version		(ZifRelease	*release,
 							 guint		 version,
+							 ZifReleaseUpgradeKind	 upgrade_kind,
 							 ZifState	*state,
 							 GError		**error);
 
