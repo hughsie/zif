@@ -327,10 +327,8 @@ zif_release_add_kernel (ZifRelease *release, ZifUpgrade *upgrade, GError **error
 					 zif_upgrade_get_version (upgrade));
 	}
 
-	/* linux, TODO: use something else for ppc */
+	/* do for i386 and ppc */
 	cmdline = g_string_new ("/sbin/grubby ");
-	g_string_append_printf (cmdline,
-			        "--make-default ");
 	g_string_append_printf (cmdline,
 			        "--add-kernel=%s/vmlinuz ", priv->boot_dir);
 	g_string_append_printf (cmdline,
@@ -372,6 +370,36 @@ out:
 	g_free (title);
 	if (cmdline != NULL)
 		g_string_free (cmdline, TRUE);
+	return ret;
+}
+
+/**
+ * zif_release_make_kernel_default_once:
+ **/
+static gboolean
+zif_release_make_kernel_default_once (ZifRelease *release, GError **error)
+{
+	gboolean ret = TRUE;
+	const gchar *cmdline = "/bin/echo 'savedefault --default=0 --once' | /sbin/grub >/dev/null";
+	GError *error_local = NULL;
+	ZifReleasePrivate *priv = release->priv;
+
+	/* we're not running as root */
+	if (!g_str_has_prefix (priv->boot_dir, "/boot")) {
+		g_debug ("not running grub as not installing root, would have run '%s'", cmdline);
+		goto out;
+	}
+
+	/* run the command */
+	g_debug ("running command %s", cmdline);
+	ret = g_spawn_command_line_sync (cmdline, NULL, NULL, NULL, &error_local);
+	if (!ret) {
+		g_set_error (error, ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED,
+			     "failed to make kernel default: %s", error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+out:
 	return ret;
 }
 
@@ -940,6 +968,11 @@ zif_release_upgrade_version (ZifRelease *release, guint version, ZifState *state
 
 	/* add the new kernel */
 	ret = zif_release_add_kernel (release, upgrade, error);
+	if (!ret)
+		goto out;
+
+	/* make the new kernel default just once */
+	ret = zif_release_make_kernel_default_once (release, error);
 	if (!ret)
 		goto out;
 
