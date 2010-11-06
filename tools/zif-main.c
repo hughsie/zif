@@ -900,7 +900,7 @@ main (int argc, char *argv[])
 	release = zif_release_new ();
 	zif_release_set_boot_dir (release, "/boot/upgrade");
 	zif_release_set_cache_dir (release, "/var/cache/PackageKit");
-	zif_release_set_uri (release, "http://people.freedesktop.org/~hughsient/fedora/preupgrade/releases.txt");
+	zif_release_set_uri (release, "http://mirrors.fedoraproject.org/releases.txt");
 
 	/* ZifState */
 	state = zif_state_new ();
