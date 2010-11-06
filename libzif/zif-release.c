@@ -582,6 +582,7 @@ zif_release_get_treeinfo (ZifRelease *release, ZifReleaseUpgradeData *data, ZifS
 	/* verify the version is sane */
 	version_tmp = g_key_file_get_integer (data->key_file_treeinfo, "general", "version", NULL);
 	if (version_tmp != (gint) data->version) {
+		ret = FALSE;
 		g_set_error_literal (error,
 				     ZIF_RELEASE_ERROR,
 				     ZIF_RELEASE_ERROR_FILE_INVALID,
@@ -592,6 +593,7 @@ zif_release_get_treeinfo (ZifRelease *release, ZifReleaseUpgradeData *data, ZifS
 	/* get the correct section */
 	basearch = zif_config_get_string (priv->config, "basearch", NULL);
 	if (basearch == NULL) {
+		ret = FALSE;
 		g_set_error_literal (error,
 				     ZIF_RELEASE_ERROR,
 				     ZIF_RELEASE_ERROR_FILE_INVALID,
