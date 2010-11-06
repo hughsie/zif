@@ -101,6 +101,7 @@ zif_release_load (ZifRelease *release, ZifState *state, GError **error)
 	ZifUpgrade *upgrade;
 	guint i;
 	const gchar *temp;
+	gchar *temp_expand;
 	gchar *filename = NULL;
 
 	/* nothing set */
@@ -179,14 +180,23 @@ zif_release_load (ZifRelease *release, ZifState *state, GError **error)
 			zif_upgrade_set_enabled (upgrade, TRUE);
 		zif_upgrade_set_version (upgrade, g_key_file_get_integer (key_file, groups[i], "version", NULL));
 		temp = g_key_file_get_string (key_file, groups[i], "baseurl", NULL);
-		if (temp != NULL)
-			zif_upgrade_set_baseurl (upgrade, temp);
+		if (temp != NULL) {
+			temp_expand = zif_config_expand_substitutions (release->priv->config, temp, NULL);
+			zif_upgrade_set_baseurl (upgrade, temp_expand);
+			g_free (temp_expand);
+		}
 		temp = g_key_file_get_string (key_file, groups[i], "mirrorlist", NULL);
-		if (temp != NULL)
-			zif_upgrade_set_mirrorlist (upgrade, temp);
+		if (temp != NULL) {
+			temp_expand = zif_config_expand_substitutions (release->priv->config, temp, NULL);
+			zif_upgrade_set_mirrorlist (upgrade, temp_expand);
+			g_free (temp_expand);
+		}
 		temp = g_key_file_get_string (key_file, groups[i], "installmirrorlist", NULL);
-		if (temp != NULL)
-			zif_upgrade_set_install_mirrorlist (upgrade, temp);
+		if (temp != NULL) {
+			temp_expand = zif_config_expand_substitutions (release->priv->config, temp, NULL);
+			zif_upgrade_set_install_mirrorlist (upgrade, temp_expand);
+			g_free (temp_expand);
+		}
 		g_ptr_array_add (release->priv->array, upgrade);
 	}
 
