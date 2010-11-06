@@ -59,6 +59,15 @@ struct _ZifReleasePrivate
 	guint			 monitor_changed_id;
 };
 
+/* only used when doing an upgrade */
+typedef struct {
+	ZifUpgrade		*upgrade;
+	ZifReleaseUpgradeKind	 upgrade_kind;
+	guint			 version;
+	GKeyFile		*key_file_treeinfo;
+	gchar			*images_section;
+} ZifReleaseUpgradeData;
+
 G_DEFINE_TYPE (ZifRelease, zif_release, G_TYPE_OBJECT)
 static gpointer zif_release_object = NULL;
 
@@ -310,11 +319,12 @@ out:
  * zif_release_add_kernel:
  **/
 static gboolean
-zif_release_add_kernel (ZifRelease *release, ZifUpgrade *upgrade, GError **error)
+zif_release_add_kernel (ZifRelease *release, ZifReleaseUpgradeData *data, GError **error)
 {
 	gboolean ret;
 	GError *error_local = NULL;
 	GString *cmdline = NULL;
+	GString *args = NULL;
 	gchar *title = NULL;
 	const gchar *arch = "i386"; //FIXME
 	ZifReleasePrivate *priv = release->priv;
@@ -324,8 +334,18 @@ zif_release_add_kernel (ZifRelease *release, ZifUpgrade *upgrade, GError **error
 		title = g_strdup ("upgrade");
 	} else {
 		title = g_strdup_printf ("Upgrade to Fedora %i",
-					 zif_upgrade_get_version (upgrade));
+					 zif_upgrade_get_version (data->upgrade));
 	}
+
+	/* kernel arguments */
+	args = g_string_new ("preupgrade ");
+	if (data->upgrade_kind == ZIF_RELEASE_UPGRADE_KIND_DEFAULT ||
+	    data->upgrade_kind == ZIF_RELEASE_UPGRADE_KIND_COMPLETE) {
+		g_string_append_printf (args,
+					"stage2=%s/stage2.img ", priv->boot_dir);
+	}
+	g_string_append_printf (args,
+			        "ksdevice=link ip=dhcp ipv6=dhcp");
 
 	/* do for i386 and ppc */
 	cmdline = g_string_new ("/sbin/grubby ");
@@ -336,7 +356,7 @@ zif_release_add_kernel (ZifRelease *release, ZifUpgrade *upgrade, GError **error
 	g_string_append_printf (cmdline,
 			        "--title=\"%s\" ", title);
 	g_string_append_printf (cmdline,
-			        "--args=\"preupgrade stage2=%s/stage2.img ksdevice=link ip=dhcp ipv6=dhcp\"", priv->boot_dir);
+			        "--args=\"%s\"", args->str);
 
 	/* we're not running as root */
 	if (!g_str_has_prefix (priv->boot_dir, "/boot")) {
@@ -368,6 +388,8 @@ zif_release_add_kernel (ZifRelease *release, ZifUpgrade *upgrade, GError **error
 	}
 out:
 	g_free (title);
+	if (args != NULL)
+		g_string_free (args, TRUE);
 	if (cmdline != NULL)
 		g_string_free (cmdline, TRUE);
 	return ret;
@@ -394,8 +416,11 @@ zif_release_make_kernel_default_once (ZifRelease *release, GError **error)
 	g_debug ("running command %s", cmdline);
 	ret = g_spawn_command_line_sync (cmdline, NULL, NULL, NULL, &error_local);
 	if (!ret) {
-		g_set_error (error, ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED,
-			     "failed to make kernel default: %s", error_local->message);
+		g_set_error (error,
+			     ZIF_RELEASE_ERROR,
+			     ZIF_RELEASE_ERROR_FAILED,
+			     "failed to make kernel default: %s",
+			     error_local->message);
 		g_error_free (error_local);
 		goto out;
 	}
@@ -450,13 +475,16 @@ out:
  * pk_release_checksum_matches_file:
  **/
 static gboolean
-pk_release_checksum_matches_file (const gchar *filename, const gchar *sha256, GError **error)
+pk_release_checksum_matches_file (const gchar *filename, const gchar *sha256, ZifState *state, GError **error)
 {
 	gboolean ret;
 	gchar *data = NULL;
 	gsize len;
 	const gchar *got;
 	GChecksum *checksum = NULL;
+
+	/* set state */
+	zif_state_action_start (state, ZIF_STATE_ACTION_CHECKING, filename);
 
 	/* load file */
 	ret = g_file_get_contents (filename, &data, &len, error);
@@ -471,6 +499,7 @@ pk_release_checksum_matches_file (const gchar *filename, const gchar *sha256, GE
 		goto out;
 	}
 out:
+	zif_state_action_stop (state);
 	g_free (data);
 	if (checksum != NULL)
 		g_checksum_free (checksum);
@@ -478,36 +507,25 @@ out:
 }
 
 /**
- * zif_release_get_kernel_and_initrd:
+ * zif_release_get_treeinfo:
  **/
 static gboolean
-zif_release_get_kernel_and_initrd (ZifRelease *release, guint version, ZifState *state, GError **error)
+zif_release_get_treeinfo (ZifRelease *release, ZifReleaseUpgradeData *data, ZifState *state, GError **error)
 {
 	gboolean ret;
 	GError *error_local = NULL;
 	gchar *treeinfo_uri = NULL;
 	ZifConfig *config = NULL;
 	gchar *basearch = NULL;
-	gchar *images_section = NULL;
-	gchar *kernel = NULL;
-	gchar *kernel_checksum = NULL;
-	gchar *kernel_filename = NULL;
-	gchar *initrd = NULL;
-	gchar *initrd_checksum = NULL;
-	gchar *initrd_filename = NULL;
-	gchar *stage2 = NULL;
-	gchar *stage2_checksum = NULL;
 	gchar *treeinfo_filename = NULL;
-	GKeyFile *key_file_treeinfo = NULL;
 	gint version_tmp;
 	ZifState *state_local;
 	ZifReleasePrivate *priv = release->priv;
 
 	/* 1. get treeinfo
-	 * 2. get kernel
-	 * 3. get initrd
+	 * 2. parse it
 	 */
-	zif_state_set_number_steps (state, 3);
+	zif_state_set_number_steps (state, 2);
 
 	/* get .treeinfo from a mirror in the installmirrorlist */
 	treeinfo_filename = g_build_filename (priv->cache_dir, ".treeinfo", NULL);
@@ -516,7 +534,10 @@ zif_release_get_kernel_and_initrd (ZifRelease *release, guint version, ZifState 
 		state_local = zif_state_get_child (state);
 		ret = zif_download_location (priv->download, ".treeinfo", treeinfo_filename, state_local, &error_local);
 		if (!ret) {
-			g_set_error (error, ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED, "failed to download treeinfo: %s", error_local->message);
+			g_set_error (error,
+				     ZIF_RELEASE_ERROR,
+				     ZIF_RELEASE_ERROR_FAILED,
+				     "failed to download treeinfo: %s", error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
@@ -528,17 +549,20 @@ zif_release_get_kernel_and_initrd (ZifRelease *release, guint version, ZifState 
 		goto out;
 
 	/* parse the treeinfo file */
-	key_file_treeinfo = g_key_file_new ();
-	ret = g_key_file_load_from_file (key_file_treeinfo, treeinfo_filename, 0, &error_local);
+	data->key_file_treeinfo = g_key_file_new ();
+	ret = g_key_file_load_from_file (data->key_file_treeinfo, treeinfo_filename, 0, &error_local);
 	if (!ret) {
-		g_set_error (error, ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED, "failed to open treeinfo: %s", error_local->message);
+		g_set_error (error,
+			     ZIF_RELEASE_ERROR,
+			     ZIF_RELEASE_ERROR_FAILED,
+			     "failed to open treeinfo: %s", error_local->message);
 		g_error_free (error_local);
 		goto out;
 	}
 
 	/* verify the version is sane */
-	version_tmp = g_key_file_get_integer (key_file_treeinfo, "general", "version", NULL);
-	if (version_tmp != (gint) version) {
+	version_tmp = g_key_file_get_integer (data->key_file_treeinfo, "general", "version", NULL);
+	if (version_tmp != (gint) data->version) {
 		g_set_error_literal (error, ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED, "treeinfo release differs from wanted release");
 		goto out;
 	}
@@ -550,125 +574,186 @@ zif_release_get_kernel_and_initrd (ZifRelease *release, guint version, ZifState 
 		g_set_error_literal (error, ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED, "failed to get basearch");
 		goto out;
 	}
-	images_section = g_strdup_printf ("images-%s", basearch);
-
-	/* download the kernel, initrd and stage2 */
-	kernel = g_key_file_get_string (key_file_treeinfo, images_section, "kernel", NULL);
-	if (kernel == NULL) {
-		g_set_error_literal (error, ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED, "failed to get kernel section");
-		goto out;
-	}
-	initrd = g_key_file_get_string (key_file_treeinfo, images_section, "initrd", NULL);
-	if (initrd == NULL) {
-		g_set_error_literal (error, ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED, "failed to get initrd section");
-		goto out;
-	}
-	stage2 = g_key_file_get_string (key_file_treeinfo, "stage2", "mainimage", NULL);
-	if (stage2 == NULL) {
-		g_set_error_literal (error, ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED, "failed to get stage2 section");
-		goto out;
-	}
-	kernel_checksum = g_key_file_get_string (key_file_treeinfo, "checksums", kernel, NULL);
-	initrd_checksum = g_key_file_get_string (key_file_treeinfo, "checksums", initrd, NULL);
-	stage2_checksum = g_key_file_get_string (key_file_treeinfo, "checksums", stage2, NULL);
-
-	/* does kernel already exist */
-	kernel_filename = g_build_filename (priv->boot_dir, "vmlinuz", NULL);
-	ret = g_file_test (kernel_filename, G_FILE_TEST_EXISTS);
-
-	/* check the checksum matches */
-	if (ret) {
-		ret = pk_release_checksum_matches_file (kernel_filename, kernel_checksum+7, &error_local);
-		if (!ret) {
-			g_debug ("failed kernel checksum: %s", error_local->message);
-			/* not fatal */
-			g_clear_error (&error_local);
-			g_unlink (kernel_filename);
-		} else {
-			g_debug ("%s already exists and is correct", kernel_filename);
-		}
-	}
-
-	/* download kernel */
-	if (!ret) {
-		state_local = zif_state_get_child (state);
-		ret = zif_download_location_full (priv->download, kernel, kernel_filename,
-						  0, "text/plain",
-						  G_CHECKSUM_SHA256, kernel_checksum+7,
-						  state_local, &error_local);
-		if (!ret) {
-			g_set_error (error, ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED, "failed to download kernel: %s", error_local->message);
-			g_error_free (error_local);
-			goto out;
-		}
-	}
-
-	/* done */
-	ret = zif_state_done (state, error);
-	if (!ret)
-		goto out;
-
-	/* check downloaded kernel matches its checksum */
-	ret = pk_release_checksum_matches_file (kernel_filename, kernel_checksum+7, &error_local);
-	if (!ret) {
-		g_set_error (error, ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED, "failed kernel checksum: %s", error_local->message);
-		g_error_free (error_local);
-		goto out;
-	}
-
-	/* does initrd already exist */
-	initrd_filename = g_build_filename (priv->boot_dir, "initrd.img", NULL);
-	ret = g_file_test (initrd_filename, G_FILE_TEST_EXISTS);
-
-	/* check the checksum matches */
-	if (ret) {
-		ret = pk_release_checksum_matches_file (initrd_filename, initrd_checksum+7, &error_local);
-		if (!ret) {
-			g_debug ("failed initrd checksum: %s", error_local->message);
-			/* not fatal */
-			g_clear_error (&error_local);
-			g_unlink (initrd_filename);
-		} else {
-			g_debug ("%s already exists and is correct", initrd_filename);
-		}
-	}
-
-	/* download initrd */
-	if (!ret) {
-		state_local = zif_state_get_child (state);
-		ret = zif_download_location_full (priv->download, initrd,
-						  initrd_filename,
-						  0, "application/x-extension-img",
-						  G_CHECKSUM_SHA256, initrd_checksum+7,
-						  state_local, &error_local);
-		if (!ret) {
-			g_set_error (error, ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED, "failed to download kernel: %s", error_local->message);
-			g_error_free (error_local);
-			goto out;
-		}
-	}
+	data->images_section = g_strdup_printf ("images-%s", basearch);
 
 	/* done */
 	ret = zif_state_done (state, error);
 	if (!ret)
 		goto out;
 out:
-	g_free (stage2);
-	g_free (stage2_checksum);
-	g_free (kernel);
-	g_free (kernel_checksum);
-	g_free (kernel_filename);
-	g_free (initrd);
-	g_free (initrd_checksum);
-	g_free (initrd_filename);
-	g_free (images_section);
 	g_free (basearch);
 	g_free (treeinfo_filename);
 	if (config != NULL)
 		g_object_unref (config);
-	if (key_file_treeinfo != NULL)
-		g_key_file_free (key_file_treeinfo);
 	g_free (treeinfo_uri);
+	return ret;
+}
+
+/**
+ * zif_release_get_kernel:
+ **/
+static gboolean
+zif_release_get_kernel (ZifRelease *release, ZifReleaseUpgradeData *data, ZifState *state, GError **error)
+{
+	gboolean ret;
+	GError *error_local = NULL;
+	gchar *kernel = NULL;
+	gchar *checksum = NULL;
+	gchar *filename = NULL;
+	ZifReleasePrivate *priv = release->priv;
+
+	/* get data */
+	kernel = g_key_file_get_string (data->key_file_treeinfo, data->images_section, "kernel", NULL);
+	if (kernel == NULL) {
+		g_set_error_literal (error, ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED, "failed to get kernel section");
+		goto out;
+	}
+	checksum = g_key_file_get_string (data->key_file_treeinfo, "checksums", kernel, NULL);
+
+	/* check the checksum matches */
+	filename = g_build_filename (priv->boot_dir, "vmlinuz", NULL);
+	ret = pk_release_checksum_matches_file (filename, checksum+7, state, &error_local);
+	if (!ret) {
+		g_debug ("failed kernel checksum: %s", error_local->message);
+		/* not fatal */
+		g_clear_error (&error_local);
+		g_unlink (filename);
+	} else {
+		g_debug ("%s already exists and is correct", filename);
+	}
+
+	/* download kernel */
+	if (!ret) {
+		ret = zif_download_location_full (priv->download, kernel, filename,
+						  0, "text/plain",
+						  G_CHECKSUM_SHA256, checksum+7,
+						  state, &error_local);
+		if (!ret) {
+			g_set_error (error,
+				     ZIF_RELEASE_ERROR,
+				     ZIF_RELEASE_ERROR_FAILED,
+				     "failed to download kernel: %s",
+				     error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+	}
+out:
+	g_free (kernel);
+	g_free (checksum);
+	g_free (filename);
+	return ret;
+}
+
+/**
+ * zif_release_get_initrd:
+ **/
+static gboolean
+zif_release_get_initrd (ZifRelease *release, ZifReleaseUpgradeData *data, ZifState *state, GError **error)
+{
+	gboolean ret;
+	GError *error_local = NULL;
+	gchar *initrd = NULL;
+	gchar *checksum = NULL;
+	gchar *filename = NULL;
+	ZifReleasePrivate *priv = release->priv;
+
+	/* get data */
+	initrd = g_key_file_get_string (data->key_file_treeinfo, data->images_section, "initrd", NULL);
+	if (initrd == NULL) {
+		g_set_error_literal (error, ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED, "failed to get initrd section");
+		goto out;
+	}
+	checksum = g_key_file_get_string (data->key_file_treeinfo, "checksums", initrd, NULL);
+
+	/* check the checksum matches */
+	filename = g_build_filename (priv->boot_dir, "initrd.img", NULL);
+	ret = pk_release_checksum_matches_file (filename, checksum+7, state, &error_local);
+	if (!ret) {
+		g_debug ("failed initrd checksum: %s", error_local->message);
+		/* not fatal */
+		g_clear_error (&error_local);
+		g_unlink (filename);
+	} else {
+		g_debug ("%s already exists and is correct", filename);
+	}
+
+	/* download initrd */
+	if (!ret) {
+		ret = zif_download_location_full (priv->download, initrd,
+						  filename,
+						  0, "text/plain",
+						  G_CHECKSUM_SHA256, checksum+7,
+						  state, &error_local);
+		if (!ret) {
+			g_set_error (error,
+				     ZIF_RELEASE_ERROR,
+				     ZIF_RELEASE_ERROR_FAILED,
+				     "failed to download initrd: %s", error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+	}
+out:
+	g_free (initrd);
+	g_free (checksum);
+	g_free (filename);
+	return ret;
+}
+
+/**
+ * zif_release_get_stage2:
+ **/
+static gboolean
+zif_release_get_stage2 (ZifRelease *release, ZifReleaseUpgradeData *data, ZifState *state, GError **error)
+{
+	gboolean ret = FALSE;
+	GError *error_local = NULL;
+	gchar *stage2 = NULL;
+	gchar *checksum = NULL;
+	gchar *filename = NULL;
+	ZifReleasePrivate *priv = release->priv;
+
+	/* download the kernel, initrd and stage2 */
+	stage2 = g_key_file_get_string (data->key_file_treeinfo, "stage2", "mainimage", NULL);
+	if (stage2 == NULL) {
+		g_set_error_literal (error, ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED, "failed to get stage2 section");
+		goto out;
+	}
+	checksum = g_key_file_get_string (data->key_file_treeinfo, "checksums", stage2, NULL);
+
+	/* check the checksum matches */
+	filename = g_build_filename (priv->boot_dir, "install.img", NULL);
+	ret = pk_release_checksum_matches_file (filename, checksum+7, state, &error_local);
+	if (!ret) {
+		g_debug ("failed stage2 checksum: %s", error_local->message);
+		/* not fatal */
+		g_clear_error (&error_local);
+		g_unlink (filename);
+	} else {
+		g_debug ("%s already exists and is correct", filename);
+	}
+
+	/* download stage2 */
+	if (!ret) {
+		ret = zif_download_location_full (priv->download, stage2,
+						  filename,
+						  0, "text/plain",
+						  G_CHECKSUM_SHA256, checksum+7,
+						  state, &error_local);
+		if (!ret) {
+			g_set_error (error,
+				     ZIF_RELEASE_ERROR,
+				     ZIF_RELEASE_ERROR_FAILED,
+				     "failed to download stage2: %s", error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+	}
+out:
+	g_free (filename);
+	g_free (stage2);
+	g_free (checksum);
 	return ret;
 }
 
@@ -837,23 +922,11 @@ out:
  * zif_release_get_package_data:
  **/
 static gboolean
-zif_release_get_package_data (ZifRelease *release, ZifUpgrade *upgrade, ZifState *state, GError **error)
+zif_release_get_package_data (ZifRelease *release, ZifReleaseUpgradeData *data, ZifState *state, GError **error)
 {
 	//FIXME
 	g_set_error_literal (error, ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED,
 			     "getting the package data is not supported yet");
-	return FALSE;
-}
-
-/**
- * zif_release_get_stage2:
- **/
-static gboolean
-zif_release_get_stage2 (ZifRelease *release, ZifUpgrade *upgrade, ZifState *state, GError **error)
-{
-	//FIXME
-	g_set_error_literal (error, ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED,
-			     "getting the stage2 image is not supported yet");
 	return FALSE;
 }
 
@@ -876,11 +949,11 @@ gboolean
 zif_release_upgrade_version (ZifRelease *release, guint version, ZifReleaseUpgradeKind upgrade_kind, ZifState *state, GError **error)
 {
 	gboolean ret = FALSE;
-	ZifUpgrade *upgrade = NULL;
 	ZifState *state_local;
 	GFile *boot_file = NULL;
 	GError *error_local = NULL;
 	ZifReleasePrivate *priv;
+	ZifReleaseUpgradeData *data = NULL;
 	ZifMd *md_mirrorlist = NULL;
 	gchar *installmirrorlist_filename = NULL;
 
@@ -890,6 +963,11 @@ zif_release_upgrade_version (ZifRelease *release, guint version, ZifReleaseUpgra
 
 	/* get private */
 	priv = release->priv;
+
+	/* junk data for the entire method */
+	data = g_new0 (ZifReleaseUpgradeData, 1);
+	data->version = version;
+	data->upgrade_kind = upgrade_kind;
 
 	/* nothing set */
 	if (priv->boot_dir == NULL) {
@@ -915,20 +993,24 @@ zif_release_upgrade_version (ZifRelease *release, guint version, ZifReleaseUpgra
 	/* 1. setup
 	 * 2. get installmirrorlist
 	 * 3. parse installmirrorlist
-	 * 4. download kernel and initrd
-	 * 5. install kernel
+	 * 4. download treeinfo
+	 * 5. download kernel
+	 * 6. download initrd
+	 * (6) download stage2
+	 * (6) download packages
+	 * 7. install kernel
 	 */
 	if (upgrade_kind == ZIF_RELEASE_UPGRADE_KIND_MINIMAL)
-		zif_state_set_number_steps (state, 5);
-	else if (upgrade_kind == ZIF_RELEASE_UPGRADE_KIND_DEFAULT)
-		zif_state_set_number_steps (state, 6);
-	else if (upgrade_kind == ZIF_RELEASE_UPGRADE_KIND_COMPLETE)
 		zif_state_set_number_steps (state, 7);
+	else if (upgrade_kind == ZIF_RELEASE_UPGRADE_KIND_DEFAULT)
+		zif_state_set_number_steps (state, 8);
+	else if (upgrade_kind == ZIF_RELEASE_UPGRADE_KIND_COMPLETE)
+		zif_state_set_number_steps (state, 9);
 
 	/* get the correct object */
 	state_local = zif_state_get_child (state);
-	upgrade = zif_release_get_upgrade_for_version (release, version, state_local, error);
-	if (upgrade == NULL)
+	data->upgrade = zif_release_get_upgrade_for_version (release, version, state_local, error);
+	if (data->upgrade == NULL)
 		goto out;
 
 	/* check size */
@@ -950,7 +1032,7 @@ zif_release_upgrade_version (ZifRelease *release, guint version, ZifReleaseUpgra
 	state_local = zif_state_get_child (state);
 	installmirrorlist_filename = g_build_filename (priv->cache_dir, "installmirrorlist", NULL);
 	ret = zif_download_file (priv->download,
-				 zif_upgrade_get_install_mirrorlist (upgrade),
+				 zif_upgrade_get_install_mirrorlist (data->upgrade),
 				 installmirrorlist_filename, state_local, &error_local);
 	if (!ret) {
 		g_set_error (error,
@@ -986,9 +1068,31 @@ zif_release_upgrade_version (ZifRelease *release, guint version, ZifReleaseUpgra
 	if (!ret)
 		goto out;
 
-	/* gets treeinfo, kernel and initrd */
+	/* gets .treeinfo */
 	state_local = zif_state_get_child (state);
-	ret = zif_release_get_kernel_and_initrd (release, version, state_local, error);
+	ret = zif_release_get_treeinfo (release, data, state_local, error);
+	if (!ret)
+		goto out;
+
+	/* done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* gets .treeinfo */
+	state_local = zif_state_get_child (state);
+	ret = zif_release_get_kernel (release, data, state_local, error);
+	if (!ret)
+		goto out;
+
+	/* done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* gets .treeinfo */
+	state_local = zif_state_get_child (state);
+	ret = zif_release_get_initrd (release, data, state_local, error);
 	if (!ret)
 		goto out;
 
@@ -1003,7 +1107,7 @@ zif_release_upgrade_version (ZifRelease *release, guint version, ZifReleaseUpgra
 
 		/* gets stage2 */
 		state_local = zif_state_get_child (state);
-		ret = zif_release_get_stage2 (release, upgrade, state_local, error);
+		ret = zif_release_get_stage2 (release, data, state_local, error);
 		if (!ret)
 			goto out;
 	}
@@ -1018,7 +1122,7 @@ zif_release_upgrade_version (ZifRelease *release, guint version, ZifReleaseUpgra
 
 		/* gets stage2 */
 		state_local = zif_state_get_child (state);
-		ret = zif_release_get_package_data (release, upgrade, state_local, error);
+		ret = zif_release_get_package_data (release, data, state_local, error);
 		if (!ret)
 			goto out;
 	}
@@ -1029,7 +1133,7 @@ zif_release_upgrade_version (ZifRelease *release, guint version, ZifReleaseUpgra
 		goto out;
 
 	/* add the new kernel */
-	ret = zif_release_add_kernel (release, upgrade, error);
+	ret = zif_release_add_kernel (release, data, error);
 	if (!ret)
 		goto out;
 
@@ -1051,11 +1155,18 @@ zif_release_upgrade_version (ZifRelease *release, guint version, ZifReleaseUpgra
 	/* success */
 	ret = TRUE;
 out:
+	/* need to zif_download_location_remove_md or a non-singleton ZifDownload */
 	g_free (installmirrorlist_filename);
+	if (data != NULL) {
+		if (data->upgrade != NULL)
+			g_object_unref (data->upgrade);
+		if (data->key_file_treeinfo != NULL)
+			g_key_file_free (data->key_file_treeinfo);
+		g_free (data->images_section);
+		g_free (data);
+	}
 	if (md_mirrorlist != NULL)
 		g_object_unref (md_mirrorlist);
-	if (upgrade != NULL)
-		g_object_unref (upgrade);
 	if (boot_file != NULL)
 		g_object_unref (boot_file);
 	return ret;
