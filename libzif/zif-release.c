@@ -52,6 +52,7 @@ struct _ZifReleasePrivate
 	gboolean		 loaded;
 	ZifMonitor		*monitor;
 	ZifDownload		*download;
+	ZifConfig		*config;
 	GPtrArray		*array;
 	gchar			*cache_dir;
 	gchar			*boot_dir;
@@ -326,10 +327,11 @@ zif_release_add_kernel (ZifRelease *release, ZifReleaseUpgradeData *data, GError
 	GString *cmdline = NULL;
 	GString *args = NULL;
 	gchar *title = NULL;
-	const gchar *arch = "i386"; //FIXME
+	gchar *arch = NULL;
 	ZifReleasePrivate *priv = release->priv;
 
 	/* yaboot (ppc) doesn't support spaces in titles */
+	arch = zif_config_get_string (priv->config, "basearch", NULL);
 	if (g_str_has_prefix (arch, "ppc")) {
 		title = g_strdup ("upgrade");
 	} else {
@@ -387,6 +389,7 @@ zif_release_add_kernel (ZifRelease *release, ZifReleaseUpgradeData *data, GError
 		}
 	}
 out:
+	g_free (arch);
 	g_free (title);
 	if (args != NULL)
 		g_string_free (args, TRUE);
@@ -515,7 +518,6 @@ zif_release_get_treeinfo (ZifRelease *release, ZifReleaseUpgradeData *data, ZifS
 	gboolean ret;
 	GError *error_local = NULL;
 	gchar *treeinfo_uri = NULL;
-	ZifConfig *config = NULL;
 	gchar *basearch = NULL;
 	gchar *treeinfo_filename = NULL;
 	gint version_tmp;
@@ -568,8 +570,7 @@ zif_release_get_treeinfo (ZifRelease *release, ZifReleaseUpgradeData *data, ZifS
 	}
 
 	/* get the correct section */
-	config = zif_config_new ();
-	basearch = zif_config_get_string (config, "basearch", NULL);
+	basearch = zif_config_get_string (priv->config, "basearch", NULL);
 	if (basearch == NULL) {
 		g_set_error_literal (error, ZIF_RELEASE_ERROR, ZIF_RELEASE_ERROR_FAILED, "failed to get basearch");
 		goto out;
@@ -583,8 +584,6 @@ zif_release_get_treeinfo (ZifRelease *release, ZifReleaseUpgradeData *data, ZifS
 out:
 	g_free (basearch);
 	g_free (treeinfo_filename);
-	if (config != NULL)
-		g_object_unref (config);
 	g_free (treeinfo_uri);
 	return ret;
 }
@@ -1257,6 +1256,7 @@ zif_release_finalize (GObject *object)
 	g_signal_handler_disconnect (release->priv->monitor, release->priv->monitor_changed_id);
 	g_object_unref (release->priv->monitor);
 	g_object_unref (release->priv->download);
+	g_object_unref (release->priv->config);
 	g_free (release->priv->cache_dir);
 	g_free (release->priv->boot_dir);
 	g_free (release->priv->uri);
@@ -1285,6 +1285,7 @@ zif_release_init (ZifRelease *release)
 	release->priv->array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	release->priv->download = zif_download_new ();
 	release->priv->monitor = zif_monitor_new ();
+	release->priv->config = zif_config_new ();
 	release->priv->monitor_changed_id =
 		g_signal_connect (release->priv->monitor, "changed",
 				  G_CALLBACK (zif_release_file_monitor_cb), release);
