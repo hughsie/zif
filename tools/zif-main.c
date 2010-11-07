@@ -2176,7 +2176,7 @@ main (int argc, char *argv[])
 
 		/* do the upgrade */
 		ret = zif_release_upgrade_version (release, version,
-						   ZIF_RELEASE_UPGRADE_KIND_MINIMAL,
+						   ZIF_RELEASE_UPGRADE_KIND_DEFAULT,
 						   state, &error);
 		if (!ret) {
 			g_warning ("FAILED: %s", error->message);
