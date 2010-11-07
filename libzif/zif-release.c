@@ -1274,7 +1274,7 @@ zif_release_upgrade_version (ZifRelease *release, guint version, ZifReleaseUpgra
 	/* success */
 	ret = TRUE;
 out:
-	/* need to zif_download_location_remove_md or a non-singleton ZifDownload */
+	zif_download_location_clear (priv->download);
 	g_free (installmirrorlist_filename);
 	if (data != NULL) {
 		if (data->upgrade != NULL)

@@ -816,6 +816,21 @@ zif_download_location_get_size (ZifDownload *download)
 }
 
 /**
+ * zif_download_location_clear:
+ * @download: the #ZifDownload object
+ *
+ * Clears the list of active mirrors.
+ *
+ * Since: 0.1.3
+ **/
+void
+zif_download_location_clear (ZifDownload *download)
+{
+	g_return_if_fail (ZIF_IS_DOWNLOAD (download));
+	g_ptr_array_set_size (download->priv->array, 0);
+}
+
+/**
  * zif_download_finalize:
  **/
 static void
