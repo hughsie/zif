@@ -703,7 +703,6 @@ main (int argc, char *argv[])
 //	const gchar *id;
 	ZifRepos *repos = NULL;
 	GPtrArray *store_array = NULL;
-	ZifDownload *download = NULL;
 	ZifConfig *config = NULL;
 	GPtrArray *packages;
 	ZifStoreLocal *store_local = NULL;
@@ -821,6 +820,12 @@ main (int argc, char *argv[])
 		g_error_free (error);
 		goto out;
 	}
+	ret = zif_config_set_string (download, "http_proxy", http_proxy, &error);
+	if (!ret) {
+		g_error ("failed to set proxy: %s", error->message);
+		g_error_free (error);
+		goto out;
+	}
 
 	/* are we allowed to access the repos */
 	if (!offline)
@@ -853,15 +858,6 @@ main (int argc, char *argv[])
 	/* could not lock, even after retrying */
 	if (!ret)
 		goto out;
-
-	/* ZifDownload */
-	download = zif_download_new ();
-	ret = zif_download_set_proxy (download, http_proxy, &error);
-	if (!ret) {
-		g_error ("failed to set proxy: %s", error->message);
-		g_error_free (error);
-		goto out;
-	}
 
 	/* ZifStoreLocal */
 	store_local = zif_store_local_new ();
@@ -2200,8 +2196,6 @@ main (int argc, char *argv[])
 out:
 	if (store_array != NULL)
 		g_ptr_array_unref (store_array);
-	if (download != NULL)
-		g_object_unref (download);
 	if (store_local != NULL)
 		g_object_unref (store_local);
 	if (repos != NULL)

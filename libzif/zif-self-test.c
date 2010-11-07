@@ -114,7 +114,6 @@ zif_release_func (void)
 
 	state = zif_state_new ();
 	download = zif_download_new ();
-	zif_download_set_proxy (download, NULL, NULL);
 	release = zif_release_new ();
 	zif_release_set_cache_dir (release, "/tmp");
 	zif_release_set_boot_dir (release, "/tmp");
@@ -317,7 +316,6 @@ zif_download_func (void)
 
 	download = zif_download_new ();
 	g_assert (download != NULL);
-	g_assert (zif_download_set_proxy (download, NULL, NULL));
 	state = zif_state_new ();
 	g_assert (state != NULL);
 
@@ -1874,7 +1872,6 @@ zif_store_remote_func (void)
 	g_assert (zif_config_set_boolean (config, "network", TRUE, NULL));
 	download = zif_download_new ();
 	g_assert (download != NULL);
-	g_assert (zif_download_set_proxy (download, NULL, NULL));
 
 	zif_state_reset (state);
 	in_array[0] = "/usr/bin/gnome-power-manager";
