@@ -57,8 +57,6 @@ struct _ZifDownloadPrivate
 	ZifDownloadPolicy	 policy;
 };
 
-static gpointer zif_download_object = NULL;
-
 G_DEFINE_TYPE (ZifDownload, zif_download, G_TYPE_OBJECT)
 
 /**
@@ -878,12 +876,8 @@ zif_download_init (ZifDownload *download)
 ZifDownload *
 zif_download_new (void)
 {
-	if (zif_download_object != NULL) {
-		g_object_ref (zif_download_object);
-	} else {
-		zif_download_object = g_object_new (ZIF_TYPE_DOWNLOAD, NULL);
-		g_object_add_weak_pointer (zif_download_object, &zif_download_object);
-	}
-	return ZIF_DOWNLOAD (zif_download_object);
+	ZifDownload *download;
+	download = g_object_new (ZIF_TYPE_DOWNLOAD, NULL);
+	return ZIF_DOWNLOAD (download);
 }
 
