@@ -339,6 +339,41 @@ out:
 }
 
 /**
+ * zif_release_remove_kernel:
+ **/
+static gboolean
+zif_release_remove_kernel (ZifRelease *release, ZifReleaseUpgradeData *data, GError **error)
+{
+	gboolean ret;
+	GError *error_local = NULL;
+	gchar *cmdline = NULL;
+	ZifReleasePrivate *priv = release->priv;
+
+	/* we're not running as root */
+	cmdline = g_strdup_printf ("/sbin/grubby --remove-kernel=%s/vmlinuz", priv->boot_dir);
+	if (!g_str_has_prefix (priv->boot_dir, "/boot")) {
+		g_debug ("not running grubby as not installing root, would have run '%s'", cmdline);
+		ret = TRUE;
+		goto out;
+	}
+
+	/* run the command */
+	g_debug ("running command %s", cmdline);
+	ret = g_spawn_command_line_sync (cmdline, NULL, NULL, NULL, &error_local);
+	if (!ret) {
+		g_set_error (error,
+			     ZIF_RELEASE_ERROR,
+			     ZIF_RELEASE_ERROR_SPAWN_FAILED,
+			     "failed to add kernel: %s", error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+out:
+	g_free (cmdline);
+	return ret;
+}
+
+/**
  * zif_release_add_kernel:
  **/
 static gboolean
@@ -431,7 +466,7 @@ static gboolean
 zif_release_make_kernel_default_once (ZifRelease *release, GError **error)
 {
 	gboolean ret = TRUE;
-	const gchar *cmdline = "/bin/echo 'savedefault --default=0 --once' | /sbin/grub >/dev/null";
+	gchar *cmdline = NULL;
 	GError *error_local = NULL;
 	ZifReleasePrivate *priv = release->priv;
 
@@ -441,7 +476,13 @@ zif_release_make_kernel_default_once (ZifRelease *release, GError **error)
 		goto out;
 	}
 
-	/* run the command */
+	/* We want to run something like:
+	 *
+	 * /bin/echo 'savedefault --default=0 --once' | /sbin/grub > /dev/null
+	 *
+	 * ...but this won't work in C and is a bodge.
+	 * Ideally we want to add --once to the list of grubby commands. */
+	cmdline = g_strdup_printf ("/sbin/grubby --set-default=%s/vmlinuz", priv->boot_dir);
 	g_debug ("running command %s", cmdline);
 	ret = g_spawn_command_line_sync (cmdline, NULL, NULL, NULL, &error_local);
 	if (!ret) {
@@ -454,6 +495,7 @@ zif_release_make_kernel_default_once (ZifRelease *release, GError **error)
 		goto out;
 	}
 out:
+	g_free (cmdline);
 	return ret;
 }
 
@@ -1185,6 +1227,11 @@ zif_release_upgrade_version (ZifRelease *release, guint version, ZifReleaseUpgra
 
 	/* done */
 	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* remove any previous upgrade kernels */
+	ret = zif_release_remove_kernel (release, data, error);
 	if (!ret)
 		goto out;
 
