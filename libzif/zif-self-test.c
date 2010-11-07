@@ -134,10 +134,10 @@ zif_release_func (void)
 	g_assert_cmpstr (zif_upgrade_get_baseurl (upgrade), ==, NULL);
 	g_assert_cmpstr (zif_upgrade_get_mirrorlist (upgrade), ==,
 			"http://people.freedesktop.org/~hughsient/fedora/preupgrade/mirrorlist"
-			"?repo=fedora-15&arch=$basearch");
+			"?repo=fedora-15&arch=i386");
 	g_assert_cmpstr (zif_upgrade_get_install_mirrorlist (upgrade), ==,
 			 "http://people.freedesktop.org/~hughsient/fedora/preupgrade/installmirrorlist"
-			 "?path=pub/fedora/linux/releases/15/Fedora/$basearch/os");
+			 "?path=pub/fedora/linux/releases/15/Fedora/i386/os");
 	g_assert_cmpint (zif_upgrade_get_version (upgrade), ==, 15);
 	g_assert (zif_upgrade_get_enabled (upgrade));
 	g_assert (zif_upgrade_get_stable (upgrade));
