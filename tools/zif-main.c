@@ -820,7 +820,7 @@ main (int argc, char *argv[])
 		g_error_free (error);
 		goto out;
 	}
-	ret = zif_config_set_string (download, "http_proxy", http_proxy, &error);
+	ret = zif_config_set_string (config, "http_proxy", http_proxy, &error);
 	if (!ret) {
 		g_error ("failed to set proxy: %s", error->message);
 		g_error_free (error);
