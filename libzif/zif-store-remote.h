@@ -94,6 +94,8 @@ ZifUpdate	*zif_store_remote_get_update_detail	(ZifStoreRemote		*store,
 gboolean	 zif_store_remote_check			(ZifStoreRemote		*store,
 							 ZifState		*state,
 							 GError			**error);
+void		 zif_store_remote_set_id		(ZifStoreRemote		*store,
+							 const gchar		*id);
 
 G_END_DECLS
 

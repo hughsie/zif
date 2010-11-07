@@ -1613,6 +1613,38 @@ out:
 }
 
 /**
+ * zif_store_remote_set_id:
+ * @state: a #ZifState to use for progress reporting
+ * @id: the repository id, e.g. "fedora"
+ *
+ * Sets the ID for the #ZifStoreRemote
+ *
+ * Since: 0.1.3
+ **/
+void
+zif_store_remote_set_id (ZifStoreRemote *store, const gchar *id)
+{
+	guint i;
+	ZifMd *md;
+
+	g_return_if_fail (ZIF_IS_STORE_REMOTE (store));
+	g_return_if_fail (id != NULL);
+	g_return_if_fail (store->priv->id == NULL);
+
+	/* save */
+	g_debug ("setting store %s", id);
+	store->priv->id = g_strdup (id);
+
+	/* set MD id for each repo type */
+	for (i=1; i<ZIF_MD_KIND_LAST; i++) {
+		md = zif_store_remote_get_md_from_type (store, i);
+		if (md == NULL)
+			continue;
+		zif_md_set_id (md, store->priv->id);
+	}
+}
+
+/**
  * zif_store_remote_set_from_file:
  * @state: a #ZifState to use for progress reporting
  *
@@ -1623,14 +1655,10 @@ zif_store_remote_set_from_file (ZifStoreRemote *store, const gchar *repo_filenam
 				ZifState *state, GError **error)
 {
 	gboolean ret = TRUE;
-	guint i;
 	GError *error_local = NULL;
-	ZifMd *md;
 
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), FALSE);
 	g_return_val_if_fail (repo_filename != NULL, FALSE);
-	g_return_val_if_fail (id != NULL, FALSE);
-	g_return_val_if_fail (store->priv->id == NULL, FALSE);
 	g_return_val_if_fail (!store->priv->loaded, FALSE);
 	g_return_val_if_fail (zif_state_valid (state), FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
@@ -1644,21 +1672,12 @@ zif_store_remote_set_from_file (ZifStoreRemote *store, const gchar *repo_filenam
 	}
 
 	/* save */
-	g_debug ("setting store %s", id);
-	store->priv->id = g_strdup (id);
+	zif_store_remote_set_id (store, id);
 	store->priv->repo_filename = g_strdup (repo_filename);
 	store->priv->directory = g_build_filename (store->priv->cache_dir, store->priv->id, NULL);
 
 	/* repomd location */
 	store->priv->repomd_filename = g_build_filename (store->priv->cache_dir, store->priv->id, "repomd.xml", NULL);
-
-	/* set MD id for each repo type */
-	for (i=1; i<ZIF_MD_KIND_LAST; i++) {
-		md = zif_store_remote_get_md_from_type (store, i);
-		if (md == NULL)
-			continue;
-		zif_md_set_id (md, store->priv->id);
-	}
 
 	/* setup watch */
 	ret = zif_monitor_add_watch (store->priv->monitor, repo_filename, &error_local);
