@@ -1658,6 +1658,22 @@ zif_store_local_func (void)
 	g_assert_no_error (error);
 	g_assert (array != NULL);
 	g_assert_cmpint (array->len, ==, 1);
+	g_ptr_array_unref (array);
+
+	zif_state_reset (state);
+	to_array[0] = "new-test";
+	array = zif_store_what_conflicts (ZIF_STORE (store), (gchar**)to_array, state, &error);
+	g_assert_no_error (error);
+	g_assert (array != NULL);
+	g_assert_cmpint (array->len, ==, 1);
+	g_ptr_array_unref (array);
+
+	zif_state_reset (state);
+	to_array[0] = "obsolete-package";
+	array = zif_store_what_obsoletes (ZIF_STORE (store), (gchar**)to_array, state, &error);
+	g_assert_no_error (error);
+	g_assert (array != NULL);
+	g_assert_cmpint (array->len, ==, 1);
 
 	/* get this package */
 	package = g_ptr_array_index (array, 0);

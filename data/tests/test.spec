@@ -7,6 +7,8 @@ Source0: README
 License: GPLv2+
 BuildArch: noarch
 Provides: Test(Interface)
+Obsoletes: obsolete-package < 1.0.0
+Conflicts: new-test == 1.0.0
 
 %description
 This is a test package.
