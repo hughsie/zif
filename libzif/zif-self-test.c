@@ -163,7 +163,54 @@ static void
 zif_transaction_func (void)
 {
 	ZifTransaction *transaction;
+	ZifPackage *package;
+	ZifPackage *package2;
+	ZifState *state;
+	GError *error = NULL;
+	gboolean ret;
+
+	state = zif_state_new ();
 	transaction = zif_transaction_new ();
+
+	/* create dummy package for testing */
+	package = zif_package_new ();
+	ret = zif_package_set_id (package, "test;0.0.1;noarch;fedora", &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	/* add to install list */
+	ret = zif_transaction_add_install (transaction, package, &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	/* add again, should fail */
+	package2 = zif_package_new ();
+	ret = zif_package_set_id (package2, "test;0.0.1;noarch;fedora", NULL);
+	ret = zif_transaction_add_install (transaction, package2, &error);
+	g_assert_error (error, ZIF_TRANSACTION_ERROR, ZIF_TRANSACTION_ERROR_FAILED);
+	g_assert (!ret);
+	g_clear_error (&error);
+
+	/* add to remove list */
+	ret = zif_transaction_add_remove (transaction, package, &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	/* add again, should fail */
+	ret = zif_transaction_add_remove (transaction, package2, &error);
+	g_assert_error (error, ZIF_TRANSACTION_ERROR, ZIF_TRANSACTION_ERROR_FAILED);
+	g_assert (!ret);
+	g_clear_error (&error);
+
+	/* resolve */
+	ret = zif_transaction_resolve (transaction, state, &error);
+	g_assert_error (error, ZIF_TRANSACTION_ERROR, ZIF_TRANSACTION_ERROR_FAILED);
+	g_assert (!ret);
+	g_clear_error (&error);
+
+	g_object_unref (package);
+	g_object_unref (package2);
+	g_object_unref (state);
 	g_object_unref (transaction);
 }
 
