@@ -72,7 +72,6 @@ typedef struct {
 } ZifReleaseUpgradeData;
 
 G_DEFINE_TYPE (ZifRelease, zif_release, G_TYPE_OBJECT)
-static gpointer zif_release_object = NULL;
 
 /**
  * zif_release_error_quark:
@@ -1541,12 +1540,8 @@ zif_release_init (ZifRelease *release)
 ZifRelease *
 zif_release_new (void)
 {
-	if (zif_release_object != NULL) {
-		g_object_ref (zif_release_object);
-	} else {
-		zif_release_object = g_object_new (ZIF_TYPE_RELEASE, NULL);
-		g_object_add_weak_pointer (zif_release_object, &zif_release_object);
-	}
-	return ZIF_RELEASE (zif_release_object);
+	ZifRelease *release;
+	release = g_object_new (ZIF_TYPE_RELEASE, NULL);
+	return ZIF_RELEASE (release);
 }
 
