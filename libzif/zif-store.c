@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*-
  *
- * Copyright (C) 2008 Richard Hughes <richard@hughsie.com>
+ * Copyright (C) 2008-2010 Richard Hughes <richard@hughsie.com>
  *
  * Licensed under the GNU General Public License Version 2
  *
@@ -369,13 +369,46 @@ zif_store_what_provides (ZifStore *store, gchar **search, ZifState *state, GErro
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* no support */
-	if (klass->search_name == NULL) {
+	if (klass->what_provides == NULL) {
 		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_NO_SUPPORT,
 				     "operation cannot be performed on this store");
 		return NULL;
 	}
 
 	return klass->what_provides (store, search, state, error);
+}
+
+/**
+ * zif_store_what_obsoletes:
+ * @store: the #ZifStore object
+ * @search: the search term, e.g. "gstreamer(codec-mp3)"
+ * @state: a #ZifState to use for progress reporting
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Find packages that obsolete a specific string.
+ *
+ * Return value: an array of #ZifPackage's
+ *
+ * Since: 0.1.3
+ **/
+GPtrArray *
+zif_store_what_obsoletes (ZifStore *store, gchar **search, ZifState *state, GError **error)
+{
+	ZifStoreClass *klass = ZIF_STORE_GET_CLASS (store);
+
+	g_return_val_if_fail (ZIF_IS_STORE (store), NULL);
+	g_return_val_if_fail (search != NULL, NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+	/* no support */
+	if (klass->what_obsoletes == NULL) {
+		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_NO_SUPPORT,
+				     "operation cannot be performed on this store");
+		return NULL;
+	}
+
+	return klass->what_obsoletes (store, search, state, error);
 }
 
 /**

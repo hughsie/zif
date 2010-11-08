@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*-
  *
- * Copyright (C) 2008 Richard Hughes <richard@hughsie.com>
+ * Copyright (C) 2008-2010 Richard Hughes <richard@hughsie.com>
  *
  * Licensed under the GNU General Public License Version 2
  *
@@ -60,6 +60,7 @@ struct _ZifPackagePrivate
 	GPtrArray		*files;
 	GPtrArray		*requires;
 	GPtrArray		*provides;
+	GPtrArray		*obsoletes;
 	gboolean		 installed;
 };
 
@@ -442,6 +443,16 @@ zif_package_print (ZifPackage *package)
 	if (package->priv->provides != NULL) {
 		g_print ("provides:\n");
 		array = package->priv->provides;
+		for (i=0; i<array->len; i++) {
+			depend = g_ptr_array_index (array, i);
+			text = zif_depend_to_string (depend);
+			g_print ("\t%s\n", text);
+			g_free (text);
+		}
+	}
+	if (package->priv->obsoletes != NULL) {
+		g_print ("obsoletes:\n");
+		array = package->priv->obsoletes;
 		for (i=0; i<array->len; i++) {
 			depend = g_ptr_array_index (array, i);
 			text = zif_depend_to_string (depend);
@@ -1169,6 +1180,39 @@ zif_package_get_provides (ZifPackage *package, ZifState *state, GError **error)
 }
 
 /**
+ * zif_package_get_obsoletes:
+ * @package: the #ZifPackage object
+ * @state: a #ZifState to use for progress reporting
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Get all the package obsoletes.
+ *
+ * Return value: the reference counted #GPtrArray, use g_ptr_array_unref() when done
+ *
+ * Since: 0.1.3
+ **/
+GPtrArray *
+zif_package_get_obsoletes (ZifPackage *package, ZifState *state, GError **error)
+{
+	gboolean ret;
+
+	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
+	g_return_val_if_fail (package->priv->package_id_split != NULL, NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+	/* not exists */
+	if (package->priv->obsoletes == NULL) {
+		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_OBSOLETES, state, error);
+		if (!ret)
+			return NULL;
+	}
+
+	/* return refcounted */
+	return g_ptr_array_ref (package->priv->obsoletes);
+}
+
+/**
  * zif_package_set_time_file:
  * @package: the #ZifPackage object
  * @time_file: the unix time the file was created
@@ -1456,6 +1500,25 @@ zif_package_set_provides (ZifPackage *package, GPtrArray *provides)
 }
 
 /**
+ * zif_package_set_obsoletes:
+ * @package: the #ZifPackage object
+ * @obsoletes: the package obsoletes
+ *
+ * Sets the package obsoletes.
+ *
+ * Since: 0.1.3
+ **/
+void
+zif_package_set_obsoletes (ZifPackage *package, GPtrArray *obsoletes)
+{
+	g_return_if_fail (ZIF_IS_PACKAGE (package));
+	g_return_if_fail (obsoletes != NULL);
+	g_return_if_fail (package->priv->obsoletes == NULL);
+
+	package->priv->obsoletes = g_ptr_array_ref (obsoletes);
+}
+
+/**
  * zif_package_finalize:
  **/
 static void
@@ -1487,6 +1550,8 @@ zif_package_finalize (GObject *object)
 		g_ptr_array_unref (package->priv->requires);
 	if (package->priv->provides != NULL)
 		g_ptr_array_unref (package->priv->provides);
+	if (package->priv->obsoletes != NULL)
+		g_ptr_array_unref (package->priv->obsoletes);
 
 	G_OBJECT_CLASS (zif_package_parent_class)->finalize (object);
 }
@@ -1509,20 +1574,6 @@ static void
 zif_package_init (ZifPackage *package)
 {
 	package->priv = ZIF_PACKAGE_GET_PRIVATE (package);
-	package->priv->package_id_split = NULL;
-	package->priv->package_id = NULL;
-	package->priv->summary = NULL;
-	package->priv->description = NULL;
-	package->priv->license = NULL;
-	package->priv->url = NULL;
-	package->priv->category = NULL;
-	package->priv->files = NULL;
-	package->priv->requires = NULL;
-	package->priv->provides = NULL;
-	package->priv->location_href = NULL;
-	package->priv->installed = FALSE;
-	package->priv->group = NULL;
-	package->priv->size = 0;
 }
 
 /**

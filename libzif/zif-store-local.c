@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*-
  *
- * Copyright (C) 2008 Richard Hughes <richard@hughsie.com>
+ * Copyright (C) 2008-2010 Richard Hughes <richard@hughsie.com>
  *
  * Licensed under the GNU General Public License Version 2
  *
@@ -875,6 +875,104 @@ out:
 	return array;
 }
 
+
+/**
+ * zif_store_local_what_obsoletes:
+ **/
+static GPtrArray *
+zif_store_local_what_obsoletes (ZifStore *store, gchar **search, ZifState *state, GError **error)
+{
+	guint i;
+	guint j, k;
+	GPtrArray *array = NULL;
+	ZifPackage *package;
+	GPtrArray *provides;
+	GError *error_local = NULL;
+	gboolean ret;
+	ZifDepend *provide;
+	ZifState *state_local = NULL;
+	ZifState *state_loop = NULL;
+	ZifStoreLocal *local = ZIF_STORE_LOCAL (store);
+
+	g_return_val_if_fail (ZIF_IS_STORE_LOCAL (store), NULL);
+	g_return_val_if_fail (search != NULL, NULL);
+	g_return_val_if_fail (local->priv->prefix != NULL, NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
+
+	/* not locked */
+	ret = zif_lock_is_locked (local->priv->lock, NULL);
+	if (!ret) {
+		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_NOT_LOCKED, "not locked");
+		goto out;
+	}
+
+	/* we have a different number of steps depending if we are loaded or not */
+	if (local->priv->loaded)
+		zif_state_set_number_steps (state, 1);
+	else
+		zif_state_set_number_steps (state, 2);
+
+	/* if not already loaded, load */
+	if (!local->priv->loaded) {
+		state_local = zif_state_get_child (state);
+		ret = zif_store_local_load (store, state_local, &error_local);
+		if (!ret) {
+			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+				     "failed to load package store: %s", error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+
+		/* this section done */
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
+	}
+
+	/* check we have packages */
+	if (local->priv->packages->len == 0) {
+		g_warning ("no packages in sack, so nothing to do!");
+		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_ARRAY_IS_EMPTY,
+				     "no packages in local sack");
+		goto out;
+	}
+
+	/* setup state with the correct number of steps */
+	state_local = zif_state_get_child (state);
+	zif_state_set_number_steps (state_local, local->priv->packages->len);
+
+	/* iterate list */
+	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
+	for (i=0;i<local->priv->packages->len;i++) {
+		package = g_ptr_array_index (local->priv->packages, i);
+		state_loop = zif_state_get_child (state_local);
+		provides = zif_package_get_obsoletes (package, state_loop, NULL);
+		for (j=0; j<provides->len; j++) {
+			const gchar *name;
+			provide = g_ptr_array_index (provides, j);
+			name = zif_depend_get_name (provide);
+			for (k=0; search[k] != NULL; k++) {
+				if (g_strcmp0 (name, search[k]) == 0) {
+					g_ptr_array_add (array, g_object_ref (package));
+					break;
+				}
+			}
+		}
+
+		/* this section done */
+		ret = zif_state_done (state_local, error);
+		if (!ret)
+			goto out;
+	}
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+out:
+	return array;
+}
+
 /**
  * zif_store_local_get_packages:
  **/
@@ -1143,6 +1241,7 @@ zif_store_local_class_init (ZifStoreLocalClass *klass)
 	store_class->search_file = zif_store_local_search_file;
 	store_class->resolve = zif_store_local_resolve;
 	store_class->what_provides = zif_store_local_what_provides;
+	store_class->what_obsoletes = zif_store_local_what_obsoletes;
 	store_class->get_packages = zif_store_local_get_packages;
 	store_class->find_package = zif_store_local_find_package;
 	store_class->get_id = zif_store_local_get_id;

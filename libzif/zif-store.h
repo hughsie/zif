@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*-
  *
- * Copyright (C) 2008 Richard Hughes <richard@hughsie.com>
+ * Copyright (C) 2008-2010 Richard Hughes <richard@hughsie.com>
  *
  * Licensed under the GNU General Public License Version 2
  *
@@ -94,6 +94,10 @@ struct _ZifStoreClass
 						 gchar			**search,
 						 ZifState		*state,
 						 GError			**error);
+	GPtrArray	*(*what_obsoletes)	(ZifStore		*store,
+						 gchar			**search,
+						 ZifState		*state,
+						 GError			**error);
 	GPtrArray	*(*get_packages)	(ZifStore		*store,
 						 ZifState		*state,
 						 GError			**error);
@@ -162,6 +166,10 @@ GPtrArray	*zif_store_resolve		(ZifStore		*store,
 						 ZifState		*state,
 						 GError			**error);
 GPtrArray	*zif_store_what_provides	(ZifStore		*store,
+						 gchar			**search,
+						 ZifState		*state,
+						 GError			**error);
+GPtrArray	*zif_store_what_obsoletes	(ZifStore		*store,
 						 gchar			**search,
 						 ZifState		*state,
 						 GError			**error);

@@ -441,8 +441,11 @@ zif_md_load (ZifMd *md, ZifState *state, GError **error)
 
 	/* no support */
 	if (klass->load == NULL) {
-		g_set_error_literal (error, ZIF_MD_ERROR, ZIF_MD_ERROR_NO_SUPPORT,
-				     "operation cannot be performed on this md");
+		g_set_error (error,
+			     ZIF_MD_ERROR,
+			     ZIF_MD_ERROR_NO_SUPPORT,
+			     "operation cannot be performed on md type %s",
+			     zif_md_kind_to_text (zif_md_get_kind (md)));
 		return FALSE;
 	}
 
@@ -686,8 +689,11 @@ zif_md_unload (ZifMd *md, ZifState *state, GError **error)
 
 	/* no support */
 	if (klass->unload == NULL) {
-		g_set_error_literal (error, ZIF_MD_ERROR, ZIF_MD_ERROR_NO_SUPPORT,
-				     "operation cannot be performed on this md");
+		g_set_error (error,
+			     ZIF_MD_ERROR,
+			     ZIF_MD_ERROR_NO_SUPPORT,
+			     "operation cannot be performed on md type %s",
+			     zif_md_kind_to_text (zif_md_get_kind (md)));
 		return FALSE;
 	}
 
@@ -719,8 +725,11 @@ zif_md_resolve (ZifMd *md, gchar **search, ZifState *state, GError **error)
 
 	/* no support */
 	if (klass->resolve == NULL) {
-		g_set_error_literal (error, ZIF_MD_ERROR, ZIF_MD_ERROR_NO_SUPPORT,
-				     "operation cannot be performed on this md");
+		g_set_error (error,
+			     ZIF_MD_ERROR,
+			     ZIF_MD_ERROR_NO_SUPPORT,
+			     "operation cannot be performed on md type %s",
+			     zif_md_kind_to_text (zif_md_get_kind (md)));
 		goto out;
 	}
 
@@ -756,8 +765,11 @@ zif_md_search_file (ZifMd *md, gchar **search, ZifState *state, GError **error)
 
 	/* no support */
 	if (klass->search_file == NULL) {
-		g_set_error_literal (error, ZIF_MD_ERROR, ZIF_MD_ERROR_NO_SUPPORT,
-				     "operation cannot be performed on this md");
+		g_set_error (error,
+			     ZIF_MD_ERROR,
+			     ZIF_MD_ERROR_NO_SUPPORT,
+			     "operation cannot be performed on md type %s",
+			     zif_md_kind_to_text (zif_md_get_kind (md)));
 		goto out;
 	}
 
@@ -792,8 +804,11 @@ zif_md_search_name (ZifMd *md, gchar **search, ZifState *state, GError **error)
 
 	/* no support */
 	if (klass->search_name == NULL) {
-		g_set_error_literal (error, ZIF_MD_ERROR, ZIF_MD_ERROR_NO_SUPPORT,
-				     "operation cannot be performed on this md");
+		g_set_error (error,
+			     ZIF_MD_ERROR,
+			     ZIF_MD_ERROR_NO_SUPPORT,
+			     "operation cannot be performed on md type %s",
+			     zif_md_kind_to_text (zif_md_get_kind (md)));
 		goto out;
 	}
 
@@ -828,8 +843,11 @@ zif_md_search_details (ZifMd *md, gchar **search, ZifState *state, GError **erro
 
 	/* no support */
 	if (klass->search_details == NULL) {
-		g_set_error_literal (error, ZIF_MD_ERROR, ZIF_MD_ERROR_NO_SUPPORT,
-				     "operation cannot be performed on this md");
+		g_set_error (error,
+			     ZIF_MD_ERROR,
+			     ZIF_MD_ERROR_NO_SUPPORT,
+			     "operation cannot be performed on md type %s",
+			     zif_md_kind_to_text (zif_md_get_kind (md)));
 		goto out;
 	}
 
@@ -864,8 +882,11 @@ zif_md_search_group (ZifMd *md, gchar **search, ZifState *state, GError **error)
 
 	/* no support */
 	if (klass->search_group == NULL) {
-		g_set_error_literal (error, ZIF_MD_ERROR, ZIF_MD_ERROR_NO_SUPPORT,
-				     "operation cannot be performed on this md");
+		g_set_error (error,
+			     ZIF_MD_ERROR,
+			     ZIF_MD_ERROR_NO_SUPPORT,
+			     "operation cannot be performed on md type %s",
+			     zif_md_kind_to_text (zif_md_get_kind (md)));
 		goto out;
 	}
 
@@ -900,8 +921,11 @@ zif_md_search_pkgid (ZifMd *md, gchar **search, ZifState *state, GError **error)
 
 	/* no support */
 	if (klass->search_pkgid == NULL) {
-		g_set_error_literal (error, ZIF_MD_ERROR, ZIF_MD_ERROR_NO_SUPPORT,
-				     "operation cannot be performed on this md");
+		g_set_error (error,
+			     ZIF_MD_ERROR,
+			     ZIF_MD_ERROR_NO_SUPPORT,
+			     "operation cannot be performed on md type %s",
+			     zif_md_kind_to_text (zif_md_get_kind (md)));
 		goto out;
 	}
 
@@ -937,13 +961,56 @@ zif_md_what_provides (ZifMd *md, gchar **search,
 
 	/* no support */
 	if (klass->what_provides == NULL) {
-		g_set_error_literal (error, ZIF_MD_ERROR, ZIF_MD_ERROR_NO_SUPPORT,
-				     "operation cannot be performed on this md");
+		g_set_error (error,
+			     ZIF_MD_ERROR,
+			     ZIF_MD_ERROR_NO_SUPPORT,
+			     "operation cannot be performed on md type %s",
+			     zif_md_kind_to_text (zif_md_get_kind (md)));
 		goto out;
 	}
 
 	/* do subclassed action */
 	array = klass->what_provides (md, search, state, error);
+out:
+	return array;
+}
+
+/**
+ * zif_md_what_obsoletes:
+ * @md: the #ZifMd object
+ * @search: the provide, e.g. "mimehandler(application/ogg)"
+ * @state: a #ZifState to use for progress reporting
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Finds all packages that match the given provide.
+ *
+ * Return value: an array of #ZifPackageRemote's
+ *
+ * Since: 0.1.3
+ **/
+GPtrArray *
+zif_md_what_obsoletes (ZifMd *md, gchar **search,
+		       ZifState *state, GError **error)
+{
+	GPtrArray *array = NULL;
+	ZifMdClass *klass = ZIF_MD_GET_CLASS (md);
+
+	g_return_val_if_fail (ZIF_IS_MD (md), NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+	/* no support */
+	if (klass->what_obsoletes == NULL) {
+		g_set_error (error,
+			     ZIF_MD_ERROR,
+			     ZIF_MD_ERROR_NO_SUPPORT,
+			     "operation cannot be performed on md type %s",
+			     zif_md_kind_to_text (zif_md_get_kind (md)));
+		goto out;
+	}
+
+	/* do subclassed action */
+	array = klass->what_obsoletes (md, search, state, error);
 out:
 	return array;
 }
@@ -973,8 +1040,11 @@ zif_md_find_package (ZifMd *md, const gchar *package_id, ZifState *state, GError
 
 	/* no support */
 	if (klass->find_package == NULL) {
-		g_set_error_literal (error, ZIF_MD_ERROR, ZIF_MD_ERROR_NO_SUPPORT,
-				     "operation cannot be performed on this md");
+		g_set_error (error,
+			     ZIF_MD_ERROR,
+			     ZIF_MD_ERROR_NO_SUPPORT,
+			     "operation cannot be performed on md type %s",
+			     zif_md_kind_to_text (zif_md_get_kind (md)));
 		goto out;
 	}
 
@@ -1009,8 +1079,11 @@ zif_md_get_changelog (ZifMd *md, const gchar *pkgid, ZifState *state, GError **e
 
 	/* no support */
 	if (klass->get_changelog == NULL) {
-		g_set_error_literal (error, ZIF_MD_ERROR, ZIF_MD_ERROR_NO_SUPPORT,
-				     "operation cannot be performed on this md");
+		g_set_error (error,
+			     ZIF_MD_ERROR,
+			     ZIF_MD_ERROR_NO_SUPPORT,
+			     "operation cannot be performed on md type %s",
+			     zif_md_kind_to_text (zif_md_get_kind (md)));
 		goto out;
 	}
 
@@ -1045,8 +1118,11 @@ zif_md_get_files (ZifMd *md, ZifPackage *package, ZifState *state, GError **erro
 
 	/* no support */
 	if (klass->get_files == NULL) {
-		g_set_error_literal (error, ZIF_MD_ERROR, ZIF_MD_ERROR_NO_SUPPORT,
-				     "operation cannot be performed on this md");
+		g_set_error (error,
+			     ZIF_MD_ERROR,
+			     ZIF_MD_ERROR_NO_SUPPORT,
+			     "operation cannot be performed on md type %s",
+			     zif_md_kind_to_text (zif_md_get_kind (md)));
 		goto out;
 	}
 
@@ -1080,8 +1156,11 @@ zif_md_get_packages (ZifMd *md, ZifState *state, GError **error)
 
 	/* no support */
 	if (klass->get_packages == NULL) {
-		g_set_error_literal (error, ZIF_MD_ERROR, ZIF_MD_ERROR_NO_SUPPORT,
-				     "operation cannot be performed on this md");
+		g_set_error (error,
+			     ZIF_MD_ERROR,
+			     ZIF_MD_ERROR_NO_SUPPORT,
+			     "operation cannot be performed on md type %s",
+			     zif_md_kind_to_text (zif_md_get_kind (md)));
 		goto out;
 	}
 

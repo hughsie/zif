@@ -258,9 +258,7 @@ zif_package_local_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, ZifSt
 	ZifString *tmp;
 	const gchar *text;
 	const gchar *group;
-//	GPtrArray *tmparray;
 	GPtrArray *depends;
-//	GPtrArray *provides;
 	GPtrArray *flags;
 	GPtrArray *names;
 	GPtrArray *versions;
@@ -438,13 +436,13 @@ zif_package_local_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, ZifSt
 		names = zif_get_header_string_array (header, RPMTAG_OBSOLETENAME);
 		if (names == NULL) {
 			depends = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
-			//zif_package_set_obsoletes (pkg, depends);
+			zif_package_set_obsoletes (pkg, depends);
 			g_ptr_array_unref (depends);
 		} else {
 			versions = zif_get_header_string_array (header, RPMTAG_OBSOLETEVERSION);
 			flags = zif_get_header_uint32_index (header, RPMTAG_OBSOLETEFLAGS, names->len);
 			depends = zif_package_local_get_depends_from_name_flags_version (names, flags, versions);
-			//zif_package_set_obsoletes (pkg, depends);
+			zif_package_set_obsoletes (pkg, depends);
 			g_ptr_array_unref (depends);
 			g_ptr_array_unref (names);
 			g_ptr_array_unref (versions);

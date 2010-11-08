@@ -87,6 +87,10 @@ GPtrArray	*zif_store_array_what_provides		(GPtrArray		*store_array,
 							 gchar			**search,
 							 ZifState		*state,
 							 GError			**error);
+GPtrArray	*zif_store_array_what_obsoletes		(GPtrArray		*store_array,
+							 gchar			**search,
+							 ZifState		*state,
+							 GError			**error);
 GPtrArray	*zif_store_array_get_packages		(GPtrArray		*store_array,
 							 ZifState		*state,
 							 GError			**error);

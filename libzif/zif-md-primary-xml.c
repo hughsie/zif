@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*-
  *
- * Copyright (C) 2009 Richard Hughes <richard@hughsie.com>
+ * Copyright (C) 2009-2010 Richard Hughes <richard@hughsie.com>
  *
  * Licensed under the GNU General Public License Version 2
  *
@@ -756,6 +756,48 @@ out:
 	return ret;
 }
 
+
+/**
+ * zif_md_primary_xml_what_obsoletes_cb:
+ **/
+static gboolean
+zif_md_primary_xml_what_obsoletes_cb (ZifPackage *package, gpointer user_data)
+{
+	guint i, j;
+	gboolean ret = FALSE;
+	GPtrArray *array = NULL;
+	ZifState *state_tmp;
+	ZifDepend *depend;
+	GError *error = NULL;
+	gchar **search = (gchar **) user_data;
+
+	state_tmp = zif_state_new ();
+	array = zif_package_get_obsoletes (package, state_tmp, &error);
+	if (array == NULL) {
+		g_warning ("failed to get obsoletes: %s", error->message);
+		g_error_free (error);
+		goto out;
+	}
+
+	/* find a depends string */
+	for (i=0; i<array->len; i++) {
+		const gchar *name;
+		depend = g_ptr_array_index (array, i);
+		name = zif_depend_get_name (depend);
+		for (j=0; search[j] != NULL; j++) {
+			if (g_strcmp0 (name, search[j]) == 0) {
+				ret = TRUE;
+				goto out;
+			}
+		}
+	}
+out:
+	g_object_unref (state_tmp);
+	if (array != NULL)
+		g_ptr_array_unref (array);
+	return ret;
+}
+
 /**
  * zif_md_primary_xml_what_provides:
  **/
@@ -765,6 +807,18 @@ zif_md_primary_xml_what_provides (ZifMd *md, gchar **search,
 {
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	return zif_md_primary_xml_filter (md, zif_md_primary_xml_what_provides_cb, (gpointer) search,
+					  state, error);
+}
+
+/**
+ * zif_md_primary_xml_what_obsoletes:
+ **/
+static GPtrArray *
+zif_md_primary_xml_what_obsoletes (ZifMd *md, gchar **search,
+				  ZifState *state, GError **error)
+{
+	g_return_val_if_fail (zif_state_valid (state), NULL);
+	return zif_md_primary_xml_filter (md, zif_md_primary_xml_what_obsoletes_cb, (gpointer) search,
 					  state, error);
 }
 
@@ -836,6 +890,7 @@ zif_md_primary_xml_class_init (ZifMdPrimaryXmlClass *klass)
 	md_class->search_group = zif_md_primary_xml_search_group;
 	md_class->search_pkgid = zif_md_primary_xml_search_pkgid;
 	md_class->what_provides = zif_md_primary_xml_what_provides;
+	md_class->what_obsoletes = zif_md_primary_xml_what_obsoletes;
 	md_class->resolve = zif_md_primary_xml_resolve;
 	md_class->get_packages = zif_md_primary_xml_get_packages;
 	md_class->find_package = zif_md_primary_xml_find_package;

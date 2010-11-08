@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*-
  *
- * Copyright (C) 2008-2009 Richard Hughes <richard@hughsie.com>
+ * Copyright (C) 2008-2010 Richard Hughes <richard@hughsie.com>
  *
  * Licensed under the GNU General Public License Version 2
  *
@@ -129,6 +129,9 @@ GPtrArray		*zif_package_get_requires	(ZifPackage	*package,
 GPtrArray		*zif_package_get_provides	(ZifPackage	*package,
 							 ZifState	*state,
 							 GError		**error);
+GPtrArray		*zif_package_get_obsoletes	(ZifPackage	*package,
+							 ZifState	*state,
+							 GError		**error);
 guint64			 zif_package_get_time_file	(ZifPackage	*package);
 
 /* internal setters */
@@ -160,6 +163,8 @@ void			 zif_package_set_requires	(ZifPackage	*package,
 							 GPtrArray	*requires);
 void			 zif_package_set_provides	(ZifPackage	*package,
 							 GPtrArray	*provides);
+void			 zif_package_set_obsoletes	(ZifPackage	*package,
+							 GPtrArray	*obsoletes);
 void			 zif_package_set_time_file	(ZifPackage	*package,
 							 guint64	 time_file);
 /* actions */

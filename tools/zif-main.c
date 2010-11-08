@@ -779,6 +779,7 @@ main (int argc, char *argv[])
 		"  search-group    Search packages in the given group\n"
 		"  search-name     Search package name for the given string\n"
 		"  upgrade         Upgrade the operating system to a newer version\n"
+		"  what-obsoletes  Find what package obsoletes the given value\n"
 		"  what-provides   Find what package provides the given value\n"
 		);
 
@@ -2031,6 +2032,66 @@ main (int argc, char *argv[])
 		state_local = zif_state_get_child (state);
 		to_array[0] = value;
 		array = zif_store_array_search_category (store_array, (gchar**)to_array, state_local, &error);
+		if (array == NULL) {
+			g_print ("failed to get results: %s\n", error->message);
+			g_error_free (error);
+			goto out;
+		}
+
+		/* this section done */
+		ret = zif_state_done (state, &error);
+		if (!ret)
+			goto out;
+
+		/* no more progressbar */
+		pk_progress_bar_end (progressbar);
+
+		zif_print_packages (array);
+		g_ptr_array_unref (array);
+		goto out;
+	}
+	if (g_strcmp0 (mode, "what-obsoletes") == 0) {
+		if (value == NULL) {
+			g_print ("specify a search term\n");
+			goto out;
+		}
+
+		pk_progress_bar_start (progressbar, "Obsoletes");
+
+		/* setup state with the correct number of steps */
+		zif_state_set_number_steps (state, 3);
+
+		/* add both local and remote packages */
+		store_array = zif_store_array_new ();
+		state_local = zif_state_get_child (state);
+		ret = zif_store_array_add_local (store_array, state_local, &error);
+		if (!ret) {
+			g_print ("failed to add remote: %s\n", error->message);
+			g_error_free (error);
+			goto out;
+		}
+
+		/* this section done */
+		ret = zif_state_done (state, &error);
+		if (!ret)
+			goto out;
+
+		state_local = zif_state_get_child (state);
+		ret = zif_store_array_add_remote_enabled (store_array, state_local, &error);
+		if (!ret) {
+			g_print ("failed to add remote: %s\n", error->message);
+			g_error_free (error);
+			goto out;
+		}
+
+		/* this section done */
+		ret = zif_state_done (state, &error);
+		if (!ret)
+			goto out;
+
+		state_local = zif_state_get_child (state);
+		to_array[0] = value;
+		array = zif_store_array_what_obsoletes (store_array, (gchar**)to_array, state_local, &error);
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);

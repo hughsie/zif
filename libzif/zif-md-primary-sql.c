@@ -412,11 +412,11 @@ zif_md_primary_sql_sqlite_pkgkey_cb (void *data, gint argc, gchar **argv, gchar 
 }
 
 /**
- * zif_md_primary_sql_what_provides:
+ * zif_md_primary_sql_what_depends:
  **/
 static GPtrArray *
-zif_md_primary_sql_what_provides (ZifMd *md, gchar **search,
-				  ZifState *state, GError **error)
+zif_md_primary_sql_what_depends (ZifMd *md, const gchar *table_name, gchar **search,
+				 ZifState *state, GError **error)
 {
 	gchar *statement = NULL;
 	gchar *error_msg = NULL;
@@ -460,7 +460,7 @@ zif_md_primary_sql_what_provides (ZifMd *md, gchar **search,
 
 	/* create data struct we can pass to the callback */
 	pkgkey_array = g_ptr_array_new ();
-	statement = g_strdup_printf ("SELECT pkgKey FROM provides WHERE name = '%s'", search[0]);
+	statement = g_strdup_printf ("SELECT pkgKey FROM %s WHERE name = '%s'", table_name, search[0]);
 	rc = sqlite3_exec (md_primary_sql->priv->db, statement, zif_md_primary_sql_sqlite_pkgkey_cb, pkgkey_array, &error_msg);
 	if (rc != SQLITE_OK) {
 		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_BAD_SQL,
@@ -521,6 +521,26 @@ out:
 	if (pkgkey_array != NULL)
 		g_ptr_array_unref (pkgkey_array);
 	return array;
+}
+
+/**
+ * zif_md_primary_sql_what_provides:
+ **/
+static GPtrArray *
+zif_md_primary_sql_what_provides (ZifMd *md, gchar **search,
+				  ZifState *state, GError **error)
+{
+	return zif_md_primary_sql_what_depends (md, "provides", search, state, error);
+}
+
+/**
+ * zif_md_primary_sql_what_obsoletes:
+ **/
+static GPtrArray *
+zif_md_primary_sql_what_obsoletes (ZifMd *md, gchar **search,
+				   ZifState *state, GError **error)
+{
+	return zif_md_primary_sql_what_depends (md, "obsoletes", search, state, error);
 }
 
 /**
@@ -602,6 +622,7 @@ zif_md_primary_sql_class_init (ZifMdPrimarySqlClass *klass)
 	md_class->search_group = zif_md_primary_sql_search_group;
 	md_class->search_pkgid = zif_md_primary_sql_search_pkgid;
 	md_class->what_provides = zif_md_primary_sql_what_provides;
+	md_class->what_obsoletes = zif_md_primary_sql_what_obsoletes;
 	md_class->resolve = zif_md_primary_sql_resolve;
 	md_class->get_packages = zif_md_primary_sql_get_packages;
 	md_class->find_package = zif_md_primary_sql_find_package;
