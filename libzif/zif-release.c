@@ -56,6 +56,7 @@ struct _ZifReleasePrivate
 	GPtrArray		*array;
 	gchar			*cache_dir;
 	gchar			*boot_dir;
+	gchar			*repo_dir;
 	gchar			*uri;
 	guint			 monitor_changed_id;
 };
@@ -409,7 +410,7 @@ zif_release_add_kernel (ZifRelease *release, ZifReleaseUpgradeData *data, GError
 					"stage2=hd:UUID=%s:/upgrade/install.img ", data->uuid);
 	}
 	if (data->upgrade_kind == ZIF_RELEASE_UPGRADE_KIND_COMPLETE) {
-		g_string_append (args, "repo=hd::/var/cache/yum/preupgrade ");
+		g_string_append_printf (args, "repo=hd::%s ", priv->repo_dir);
 	}
 	g_string_append (args,
 			 "ksdevice=link ip=dhcp ipv6=dhcp ");
@@ -977,7 +978,7 @@ zif_release_write_kickstart (ZifRelease *release, ZifReleaseUpgradeData *data, G
 	g_string_append (string, "\n");
 	g_string_append (string, "%post\n");
 	g_string_append_printf (string, "grubby --remove-kernel=%s/vmlinuz\n", priv->boot_dir);
-	g_string_append_printf (string, "rm -rf %s /var/cache/yum/preupgrade*\n", priv->boot_dir);
+	g_string_append_printf (string, "rm -rf %s %s*\n", priv->boot_dir, priv->repo_dir);
 	g_string_append (string, "%end\n");
 
 	/* write file */
@@ -1008,6 +1009,38 @@ out:
 static gboolean
 zif_release_get_package_data (ZifRelease *release, ZifReleaseUpgradeData *data, ZifState *state, GError **error)
 {
+	gboolean ret;
+	GFile *file;
+	GError *error_local = NULL;
+	gchar *cmdline = NULL;
+	ZifReleasePrivate *priv = release->priv;
+
+	/* create directory path */
+	file = g_file_new_for_path (priv->repo_dir);
+	ret = g_file_make_directory_with_parents (file, NULL, &error_local);
+	if (!ret) {
+		g_set_error (error,
+			     ZIF_RELEASE_ERROR,
+			     ZIF_RELEASE_ERROR_SETUP_INVALID,
+			     "failed to create repo: %s",
+			     error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* create the repodata */
+	cmdline = g_strdup_printf ("/usr/bin/createrepo %s", priv->repo_dir);
+	g_debug ("running command %s", cmdline);
+	ret = g_spawn_command_line_sync (cmdline, NULL, NULL, NULL, &error_local);
+	if (!ret) {
+		g_set_error (error,
+			     ZIF_RELEASE_ERROR,
+			     ZIF_RELEASE_ERROR_SPAWN_FAILED,
+			     "failed to add kernel: %s", error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
 	/* 1. get the list of enabled repos
 	 * 2. create a repo file for them
 	 * 3. create a ZifStoreRemote object for each
@@ -1019,11 +1052,15 @@ zif_release_get_package_data (ZifRelease *release, ZifReleaseUpgradeData *data, 
 	 * 9. add a repo= line to the arguments
 	 */
 	//FIXME
+	ret = FALSE;
 	g_set_error_literal (error,
 			     ZIF_RELEASE_ERROR,
 			     ZIF_RELEASE_ERROR_NOT_SUPPORTED,
 			     "getting the package data is not supported yet");
-	return FALSE;
+out:
+	g_free (cmdline);
+	g_object_unref (file);
+	return ret;
 }
 
 /**
@@ -1297,7 +1334,7 @@ out:
  * @release: the #ZifRelease object
  * @cache_dir: the system wide release location, e.g. "/var/cache/PackageKit"
  *
- * Sets the location to use as the local file cache.
+ * Sets the location to use as the local file cache for the release info.
  *
  * Since: 0.1.3
  **/
@@ -1330,6 +1367,26 @@ zif_release_set_boot_dir (ZifRelease *release, const gchar *boot_dir)
 
 	g_free (release->priv->boot_dir);
 	release->priv->boot_dir = g_strdup (boot_dir);
+}
+
+/**
+ * zif_release_set_repo_dir:
+ * @release: the #ZifRelease object
+ * @repo_dir: the repo directory, e.g. "/var/cache/yum/preupgrade"
+ *
+ * Sets the location to use as the downloaded package repo.
+ *
+ * Since: 0.1.3
+ **/
+void
+zif_release_set_repo_dir (ZifRelease *release, const gchar *repo_dir)
+{
+	g_return_if_fail (ZIF_IS_RELEASE (release));
+	g_return_if_fail (repo_dir != NULL);
+	g_return_if_fail (!release->priv->loaded);
+
+	g_free (release->priv->repo_dir);
+	release->priv->repo_dir = g_strdup (repo_dir);
 }
 
 /**
@@ -1380,6 +1437,7 @@ zif_release_finalize (GObject *object)
 	g_object_unref (release->priv->config);
 	g_free (release->priv->cache_dir);
 	g_free (release->priv->boot_dir);
+	g_free (release->priv->repo_dir);
 	g_free (release->priv->uri);
 
 	G_OBJECT_CLASS (zif_release_parent_class)->finalize (object);

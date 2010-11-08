@@ -117,6 +117,7 @@ zif_release_func (void)
 	release = zif_release_new ();
 	zif_release_set_cache_dir (release, "/tmp");
 	zif_release_set_boot_dir (release, "/tmp");
+	zif_release_set_repo_dir (release, "/tmp");
 	zif_release_set_uri (release, "http://people.freedesktop.org/~hughsient/fedora/preupgrade/releases.txt");
 
 	/* ensure file is not present */

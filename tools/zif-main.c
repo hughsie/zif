@@ -896,6 +896,7 @@ main (int argc, char *argv[])
 	release = zif_release_new ();
 	zif_release_set_boot_dir (release, "/boot/upgrade");
 	zif_release_set_cache_dir (release, "/var/cache/PackageKit");
+	zif_release_set_repo_dir (release, "/var/cache/yum/preupgrade");
 	zif_release_set_uri (release, "http://mirrors.fedoraproject.org/releases.txt");
 
 	/* ZifState */

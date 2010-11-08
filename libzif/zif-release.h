@@ -82,6 +82,8 @@ void		 zif_release_set_cache_dir		(ZifRelease	*release,
 							 const gchar	*cache_dir);
 void		 zif_release_set_boot_dir		(ZifRelease	*release,
 							 const gchar	*boot_dir);
+void		 zif_release_set_repo_dir		(ZifRelease	*release,
+							 const gchar	*boot_dir);
 void		 zif_release_set_uri			(ZifRelease	*release,
 							 const gchar	*uri);
 GPtrArray	*zif_release_get_upgrades		(ZifRelease	*release,
