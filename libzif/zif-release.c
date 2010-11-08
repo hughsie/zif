@@ -67,7 +67,8 @@ typedef struct {
 	ZifReleaseUpgradeKind	 upgrade_kind;
 	guint			 version;
 	GKeyFile		*key_file_treeinfo;
-	gchar			*uuid;
+	gchar			*uuid_root;
+	gchar			*uuid_boot;
 	gchar			*images_section;
 } ZifReleaseUpgradeData;
 
@@ -465,13 +466,13 @@ zif_release_add_kernel (ZifRelease *release, ZifReleaseUpgradeData *data, GError
 	/* write kickstart info */
 	args = g_string_new ("preupgrade ");
 	g_string_append_printf (args,
-			        "ks=hd:UUID=%s:/upgrade/ks.cfg ", data->uuid);
+			        "ks=hd:UUID=%s:/upgrade/ks.cfg ", data->uuid_boot);
 
 	/* kernel arguments */
 	if (data->upgrade_kind == ZIF_RELEASE_UPGRADE_KIND_DEFAULT ||
 	    data->upgrade_kind == ZIF_RELEASE_UPGRADE_KIND_COMPLETE) {
 		g_string_append_printf (args,
-					"stage2=hd:UUID=%s:/upgrade/install.img ", data->uuid);
+					"stage2=hd:UUID=%s:/upgrade/install.img ", data->uuid_boot);
 	}
 	if (data->upgrade_kind == ZIF_RELEASE_UPGRADE_KIND_COMPLETE) {
 		g_string_append_printf (args, "repo=hd::%s ", priv->repo_dir);
@@ -1036,7 +1037,7 @@ zif_release_write_kickstart (ZifRelease *release, ZifReleaseUpgradeData *data, G
 	g_string_append_printf (string, "keyboard %s\n", keymap);
 	g_string_append (string, "bootloader --upgrade --location=none\n");
 	g_string_append (string, "clearpart --none\n");
-	g_string_append_printf (string, "upgrade --root-device=UUID=%s\n", data->uuid);
+	g_string_append_printf (string, "upgrade --root-device=UUID=%s\n", data->uuid_root);
 	g_string_append (string, "reboot\n");
 	g_string_append (string, "\n");
 	g_string_append (string, "%post\n");
@@ -1127,6 +1128,46 @@ out:
 }
 
 /**
+ * zif_release_get_mtab_entry:
+ **/
+static gchar *
+zif_release_get_mtab_entry (const gchar *mount_point, GError **error)
+{
+	gboolean ret;
+	gchar *data = NULL;
+	gchar *device = NULL;
+	gchar **lines = NULL;
+	gchar **split;
+	guint i;
+
+	/* get mtab contents */
+	ret = g_file_get_contents ("/etc/mtab", &data, NULL, error);
+	if (!ret)
+		goto out;
+
+	/* find the mountpoint, and get the device name */
+	lines = g_strsplit (data, "\n", -1);
+	for (i=0; lines[i] != NULL && device == NULL; i++) {
+		split = g_strsplit (lines[i], " ", -1);
+		if (g_strcmp0 (split[1], mount_point) == 0)
+			device = g_strdup (split[0]);
+		g_strfreev (split);
+	}
+
+	/* nothing found */
+	if (device == NULL) {
+		g_set_error (error,
+			     ZIF_RELEASE_ERROR,
+			     ZIF_RELEASE_ERROR_NOT_SUPPORTED,
+			     "no mtab entry for %s", mount_point);
+	}
+out:
+	g_strfreev (lines);
+	g_free (data);
+	return device;
+}
+
+/**
  * zif_release_upgrade_version:
  * @release: the #ZifRelease object
  * @version: a distribution version, e.g. 15
@@ -1152,6 +1193,7 @@ zif_release_upgrade_version (ZifRelease *release, guint version, ZifReleaseUpgra
 	ZifReleaseUpgradeData *data = NULL;
 	ZifMd *md_mirrorlist = NULL;
 	gchar *installmirrorlist_filename = NULL;
+	gchar *mtab_entry = NULL;
 
 	g_return_val_if_fail (ZIF_IS_RELEASE (release), FALSE);
 	g_return_val_if_fail (zif_state_valid (state), FALSE);
@@ -1224,15 +1266,35 @@ zif_release_upgrade_version (ZifRelease *release, guint version, ZifReleaseUpgra
 	if (!ret)
 		goto out;
 
-	/* get uuid */
-	data->uuid = zif_release_get_uuid ("/dev/root", &error_local);
-	if (data->uuid == NULL) {
+	/* get uuids */
+	data->uuid_root = zif_release_get_uuid ("/dev/root", &error_local);
+	if (data->uuid_root == NULL) {
+		ret = FALSE;
 		g_set_error (error,
 			     ZIF_RELEASE_ERROR,
 			     ZIF_RELEASE_ERROR_NO_UUID_FOR_ROOT,
-			     "failed to get uuid: %s", error_local->message);
+			     "failed to get uuid for root: %s", error_local->message);
 		g_error_free (error_local);
 		goto out;
+	}
+
+	/* get the boot uuid */
+	mtab_entry = zif_release_get_mtab_entry ("/boot", &error_local);
+	if (mtab_entry == NULL) {
+		g_debug ("using root uuid: %s", error_local->message);
+		data->uuid_boot = g_strdup (data->uuid_root);
+		g_clear_error (&error_local);
+	} else {
+		data->uuid_boot = zif_release_get_uuid (mtab_entry, &error_local);
+		if (data->uuid_boot == NULL) {
+			ret = FALSE;
+			g_set_error (error,
+				     ZIF_RELEASE_ERROR,
+				     ZIF_RELEASE_ERROR_NO_UUID_FOR_ROOT,
+				     "failed to get uuid for boot: %s", error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
 	}
 
 	/* done */
@@ -1376,13 +1438,15 @@ zif_release_upgrade_version (ZifRelease *release, guint version, ZifReleaseUpgra
 out:
 	zif_download_location_clear (priv->download);
 	g_free (installmirrorlist_filename);
+	g_free (mtab_entry);
 	if (data != NULL) {
 		if (data->upgrade != NULL)
 			g_object_unref (data->upgrade);
 		if (data->key_file_treeinfo != NULL)
 			g_key_file_free (data->key_file_treeinfo);
 		g_free (data->images_section);
-		g_free (data->uuid);
+		g_free (data->uuid_root);
+		g_free (data->uuid_boot);
 		g_free (data);
 	}
 	if (md_mirrorlist != NULL)
