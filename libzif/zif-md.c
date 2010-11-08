@@ -400,7 +400,7 @@ zif_md_delete_file (const gchar *filename)
 	if (!ret)
 		goto out;
 
-	g_warning ("deleting %s", filename);
+	g_debug ("deleting %s", filename);
 
 	/* remove */
 	retval = g_unlink (filename);
