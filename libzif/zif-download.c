@@ -82,12 +82,12 @@ static void
 zif_download_file_got_chunk_cb (SoupMessage *msg, SoupBuffer *chunk, ZifDownload *download)
 {
 	guint percentage;
-	guint header_size;
-	guint body_length;
+	goffset header_size;
+	goffset body_length;
 	gboolean ret;
 
 	/* get data */
-	body_length = (guint) msg->response_body->length;
+	body_length = msg->response_body->length;
 	header_size = soup_message_headers_get_content_length (msg->response_headers);
 
 	/* size is not known */
@@ -97,8 +97,11 @@ zif_download_file_got_chunk_cb (SoupMessage *msg, SoupBuffer *chunk, ZifDownload
 	/* calulate percentage */
 	percentage = (100 * body_length) / header_size;
 	ret = zif_state_set_percentage (download->priv->state, percentage);
-	if (ret)
-		g_debug ("download: %i%% (%i, %i) - %p, %p", percentage, body_length, header_size, msg, download);
+	if (ret) {
+		/* only print if it's significant */
+		g_debug ("download: %i%% (%" G_GOFFSET_FORMAT ", %" G_GOFFSET_FORMAT ") - %p, %p",
+			 percentage, body_length, header_size, msg, download);
+	}
 out:
 	return;
 }
