@@ -184,6 +184,30 @@ out:
 }
 
 /**
+ * zif_lock_get_cmdline_for_pid:
+ **/
+static gchar *
+zif_lock_get_cmdline_for_pid (guint pid)
+{
+	gboolean ret;
+	gchar *filename = NULL;
+	gchar *data = NULL;
+	gchar *cmdline = NULL;
+	GError *error = NULL;
+
+	/* find the cmdline */
+	filename = g_strdup_printf ("/proc/%i/cmdline", pid);
+	ret = g_file_get_contents (filename, &data, NULL, &error);
+	if (ret) {
+		cmdline = g_strdup_printf ("%s (%i)", data, pid);
+	} else {
+		g_warning ("failed to get cmdline: %s", error->message);
+		cmdline = g_strdup_printf ("unknown (%i)", pid);
+	}
+	g_free (data);
+	return cmdline;
+}
+/**
  * zif_lock_set_locked:
  * @lock: the #ZifLock object
  * @pid: the PID of the process holding the lock, or %NULL
@@ -201,6 +225,7 @@ zif_lock_set_locked (ZifLock *lock, guint *pid, GError **error)
 	gboolean ret = FALSE;
 	guint pid_tmp = 0;
 	gchar *pid_text = NULL;
+	gchar *cmdline = NULL;
 	GError *error_local = NULL;
 
 	g_return_val_if_fail (ZIF_IS_LOCK (lock), FALSE);
@@ -209,8 +234,9 @@ zif_lock_set_locked (ZifLock *lock, guint *pid, GError **error)
 	/* already locked */
 	ret = zif_lock_is_locked (lock, &pid_tmp);
 	if (ret) {
+		cmdline = zif_lock_get_cmdline_for_pid (pid_tmp);
 		g_set_error (error, ZIF_LOCK_ERROR, ZIF_LOCK_ERROR_ALREADY_LOCKED,
-			     "already locked by %i", pid_tmp);
+			     "already locked by %s", cmdline);
 		if (pid != NULL)
 			*pid = pid_tmp;
 		ret = FALSE;
@@ -247,6 +273,7 @@ zif_lock_set_locked (ZifLock *lock, guint *pid, GError **error)
 		*pid = pid_tmp;
 out:
 	g_free (pid_text);
+	g_free (cmdline);
 	return ret;
 }
 
