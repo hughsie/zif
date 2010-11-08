@@ -47,6 +47,7 @@
 #include <zif-md-mirrorlist.h>
 #include <zif-md-metalink.h>
 #include <zif-update-info.h>
+#include <zif-transaction.h>
 #include <zif-version.h>
 
 #undef __ZIF_H_INSIDE__

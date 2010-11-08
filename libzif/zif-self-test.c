@@ -60,6 +60,7 @@
 #include "zif-store-local.h"
 #include "zif-store-remote.h"
 #include "zif-string.h"
+#include "zif-transaction.h"
 #include "zif-release.h"
 #include "zif-update.h"
 #include "zif-update-info.h"
@@ -156,6 +157,14 @@ zif_release_func (void)
 	g_object_unref (config);
 	g_object_unref (release);
 	g_object_unref (download);
+}
+
+static void
+zif_transaction_func (void)
+{
+	ZifTransaction *transaction;
+	transaction = zif_transaction_new ();
+	g_object_unref (transaction);
 }
 
 static void
@@ -2155,6 +2164,7 @@ main (int argc, char **argv)
 	g_test_add_func ("/zif/store-local", zif_store_local_func);
 	g_test_add_func ("/zif/store-remote", zif_store_remote_func);
 	g_test_add_func ("/zif/string", zif_string_func);
+	g_test_add_func ("/zif/transaction", zif_transaction_func);
 	g_test_add_func ("/zif/update-info", zif_update_info_func);
 	g_test_add_func ("/zif/update", zif_update_func);
 	g_test_add_func ("/zif/utils", zif_utils_func);

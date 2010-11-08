@@ -47,6 +47,7 @@ libzif_include_HEADERS =					\
 	zif-upgrade.h						\
 	zif-groups.h						\
 	zif-config.h						\
+	zif-transaction.h					\
 	zif-md.h						\
 	zif-md-mirrorlist.h					\
 	zif-md-metalink.h					\
@@ -129,6 +130,8 @@ libzif_la_SOURCES =						\
 	zif-monitor.h						\
 	zif-release.c						\
 	zif-release.h						\
+	zif-transaction.c					\
+	zif-transaction.h					\
 	zif-version.h						\
 	zif-download.c						\
 	zif-download.h
