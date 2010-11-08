@@ -1000,6 +1000,9 @@ zif_release_get_uuid (const gchar *root, GError **error)
 	ret = g_spawn_command_line_sync (cmdline, &uuid, NULL, NULL, error);
 	if (!ret)
 		goto out;
+
+	/* cleanup */
+	g_strdelimit (uuid, "\n", '\0');
 out:
 	g_free (cmdline);
 	return uuid;
