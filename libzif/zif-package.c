@@ -61,6 +61,7 @@ struct _ZifPackagePrivate
 	GPtrArray		*requires;
 	GPtrArray		*provides;
 	GPtrArray		*obsoletes;
+	GPtrArray		*conflicts;
 	gboolean		 installed;
 };
 
@@ -460,6 +461,16 @@ zif_package_print (ZifPackage *package)
 			g_free (text);
 		}
 	}
+	if (package->priv->conflicts != NULL) {
+		g_print ("conflicts:\n");
+		array = package->priv->conflicts;
+		for (i=0; i<array->len; i++) {
+			depend = g_ptr_array_index (array, i);
+			text = zif_depend_to_string (depend);
+			g_print ("\t%s\n", text);
+			g_free (text);
+		}
+	}
 }
 
 /**
@@ -784,6 +795,8 @@ zif_package_ensure_type_to_string (ZifPackageEnsureType type)
 		return "conflicts";
 	if (type == ZIF_PACKAGE_ENSURE_TYPE_OBSOLETES)
 		return "obsoletes";
+	if (type == ZIF_PACKAGE_ENSURE_TYPE_CONFLICTS)
+		return "conflicts";
 	return "unknown";
 }
 
@@ -1213,6 +1226,39 @@ zif_package_get_obsoletes (ZifPackage *package, ZifState *state, GError **error)
 }
 
 /**
+ * zif_package_get_conflicts:
+ * @package: the #ZifPackage object
+ * @state: a #ZifState to use for progress reporting
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Get all the package conflicts.
+ *
+ * Return value: the reference counted #GPtrArray, use g_ptr_array_unref() when done
+ *
+ * Since: 0.1.3
+ **/
+GPtrArray *
+zif_package_get_conflicts (ZifPackage *package, ZifState *state, GError **error)
+{
+	gboolean ret;
+
+	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
+	g_return_val_if_fail (package->priv->package_id_split != NULL, NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+	/* not exists */
+	if (package->priv->conflicts == NULL) {
+		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_CONFLICTS, state, error);
+		if (!ret)
+			return NULL;
+	}
+
+	/* return refcounted */
+	return g_ptr_array_ref (package->priv->conflicts);
+}
+
+/**
  * zif_package_set_time_file:
  * @package: the #ZifPackage object
  * @time_file: the unix time the file was created
@@ -1519,6 +1565,25 @@ zif_package_set_obsoletes (ZifPackage *package, GPtrArray *obsoletes)
 }
 
 /**
+ * zif_package_set_conflicts:
+ * @package: the #ZifPackage object
+ * @conflicts: the package conflicts
+ *
+ * Sets the package conflicts.
+ *
+ * Since: 0.1.3
+ **/
+void
+zif_package_set_conflicts (ZifPackage *package, GPtrArray *conflicts)
+{
+	g_return_if_fail (ZIF_IS_PACKAGE (package));
+	g_return_if_fail (conflicts != NULL);
+	g_return_if_fail (package->priv->conflicts == NULL);
+
+	package->priv->conflicts = g_ptr_array_ref (conflicts);
+}
+
+/**
  * zif_package_finalize:
  **/
 static void
@@ -1552,6 +1617,8 @@ zif_package_finalize (GObject *object)
 		g_ptr_array_unref (package->priv->provides);
 	if (package->priv->obsoletes != NULL)
 		g_ptr_array_unref (package->priv->obsoletes);
+	if (package->priv->conflicts != NULL)
+		g_ptr_array_unref (package->priv->conflicts);
 
 	G_OBJECT_CLASS (zif_package_parent_class)->finalize (object);
 }

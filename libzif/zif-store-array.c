@@ -57,6 +57,7 @@ typedef enum {
 	ZIF_ROLE_SEARCH_CATEGORY,
 	ZIF_ROLE_WHAT_PROVIDES,
 	ZIF_ROLE_WHAT_OBSOLETES,
+	ZIF_ROLE_WHAT_CONFLICTS,
 	ZIF_ROLE_GET_CATEGORIES,
 	ZIF_ROLE_UNKNOWN
 } ZifRole;
@@ -87,6 +88,8 @@ zif_role_to_string (ZifRole role)
 		return "what-provides";
 	if (role == ZIF_ROLE_WHAT_OBSOLETES)
 		return "what-obsoletes";
+	if (role == ZIF_ROLE_WHAT_CONFLICTS)
+		return "what-conflicts";
 	if (role == ZIF_ROLE_GET_CATEGORIES)
 		return "get-categories";
 	return NULL;
@@ -311,6 +314,8 @@ zif_store_array_repos_search (GPtrArray *store_array, ZifRole role, gchar **sear
 			part = zif_store_what_provides (store, search, state_local, &error_local);
 		else if (role == ZIF_ROLE_WHAT_OBSOLETES)
 			part = zif_store_what_obsoletes (store, search, state_local, &error_local);
+		else if (role == ZIF_ROLE_WHAT_CONFLICTS)
+			part = zif_store_what_conflicts (store, search, state_local, &error_local);
 		else if (role == ZIF_ROLE_GET_CATEGORIES)
 			part = zif_store_get_categories (store, state_local, &error_local);
 		else {
@@ -827,6 +832,30 @@ zif_store_array_what_obsoletes (GPtrArray *store_array, gchar **search,
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	return zif_store_array_repos_search (store_array, ZIF_ROLE_WHAT_OBSOLETES, search,
+					     state, error);
+}
+
+/**
+ * zif_store_array_what_conflicts:
+ * @store_array: the #GPtrArray of #ZifStores
+ * @search: the search term, e.g. "gstreamer(codec-mp3)"
+ * @state: a #ZifState to use for progress reporting
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Find packages that conflict with a specific string.
+ *
+ * Return value: an array of #ZifPackage's
+ *
+ * Since: 0.1.3
+ **/
+GPtrArray *
+zif_store_array_what_conflicts (GPtrArray *store_array, gchar **search,
+				ZifState *state, GError **error)
+{
+	g_return_val_if_fail (zif_state_valid (state), NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+	return zif_store_array_repos_search (store_array, ZIF_ROLE_WHAT_CONFLICTS, search,
 					     state, error);
 }
 

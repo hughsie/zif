@@ -91,6 +91,10 @@ struct _ZifMdClass
 						 gchar			**search,
 						 ZifState		*state,
 						 GError			**error);
+	GPtrArray	*(*what_conflicts)	(ZifMd			*md,
+						 gchar			**search,
+						 ZifState		*state,
+						 GError			**error);
 	GPtrArray	*(*resolve)		(ZifMd			*md,
 						 gchar			**search,
 						 ZifState		*state,
@@ -215,6 +219,10 @@ GPtrArray	*zif_md_what_provides			(ZifMd		*md,
 							 ZifState	*state,
 							 GError		**error);
 GPtrArray	*zif_md_what_obsoletes			(ZifMd		*md,
+							 gchar		**search,
+							 ZifState	*state,
+							 GError		**error);
+GPtrArray	*zif_md_what_conflicts			(ZifMd		*md,
 							 gchar		**search,
 							 ZifState	*state,
 							 GError		**error);

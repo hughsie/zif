@@ -98,6 +98,10 @@ struct _ZifStoreClass
 						 gchar			**search,
 						 ZifState		*state,
 						 GError			**error);
+	GPtrArray	*(*what_conflicts)	(ZifStore		*store,
+						 gchar			**search,
+						 ZifState		*state,
+						 GError			**error);
 	GPtrArray	*(*get_packages)	(ZifStore		*store,
 						 ZifState		*state,
 						 GError			**error);
@@ -170,6 +174,10 @@ GPtrArray	*zif_store_what_provides	(ZifStore		*store,
 						 ZifState		*state,
 						 GError			**error);
 GPtrArray	*zif_store_what_obsoletes	(ZifStore		*store,
+						 gchar			**search,
+						 ZifState		*state,
+						 GError			**error);
+GPtrArray	*zif_store_what_conflicts	(ZifStore		*store,
 						 gchar			**search,
 						 ZifState		*state,
 						 GError			**error);

@@ -47,6 +47,7 @@ typedef enum {
 	ZIF_MD_PRIMARY_XML_SECTION_PACKAGE_PROVIDES,
 	ZIF_MD_PRIMARY_XML_SECTION_PACKAGE_REQUIRES,
 	ZIF_MD_PRIMARY_XML_SECTION_PACKAGE_OBSOLETES,
+	ZIF_MD_PRIMARY_XML_SECTION_PACKAGE_CONFLICTS,
 	ZIF_MD_PRIMARY_XML_SECTION_PACKAGE_UNKNOWN
 } ZifMdPrimaryXmlSectionPackage;
 
@@ -224,6 +225,10 @@ zif_md_primary_xml_parser_start_element (GMarkupParseContext *context, const gch
 				primary_xml->priv->section_package = ZIF_MD_PRIMARY_XML_SECTION_PACKAGE_OBSOLETES;
 				goto out;
 			}
+			if (g_strcmp0 (element_name, "rpm:conflicts") == 0) {
+				primary_xml->priv->section_package = ZIF_MD_PRIMARY_XML_SECTION_PACKAGE_CONFLICTS;
+				goto out;
+			}
 			g_warning ("unhandled update base tag: %s", element_name);
 			goto out;
 
@@ -232,6 +237,10 @@ zif_md_primary_xml_parser_start_element (GMarkupParseContext *context, const gch
 				goto out;
 			}
 		} else if (primary_xml->priv->section_package == ZIF_MD_PRIMARY_XML_SECTION_PACKAGE_OBSOLETES) {
+			if (g_strcmp0 (element_name, "rpm:entry") == 0) {
+				goto out;
+			}
+		} else if (primary_xml->priv->section_package == ZIF_MD_PRIMARY_XML_SECTION_PACKAGE_CONFLICTS) {
 			if (g_strcmp0 (element_name, "rpm:entry") == 0) {
 				goto out;
 			}
@@ -321,6 +330,7 @@ zif_md_primary_xml_parser_end_element (GMarkupParseContext *context, const gchar
 		    g_strcmp0 (element_name, "rpm:provides") == 0 ||
 		    g_strcmp0 (element_name, "rpm:requires") == 0 ||
 		    g_strcmp0 (element_name, "rpm:obsoletes") == 0 ||
+		    g_strcmp0 (element_name, "rpm:conflicts") == 0 ||
 		    g_strcmp0 (element_name, "rpm:sourcerpm") == 0 ||
 		    g_strcmp0 (element_name, "rpm:header-range") == 0 ||
 		    g_strcmp0 (element_name, "location") == 0 ||
@@ -756,7 +766,6 @@ out:
 	return ret;
 }
 
-
 /**
  * zif_md_primary_xml_what_obsoletes_cb:
  **/
@@ -799,6 +808,47 @@ out:
 }
 
 /**
+ * zif_md_primary_xml_what_conflicts_cb:
+ **/
+static gboolean
+zif_md_primary_xml_what_conflicts_cb (ZifPackage *package, gpointer user_data)
+{
+	guint i, j;
+	gboolean ret = FALSE;
+	GPtrArray *array = NULL;
+	ZifState *state_tmp;
+	ZifDepend *depend;
+	GError *error = NULL;
+	gchar **search = (gchar **) user_data;
+
+	state_tmp = zif_state_new ();
+	array = zif_package_get_conflicts (package, state_tmp, &error);
+	if (array == NULL) {
+		g_warning ("failed to get conflicts: %s", error->message);
+		g_error_free (error);
+		goto out;
+	}
+
+	/* find a depends string */
+	for (i=0; i<array->len; i++) {
+		const gchar *name;
+		depend = g_ptr_array_index (array, i);
+		name = zif_depend_get_name (depend);
+		for (j=0; search[j] != NULL; j++) {
+			if (g_strcmp0 (name, search[j]) == 0) {
+				ret = TRUE;
+				goto out;
+			}
+		}
+	}
+out:
+	g_object_unref (state_tmp);
+	if (array != NULL)
+		g_ptr_array_unref (array);
+	return ret;
+}
+
+/**
  * zif_md_primary_xml_what_provides:
  **/
 static GPtrArray *
@@ -815,10 +865,22 @@ zif_md_primary_xml_what_provides (ZifMd *md, gchar **search,
  **/
 static GPtrArray *
 zif_md_primary_xml_what_obsoletes (ZifMd *md, gchar **search,
-				  ZifState *state, GError **error)
+				   ZifState *state, GError **error)
 {
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	return zif_md_primary_xml_filter (md, zif_md_primary_xml_what_obsoletes_cb, (gpointer) search,
+					  state, error);
+}
+
+/**
+ * zif_md_primary_xml_what_conflicts:
+ **/
+static GPtrArray *
+zif_md_primary_xml_what_conflicts (ZifMd *md, gchar **search,
+				   ZifState *state, GError **error)
+{
+	g_return_val_if_fail (zif_state_valid (state), NULL);
+	return zif_md_primary_xml_filter (md, zif_md_primary_xml_what_conflicts_cb, (gpointer) search,
 					  state, error);
 }
 
@@ -891,6 +953,7 @@ zif_md_primary_xml_class_init (ZifMdPrimaryXmlClass *klass)
 	md_class->search_pkgid = zif_md_primary_xml_search_pkgid;
 	md_class->what_provides = zif_md_primary_xml_what_provides;
 	md_class->what_obsoletes = zif_md_primary_xml_what_obsoletes;
+	md_class->what_conflicts = zif_md_primary_xml_what_conflicts;
 	md_class->resolve = zif_md_primary_xml_resolve;
 	md_class->get_packages = zif_md_primary_xml_get_packages;
 	md_class->find_package = zif_md_primary_xml_find_package;

@@ -412,6 +412,39 @@ zif_store_what_obsoletes (ZifStore *store, gchar **search, ZifState *state, GErr
 }
 
 /**
+ * zif_store_what_conflicts:
+ * @store: the #ZifStore object
+ * @search: the search term, e.g. "gstreamer(codec-mp3)"
+ * @state: a #ZifState to use for progress reporting
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Find packages that conflict a specific string.
+ *
+ * Return value: an array of #ZifPackage's
+ *
+ * Since: 0.1.3
+ **/
+GPtrArray *
+zif_store_what_conflicts (ZifStore *store, gchar **search, ZifState *state, GError **error)
+{
+	ZifStoreClass *klass = ZIF_STORE_GET_CLASS (store);
+
+	g_return_val_if_fail (ZIF_IS_STORE (store), NULL);
+	g_return_val_if_fail (search != NULL, NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+	/* no support */
+	if (klass->what_conflicts == NULL) {
+		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_NO_SUPPORT,
+				     "operation cannot be performed on this store");
+		return NULL;
+	}
+
+	return klass->what_conflicts (store, search, state, error);
+}
+
+/**
  * zif_store_get_packages:
  * @store: the #ZifStore object
  * @state: a #ZifState to use for progress reporting

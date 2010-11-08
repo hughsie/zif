@@ -132,6 +132,9 @@ GPtrArray		*zif_package_get_provides	(ZifPackage	*package,
 GPtrArray		*zif_package_get_obsoletes	(ZifPackage	*package,
 							 ZifState	*state,
 							 GError		**error);
+GPtrArray		*zif_package_get_conflicts	(ZifPackage	*package,
+							 ZifState	*state,
+							 GError		**error);
 guint64			 zif_package_get_time_file	(ZifPackage	*package);
 
 /* internal setters */
@@ -165,6 +168,8 @@ void			 zif_package_set_provides	(ZifPackage	*package,
 							 GPtrArray	*provides);
 void			 zif_package_set_obsoletes	(ZifPackage	*package,
 							 GPtrArray	*obsoletes);
+void			 zif_package_set_conflicts	(ZifPackage	*package,
+							 GPtrArray	*conflicts);
 void			 zif_package_set_time_file	(ZifPackage	*package,
 							 guint64	 time_file);
 /* actions */

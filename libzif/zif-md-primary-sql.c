@@ -544,6 +544,16 @@ zif_md_primary_sql_what_obsoletes (ZifMd *md, gchar **search,
 }
 
 /**
+ * zif_md_primary_sql_what_conflicts:
+ **/
+static GPtrArray *
+zif_md_primary_sql_what_conflicts (ZifMd *md, gchar **search,
+				   ZifState *state, GError **error)
+{
+	return zif_md_primary_sql_what_depends (md, "conflicts", search, state, error);
+}
+
+/**
  * zif_md_primary_sql_find_package:
  **/
 static GPtrArray *
@@ -623,6 +633,7 @@ zif_md_primary_sql_class_init (ZifMdPrimarySqlClass *klass)
 	md_class->search_pkgid = zif_md_primary_sql_search_pkgid;
 	md_class->what_provides = zif_md_primary_sql_what_provides;
 	md_class->what_obsoletes = zif_md_primary_sql_what_obsoletes;
+	md_class->what_conflicts = zif_md_primary_sql_what_conflicts;
 	md_class->resolve = zif_md_primary_sql_resolve;
 	md_class->get_packages = zif_md_primary_sql_get_packages;
 	md_class->find_package = zif_md_primary_sql_find_package;
