@@ -91,6 +91,33 @@ zif_release_error_quark (void)
 }
 
 /**
+ * zif_release_get_file_age:
+ **/
+static guint64
+zif_release_get_file_age (GFile *file, GError **error)
+{
+	GFileInfo *file_info;
+	guint64 modified;
+	guint64 age = G_MAXUINT64;
+
+	/* get file attributes */
+	file_info = g_file_query_info (file,
+				       G_FILE_ATTRIBUTE_TIME_MODIFIED,
+				       G_FILE_QUERY_INFO_NONE, NULL,
+				       error);
+	if (file_info == NULL)
+		goto out;
+
+	/* get age */
+	modified = g_file_info_get_attribute_uint64 (file_info, G_FILE_ATTRIBUTE_TIME_MODIFIED);
+	age = time (NULL) - modified;
+out:
+	if (file_info != NULL)
+		g_object_unref (file_info);
+	return age;
+}
+
+/**
  * zif_release_load:
  **/
 static gboolean
@@ -102,12 +129,15 @@ zif_release_load (ZifRelease *release, ZifState *state, GError **error)
 	gchar **groups = NULL;
 	ZifUpgrade *upgrade;
 	guint i;
+	GFile *file = NULL;
+	guint64 cache_age, age;
 	const gchar *temp;
 	gchar *temp_expand;
 	gchar *filename = NULL;
+	ZifReleasePrivate *priv = release->priv;
 
 	/* nothing set */
-	if (release->priv->cache_dir == NULL) {
+	if (priv->cache_dir == NULL) {
 		g_set_error_literal (error,
 				     ZIF_RELEASE_ERROR,
 				     ZIF_RELEASE_ERROR_SETUP_INVALID,
@@ -116,11 +146,44 @@ zif_release_load (ZifRelease *release, ZifState *state, GError **error)
 	}
 
 	/* download if it does not already exist */
-	filename = g_build_filename (release->priv->cache_dir, "releases.txt", NULL);
+	filename = g_build_filename (priv->cache_dir, "releases.txt", NULL);
 	ret = g_file_test (filename, G_FILE_TEST_EXISTS);
+	if (ret) {
+		/* check file age */
+		file = g_file_new_for_path (filename);
+		age = zif_release_get_file_age (file, &error_local);
+		if (age == G_MAXUINT64) {
+			g_set_error (error,
+				     ZIF_RELEASE_ERROR,
+				     ZIF_RELEASE_ERROR_SETUP_INVALID,
+				     "failed to get age for release info: %s",
+				     error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+
+		/* delete it if it's older */
+		cache_age = zif_config_get_uint (priv->config, "max-age", NULL);
+		if (age > cache_age) {
+			g_debug ("deleting old %s as too old", filename);
+			ret = g_file_delete (file, NULL, &error_local);
+			if (!ret) {
+				g_set_error (error,
+					     ZIF_RELEASE_ERROR,
+					     ZIF_RELEASE_ERROR_SETUP_INVALID,
+					     "failed to delete old releases file: %s",
+					     error_local->message);
+				g_error_free (error_local);
+				goto out;
+			}
+
+			/* force download as if this never existed */
+			ret = FALSE;
+		}
+	}
 	if (!ret) {
-		ret = zif_download_file (release->priv->download,
-					 release->priv->uri,
+		ret = zif_download_file (priv->download,
+					 priv->uri,
 					 filename,
 					 state, &error_local);
 		if (!ret) {
@@ -135,7 +198,7 @@ zif_release_load (ZifRelease *release, ZifState *state, GError **error)
 	}
 
 	/* setup watch */
-	ret = zif_monitor_add_watch (release->priv->monitor, filename, &error_local);
+	ret = zif_monitor_add_watch (priv->monitor, filename, &error_local);
 	if (!ret) {
 		g_set_error (error,
 			     ZIF_RELEASE_ERROR,
@@ -183,32 +246,34 @@ zif_release_load (ZifRelease *release, ZifState *state, GError **error)
 		zif_upgrade_set_version (upgrade, g_key_file_get_integer (key_file, groups[i], "version", NULL));
 		temp = g_key_file_get_string (key_file, groups[i], "baseurl", NULL);
 		if (temp != NULL) {
-			temp_expand = zif_config_expand_substitutions (release->priv->config, temp, NULL);
+			temp_expand = zif_config_expand_substitutions (priv->config, temp, NULL);
 			zif_upgrade_set_baseurl (upgrade, temp_expand);
 			g_free (temp_expand);
 		}
 		temp = g_key_file_get_string (key_file, groups[i], "mirrorlist", NULL);
 		if (temp != NULL) {
-			temp_expand = zif_config_expand_substitutions (release->priv->config, temp, NULL);
+			temp_expand = zif_config_expand_substitutions (priv->config, temp, NULL);
 			zif_upgrade_set_mirrorlist (upgrade, temp_expand);
 			g_free (temp_expand);
 		}
 		temp = g_key_file_get_string (key_file, groups[i], "installmirrorlist", NULL);
 		if (temp != NULL) {
-			temp_expand = zif_config_expand_substitutions (release->priv->config, temp, NULL);
+			temp_expand = zif_config_expand_substitutions (priv->config, temp, NULL);
 			zif_upgrade_set_install_mirrorlist (upgrade, temp_expand);
 			g_free (temp_expand);
 		}
-		g_ptr_array_add (release->priv->array, upgrade);
+		g_ptr_array_add (priv->array, upgrade);
 	}
 
 	/* done */
-	release->priv->loaded = TRUE;
+	priv->loaded = TRUE;
 out:
 	g_free (filename);
 	g_strfreev (groups);
 	if (key_file != NULL)
 		g_key_file_free (key_file);
+	if (file != NULL)
+		g_object_unref (file);
 	return ret;
 }
 
@@ -479,12 +544,6 @@ zif_release_make_kernel_default_once (ZifRelease *release, GError **error)
 	GError *error_local = NULL;
 	ZifReleasePrivate *priv = release->priv;
 
-	/* we're not running as root */
-	if (!g_str_has_prefix (priv->boot_dir, "/boot")) {
-		g_debug ("not running grub as not installing root, would have run '%s'", cmdline);
-		goto out;
-	}
-
 	/* We want to run something like:
 	 *
 	 * /bin/echo 'savedefault --default=0 --once' | /sbin/grub > /dev/null
@@ -492,6 +551,12 @@ zif_release_make_kernel_default_once (ZifRelease *release, GError **error)
 	 * ...but this won't work in C and is a bodge.
 	 * Ideally we want to add --once to the list of grubby commands. */
 	cmdline = g_strdup_printf ("/sbin/grubby --set-default=%s/vmlinuz", priv->boot_dir);
+
+	/* we're not running as root */
+	if (!g_str_has_prefix (priv->boot_dir, "/boot")) {
+		g_debug ("not running grub as not installing root, would have run '%s'", cmdline);
+		goto out;
+	}
 	g_debug ("running command %s", cmdline);
 	ret = g_spawn_command_line_sync (cmdline, NULL, NULL, NULL, &error_local);
 	if (!ret) {
