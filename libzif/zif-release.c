@@ -924,7 +924,7 @@ zif_release_get_keyfile_value (const gchar *filename, const gchar *key)
 {
 	GFile *file;
 	gchar *data = NULL;
-	gchar *lang = NULL;
+	gchar *value = NULL;
 	gchar **lines = NULL;
 	GError *error = NULL;
 	gboolean ret;
@@ -945,19 +945,15 @@ zif_release_get_keyfile_value (const gchar *filename, const gchar *key)
 	lines = g_strsplit (data, "\n", -1);
 	for (i=0; lines[i] != NULL; i++) {
 		if (g_str_has_prefix (lines[i], key)) {
-			lang = g_strdup (lines[i]+len+2);
-			g_strdelimit (lang, "\"", '\0');
+			value = g_strdup (lines[i]+len+2);
+			g_strdelimit (value, "\"", '\0');
 			break;
 		}
 	}
 out:
-	if (lang == NULL) {
-		g_warning ("failed to get LANG, falling back to en_US.UTF-8");
-		lang = g_strdup ("en_US.UTF-8");
-	}
 	g_object_unref (file);
 	g_strfreev (lines);
-	return lang;
+	return value;
 }
 
 /**
