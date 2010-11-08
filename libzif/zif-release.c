@@ -896,7 +896,7 @@ zif_release_get_stage2 (ZifRelease *release, ZifReleaseUpgradeData *data, ZifSta
 	if (!ret) {
 		ret = zif_download_location_full (priv->download, stage2,
 						  filename,
-						  0, "application/x-extension-img",
+						  0, "application/octet-stream",
 						  G_CHECKSUM_SHA256, checksum+7,
 						  state, &error_local);
 		if (!ret) {
