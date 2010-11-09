@@ -74,6 +74,8 @@ libzif_la_SOURCES =						\
 	zif-package-local.h					\
 	zif-package-remote.c					\
 	zif-package-remote.h					\
+	zif-package-meta.c					\
+	zif-package-meta.h					\
 	zif-store.c						\
 	zif-store.h						\
 	zif-legal.c						\

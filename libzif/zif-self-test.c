@@ -53,6 +53,7 @@
 #include "zif-package.h"
 #include "zif-package-local.h"
 #include "zif-package-remote.h"
+#include "zif-package-meta.h"
 #include "zif-repos.h"
 #include "zif-state.h"
 #include "zif-store-array.h"
@@ -1286,6 +1287,73 @@ zif_package_local_func (void)
 }
 
 static void
+zif_package_meta_func (void)
+{
+	ZifPackage *pkg;
+	gboolean ret;
+	GError *error = NULL;
+	gchar *filename;
+	ZifState *state;
+	GPtrArray *depends;
+
+	state = zif_state_new ();
+	pkg = zif_package_meta_new ();
+	g_assert (pkg != NULL);
+
+	filename = zif_test_get_data_file ("test.spec");
+	ret = zif_package_meta_set_from_filename (ZIF_PACKAGE_META(pkg), filename, &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	g_assert_cmpstr (zif_package_get_id (pkg), ==, "test;0.1-1%{?dist};i386;meta");
+
+	zif_state_reset (state);
+	g_assert_cmpstr (zif_package_get_summary (pkg, state, NULL), ==, "Test package");
+
+	zif_state_reset (state);
+	g_assert_cmpstr (zif_package_get_license (pkg, state, NULL), ==, "GPLv2+");
+
+	zif_state_reset (state);
+	g_assert_cmpstr (zif_package_get_url (pkg, state, NULL), ==, "http://people.freedesktop.org/~hughsient/releases/");
+
+	/* requires */
+	zif_state_reset (state);
+	depends = zif_package_get_requires (pkg, state, &error);
+	g_assert_no_error (error);
+	g_assert (depends != NULL);
+	g_assert_cmpint (depends->len, ==, 0);
+	g_clear_error (&error);
+
+	/* conflicts */
+	zif_state_reset (state);
+	depends = zif_package_get_conflicts (pkg, state, &error);
+	g_assert_no_error (error);
+	g_assert (depends != NULL);
+	g_assert_cmpint (depends->len, ==, 1);
+	g_clear_error (&error);
+
+	/* obsoletes */
+	zif_state_reset (state);
+	depends = zif_package_get_obsoletes (pkg, state, &error);
+	g_assert_no_error (error);
+	g_assert (depends != NULL);
+	g_assert_cmpint (depends->len, ==, 1);
+	g_clear_error (&error);
+
+	/* provides */
+	zif_state_reset (state);
+	depends = zif_package_get_provides (pkg, state, &error);
+	g_assert_no_error (error);
+	g_assert (depends != NULL);
+	g_assert_cmpint (depends->len, ==, 1);
+	g_clear_error (&error);
+
+	g_free (filename);
+	g_object_unref (pkg);
+	g_object_unref (state);
+}
+
+static void
 zif_package_remote_func (void)
 {
 	ZifPackage *pkg;
@@ -2234,6 +2302,7 @@ main (int argc, char **argv)
 	g_test_add_func ("/zif/monitor", zif_monitor_func);
 	g_test_add_func ("/zif/package-local", zif_package_local_func);
 	g_test_add_func ("/zif/package-remote", zif_package_remote_func);
+	g_test_add_func ("/zif/package-meta", zif_package_meta_func);
 	g_test_add_func ("/zif/package", zif_package_func);
 	g_test_add_func ("/zif/release", zif_release_func);
 	g_test_add_func ("/zif/repos", zif_repos_func);
