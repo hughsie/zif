@@ -40,6 +40,8 @@ struct _ZifDependPrivate
 	gchar			*name;
 	ZifDependFlag		 flag;
 	gchar			*version;
+	gchar			*description;
+	gboolean		 description_ok;
 };
 
 enum {
@@ -82,7 +84,10 @@ zif_depend_flag_to_string (ZifDependFlag flag)
  *
  * Returns a string representation of the #ZifDepend object.
  *
- * Return value: string value
+ * Note: this function is deprecated, use zif_depend_get_description()
+ * instead as it is more efficient.
+ *
+ * Return value: string value, free with g_free()
  *
  * Since: 0.1.0
  **/
@@ -97,6 +102,31 @@ zif_depend_to_string (ZifDepend *depend)
 				zif_depend_flag_to_string (depend->priv->flag),
 				depend->priv->version);
 }
+
+/**
+ * zif_depend_get_description:
+ * @flag: a valid #ZifDependFlag object
+ *
+ * Returns a string representation of the #ZifDepend object.
+ *
+ * Return value: string value
+ *
+ * Since: 0.1.3
+ **/
+const gchar *
+zif_depend_get_description (ZifDepend *depend)
+{
+	g_return_val_if_fail (ZIF_IS_DEPEND (depend), NULL);
+
+	/* does not exist, or not valid */
+	if (!depend->priv->description_ok) {
+		g_free (depend->priv->description);
+		depend->priv->description = zif_depend_to_string (depend);
+		depend->priv->description_ok = TRUE;
+	}
+	return depend->priv->description;
+}
+
 
 /**
  * zif_depend_get_flag:
@@ -163,6 +193,7 @@ zif_depend_set_flag (ZifDepend *depend, ZifDependFlag flag)
 {
 	g_return_if_fail (ZIF_IS_DEPEND (depend));
 	depend->priv->flag = flag;
+	depend->priv->description_ok = FALSE;
 }
 
 /**
@@ -182,6 +213,7 @@ zif_depend_set_name (ZifDepend *depend, const gchar *name)
 	g_return_if_fail (depend->priv->name == NULL);
 
 	depend->priv->name = g_strdup (name);
+	depend->priv->description_ok = FALSE;
 }
 
 /**
@@ -201,6 +233,7 @@ zif_depend_set_version (ZifDepend *depend, const gchar *version)
 	g_return_if_fail (depend->priv->version == NULL);
 
 	depend->priv->version = g_strdup (version);
+	depend->priv->description_ok = FALSE;
 }
 
 /**
@@ -250,6 +283,7 @@ zif_depend_finalize (GObject *object)
 
 	g_free (depend->priv->name);
 	g_free (depend->priv->version);
+	g_free (depend->priv->description);
 
 	G_OBJECT_CLASS (zif_depend_parent_class)->finalize (object);
 }
@@ -307,8 +341,6 @@ zif_depend_init (ZifDepend *depend)
 {
 	depend->priv = ZIF_DEPEND_GET_PRIVATE (depend);
 	depend->priv->flag = ZIF_DEPEND_FLAG_UNKNOWN;
-	depend->priv->name = NULL;
-	depend->priv->version = NULL;
 }
 
 /**

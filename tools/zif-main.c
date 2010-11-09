@@ -222,7 +222,7 @@ zif_cmd_get_depends (const gchar *package_name, ZifState *state)
 	GPtrArray *store_array;
 	GPtrArray *requires = NULL;
 	ZifDepend *require;
-	gchar *require_str;
+	const gchar *require_str;
 	GPtrArray *provides;
 	const gchar *package_id;
 	guint i, j;
@@ -305,9 +305,8 @@ zif_cmd_get_depends (const gchar *package_name, ZifState *state)
 		state_loop = zif_state_get_child (state_local);
 
 		require = g_ptr_array_index (requires, i);
-		require_str = zif_depend_to_string (require);
+		require_str = zif_depend_get_description (require);
 		g_string_append_printf (string, "  dependency: %s\n", require_str);
-		g_free (require_str);
 
 		/* find the package providing the depend */
 		to_array[0] = zif_depend_get_name (require);

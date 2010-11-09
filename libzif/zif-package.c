@@ -408,7 +408,7 @@ void
 zif_package_print (ZifPackage *package)
 {
 	guint i;
-	gchar *text;
+	const gchar *text;
 	ZifDepend *depend;
 	GPtrArray *array;
 
@@ -436,9 +436,8 @@ zif_package_print (ZifPackage *package)
 		array = package->priv->requires;
 		for (i=0; i<array->len; i++) {
 			depend = g_ptr_array_index (array, i);
-			text = zif_depend_to_string (depend);
+			text = zif_depend_get_description (depend);
 			g_print ("\t%s\n", text);
-			g_free (text);
 		}
 	}
 	if (package->priv->provides != NULL) {
@@ -446,9 +445,8 @@ zif_package_print (ZifPackage *package)
 		array = package->priv->provides;
 		for (i=0; i<array->len; i++) {
 			depend = g_ptr_array_index (array, i);
-			text = zif_depend_to_string (depend);
+			text = zif_depend_get_description (depend);
 			g_print ("\t%s\n", text);
-			g_free (text);
 		}
 	}
 	if (package->priv->obsoletes != NULL) {
@@ -456,9 +454,8 @@ zif_package_print (ZifPackage *package)
 		array = package->priv->obsoletes;
 		for (i=0; i<array->len; i++) {
 			depend = g_ptr_array_index (array, i);
-			text = zif_depend_to_string (depend);
+			text = zif_depend_get_description (depend);
 			g_print ("\t%s\n", text);
-			g_free (text);
 		}
 	}
 	if (package->priv->conflicts != NULL) {
@@ -466,9 +463,8 @@ zif_package_print (ZifPackage *package)
 		array = package->priv->conflicts;
 		for (i=0; i<array->len; i++) {
 			depend = g_ptr_array_index (array, i);
-			text = zif_depend_to_string (depend);
+			text = zif_depend_get_description (depend);
 			g_print ("\t%s\n", text);
-			g_free (text);
 		}
 	}
 }

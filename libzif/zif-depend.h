@@ -76,6 +76,7 @@ const gchar		*zif_depend_flag_to_string	(ZifDependFlag		 flag);
 ZifDependFlag		 zif_depend_get_flag		(ZifDepend		*depend);
 const gchar		*zif_depend_get_name		(ZifDepend		*depend);
 const gchar		*zif_depend_get_version		(ZifDepend		*depend);
+const gchar		*zif_depend_get_description	(ZifDepend		*depend);
 
 /* internal setters */
 void			 zif_depend_set_flag		(ZifDepend		*depend,
