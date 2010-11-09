@@ -63,12 +63,31 @@ struct _ZifStoreMetaPrivate
 G_DEFINE_TYPE (ZifStoreMeta, zif_store_meta, ZIF_TYPE_STORE)
 
 /**
+ * zif_store_meta_locate_package:
+ **/
+static ZifPackage *
+zif_store_meta_locate_package (ZifStoreMeta *store, ZifPackage *package)
+{
+	guint i;
+	const gchar *package_id;
+	ZifPackage *package_tmp;
+
+	package_id = zif_package_get_id (package);
+	for (i=0; i<store->priv->packages->len; i++) {
+		package_tmp = g_ptr_array_index (store->priv->packages, i);
+		if (g_strcmp0 (package_id, zif_package_get_id (package_tmp)) == 0)
+			return package_tmp;
+	}
+	return NULL;
+}
+
+/**
  * zif_store_meta_add_package:
  * @store: the #ZifStoreMeta object
  * @package: a #ZifPackage object
  * @error: a #GError which is used on failure, or %NULL
  *
- * Sets the prefix to use for the install root.
+ * Adds a package to the virtual store.
  *
  * Return value: %TRUE for success, %FALSE for failure
  *
@@ -78,14 +97,133 @@ gboolean
 zif_store_meta_add_package (ZifStoreMeta *store, ZifPackage *package, GError **error)
 {
 	gboolean ret = TRUE;
+	ZifPackage *package_tmp;
 
 	g_return_val_if_fail (ZIF_IS_STORE_META (store), FALSE);
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
+	/* check it's not already added */
+	package_tmp = zif_store_meta_locate_package (store, package);
+	if (package_tmp != NULL) {
+		ret = FALSE;
+		g_set_error (error,
+			     ZIF_STORE_ERROR,
+			     ZIF_STORE_ERROR_FAILED,
+			     "already added %s",
+			     zif_package_get_id (package));
+		goto out;
+	}
+
 	/* just add */
 	g_ptr_array_add (store->priv->packages, g_object_ref (package));
+out:
+	return ret;
+}
 
+/**
+ * zif_store_meta_add_packages:
+ * @store: the #ZifStoreMeta object
+ * @array: an array of #ZifPackage's
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Adds an array of packages to the virtual store.
+ *
+ * Return value: %TRUE for success, %FALSE for failure
+ *
+ * Since: 0.1.3
+ **/
+gboolean
+zif_store_meta_add_packages (ZifStoreMeta *store, GPtrArray *array, GError **error)
+{
+	gboolean ret = TRUE;
+	ZifPackage *package;
+	guint i;
+
+	g_return_val_if_fail (ZIF_IS_STORE_META (store), FALSE);
+	g_return_val_if_fail (array != NULL, FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+	/* just add */
+	for (i=0; i<array->len; i++) {
+		package = g_ptr_array_index (array, i);
+		ret = zif_store_meta_add_package (store, package, error);
+		if (!ret)
+			break;
+	}
+	return ret;
+}
+
+/**
+ * zif_store_meta_remove_package:
+ * @store: the #ZifStoreMeta object
+ * @package: a #ZifPackage object
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Removes a package from the virtual store.
+ *
+ * Return value: %TRUE for success, %FALSE for failure
+ *
+ * Since: 0.1.3
+ **/
+gboolean
+zif_store_meta_remove_package (ZifStoreMeta *store, ZifPackage *package, GError **error)
+{
+	gboolean ret = TRUE;
+	ZifPackage *package_tmp;
+
+	g_return_val_if_fail (ZIF_IS_STORE_META (store), FALSE);
+	g_return_val_if_fail (ZIF_IS_PACKAGE (package), FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+	/* check it's not already removeed */
+	package_tmp = zif_store_meta_locate_package (store, package);
+	if (package_tmp == NULL) {
+		ret = FALSE;
+		g_set_error (error,
+			     ZIF_STORE_ERROR,
+			     ZIF_STORE_ERROR_FAILED,
+			     "package not found in array %s",
+			     zif_package_get_id (package));
+		goto out;
+	}
+
+	/* just remove */
+	g_ptr_array_remove (store->priv->packages, package_tmp);
+out:
+	return ret;
+}
+
+/**
+ * zif_store_meta_remove_packages:
+ * @store: the #ZifStoreMeta object
+ * @array: an array of #ZifPackage's
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Removes an array of packages from the virtual store.
+ *
+ * Return value: %TRUE for success, %FALSE for failure
+ *
+ * Since: 0.1.3
+ **/
+gboolean
+zif_store_meta_remove_packages (ZifStoreMeta *store, GPtrArray *array, GError **error)
+{
+	gboolean ret = TRUE;
+	ZifPackage *package;
+	guint i;
+
+	g_return_val_if_fail (ZIF_IS_STORE_META (store), FALSE);
+	g_return_val_if_fail (array != NULL, FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+	/* just remove */
+	for (i=0; i<array->len; i++) {
+		package = g_ptr_array_index (array, i);
+		ret = zif_store_meta_remove_package (store, package, error);
+		if (!ret)
+			break;
+	}
 	return ret;
 }
 
@@ -113,7 +251,7 @@ zif_store_meta_search_name (ZifStore *store, gchar **search, ZifState *state, GE
 	/* check we have packages */
 	if (meta->priv->packages->len == 0) {
 		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
-				     "no packages in meta sack");
+				     "cannot search name, no packages in meta sack");
 		goto out;
 	}
 
@@ -158,15 +296,15 @@ zif_store_meta_resolve (ZifStore *store, gchar **search, ZifState *state, GError
 	g_return_val_if_fail (search != NULL, NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 
-	/* we just search a virtual in-memory-sack */
-	zif_state_set_number_steps (state, meta->priv->packages->len);
-
 	/* check we have packages */
 	if (meta->priv->packages->len == 0) {
 		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_ARRAY_IS_EMPTY,
-				     "no packages in meta sack");
+				     "cannot resolve, no packages in meta sack");
 		goto out;
 	}
+
+	/* we just search a virtual in-memory-sack */
+	zif_state_set_number_steps (state, meta->priv->packages->len);
 
 	/* iterate list */
 	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
@@ -225,7 +363,7 @@ zif_store_meta_find_package (ZifStore *store, const gchar *package_id, ZifState 
 	/* check we have packages */
 	if (meta->priv->packages->len == 0) {
 		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_ARRAY_IS_EMPTY,
-				     "no packages in meta sack");
+				     "cannot find package, no packages in meta sack");
 		goto out;
 	}
 
@@ -263,7 +401,8 @@ zif_store_meta_find_package (ZifStore *store, const gchar *package_id, ZifState 
 	/* return ref to package */
 	package = g_object_ref (g_ptr_array_index (array, 0));
 out:
-	g_ptr_array_unref (array);
+	if (array != NULL)
+		g_ptr_array_unref (array);
 	return package;
 }
 

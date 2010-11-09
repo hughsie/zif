@@ -1955,6 +1955,12 @@ zif_store_meta_func (void)
 	g_assert_no_error (error);
 	g_assert (ret);
 
+	/* add to array, again */
+	ret = zif_store_meta_add_package (ZIF_STORE_META (store), pkg, &error);
+	g_assert_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED);
+	g_assert (!ret);
+	g_clear_error (&error);
+
 	/* ensure we can find it */
 	to_array[0] = "test";
 	zif_state_reset (state);
@@ -1971,6 +1977,17 @@ zif_store_meta_func (void)
 	g_assert (array != NULL);
 	g_assert_cmpint (array->len, ==, 1);
 	g_ptr_array_unref (array);
+
+	/* delete from array */
+	ret = zif_store_meta_remove_package (ZIF_STORE_META (store), pkg, &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	/* delete from array, again */
+	ret = zif_store_meta_remove_package (ZIF_STORE_META (store), pkg, &error);
+	g_assert_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED);
+	g_assert (!ret);
+	g_clear_error (&error);
 
 	g_free (filename);
 	g_object_unref (pkg);

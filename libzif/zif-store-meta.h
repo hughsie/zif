@@ -60,6 +60,15 @@ ZifStore	*zif_store_meta_new		(void);
 gboolean	 zif_store_meta_add_package	(ZifStoreMeta		*store,
 						 ZifPackage		*package,
 						 GError			**error);
+gboolean	 zif_store_meta_add_packages	(ZifStoreMeta		*store,
+						 GPtrArray		*array,
+						 GError			**error);
+gboolean	 zif_store_meta_remove_package	(ZifStoreMeta		*store,
+						 ZifPackage		*package,
+						 GError			**error);
+gboolean	 zif_store_meta_remove_packages	(ZifStoreMeta		*store,
+						 GPtrArray		*array,
+						 GError			**error);
 
 G_END_DECLS
 
