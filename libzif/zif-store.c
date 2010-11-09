@@ -23,7 +23,7 @@
  * SECTION:zif-store
  * @short_description: A store is an abstract collection of packages
  *
- * #ZifStoreLocal and #ZifStoreRemote both implement #ZifStore.
+ * #ZifStoreLocal, #ZifStoreRemote and #ZifStoreMeta all implement #ZifStore.
  */
 
 #ifdef HAVE_CONFIG_H

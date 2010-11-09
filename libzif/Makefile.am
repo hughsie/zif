@@ -84,6 +84,8 @@ libzif_la_SOURCES =						\
 	zif-store-local.h					\
 	zif-store-remote.c					\
 	zif-store-remote.h					\
+	zif-store-meta.c					\
+	zif-store-meta.h					\
 	zif-marshal.c						\
 	zif-marshal.h						\
 	zif-md.c						\

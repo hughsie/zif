@@ -59,6 +59,7 @@
 #include "zif-store-array.h"
 #include "zif-store.h"
 #include "zif-store-local.h"
+#include "zif-store-meta.h"
 #include "zif-store-remote.h"
 #include "zif-string.h"
 #include "zif-transaction.h"
@@ -1864,6 +1865,58 @@ zif_store_local_func (void)
 }
 
 static void
+zif_store_meta_func (void)
+{
+	ZifStore *store;
+	ZifPackage *pkg;
+	gboolean ret;
+	GError *error = NULL;
+	gchar *filename;
+	ZifState *state;
+	const gchar *to_array[] = {NULL, NULL};
+	GPtrArray *array;
+
+	store = zif_store_meta_new ();
+
+	/* create virtal package to add to the store */
+	state = zif_state_new ();
+	pkg = zif_package_meta_new ();
+	filename = zif_test_get_data_file ("test.spec");
+	ret = zif_package_meta_set_from_filename (ZIF_PACKAGE_META(pkg), filename, &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	g_assert_cmpstr (zif_package_get_id (pkg), ==, "test;0.1-1%{?dist};i386;meta");
+
+	/* add to array */
+	ret = zif_store_meta_add_package (ZIF_STORE_META (store), pkg, &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	/* ensure we can find it */
+	to_array[0] = "test";
+	zif_state_reset (state);
+	array = zif_store_resolve (store, (gchar**) to_array, state, &error);
+	g_assert_no_error (error);
+	g_assert (array != NULL);
+	g_assert_cmpint (array->len, ==, 1);
+	g_ptr_array_unref (array);
+
+	/* ensure we can find it */
+	zif_state_reset (state);
+	array = zif_store_get_packages (store, state, &error);
+	g_assert_no_error (error);
+	g_assert (array != NULL);
+	g_assert_cmpint (array->len, ==, 1);
+	g_ptr_array_unref (array);
+
+	g_free (filename);
+	g_object_unref (pkg);
+	g_object_unref (state);
+	g_object_unref (store);
+}
+
+static void
 zif_store_remote_func (void)
 {
 	ZifGroups *groups;
@@ -2308,6 +2361,7 @@ main (int argc, char **argv)
 	g_test_add_func ("/zif/repos", zif_repos_func);
 	g_test_add_func ("/zif/state", zif_state_func);
 	g_test_add_func ("/zif/store-local", zif_store_local_func);
+	g_test_add_func ("/zif/store-meta", zif_store_meta_func);
 	g_test_add_func ("/zif/store-remote", zif_store_remote_func);
 	g_test_add_func ("/zif/string", zif_string_func);
 	g_test_add_func ("/zif/transaction", zif_transaction_func);
