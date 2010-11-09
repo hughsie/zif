@@ -32,6 +32,7 @@
 #include <glib.h>
 
 #include "zif-depend.h"
+#include "zif-utils.h"
 
 #define ZIF_DEPEND_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_DEPEND, ZifDependPrivate))
 
@@ -53,6 +54,59 @@ enum {
 };
 
 G_DEFINE_TYPE (ZifDepend, zif_depend, G_TYPE_OBJECT)
+
+/**
+ * zif_depend_satisfies:
+ * @got: the #ZifDepend we've got
+ * @need: the #ZifDepend we need
+ *
+ * Returns if the dependency will be satisfied with what we've got.
+ *
+ * Return value: %TRUE if okay
+ *
+ * Since: 0.1.3
+ **/
+gboolean
+zif_depend_satisfies (ZifDepend *got, ZifDepend *need)
+{
+	gboolean ret;
+
+	/* name does not match */
+	ret = (g_strcmp0 (got->priv->name, need->priv->name) == 0);
+	if (!ret)
+		goto out;
+
+	/* 'Requires: hal' - not any particular version */
+	if (need->priv->flag == ZIF_DEPEND_FLAG_ANY) {
+		ret = TRUE;
+		goto out;
+	}
+
+	/* 'Requires: hal = 0.5.8' - both equal */
+	if (got->priv->flag == ZIF_DEPEND_FLAG_EQUAL &&
+	    need->priv->flag == ZIF_DEPEND_FLAG_EQUAL) {
+		ret = (zif_compare_evr (got->priv->version, need->priv->version) == 0);
+		goto out;
+	}
+
+	/* 'Requires: hal > 0.5.7' - greater */
+	if (need->priv->flag == ZIF_DEPEND_FLAG_GREATER) {
+		ret = (zif_compare_evr (got->priv->version, need->priv->version) > 0);
+		goto out;
+	}
+
+	/* 'Requires: hal < 0.5.7' - less */
+	if (need->priv->flag == ZIF_DEPEND_FLAG_LESS) {
+		ret = (zif_compare_evr (got->priv->version, need->priv->version) < 0);
+		goto out;
+	}
+out:
+	g_debug ("tested satisfiability of %s:%s = %s",
+		 zif_depend_get_description (got),
+		 zif_depend_get_description (need),
+		 ret ? "TRUE" : "FALSE");
+	return ret;
+}
 
 /**
  * zif_depend_flag_to_string:

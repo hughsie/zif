@@ -322,6 +322,7 @@ static void
 zif_depend_func (void)
 {
 	ZifDepend *depend;
+	ZifDepend *need;
 	gboolean ret;
 	GError *error = NULL;
 
@@ -362,6 +363,67 @@ zif_depend_func (void)
 	g_assert_error (error, 1, 0);
 	g_assert (!ret);
 	g_clear_error (&error);
+	g_object_unref (depend);
+
+	/* test satisfiability */
+	depend = zif_depend_new ();
+	zif_depend_set_name (depend, "hal");
+	zif_depend_set_flag (depend, ZIF_DEPEND_FLAG_EQUAL);
+	zif_depend_set_version (depend, "0.5.8-1");
+
+	/* exact */
+	need = zif_depend_new ();
+	zif_depend_set_name (need, "hal");
+	zif_depend_set_flag (need, ZIF_DEPEND_FLAG_EQUAL);
+	zif_depend_set_version (need, "0.5.8-1");
+	ret = zif_depend_satisfies (depend, need);
+	g_assert (ret);
+	g_object_unref (need);
+
+	/* non version specific */
+	need = zif_depend_new ();
+	zif_depend_set_name (need, "hal");
+	zif_depend_set_flag (need, ZIF_DEPEND_FLAG_ANY);
+	ret = zif_depend_satisfies (depend, need);
+	g_assert (ret);
+	g_object_unref (need);
+
+	/* greater than */
+	need = zif_depend_new ();
+	zif_depend_set_name (need, "hal");
+	zif_depend_set_flag (need, ZIF_DEPEND_FLAG_GREATER);
+	zif_depend_set_version (need, "0.5.7-1");
+	ret = zif_depend_satisfies (depend, need);
+	g_assert (ret);
+	g_object_unref (need);
+
+	/* less than */
+	need = zif_depend_new ();
+	zif_depend_set_name (need, "hal");
+	zif_depend_set_flag (need, ZIF_DEPEND_FLAG_LESS);
+	zif_depend_set_version (need, "0.5.9-1");
+	ret = zif_depend_satisfies (depend, need);
+	g_assert (ret);
+	g_object_unref (need);
+
+	/* fail */
+	need = zif_depend_new ();
+	zif_depend_set_name (need, "hal");
+	zif_depend_set_flag (need, ZIF_DEPEND_FLAG_EQUAL);
+	zif_depend_set_version (need, "0.5.9-1");
+	ret = zif_depend_satisfies (depend, need);
+	g_assert (!ret);
+	g_object_unref (need);
+
+	/* fail */
+	need = zif_depend_new ();
+	zif_depend_set_name (need, "not-hal");
+	zif_depend_set_flag (need, ZIF_DEPEND_FLAG_EQUAL);
+	zif_depend_set_version (need, "0.5.8-1");
+	ret = zif_depend_satisfies (depend, need);
+	g_assert (!ret);
+	g_object_unref (need);
+
 	g_object_unref (depend);
 }
 
