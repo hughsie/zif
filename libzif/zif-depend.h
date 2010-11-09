@@ -71,6 +71,9 @@ ZifDepend		*zif_depend_new			(void);
 /* utility functions */
 gchar			*zif_depend_to_string		(ZifDepend		*depend);
 const gchar		*zif_depend_flag_to_string	(ZifDependFlag		 flag);
+gboolean		 zif_depend_parse_description	(ZifDepend		*depend,
+							 const gchar		*value,
+							 GError			**error);
 
 /* public getters */
 ZifDependFlag		 zif_depend_get_flag		(ZifDepend		*depend);

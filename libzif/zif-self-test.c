@@ -320,6 +320,8 @@ static void
 zif_depend_func (void)
 {
 	ZifDepend *depend;
+	gboolean ret;
+	GError *error = NULL;
 
 	depend = zif_depend_new ();
 	zif_depend_set_flag (depend, ZIF_DEPEND_FLAG_GREATER);
@@ -329,7 +331,35 @@ zif_depend_func (void)
 	g_assert_cmpstr (zif_depend_get_name (depend), ==, "kernel");
 	g_assert_cmpstr (zif_depend_get_version (depend), ==, "2.6.0");
 	g_assert_cmpint (zif_depend_get_flag (depend), ==, ZIF_DEPEND_FLAG_GREATER);
+	g_assert_cmpstr (zif_depend_get_description (depend), ==, "kernel > 2.6.0");
+	g_object_unref (depend);
 
+	/* test parsing 1 form */
+	depend = zif_depend_new ();
+	ret = zif_depend_parse_description (depend, "kernel", &error);
+	g_assert_cmpstr (zif_depend_get_name (depend), ==, "kernel");
+	g_assert_cmpstr (zif_depend_get_version (depend), ==, NULL);
+	g_assert_cmpint (zif_depend_get_flag (depend), ==, ZIF_DEPEND_FLAG_ANY);
+	g_assert_no_error (error);
+	g_assert (ret);
+	g_object_unref (depend);
+
+	/* test parsing 3 form */
+	depend = zif_depend_new ();
+	ret = zif_depend_parse_description (depend, "kernel > 2.6.0", &error);
+	g_assert_cmpstr (zif_depend_get_name (depend), ==, "kernel");
+	g_assert_cmpstr (zif_depend_get_version (depend), ==, "2.6.0");
+	g_assert_cmpint (zif_depend_get_flag (depend), ==, ZIF_DEPEND_FLAG_GREATER);
+	g_assert_no_error (error);
+	g_assert (ret);
+	g_object_unref (depend);
+
+	/* test parsing invalid */
+	depend = zif_depend_new ();
+	ret = zif_depend_parse_description (depend, "kernel 2.6.0", &error);
+	g_assert_error (error, 1, 0);
+	g_assert (!ret);
+	g_clear_error (&error);
 	g_object_unref (depend);
 }
 

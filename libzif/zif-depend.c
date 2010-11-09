@@ -237,6 +237,70 @@ zif_depend_set_version (ZifDepend *depend, const gchar *version)
 }
 
 /**
+ * zif_depend_string_to_flag:
+ **/
+static ZifDependFlag
+zif_depend_string_to_flag (const gchar *value)
+{
+	if (g_strcmp0 (value, "<") == 0)
+		return ZIF_DEPEND_FLAG_LESS;
+	if (g_strcmp0 (value, ">") == 0)
+		return ZIF_DEPEND_FLAG_GREATER;
+	if (g_strcmp0 (value, "=") == 0)
+		return ZIF_DEPEND_FLAG_EQUAL;
+	return ZIF_DEPEND_FLAG_UNKNOWN;
+}
+
+/**
+ * zif_depend_parse_description:
+ * @depend: the #ZifDepend object
+ * @value: the depend string, e.g. "obsolete-package < 1.0.0"
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Parses a depend string and sets internal state.
+ *
+ * Return value: %TRUE for success
+ *
+ * Since: 0.1.3
+ **/
+gboolean
+zif_depend_parse_description (ZifDepend *depend, const gchar *value, GError **error)
+{
+	gchar **split = NULL;
+	gboolean ret = TRUE;
+
+	g_return_val_if_fail (ZIF_IS_DEPEND (depend), FALSE);
+	g_return_val_if_fail (value != FALSE, FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+	/* cut up */
+	split = g_strsplit (value, " ", -1);
+
+	/* just the name */
+	if (g_strv_length (split) == 1) {
+		zif_depend_set_flag (depend, ZIF_DEPEND_FLAG_ANY);
+//		zif_depend_set_version (depend, NULL);
+		zif_depend_set_name (depend, split[0]);
+		goto out;
+	}
+
+	/* three sections to parse */
+	if (g_strv_length (split) == 3) {
+		zif_depend_set_name (depend, split[0]);
+		zif_depend_set_flag (depend, zif_depend_string_to_flag (split[1]));
+		zif_depend_set_version (depend, split[2]);
+		goto out;
+	}
+
+	/* failed */
+	ret = FALSE;
+	g_set_error (error, 1, 0, "failed to parse '%s' as ZifDepend", value);
+out:
+	g_strfreev (split);
+	return ret;
+}
+
+/**
  * zif_depend_get_property:
  **/
 static void
