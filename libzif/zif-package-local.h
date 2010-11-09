@@ -57,7 +57,7 @@ struct _ZifPackageLocalClass
 };
 
 GType			 zif_package_local_get_type		(void);
-ZifPackageLocal		*zif_package_local_new			(void);
+ZifPackage		*zif_package_local_new			(void);
 gboolean		 zif_package_local_set_from_header	(ZifPackageLocal *pkg,
 								 Header		 header,
 								 GError		**error)

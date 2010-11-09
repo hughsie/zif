@@ -1239,7 +1239,7 @@ zif_package_func (void)
 static void
 zif_package_local_func (void)
 {
-	ZifPackageLocal *pkg;
+	ZifPackage *pkg;
 	gboolean ret;
 	GError *error = NULL;
 	gchar *filename;
@@ -1248,7 +1248,7 @@ zif_package_local_func (void)
 	g_assert (pkg != NULL);
 
 	filename = zif_test_get_data_file ("test-0.1-1.fc13.noarch.rpm");
-	ret = zif_package_local_set_from_filename (pkg, filename, &error);
+	ret = zif_package_local_set_from_filename (ZIF_PACKAGE_LOCAL (pkg), filename, &error);
 	g_assert_no_error (error);
 	g_assert (ret);
 	g_free (filename);
@@ -1258,7 +1258,7 @@ zif_package_local_func (void)
 static void
 zif_package_remote_func (void)
 {
-	ZifPackageRemote *pkg;
+	ZifPackage *pkg;
 
 	pkg = zif_package_remote_new ();
 	g_assert (pkg != NULL);

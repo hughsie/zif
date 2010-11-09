@@ -124,7 +124,7 @@ static gint
 zif_md_primary_sql_sqlite_create_package_cb (void *data, gint argc, gchar **argv, gchar **col_name)
 {
 	ZifMdPrimarySqlData *fldata = (ZifMdPrimarySqlData *) data;
-	ZifPackageRemote *package;
+	ZifPackage *package;
 	ZifStoreRemote *store_remote;
 	gboolean ret;
 
@@ -132,13 +132,13 @@ zif_md_primary_sql_sqlite_create_package_cb (void *data, gint argc, gchar **argv
 	store_remote = zif_md_get_store_remote (ZIF_MD (fldata->md));
 	if (store_remote != NULL) {
 		/* this is not set in a test harness */
-		zif_package_remote_set_store_remote (package, store_remote);
+		zif_package_remote_set_store_remote (ZIF_PACKAGE_REMOTE (package), store_remote);
 	} else {
 		g_debug ("no remote store for %s, which is okay as we're in make check", argv[1]);
 	}
 
 	/* add */
-	ret = zif_package_remote_set_from_repo (package, argc, col_name, argv, fldata->id, NULL);
+	ret = zif_package_remote_set_from_repo (ZIF_PACKAGE_REMOTE (package), argc, col_name, argv, fldata->id, NULL);
 	if (ret) {
 		g_ptr_array_add (fldata->packages, package);
 	} else {

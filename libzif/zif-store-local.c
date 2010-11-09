@@ -134,7 +134,7 @@ zif_store_local_load (ZifStore *store, ZifState *state, GError **error)
 	gboolean ret = TRUE;
 	rpmdbMatchIterator mi = NULL;
 	Header header;
-	ZifPackageLocal *package;
+	ZifPackage *package;
 	rpmdb db = NULL;
 	GError *error_local = NULL;
 	ZifStoreLocal *local = ZIF_STORE_LOCAL (store);
@@ -182,7 +182,7 @@ zif_store_local_load (ZifStore *store, ZifState *state, GError **error)
 		if (header == NULL)
 			break;
 		package = zif_package_local_new ();
-		ret = zif_package_local_set_from_header (package, header, &error_local);
+		ret = zif_package_local_set_from_header (ZIF_PACKAGE_LOCAL (package), header, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 				     "failed to set from header: %s", error_local->message);

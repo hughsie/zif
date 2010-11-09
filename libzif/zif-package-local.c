@@ -656,11 +656,11 @@ zif_package_local_init (ZifPackageLocal *pkg)
  *
  * Since: 0.1.0
  **/
-ZifPackageLocal *
+ZifPackage *
 zif_package_local_new (void)
 {
-	ZifPackageLocal *pkg;
+	ZifPackage *pkg;
 	pkg = g_object_new (ZIF_TYPE_PACKAGE_LOCAL, NULL);
-	return ZIF_PACKAGE_LOCAL (pkg);
+	return ZIF_PACKAGE (pkg);
 }
 

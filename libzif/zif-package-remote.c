@@ -311,11 +311,11 @@ zif_package_remote_init (ZifPackageRemote *pkg)
  *
  * Since: 0.1.0
  **/
-ZifPackageRemote *
+ZifPackage *
 zif_package_remote_new (void)
 {
-	ZifPackageRemote *pkg;
+	ZifPackage *pkg;
 	pkg = g_object_new (ZIF_TYPE_PACKAGE_REMOTE, NULL);
-	return ZIF_PACKAGE_REMOTE (pkg);
+	return ZIF_PACKAGE (pkg);
 }
 

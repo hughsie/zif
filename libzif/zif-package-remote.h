@@ -56,7 +56,7 @@ struct _ZifPackageRemoteClass
 };
 
 GType			 zif_package_remote_get_type		(void);
-ZifPackageRemote	*zif_package_remote_new			(void);
+ZifPackage		*zif_package_remote_new			(void);
 gboolean		 zif_package_remote_set_from_repo	(ZifPackageRemote *pkg,
 								 guint		 length,
 								 gchar		**type,
