@@ -251,7 +251,7 @@ zif_transaction_add_install (ZifTransaction *transaction, ZifPackage *package, G
 		goto out;
 	}
 
-	g_debug ("Added for install %s", zif_package_get_id (package));
+	g_debug ("Add INSTALL %s", zif_package_get_id (package));
 out:
 	return ret;
 }
@@ -288,7 +288,7 @@ zif_transaction_add_update (ZifTransaction *transaction, ZifPackage *package, GE
 		goto out;
 	}
 
-	g_debug ("Added for update %s", zif_package_get_id (package));
+	g_debug ("Add UPDATE %s", zif_package_get_id (package));
 out:
 	return ret;
 }
@@ -325,7 +325,7 @@ zif_transaction_add_remove (ZifTransaction *transaction, ZifPackage *package, GE
 		goto out;
 	}
 
-	g_debug ("Added for remove %s", zif_package_get_id (package));
+	g_debug ("Add REMOVE %s", zif_package_get_id (package));
 out:
 	return ret;
 }
@@ -1413,6 +1413,9 @@ zif_transaction_resolve_update_item (ZifTransactionResolve *data,
 	if (!ret)
 		goto out;
 
+	/* new things to process */
+	data->unresolved_dependencies = TRUE;
+
 	/* mark as resolved, so we don't try to process this again */
 	item->resolved = TRUE;
 out:
@@ -1441,12 +1444,15 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 	ZifTransactionItem *item;
 	ZifTransactionResolve *data;
 	GError *error_local = NULL;
+	guint resolve_count = 0;
 
 	g_return_val_if_fail (ZIF_IS_TRANSACTION (transaction), FALSE);
 	g_return_val_if_fail (zif_state_valid (state), FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 	g_return_val_if_fail (transaction->priv->stores_remote != NULL, FALSE);
 	g_return_val_if_fail (transaction->priv->store_local != NULL, FALSE);
+
+	g_debug ("starting resolve");
 
 	/* whilst there are unresolved dependencies, keep trying */
 	data = g_new0 (ZifTransactionResolve, 1);
@@ -1456,9 +1462,11 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 	while (data->unresolved_dependencies) {
 
 		/* reset here */
+		resolve_count++;
 		data->unresolved_dependencies = FALSE;
 
 		/* for each package set to be installed */
+		g_debug ("starting INSTALL on loop %i", resolve_count);
 		for (i=0; i<transaction->priv->install->len; i++) {
 			item = g_ptr_array_index (transaction->priv->install, i);
 			if (item->resolved)
@@ -1480,7 +1488,8 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 			}
 		}
 
-		/* for each package set to be installed */
+		/* for each package set to be updated */
+		g_debug ("starting UPDATE on loop %i", resolve_count);
 		for (i=0; i<transaction->priv->update->len; i++) {
 			item = g_ptr_array_index (transaction->priv->update, i);
 			if (item->resolved)
@@ -1503,6 +1512,7 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 		}
 
 		/* for each package set to be removed */
+		g_debug ("starting REMOVE on loop %i", resolve_count);
 		for (i=0; i<transaction->priv->remove->len; i++) {
 			item = g_ptr_array_index (transaction->priv->remove, i);
 			if (item->resolved)

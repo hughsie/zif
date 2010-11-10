@@ -1,0 +1,7 @@
+# update a single package, with the new version having a new dep
+
+[Zif Manifest]
+AddLocal=udev;0:0.1.0-1;i386;meta,hal;1.0.0-1;i386;meta
+AddRemote=hal;1.0.0-2;i386;meta@Requires:hal-libs = 1.0.0-2,hal-libs;1.0.0-2;i386;meta
+TransactionUpdate=hal;1.0.0-1;i386;meta
+PostInstalled=udev;0:0.1.0-1;i386;meta,hal;1.0.0-2;i386;meta,hal-libs;1.0.0-2;i386;meta
