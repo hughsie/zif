@@ -58,6 +58,7 @@
 struct _ZifStoreMetaPrivate
 {
 	GPtrArray		*packages;
+	gboolean		 is_local;
 };
 
 G_DEFINE_TYPE (ZifStoreMeta, zif_store_meta, ZIF_TYPE_STORE)
@@ -116,6 +117,9 @@ zif_store_meta_add_package (ZifStoreMeta *store, ZifPackage *package, GError **e
 	}
 
 	/* just add */
+	g_debug ("adding %s to %s",
+		 zif_package_get_id (package),
+		 zif_store_get_id (ZIF_STORE (store)));
 	g_ptr_array_add (store->priv->packages, g_object_ref (package));
 out:
 	return ret;
@@ -176,7 +180,7 @@ zif_store_meta_remove_package (ZifStoreMeta *store, ZifPackage *package, GError 
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
-	/* check it's not already removeed */
+	/* check it's not already removed */
 	package_tmp = zif_store_meta_locate_package (store, package);
 	if (package_tmp == NULL) {
 		ret = FALSE;
@@ -189,6 +193,9 @@ zif_store_meta_remove_package (ZifStoreMeta *store, ZifPackage *package, GError 
 	}
 
 	/* just remove */
+	g_debug ("removing %s from %s",
+		 zif_package_get_id (package),
+		 zif_store_get_id (ZIF_STORE (store)));
 	g_ptr_array_remove (store->priv->packages, package_tmp);
 out:
 	return ret;
@@ -225,6 +232,23 @@ zif_store_meta_remove_packages (ZifStoreMeta *store, GPtrArray *array, GError **
 			break;
 	}
 	return ret;
+}
+
+/**
+ * zif_store_meta_set_is_local:
+ * @store: the #ZifStoreMeta object
+ * @is_local: %TRUE if this is a local repo
+ *
+ * This function changes no results, it just changes the repository
+ * identifier to be "meta-local" rather than "meta".
+ *
+ * Since: 0.1.3
+ **/
+void
+zif_store_meta_set_is_local (ZifStoreMeta *store, gboolean is_local)
+{
+	g_return_if_fail (ZIF_IS_STORE_META (store));
+	store->priv->is_local = is_local;
 }
 
 /**
@@ -412,8 +436,11 @@ out:
 static const gchar *
 zif_store_meta_get_id (ZifStore *store)
 {
+	ZifStoreMeta *meta = ZIF_STORE_META (store);
 	g_return_val_if_fail (ZIF_IS_STORE_META (store), NULL);
-	return "meta";
+	if (meta->priv->is_local)
+		return "meta-local";
+	return "meta-remote";
 }
 
 /**

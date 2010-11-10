@@ -69,6 +69,8 @@ gboolean	 zif_store_meta_remove_package	(ZifStoreMeta		*store,
 gboolean	 zif_store_meta_remove_packages	(ZifStoreMeta		*store,
 						 GPtrArray		*array,
 						 GError			**error);
+void		 zif_store_meta_set_is_local	(ZifStoreMeta		*store,
+						 gboolean		 is_local);
 
 G_END_DECLS
 
