@@ -100,6 +100,11 @@ zif_depend_satisfies (ZifDepend *got, ZifDepend *need)
 		ret = (zif_compare_evr (got->priv->version, need->priv->version) < 0);
 		goto out;
 	}
+
+	/* not sure */
+	g_debug ("not sure how to compare %s and %s",
+		 zif_depend_flag_to_string (got->priv->flag),
+		 zif_depend_flag_to_string (need->priv->flag));
 out:
 	g_debug ("tested satisfiability of %s:%s = %s",
 		 zif_depend_get_description (got),
@@ -175,7 +180,10 @@ zif_depend_get_description (ZifDepend *depend)
 	/* does not exist, or not valid */
 	if (!depend->priv->description_ok) {
 		g_free (depend->priv->description);
-		depend->priv->description = zif_depend_to_string (depend);
+		depend->priv->description = g_strdup_printf ("[%s %s %s]",
+							     depend->priv->name,
+							     zif_depend_flag_to_string (depend->priv->flag),
+							     depend->priv->version ? depend->priv->version : "");
 		depend->priv->description_ok = TRUE;
 	}
 	return depend->priv->description;
@@ -333,7 +341,6 @@ zif_depend_parse_description (ZifDepend *depend, const gchar *value, GError **er
 	/* just the name */
 	if (g_strv_length (split) == 1) {
 		zif_depend_set_flag (depend, ZIF_DEPEND_FLAG_ANY);
-//		zif_depend_set_version (depend, NULL);
 		zif_depend_set_name (depend, split[0]);
 		goto out;
 	}
