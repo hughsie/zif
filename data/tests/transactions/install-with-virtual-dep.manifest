@@ -1,0 +1,7 @@
+# simulate installing one package that has a dep, and making sure we choose the highest virtual dep
+
+[Zif Manifest]
+AddLocal=
+AddRemote=hal;0.0.1-1;i386;meta@Requires:configuration-store,hal-info;0.0.1-1;i386;meta@Provides:configuration-store =  1,udev-info;0.0.1-1;i386;meta@Provides:configuration-store = 2
+TransactionInstall=hal;0.0.1-1;i386;meta
+PostInstalled=hal;0.0.1-1;i386;meta,udev-info;0.0.1-1;i386;meta

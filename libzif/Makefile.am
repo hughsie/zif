@@ -136,6 +136,8 @@ libzif_la_SOURCES =						\
 	zif-release.h						\
 	zif-transaction.c					\
 	zif-transaction.h					\
+	zif-manifest.c						\
+	zif-manifest.h						\
 	zif-version.h						\
 	zif-download.c						\
 	zif-download.h

@@ -67,6 +67,7 @@
 #include "zif-update.h"
 #include "zif-update-info.h"
 #include "zif-utils.h"
+#include "zif-manifest.h"
 
 /**
  * zif_test_get_data_file:
@@ -159,6 +160,61 @@ zif_release_func (void)
 	g_object_unref (config);
 	g_object_unref (release);
 	g_object_unref (download);
+}
+
+static gint
+zif_indirect_strcmp (gchar **a, gchar **b)
+{
+	return g_strcmp0 (*a, *b);
+}
+
+static void
+zif_manifest_func (void)
+{
+	ZifManifest *manifest;
+	gboolean ret;
+	GError *error = NULL;
+	GDir *dir;
+	gchar *dirname;
+	const gchar *filename;
+	gchar *path;
+	guint i;
+	GPtrArray *array;
+
+	/* create new manifest */
+	manifest = zif_manifest_new ();
+	g_assert (manifest != NULL);
+
+	/* open directory of test data */
+	dirname = zif_test_get_data_file ("transactions");
+	g_assert (dirname != NULL);
+	dir = g_dir_open (dirname, 0, &error);
+	g_assert_no_error (error);
+	g_assert (dir != NULL);
+
+	/* get manifests files */
+	array = g_ptr_array_new_with_free_func (g_free);
+	filename = g_dir_read_name (dir);
+	while (filename != NULL) {
+		path = g_build_filename (dirname, filename, NULL);
+		g_ptr_array_add (array, path);
+		filename = g_dir_read_name (dir);
+	}
+
+	/* sort this */
+	g_ptr_array_sort (array, (GCompareFunc) zif_indirect_strcmp);
+
+	/* run each sample transactions */
+	for (i=0; i<array->len; i++) {
+		filename = g_ptr_array_index (array, i);
+		ret = zif_manifest_check (manifest, filename, &error);
+		g_assert_no_error (error);
+		g_assert (ret);
+	}
+
+	g_ptr_array_unref (array);
+	g_free (dirname);
+	g_object_unref (manifest);
 }
 
 static void
@@ -347,7 +403,7 @@ zif_depend_func (void)
 	g_assert_cmpstr (zif_depend_get_name (depend), ==, "kernel");
 	g_assert_cmpstr (zif_depend_get_version (depend), ==, "2.6.0");
 	g_assert_cmpint (zif_depend_get_flag (depend), ==, ZIF_DEPEND_FLAG_GREATER);
-	g_assert_cmpstr (zif_depend_get_description (depend), ==, "kernel > 2.6.0");
+	g_assert_cmpstr (zif_depend_get_description (depend), ==, "[kernel > 2.6.0]");
 	g_object_unref (depend);
 
 	/* test parsing 1 form */
@@ -2433,6 +2489,7 @@ main (int argc, char **argv)
 	g_test_add_func ("/zif/groups", zif_groups_func);
 	g_test_add_func ("/zif/legal", zif_legal_func);
 	g_test_add_func ("/zif/lock", zif_lock_func);
+	g_test_add_func ("/zif/manifest", zif_manifest_func);
 	g_test_add_func ("/zif/md", zif_md_func);
 	g_test_add_func ("/zif/md-comps", zif_md_comps_func);
 	g_test_add_func ("/zif/md-delta", zif_md_delta_func);

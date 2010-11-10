@@ -1,0 +1,7 @@
+# simulate removing a package that has a file dep that also needs to be removed
+
+[Zif Manifest]
+AddLocal=hal;0.0.1-1;i386;meta@Requires:/etc/hal/fdi.dtd,hal-info;0.0.1-1;i386;meta@File:/etc/hal/fdi.dtd
+AddRemote=
+TransactionRemove=hal-info;0.0.1-1;i386;meta
+PostInstalled=

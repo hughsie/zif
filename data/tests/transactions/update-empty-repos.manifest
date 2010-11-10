@@ -1,0 +1,7 @@
+# an empty transaction with no repos
+
+[Zif Manifest]
+AddLocal=
+AddRemote=
+TransactionUpdate=
+PostInstalled=

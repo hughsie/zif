@@ -1,0 +1,7 @@
+# simulate installing a package with a file dep
+
+[Zif Manifest]
+AddLocal=
+AddRemote=pkg-config;0.0.1-1;i386;meta@File:/usr/bin/pkg-config,hal;0.0.1-1;i386;meta@Requires:/usr/bin/pkg-config
+TransactionInstall=hal;0.0.1-1;i386;meta
+PostInstalled=pkg-config;0.0.1-1;i386;meta,hal;0.0.1-1;i386;meta

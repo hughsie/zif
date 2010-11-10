@@ -1,0 +1,7 @@
+# simulate installing one package that has a dep, and we chose the highest version dep
+
+[Zif Manifest]
+AddLocal=
+AddRemote=hal;0.0.1-1;i386;meta@Requires:hal-info,hal-info;0.0.1-1;i386;meta,hal-info;0.0.2-1;i386;meta
+TransactionInstall=hal;0.0.1-1;i386;meta
+PostInstalled=hal;0.0.1-1;i386;meta,hal-info;0.0.2-1;i386;meta

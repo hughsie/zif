@@ -1,0 +1,7 @@
+# install a package when it's already installed
+
+[Zif Manifest]
+AddLocal=hal;0.0.1-1;i386;meta
+AddRemote=hal;0.0.1-1;i386;meta
+TransactionInstall=hal;0.0.1-1;i386;meta
+PostInstalled=hal;0.0.1-1;i386;meta

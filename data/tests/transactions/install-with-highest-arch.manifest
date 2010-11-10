@@ -1,0 +1,7 @@
+# install a package where there are different arches available as deps
+
+[Zif Manifest]
+AddLocal=
+AddRemote=hal;0.0.1-1;i386;meta@Requires:glibc,glibc;0.0.1-1;i586;meta,glibc;0.0.1-1;i386;meta,glibc;0.0.1-1;i686;meta
+TransactionInstall=hal;0.0.1-1;i386;meta
+PostInstalled=hal;0.0.1-1;i386;meta,glibc;0.0.1-1;i686;meta
