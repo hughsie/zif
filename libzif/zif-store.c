@@ -34,6 +34,7 @@
 
 #include "zif-store.h"
 #include "zif-package.h"
+#include "zif-utils.h"
 
 G_DEFINE_TYPE (ZifStore, zif_store, G_TYPE_OBJECT)
 
@@ -528,7 +529,7 @@ zif_store_find_package (ZifStore *store, const gchar *package_id, ZifState *stat
 	ZifStoreClass *klass = ZIF_STORE_GET_CLASS (store);
 
 	g_return_val_if_fail (ZIF_IS_STORE (store), NULL);
-	g_return_val_if_fail (package_id != NULL, NULL);
+	g_return_val_if_fail (zif_package_id_check (package_id), NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
