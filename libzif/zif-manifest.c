@@ -461,6 +461,7 @@ zif_manifest_check (ZifManifest *manifest,
 	/* load file */
 	dirname = g_path_get_dirname (filename);
 	keyfile = g_key_file_new ();
+	g_debug ("             ---            ");
 	g_debug ("loading manifest %s", filename);
 	ret = g_key_file_load_from_file (keyfile, filename, 0, &error_local);
 	if (!ret) {
@@ -471,6 +472,13 @@ zif_manifest_check (ZifManifest *manifest,
 			     filename,
 			     error_local->message);
 		g_error_free (error_local);
+		goto out;
+	}
+
+	/* skip this */
+	ret = g_key_file_get_boolean (keyfile, "Zif Manifest", "Disable", NULL);
+	if (ret) {
+		g_debug ("skipping file");
 		goto out;
 	}
 
