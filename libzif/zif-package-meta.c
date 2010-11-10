@@ -177,6 +177,34 @@ zif_package_meta_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, ZifSta
 }
 
 /**
+ * zif_package_meta_set_from_data:
+ * @pkg: the #ZifPackageMeta object
+ * @data: the spec file data
+ *
+ * Sets a meta package object from a some string data.
+ *
+ * Return value: %TRUE for success, %FALSE for failure
+ *
+ * Since: 0.1.3
+ **/
+gboolean
+zif_package_meta_set_from_data (ZifPackageMeta *pkg, gchar **data)
+{
+	guint i;
+
+	g_return_val_if_fail (ZIF_IS_PACKAGE_META (pkg), FALSE);
+	g_return_val_if_fail (data != NULL, FALSE);
+
+	for (i=0; data[i] != NULL; i++) {
+		if (g_strstr_len (data[i], -1, ":") != NULL) {
+			g_debug ("adding data %s", data[i]);
+			g_ptr_array_add (pkg->priv->array, g_strdup (data[i]));
+		}
+	}
+	return TRUE;
+}
+
+/**
  * zif_package_meta_set_from_filename:
  * @pkg: the #ZifPackageMeta object
  * @filename: the meta filename

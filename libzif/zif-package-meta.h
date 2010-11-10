@@ -60,6 +60,8 @@ gboolean		 zif_package_meta_set_from_filename	(ZifPackageMeta *pkg,
 								 const gchar	*filename,
 								 GError		**error)
 								 G_GNUC_WARN_UNUSED_RESULT;
+gboolean		 zif_package_meta_set_from_data		(ZifPackageMeta *pkg,
+								 gchar		**data);
 
 G_END_DECLS
 
