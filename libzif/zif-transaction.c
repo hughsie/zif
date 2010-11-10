@@ -46,6 +46,7 @@
 #  include <config.h>
 #endif
 
+#include <string.h>
 #include <glib.h>
 
 #include "zif-transaction.h"
@@ -695,6 +696,45 @@ _zif_package_array_get_packages_with_best_arch (GPtrArray *array)
 }
 
 /**
+ * _zif_package_array_get_packages_with_smallest_name:
+ *
+ * If we have the following packages:
+ *  - glibc.i386
+ *  - hal.i386
+ *
+ * Then we output:
+ *  - hal.i686
+ *
+ * As it has the smallest name. I know it's insane, but it's what yum does.
+ *
+ **/
+static GPtrArray *
+_zif_package_array_get_packages_with_smallest_name (GPtrArray *array)
+{
+	GPtrArray *results;
+	ZifPackage *package;
+	guint i, j;
+	gboolean added_something = FALSE;
+
+	results = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_ref);
+
+	/* only return the shortest names */
+	for (j=1;; j++) {
+		for (i=0; i<array->len; i++) {
+			package = g_ptr_array_index (array, i);
+			if (strlen (zif_package_get_name (package)) == j) {
+				g_ptr_array_add (results, g_object_ref (package));
+				added_something = TRUE;
+			}
+		}
+		if (added_something)
+			break;
+	}
+
+	return results;
+}
+
+/**
  * zif_transaction_get_package_provide_from_package_array:
  **/
 static gboolean
@@ -709,6 +749,7 @@ zif_transaction_get_package_provide_from_package_array (GPtrArray *array,
 	ZifPackage *package_tmp;
 	GPtrArray *satisfy_array;
 	GPtrArray *satisfy_arch_array = NULL;
+	GPtrArray *satisfy_strcmp_array = NULL;
 	gboolean satisfies = FALSE;
 	GError *error_local = NULL;
 
@@ -752,11 +793,24 @@ zif_transaction_get_package_provide_from_package_array (GPtrArray *array,
 		goto out;
 	}
 
+	g_debug ("provide %s still has %i matches, filtering down to smallest name (OMG)",
+		 zif_depend_get_description (depend),
+		 satisfy_array->len);
+
+	/* filter these down so we get best architectures listed first */
+	satisfy_strcmp_array = _zif_package_array_get_packages_with_smallest_name (satisfy_array);
+
+	/* optimize for one single result */
+	if (satisfy_strcmp_array->len == 1) {
+		*package = g_object_ref (g_ptr_array_index (satisfy_strcmp_array, 0));
+		goto out;
+	}
+
 	/* return the newest */
 	g_debug ("provide %s still has %i matches, choosing newest",
 		 zif_depend_get_description (depend),
 		 satisfy_array->len);
-	*package = zif_package_array_get_newest (satisfy_array, &error_local);
+	*package = zif_package_array_get_newest (satisfy_strcmp_array, &error_local);
 	if (*package == NULL) {
 		ret = FALSE;
 		g_set_error (error,
@@ -770,6 +824,8 @@ zif_transaction_get_package_provide_from_package_array (GPtrArray *array,
 out:
 	if (satisfy_arch_array != NULL)
 		g_ptr_array_unref (satisfy_arch_array);
+	if (satisfy_strcmp_array != NULL)
+		g_ptr_array_unref (satisfy_strcmp_array);
 	g_ptr_array_unref (satisfy_array);
 	return ret;
 }
