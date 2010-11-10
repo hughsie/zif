@@ -465,6 +465,7 @@ zif_transaction_package_requires (ZifPackage *package,
 	g_debug ("Find out if %s requires %s",
 		 zif_package_get_id (package),
 		 zif_depend_get_description (depend));
+	zif_state_reset (state);
 	requires = zif_package_get_requires (package, state, &error_local);
 	if (requires == NULL) {
 		ret = FALSE;
@@ -1328,6 +1329,7 @@ zif_transaction_get_newest_from_remote_by_names (ZifTransactionResolve *data, co
 
 	/* get resolve in the array */
 	search[0] = name;
+	zif_state_reset (data->state);
 	matches = zif_store_array_resolve (data->transaction->priv->stores_remote,
 					   (gchar **) search, data->state, error);
 	if (matches == NULL)
@@ -1375,6 +1377,17 @@ zif_transaction_resolve_update_item (ZifTransactionResolve *data,
 			     zif_package_get_id (item->package),
 			     error_local->message);
 		g_error_free (error_local);
+		goto out;
+	}
+
+	/* is the installed package the same? */
+	value = zif_package_compare (package, item->package);
+	if (value == 0) {
+		g_set_error (error,
+			     ZIF_TRANSACTION_ERROR,
+			     ZIF_TRANSACTION_ERROR_NOTHING_TO_DO,
+			     "there is no update available for %s",
+			     zif_package_get_id (package));
 		goto out;
 	}
 
@@ -1474,9 +1487,17 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 				continue;
 
 			/* resolve this item */
-			ret = zif_transaction_resolve_update_item (data, item, error);
+			ret = zif_transaction_resolve_update_item (data, item, &error_local);
 			if (!ret) {
-				g_assert (error == NULL || *error != NULL);
+				g_assert (error_local != NULL);
+				/* special error code */
+				if (error_local->code == ZIF_TRANSACTION_ERROR_NOTHING_TO_DO) {
+					g_ptr_array_remove (transaction->priv->update, item);
+					data->unresolved_dependencies = TRUE;
+					g_clear_error (&error_local);
+					break;
+				}
+				g_propagate_error (error, error_local);
 				goto out;
 			}
 		}
@@ -1488,9 +1509,17 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 				continue;
 
 			/* resolve this item */
-			ret = zif_transaction_resolve_remove_item (data, item, error);
+			ret = zif_transaction_resolve_remove_item (data, item, &error_local);
 			if (!ret) {
-				g_assert (error == NULL || *error != NULL);
+				g_assert (error_local != NULL);
+				/* special error code */
+				if (error_local->code == ZIF_TRANSACTION_ERROR_NOTHING_TO_DO) {
+					g_ptr_array_remove (transaction->priv->remove, item);
+					data->unresolved_dependencies = TRUE;
+					g_clear_error (&error_local);
+					break;
+				}
+				g_propagate_error (error, error_local);
 				goto out;
 			}
 		}
