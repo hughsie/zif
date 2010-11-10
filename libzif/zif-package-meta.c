@@ -32,6 +32,7 @@
 
 #include <glib.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "zif-depend.h"
 #include "zif-package.h"
@@ -60,14 +61,18 @@ static gchar *
 zif_package_meta_get_string (ZifPackageMeta *pkg, const gchar *key)
 {
 	guint i;
+	guint keylen;
 	gchar *value = NULL;
 	const gchar *data;
 
 	/* find a single string */
+	keylen = strlen (key);
 	for (i=0; i<pkg->priv->array->len; i++) {
 		data = g_ptr_array_index (pkg->priv->array, i);
 		if (g_str_has_prefix (data, key)) {
-			value = g_strdup (data + strlen (key) + 2);
+			if (data[keylen + 1] == ' ')
+				keylen++;
+			value = g_strdup (data + keylen + 1);
 			break;
 		}
 	}
@@ -81,6 +86,7 @@ static GPtrArray *
 zif_package_meta_get_depends (ZifPackageMeta *pkg, const gchar *key)
 {
 	guint i;
+	guint keylen;
 	gboolean ret;
 	GPtrArray *value;
 	const gchar *data;
@@ -88,12 +94,15 @@ zif_package_meta_get_depends (ZifPackageMeta *pkg, const gchar *key)
 	GError *error = NULL;
 
 	/* find an array of ZifDepends */
+	keylen = strlen (key);
 	value = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	for (i=0; i<pkg->priv->array->len; i++) {
 		data = g_ptr_array_index (pkg->priv->array, i);
 		if (g_str_has_prefix (data, key)) {
+			if (data[keylen + 1] == ' ')
+				keylen++;
 			depend = zif_depend_new ();
-			ret = zif_depend_parse_description (depend, data + strlen (key) + 2, &error);
+			ret = zif_depend_parse_description (depend, data + keylen + 1, &error);
 			if (ret) {
 				g_ptr_array_add (value, g_object_ref (depend));
 			} else {
