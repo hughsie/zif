@@ -151,6 +151,7 @@ zif_package_meta_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, ZifSta
 	ZifString *tmp;
 	GPtrArray *depends;
 	gboolean ret = TRUE;
+	ZifDepend *depend;
 
 	g_return_val_if_fail (zif_state_valid (state), FALSE);
 
@@ -184,6 +185,14 @@ zif_package_meta_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, ZifSta
 	} else if (type == ZIF_PACKAGE_ENSURE_TYPE_PROVIDES) {
 		depends = zif_package_meta_get_depends (ZIF_PACKAGE_META(pkg), "Provides");
 		zif_package_set_provides (pkg, depends);
+
+		/* a package has to provide itself */
+		depend = zif_depend_new ();
+		zif_depend_set_flag (depend, ZIF_DEPEND_FLAG_EQUAL);
+		zif_depend_set_name (depend, zif_package_get_name (pkg));
+		zif_depend_set_version (depend, zif_package_get_version (pkg));
+		g_ptr_array_add (depends, depend);
+
 		g_ptr_array_unref (depends);
 
 	} else if (type == ZIF_PACKAGE_ENSURE_TYPE_CONFLICTS) {
