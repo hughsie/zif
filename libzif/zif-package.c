@@ -170,6 +170,52 @@ out:
 	return package;
 }
 
+
+/**
+ * zif_package_array_get_oldest:
+ * @array: array of %ZifPackage's
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Returns the oldest package from a list.
+ *
+ * Return value: a single %ZifPackage, or %NULL in the case of an error. Use g_object_unref() when done.
+ *
+ * Since: 0.1.3
+ **/
+ZifPackage *
+zif_package_array_get_oldest (GPtrArray *array, GError **error)
+{
+	ZifPackage *package_oldest;
+	ZifPackage *package = NULL;
+	guint i;
+	gint retval;
+
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+	/* no results */
+	if (array->len == 0) {
+		g_set_error_literal (error, ZIF_PACKAGE_ERROR, ZIF_PACKAGE_ERROR_FAILED,
+				     "nothing in array");
+		goto out;
+	}
+
+	/* start with the first package being the oldest */
+	package_oldest = g_ptr_array_index (array, 0);
+
+	/* find oldest in rest of the array */
+	for (i=1; i<array->len; i++) {
+		package = g_ptr_array_index (array, i);
+		retval = zif_package_compare (package, package_oldest);
+		if (retval < 0)
+			package_oldest = package;
+	}
+
+	/* return reference so we can unref the list */
+	package = g_object_ref (package_oldest);
+out:
+	return package;
+}
+
 /**
  * zif_package_array_filter_newest:
  * @packages: array of %ZifPackage's
@@ -1487,7 +1533,7 @@ zif_package_set_size (ZifPackage *package, guint64 size)
 /**
  * zif_package_set_files:
  * @package: the #ZifPackage object
- * @files: the package filelist
+ * @files: an array of strings.
  *
  * Sets the package file list.
  *
