@@ -223,11 +223,13 @@ zif_package_meta_set_from_filename (ZifPackageMeta *pkg, const gchar *filename, 
 	GError *error_local = NULL;
 	gchar **lines = NULL;
 	gchar *data = NULL;
-	guint i;
 	gchar *name = NULL;
 	gchar *version = NULL;
 	gchar *release = NULL;
+	gchar *epoch_str = NULL;
+	gchar *arch = NULL;
 	gchar *package_id = NULL;
+	guint epoch = 0;
 
 	g_return_val_if_fail (ZIF_IS_PACKAGE_META (pkg), FALSE);
 	g_return_val_if_fail (filename != NULL, FALSE);
@@ -242,19 +244,21 @@ zif_package_meta_set_from_filename (ZifPackageMeta *pkg, const gchar *filename, 
 		goto out;
 	}
 
-	/* parse wach line */
+	/* parses lines */
 	lines = g_strsplit (data, "\n", -1);
-	for (i=0; lines[i] != NULL; i++) {
-		if (g_strstr_len (lines[i], -1, ": ") != NULL)
-			g_ptr_array_add (pkg->priv->array, g_strdup (lines[i]));
-	}
+	zif_package_meta_set_from_data (pkg, lines);
 
 	/* get core data */
 	name = zif_package_meta_get_string (pkg, "Name");
 	version = zif_package_meta_get_string (pkg, "Version");
 	release = zif_package_meta_get_string (pkg, "Release");
-	//TODO: get epoch and arch
-	package_id = zif_package_id_from_nevra (name, 0, version, release, "i386", "meta");
+	epoch_str = zif_package_meta_get_string (pkg, "Epoch");
+	if (epoch_str != NULL)
+		epoch = atoi (epoch_str);
+	arch = zif_package_meta_get_string (pkg, "Arch");
+	if (arch == NULL)
+		arch = g_strdup ("i386");
+	package_id = zif_package_id_from_nevra (name, 0, version, release, arch, "meta");
 
 	/* save id */
 	ret = zif_package_set_id (ZIF_PACKAGE (pkg), package_id, error);
@@ -264,6 +268,8 @@ out:
 	g_strfreev (lines);
 	g_free (data);
 	g_free (package_id);
+	g_free (epoch_str);
+	g_free (arch);
 	g_free (name);
 	g_free (version);
 	g_free (release);
