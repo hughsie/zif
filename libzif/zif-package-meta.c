@@ -113,6 +113,31 @@ zif_package_meta_get_depends (ZifPackageMeta *pkg, const gchar *key)
 		}
 	}
 
+	return value;
+}
+
+/*
+ * zif_package_meta_get_string_array:
+ */
+static GPtrArray *
+zif_package_meta_get_string_array (ZifPackageMeta *pkg, const gchar *key)
+{
+	guint i;
+	guint keylen;
+	GPtrArray *value;
+	const gchar *data;
+
+	/* find an array of strings */
+	keylen = strlen (key);
+	value = g_ptr_array_new_with_free_func (g_free);
+	for (i=0; i<pkg->priv->array->len; i++) {
+		data = g_ptr_array_index (pkg->priv->array, i);
+		if (g_str_has_prefix (data, key)) {
+			if (data[keylen + 1] == ' ')
+				keylen++;
+			g_ptr_array_add (value, g_strdup (data + keylen + 1));
+		}
+	}
 
 	return value;
 }
@@ -145,6 +170,11 @@ zif_package_meta_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, ZifSta
 			zif_package_set_url (pkg, tmp);
 			zif_string_unref (tmp);
 		}
+
+	} else if (type == ZIF_PACKAGE_ENSURE_TYPE_FILES) {
+		depends = zif_package_meta_get_string_array (ZIF_PACKAGE_META(pkg), "File");
+		zif_package_set_files (pkg, depends);
+		g_ptr_array_unref (depends);
 
 	} else if (type == ZIF_PACKAGE_ENSURE_TYPE_REQUIRES) {
 		depends = zif_package_meta_get_depends (ZIF_PACKAGE_META(pkg), "Requires");
