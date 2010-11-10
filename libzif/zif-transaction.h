@@ -35,6 +35,7 @@
 
 #include "zif-state.h"
 #include "zif-package.h"
+#include "zif-store.h"
 
 G_BEGIN_DECLS
 
@@ -63,6 +64,7 @@ struct _ZifTransactionClass
 
 typedef enum {
 	ZIF_TRANSACTION_ERROR_FAILED,
+	ZIF_TRANSACTION_ERROR_NOTHING_TO_DO,
 	ZIF_TRANSACTION_ERROR_LAST
 } ZifTransactionError;
 
@@ -82,6 +84,13 @@ gboolean	 zif_transaction_add_remove		(ZifTransaction	*transaction,
 gboolean	 zif_transaction_resolve		(ZifTransaction	*transaction,
 							 ZifState	*state,
 							 GError		**error);
+void		 zif_transaction_set_store_local	(ZifTransaction	*transaction,
+							 ZifStore	*store);
+void		 zif_transaction_set_stores_remote	(ZifTransaction	*transaction,
+							 GPtrArray	*stores);
+GPtrArray	*zif_transaction_get_install		(ZifTransaction	*transaction);
+GPtrArray	*zif_transaction_get_update		(ZifTransaction	*transaction);
+GPtrArray	*zif_transaction_get_remove		(ZifTransaction	*transaction);
 
 G_END_DECLS
 

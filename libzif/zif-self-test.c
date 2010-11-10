@@ -167,18 +167,23 @@ zif_transaction_func (void)
 	ZifTransaction *transaction;
 	ZifPackage *package;
 	ZifPackage *package2;
+	ZifStore *local;
 	ZifState *state;
+	GPtrArray *remotes;
 	GError *error = NULL;
 	gboolean ret;
+	gchar *filename;
 
 	state = zif_state_new ();
 	transaction = zif_transaction_new ();
 
 	/* create dummy package for testing */
-	package = zif_package_new ();
-	ret = zif_package_set_id (package, "test;0.0.1;noarch;fedora", &error);
+	package = ZIF_PACKAGE (zif_package_local_new ());
+	filename = zif_test_get_data_file ("depend-0.1-1.fc13.noarch.rpm");
+	ret = zif_package_local_set_from_filename (ZIF_PACKAGE_LOCAL (package), filename, &error);
 	g_assert_no_error (error);
 	g_assert (ret);
+	g_free (filename);
 
 	/* add to install list */
 	ret = zif_transaction_add_install (transaction, package, &error);
@@ -187,7 +192,7 @@ zif_transaction_func (void)
 
 	/* add again, should fail */
 	package2 = zif_package_new ();
-	ret = zif_package_set_id (package2, "test;0.0.1;noarch;fedora", NULL);
+	ret = zif_package_set_id (package2, "depend;0.1-1.fc13;noarch;installed", &error);
 	ret = zif_transaction_add_install (transaction, package2, &error);
 	g_assert_error (error, ZIF_TRANSACTION_ERROR, ZIF_TRANSACTION_ERROR_FAILED);
 	g_assert (!ret);
@@ -203,16 +208,24 @@ zif_transaction_func (void)
 	g_assert_error (error, ZIF_TRANSACTION_ERROR, ZIF_TRANSACTION_ERROR_FAILED);
 	g_assert (!ret);
 	g_clear_error (&error);
-
-	/* resolve */
-	ret = zif_transaction_resolve (transaction, state, &error);
-	g_assert_error (error, ZIF_TRANSACTION_ERROR, ZIF_TRANSACTION_ERROR_FAILED);
-	g_assert (!ret);
-	g_clear_error (&error);
-
 	g_object_unref (package);
 	g_object_unref (package2);
+	g_object_unref (transaction);
+
+	/* resolve */
+	transaction = zif_transaction_new ();
+	local = zif_store_meta_new ();
+	zif_transaction_set_store_local (transaction, local);
+	remotes = zif_store_array_new ();
+	zif_transaction_set_stores_remote (transaction, remotes);
+	ret = zif_transaction_resolve (transaction, state, &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+	g_clear_error (&error);
+
+	g_ptr_array_unref (remotes);
 	g_object_unref (state);
+	g_object_unref (local);
 	g_object_unref (transaction);
 }
 
@@ -1408,7 +1421,7 @@ zif_package_meta_func (void)
 	depends = zif_package_get_provides (pkg, state, &error);
 	g_assert_no_error (error);
 	g_assert (depends != NULL);
-	g_assert_cmpint (depends->len, ==, 1);
+	g_assert_cmpint (depends->len, ==, 2); /* one explicit, one the package itself */
 	g_clear_error (&error);
 
 	g_free (filename);
