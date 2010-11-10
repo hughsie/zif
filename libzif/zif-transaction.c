@@ -72,9 +72,18 @@ typedef struct {
 
 G_DEFINE_TYPE (ZifTransaction, zif_transaction, G_TYPE_OBJECT)
 
+typedef enum {
+	ZIF_TRANSACTION_REASON_USER_ACTION,
+	ZIF_TRANSACTION_REASON_INSTALL_ONLYN,
+	ZIF_TRANSACTION_REASON_UPDATE,
+	ZIF_TRANSACTION_REASON_INSTALL_DEPDND,
+	ZIF_TRANSACTION_REASON_LAST
+} ZifTransactionReason;
+
 typedef struct {
 	ZifPackage		*package;
 	gboolean		 resolved;
+	ZifTransactionReason	 reason;
 } ZifTransactionItem;
 
 /**
@@ -91,6 +100,24 @@ zif_transaction_error_quark (void)
 	if (!quark)
 		quark = g_quark_from_static_string ("zif_transaction_error");
 	return quark;
+}
+
+/**
+ * zif_transaction_reason_to_string:
+ **/
+static const gchar *
+zif_transaction_reason_to_string (ZifTransactionReason reason)
+{
+	if (reason == ZIF_TRANSACTION_REASON_USER_ACTION)
+		return "user-action";
+	if (reason == ZIF_TRANSACTION_REASON_INSTALL_ONLYN)
+		return "install-onlyn";
+	if (reason == ZIF_TRANSACTION_REASON_UPDATE)
+		return "update";
+	if (reason == ZIF_TRANSACTION_REASON_INSTALL_DEPDND)
+		return "install-depend";
+	g_warning ("cannot convert reason %i to string", reason);
+	return NULL;
 }
 
 /**
@@ -196,8 +223,7 @@ zif_transaction_get_item_from_array (GPtrArray *array, ZifPackage *package)
  * zif_transaction_add_to_array:
  **/
 static gboolean
-zif_transaction_add_to_array (GPtrArray *array, ZifPackage *package,
-			      ZifPackage *related_package)
+zif_transaction_add_to_array (GPtrArray *array, ZifPackage *package, ZifTransactionReason reason)
 {
 	gboolean ret = FALSE;
 	ZifTransactionItem *item;
@@ -210,11 +236,43 @@ zif_transaction_add_to_array (GPtrArray *array, ZifPackage *package,
 	/* create new item */
 	item = g_new0 (ZifTransactionItem, 1);
 	item->resolved = FALSE;
+	item->reason = reason;
 	item->package = g_object_ref (package);
 	g_ptr_array_add (array, item);
 
 	/* success */
 	ret = TRUE;
+out:
+	return ret;
+}
+
+/**
+ * zif_transaction_add_install_internal:
+ **/
+static gboolean
+zif_transaction_add_install_internal (ZifTransaction *transaction,
+				      ZifPackage *package,
+				      ZifTransactionReason reason,
+				      GError **error)
+{
+	gboolean ret;
+
+	/* add to install */
+	ret = zif_transaction_add_to_array (transaction->priv->install,
+					    package,
+					    reason);
+	if (!ret) {
+		g_set_error (error,
+			     ZIF_TRANSACTION_ERROR,
+			     ZIF_TRANSACTION_ERROR_FAILED,
+			     "Not adding already added package for install %s",
+			     zif_package_get_id (package));
+		goto out;
+	}
+
+	g_debug ("Add INSTALL %s [%s]",
+		 zif_package_get_id (package),
+		 zif_transaction_reason_to_string (reason));
 out:
 	return ret;
 }
@@ -232,7 +290,9 @@ out:
  * Since: 0.1.3
  **/
 gboolean
-zif_transaction_add_install (ZifTransaction *transaction, ZifPackage *package, GError **error)
+zif_transaction_add_install (ZifTransaction *transaction,
+			     ZifPackage *package,
+			     GError **error)
 {
 	gboolean ret;
 
@@ -241,17 +301,40 @@ zif_transaction_add_install (ZifTransaction *transaction, ZifPackage *package, G
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
 	/* add to install */
-	ret = zif_transaction_add_to_array (transaction->priv->install, package, NULL);
+	ret = zif_transaction_add_install_internal (transaction,
+						    package,
+						    ZIF_TRANSACTION_REASON_USER_ACTION,
+						    error);
+	return ret;
+}
+
+/**
+ * zif_transaction_add_update_internal:
+ **/
+static gboolean
+zif_transaction_add_update_internal (ZifTransaction *transaction,
+				     ZifPackage *package,
+				     ZifTransactionReason reason,
+				     GError **error)
+{
+	gboolean ret;
+
+	/* add to update */
+	ret = zif_transaction_add_to_array (transaction->priv->update,
+					    package,
+					    reason);
 	if (!ret) {
 		g_set_error (error,
 			     ZIF_TRANSACTION_ERROR,
 			     ZIF_TRANSACTION_ERROR_FAILED,
-			     "Not adding already added package for install %s",
+			     "Not adding already added package for update %s",
 			     zif_package_get_id (package));
 		goto out;
 	}
 
-	g_debug ("Add INSTALL %s", zif_package_get_id (package));
+	g_debug ("Add UPDATE %s [%s]",
+		 zif_package_get_id (package),
+		 zif_transaction_reason_to_string (reason));
 out:
 	return ret;
 }
@@ -278,17 +361,40 @@ zif_transaction_add_update (ZifTransaction *transaction, ZifPackage *package, GE
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
 	/* add to update */
-	ret = zif_transaction_add_to_array (transaction->priv->update, package, NULL);
+	ret = zif_transaction_add_update_internal (transaction,
+						   package,
+						   ZIF_TRANSACTION_REASON_USER_ACTION,
+						   error);
+	return ret;
+}
+
+/**
+ * zif_transaction_add_remove_internal:
+ **/
+static gboolean
+zif_transaction_add_remove_internal (ZifTransaction *transaction,
+				     ZifPackage *package,
+				     ZifTransactionReason reason,
+				     GError **error)
+{
+	gboolean ret;
+
+	/* add to remove */
+	ret = zif_transaction_add_to_array (transaction->priv->remove,
+					    package,
+					    reason);
 	if (!ret) {
 		g_set_error (error,
 			     ZIF_TRANSACTION_ERROR,
 			     ZIF_TRANSACTION_ERROR_FAILED,
-			     "Not adding already added package for update %s",
+			     "Not adding already added package for remove %s",
 			     zif_package_get_id (package));
 		goto out;
 	}
 
-	g_debug ("Add UPDATE %s", zif_package_get_id (package));
+	g_debug ("Add REMOVE %s [%s]",
+		 zif_package_get_id (package),
+		 zif_transaction_reason_to_string (reason));
 out:
 	return ret;
 }
@@ -315,18 +421,10 @@ zif_transaction_add_remove (ZifTransaction *transaction, ZifPackage *package, GE
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
 	/* add to remove */
-	ret = zif_transaction_add_to_array (transaction->priv->remove, package, NULL);
-	if (!ret) {
-		g_set_error (error,
-			     ZIF_TRANSACTION_ERROR,
-			     ZIF_TRANSACTION_ERROR_FAILED,
-			     "Not adding already added package for remove %s",
-			     zif_package_get_id (package));
-		goto out;
-	}
-
-	g_debug ("Add REMOVE %s", zif_package_get_id (package));
-out:
+	ret = zif_transaction_add_remove_internal (transaction,
+						   package,
+						   ZIF_TRANSACTION_REASON_USER_ACTION,
+						   error);
 	return ret;
 }
 
@@ -730,6 +828,7 @@ out:
 static gboolean
 zif_transaction_get_package_requires_from_store (ZifStore *store,
 						 ZifDepend *depend,
+						 GPtrArray *already_marked_to_remove,
 						 GPtrArray **requires,
 						 ZifState *state,
 						 GError **error)
@@ -739,6 +838,7 @@ zif_transaction_get_package_requires_from_store (ZifStore *store,
 	GPtrArray *array;
 	guint i;
 	ZifPackage *package;
+	ZifTransactionItem *item;
 	gboolean satisfies = FALSE;
 
 	/* get the package list */
@@ -759,6 +859,15 @@ zif_transaction_get_package_requires_from_store (ZifStore *store,
 	*requires = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	for (i=0; i<array->len; i++) {
 		package = g_ptr_array_index (array, i);
+
+		/* is already being removed? */
+		item = zif_transaction_get_item_from_array (already_marked_to_remove,
+							    package);
+		if (item != NULL) {
+			g_debug ("not getting requires for %s, as already in remove array",
+				 zif_package_get_id (package));
+			continue;
+		}
 
 		/* get requires */
 		ret = zif_transaction_package_requires (package,
@@ -971,13 +1080,21 @@ zif_transaction_resolve_install_depend (ZifTransactionResolve *data,
 			g_debug ("%s is already installed, and we want %s, so removing installed version",
 				 zif_package_get_id (package),
 				 zif_package_get_id (package_provide));
-			ret = zif_transaction_add_remove (data->transaction, package, error);
+			ret = zif_transaction_add_remove_internal (data->transaction,
+								   package,
+								   ZIF_TRANSACTION_REASON_UPDATE,
+								   error);
 			if (!ret)
 				goto out;
 		}
 skip_resolve:
 		/* add the provide to the install set */
-		zif_transaction_add_install (data->transaction, package_provide, NULL);
+		ret = zif_transaction_add_install_internal (data->transaction,
+							    package_provide,
+							    ZIF_TRANSACTION_REASON_INSTALL_DEPDND,
+							    error);
+		if (!ret)
+			goto out;
 		data->unresolved_dependencies = TRUE;
 		goto out;
 	}
@@ -1080,8 +1197,10 @@ zif_transaction_resolve_install_item (ZifTransactionResolve *data,
 				 array->len,
 				 installonlyn,
 				 zif_package_get_id (package_oldest));
-			ret = zif_transaction_add_remove (data->transaction,
-							  package_oldest, error);
+			ret = zif_transaction_add_remove_internal (data->transaction,
+								   package_oldest,
+								   ZIF_TRANSACTION_REASON_INSTALL_ONLYN,
+								   error);
 			if (!ret) {
 				g_assert (error == NULL || *error != NULL);
 				goto out;
@@ -1140,7 +1259,7 @@ out:
  **/
 static gboolean
 zif_transaction_resolve_remove_require (ZifTransactionResolve *data,
-					ZifPackage *source,
+					ZifTransactionItem *item,
 					ZifDepend *depend,
 					GError **error)
 {
@@ -1152,9 +1271,11 @@ zif_transaction_resolve_remove_require (ZifTransactionResolve *data,
 	/* find if anything in the local store requires this package */
 	g_debug ("find anything installed that requires %s provided by %s",
 		 zif_depend_get_description (depend),
-		 zif_package_get_id (source));
+		 zif_package_get_id (item->package));
 	ret = zif_transaction_get_package_requires_from_store (data->transaction->priv->store_local,
-							       depend, &package_requires,
+							       depend,
+							       data->transaction->priv->remove,
+							       &package_requires,
 							       data->state, error);
 	if (!ret)
 		goto out;
@@ -1172,7 +1293,7 @@ zif_transaction_resolve_remove_require (ZifTransactionResolve *data,
 	g_debug ("%i packages require %s provided by %s",
 		 package_requires->len,
 		 zif_depend_get_description (depend),
-		 zif_package_get_id (source));
+		 zif_package_get_id (item->package));
 	for (i=0; i<package_requires->len; i++) {
 		package = g_ptr_array_index (package_requires, i);
 		g_debug ("%i.\t%s", i+1, zif_package_get_id (package));
@@ -1181,7 +1302,7 @@ zif_transaction_resolve_remove_require (ZifTransactionResolve *data,
 		package = g_ptr_array_index (package_requires, i);
 
 		/* don't remove ourself */
-		if (source == package)
+		if (item->package == package)
 			continue;
 
 		/* remove this too */
@@ -1189,10 +1310,24 @@ zif_transaction_resolve_remove_require (ZifTransactionResolve *data,
 			 zif_depend_get_description (depend),
 			 zif_package_get_id (package));
 
-		/* add the provide to the install set */
-		ret = zif_transaction_add_remove (data->transaction, package, error);
-		if (!ret)
-			goto out;
+		/* package is being updated, so try to update deps too */
+		if (item->reason == ZIF_TRANSACTION_REASON_UPDATE) {
+			ret = zif_transaction_add_update_internal (data->transaction,
+								   package,
+								   item->reason,
+								   error);
+			if (!ret)
+				goto out;
+
+		} else {
+			/* remove the package */
+			ret = zif_transaction_add_remove_internal (data->transaction,
+								   package,
+								   item->reason,
+								   error);
+			if (!ret)
+				goto out;
+		}
 		data->unresolved_dependencies = TRUE;
 	}
 out:
@@ -1280,7 +1415,7 @@ zif_transaction_resolve_remove_item (ZifTransactionResolve *data,
 	}
 	for (i=0; i<provides->len; i++) {
 		depend = g_ptr_array_index (provides, i);
-		ret = zif_transaction_resolve_remove_require (data, item->package, depend, error);
+		ret = zif_transaction_resolve_remove_require (data, item, depend, error);
 		if (!ret)
 			goto out;
 	}
@@ -1313,7 +1448,10 @@ zif_transaction_show_array (const gchar *title, GPtrArray *array)
 	g_debug ("%s", title);
 	for (i=0; i<array->len; i++) {
 		item = g_ptr_array_index (array, i);
-		g_debug ("%i.\t%s", i+1, zif_package_get_id (item->package));
+		g_debug ("%i.\t%s [%s]",
+			 i+1,
+			 zif_package_get_id (item->package),
+			 zif_transaction_reason_to_string (item->reason));
 	}
 }
 
@@ -1404,12 +1542,18 @@ zif_transaction_resolve_update_item (ZifTransactionResolve *data,
 	}
 
 	/* remove the installed package */
-	ret = zif_transaction_add_remove (data->transaction, item->package, error);
+	ret = zif_transaction_add_remove_internal (data->transaction,
+						   item->package,
+						   ZIF_TRANSACTION_REASON_UPDATE,
+						   error);
 	if (!ret)
 		goto out;
 
 	/* add the new package */
-	ret = zif_transaction_add_install (data->transaction, package, error);
+	ret = zif_transaction_add_install_internal (data->transaction,
+						    package,
+						    ZIF_TRANSACTION_REASON_UPDATE,
+						    error);
 	if (!ret)
 		goto out;
 
