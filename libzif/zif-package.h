@@ -189,6 +189,8 @@ gboolean		 zif_package_is_free		(ZifPackage	*package);
 gboolean		 zif_package_is_native		(ZifPackage	*package);
 gint			 zif_package_compare		(ZifPackage	*a,
 							 ZifPackage	*b);
+gboolean		 zif_package_is_compatible_arch	(ZifPackage	*a,
+							 ZifPackage	*b);
 ZifPackage		*zif_package_array_get_newest	(GPtrArray	*array,
 							 GError		**error);
 ZifPackage		*zif_package_array_get_oldest	(GPtrArray	*array,

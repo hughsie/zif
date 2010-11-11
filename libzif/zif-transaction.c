@@ -1320,7 +1320,7 @@ zif_transaction_resolve_install_item (ZifTransactionResolve *data,
 skip_resolve:
 
 	g_debug ("getting requires for %s", zif_package_get_id (item->package));
-	zif_state_reset (data->state); //FIXME
+	zif_state_reset (data->state);
 	requires = zif_package_get_requires (item->package, data->state, &error_local);
 	if (requires == NULL) {
 		ret = FALSE;
@@ -1376,6 +1376,41 @@ zif_transaction_resolve_remove_require (ZifTransactionResolve *data,
 	guint i;
 	GPtrArray *package_requires = NULL;
 	ZifPackage *package;
+	GError *error_local = NULL;
+	GPtrArray *local_provides = NULL;
+
+	/* does anything *else* provide the depend that's installed? */
+	g_debug ("find anything installed that also provides %s (currently provided by %s)",
+		 zif_depend_get_description (depend),
+		 zif_package_get_id (item->package));
+	zif_state_reset (data->state);
+	local_provides = zif_store_what_provides (data->transaction->priv->store_local,
+						  depend,
+						  data->state,
+						  &error_local);
+	if (local_provides == NULL) {
+		ret = FALSE;
+		g_set_error (error,
+			     ZIF_TRANSACTION_ERROR,
+			     ZIF_TRANSACTION_ERROR_FAILED,
+			     "Failed to get local provide for %s: %s",
+			     zif_depend_get_description (depend),
+			     error_local->message);
+		goto out;
+	}
+
+	/* find out if anything arch-compatible (that isn't the package itself)
+	 * provides the dep */
+	for (i=0; i<local_provides->len; i++) {
+		package = g_ptr_array_index (local_provides, i);
+		if (zif_package_compare (package, item->package) == 0)
+			continue;
+		if (!zif_package_is_compatible_arch (package, item->package))
+			continue;
+		g_debug ("got local provide from %s, so no need to remove",
+			 zif_package_get_id (package));
+		goto out;
+	}
 
 	/* find if anything in the local store requires this package */
 	g_debug ("find anything installed that requires %s provided by %s",
@@ -1440,6 +1475,8 @@ zif_transaction_resolve_remove_require (ZifTransactionResolve *data,
 		data->unresolved_dependencies = TRUE;
 	}
 out:
+	if (local_provides != NULL)
+		g_ptr_array_unref (local_provides);
 	if (package_requires != NULL)
 		g_ptr_array_unref (package_requires);
 	return ret;
@@ -1459,12 +1496,11 @@ zif_transaction_resolve_remove_item (ZifTransactionResolve *data,
 	GError *error_local = NULL;
 	gboolean ret = FALSE;
 	ZifDepend *depend;
-//	ZifDepend *virtual_depend = NULL;
 	const gchar *filename;
 
 	/* make a list of anything this package provides */
 	g_debug ("getting provides for %s", zif_package_get_id (item->package));
-	zif_state_reset (data->state); //FIXME
+	zif_state_reset (data->state);
 	provides = zif_package_get_provides (item->package, data->state, &error_local);
 	if (provides == NULL) {
 		g_set_error (error, ZIF_TRANSACTION_ERROR, ZIF_TRANSACTION_ERROR_FAILED,
@@ -1477,7 +1513,7 @@ zif_transaction_resolve_remove_item (ZifTransactionResolve *data,
 
 	/* get filelist, as a file might be depending on one of its files */
 	g_debug ("getting files for %s", zif_package_get_id (item->package));
-	zif_state_reset (data->state); //FIXME
+	zif_state_reset (data->state);
 	files = zif_package_get_files (item->package, data->state, &error_local);
 	if (files == NULL) {
 		g_set_error (error, ZIF_TRANSACTION_ERROR, ZIF_TRANSACTION_ERROR_FAILED,
@@ -1496,25 +1532,6 @@ zif_transaction_resolve_remove_item (ZifTransactionResolve *data,
 		zif_depend_set_flag (depend, ZIF_DEPEND_FLAG_ANY);
 		g_ptr_array_add (provides, depend);
 	}
-
-
-#if 0
-	/* get rid of the virtual provide that we added manually */
-	virtual_depend = zif_depend_new ();
-	zif_depend_set_flag (virtual_depend, ZIF_DEPEND_FLAG_EQUAL);
-	zif_depend_set_name (virtual_depend, zif_package_get_name (item->package));
-	zif_depend_set_version (virtual_depend, zif_package_get_version (item->package));
-	for (i=0; i<provides->len; i++) {
-		depend = g_ptr_array_index (provides, i);
-		if (zif_depend_satisfies (depend, virtual_depend)) {
-			g_debug ("removing virtual provide %s",
-				 zif_depend_get_description (depend));
-			g_ptr_array_remove_index_fast (provides, i);
-			break;
-		}
-	}
-	g_object_unref (virtual_depend);
-#endif
 
 	/* find each provide */
 	g_debug ("got %i provides", provides->len);
@@ -1562,20 +1579,6 @@ zif_transaction_show_array (const gchar *title, GPtrArray *array)
 			 zif_package_get_id (item->package),
 			 zif_transaction_reason_to_string (item->reason));
 	}
-}
-
-/**
- * _zif_utils_is_arch_compatible:
- **/
-static gboolean
-_zif_utils_is_arch_compatible (const gchar *arch1, const gchar *arch2)
-{
-	if (g_strcmp0 (arch1, arch2) == 0)
-		return TRUE;
-	if (g_str_has_suffix (arch1, "86") &&
-	    g_str_has_suffix (arch2, "86"))
-		return TRUE;
-	return FALSE;
 }
 
 /**
@@ -1640,8 +1643,7 @@ zif_transaction_get_newest_from_remote_by_names (ZifTransactionResolve *data, Zi
 	/* filter out any architectures that don't satisfy */
 	for (i=0; i<matches->len;) {
 		package_best = g_ptr_array_index (matches, i);
-		if (!_zif_utils_is_arch_compatible (zif_package_get_arch (package),
-						    zif_package_get_arch (package_best))) {
+		if (!zif_package_is_compatible_arch (package, package_best)) {
 			g_ptr_array_remove_index_fast (matches, i);
 			continue;
 		}
@@ -1960,7 +1962,6 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 	/* success */
 	g_debug ("done depsolve");
 	zif_transaction_show_array ("installing", transaction->priv->install);
-//	zif_transaction_show_array ("updating", transaction->priv->update);
 	zif_transaction_show_array ("removing", transaction->priv->remove);
 	ret = TRUE;
 out:

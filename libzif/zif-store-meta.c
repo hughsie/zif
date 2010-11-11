@@ -430,6 +430,79 @@ out:
 	return package;
 }
 
+/**
+ * zif_store_meta_what_provides:
+ **/
+static GPtrArray *
+zif_store_meta_what_provides (ZifStore *store, ZifDepend *depend,
+			       ZifState *state, GError **error)
+{
+	gboolean ret = FALSE;
+	GError *error_local = NULL;
+	GPtrArray *array = NULL;
+	GPtrArray *array_tmp = NULL;
+	GPtrArray *provides;
+	guint i;
+	guint j;
+	ZifDepend *depend_tmp;
+	ZifPackage *package;
+	ZifState *state_local;
+	ZifStoreMeta *meta = ZIF_STORE_META (store);
+
+	g_return_val_if_fail (ZIF_IS_STORE_META (store), NULL);
+	g_return_val_if_fail (ZIF_IS_DEPEND (depend), NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
+
+	/* check we have packages */
+	if (meta->priv->packages->len == 0) {
+		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_ARRAY_IS_EMPTY,
+				     "cannot resolve, no packages in meta sack");
+		goto out;
+	}
+
+	/* we just search a virtual in-memory-sack */
+	zif_state_set_number_steps (state, meta->priv->packages->len);
+
+	/* iterate list */
+	array_tmp = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
+	for (i=0;i<meta->priv->packages->len;i++) {
+		package = g_ptr_array_index (meta->priv->packages, i);
+
+		/* get package provides */
+		state_local = zif_state_get_child (state);
+		provides = zif_package_get_provides (package, state_local, &error_local);
+		if (provides == NULL) {
+			g_set_error (error,
+				     ZIF_STORE_ERROR,
+				     ZIF_STORE_ERROR_FAILED,
+				     "failed to get provides for %s: %s",
+				     zif_package_get_id (package),
+				     error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+		for (j=0; j<provides->len; j++) {
+			depend_tmp = g_ptr_array_index (provides, j);
+			if (zif_depend_satisfies (depend_tmp, depend)) {
+				g_ptr_array_add (array_tmp, g_object_ref (package));
+				break;
+			}
+		}
+		g_ptr_array_unref (provides);
+
+		/* this section done */
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
+	}
+
+	/* success */
+	array = g_ptr_array_ref (array_tmp);
+out:
+	if (array_tmp != NULL)
+		g_ptr_array_unref (array_tmp);
+	return array;
+}
 
 /**
  * zif_store_meta_what_obsoletes:
@@ -570,6 +643,7 @@ zif_store_meta_class_init (ZifStoreMetaClass *klass)
 	store_class->get_packages = zif_store_meta_get_packages;
 	store_class->find_package = zif_store_meta_find_package;
 	store_class->what_obsoletes = zif_store_meta_what_obsoletes;
+	store_class->what_provides = zif_store_meta_what_provides;
 	store_class->get_id = zif_store_meta_get_id;
 	store_class->print = zif_store_meta_print;
 

@@ -104,6 +104,12 @@ zif_package_compare (ZifPackage *a, ZifPackage *b)
 	g_return_val_if_fail (ZIF_IS_PACKAGE (a), G_MAXINT);
 	g_return_val_if_fail (ZIF_IS_PACKAGE (b), G_MAXINT);
 
+	/* trivial optimisation */
+	if (a == b) {
+		val = 0;
+		goto out;
+	}
+
 	/* no-copy */
 	splita = a->priv->package_id_split;
 	splitb = b->priv->package_id_split;
@@ -123,6 +129,44 @@ zif_package_compare (ZifPackage *a, ZifPackage *b)
 		val = g_strcmp0 (splitb[ZIF_PACKAGE_ID_ARCH], splita[ZIF_PACKAGE_ID_ARCH]);
 out:
 	return val;
+}
+
+
+/**
+ * zif_package_is_compatible_arch:
+ * @a: the first package to compare
+ * @b: the second package to compare
+ *
+ * Finds if the package architectures are compatible.
+ * In this sense, i386 is compatible with i586, but not x86_64
+ *
+ * Return value: %TRUE is compatible
+ *
+ * Since: 0.1.3
+ **/
+gboolean
+zif_package_is_compatible_arch (ZifPackage *a, ZifPackage *b)
+{
+	const gchar *archa;
+	const gchar *archb;
+
+	g_return_val_if_fail (ZIF_IS_PACKAGE (a), FALSE);
+	g_return_val_if_fail (ZIF_IS_PACKAGE (b), FALSE);
+
+	archa = a->priv->package_id_split[ZIF_PACKAGE_ID_ARCH];
+	archb = b->priv->package_id_split[ZIF_PACKAGE_ID_ARCH];
+
+	/* same */
+	if (g_strcmp0 (archa, archb) == 0)
+		return TRUE;
+
+	/* 32bit intel */
+	if (g_str_has_suffix (archa, "86") &&
+	    g_str_has_suffix (archb, "86"))
+		return TRUE;
+
+	/* others */
+	return FALSE;
 }
 
 /**
