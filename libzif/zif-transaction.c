@@ -2099,6 +2099,24 @@ zif_transaction_set_skip_broken (ZifTransaction *transaction, gboolean skip_brok
 }
 
 /**
+ * zif_transaction_clear:
+ * @transaction: the #ZifTransaction object
+ *
+ * Clears any pending or completed packages and returns the transaction
+ * to the default state.
+ *
+ * Since: 0.1.3
+ **/
+void
+zif_transaction_clear (ZifTransaction *transaction)
+{
+	g_return_if_fail (ZIF_IS_TRANSACTION (transaction));
+	g_ptr_array_set_size (transaction->priv->install, 0);
+	g_ptr_array_set_size (transaction->priv->update, 0);
+	g_ptr_array_set_size (transaction->priv->remove, 0);
+}
+
+/**
  * zif_transaction_finalize:
  **/
 static void

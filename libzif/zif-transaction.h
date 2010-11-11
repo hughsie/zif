@@ -101,6 +101,7 @@ void		 zif_transaction_set_stores_remote	(ZifTransaction	*transaction,
 							 GPtrArray	*stores);
 void		 zif_transaction_set_skip_broken	(ZifTransaction	*transaction,
 							 gboolean	 skip_broken);
+void		 zif_transaction_clear			(ZifTransaction	*transaction);
 GPtrArray	*zif_transaction_get_install		(ZifTransaction	*transaction);
 GPtrArray	*zif_transaction_get_update		(ZifTransaction	*transaction);
 GPtrArray	*zif_transaction_get_remove		(ZifTransaction	*transaction);
