@@ -56,6 +56,39 @@ enum {
 G_DEFINE_TYPE (ZifDepend, zif_depend, G_TYPE_OBJECT)
 
 /**
+ * zif_depend_compare:
+ * @a: the #ZifDepend
+ * @b: the #ZifDepend to compare
+ *
+ * Compares one dependancy against another.
+ * This is basically a zif_compare_evr() on the versions.
+ *
+ * Return value: 1 for a>b, 0 for a==b, -1 for b>a, or G_MAXINT for error
+ *
+ * Since: 0.1.3
+ **/
+gint
+zif_depend_compare (ZifDepend *a, ZifDepend *b)
+{
+	g_return_val_if_fail (a != NULL, G_MAXINT);
+	g_return_val_if_fail (b != NULL, G_MAXINT);
+
+	/* deal with missing versions */
+	if (a->priv->version == NULL &&
+	    b->priv->version == NULL)
+		return 0;
+	if (a->priv->version != NULL &&
+	    b->priv->version == NULL)
+		return 1;
+	if (a->priv->version == NULL &&
+	    b->priv->version != NULL)
+		return -1;
+
+	/* fall back to comparing the evr */
+	return zif_compare_evr (a->priv->version, b->priv->version);
+}
+
+/**
  * zif_depend_satisfies:
  * @got: the #ZifDepend we've got
  * @need: the #ZifDepend we need

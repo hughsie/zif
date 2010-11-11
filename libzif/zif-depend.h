@@ -76,6 +76,8 @@ gboolean		 zif_depend_parse_description	(ZifDepend		*depend,
 							 GError			**error);
 gboolean		 zif_depend_satisfies		(ZifDepend		*got,
 							 ZifDepend		*need);
+gint			 zif_depend_compare		(ZifDepend		*a,
+							 ZifDepend		*b);
 
 /* public getters */
 ZifDependFlag		 zif_depend_get_flag		(ZifDepend		*depend);

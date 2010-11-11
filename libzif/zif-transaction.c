@@ -435,7 +435,7 @@ zif_transaction_add_remove (ZifTransaction *transaction, ZifPackage *package, GE
 static gboolean
 zif_transaction_package_file_depend (ZifPackage *package,
 				     const gchar *filename,
-				     gboolean *satisfies,
+				     ZifDepend **satisfies,
 				     ZifState *state,
 				     GError **error)
 {
@@ -468,24 +468,27 @@ zif_transaction_package_file_depend (ZifPackage *package,
 		filename_tmp = g_ptr_array_index (provides, i);
 		g_debug ("require: %s:%s", filename_tmp, filename);
 		if (g_strcmp0 (filename_tmp, filename) == 0) {
-			*satisfies = TRUE;
+			*satisfies = zif_depend_new ();
+			zif_depend_set_flag (*satisfies, ZIF_DEPEND_FLAG_ANY);
+			zif_depend_set_name (*satisfies, filename);
 			goto out;
 		}
 	}
 
 	/* success, but did not find */
-	*satisfies = FALSE;
+	*satisfies = NULL;
 out:
 	return ret;
 }
 
 /**
  * zif_transaction_package_provides:
+ * @satisfies: the matched depend, free with g_object_unref() in for not %NULL
  **/
 static gboolean
 zif_transaction_package_provides (ZifPackage *package,
 				  ZifDepend *depend,
-				  gboolean *satisfies,
+				  ZifDepend **satisfies,
 				  ZifState *state,
 				  GError **error)
 {
@@ -527,14 +530,14 @@ zif_transaction_package_provides (ZifPackage *package,
 		depend_tmp = g_ptr_array_index (provides, i);
 		ret = zif_depend_satisfies (depend, depend_tmp);
 		if (ret) {
-			*satisfies = TRUE;
+			*satisfies = g_object_ref (depend_tmp);
 			goto out;
 		}
 	}
 
 	/* success, but did not find */
 	ret = TRUE;
-	*satisfies = FALSE;
+	*satisfies = NULL;
 out:
 	if (provides != NULL)
 		g_ptr_array_unref (provides);
@@ -624,7 +627,7 @@ zif_transaction_get_package_provide_from_array (GPtrArray *array,
 	gboolean ret = TRUE;
 	guint i;
 	ZifTransactionItem *item;
-	gboolean satisfies = FALSE;
+	ZifDepend *satisfies = NULL;
 
 	/* interate through the array */
 	for (i=0; i<array->len; i++) {
@@ -642,8 +645,9 @@ zif_transaction_get_package_provide_from_array (GPtrArray *array,
 		}
 
 		/* gotcha */
-		if (satisfies) {
+		if (satisfies != NULL) {
 			*package = g_object_ref (item->package);
+			g_object_unref (satisfies);
 			goto out;
 		}
 	}
@@ -656,7 +660,7 @@ out:
 }
 
 /**
- * _zif_package_array_get_packages_with_best_arch:
+ * _zif_package_array_filter_packages_by_best_arch:
  *
  * If we have the following packages:
  *  - glibc.i386
@@ -667,36 +671,44 @@ out:
  *  - glibc.i686
  *
  **/
-static GPtrArray *
-_zif_package_array_get_packages_with_best_arch (GPtrArray *array)
+static void
+_zif_package_array_filter_packages_by_best_arch (GPtrArray *array)
 {
-	GPtrArray *results;
 	ZifPackage *package;
-	guint i, j;
-	gboolean added_something = FALSE;
-	const gchar *arch_priorities[] = { "i686", "i586", "i386", NULL };
+	guint i;
+	const gchar *arch;
+	const gchar *best_arch = NULL;
 
-	results = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_ref);
-
-	/* search for arch priorities in the correct order */
-	//FIXME, get the preferred arch list for 64bit
-	for (j=0; arch_priorities[j] != NULL; j++) {
-		for (i=0; i<array->len; i++) {
-			package = g_ptr_array_index (array, i);
-			if (g_strcmp0 (zif_package_get_arch (package), arch_priorities[j]) == 0) {
-				g_ptr_array_add (results, g_object_ref (package));
-				added_something = TRUE;
-			}
-		}
-		if (added_something)
+	/* find the best arch */
+	for (i=0; i<array->len; i++) {
+		package = g_ptr_array_index (array, i);
+		arch = zif_package_get_arch (package);
+		if (g_strcmp0 (arch, "x86_64") == 0)
 			break;
+		if (g_strcmp0 (arch, best_arch) > 0) {
+			best_arch = arch;
+		}
 	}
 
-	return results;
+	/* if no obvious best, skip */
+	g_debug ("bestarch=%s", best_arch);
+	if (best_arch == NULL)
+		return;
+
+	/* remove any that are not best */
+	for (i=0; i<array->len;) {
+		package = g_ptr_array_index (array, i);
+		arch = zif_package_get_arch (package);
+		if (g_strcmp0 (arch, best_arch) != 0) {
+			g_ptr_array_remove_index_fast (array, i);
+			continue;
+		}
+		i++;
+	}
 }
 
 /**
- * _zif_package_array_get_packages_with_smallest_name:
+ * _zif_package_array_filter_packages_by_smallest_name:
  *
  * If we have the following packages:
  *  - glibc.i386
@@ -708,30 +720,63 @@ _zif_package_array_get_packages_with_best_arch (GPtrArray *array)
  * As it has the smallest name. I know it's insane, but it's what yum does.
  *
  **/
-static GPtrArray *
-_zif_package_array_get_packages_with_smallest_name (GPtrArray *array)
+static void
+_zif_package_array_filter_packages_by_smallest_name (GPtrArray *array)
 {
-	GPtrArray *results;
 	ZifPackage *package;
-	guint i, j;
-	gboolean added_something = FALSE;
+	guint i;
+	guint length;
+	guint shortest = G_MAXUINT;
 
-	results = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_ref);
-
-	/* only return the shortest names */
-	for (j=1;; j++) {
-		for (i=0; i<array->len; i++) {
-			package = g_ptr_array_index (array, i);
-			if (strlen (zif_package_get_name (package)) == j) {
-				g_ptr_array_add (results, g_object_ref (package));
-				added_something = TRUE;
-			}
-		}
-		if (added_something)
-			break;
+	/* find the smallest name */
+	for (i=0; i<array->len; i++) {
+		package = g_ptr_array_index (array, i);
+		length = strlen (zif_package_get_name (package));
+		if (length < shortest)
+			shortest = length;
 	}
 
-	return results;
+	/* remove entries that are longer than the shortest name */
+	for (i=0; i<array->len;) {
+		package = g_ptr_array_index (array, i);
+		length = strlen (zif_package_get_name (package));
+		if (length != shortest) {
+			g_ptr_array_remove_index_fast (array, i);
+			continue;
+		}
+		i++;
+	}
+}
+
+/**
+ * _zif_package_array_filter_packages_by_depend_version:
+ **/
+static gboolean
+_zif_package_array_filter_packages_by_depend_version (GPtrArray *array,
+						      ZifDepend *depend,
+						      ZifState *state,
+						      GError **error)
+{
+	guint i;
+	gboolean ret = TRUE;
+	ZifPackage *package;
+	ZifDepend *satisfies = NULL;
+
+	/* remove entries that do not satisfy the best dep */
+	for (i=0; i<array->len;) {
+		package = g_ptr_array_index (array, i);
+		ret = zif_transaction_package_provides (package, depend, &satisfies, state, error);
+		if (!ret)
+			goto out;
+		if (satisfies == NULL) {
+			g_ptr_array_remove_index_fast (array, i);
+			continue;
+		}
+		g_object_unref (satisfies);
+		i++;
+	}
+out:
+	return ret;
 }
 
 /**
@@ -748,9 +793,8 @@ zif_transaction_get_package_provide_from_package_array (GPtrArray *array,
 	guint i;
 	ZifPackage *package_tmp;
 	GPtrArray *satisfy_array;
-	GPtrArray *satisfy_arch_array = NULL;
-	GPtrArray *satisfy_strcmp_array = NULL;
-	gboolean satisfies = FALSE;
+	ZifDepend *satisfies = NULL;
+	ZifDepend *best_depend = NULL;
 	GError *error_local = NULL;
 
 	/* interate through the array */
@@ -764,8 +808,50 @@ zif_transaction_get_package_provide_from_package_array (GPtrArray *array,
 			goto out;
 
 		/* gotcha, but keep looking */
-		if (satisfies)
+		if (satisfies != NULL) {
 			g_ptr_array_add (satisfy_array, g_object_ref (package_tmp));
+
+			/* ensure we track the best depend */
+			if (best_depend == NULL ||
+			    zif_depend_compare (satisfies, best_depend) > 0) {
+				if (best_depend != NULL)
+					g_object_unref (best_depend);
+				best_depend = g_object_ref (satisfies);
+			}
+
+			g_object_unref (satisfies);
+		}
+	}
+
+	/* print what we've got */
+	g_debug ("provide %s has %i matches",
+		 zif_depend_get_description (depend),
+		 satisfy_array->len);
+	if (best_depend != NULL) {
+		g_debug ("best depend was %s",
+			 zif_depend_get_description (best_depend));
+	}
+
+	/* filter these down so we get best architectures listed first */
+	if (satisfy_array->len > 1) {
+		_zif_package_array_filter_packages_by_best_arch (satisfy_array);
+		g_debug ("after filtering by arch, array now %i packages", satisfy_array->len);
+	}
+
+	/* if the depends are the same, choose the one with the biggest version */
+	if (satisfy_array->len > 1) {
+		ret = _zif_package_array_filter_packages_by_depend_version (satisfy_array,
+									    best_depend,
+									    state, error);
+		if (!ret)
+			goto out;
+		g_debug ("after filtering by depend, array now %i packages", satisfy_array->len);
+	}
+
+	/* filter these down so we get smallest names listed first */
+	if (satisfy_array->len > 1) {
+		_zif_package_array_filter_packages_by_smallest_name (satisfy_array);
+		g_debug ("after filtering by name length, array now %i packages", satisfy_array->len);
 	}
 
 	/* success, but no results */
@@ -774,43 +860,8 @@ zif_transaction_get_package_provide_from_package_array (GPtrArray *array,
 		goto out;
 	}
 
-	/* optimize for one single result */
-	if (satisfy_array->len == 1) {
-		*package = g_object_ref (g_ptr_array_index (satisfy_array, 0));
-		goto out;
-	}
-
-	g_debug ("provide %s still has %i matches, filtering down to best architecture",
-		 zif_depend_get_description (depend),
-		 satisfy_array->len);
-
-	/* filter these down so we get best architectures listed first */
-	satisfy_arch_array = _zif_package_array_get_packages_with_best_arch (satisfy_array);
-
-	/* optimize for one single result */
-	if (satisfy_arch_array->len == 1) {
-		*package = g_object_ref (g_ptr_array_index (satisfy_arch_array, 0));
-		goto out;
-	}
-
-	g_debug ("provide %s still has %i matches, filtering down to smallest name (OMG)",
-		 zif_depend_get_description (depend),
-		 satisfy_array->len);
-
-	/* filter these down so we get best architectures listed first */
-	satisfy_strcmp_array = _zif_package_array_get_packages_with_smallest_name (satisfy_array);
-
-	/* optimize for one single result */
-	if (satisfy_strcmp_array->len == 1) {
-		*package = g_object_ref (g_ptr_array_index (satisfy_strcmp_array, 0));
-		goto out;
-	}
-
 	/* return the newest */
-	g_debug ("provide %s still has %i matches, choosing newest",
-		 zif_depend_get_description (depend),
-		 satisfy_array->len);
-	*package = zif_package_array_get_newest (satisfy_strcmp_array, &error_local);
+	*package = zif_package_array_get_newest (satisfy_array, &error_local);
 	if (*package == NULL) {
 		ret = FALSE;
 		g_set_error (error,
@@ -822,10 +873,8 @@ zif_transaction_get_package_provide_from_package_array (GPtrArray *array,
 		goto out;
 	}
 out:
-	if (satisfy_arch_array != NULL)
-		g_ptr_array_unref (satisfy_arch_array);
-	if (satisfy_strcmp_array != NULL)
-		g_ptr_array_unref (satisfy_strcmp_array);
+	if (best_depend != NULL)
+		g_object_unref (best_depend);
 	g_ptr_array_unref (satisfy_array);
 	return ret;
 }

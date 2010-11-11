@@ -83,37 +83,46 @@ zif_package_meta_get_string (ZifPackageMeta *pkg, const gchar *key)
  * zif_package_meta_get_depends:
  */
 static GPtrArray *
-zif_package_meta_get_depends (ZifPackageMeta *pkg, const gchar *key)
+zif_package_meta_get_depends (ZifPackageMeta *pkg, const gchar *key, GError **error)
 {
 	guint i;
 	guint keylen;
 	gboolean ret;
-	GPtrArray *value;
+	GPtrArray *depends_tmp;
+	GPtrArray *depends = NULL;
 	const gchar *data;
 	ZifDepend *depend;
-	GError *error = NULL;
+	GError *error_local = NULL;
 
 	/* find an array of ZifDepends */
 	keylen = strlen (key);
-	value = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
+	depends_tmp = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	for (i=0; i<pkg->priv->array->len; i++) {
 		data = g_ptr_array_index (pkg->priv->array, i);
 		if (g_str_has_prefix (data, key)) {
 			if (data[keylen + 1] == ' ')
 				keylen++;
 			depend = zif_depend_new ();
-			ret = zif_depend_parse_description (depend, data + keylen + 1, &error);
-			if (ret) {
-				g_ptr_array_add (value, g_object_ref (depend));
-			} else {
-				g_debug ("failed to parse '%s': %s", data, error->message);
-				g_clear_error (&error);
+			ret = zif_depend_parse_description (depend, data + keylen + 1, &error_local);
+			if (!ret) {
+				g_set_error (error,
+					     ZIF_PACKAGE_ERROR,
+					     ZIF_PACKAGE_ERROR_FAILED,
+					     "Failed to parse %s: %s",
+					     data, error_local->message);
+				g_error_free (error_local);
+				g_object_unref (depend);
+				goto out;
 			}
+			g_ptr_array_add (depends_tmp, g_object_ref (depend));
 			g_object_unref (depend);
 		}
 	}
-
-	return value;
+	/* success */
+	depends = g_ptr_array_ref (depends_tmp);
+out:
+	g_ptr_array_unref (depends_tmp);
+	return depends;
 }
 
 /*
@@ -178,12 +187,20 @@ zif_package_meta_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, ZifSta
 		g_ptr_array_unref (depends);
 
 	} else if (type == ZIF_PACKAGE_ENSURE_TYPE_REQUIRES) {
-		depends = zif_package_meta_get_depends (ZIF_PACKAGE_META(pkg), "Requires");
+		depends = zif_package_meta_get_depends (ZIF_PACKAGE_META(pkg), "Requires", error);
+		if (depends == NULL) {
+			ret = FALSE;
+			goto out;
+		}
 		zif_package_set_requires (pkg, depends);
 		g_ptr_array_unref (depends);
 
 	} else if (type == ZIF_PACKAGE_ENSURE_TYPE_PROVIDES) {
-		depends = zif_package_meta_get_depends (ZIF_PACKAGE_META(pkg), "Provides");
+		depends = zif_package_meta_get_depends (ZIF_PACKAGE_META(pkg), "Provides", error);
+		if (depends == NULL) {
+			ret = FALSE;
+			goto out;
+		}
 		zif_package_set_provides (pkg, depends);
 
 		/* a package has to provide itself */
@@ -196,12 +213,20 @@ zif_package_meta_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, ZifSta
 		g_ptr_array_unref (depends);
 
 	} else if (type == ZIF_PACKAGE_ENSURE_TYPE_CONFLICTS) {
-		depends = zif_package_meta_get_depends (ZIF_PACKAGE_META(pkg), "Conflicts");
+		depends = zif_package_meta_get_depends (ZIF_PACKAGE_META(pkg), "Conflicts", error);
+		if (depends == NULL) {
+			ret = FALSE;
+			goto out;
+		}
 		zif_package_set_conflicts (pkg, depends);
 		g_ptr_array_unref (depends);
 
 	} else if (type == ZIF_PACKAGE_ENSURE_TYPE_OBSOLETES) {
-		depends = zif_package_meta_get_depends (ZIF_PACKAGE_META(pkg), "Obsoletes");
+		depends = zif_package_meta_get_depends (ZIF_PACKAGE_META(pkg), "Obsoletes", error);
+		if (depends == NULL) {
+			ret = FALSE;
+			goto out;
+		}
 		zif_package_set_obsoletes (pkg, depends);
 		g_ptr_array_unref (depends);
 	} else {
@@ -212,6 +237,7 @@ zif_package_meta_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, ZifSta
 			     "failed to get ensure data %s",
 			     zif_package_ensure_type_to_string (type));
 	}
+out:
 	return ret;
 }
 
