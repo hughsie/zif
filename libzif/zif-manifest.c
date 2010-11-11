@@ -568,6 +568,10 @@ zif_manifest_check (ZifManifest *manifest,
 	zif_transaction_set_store_local (transaction, local);
 	zif_transaction_set_stores_remote (transaction, remote_array);
 
+	/* skip-broken */
+	ret = g_key_file_get_boolean (keyfile, "Zif Manifest", "SkipBroken", NULL);
+	zif_transaction_set_skip_broken (transaction, ret);
+
 	/* installs */
 	transaction_install = g_key_file_get_string (keyfile, "Zif Manifest", "TransactionInstall", NULL);
 	if (transaction_install != NULL) {

@@ -2113,11 +2113,14 @@ zif_transaction_resolve_conflicts_item (ZifTransactionResolve *data,
 		goto out;
 	}
 
-	g_debug ("Checking for installed packages that conflict with %s",
+	g_debug ("checking %i provides for %s",
+		 provides->len,
 		 zif_package_get_id (item->package));
 	for (i=0; i<provides->len; i++) {
 
 		depend = g_ptr_array_index (provides, i);
+		g_debug ("checking provide %s",
+			 zif_depend_get_description (depend));
 
 		/* get packages that conflict with this */
 		ret = zif_transaction_get_package_conflict_from_store (data->transaction->priv->store_local,
@@ -2142,10 +2145,15 @@ zif_transaction_resolve_conflicts_item (ZifTransactionResolve *data,
 		}
 	}
 
+	g_debug ("checking %i conflicts for %s",
+		 provides->len,
+		 zif_package_get_id (item->package));
 	for (i=0; i<conflicts->len; i++) {
-		depend = g_ptr_array_index (provides, i);
+		depend = g_ptr_array_index (conflicts, i);
 
 		/* does this install conflict with another package */
+		g_debug ("checking conflict %s",
+			 zif_depend_get_description (depend));
 		ret = zif_transaction_get_package_provide_from_store (data->transaction->priv->store_local,
 								      depend, &conflicting,
 								      data->state, error);
@@ -2203,15 +2211,6 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 	g_return_val_if_fail (transaction->priv->stores_remote != NULL, FALSE);
 	g_return_val_if_fail (transaction->priv->store_local != NULL, FALSE);
 
-	/* not supported yet */
-	if (transaction->priv->skip_broken) {
-		g_set_error_literal (error,
-				     ZIF_TRANSACTION_ERROR,
-				     ZIF_TRANSACTION_ERROR_NOT_SUPPORTED,
-				     "skip broken is not supported (yet)");
-		goto out;
-	}
-
 	g_debug ("starting resolve with %i to install, %i to update, and %i to remove",
 		 transaction->priv->install->len,
 		 transaction->priv->update->len,
@@ -2248,6 +2247,8 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 					g_clear_error (&error_local);
 					break;
 				}
+				g_debug ("ignoring error as we're skip-broken: %s",
+					 error_local->message);
 				g_propagate_error (error, error_local);
 				goto out;
 			}
@@ -2269,6 +2270,14 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 					g_debug ("REMOVE %s as nothing to do",
 						 zif_package_get_id (item->package));
 					g_ptr_array_remove (transaction->priv->update, item);
+					data->unresolved_dependencies = TRUE;
+					g_clear_error (&error_local);
+					break;
+				}
+				if (transaction->priv->skip_broken) {
+					g_debug ("ignoring error as we're skip-broken: %s",
+						 error_local->message);
+					g_ptr_array_remove (transaction->priv->remove, item);
 					data->unresolved_dependencies = TRUE;
 					g_clear_error (&error_local);
 					break;
@@ -2298,6 +2307,14 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 					g_clear_error (&error_local);
 					break;
 				}
+				if (transaction->priv->skip_broken) {
+					g_debug ("ignoring error as we're skip-broken: %s",
+						 error_local->message);
+					g_ptr_array_remove (transaction->priv->remove, item);
+					data->unresolved_dependencies = TRUE;
+					g_clear_error (&error_local);
+					break;
+				}
 				g_propagate_error (error, error_local);
 				goto out;
 			}
@@ -2309,9 +2326,19 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 			item = g_ptr_array_index (transaction->priv->install, i);
 
 			/* check this item */
-			ret = zif_transaction_resolve_conflicts_item (data, item, error);
-			if (!ret)
+			ret = zif_transaction_resolve_conflicts_item (data, item, &error_local);
+			if (!ret) {
+				if (transaction->priv->skip_broken) {
+					g_debug ("ignoring error as we're skip-broken: %s",
+						 error_local->message);
+					g_ptr_array_remove (transaction->priv->install, item);
+					data->unresolved_dependencies = TRUE;
+					g_clear_error (&error_local);
+					break;
+				}
+				g_propagate_error (error, error_local);
 				goto out;
+			}
 		}
 	}
 
