@@ -69,6 +69,16 @@ typedef enum {
 	ZIF_TRANSACTION_ERROR_LAST
 } ZifTransactionError;
 
+typedef enum {
+	ZIF_TRANSACTION_REASON_INVALID,
+	ZIF_TRANSACTION_REASON_USER_ACTION,
+	ZIF_TRANSACTION_REASON_INSTALL_ONLYN,
+	ZIF_TRANSACTION_REASON_UPDATE,
+	ZIF_TRANSACTION_REASON_INSTALL_DEPEND,
+	ZIF_TRANSACTION_REASON_OBSOLETE,
+	ZIF_TRANSACTION_REASON_LAST
+} ZifTransactionReason;
+
 GQuark		 zif_transaction_error_quark		(void);
 GType		 zif_transaction_get_type		(void);
 
@@ -94,6 +104,10 @@ void		 zif_transaction_set_skip_broken	(ZifTransaction	*transaction,
 GPtrArray	*zif_transaction_get_install		(ZifTransaction	*transaction);
 GPtrArray	*zif_transaction_get_update		(ZifTransaction	*transaction);
 GPtrArray	*zif_transaction_get_remove		(ZifTransaction	*transaction);
+const gchar	*zif_transaction_reason_to_string	(ZifTransactionReason reason);
+ZifTransactionReason	zif_transaction_get_reason	(ZifTransaction	*transaction,
+							 ZifPackage	*package,
+							 GError		**error);
 
 G_END_DECLS
 

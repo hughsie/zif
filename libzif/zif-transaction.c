@@ -74,15 +74,6 @@ typedef struct {
 
 G_DEFINE_TYPE (ZifTransaction, zif_transaction, G_TYPE_OBJECT)
 
-typedef enum {
-	ZIF_TRANSACTION_REASON_USER_ACTION,
-	ZIF_TRANSACTION_REASON_INSTALL_ONLYN,
-	ZIF_TRANSACTION_REASON_UPDATE,
-	ZIF_TRANSACTION_REASON_INSTALL_DEPEND,
-	ZIF_TRANSACTION_REASON_OBSOLETE,
-	ZIF_TRANSACTION_REASON_LAST
-} ZifTransactionReason;
-
 typedef struct {
 	ZifPackage		*package;
 	gboolean		 resolved;
@@ -107,8 +98,15 @@ zif_transaction_error_quark (void)
 
 /**
  * zif_transaction_reason_to_string:
+ * @reason: the #ZifTransactionReason enum, e.g. %ZIF_TRANSACTION_REASON_USER_ACTION
+ *
+ * Gets the string representation of the reason a package was added.
+ *
+ * Return value: A constant string
+ *
+ * Since: 0.1.3
  **/
-static const gchar *
+const gchar *
 zif_transaction_reason_to_string (ZifTransactionReason reason)
 {
 	if (reason == ZIF_TRANSACTION_REASON_USER_ACTION)
@@ -222,6 +220,42 @@ zif_transaction_get_item_from_array (GPtrArray *array, ZifPackage *package)
 			return item;
 	}
 	return NULL;
+}
+
+/**
+ * zif_transaction_get_reason:
+ * @transaction: the #ZifTransaction object
+ * @package: the #ZifPackage object
+ *
+ * Gets the reason why the package is in the install or remove array.
+ *
+ * Return value: A #ZifTransactionReason enumerated value, or %ZIF_TRANSACTION_REASON_INVALID for error.
+ *
+ * Since: 0.1.3
+ **/
+ZifTransactionReason
+zif_transaction_get_reason (ZifTransaction *transaction, ZifPackage *package, GError **error)
+{
+	ZifTransactionItem *item;
+	g_return_val_if_fail (ZIF_IS_TRANSACTION (transaction), ZIF_TRANSACTION_REASON_INVALID);
+	g_return_val_if_fail (ZIF_IS_PACKAGE (package), ZIF_TRANSACTION_REASON_INVALID);
+	g_return_val_if_fail (error == NULL || *error == NULL, ZIF_TRANSACTION_REASON_INVALID);
+
+	/* find the package */
+	item = zif_transaction_get_item_from_array (transaction->priv->install, package);
+	if (item != NULL)
+		return item->reason;
+	item = zif_transaction_get_item_from_array (transaction->priv->remove, package);
+	if (item != NULL)
+		return item->reason;
+
+	/* not found */
+	g_set_error (error,
+		     ZIF_TRANSACTION_ERROR,
+		     ZIF_TRANSACTION_ERROR_FAILED,
+		     "could not find package %s",
+		     zif_package_get_id (package));
+	return ZIF_TRANSACTION_REASON_INVALID;
 }
 
 /**
@@ -1908,7 +1942,10 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 		goto out;
 	}
 
-	g_debug ("starting resolve");
+	g_debug ("starting resolve with %i to install, %i to update, and %i to remove",
+		 transaction->priv->install->len,
+		 transaction->priv->update->len,
+		 transaction->priv->remove->len);
 
 	/* whilst there are unresolved dependencies, keep trying */
 	data = g_new0 (ZifTransactionResolve, 1);
@@ -1934,6 +1971,8 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 				g_assert (error_local != NULL);
 				/* special error code */
 				if (error_local->code == ZIF_TRANSACTION_ERROR_NOTHING_TO_DO) {
+					g_debug ("REMOVE %s as nothing to do",
+						 zif_package_get_id (item->package));
 					g_ptr_array_remove (transaction->priv->install, item);
 					data->unresolved_dependencies = TRUE;
 					g_clear_error (&error_local);
@@ -1957,6 +1996,8 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 				g_assert (error_local != NULL);
 				/* special error code */
 				if (error_local->code == ZIF_TRANSACTION_ERROR_NOTHING_TO_DO) {
+					g_debug ("REMOVE %s as nothing to do",
+						 zif_package_get_id (item->package));
 					g_ptr_array_remove (transaction->priv->update, item);
 					data->unresolved_dependencies = TRUE;
 					g_clear_error (&error_local);
@@ -1980,6 +2021,8 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 				g_assert (error_local != NULL);
 				/* special error code */
 				if (error_local->code == ZIF_TRANSACTION_ERROR_NOTHING_TO_DO) {
+					g_debug ("REMOVE %s as nothing to do",
+						 zif_package_get_id (item->package));
 					g_ptr_array_remove (transaction->priv->remove, item);
 					data->unresolved_dependencies = TRUE;
 					g_clear_error (&error_local);

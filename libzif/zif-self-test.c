@@ -226,9 +226,11 @@ zif_transaction_func (void)
 	ZifStore *local;
 	ZifState *state;
 	GPtrArray *remotes;
+	GPtrArray *packages;
 	GError *error = NULL;
 	gboolean ret;
 	gchar *filename;
+	ZifTransactionReason reason;
 
 	state = zif_state_new ();
 	transaction = zif_transaction_new ();
@@ -270,6 +272,16 @@ zif_transaction_func (void)
 
 	/* resolve */
 	transaction = zif_transaction_new ();
+
+	package = zif_package_meta_new ();
+	ret = zif_package_set_id (package, "test;0.0.1;i386;data", &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+	ret = zif_transaction_add_install (transaction, package, &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+	g_object_unref (package);
+
 	local = zif_store_meta_new ();
 	zif_transaction_set_store_local (transaction, local);
 	remotes = zif_store_array_new ();
@@ -278,6 +290,23 @@ zif_transaction_func (void)
 	g_assert_no_error (error);
 	g_assert (ret);
 	g_clear_error (&error);
+
+	/* get results */
+	packages = zif_transaction_get_remove (transaction);
+	g_assert (packages != NULL);
+	g_assert_cmpint (packages->len, ==, 0);
+	g_ptr_array_unref (packages);
+
+	/* check reason */
+	packages = zif_transaction_get_install (transaction);
+	g_assert (packages != NULL);
+	g_assert_cmpint (packages->len, ==, 1);
+	package = g_ptr_array_index (packages, 0);
+	g_assert_cmpstr (zif_package_get_id (package), ==, "test;0.0.1;i386;data");
+	reason = zif_transaction_get_reason (transaction, package, &error);
+	g_assert_no_error (error);
+	g_assert_cmpint (reason, ==, ZIF_TRANSACTION_REASON_USER_ACTION);
+	g_ptr_array_unref (packages);
 
 	g_ptr_array_unref (remotes);
 	g_object_unref (state);
