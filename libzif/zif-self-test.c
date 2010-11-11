@@ -418,10 +418,10 @@ zif_depend_func (void)
 
 	/* test parsing 3 form */
 	depend = zif_depend_new ();
-	ret = zif_depend_parse_description (depend, "kernel > 2.6.0", &error);
+	ret = zif_depend_parse_description (depend, "kernel >= 2.6.0", &error);
 	g_assert_cmpstr (zif_depend_get_name (depend), ==, "kernel");
 	g_assert_cmpstr (zif_depend_get_version (depend), ==, "2.6.0");
-	g_assert_cmpint (zif_depend_get_flag (depend), ==, ZIF_DEPEND_FLAG_GREATER);
+	g_assert_cmpint (zif_depend_get_flag (depend), ==, ZIF_DEPEND_FLAG_GREATER | ZIF_DEPEND_FLAG_EQUAL);
 	g_assert_no_error (error);
 	g_assert (ret);
 	g_object_unref (depend);
@@ -466,10 +466,28 @@ zif_depend_func (void)
 	g_assert (ret);
 	g_object_unref (need);
 
+	/* greater or equal to */
+	need = zif_depend_new ();
+	zif_depend_set_name (need, "hal");
+	zif_depend_set_flag (need, ZIF_DEPEND_FLAG_GREATER | ZIF_DEPEND_FLAG_EQUAL);
+	zif_depend_set_version (need, "0.5.7-1");
+	ret = zif_depend_satisfies (depend, need);
+	g_assert (ret);
+	g_object_unref (need);
+
 	/* less than */
 	need = zif_depend_new ();
 	zif_depend_set_name (need, "hal");
 	zif_depend_set_flag (need, ZIF_DEPEND_FLAG_LESS);
+	zif_depend_set_version (need, "0.5.9-1");
+	ret = zif_depend_satisfies (depend, need);
+	g_assert (ret);
+	g_object_unref (need);
+
+	/* less or equal to */
+	need = zif_depend_new ();
+	zif_depend_set_name (need, "hal");
+	zif_depend_set_flag (need, ZIF_DEPEND_FLAG_LESS | ZIF_DEPEND_FLAG_EQUAL);
 	zif_depend_set_version (need, "0.5.9-1");
 	ret = zif_depend_satisfies (depend, need);
 	g_assert (ret);

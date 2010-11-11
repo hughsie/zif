@@ -44,11 +44,11 @@ typedef struct _ZifDependPrivate ZifDependPrivate;
 typedef struct _ZifDependClass	 ZifDependClass;
 
 typedef enum {
-	ZIF_DEPEND_FLAG_ANY,
-	ZIF_DEPEND_FLAG_LESS,
-	ZIF_DEPEND_FLAG_GREATER,
-	ZIF_DEPEND_FLAG_EQUAL,
-	ZIF_DEPEND_FLAG_UNKNOWN
+	ZIF_DEPEND_FLAG_ANY	= 1,
+	ZIF_DEPEND_FLAG_LESS	= 2,
+	ZIF_DEPEND_FLAG_GREATER	= 4,
+	ZIF_DEPEND_FLAG_EQUAL	= 8,
+	ZIF_DEPEND_FLAG_UNKNOWN = 0
 } ZifDependFlag;
 
 #include "zif-package.h"

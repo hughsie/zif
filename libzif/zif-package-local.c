@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*-
  *
- * Copyright (C) 2008 Richard Hughes <richard@hughsie.com>
+ * Copyright (C) 2008-2010 Richard Hughes <richard@hughsie.com>
  *
  * Licensed under the GNU General Public License Version 2
  *
@@ -223,12 +223,16 @@ zif_package_local_get_depends_from_name_flags_version (GPtrArray *names, GPtrArr
 		/* convert to enums */
 		flag = ZIF_DEPEND_FLAG_UNKNOWN;
 		if ((rpmflags & RPMSENSE_LESS) > 0) {
-			flag = ZIF_DEPEND_FLAG_LESS;
+			flag += ZIF_DEPEND_FLAG_LESS;
 		} else if ((rpmflags & RPMSENSE_GREATER) > 0) {
-			flag = ZIF_DEPEND_FLAG_GREATER;
+			flag += ZIF_DEPEND_FLAG_GREATER;
 		} else if ((rpmflags & RPMSENSE_EQUAL) > 0) {
-			flag = ZIF_DEPEND_FLAG_EQUAL;
+			flag += ZIF_DEPEND_FLAG_EQUAL;
 		}
+
+		/* no version means any */
+		if (flag == ZIF_DEPEND_FLAG_UNKNOWN)
+			flag = ZIF_DEPEND_FLAG_ANY;
 
 		/* unknown */
 		name = g_ptr_array_index (names, i);

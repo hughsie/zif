@@ -93,6 +93,9 @@ zif_depend_satisfies (ZifDepend *got, ZifDepend *need)
 {
 	gboolean ret;
 
+	g_return_val_if_fail (got->priv->flag != ZIF_DEPEND_FLAG_UNKNOWN, FALSE);
+	g_return_val_if_fail (need->priv->flag != ZIF_DEPEND_FLAG_UNKNOWN, FALSE);
+
 	/* name does not match */
 	ret = (g_strcmp0 (got->priv->name, need->priv->name) == 0);
 	if (!ret)
@@ -129,6 +132,18 @@ zif_depend_satisfies (ZifDepend *got, ZifDepend *need)
 		goto out;
 	}
 
+	/* 'Requires: hal >= 0.5.7' - greater */
+	if (need->priv->flag == (ZIF_DEPEND_FLAG_GREATER | ZIF_DEPEND_FLAG_EQUAL)) {
+		ret = (zif_compare_evr (got->priv->version, need->priv->version) >= 0);
+		goto out;
+	}
+
+	/* 'Requires: hal <= 0.5.7' - less */
+	if (need->priv->flag == (ZIF_DEPEND_FLAG_LESS | ZIF_DEPEND_FLAG_EQUAL)) {
+		ret = (zif_compare_evr (got->priv->version, need->priv->version) <= 0);
+		goto out;
+	}
+
 	/* not sure */
 	g_debug ("not sure how to compare %s and %s",
 		 zif_depend_flag_to_string (got->priv->flag),
@@ -162,7 +177,11 @@ zif_depend_flag_to_string (ZifDependFlag flag)
 		return ">";
 	if (flag == ZIF_DEPEND_FLAG_EQUAL)
 		return "=";
-	return "unknown";
+	if (flag == (ZIF_DEPEND_FLAG_LESS | ZIF_DEPEND_FLAG_EQUAL))
+		return "<=";
+	if (flag == (ZIF_DEPEND_FLAG_GREATER | ZIF_DEPEND_FLAG_EQUAL))
+		return ">=";
+	return "???";
 }
 
 /**
@@ -204,6 +223,8 @@ const gchar *
 zif_depend_get_description (ZifDepend *depend)
 {
 	g_return_val_if_fail (ZIF_IS_DEPEND (depend), NULL);
+	g_return_val_if_fail (depend->priv->name != NULL, NULL);
+	g_return_val_if_fail (depend->priv->flag != ZIF_DEPEND_FLAG_UNKNOWN, NULL);
 
 	/* does not exist, or not valid */
 	if (!depend->priv->description_ok) {
@@ -282,6 +303,7 @@ void
 zif_depend_set_flag (ZifDepend *depend, ZifDependFlag flag)
 {
 	g_return_if_fail (ZIF_IS_DEPEND (depend));
+	g_return_if_fail (flag != ZIF_DEPEND_FLAG_UNKNOWN);
 	depend->priv->flag = flag;
 	depend->priv->description_ok = FALSE;
 }
@@ -336,8 +358,15 @@ zif_depend_string_to_flag (const gchar *value)
 		return ZIF_DEPEND_FLAG_LESS;
 	if (g_strcmp0 (value, ">") == 0)
 		return ZIF_DEPEND_FLAG_GREATER;
-	if (g_strcmp0 (value, "=") == 0)
+	if (g_strcmp0 (value, "=") == 0 ||
+	    g_strcmp0 (value, "==") == 0)
 		return ZIF_DEPEND_FLAG_EQUAL;
+	if (g_strcmp0 (value, ">=") == 0)
+		return ZIF_DEPEND_FLAG_GREATER |
+		       ZIF_DEPEND_FLAG_EQUAL;
+	if (g_strcmp0 (value, "<=") == 0)
+		return ZIF_DEPEND_FLAG_LESS |
+		       ZIF_DEPEND_FLAG_EQUAL;
 	return ZIF_DEPEND_FLAG_UNKNOWN;
 }
 
@@ -358,6 +387,7 @@ zif_depend_parse_description (ZifDepend *depend, const gchar *value, GError **er
 {
 	gchar **split = NULL;
 	gboolean ret = TRUE;
+	ZifDependFlag flag;
 
 	g_return_val_if_fail (ZIF_IS_DEPEND (depend), FALSE);
 	g_return_val_if_fail (value != FALSE, FALSE);
@@ -375,8 +405,17 @@ zif_depend_parse_description (ZifDepend *depend, const gchar *value, GError **er
 
 	/* three sections to parse */
 	if (g_strv_length (split) == 3) {
+		flag = zif_depend_string_to_flag (split[1]);
+		if (flag == ZIF_DEPEND_FLAG_UNKNOWN) {
+			ret = FALSE;
+			g_set_error (error, 1, 0,
+				     "failed to parse the depend flag: %s",
+				     split[1]);
+			g_error ("%s", split[1]);
+			goto out;
+		}
 		zif_depend_set_name (depend, split[0]);
-		zif_depend_set_flag (depend, zif_depend_string_to_flag (split[1]));
+		zif_depend_set_flag (depend, flag);
 		zif_depend_set_version (depend, split[2]);
 		goto out;
 	}
