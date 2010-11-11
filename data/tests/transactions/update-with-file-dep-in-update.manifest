@@ -1,0 +1,7 @@
+# Update two packages, where one requires a file in the other.
+
+[Zif Manifest]
+AddLocal=libstdc++;0:0.3.0-1;i386;meta@Files:/usr/lib/libstdc++.so.6,libstdc++-devel;0:0.3.0-1;i386;meta@Requires:libstdc++ = 0:0.3.0-1@Requires:/usr/lib/libstdc++.so.6
+AddRemote=libstdc++;0:0.3.0-7;i386;meta@File:/usr/lib/libstdc++.so.6,libstdc++-devel;0:0.3.0-7;i386;meta@Requires:/usr/lib/libstdc++.so.6@Requires:libstdc++ = 0:0.3.0-7
+TransactionUpdate=libstdc++
+PostInstalled=libstdc++;0:0.3.0-7;i386;meta,libstdc++-devel;0:0.3.0-7;i386;meta

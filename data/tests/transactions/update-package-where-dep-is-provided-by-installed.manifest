@@ -1,0 +1,8 @@
+# Update a single package where a dep being removed is provided by another
+# installed package that is scheduled for update.
+
+[Zif Manifest]
+AddLocal=bash;0:0.3.0-1;i386;meta@Provides:shell,zsh;1.0.0-1;i386;meta@Provides:shell,system-base;1.0.0-1;i386;meta@Requires:shell
+AddRemote=zsh;1.7.1-2;i386;meta,bash;0:1.0.0-1;i386;meta@Provides:shell
+TransactionUpdate=zsh,bash
+PostInstalled=zsh;1.7.1-2;i386;meta,bash;0:1.0.0-1;i386;meta,system-base;1.0.0-1;i386;meta

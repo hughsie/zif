@@ -1,0 +1,8 @@
+# Install a package which has a dep provided by a package with a
+# non-numeric version.
+
+[Zif Manifest]
+AddLocal=
+AddRemote=zsh-libs;R10-4;i386;meta,zsh;1.3.1-2;i386;meta@Requires:zsh-libs
+TransactionInstall=zsh
+PostInstalled=zsh-libs;R10-4;i386;meta,zsh;1.3.1-2;i386;meta
