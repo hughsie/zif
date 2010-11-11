@@ -349,7 +349,7 @@ zif_store_resolve (ZifStore *store, gchar **search, ZifState *state, GError **er
 /**
  * zif_store_what_provides:
  * @store: the #ZifStore object
- * @search: the search term, e.g. "gstreamer(codec-mp3)"
+ * @depend: A #ZifDepend to search for
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -357,15 +357,15 @@ zif_store_resolve (ZifStore *store, gchar **search, ZifState *state, GError **er
  *
  * Return value: an array of #ZifPackage's
  *
- * Since: 0.1.0
+ * Since: 0.1.3
  **/
 GPtrArray *
-zif_store_what_provides (ZifStore *store, gchar **search, ZifState *state, GError **error)
+zif_store_what_provides (ZifStore *store, ZifDepend *depend, ZifState *state, GError **error)
 {
 	ZifStoreClass *klass = ZIF_STORE_GET_CLASS (store);
 
 	g_return_val_if_fail (ZIF_IS_STORE (store), NULL);
-	g_return_val_if_fail (search != NULL, NULL);
+	g_return_val_if_fail (ZIF_IS_DEPEND (depend), NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
@@ -376,13 +376,13 @@ zif_store_what_provides (ZifStore *store, gchar **search, ZifState *state, GErro
 		return NULL;
 	}
 
-	return klass->what_provides (store, search, state, error);
+	return klass->what_provides (store, depend, state, error);
 }
 
 /**
  * zif_store_what_obsoletes:
  * @store: the #ZifStore object
- * @search: the search term, e.g. "gstreamer(codec-mp3)"
+ * @depend: A #ZifDepend to search for
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -393,12 +393,12 @@ zif_store_what_provides (ZifStore *store, gchar **search, ZifState *state, GErro
  * Since: 0.1.3
  **/
 GPtrArray *
-zif_store_what_obsoletes (ZifStore *store, gchar **search, ZifState *state, GError **error)
+zif_store_what_obsoletes (ZifStore *store, ZifDepend *depend, ZifState *state, GError **error)
 {
 	ZifStoreClass *klass = ZIF_STORE_GET_CLASS (store);
 
 	g_return_val_if_fail (ZIF_IS_STORE (store), NULL);
-	g_return_val_if_fail (search != NULL, NULL);
+	g_return_val_if_fail (ZIF_IS_DEPEND (depend), NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
@@ -409,13 +409,13 @@ zif_store_what_obsoletes (ZifStore *store, gchar **search, ZifState *state, GErr
 		return NULL;
 	}
 
-	return klass->what_obsoletes (store, search, state, error);
+	return klass->what_obsoletes (store, depend, state, error);
 }
 
 /**
  * zif_store_what_conflicts:
  * @store: the #ZifStore object
- * @search: the search term, e.g. "gstreamer(codec-mp3)"
+ * @depend: A #ZifDepend to search for
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -426,12 +426,12 @@ zif_store_what_obsoletes (ZifStore *store, gchar **search, ZifState *state, GErr
  * Since: 0.1.3
  **/
 GPtrArray *
-zif_store_what_conflicts (ZifStore *store, gchar **search, ZifState *state, GError **error)
+zif_store_what_conflicts (ZifStore *store, ZifDepend *depend, ZifState *state, GError **error)
 {
 	ZifStoreClass *klass = ZIF_STORE_GET_CLASS (store);
 
 	g_return_val_if_fail (ZIF_IS_STORE (store), NULL);
-	g_return_val_if_fail (search != NULL, NULL);
+	g_return_val_if_fail (ZIF_IS_DEPEND (depend), NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
@@ -442,7 +442,7 @@ zif_store_what_conflicts (ZifStore *store, gchar **search, ZifState *state, GErr
 		return NULL;
 	}
 
-	return klass->what_conflicts (store, search, state, error);
+	return klass->what_conflicts (store, depend, state, error);
 }
 
 /**

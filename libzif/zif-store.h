@@ -29,6 +29,7 @@
 #include <glib-object.h>
 #include <gio/gio.h>
 
+#include "zif-depend.h"
 #include "zif-package.h"
 #include "zif-state.h"
 
@@ -91,15 +92,15 @@ struct _ZifStoreClass
 						 ZifState		*state,
 						 GError			**error);
 	GPtrArray	*(*what_provides)	(ZifStore		*store,
-						 gchar			**search,
+						 ZifDepend		*depend,
 						 ZifState		*state,
 						 GError			**error);
 	GPtrArray	*(*what_obsoletes)	(ZifStore		*store,
-						 gchar			**search,
+						 ZifDepend		*depend,
 						 ZifState		*state,
 						 GError			**error);
 	GPtrArray	*(*what_conflicts)	(ZifStore		*store,
-						 gchar			**search,
+						 ZifDepend		*depend,
 						 ZifState		*state,
 						 GError			**error);
 	GPtrArray	*(*get_packages)	(ZifStore		*store,
@@ -170,15 +171,15 @@ GPtrArray	*zif_store_resolve		(ZifStore		*store,
 						 ZifState		*state,
 						 GError			**error);
 GPtrArray	*zif_store_what_provides	(ZifStore		*store,
-						 gchar			**search,
+						 ZifDepend		*depend,
 						 ZifState		*state,
 						 GError			**error);
 GPtrArray	*zif_store_what_obsoletes	(ZifStore		*store,
-						 gchar			**search,
+						 ZifDepend		*depend,
 						 ZifState		*state,
 						 GError			**error);
 GPtrArray	*zif_store_what_conflicts	(ZifStore		*store,
-						 gchar			**search,
+						 ZifDepend		*depend,
 						 ZifState		*state,
 						 GError			**error);
 GPtrArray	*zif_store_get_packages		(ZifStore		*store,

@@ -28,6 +28,7 @@
 
 #include <glib.h>
 
+#include "zif-depend.h"
 #include "zif-store.h"
 #include "zif-package.h"
 #include "zif-state.h"
@@ -84,15 +85,15 @@ GPtrArray	*zif_store_array_search_file		(GPtrArray		*store_array,
 							 ZifState		*state,
 							 GError			**error);
 GPtrArray	*zif_store_array_what_provides		(GPtrArray		*store_array,
-							 gchar			**search,
+							 ZifDepend		*depend,
 							 ZifState		*state,
 							 GError			**error);
 GPtrArray	*zif_store_array_what_obsoletes		(GPtrArray		*store_array,
-							 gchar			**search,
+							 ZifDepend		*depend,
 							 ZifState		*state,
 							 GError			**error);
 GPtrArray	*zif_store_array_what_conflicts		(GPtrArray		*store_array,
-							 gchar			**search,
+							 ZifDepend		*depend,
 							 ZifState		*state,
 							 GError			**error);
 GPtrArray	*zif_store_array_get_packages		(GPtrArray		*store_array,

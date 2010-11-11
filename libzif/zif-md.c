@@ -938,7 +938,7 @@ out:
 /**
  * zif_md_what_provides:
  * @md: the #ZifMd object
- * @search: the provide, e.g. "mimehandler(application/ogg)"
+ * @depend: the #ZifDepend provide
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -946,16 +946,17 @@ out:
  *
  * Return value: an array of #ZifPackageRemote's
  *
- * Since: 0.1.0
+ * Since: 0.1.3
  **/
 GPtrArray *
-zif_md_what_provides (ZifMd *md, gchar **search,
+zif_md_what_provides (ZifMd *md, ZifDepend *depend,
 		      ZifState *state, GError **error)
 {
 	GPtrArray *array = NULL;
 	ZifMdClass *klass = ZIF_MD_GET_CLASS (md);
 
 	g_return_val_if_fail (ZIF_IS_MD (md), NULL);
+	g_return_val_if_fail (ZIF_IS_DEPEND (depend), NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
@@ -970,7 +971,7 @@ zif_md_what_provides (ZifMd *md, gchar **search,
 	}
 
 	/* do subclassed action */
-	array = klass->what_provides (md, search, state, error);
+	array = klass->what_provides (md, depend, state, error);
 out:
 	return array;
 }
@@ -978,24 +979,25 @@ out:
 /**
  * zif_md_what_obsoletes:
  * @md: the #ZifMd object
- * @search: the provide, e.g. "mimehandler(application/ogg)"
+ * @depend: the #ZifDepend obsolete
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
- * Finds all packages that match the given provide.
+ * Finds all packages that obsolete the given provide.
  *
  * Return value: an array of #ZifPackageRemote's
  *
  * Since: 0.1.3
  **/
 GPtrArray *
-zif_md_what_obsoletes (ZifMd *md, gchar **search,
+zif_md_what_obsoletes (ZifMd *md, ZifDepend *depend,
 		       ZifState *state, GError **error)
 {
 	GPtrArray *array = NULL;
 	ZifMdClass *klass = ZIF_MD_GET_CLASS (md);
 
 	g_return_val_if_fail (ZIF_IS_MD (md), NULL);
+	g_return_val_if_fail (ZIF_IS_DEPEND (depend), NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
@@ -1010,7 +1012,7 @@ zif_md_what_obsoletes (ZifMd *md, gchar **search,
 	}
 
 	/* do subclassed action */
-	array = klass->what_obsoletes (md, search, state, error);
+	array = klass->what_obsoletes (md, depend, state, error);
 out:
 	return array;
 }
@@ -1018,24 +1020,25 @@ out:
 /**
  * zif_md_what_conflicts:
  * @md: the #ZifMd object
- * @search: the provide, e.g. "mimehandler(application/ogg)"
+ * @depend: the #ZifDepend conflict
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
- * Finds all packages that conflict with the given provide.
+ * Finds all packages that conflict with the given depend.
  *
  * Return value: an array of #ZifPackageRemote's
  *
  * Since: 0.1.3
  **/
 GPtrArray *
-zif_md_what_conflicts (ZifMd *md, gchar **search,
+zif_md_what_conflicts (ZifMd *md, ZifDepend *depend,
 		       ZifState *state, GError **error)
 {
 	GPtrArray *array = NULL;
 	ZifMdClass *klass = ZIF_MD_GET_CLASS (md);
 
 	g_return_val_if_fail (ZIF_IS_MD (md), NULL);
+	g_return_val_if_fail (ZIF_IS_DEPEND (depend), NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
@@ -1050,7 +1053,7 @@ zif_md_what_conflicts (ZifMd *md, gchar **search,
 	}
 
 	/* do subclassed action */
-	array = klass->what_conflicts (md, search, state, error);
+	array = klass->what_conflicts (md, depend, state, error);
 out:
 	return array;
 }

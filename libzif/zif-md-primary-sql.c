@@ -415,7 +415,7 @@ zif_md_primary_sql_sqlite_pkgkey_cb (void *data, gint argc, gchar **argv, gchar 
  * zif_md_primary_sql_what_depends:
  **/
 static GPtrArray *
-zif_md_primary_sql_what_depends (ZifMd *md, const gchar *table_name, gchar **search,
+zif_md_primary_sql_what_depends (ZifMd *md, const gchar *table_name, ZifDepend *depend,
 				 ZifState *state, GError **error)
 {
 	gchar *statement = NULL;
@@ -460,7 +460,9 @@ zif_md_primary_sql_what_depends (ZifMd *md, const gchar *table_name, gchar **sea
 
 	/* create data struct we can pass to the callback */
 	pkgkey_array = g_ptr_array_new ();
-	statement = g_strdup_printf ("SELECT pkgKey FROM %s WHERE name = '%s'", table_name, search[0]);
+	statement = g_strdup_printf ("SELECT pkgKey FROM %s WHERE name = '%s'",
+				     table_name,
+				     zif_depend_get_name (depend));
 	rc = sqlite3_exec (md_primary_sql->priv->db, statement, zif_md_primary_sql_sqlite_pkgkey_cb, pkgkey_array, &error_msg);
 	if (rc != SQLITE_OK) {
 		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_BAD_SQL,
@@ -527,30 +529,30 @@ out:
  * zif_md_primary_sql_what_provides:
  **/
 static GPtrArray *
-zif_md_primary_sql_what_provides (ZifMd *md, gchar **search,
+zif_md_primary_sql_what_provides (ZifMd *md, ZifDepend *depend,
 				  ZifState *state, GError **error)
 {
-	return zif_md_primary_sql_what_depends (md, "provides", search, state, error);
+	return zif_md_primary_sql_what_depends (md, "provides", depend, state, error);
 }
 
 /**
  * zif_md_primary_sql_what_obsoletes:
  **/
 static GPtrArray *
-zif_md_primary_sql_what_obsoletes (ZifMd *md, gchar **search,
+zif_md_primary_sql_what_obsoletes (ZifMd *md, ZifDepend *depend,
 				   ZifState *state, GError **error)
 {
-	return zif_md_primary_sql_what_depends (md, "obsoletes", search, state, error);
+	return zif_md_primary_sql_what_depends (md, "obsoletes", depend, state, error);
 }
 
 /**
  * zif_md_primary_sql_what_conflicts:
  **/
 static GPtrArray *
-zif_md_primary_sql_what_conflicts (ZifMd *md, gchar **search,
+zif_md_primary_sql_what_conflicts (ZifMd *md, ZifDepend *depend,
 				   ZifState *state, GError **error)
 {
-	return zif_md_primary_sql_what_depends (md, "conflicts", search, state, error);
+	return zif_md_primary_sql_what_depends (md, "conflicts", depend, state, error);
 }
 
 /**

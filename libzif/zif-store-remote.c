@@ -2729,7 +2729,7 @@ out:
  * zif_store_remote_what_provides:
  **/
 static GPtrArray *
-zif_store_remote_what_provides (ZifStore *store, gchar **search,
+zif_store_remote_what_provides (ZifStore *store, ZifDepend *depend,
 				ZifState *state, GError **error)
 {
 	gboolean ret;
@@ -2777,7 +2777,7 @@ zif_store_remote_what_provides (ZifStore *store, gchar **search,
 	primary = zif_store_remote_get_primary (remote, error);
 	if (primary == NULL)
 		goto out;
-	array = zif_md_what_provides (primary, search,
+	array = zif_md_what_provides (primary, depend,
 				      state_local, error);
 	if (array == NULL)
 		goto out;
@@ -2794,7 +2794,7 @@ out:
  * zif_store_remote_what_obsoletes:
  **/
 static GPtrArray *
-zif_store_remote_what_obsoletes (ZifStore *store, gchar **search,
+zif_store_remote_what_obsoletes (ZifStore *store, ZifDepend *depend,
 				 ZifState *state, GError **error)
 {
 	gboolean ret;
@@ -2842,7 +2842,7 @@ zif_store_remote_what_obsoletes (ZifStore *store, gchar **search,
 	primary = zif_store_remote_get_primary (remote, error);
 	if (primary == NULL)
 		goto out;
-	array = zif_md_what_obsoletes (primary, search,
+	array = zif_md_what_obsoletes (primary, depend,
 				       state_local, error);
 	if (array == NULL)
 		goto out;
@@ -2859,7 +2859,7 @@ out:
  * zif_store_remote_what_conflicts:
  **/
 static GPtrArray *
-zif_store_remote_what_conflicts (ZifStore *store, gchar **search,
+zif_store_remote_what_conflicts (ZifStore *store, ZifDepend *depend,
 				 ZifState *state, GError **error)
 {
 	gboolean ret;
@@ -2907,7 +2907,7 @@ zif_store_remote_what_conflicts (ZifStore *store, gchar **search,
 	primary = zif_store_remote_get_primary (remote, error);
 	if (primary == NULL)
 		goto out;
-	array = zif_md_what_conflicts (primary, search,
+	array = zif_md_what_conflicts (primary, depend,
 				       state_local, error);
 	if (array == NULL)
 		goto out;

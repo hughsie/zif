@@ -77,7 +77,8 @@ typedef enum {
 	ZIF_TRANSACTION_REASON_USER_ACTION,
 	ZIF_TRANSACTION_REASON_INSTALL_ONLYN,
 	ZIF_TRANSACTION_REASON_UPDATE,
-	ZIF_TRANSACTION_REASON_INSTALL_DEPDND,
+	ZIF_TRANSACTION_REASON_INSTALL_DEPEND,
+	ZIF_TRANSACTION_REASON_OBSOLETE,
 	ZIF_TRANSACTION_REASON_LAST
 } ZifTransactionReason;
 
@@ -115,8 +116,10 @@ zif_transaction_reason_to_string (ZifTransactionReason reason)
 		return "install-onlyn";
 	if (reason == ZIF_TRANSACTION_REASON_UPDATE)
 		return "update";
-	if (reason == ZIF_TRANSACTION_REASON_INSTALL_DEPDND)
+	if (reason == ZIF_TRANSACTION_REASON_INSTALL_DEPEND)
 		return "install-depend";
+	if (reason == ZIF_TRANSACTION_REASON_OBSOLETE)
+		return "obsolete";
 	g_warning ("cannot convert reason %i to string", reason);
 	return NULL;
 }
@@ -1196,7 +1199,7 @@ skip_resolve:
 		/* add the provide to the install set */
 		ret = zif_transaction_add_install_internal (data->transaction,
 							    package_provide,
-							    ZIF_TRANSACTION_REASON_INSTALL_DEPDND,
+							    ZIF_TRANSACTION_REASON_INSTALL_DEPEND,
 							    error);
 		if (!ret)
 			goto out;
@@ -1675,9 +1678,79 @@ zif_transaction_resolve_update_item (ZifTransactionResolve *data,
 				     GError **error)
 {
 	gboolean ret = FALSE;
-	gint value;
-	ZifPackage *package;
 	GError *error_local = NULL;
+	gint value;
+	GPtrArray *obsoletes = NULL;
+	guint i;
+	ZifDepend *depend;
+	ZifPackage *package;
+
+	/* does anything obsolete this package */
+	depend = zif_depend_new ();
+	zif_depend_set_name (depend, zif_package_get_name (item->package));
+	zif_depend_set_flag (depend, ZIF_DEPEND_FLAG_GREATER);
+	zif_depend_set_version (depend, zif_package_get_version (item->package));
+
+	/* search the stores */
+	zif_state_reset (data->state);
+	obsoletes = zif_store_array_what_obsoletes (data->transaction->priv->stores_remote,
+						    depend,
+						    data->state,
+						    &error_local);
+	if (obsoletes == NULL) {
+		/* this is a special error */
+		if (error_local->code == ZIF_STORE_ERROR_ARRAY_IS_EMPTY) {
+			g_clear_error (&error_local);
+			goto skip;
+		}
+		g_set_error (error,
+			     ZIF_TRANSACTION_ERROR,
+			     ZIF_TRANSACTION_ERROR_FAILED,
+			     "failed to find %s in remote store: %s",
+			     zif_package_get_id (item->package),
+			     error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+	if (obsoletes->len > 0) {
+		g_debug ("%i packages obsolete %s",
+			 obsoletes->len,
+			 zif_package_get_id (item->package));
+		for (i=0; i<obsoletes->len; i++) {
+			package = g_ptr_array_index (obsoletes, i);
+			g_debug ("%i.\t%s",
+				 i+1,
+				 zif_package_get_id (package));
+		}
+
+		/* get the newest package */
+		package = zif_package_array_get_newest (obsoletes, error);
+		if (package == NULL) {
+			ret = FALSE;
+			goto out;
+		}
+
+		/* remove the installed package */
+		ret = zif_transaction_add_remove_internal (data->transaction,
+							   item->package,
+							   ZIF_TRANSACTION_REASON_OBSOLETE,
+							   error);
+		if (!ret)
+			goto out;
+
+		/* add the new package */
+		ret = zif_transaction_add_install_internal (data->transaction,
+							    package,
+							    item->reason,
+							    error);
+		if (!ret)
+			goto out;
+
+		/* ignore all the other update checks */
+		goto success;
+	}
+
+skip:
 
 	/* get the newest package available from the remote stores */
 	package = zif_transaction_get_newest_from_remote_by_names (data,
@@ -1740,12 +1813,18 @@ zif_transaction_resolve_update_item (ZifTransactionResolve *data,
 	if (!ret)
 		goto out;
 
+success:
+
 	/* new things to process */
 	data->unresolved_dependencies = TRUE;
 
 	/* mark as resolved, so we don't try to process this again */
 	item->resolved = TRUE;
 out:
+	if (obsoletes != NULL)
+		g_ptr_array_unref (obsoletes);
+	if (depend != NULL)
+		g_object_unref (depend);
 	if (package != NULL)
 		g_object_unref (package);
 	return ret;

@@ -1178,7 +1178,7 @@ zif_package_get_files (ZifPackage *package, ZifState *state, GError **error)
  *
  * Gets all the package requires.
  *
- * Return value: the reference counted #GPtrArray, use g_ptr_array_unref() when done
+ * Return value: an array of ZifDepend's, use g_ptr_array_unref() when done
  *
  * Since: 0.1.0
  **/
@@ -1211,7 +1211,7 @@ zif_package_get_requires (ZifPackage *package, ZifState *state, GError **error)
  *
  * Get all the package provides.
  *
- * Return value: the reference counted #GPtrArray, use g_ptr_array_unref() when done
+ * Return value: an array of ZifDepend's, use g_ptr_array_unref() when done
  *
  * Since: 0.1.0
  **/
@@ -1244,7 +1244,7 @@ zif_package_get_provides (ZifPackage *package, ZifState *state, GError **error)
  *
  * Get all the package obsoletes.
  *
- * Return value: the reference counted #GPtrArray, use g_ptr_array_unref() when done
+ * Return value: an array of ZifDepend's, use g_ptr_array_unref() when done
  *
  * Since: 0.1.3
  **/

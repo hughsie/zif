@@ -260,7 +260,7 @@ out:
  * zif_store_array_repos_search:
  **/
 static GPtrArray *
-zif_store_array_repos_search (GPtrArray *store_array, ZifRole role, gchar **search,
+zif_store_array_repos_search (GPtrArray *store_array, ZifRole role, gpointer search,
 			      ZifState *state, GError **error)
 {
 	gboolean ret;
@@ -295,27 +295,27 @@ zif_store_array_repos_search (GPtrArray *store_array, ZifRole role, gchar **sear
 
 		/* get results for this store */
 		if (role == ZIF_ROLE_RESOLVE)
-			part = zif_store_resolve (store, search, state_local, &error_local);
+			part = zif_store_resolve (store, (gchar**)search, state_local, &error_local);
 		else if (role == ZIF_ROLE_SEARCH_NAME)
-			part = zif_store_search_name (store, search, state_local, &error_local);
+			part = zif_store_search_name (store, (gchar**)search, state_local, &error_local);
 		else if (role == ZIF_ROLE_SEARCH_DETAILS)
-			part = zif_store_search_details (store, search, state_local, &error_local);
+			part = zif_store_search_details (store, (gchar**)search, state_local, &error_local);
 		else if (role == ZIF_ROLE_SEARCH_GROUP)
-			part = zif_store_search_group (store, search, state_local, &error_local);
+			part = zif_store_search_group (store, (gchar**)search, state_local, &error_local);
 		else if (role == ZIF_ROLE_SEARCH_CATEGORY)
-			part = zif_store_search_category (store, search, state_local, &error_local);
+			part = zif_store_search_category (store, (gchar**)search, state_local, &error_local);
 		else if (role == ZIF_ROLE_SEARCH_FILE)
-			part = zif_store_search_file (store, search, state_local, &error_local);
+			part = zif_store_search_file (store, (gchar**)search, state_local, &error_local);
 		else if (role == ZIF_ROLE_GET_PACKAGES)
 			part = zif_store_get_packages (store, state_local, &error_local);
 		else if (role == ZIF_ROLE_GET_UPDATES)
-			part = zif_store_get_updates (store, (GPtrArray *) search, state_local, &error_local);
+			part = zif_store_get_updates (store, (GPtrArray *) (gchar**)search, state_local, &error_local);
 		else if (role == ZIF_ROLE_WHAT_PROVIDES)
-			part = zif_store_what_provides (store, search, state_local, &error_local);
+			part = zif_store_what_provides (store, (ZifDepend*) search, state_local, &error_local);
 		else if (role == ZIF_ROLE_WHAT_OBSOLETES)
-			part = zif_store_what_obsoletes (store, search, state_local, &error_local);
+			part = zif_store_what_obsoletes (store, (ZifDepend*) search, state_local, &error_local);
 		else if (role == ZIF_ROLE_WHAT_CONFLICTS)
-			part = zif_store_what_conflicts (store, search, state_local, &error_local);
+			part = zif_store_what_conflicts (store, (ZifDepend*) search, state_local, &error_local);
 		else if (role == ZIF_ROLE_GET_CATEGORIES)
 			part = zif_store_get_categories (store, state_local, &error_local);
 		else {
@@ -785,7 +785,7 @@ zif_store_array_get_updates (GPtrArray *store_array, GPtrArray *packages,
 /**
  * zif_store_array_what_provides:
  * @store_array: the #GPtrArray of #ZifStores
- * @search: the search term, e.g. "gstreamer(codec-mp3)"
+ * @depend: A #ZifDepend to search for
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -793,28 +793,22 @@ zif_store_array_get_updates (GPtrArray *store_array, GPtrArray *packages,
  *
  * Return value: an array of #ZifPackage's
  *
- * Since: 0.1.0
+ * Since: 0.1.3
  **/
 GPtrArray *
-zif_store_array_what_provides (GPtrArray *store_array, gchar **search,
-				       ZifState *state, GError **error)
+zif_store_array_what_provides (GPtrArray *store_array, ZifDepend *depend,
+			       ZifState *state, GError **error)
 {
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
-
-	/* if this is a path, then we use the file list and treat like a SearchFile */
-	if (g_str_has_prefix (search[0], "/")) {
-		return zif_store_array_repos_search (store_array, ZIF_ROLE_SEARCH_FILE, search,
-						     state, error);
-	}
-	return zif_store_array_repos_search (store_array, ZIF_ROLE_WHAT_PROVIDES, search,
+	return zif_store_array_repos_search (store_array, ZIF_ROLE_WHAT_PROVIDES, depend,
 					     state, error);
 }
 
 /**
  * zif_store_array_what_obsoletes:
  * @store_array: the #GPtrArray of #ZifStores
- * @search: the search term, e.g. "gstreamer(codec-mp3)"
+ * @depend: A #ZifDepend to search for
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -825,20 +819,20 @@ zif_store_array_what_provides (GPtrArray *store_array, gchar **search,
  * Since: 0.1.3
  **/
 GPtrArray *
-zif_store_array_what_obsoletes (GPtrArray *store_array, gchar **search,
+zif_store_array_what_obsoletes (GPtrArray *store_array, ZifDepend *depend,
 				ZifState *state, GError **error)
 {
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
-	return zif_store_array_repos_search (store_array, ZIF_ROLE_WHAT_OBSOLETES, search,
+	return zif_store_array_repos_search (store_array, ZIF_ROLE_WHAT_OBSOLETES, depend,
 					     state, error);
 }
 
 /**
  * zif_store_array_what_conflicts:
  * @store_array: the #GPtrArray of #ZifStores
- * @search: the search term, e.g. "gstreamer(codec-mp3)"
+ * @depend: A #ZifDepend to search for
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -849,13 +843,13 @@ zif_store_array_what_obsoletes (GPtrArray *store_array, gchar **search,
  * Since: 0.1.3
  **/
 GPtrArray *
-zif_store_array_what_conflicts (GPtrArray *store_array, gchar **search,
+zif_store_array_what_conflicts (GPtrArray *store_array, ZifDepend *depend,
 				ZifState *state, GError **error)
 {
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
-	return zif_store_array_repos_search (store_array, ZIF_ROLE_WHAT_CONFLICTS, search,
+	return zif_store_array_repos_search (store_array, ZIF_ROLE_WHAT_CONFLICTS, depend,
 					     state, error);
 }
 

@@ -782,10 +782,10 @@ out:
  * zif_store_local_what_provides:
  **/
 static GPtrArray *
-zif_store_local_what_provides (ZifStore *store, gchar **search, ZifState *state, GError **error)
+zif_store_local_what_provides (ZifStore *store, ZifDepend *depend, ZifState *state, GError **error)
 {
 	guint i;
-	guint j, k;
+	guint j;
 	GPtrArray *array = NULL;
 	ZifPackage *package;
 	GPtrArray *provides;
@@ -797,7 +797,7 @@ zif_store_local_what_provides (ZifStore *store, gchar **search, ZifState *state,
 	ZifStoreLocal *local = ZIF_STORE_LOCAL (store);
 
 	g_return_val_if_fail (ZIF_IS_STORE_LOCAL (store), NULL);
-	g_return_val_if_fail (search != NULL, NULL);
+	g_return_val_if_fail (depend != NULL, NULL);
 	g_return_val_if_fail (local->priv->prefix != NULL, NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 
@@ -850,14 +850,10 @@ zif_store_local_what_provides (ZifStore *store, gchar **search, ZifState *state,
 		state_loop = zif_state_get_child (state_local);
 		provides = zif_package_get_provides (package, state_loop, NULL);
 		for (j=0; j<provides->len; j++) {
-			const gchar *name;
 			provide = g_ptr_array_index (provides, j);
-			name = zif_depend_get_name (provide);
-			for (k=0; search[k] != NULL; k++) {
-				if (g_strcmp0 (name, search[k]) == 0) {
-					g_ptr_array_add (array, g_object_ref (package));
-					break;
-				}
+			if (zif_depend_satisfies (provide, depend)) {
+				g_ptr_array_add (array, g_object_ref (package));
+				break;
 			}
 		}
 
@@ -879,10 +875,10 @@ out:
  * zif_store_local_what_obsoletes:
  **/
 static GPtrArray *
-zif_store_local_what_obsoletes (ZifStore *store, gchar **search, ZifState *state, GError **error)
+zif_store_local_what_obsoletes (ZifStore *store, ZifDepend *depend, ZifState *state, GError **error)
 {
 	guint i;
-	guint j, k;
+	guint j;
 	GPtrArray *array = NULL;
 	ZifPackage *package;
 	GPtrArray *provides;
@@ -894,7 +890,7 @@ zif_store_local_what_obsoletes (ZifStore *store, gchar **search, ZifState *state
 	ZifStoreLocal *local = ZIF_STORE_LOCAL (store);
 
 	g_return_val_if_fail (ZIF_IS_STORE_LOCAL (store), NULL);
-	g_return_val_if_fail (search != NULL, NULL);
+	g_return_val_if_fail (depend != NULL, NULL);
 	g_return_val_if_fail (local->priv->prefix != NULL, NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 
@@ -947,14 +943,10 @@ zif_store_local_what_obsoletes (ZifStore *store, gchar **search, ZifState *state
 		state_loop = zif_state_get_child (state_local);
 		provides = zif_package_get_obsoletes (package, state_loop, NULL);
 		for (j=0; j<provides->len; j++) {
-			const gchar *name;
 			provide = g_ptr_array_index (provides, j);
-			name = zif_depend_get_name (provide);
-			for (k=0; search[k] != NULL; k++) {
-				if (g_strcmp0 (name, search[k]) == 0) {
-					g_ptr_array_add (array, g_object_ref (package));
-					break;
-				}
+			if (zif_depend_satisfies (provide, depend)) {
+				g_ptr_array_add (array, g_object_ref (package));
+				break;
 			}
 		}
 
@@ -976,10 +968,10 @@ out:
  * zif_store_local_what_conflicts:
  **/
 static GPtrArray *
-zif_store_local_what_conflicts (ZifStore *store, gchar **search, ZifState *state, GError **error)
+zif_store_local_what_conflicts (ZifStore *store, ZifDepend *depend, ZifState *state, GError **error)
 {
 	guint i;
-	guint j, k;
+	guint j;
 	GPtrArray *array = NULL;
 	ZifPackage *package;
 	GPtrArray *provides;
@@ -991,7 +983,7 @@ zif_store_local_what_conflicts (ZifStore *store, gchar **search, ZifState *state
 	ZifStoreLocal *local = ZIF_STORE_LOCAL (store);
 
 	g_return_val_if_fail (ZIF_IS_STORE_LOCAL (store), NULL);
-	g_return_val_if_fail (search != NULL, NULL);
+	g_return_val_if_fail (depend != NULL, NULL);
 	g_return_val_if_fail (local->priv->prefix != NULL, NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 
@@ -1044,14 +1036,10 @@ zif_store_local_what_conflicts (ZifStore *store, gchar **search, ZifState *state
 		state_loop = zif_state_get_child (state_local);
 		provides = zif_package_get_conflicts (package, state_loop, NULL);
 		for (j=0; j<provides->len; j++) {
-			const gchar *name;
 			provide = g_ptr_array_index (provides, j);
-			name = zif_depend_get_name (provide);
-			for (k=0; search[k] != NULL; k++) {
-				if (g_strcmp0 (name, search[k]) == 0) {
-					g_ptr_array_add (array, g_object_ref (package));
-					break;
-				}
+			if (zif_depend_satisfies (provide, depend)) {
+				g_ptr_array_add (array, g_object_ref (package));
+				break;
 			}
 		}
 

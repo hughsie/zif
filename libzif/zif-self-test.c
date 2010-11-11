@@ -1842,6 +1842,7 @@ zif_store_local_func (void)
 	const gchar *to_array[] = { NULL, NULL, NULL };
 	gchar *filename;
 	gchar *pidfile;
+	ZifDepend *depend;
 
 	/* set these up as dummy */
 	config = zif_config_new ();
@@ -1939,27 +1940,36 @@ zif_store_local_func (void)
 	g_ptr_array_unref (array);
 
 	zif_state_reset (state);
-	to_array[0] = "Test(Interface)";
-	array = zif_store_what_provides (ZIF_STORE (store), (gchar**)to_array, state, &error);
+	depend = zif_depend_new ();
+	zif_depend_set_flag (depend, ZIF_DEPEND_FLAG_ANY);
+	zif_depend_set_name (depend, "Test(Interface)");
+	array = zif_store_what_provides (ZIF_STORE (store), depend, state, &error);
 	g_assert_no_error (error);
 	g_assert (array != NULL);
 	g_assert_cmpint (array->len, ==, 1);
 	g_ptr_array_unref (array);
+	g_object_unref (depend);
 
 	zif_state_reset (state);
-	to_array[0] = "new-test";
-	array = zif_store_what_conflicts (ZIF_STORE (store), (gchar**)to_array, state, &error);
+	depend = zif_depend_new ();
+	zif_depend_set_flag (depend, ZIF_DEPEND_FLAG_ANY);
+	zif_depend_set_name (depend, "new-test");
+	array = zif_store_what_conflicts (ZIF_STORE (store), depend, state, &error);
 	g_assert_no_error (error);
 	g_assert (array != NULL);
 	g_assert_cmpint (array->len, ==, 1);
 	g_ptr_array_unref (array);
+	g_object_unref (depend);
 
 	zif_state_reset (state);
-	to_array[0] = "obsolete-package";
-	array = zif_store_what_obsoletes (ZIF_STORE (store), (gchar**)to_array, state, &error);
+	depend = zif_depend_new ();
+	zif_depend_set_flag (depend, ZIF_DEPEND_FLAG_ANY);
+	zif_depend_set_name (depend, "obsolete-package");
+	array = zif_store_what_obsoletes (ZIF_STORE (store), depend, state, &error);
 	g_assert_no_error (error);
 	g_assert (array != NULL);
 	g_assert_cmpint (array->len, ==, 1);
+	g_object_unref (depend);
 
 	/* get this package */
 	package = g_ptr_array_index (array, 0);

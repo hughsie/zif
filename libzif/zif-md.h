@@ -30,6 +30,7 @@
 #include <gio/gio.h>
 
 #include "zif-md.h"
+#include "zif-depend.h"
 #include "zif-state.h"
 #include "zif-store-remote.h"
 
@@ -84,15 +85,15 @@ struct _ZifMdClass
 						 ZifState		*state,
 						 GError			**error);
 	GPtrArray	*(*what_provides)	(ZifMd			*md,
-						 gchar			**search,
+						 ZifDepend		*depend,
 						 ZifState		*state,
 						 GError			**error);
 	GPtrArray	*(*what_obsoletes)	(ZifMd			*md,
-						 gchar			**search,
+						 ZifDepend		*depend,
 						 ZifState		*state,
 						 GError			**error);
 	GPtrArray	*(*what_conflicts)	(ZifMd			*md,
-						 gchar			**search,
+						 ZifDepend		*depend,
 						 ZifState		*state,
 						 GError			**error);
 	GPtrArray	*(*resolve)		(ZifMd			*md,
@@ -215,15 +216,15 @@ GPtrArray	*zif_md_search_pkgid			(ZifMd		*md,
 							 ZifState	*state,
 							 GError		**error);
 GPtrArray	*zif_md_what_provides			(ZifMd		*md,
-							 gchar		**search,
+							 ZifDepend	*depend,
 							 ZifState	*state,
 							 GError		**error);
 GPtrArray	*zif_md_what_obsoletes			(ZifMd		*md,
-							 gchar		**search,
+							 ZifDepend	*depend,
 							 ZifState	*state,
 							 GError		**error);
 GPtrArray	*zif_md_what_conflicts			(ZifMd		*md,
-							 gchar		**search,
+							 ZifDepend	*depend,
 							 ZifState	*state,
 							 GError		**error);
 GPtrArray	*zif_md_resolve				(ZifMd		*md,

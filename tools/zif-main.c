@@ -309,8 +309,7 @@ zif_cmd_get_depends (const gchar *package_name, ZifState *state)
 		g_string_append_printf (string, "  dependency: %s\n", require_str);
 
 		/* find the package providing the depend */
-		to_array[0] = zif_depend_get_name (require);
-		provides = zif_store_array_what_provides (store_array, (gchar**)to_array, state_loop, &error);
+		provides = zif_store_array_what_provides (store_array, require, state_loop, &error);
 		if (provides == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
@@ -712,6 +711,7 @@ main (int argc, char *argv[])
 	ZifState *state_loop = NULL;
 	ZifLock *lock = NULL;
 	ZifRelease *release = NULL;
+	ZifDepend *depend = NULL;
 	guint i;
 	guint pid;
 	guint uid;
@@ -2058,7 +2058,6 @@ main (int argc, char *argv[])
 
 		pk_progress_bar_start (progressbar, "Conflicts");
 
-
 		/* setup state with the correct number of steps */
 		zif_state_set_number_steps (state, 3);
 
@@ -2090,9 +2089,13 @@ main (int argc, char *argv[])
 		if (!ret)
 			goto out;
 
+		/* parse the depend */
+		depend = zif_depend_new ();
+		ret = zif_depend_parse_description (depend, value, &error);
+		if (!ret)
+			goto out;
 		state_local = zif_state_get_child (state);
-		to_array[0] = value;
-		array = zif_store_array_what_obsoletes (store_array, (gchar**)to_array, state_local, &error);
+		array = zif_store_array_what_obsoletes (store_array, depend, state_local, &error);
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
@@ -2151,9 +2154,13 @@ main (int argc, char *argv[])
 		if (!ret)
 			goto out;
 
+		/* parse the depend */
+		depend = zif_depend_new ();
+		ret = zif_depend_parse_description (depend, value, &error);
+		if (!ret)
+			goto out;
 		state_local = zif_state_get_child (state);
-		to_array[0] = value;
-		array = zif_store_array_what_obsoletes (store_array, (gchar**)to_array, state_local, &error);
+		array = zif_store_array_what_obsoletes (store_array, depend, state_local, &error);
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
@@ -2211,9 +2218,14 @@ main (int argc, char *argv[])
 		if (!ret)
 			goto out;
 
+		/* parse the depend */
+		depend = zif_depend_new ();
+		ret = zif_depend_parse_description (depend, value, &error);
+		if (!ret)
+			goto out;
+		g_object_unref (depend);
 		state_local = zif_state_get_child (state);
-		to_array[0] = value;
-		array = zif_store_array_what_provides (store_array, (gchar**)to_array, state_local, &error);
+		array = zif_store_array_what_provides (store_array, depend, state_local, &error);
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
@@ -2320,6 +2332,8 @@ main (int argc, char *argv[])
 out:
 	if (store_array != NULL)
 		g_ptr_array_unref (store_array);
+	if (depend != NULL)
+		g_object_unref (depend);
 	if (store_local != NULL)
 		g_object_unref (store_local);
 	if (repos != NULL)
