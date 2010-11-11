@@ -551,12 +551,12 @@ out:
 /**
  * zif_transaction_package_requires:
  *
- * Satisfies is %TRUE if the dep is satisfied by package
+ * Satisfies is the dep that satisfies the query. Free with g_object_unref().
  **/
 static gboolean
 zif_transaction_package_requires (ZifPackage *package,
 				  ZifDepend *depend,
-				  gboolean *satisfies,
+				  ZifDepend **satisfies,
 				  ZifState *state,
 				  GError **error)
 {
@@ -604,14 +604,14 @@ zif_transaction_package_requires (ZifPackage *package,
 				 zif_depend_get_description (depend_tmp),
 				 zif_package_get_id (package));
 			ret = TRUE;
-			*satisfies = TRUE;
+			*satisfies = g_object_ref (depend_tmp);
 			goto out;
 		}
 	}
 
 	/* success, but did not find */
 	ret = TRUE;
-	*satisfies = FALSE;
+	*satisfies = NULL;
 out:
 	if (requires != NULL)
 		g_ptr_array_unref (requires);
@@ -948,7 +948,7 @@ zif_transaction_get_package_requires_from_store (ZifStore *store,
 	guint i;
 	ZifPackage *package;
 	ZifTransactionItem *item;
-	gboolean satisfies = FALSE;
+	ZifDepend *satisfies = NULL;
 
 	/* get the package list */
 	zif_state_reset (state);
@@ -990,9 +990,10 @@ zif_transaction_get_package_requires_from_store (ZifStore *store,
 		}
 
 		/* gotcha */
-		if (satisfies) {
+		if (satisfies != NULL) {
 			g_debug ("adding %s to requires", zif_package_get_id (package));
 			g_ptr_array_add (*requires, g_object_ref (package));
+			g_object_unref (satisfies);
 		}
 	}
 
@@ -1376,6 +1377,8 @@ zif_transaction_resolve_remove_require (ZifTransactionResolve *data,
 	guint i;
 	GPtrArray *package_requires = NULL;
 	ZifPackage *package;
+	ZifPackage *package_in_install;
+	ZifDepend *satisfies;
 	GError *error_local = NULL;
 	GPtrArray *local_provides = NULL;
 
@@ -1448,6 +1451,35 @@ zif_transaction_resolve_remove_require (ZifTransactionResolve *data,
 		/* don't remove ourself */
 		if (item->package == package)
 			continue;
+
+		/* is the thing that the package requires provided by something in install
+		 * NOTE: we need to get the actual depend of the package, not the thing passed to us */
+		ret = zif_transaction_package_requires (package, depend, &satisfies, data->state, error);
+		if (!ret)
+			goto out;
+
+		/* this should be true, otherwise it would not have been added to the array */
+		g_assert (satisfies != NULL);
+
+		/* find out if anything in the install queue already provides the depend */
+		g_debug ("find out if %s is provided in the install queue",
+			 zif_depend_get_description (satisfies));
+		ret = zif_transaction_get_package_provide_from_array (data->transaction->priv->install,
+								      satisfies,
+								      &package_in_install,
+								      data->state,
+								      error);
+		if (!ret)
+			goto out;
+		if (package_in_install != NULL) {
+			g_debug ("%s provides %s which is already being installed",
+				 zif_package_get_id (package_in_install),
+				 zif_depend_get_description (depend));
+			g_object_unref (package_in_install);
+			continue;
+		}
+
+		g_object_unref (satisfies);
 
 		/* remove this too */
 		g_debug ("depend %s is required by %s (installed), so remove",
