@@ -104,6 +104,12 @@ zif_depend_satisfies (ZifDepend *got, ZifDepend *need)
 		goto out;
 	}
 
+	/* 'Obsoletes: hal' - not any particular version */
+	if (got->priv->flag == ZIF_DEPEND_FLAG_ANY) {
+		ret = TRUE;
+		goto out;
+	}
+
 	/* 'Requires: hal = 0.5.8' - both equal */
 	if (got->priv->flag == ZIF_DEPEND_FLAG_EQUAL &&
 	    need->priv->flag == ZIF_DEPEND_FLAG_EQUAL) {
