@@ -3,5 +3,5 @@
 [Zif Manifest]
 AddLocal=hal;0.0.1-1;i386;meta@Requires:hal-info,hal-info;0.0.1-1;i386;meta
 AddRemote=
-TransactionRemove=hal;0.0.1-1;i386;meta
+TransactionRemove=hal
 PostInstalled=hal-info;0.0.1-1;i386;meta

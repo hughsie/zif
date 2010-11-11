@@ -209,6 +209,7 @@ zif_manifest_add_packages_to_store (ZifManifest *manifest,
 				    ZifStore *store,
 				    const gchar *dirname,
 				    const gchar *packages,
+				    ZifState *state,
 				    GError **error)
 {
 	guint i;
@@ -252,7 +253,7 @@ zif_manifest_add_packages_to_store (ZifManifest *manifest,
 			continue;
 		}
 
-		/* not recognised */
+		/* not recognised, and no hint */
 		ret = FALSE;
 		g_set_error (error,
 			     ZIF_MANIFEST_ERROR,
@@ -275,25 +276,63 @@ zif_manifest_add_package_to_transaction (ZifManifest *manifest,
 					 ZifStore *store,
 					 ZifManifestAction action,
 					 const gchar *package_id,
+					 ZifStore *store_hint,
+					 ZifState *state,
 					 GError **error)
 {
 	ZifPackage *package;
 	gboolean ret = FALSE;
-	ZifState *state;
 	GError *error_local = NULL;
+	const gchar *to_array[] = { NULL, NULL };
+	GPtrArray *package_array = NULL;
 
-	/* get metapackage */
-	state = zif_state_new ();
-	package = zif_store_find_package (store, package_id, state, &error_local);
-	if (package == NULL) {
-		g_set_error (error,
-			     ZIF_MANIFEST_ERROR,
-			     ZIF_MANIFEST_ERROR_POST_INSTALL,
-			     "Failed to add package_id to transaction %s: %s",
-			     package_id,
-			     error_local->message);
-		g_error_free (error_local);
-		goto out;
+	if (zif_package_id_check (package_id)) {
+		/* get metapackage */
+		zif_state_reset (state);
+		package = zif_store_find_package (store, package_id, state, &error_local);
+		if (package == NULL) {
+			g_set_error (error,
+				     ZIF_MANIFEST_ERROR,
+				     ZIF_MANIFEST_ERROR_POST_INSTALL,
+				     "Failed to add package_id to transaction %s: %s",
+				     package_id,
+				     error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+	} else {
+
+		/* search store hint for package */
+		zif_state_reset (state);
+		to_array[0] = package_id;
+		package_array = zif_store_resolve (store_hint, (gchar **) to_array, state, error);
+		if (package_array == NULL)
+			goto out;
+
+		/* nothing found */
+		if (package_array->len == 0) {
+			g_set_error (error,
+				     ZIF_MANIFEST_ERROR,
+				     ZIF_MANIFEST_ERROR_POST_INSTALL,
+				     "no item %s found in %s",
+				     package_id,
+				     zif_store_get_id (store));
+			goto out;
+		}
+
+		/* ambiguous */
+		if (package_array->len > 1) {
+			g_set_error (error,
+				     ZIF_MANIFEST_ERROR,
+				     ZIF_MANIFEST_ERROR_POST_INSTALL,
+				     "more than one item %s found in %s",
+				     package_id,
+				     zif_store_get_id (store));
+			goto out;
+		}
+
+		/* one item, yay */
+		package = g_object_ref (g_ptr_array_index (package_array, 0));
 	}
 
 	/* add it to the transaction */
@@ -314,7 +353,8 @@ zif_manifest_add_package_to_transaction (ZifManifest *manifest,
 		goto out;
 	}
 out:
-	g_object_unref (state);
+	if (package_array != NULL)
+		g_ptr_array_unref (package_array);
 	if (package != NULL)
 		g_object_unref (package);
 	return ret;
@@ -329,6 +369,8 @@ zif_manifest_add_packages_to_transaction (ZifManifest *manifest,
 					  ZifStore *store,
 					  ZifManifestAction action,
 					  const gchar *packages,
+					  ZifStore *store_hint,
+					  ZifState *state,
 					  GError **error)
 {
 	guint i;
@@ -338,7 +380,14 @@ zif_manifest_add_packages_to_transaction (ZifManifest *manifest,
 	/* add each package */
 	split = g_strsplit (packages, ",", -1);
 	for (i=0; split[i] != NULL; i++) {
-		ret = zif_manifest_add_package_to_transaction (manifest, transaction, store, action, split[i], error);
+		ret = zif_manifest_add_package_to_transaction (manifest,
+							       transaction,
+							       store,
+							       action,
+							       split[i],
+							       store_hint,
+							       state,
+							       error);
 		if (!ret)
 			break;
 	}
@@ -459,6 +508,7 @@ zif_manifest_check (ZifManifest *manifest,
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
 	/* load file */
+	state = zif_state_new ();
 	dirname = g_path_get_dirname (filename);
 	keyfile = g_key_file_new ();
 	g_debug ("             ---            ");
@@ -491,6 +541,7 @@ zif_manifest_check (ZifManifest *manifest,
 							  local,
 							  dirname,
 							  packages_local,
+							  state,
 							  error);
 		if (!ret)
 			goto out;
@@ -504,6 +555,7 @@ zif_manifest_check (ZifManifest *manifest,
 							  remote,
 							  dirname,
 							  packages_remote,
+							  state,
 							  error);
 		if (!ret)
 			goto out;
@@ -524,6 +576,8 @@ zif_manifest_check (ZifManifest *manifest,
 								remote,
 								ZIF_MANIFEST_ACTION_INSTALL,
 								transaction_install,
+								remote,
+								state,
 								error);
 		if (!ret)
 			goto out;
@@ -538,6 +592,8 @@ zif_manifest_check (ZifManifest *manifest,
 								local,
 								ZIF_MANIFEST_ACTION_REMOVE,
 								transaction_install,
+								local,
+								state,
 								error);
 		if (!ret)
 			goto out;
@@ -552,6 +608,8 @@ zif_manifest_check (ZifManifest *manifest,
 								local,
 								ZIF_MANIFEST_ACTION_UPDATE,
 								transaction_install,
+								local,
+								state,
 								error);
 		if (!ret)
 			goto out;
@@ -569,7 +627,7 @@ zif_manifest_check (ZifManifest *manifest,
 	}
 
 	/* resolve */
-	state = zif_state_new ();
+	zif_state_reset (state);
 	ret = zif_transaction_resolve (transaction, state, &error_local);
 	if (!ret) {
 		g_set_error (error,

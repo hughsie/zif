@@ -3,5 +3,5 @@
 [Zif Manifest]
 AddLocal=kernel;2.6.35-1;i386;meta,kernel;2.6.36-1;i386;meta,kernel;2.6.37-1;i386;meta
 AddRemote=kernel;2.6.38-1;i386;meta
-TransactionInstall=kernel;2.6.38-1;i386;meta
+TransactionInstall=kernel
 PostInstalled=kernel;2.6.36-1;i386;meta,kernel;2.6.37-1;i386;meta,kernel;2.6.38-1;i386;meta
