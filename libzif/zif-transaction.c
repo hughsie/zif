@@ -1689,10 +1689,10 @@ zif_transaction_resolve_update_item (ZifTransactionResolve *data,
 	/* does anything obsolete this package */
 	depend = zif_depend_new ();
 	zif_depend_set_name (depend, zif_package_get_name (item->package));
-	zif_depend_set_flag (depend, ZIF_DEPEND_FLAG_GREATER);
+	zif_depend_set_flag (depend, ZIF_DEPEND_FLAG_GREATER | ZIF_DEPEND_FLAG_EQUAL);
 	zif_depend_set_version (depend, zif_package_get_version (item->package));
 
-	/* search the stores */
+	/* search the remote stores */
 	zif_state_reset (data->state);
 	obsoletes = zif_store_array_what_obsoletes (data->transaction->priv->stores_remote,
 						    depend,
@@ -1713,10 +1713,11 @@ zif_transaction_resolve_update_item (ZifTransactionResolve *data,
 		g_error_free (error_local);
 		goto out;
 	}
+	g_debug ("%i packages obsolete %s with %s",
+		 obsoletes->len,
+		 zif_package_get_id (item->package),
+		 zif_depend_get_description (depend));
 	if (obsoletes->len > 0) {
-		g_debug ("%i packages obsolete %s",
-			 obsoletes->len,
-			 zif_package_get_id (item->package));
 		for (i=0; i<obsoletes->len; i++) {
 			package = g_ptr_array_index (obsoletes, i);
 			g_debug ("%i.\t%s",
