@@ -1,0 +1,7 @@
+# A 64 bit package should not update a 32 bit package
+
+[Zif Manifest]
+AddLocal=bash;0:0.3.0-1;i586;meta,bash;0:0.3.0-1;x86_64;meta
+AddRemote=bash;0:0.4.0-1;x86_64;meta,bash;0:0.4.0-1;i586;meta
+TransactionUpdate=bash;0:0.3.0-1;x86_64;meta,bash;0:0.3.0-1;i586;meta
+PostInstalled=bash;0:0.4.0-1;x86_64;meta,bash;0:0.4.0-1;i586;meta

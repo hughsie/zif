@@ -1512,17 +1512,32 @@ zif_transaction_show_array (const gchar *title, GPtrArray *array)
 }
 
 /**
+ * _zif_utils_is_arch_compatible:
+ **/
+static gboolean
+_zif_utils_is_arch_compatible (const gchar *arch1, const gchar *arch2)
+{
+	if (g_strcmp0 (arch1, arch2) == 0)
+		return TRUE;
+	if (g_str_has_suffix (arch1, "86") &&
+	    g_str_has_suffix (arch2, "86"))
+		return TRUE;
+	return FALSE;
+}
+
+/**
  * zif_transaction_get_newest_from_remote_by_names:
  **/
 static ZifPackage *
-zif_transaction_get_newest_from_remote_by_names (ZifTransactionResolve *data, const gchar *name, GError **error)
+zif_transaction_get_newest_from_remote_by_names (ZifTransactionResolve *data, ZifPackage *package, GError **error)
 {
 	GPtrArray *matches;
-	ZifPackage *package = NULL;
+	ZifPackage *package_best = NULL;
 	const gchar *search[] = { NULL, NULL };
+	guint i;
 
 	/* get resolve in the array */
-	search[0] = name;
+	search[0] = zif_package_get_name (package);
 	zif_state_reset (data->state);
 	matches = zif_store_array_resolve (data->transaction->priv->stores_remote,
 					   (gchar **) search, data->state, error);
@@ -1534,16 +1549,55 @@ zif_transaction_get_newest_from_remote_by_names (ZifTransactionResolve *data, co
 		g_set_error (error,
 			     ZIF_TRANSACTION_ERROR,
 			     ZIF_TRANSACTION_ERROR_FAILED,
-			     "cannot find installed %s", name);
+			     "cannot find remote %s",
+			     zif_package_get_name (package));
 		goto out;
 	}
 
+	/* common case */
+	if (matches->len == 1) {
+		package_best = g_object_ref (g_ptr_array_index (matches, 0));
+		goto out;
+	}
+
+	/* more then one */
+	g_debug ("multiple remote stores provide %s",
+		 zif_package_get_name (package));
+	for (i=0; i<matches->len; i++) {
+		package_best = g_ptr_array_index (matches, i);
+		g_debug ("%i.\t%s", i+1, zif_package_get_id (package_best));
+	}
+
+	/* filter out any architectures that don't satisfy */
+	for (i=0; i<matches->len;) {
+		package_best = g_ptr_array_index (matches, i);
+		if (!_zif_utils_is_arch_compatible (zif_package_get_arch (package),
+						    zif_package_get_arch (package_best))) {
+			g_ptr_array_remove_index_fast (matches, i);
+			continue;
+		}
+		i++;
+	}
+
+	/* common case */
+	if (matches->len == 1) {
+		package_best = g_object_ref (g_ptr_array_index (matches, 0));
+		goto out;
+	}
+
+	/* more then one */
+	g_debug ("multiple remote stores still provide %s",
+		 zif_package_get_name (package));
+	for (i=0; i<matches->len; i++) {
+		package_best = g_ptr_array_index (matches, i);
+		g_debug ("%i.\t%s", i+1, zif_package_get_id (package_best));
+	}
+
 	/* get the newest package */
-	zif_package_array_filter_newest (matches);
-	package = g_object_ref (g_ptr_array_index (matches, 0));
+	package_best = zif_package_array_get_newest (matches, error);
 out:
 	g_ptr_array_unref (matches);
-	return package;
+	return package_best;
 }
 
 /**
@@ -1561,7 +1615,7 @@ zif_transaction_resolve_update_item (ZifTransactionResolve *data,
 
 	/* get the newest package available from the remote stores */
 	package = zif_transaction_get_newest_from_remote_by_names (data,
-								   zif_package_get_name (item->package),
+								   item->package,
 								   &error_local);
 	if (package == NULL) {
 		g_set_error (error,
