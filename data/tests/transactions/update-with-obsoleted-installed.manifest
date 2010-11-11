@@ -1,0 +1,7 @@
+# A package update also obsoletes another installed pkg
+
+[Zif Manifest]
+AddLocal=gstreamer-plugins-good;0:0.3.0-1;i386;meta,gstreamer-plugins-farsight;0:0.8.0-1;i386;meta
+AddRemote=gstreamer-plugins-good;0:0.4.0-1;i386;meta@Obsoletes:gstreamer-plugins-farsight <= 0.8.0-1@Provides:gstreamer-plugins-farsight = 0.8.1-1
+TransactionUpdate=gstreamer-plugins-good,gstreamer-plugins-farsight
+PostInstalled=gstreamer-plugins-good;0:0.4.0-1;i386;meta

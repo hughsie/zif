@@ -1740,6 +1740,11 @@ zif_transaction_resolve_update_item (ZifTransactionResolve *data,
 		if (!ret)
 			goto out;
 
+		/* is already installed */
+		if (zif_transaction_get_item_from_array (data->transaction->priv->install,
+							 package) != NULL)
+			goto success;
+
 		/* add the new package */
 		ret = zif_transaction_add_install_internal (data->transaction,
 							    package,
