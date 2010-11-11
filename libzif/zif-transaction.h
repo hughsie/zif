@@ -65,6 +65,7 @@ struct _ZifTransactionClass
 typedef enum {
 	ZIF_TRANSACTION_ERROR_FAILED,
 	ZIF_TRANSACTION_ERROR_NOTHING_TO_DO,
+	ZIF_TRANSACTION_ERROR_NOT_SUPPORTED,
 	ZIF_TRANSACTION_ERROR_LAST
 } ZifTransactionError;
 
@@ -88,6 +89,8 @@ void		 zif_transaction_set_store_local	(ZifTransaction	*transaction,
 							 ZifStore	*store);
 void		 zif_transaction_set_stores_remote	(ZifTransaction	*transaction,
 							 GPtrArray	*stores);
+void		 zif_transaction_set_skip_broken	(ZifTransaction	*transaction,
+							 gboolean	 skip_broken);
 GPtrArray	*zif_transaction_get_install		(ZifTransaction	*transaction);
 GPtrArray	*zif_transaction_get_update		(ZifTransaction	*transaction);
 GPtrArray	*zif_transaction_get_remove		(ZifTransaction	*transaction);

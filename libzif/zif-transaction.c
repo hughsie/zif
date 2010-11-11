@@ -63,6 +63,7 @@ struct _ZifTransactionPrivate
 	GPtrArray		*remove;
 	ZifStore		*store_local;
 	GPtrArray		*stores_remote;
+	gboolean		 skip_broken;
 };
 
 typedef struct {
@@ -1848,7 +1849,7 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 	guint i;
 	gboolean ret = FALSE;
 	ZifTransactionItem *item;
-	ZifTransactionResolve *data;
+	ZifTransactionResolve *data = NULL;
 	GError *error_local = NULL;
 	guint resolve_count = 0;
 
@@ -1857,6 +1858,15 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 	g_return_val_if_fail (transaction->priv->stores_remote != NULL, FALSE);
 	g_return_val_if_fail (transaction->priv->store_local != NULL, FALSE);
+
+	/* not supported yet */
+	if (transaction->priv->skip_broken) {
+		g_set_error_literal (error,
+				     ZIF_TRANSACTION_ERROR,
+				     ZIF_TRANSACTION_ERROR_NOT_SUPPORTED,
+				     "skip broken is not supported (yet)");
+		goto out;
+	}
 
 	g_debug ("starting resolve");
 
@@ -1954,6 +1964,7 @@ out:
 
 /**
  * zif_transaction_set_store_local:
+ * @transaction: the #ZifTransaction object
  * @store: the #ZifStore to use for installed packages
  *
  * Sets the local store for use in the transaction.
@@ -1971,6 +1982,7 @@ zif_transaction_set_store_local (ZifTransaction *transaction, ZifStore *store)
 
 /**
  * zif_transaction_set_stores_remote:
+ * @transaction: the #ZifTransaction object
  * @stores: an array of #ZifStore's to use for available packages
  *
  * Sets the remote store for use in the transaction.
@@ -1984,6 +1996,24 @@ zif_transaction_set_stores_remote (ZifTransaction *transaction, GPtrArray *store
 	g_return_if_fail (stores != NULL);
 	g_return_if_fail (transaction->priv->stores_remote == NULL);
 	transaction->priv->stores_remote = g_ptr_array_ref (stores);
+}
+
+/**
+ * zif_transaction_set_skip_broken:
+ * @transaction: the #ZifTransaction object
+ * @skip_broken: if the resolve should skip broken packages
+ *
+ * Sets the skip broken policy for resolving. If this is TRUE, then
+ * checking zif_transaction_get_unresolved() after resolving would
+ * be a good idea.
+ *
+ * Since: 0.1.3
+ **/
+void
+zif_transaction_set_skip_broken (ZifTransaction *transaction, gboolean skip_broken)
+{
+	g_return_if_fail (ZIF_IS_TRANSACTION (transaction));
+	transaction->priv->skip_broken = skip_broken;
 }
 
 /**
