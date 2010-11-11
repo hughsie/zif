@@ -1583,22 +1583,38 @@ zif_transaction_get_newest_from_remote_by_names (ZifTransactionResolve *data, Zi
 	GPtrArray *matches;
 	ZifPackage *package_best = NULL;
 	const gchar *search[] = { NULL, NULL };
+	GError *error_local = NULL;
 	guint i;
 
 	/* get resolve in the array */
 	search[0] = zif_package_get_name (package);
 	zif_state_reset (data->state);
 	matches = zif_store_array_resolve (data->transaction->priv->stores_remote,
-					   (gchar **) search, data->state, error);
-	if (matches == NULL)
+					   (gchar **) search, data->state, &error_local);
+	if (matches == NULL) {
+
+		/* this is a special error */
+		if (error_local->code == ZIF_STORE_ERROR_ARRAY_IS_EMPTY) {
+			g_set_error (error,
+				     ZIF_TRANSACTION_ERROR,
+				     ZIF_TRANSACTION_ERROR_NOTHING_TO_DO,
+				     "cannot find newest remote package %s as store is empty",
+				     zif_package_get_name (package));
+			g_error_free (error_local);
+			goto out;
+		}
+
+		/* just push this along */
+		g_propagate_error (error, error_local);
 		goto out;
+	}
 
 	/* we found nothing */
 	if (matches->len == 0) {
 		g_set_error (error,
 			     ZIF_TRANSACTION_ERROR,
 			     ZIF_TRANSACTION_ERROR_FAILED,
-			     "cannot find remote %s",
+			     "cannot find newest remote package %s",
 			     zif_package_get_name (package));
 		goto out;
 	}
@@ -1645,7 +1661,8 @@ zif_transaction_get_newest_from_remote_by_names (ZifTransactionResolve *data, Zi
 	/* get the newest package */
 	package_best = zif_package_array_get_newest (matches, error);
 out:
-	g_ptr_array_unref (matches);
+	if (matches != NULL)
+		g_ptr_array_unref (matches);
 	return package_best;
 }
 
@@ -1667,10 +1684,17 @@ zif_transaction_resolve_update_item (ZifTransactionResolve *data,
 								   item->package,
 								   &error_local);
 	if (package == NULL) {
+		/* this is a special error, just ignore the item */
+		if (error_local->code == ZIF_TRANSACTION_ERROR_NOTHING_TO_DO) {
+			g_error_free (error_local);
+			item->resolved = TRUE;
+			ret = TRUE;
+			goto out;
+		}
 		g_set_error (error,
 			     ZIF_TRANSACTION_ERROR,
 			     ZIF_TRANSACTION_ERROR_FAILED,
-			     "failed to find %s in installed store: %s",
+			     "failed to find %s in remote store: %s",
 			     zif_package_get_id (item->package),
 			     error_local->message);
 		g_error_free (error_local);
