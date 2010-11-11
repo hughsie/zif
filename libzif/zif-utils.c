@@ -214,8 +214,8 @@ zif_package_convert_evr (gchar *evr, const gchar **epoch, const gchar **version,
 
 /**
  * zif_compare_evr:
- * @a: the first version string
- * @b: the second version string
+ * @a: the first version string, or %NULL
+ * @b: the second version string, or %NULL
  *
  * Compare two [epoch:]version[-release] strings
  *
@@ -232,12 +232,19 @@ zif_compare_evr (const gchar *a, const gchar *b)
 	const gchar *ae, *av, *ar;
 	const gchar *be, *bv, *br;
 
-	g_return_val_if_fail (a != NULL, 0);
-	g_return_val_if_fail (b != NULL, 0);
-
 	/* exactly the same, optimise */
 	if (g_strcmp0 (a, b) == 0)
 		goto out;
+
+	/* deal with one evr being NULL and the other a value */
+	if (a != NULL && b == NULL) {
+		val = 1;
+		goto out;
+	}
+	if (a == NULL && b != NULL) {
+		val = -1;
+		goto out;
+	}
 
 	/* copy */
 	ad = g_strdup (a);

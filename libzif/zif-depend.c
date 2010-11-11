@@ -73,17 +73,6 @@ zif_depend_compare (ZifDepend *a, ZifDepend *b)
 	g_return_val_if_fail (a != NULL, G_MAXINT);
 	g_return_val_if_fail (b != NULL, G_MAXINT);
 
-	/* deal with missing versions */
-	if (a->priv->version == NULL &&
-	    b->priv->version == NULL)
-		return 0;
-	if (a->priv->version != NULL &&
-	    b->priv->version == NULL)
-		return 1;
-	if (a->priv->version == NULL &&
-	    b->priv->version != NULL)
-		return -1;
-
 	/* fall back to comparing the evr */
 	return zif_compare_evr (a->priv->version, b->priv->version);
 }
