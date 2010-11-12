@@ -1152,6 +1152,7 @@ zif_transaction_resolve_install_depend (ZifTransactionResolve *data,
 	guint i;
 
 	/* already provided by something in the install set */
+	g_debug ("searching in install");
 	ret = zif_transaction_get_package_provide_from_array (data->transaction->priv->install,
 							      depend, &package_provide,
 							      data->state, error);
@@ -1167,6 +1168,8 @@ zif_transaction_resolve_install_depend (ZifTransactionResolve *data,
 	}
 
 	/* already provided in the rpmdb */
+	g_debug ("searching for %s in local",
+		 zif_depend_get_description (depend));
 	ret = zif_transaction_get_package_provide_from_store (data->transaction->priv->store_local,
 							      depend, &package_provide,
 							      data->state, error);
@@ -1181,7 +1184,8 @@ zif_transaction_resolve_install_depend (ZifTransactionResolve *data,
 		goto out;
 	}
 
-	/* already provided in the rpmdb */
+	/* provided by something to be installed */
+	g_debug ("searching in remote");
 	ret = zif_transaction_get_package_provide_from_store_array (data->transaction->priv->stores_remote,
 								    depend, &package_provide,
 								    data->state, error);
@@ -2332,8 +2336,14 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 					g_clear_error (&error_local);
 					break;
 				}
-				g_debug ("ignoring error as we're skip-broken: %s",
-					 error_local->message);
+				if (transaction->priv->skip_broken) {
+					g_debug ("ignoring error as we're skip-broken: %s",
+						 error_local->message);
+					g_ptr_array_remove (transaction->priv->install, item);
+					data->unresolved_dependencies = TRUE;
+					g_clear_error (&error_local);
+					break;
+				}
 				g_propagate_error (error, error_local);
 				goto out;
 			}
@@ -2362,7 +2372,7 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 				if (transaction->priv->skip_broken) {
 					g_debug ("ignoring error as we're skip-broken: %s",
 						 error_local->message);
-					g_ptr_array_remove (transaction->priv->remove, item);
+					g_ptr_array_remove (transaction->priv->update, item);
 					data->unresolved_dependencies = TRUE;
 					g_clear_error (&error_local);
 					break;

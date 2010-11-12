@@ -144,10 +144,26 @@ zif_depend_satisfies (ZifDepend *got, ZifDepend *need)
 		goto out;
 	}
 
+	/* got: bash >= 0.2.0, need: bash = 0.3.0' - only valid when versions are equal */
+	if (got->priv->flag == (ZIF_DEPEND_FLAG_GREATER | ZIF_DEPEND_FLAG_EQUAL) &&
+	    need->priv->flag == ZIF_DEPEND_FLAG_EQUAL) {
+		ret = (zif_compare_evr (got->priv->version, need->priv->version) <= 0);
+		goto out;
+	}
+
+	/* got: bash >= 0.2.0, need: bash = 0.3.0' - only valid when versions are equal */
+	if (got->priv->flag == (ZIF_DEPEND_FLAG_LESS | ZIF_DEPEND_FLAG_EQUAL) &&
+	    need->priv->flag == ZIF_DEPEND_FLAG_EQUAL) {
+		ret = (zif_compare_evr (got->priv->version, need->priv->version) >= 0);
+		goto out;
+	}
+
 	/* not sure */
-	g_debug ("not sure how to compare %s and %s",
-		 zif_depend_flag_to_string (got->priv->flag),
-		 zif_depend_flag_to_string (need->priv->flag));
+	g_warning ("not sure how to compare %s and %s for %s:%s",
+		   zif_depend_flag_to_string (got->priv->flag),
+		   zif_depend_flag_to_string (need->priv->flag),
+		   zif_depend_get_description (got),
+		   zif_depend_get_description (need));
 out:
 	g_debug ("tested satisfiability of %s:%s = %s",
 		 zif_depend_get_description (got),

@@ -478,6 +478,24 @@ zif_depend_func (void)
 	g_assert (ret);
 	g_object_unref (need);
 
+	/* exact with zero epoch */
+	need = zif_depend_new ();
+	zif_depend_set_name (need, "hal");
+	zif_depend_set_flag (need, ZIF_DEPEND_FLAG_EQUAL);
+	zif_depend_set_version (need, "0:0.5.8-1");
+	ret = zif_depend_satisfies (depend, need);
+	g_assert (ret);
+	g_object_unref (need);
+
+	/* exact with no release */
+	need = zif_depend_new ();
+	zif_depend_set_name (need, "hal");
+	zif_depend_set_flag (need, ZIF_DEPEND_FLAG_EQUAL);
+	zif_depend_set_version (need, "0.5.8");
+	ret = zif_depend_satisfies (depend, need);
+	g_assert (ret);
+	g_object_unref (need);
+
 	/* non version specific */
 	need = zif_depend_new ();
 	zif_depend_set_name (need, "hal");
@@ -538,6 +556,22 @@ zif_depend_func (void)
 	zif_depend_set_version (need, "0.5.8-1");
 	ret = zif_depend_satisfies (depend, need);
 	g_assert (!ret);
+	g_object_unref (need);
+	g_object_unref (depend);
+
+	/* test satisfiability with no release */
+	depend = zif_depend_new ();
+	zif_depend_set_name (depend, "bash");
+	zif_depend_set_flag (depend, ZIF_DEPEND_FLAG_GREATER | ZIF_DEPEND_FLAG_EQUAL);
+	zif_depend_set_version (depend, "0.0.3");
+
+	/* exact */
+	need = zif_depend_new ();
+	zif_depend_set_name (need, "bash");
+	zif_depend_set_flag (need, ZIF_DEPEND_FLAG_EQUAL);
+	zif_depend_set_version (need, "0.0.3-1");
+	ret = zif_depend_satisfies (depend, need);
+	g_assert (ret);
 	g_object_unref (need);
 
 	g_object_unref (depend);
@@ -2474,6 +2508,9 @@ zif_utils_func (void)
 	g_assert (zif_compare_evr ("1:1.0.2-4", "1:1.0.2-3") == 1);
 	g_assert (zif_compare_evr ("1:0.1.0-1", "1.0.2-2") == 1);
 	g_assert (zif_compare_evr ("1.0.2-1", "1.0.1-1") == 1);
+	g_assert (zif_compare_evr ("0.0.1-2", "0:0.0.1-2") == 0);
+	g_assert (zif_compare_evr ("0:0.0.1-2", "0.0.1-2") == 0);
+	g_assert (zif_compare_evr ("0.1", "0:0.1-1") == 0);
 
 	filename = zif_file_get_uncompressed_name ("/dave/moo.sqlite.gz");
 	g_assert_cmpstr (filename, ==, "/dave/moo.sqlite");
