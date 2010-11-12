@@ -101,7 +101,7 @@ zif_transaction_error_quark (void)
 
 /**
  * zif_transaction_reason_to_string:
- * @reason: the #ZifTransactionReason enum, e.g. %ZIF_TRANSACTION_REASON_USER_ACTION
+ * @reason: the #ZifTransactionReason enum, e.g. %ZIF_TRANSACTION_REASON_INSTALL_USER_ACTION
  *
  * Gets the string representation of the reason a package was added.
  *
@@ -112,16 +112,24 @@ zif_transaction_error_quark (void)
 const gchar *
 zif_transaction_reason_to_string (ZifTransactionReason reason)
 {
-	if (reason == ZIF_TRANSACTION_REASON_USER_ACTION)
-		return "user-action";
+	if (reason == ZIF_TRANSACTION_REASON_INSTALL_USER_ACTION)
+		return "install-user-action";
+	if (reason == ZIF_TRANSACTION_REASON_REMOVE_USER_ACTION)
+		return "remove-user-action";
+	if (reason == ZIF_TRANSACTION_REASON_UPDATE_USER_ACTION)
+		return "update-user-action";
 	if (reason == ZIF_TRANSACTION_REASON_INSTALL_ONLYN)
 		return "install-onlyn";
-	if (reason == ZIF_TRANSACTION_REASON_UPDATE)
-		return "update";
 	if (reason == ZIF_TRANSACTION_REASON_INSTALL_DEPEND)
 		return "install-depend";
 	if (reason == ZIF_TRANSACTION_REASON_OBSOLETE)
 		return "obsolete";
+	if (reason == ZIF_TRANSACTION_REASON_REMOVE_FOR_UPDATE)
+		return "remove-for-update";
+	if (reason == ZIF_TRANSACTION_REASON_INSTALL_FOR_UPDATE)
+		return "install-for-update";
+	if (reason == ZIF_TRANSACTION_REASON_REMOVE_FOR_DEP)
+		return "remove-for-dep";
 	g_warning ("cannot convert reason %i to string", reason);
 	return NULL;
 }
@@ -185,23 +193,6 @@ GPtrArray *
 zif_transaction_get_install (ZifTransaction *transaction)
 {
 	return zif_transaction_get_package_array (transaction->priv->install);
-}
-
-/**
- * zif_transaction_get_update:
- * @transaction: the #ZifTransaction object
- *
- * Gets the list of packages to be updated.
- *
- * Return value: A #GPtrArray of #ZifPackages, free with g_ptr_array_unref()
- *
- * Since: 0.1.3
- **/
-GPtrArray *
-zif_transaction_get_update (ZifTransaction *transaction)
-{
-	g_return_val_if_fail (ZIF_IS_TRANSACTION (transaction), NULL);
-	return zif_transaction_get_package_array (transaction->priv->update);
 }
 
 /**
@@ -315,6 +306,45 @@ zif_transaction_get_reason (ZifTransaction *transaction,
 }
 
 /**
+ * zif_transaction_get_array_for_reason:
+ * @transaction: the #ZifTransaction object
+ * @reason: the #ZifTransactionReason enum, e.g. %ZIF_TRANSACTION_REASON_INVALID
+ *
+ * Gets a list of packages that are due to be processed for a specific reason.
+ *
+ * Return value: An array of #ZifPackages, or %NULL for error. Free with g_ptr_array_unref()
+ *
+ * Since: 0.1.3
+ **/
+GPtrArray *
+zif_transaction_get_array_for_reason (ZifTransaction *transaction, ZifTransactionReason reason)
+{
+	GPtrArray *array;
+	guint i;
+	ZifTransactionItem *item;
+
+	g_return_val_if_fail (ZIF_IS_TRANSACTION (transaction), NULL);
+
+	/* always create array, even for no results */
+	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
+
+	/* find all the installed packages that match */
+	for (i=0; i<transaction->priv->install->len; i++) {
+		item = g_ptr_array_index (transaction->priv->install, i);
+		if (item->reason == reason)
+			g_ptr_array_add (array, g_object_ref (item->package));
+	}
+
+	/* find all the removed packages that match */
+	for (i=0; i<transaction->priv->remove->len; i++) {
+		item = g_ptr_array_index (transaction->priv->remove, i);
+		if (item->reason == reason)
+			g_ptr_array_add (array, g_object_ref (item->package));
+	}
+	return array;
+}
+
+/**
  * zif_transaction_add_to_array:
  **/
 static gboolean
@@ -407,7 +437,7 @@ zif_transaction_add_install (ZifTransaction *transaction,
 	ret = zif_transaction_add_install_internal (transaction,
 						    package,
 						    NULL,
-						    ZIF_TRANSACTION_REASON_USER_ACTION,
+						    ZIF_TRANSACTION_REASON_INSTALL_USER_ACTION,
 						    error);
 	return ret;
 }
@@ -471,7 +501,7 @@ zif_transaction_add_update (ZifTransaction *transaction, ZifPackage *package, GE
 	ret = zif_transaction_add_update_internal (transaction,
 						   package,
 						   NULL,
-						   ZIF_TRANSACTION_REASON_USER_ACTION,
+						   ZIF_TRANSACTION_REASON_UPDATE_USER_ACTION,
 						   error);
 	return ret;
 }
@@ -535,7 +565,7 @@ zif_transaction_add_remove (ZifTransaction *transaction, ZifPackage *package, GE
 	ret = zif_transaction_add_remove_internal (transaction,
 						   package,
 						   NULL,
-						   ZIF_TRANSACTION_REASON_USER_ACTION,
+						   ZIF_TRANSACTION_REASON_REMOVE_USER_ACTION,
 						   error);
 	return ret;
 }
@@ -1314,7 +1344,7 @@ zif_transaction_resolve_install_depend (ZifTransactionResolve *data,
 			ret = zif_transaction_add_remove_internal (data->transaction,
 								   package,
 								   NULL,
-								   ZIF_TRANSACTION_REASON_UPDATE,
+								   ZIF_TRANSACTION_REASON_REMOVE_FOR_UPDATE,
 								   error);
 			if (!ret)
 				goto out;
@@ -1619,7 +1649,7 @@ zif_transaction_resolve_remove_require (ZifTransactionResolve *data,
 			 zif_package_get_id (package));
 
 		/* package is being updated, so try to update deps too */
-		if (item->reason == ZIF_TRANSACTION_REASON_UPDATE) {
+		if (item->reason == ZIF_TRANSACTION_REASON_REMOVE_FOR_UPDATE) {
 			ret = zif_transaction_add_update_internal (data->transaction,
 								   package,
 								   item->package,
@@ -1633,7 +1663,7 @@ zif_transaction_resolve_remove_require (ZifTransactionResolve *data,
 			ret = zif_transaction_add_remove_internal (data->transaction,
 								   package,
 								   NULL,
-								   item->reason,
+								   ZIF_TRANSACTION_REASON_REMOVE_FOR_DEP,
 								   error);
 			if (!ret)
 				goto out;
@@ -1980,7 +2010,7 @@ skip:
 	ret = zif_transaction_add_remove_internal (data->transaction,
 						   item->package,
 						   item->package,
-						   ZIF_TRANSACTION_REASON_UPDATE,
+						   ZIF_TRANSACTION_REASON_REMOVE_FOR_UPDATE,
 						   error);
 	if (!ret)
 		goto out;
@@ -1989,7 +2019,7 @@ skip:
 	ret = zif_transaction_add_install_internal (data->transaction,
 						    package,
 						    item->package,
-						    ZIF_TRANSACTION_REASON_UPDATE,
+						    ZIF_TRANSACTION_REASON_INSTALL_FOR_UPDATE,
 						    error);
 	if (!ret)
 		goto out;
@@ -2763,7 +2793,7 @@ zif_transaction_set_verbose (ZifTransaction *transaction, gboolean verbose)
 
 
 /**
- * zif_transaction_get_reason:
+ * zif_transaction_get_state:
  * @transaction: the #ZifTransaction object
  * @package: the #ZifPackage object
  *

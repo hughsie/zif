@@ -307,7 +307,7 @@ zif_transaction_func (void)
 	g_assert_cmpstr (zif_package_get_id (package), ==, "test;0.0.1;i386;data");
 	reason = zif_transaction_get_reason (transaction, package, &error);
 	g_assert_no_error (error);
-	g_assert_cmpint (reason, ==, ZIF_TRANSACTION_REASON_USER_ACTION);
+	g_assert_cmpint (reason, ==, ZIF_TRANSACTION_REASON_INSTALL_USER_ACTION);
 	g_ptr_array_unref (packages);
 
 	g_ptr_array_unref (remotes);

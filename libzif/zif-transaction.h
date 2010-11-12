@@ -71,12 +71,16 @@ typedef enum {
 } ZifTransactionError;
 
 typedef enum {
-	ZIF_TRANSACTION_REASON_INVALID,
-	ZIF_TRANSACTION_REASON_USER_ACTION,
-	ZIF_TRANSACTION_REASON_INSTALL_ONLYN,
-	ZIF_TRANSACTION_REASON_UPDATE,
 	ZIF_TRANSACTION_REASON_INSTALL_DEPEND,
+	ZIF_TRANSACTION_REASON_INSTALL_FOR_UPDATE,
+	ZIF_TRANSACTION_REASON_INSTALL_ONLYN,
+	ZIF_TRANSACTION_REASON_INSTALL_USER_ACTION,
+	ZIF_TRANSACTION_REASON_INVALID,
 	ZIF_TRANSACTION_REASON_OBSOLETE,
+	ZIF_TRANSACTION_REASON_REMOVE_FOR_DEP,
+	ZIF_TRANSACTION_REASON_REMOVE_FOR_UPDATE,
+	ZIF_TRANSACTION_REASON_REMOVE_USER_ACTION,
+	ZIF_TRANSACTION_REASON_UPDATE_USER_ACTION,
 	ZIF_TRANSACTION_REASON_LAST
 } ZifTransactionReason;
 
@@ -121,12 +125,13 @@ void		 zif_transaction_set_verbose		(ZifTransaction	*transaction,
 							 gboolean	 verbose);
 void		 zif_transaction_reset			(ZifTransaction	*transaction);
 GPtrArray	*zif_transaction_get_install		(ZifTransaction	*transaction);
-GPtrArray	*zif_transaction_get_update		(ZifTransaction	*transaction);
 GPtrArray	*zif_transaction_get_remove		(ZifTransaction	*transaction);
 const gchar	*zif_transaction_reason_to_string	(ZifTransactionReason reason);
 ZifTransactionReason	zif_transaction_get_reason	(ZifTransaction	*transaction,
 							 ZifPackage	*package,
 							 GError		**error);
+GPtrArray	*zif_transaction_get_array_for_reason	(ZifTransaction	*transaction,
+							 ZifTransactionReason reason);
 const gchar	*zif_transaction_state_to_string	(ZifTransactionState state);
 ZifTransactionState zif_transaction_get_state		(ZifTransaction	*transaction);
 
