@@ -76,6 +76,7 @@ G_DEFINE_TYPE (ZifTransaction, zif_transaction, G_TYPE_OBJECT)
 
 typedef struct {
 	ZifPackage		*package;
+	ZifPackage		*update_package; /* allows us to remove packages added or removed if the update failed */
 	gboolean		 resolved;
 	ZifTransactionReason	 reason;
 } ZifTransactionItem;
@@ -199,6 +200,8 @@ static void
 zif_transaction_item_free (ZifTransactionItem *item)
 {
 	g_object_unref (item->package);
+	if (item->update_package)
+		g_object_unref (item->update_package);
 	g_free (item);
 }
 
@@ -223,6 +226,29 @@ zif_transaction_get_item_from_array (GPtrArray *array, ZifPackage *package)
 }
 
 /**
+ * zif_transaction_get_item_from_array_by_update_package:
+ **/
+static ZifTransactionItem *
+zif_transaction_get_item_from_array_by_update_package (GPtrArray *array,
+						       ZifPackage *package)
+{
+	ZifTransactionItem *item;
+	guint i;
+	const gchar *package_id;
+
+	/* find a package that matches */
+	package_id = zif_package_get_id (package);
+	for (i=0; i<array->len; i++) {
+		item = g_ptr_array_index (array, i);
+		if (item->update_package == NULL)
+			continue;
+		if (g_strcmp0 (zif_package_get_id (item->update_package), package_id) == 0)
+			return item;
+	}
+	return NULL;
+}
+
+/**
  * zif_transaction_get_reason:
  * @transaction: the #ZifTransaction object
  * @package: the #ZifPackage object
@@ -234,7 +260,9 @@ zif_transaction_get_item_from_array (GPtrArray *array, ZifPackage *package)
  * Since: 0.1.3
  **/
 ZifTransactionReason
-zif_transaction_get_reason (ZifTransaction *transaction, ZifPackage *package, GError **error)
+zif_transaction_get_reason (ZifTransaction *transaction,
+			    ZifPackage *package,
+			    GError **error)
 {
 	ZifTransactionItem *item;
 	g_return_val_if_fail (ZIF_IS_TRANSACTION (transaction), ZIF_TRANSACTION_REASON_INVALID);
@@ -262,7 +290,10 @@ zif_transaction_get_reason (ZifTransaction *transaction, ZifPackage *package, GE
  * zif_transaction_add_to_array:
  **/
 static gboolean
-zif_transaction_add_to_array (GPtrArray *array, ZifPackage *package, ZifTransactionReason reason)
+zif_transaction_add_to_array (GPtrArray *array,
+			      ZifPackage *package,
+			      ZifPackage *update_package,
+			      ZifTransactionReason reason)
 {
 	gboolean ret = FALSE;
 	ZifTransactionItem *item;
@@ -277,6 +308,8 @@ zif_transaction_add_to_array (GPtrArray *array, ZifPackage *package, ZifTransact
 	item->resolved = FALSE;
 	item->reason = reason;
 	item->package = g_object_ref (package);
+	if (update_package != NULL)
+		item->update_package = g_object_ref (update_package);
 	g_ptr_array_add (array, item);
 
 	/* success */
@@ -291,6 +324,7 @@ out:
 static gboolean
 zif_transaction_add_install_internal (ZifTransaction *transaction,
 				      ZifPackage *package,
+				      ZifPackage *update_package,
 				      ZifTransactionReason reason,
 				      GError **error)
 {
@@ -299,6 +333,7 @@ zif_transaction_add_install_internal (ZifTransaction *transaction,
 	/* add to install */
 	ret = zif_transaction_add_to_array (transaction->priv->install,
 					    package,
+					    update_package,
 					    reason);
 	if (!ret) {
 		g_set_error (error,
@@ -309,9 +344,10 @@ zif_transaction_add_install_internal (ZifTransaction *transaction,
 		goto out;
 	}
 
-	g_debug ("Add INSTALL %s [%s]",
+	g_debug ("Add INSTALL %s [%s] (with update package %s)",
 		 zif_package_get_id (package),
-		 zif_transaction_reason_to_string (reason));
+		 zif_transaction_reason_to_string (reason),
+		 update_package != NULL ? zif_package_get_id (update_package) : "none");
 out:
 	return ret;
 }
@@ -342,6 +378,7 @@ zif_transaction_add_install (ZifTransaction *transaction,
 	/* add to install */
 	ret = zif_transaction_add_install_internal (transaction,
 						    package,
+						    NULL,
 						    ZIF_TRANSACTION_REASON_USER_ACTION,
 						    error);
 	return ret;
@@ -361,6 +398,7 @@ zif_transaction_add_update_internal (ZifTransaction *transaction,
 	/* add to update */
 	ret = zif_transaction_add_to_array (transaction->priv->update,
 					    package,
+					    NULL,
 					    reason);
 	if (!ret) {
 		g_set_error (error,
@@ -413,6 +451,7 @@ zif_transaction_add_update (ZifTransaction *transaction, ZifPackage *package, GE
 static gboolean
 zif_transaction_add_remove_internal (ZifTransaction *transaction,
 				     ZifPackage *package,
+				     ZifPackage *update_package,
 				     ZifTransactionReason reason,
 				     GError **error)
 {
@@ -421,6 +460,7 @@ zif_transaction_add_remove_internal (ZifTransaction *transaction,
 	/* add to remove */
 	ret = zif_transaction_add_to_array (transaction->priv->remove,
 					    package,
+					    update_package,
 					    reason);
 	if (!ret) {
 		g_set_error (error,
@@ -431,9 +471,10 @@ zif_transaction_add_remove_internal (ZifTransaction *transaction,
 		goto out;
 	}
 
-	g_debug ("Add REMOVE %s [%s]",
+	g_debug ("Add REMOVE %s [%s] (with update package %s)",
 		 zif_package_get_id (package),
-		 zif_transaction_reason_to_string (reason));
+		 zif_transaction_reason_to_string (reason),
+		 update_package != NULL ? zif_package_get_id (update_package) : "none");
 out:
 	return ret;
 }
@@ -462,6 +503,7 @@ zif_transaction_add_remove (ZifTransaction *transaction, ZifPackage *package, GE
 	/* add to remove */
 	ret = zif_transaction_add_remove_internal (transaction,
 						   package,
+						   NULL,
 						   ZIF_TRANSACTION_REASON_USER_ACTION,
 						   error);
 	return ret;
@@ -1230,6 +1272,7 @@ zif_transaction_resolve_install_depend (ZifTransactionResolve *data,
 				 zif_package_get_id (package_provide));
 			ret = zif_transaction_add_remove_internal (data->transaction,
 								   package,
+								   NULL,
 								   ZIF_TRANSACTION_REASON_UPDATE,
 								   error);
 			if (!ret)
@@ -1239,6 +1282,7 @@ skip_resolve:
 		/* add the provide to the install set */
 		ret = zif_transaction_add_install_internal (data->transaction,
 							    package_provide,
+							    NULL,
 							    ZIF_TRANSACTION_REASON_INSTALL_DEPEND,
 							    error);
 		if (!ret)
@@ -1347,6 +1391,7 @@ zif_transaction_resolve_install_item (ZifTransactionResolve *data,
 				 zif_package_get_id (package_oldest));
 			ret = zif_transaction_add_remove_internal (data->transaction,
 								   package_oldest,
+								   NULL,
 								   ZIF_TRANSACTION_REASON_INSTALL_ONLYN,
 								   error);
 			if (!ret) {
@@ -1537,6 +1582,7 @@ zif_transaction_resolve_remove_require (ZifTransactionResolve *data,
 			/* remove the package */
 			ret = zif_transaction_add_remove_internal (data->transaction,
 								   package,
+								   NULL,
 								   item->reason,
 								   error);
 			if (!ret)
@@ -1807,6 +1853,7 @@ zif_transaction_resolve_update_item (ZifTransactionResolve *data,
 		/* remove the installed package */
 		ret = zif_transaction_add_remove_internal (data->transaction,
 							   item->package,
+							   item->package,
 							   ZIF_TRANSACTION_REASON_OBSOLETE,
 							   error);
 		if (!ret)
@@ -1820,6 +1867,7 @@ zif_transaction_resolve_update_item (ZifTransactionResolve *data,
 		/* add the new package */
 		ret = zif_transaction_add_install_internal (data->transaction,
 							    package,
+							    item->package,
 							    item->reason,
 							    error);
 		if (!ret)
@@ -1879,6 +1927,7 @@ skip:
 	/* remove the installed package */
 	ret = zif_transaction_add_remove_internal (data->transaction,
 						   item->package,
+						   item->package,
 						   ZIF_TRANSACTION_REASON_UPDATE,
 						   error);
 	if (!ret)
@@ -1887,6 +1936,7 @@ skip:
 	/* add the new package */
 	ret = zif_transaction_add_install_internal (data->transaction,
 						    package,
+						    item->package,
 						    ZIF_TRANSACTION_REASON_UPDATE,
 						    error);
 	if (!ret)
@@ -2273,6 +2323,50 @@ out:
 }
 
 /**
+ * zif_transaction_resolve_wind_back_failure_package:
+ **/
+static void
+zif_transaction_resolve_wind_back_failure_package (ZifTransaction *transaction, ZifPackage *package)
+{
+	ZifTransactionItem *item_tmp;
+
+	g_debug ("winding back %s",
+		 zif_package_get_id (package));
+
+	/* remove the thing we just added to the install queue too */
+	item_tmp = zif_transaction_get_item_from_array_by_update_package (transaction->priv->install,
+									  package);
+	if (item_tmp != NULL) {
+		g_debug ("REMOVE %s as CANCELLED",
+			 zif_package_get_id (item_tmp->package));
+		g_ptr_array_remove (transaction->priv->install, item_tmp);
+	}
+
+	/* remove the thing we just added to remove queue too */
+	item_tmp = zif_transaction_get_item_from_array_by_update_package (transaction->priv->remove,
+									  package);
+	if (item_tmp != NULL) {
+		g_debug ("REMOVE %s as CANCELLED",
+			 zif_package_get_id (item_tmp->package));
+		g_ptr_array_remove (transaction->priv->remove, item_tmp);
+	}
+}
+
+/**
+ * zif_transaction_resolve_wind_back_failure:
+ **/
+static void
+zif_transaction_resolve_wind_back_failure (ZifTransaction *transaction, ZifTransactionItem *item)
+{
+	/* remove the things we just added to the install queue too */
+	zif_transaction_resolve_wind_back_failure_package (transaction,
+							   item->package);
+	if (item->update_package != NULL)
+		zif_transaction_resolve_wind_back_failure_package (transaction,
+								   item->update_package);
+}
+
+/**
  * zif_transaction_resolve:
  * @transaction: the #ZifTransaction object
  * @state: a #ZifState to use for progress reporting
@@ -2339,6 +2433,7 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 				if (transaction->priv->skip_broken) {
 					g_debug ("ignoring error as we're skip-broken: %s",
 						 error_local->message);
+					zif_transaction_resolve_wind_back_failure (transaction, item);
 					g_ptr_array_remove (transaction->priv->install, item);
 					data->unresolved_dependencies = TRUE;
 					g_clear_error (&error_local);
@@ -2372,6 +2467,7 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 				if (transaction->priv->skip_broken) {
 					g_debug ("ignoring error as we're skip-broken: %s",
 						 error_local->message);
+					zif_transaction_resolve_wind_back_failure (transaction, item);
 					g_ptr_array_remove (transaction->priv->update, item);
 					data->unresolved_dependencies = TRUE;
 					g_clear_error (&error_local);
@@ -2405,6 +2501,7 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 				if (transaction->priv->skip_broken) {
 					g_debug ("ignoring error as we're skip-broken: %s",
 						 error_local->message);
+					zif_transaction_resolve_wind_back_failure (transaction, item);
 					g_ptr_array_remove (transaction->priv->remove, item);
 					data->unresolved_dependencies = TRUE;
 					g_clear_error (&error_local);
