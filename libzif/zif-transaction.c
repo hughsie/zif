@@ -2709,6 +2709,9 @@ zif_transaction_prepare (ZifTransaction *transaction, ZifState *state, GError **
 		/* see if download already exists */
 		g_debug ("checking %s",
 			 zif_package_get_id (item->package));
+		zif_state_action_start (state,
+					ZIF_STATE_ACTION_CHECKING,
+					zif_package_get_name (item->package));
 		ret = zif_package_remote_is_downloaded (ZIF_PACKAGE_REMOTE (item->package), &exists, state_loop, &error_local);
 		if (!ret) {
 			g_propagate_prefixed_error (error, error_local,
