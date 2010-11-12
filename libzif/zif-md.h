@@ -115,6 +115,22 @@ struct _ZifMdClass
 						 ZifPackage		*package,
 						 ZifState		*state,
 						 GError			**error);
+	GPtrArray	*(*get_provides)	(ZifMd			*md,
+						 ZifPackage		*package,
+						 ZifState		*state,
+						 GError			**error);
+	GPtrArray	*(*get_requires)	(ZifMd			*md,
+						 ZifPackage		*package,
+						 ZifState		*state,
+						 GError			**error);
+	GPtrArray	*(*get_obsoletes)	(ZifMd			*md,
+						 ZifPackage		*package,
+						 ZifState		*state,
+						 GError			**error);
+	GPtrArray	*(*get_conflicts)	(ZifMd			*md,
+						 ZifPackage		*package,
+						 ZifState		*state,
+						 GError			**error);
 };
 
 /* types of metadata */
@@ -243,6 +259,22 @@ GPtrArray	*zif_md_get_changelog			(ZifMd		*md,
 							 ZifState	*state,
 							 GError		**error);
 GPtrArray	*zif_md_get_files			(ZifMd		*md,
+							 ZifPackage	*package,
+							 ZifState	*state,
+							 GError		**error);
+GPtrArray	*zif_md_get_requires			(ZifMd		*md,
+							 ZifPackage	*package,
+							 ZifState	*state,
+							 GError		**error);
+GPtrArray	*zif_md_get_provides			(ZifMd		*md,
+							 ZifPackage	*package,
+							 ZifState	*state,
+							 GError		**error);
+GPtrArray	*zif_md_get_obsoletes			(ZifMd		*md,
+							 ZifPackage	*package,
+							 ZifState	*state,
+							 GError		**error);
+GPtrArray	*zif_md_get_conflicts			(ZifMd		*md,
 							 ZifPackage	*package,
 							 ZifState	*state,
 							 GError		**error);

@@ -3220,6 +3220,94 @@ out:
 }
 
 /**
+ * zif_store_remote_get_requires:
+ **/
+GPtrArray *
+zif_store_remote_get_requires (ZifStoreRemote *store, ZifPackage *package,
+			       ZifState *state, GError **error)
+{
+	ZifMd *primary;
+	GPtrArray *array = NULL;
+
+	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+	primary = zif_store_remote_get_primary (store, error);
+	if (primary == NULL)
+		goto out;
+	array = zif_md_get_requires (primary, package, state, error);
+out:
+	return array;
+}
+
+/**
+ * zif_store_remote_get_provides:
+ **/
+GPtrArray *
+zif_store_remote_get_provides (ZifStoreRemote *store, ZifPackage *package,
+			    ZifState *state, GError **error)
+{
+	ZifMd *primary;
+	GPtrArray *array = NULL;
+
+	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+	primary = zif_store_remote_get_primary (store, error);
+	if (primary == NULL)
+		goto out;
+	array = zif_md_get_provides (primary, package, state, error);
+out:
+	return array;
+}
+
+/**
+ * zif_store_remote_get_obsoletes:
+ **/
+GPtrArray *
+zif_store_remote_get_obsoletes (ZifStoreRemote *store, ZifPackage *package,
+			        ZifState *state, GError **error)
+{
+	ZifMd *primary;
+	GPtrArray *array = NULL;
+
+	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+	primary = zif_store_remote_get_primary (store, error);
+	if (primary == NULL)
+		goto out;
+	array = zif_md_get_obsoletes (primary, package, state, error);
+out:
+	return array;
+}
+
+/**
+ * zif_store_remote_get_conflicts:
+ **/
+GPtrArray *
+zif_store_remote_get_conflicts (ZifStoreRemote *store, ZifPackage *package,
+			        ZifState *state, GError **error)
+{
+	ZifMd *primary;
+	GPtrArray *array = NULL;
+
+	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+	primary = zif_store_remote_get_primary (store, error);
+	if (primary == NULL)
+		goto out;
+	array = zif_md_get_conflicts (primary, package, state, error);
+out:
+	return array;
+}
+
+/**
  * zif_store_remote_file_monitor_cb:
  **/
 static void

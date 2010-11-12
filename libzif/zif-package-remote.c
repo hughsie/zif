@@ -232,6 +232,46 @@ zif_package_remote_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, ZifS
 		/* set for this package */
 		zif_package_set_files (pkg, array);
 
+	} else if (type == ZIF_PACKAGE_ENSURE_TYPE_REQUIRES) {
+
+		/* get the file list for this package */
+		array = zif_store_remote_get_requires (pkg_remote->priv->store_remote, pkg, state, error);
+		if (array == NULL)
+			goto out;
+
+		/* set for this package */
+		zif_package_set_requires (pkg, array);
+
+	} else if (type == ZIF_PACKAGE_ENSURE_TYPE_PROVIDES) {
+
+		/* get the file list for this package */
+		array = zif_store_remote_get_provides (pkg_remote->priv->store_remote, pkg, state, error);
+		if (array == NULL)
+			goto out;
+
+		/* set for this package */
+		zif_package_set_provides (pkg, array);
+
+	} else if (type == ZIF_PACKAGE_ENSURE_TYPE_OBSOLETES) {
+
+		/* get the file list for this package */
+		array = zif_store_remote_get_obsoletes (pkg_remote->priv->store_remote, pkg, state, error);
+		if (array == NULL)
+			goto out;
+
+		/* set for this package */
+		zif_package_set_obsoletes (pkg, array);
+
+	} else if (type == ZIF_PACKAGE_ENSURE_TYPE_CONFLICTS) {
+
+		/* get the file list for this package */
+		array = zif_store_remote_get_conflicts (pkg_remote->priv->store_remote, pkg, state, error);
+		if (array == NULL)
+			goto out;
+
+		/* set for this package */
+		zif_package_set_conflicts (pkg, array);
+
 	} else if (type == ZIF_PACKAGE_ENSURE_TYPE_GROUP) {
 		/* group */
 		text = zif_package_get_category (pkg, state, error);

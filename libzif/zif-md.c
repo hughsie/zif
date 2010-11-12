@@ -1164,13 +1164,169 @@ zif_md_get_files (ZifMd *md, ZifPackage *package, ZifState *state, GError **erro
 		g_set_error (error,
 			     ZIF_MD_ERROR,
 			     ZIF_MD_ERROR_NO_SUPPORT,
-			     "operation cannot be performed on md type %s",
+			     "get-files operation cannot be performed on md type %s",
 			     zif_md_kind_to_text (zif_md_get_kind (md)));
 		goto out;
 	}
 
 	/* do subclassed action */
 	array = klass->get_files (md, package, state, error);
+out:
+	return array;
+}
+
+/**
+ * zif_md_get_provides:
+ * @md: the #ZifMd object
+ * @package: the %ZifPackage
+ * @state: a #ZifState to use for progress reporting
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Gets the provides for a specific package.
+ *
+ * Return value: an array of #ZifDepend's, free with g_ptr_array_unref()
+ *
+ * Since: 0.1.3
+ **/
+GPtrArray *
+zif_md_get_provides (ZifMd *md, ZifPackage *package, ZifState *state, GError **error)
+{
+	GPtrArray *array = NULL;
+	ZifMdClass *klass = ZIF_MD_GET_CLASS (md);
+
+	g_return_val_if_fail (ZIF_IS_MD (md), NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+	/* no support */
+	if (klass->get_provides == NULL) {
+		g_set_error (error,
+			     ZIF_MD_ERROR,
+			     ZIF_MD_ERROR_NO_SUPPORT,
+			     "get provides operation cannot be performed on md type %s",
+			     zif_md_kind_to_text (zif_md_get_kind (md)));
+		goto out;
+	}
+
+	/* do subclassed action */
+	array = klass->get_provides (md, package, state, error);
+out:
+	return array;
+}
+
+/**
+ * zif_md_get_requires:
+ * @md: the #ZifMd object
+ * @package: the %ZifPackage
+ * @state: a #ZifState to use for progress reporting
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Gets the requires for a specific package.
+ *
+ * Return value: an array of #ZifDepend's, free with g_ptr_array_unref()
+ *
+ * Since: 0.1.3
+ **/
+GPtrArray *
+zif_md_get_requires (ZifMd *md, ZifPackage *package, ZifState *state, GError **error)
+{
+	GPtrArray *array = NULL;
+	ZifMdClass *klass = ZIF_MD_GET_CLASS (md);
+
+	g_return_val_if_fail (ZIF_IS_MD (md), NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+	/* no support */
+	if (klass->get_requires == NULL) {
+		g_set_error (error,
+			     ZIF_MD_ERROR,
+			     ZIF_MD_ERROR_NO_SUPPORT,
+			     "get requires operation cannot be performed on md type %s",
+			     zif_md_kind_to_text (zif_md_get_kind (md)));
+		goto out;
+	}
+
+	/* do subclassed action */
+	array = klass->get_requires (md, package, state, error);
+out:
+	return array;
+}
+
+/**
+ * zif_md_get_obsoletes:
+ * @md: the #ZifMd object
+ * @package: the %ZifPackage
+ * @state: a #ZifState to use for progress reporting
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Gets the obsoletes for a specific package.
+ *
+ * Return value: an array of #ZifDepend's, free with g_ptr_array_unref()
+ *
+ * Since: 0.1.3
+ **/
+GPtrArray *
+zif_md_get_obsoletes (ZifMd *md, ZifPackage *package, ZifState *state, GError **error)
+{
+	GPtrArray *array = NULL;
+	ZifMdClass *klass = ZIF_MD_GET_CLASS (md);
+
+	g_return_val_if_fail (ZIF_IS_MD (md), NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+	/* no support */
+	if (klass->get_obsoletes == NULL) {
+		g_set_error (error,
+			     ZIF_MD_ERROR,
+			     ZIF_MD_ERROR_NO_SUPPORT,
+			     "get obsoletes operation cannot be performed on md type %s",
+			     zif_md_kind_to_text (zif_md_get_kind (md)));
+		goto out;
+	}
+
+	/* do subclassed action */
+	array = klass->get_obsoletes (md, package, state, error);
+out:
+	return array;
+}
+
+/**
+ * zif_md_get_conflicts:
+ * @md: the #ZifMd object
+ * @package: the %ZifPackage
+ * @state: a #ZifState to use for progress reporting
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Gets the conflicts for a specific package.
+ *
+ * Return value: an array of #ZifDepend's, free with g_ptr_array_unref()
+ *
+ * Since: 0.1.3
+ **/
+GPtrArray *
+zif_md_get_conflicts (ZifMd *md, ZifPackage *package, ZifState *state, GError **error)
+{
+	GPtrArray *array = NULL;
+	ZifMdClass *klass = ZIF_MD_GET_CLASS (md);
+
+	g_return_val_if_fail (ZIF_IS_MD (md), NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+	/* no support */
+	if (klass->get_conflicts == NULL) {
+		g_set_error (error,
+			     ZIF_MD_ERROR,
+			     ZIF_MD_ERROR_NO_SUPPORT,
+			     "get conflicts operation cannot be performed on md type %s",
+			     zif_md_kind_to_text (zif_md_get_kind (md)));
+		goto out;
+	}
+
+	/* do subclassed action */
+	array = klass->get_conflicts (md, package, state, error);
 out:
 	return array;
 }
