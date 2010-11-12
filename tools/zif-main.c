@@ -453,7 +453,8 @@ zif_transaction_run (ZifTransaction *transaction, ZifState *state, GError **erro
 	if (!ret)
 		goto out;
 out:
-	g_ptr_array_unref (store_array_remote);
+	if (store_array_remote != NULL)
+		g_ptr_array_unref (store_array_remote);
 	return ret;
 }
 
@@ -469,8 +470,8 @@ zif_cmd_install (ZifTransaction *transaction, const gchar *package_name, ZifStat
 	GPtrArray *array = NULL;
 	ZifPackage *package;
 	ZifState *state_local;
-	GPtrArray *store_array_local;
-	GPtrArray *store_array_remote;
+	GPtrArray *store_array_local = NULL;
+	GPtrArray *store_array_remote = NULL;
 	const gchar *to_array[] = { NULL, NULL };
 
 	/* setup state */
@@ -496,11 +497,13 @@ zif_cmd_install (ZifTransaction *transaction, const gchar *package_name, ZifStat
 	to_array[0] = package_name;
 	array = zif_store_array_resolve (store_array_local, (gchar**)to_array, state_local, &error_local);
 	if (array == NULL) {
+		ret = FALSE;
 		g_set_error (error, 1, 0, "failed to get results: %s\n", error_local->message);
 		g_error_free (error_local);
 		goto out;
 	}
 	if (array->len > 0) {
+		ret = FALSE;
 		g_set_error (error, 1, 0, "package already installed\n");
 		goto out;
 	}
@@ -529,11 +532,13 @@ zif_cmd_install (ZifTransaction *transaction, const gchar *package_name, ZifStat
 	to_array[0] = package_name;
 	array = zif_store_array_resolve (store_array_remote, (gchar**)to_array, state_local, &error_local);
 	if (array == NULL) {
+		ret = FALSE;
 		g_set_error (error, 1, 0, "failed to get results: %s\n", error_local->message);
 		g_error_free (error_local);
 		goto out;
 	}
 	if (array->len == 0) {
+		ret = FALSE;
 		g_set_error (error, 1, 0, "could not find package in remote source\n");
 		goto out;
 	}
@@ -568,7 +573,8 @@ out:
 	if (array != NULL)
 		g_ptr_array_unref (array);
 	g_ptr_array_unref (store_array_local);
-	g_ptr_array_unref (store_array_remote);
+	if (store_array_remote != NULL)
+		g_ptr_array_unref (store_array_remote);
 	return ret;
 }
 
@@ -609,15 +615,18 @@ zif_cmd_update (ZifTransaction *transaction, const gchar *package_name, ZifState
 	to_array[0] = package_name;
 	array = zif_store_array_resolve (store_array_local, (gchar**)to_array, state_local, &error_local);
 	if (array == NULL) {
+		ret = FALSE;
 		g_set_error (error, 1, 0, "failed to get results: %s\n", error_local->message);
 		g_error_free (error_local);
 		goto out;
 	}
 	if (array->len == 0) {
+		ret = FALSE;
 		g_set_error (error, 1, 0, "package not installed\n");
 		goto out;
 	}
 	if (array->len > 1) {
+		ret = FALSE;
 		g_set_error (error, 1, 0, "more than one package matches\n");
 		goto out;
 	}
@@ -693,15 +702,18 @@ zif_cmd_remove (ZifTransaction *transaction, const gchar *package_name, ZifState
 	to_array[0] = package_name;
 	array = zif_store_array_resolve (store_array_local, (gchar**)to_array, state_local, &error_local);
 	if (array == NULL) {
+		ret = FALSE;
 		g_set_error (error, 1, 0, "failed to get results: %s\n", error_local->message);
 		g_error_free (error_local);
 		goto out;
 	}
 	if (array->len == 0) {
+		ret = FALSE;
 		g_set_error (error, 1, 0, "package not installed\n");
 		goto out;
 	}
 	if (array->len > 1) {
+		ret = FALSE;
 		g_set_error (error, 1, 0, "more than one package matches\n");
 		goto out;
 	}
@@ -1397,10 +1409,6 @@ main (int argc, char *argv[])
 		pk_progress_bar_end (progressbar);
 		goto out;
 	}
-	if (g_strcmp0 (mode, "erase") == 0) {
-		g_print ("not yet supported\n");
-		goto out;
-	}
 	if (g_strcmp0 (mode, "get-files") == 0) {
 		GPtrArray *files;
 
@@ -1619,8 +1627,6 @@ main (int argc, char *argv[])
 
 		/* no more progressbar */
 		pk_progress_bar_end (progressbar);
-
-		g_print ("not yet supported\n");
 		goto out;
 	}
 	if (g_strcmp0 (mode, "remove") == 0) {
