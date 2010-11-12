@@ -565,6 +565,8 @@ zif_state_action_to_string (ZifStateAction action)
 		return "loading-repos";
 	if(action == ZIF_STATE_ACTION_DECOMPRESSING)
 		return "decompressing";
+	if (action == ZIF_STATE_ACTION_DEPSOLVING)
+		return "depsolving";
 	if (action == ZIF_STATE_ACTION_UNKNOWN)
 		return "unknown";
 	return NULL;

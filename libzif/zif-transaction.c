@@ -2483,9 +2483,12 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 		 transaction->priv->update->len,
 		 transaction->priv->remove->len);
 
+	/* FIXME: set the number of steps and do progress */
+	zif_state_action_start (state, ZIF_STATE_ACTION_DEPSOLVING, NULL);
+
 	/* whilst there are unresolved dependencies, keep trying */
 	data = g_new0 (ZifTransactionResolve, 1);
-	data->state = state;
+	data->state = zif_state_new (); /* <-- used as we can't do progress in a sane way */
 	data->transaction = transaction;
 	data->unresolved_dependencies = TRUE;
 	while (data->unresolved_dependencies) {
@@ -2637,7 +2640,10 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 	zif_transaction_show_array ("removing", transaction->priv->remove);
 	ret = TRUE;
 out:
-	g_free (data);
+	if (data != NULL) {
+		g_object_unref (data->state);
+		g_free (data);
+	}
 	return ret;
 }
 
