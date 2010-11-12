@@ -358,102 +358,383 @@ out:
 }
 
 /**
- * zif_cmd_install:
+ * zif_transaction_run:
  **/
 static gboolean
-zif_cmd_install (const gchar *package_name, ZifState *state)
+zif_transaction_run (ZifTransaction *transaction, ZifState *state, GError **error)
 {
-	gboolean ret;
-	GError *error = NULL;
-	GPtrArray *array = NULL;
-	ZifPackage *package;
+	GPtrArray *store_array_remote = NULL;
 	ZifState *state_local;
-	GPtrArray *store_array;
-	const gchar *to_array[] = { NULL, NULL };
+	guint i, j;
+	gboolean ret;
+	GPtrArray *array_tmp;
+	GError *error_local = NULL;
+	ZifPackage *package;
 
-	/* setup state */
-	zif_state_set_number_steps (state, 3);
+	/* setup state:
+	 * 1. add remote stores
+	 * 2. resolve
+	 * 3. prepare
+	 * 4. commit
+	 */
+	zif_state_set_number_steps (state, 4);
 
-	/* add all stores */
-	store_array = zif_store_array_new ();
+	/* get remote enabled stores */
+	store_array_remote = zif_store_array_new ();
 	state_local = zif_state_get_child (state);
-	ret = zif_store_array_add_local (store_array, state_local, &error);
+	ret = zif_store_array_add_remote_enabled (store_array_remote, state_local, &error_local);
 	if (!ret) {
-		g_print ("failed to add local store: %s\n", error->message);
-		g_error_free (error);
+		g_set_error (error, 1, 0, "failed to add remote: %s\n", error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* add remote stores */
+	zif_transaction_set_stores_remote (transaction, store_array_remote);
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* resolve */
+	state_local = zif_state_get_child (state);
+	ret = zif_transaction_resolve (transaction, state_local, &error_local);
+	if (!ret) {
+		g_set_error (error, 1, 0, "failed to resolve update: %s", error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* print what's going to happen */
+	g_print ("What's going to happen:\n");
+	for (i=0; i<ZIF_TRANSACTION_REASON_LAST; i++) {
+		array_tmp = zif_transaction_get_array_for_reason (transaction, i);
+		if (array_tmp->len > 0)
+			g_print ("  %s:\n", zif_transaction_reason_to_string (i));
+		for (j=0; j<array_tmp->len; j++) {
+			package = g_ptr_array_index (array_tmp, j);
+			g_print ("  %i.\t%s\n", j+1, zif_package_get_id (package));
+		}
+		g_ptr_array_unref (array_tmp);
+	}
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* prepare */
+	state_local = zif_state_get_child (state);
+	ret = zif_transaction_prepare (transaction, state_local, &error_local);
+	if (!ret) {
+		g_set_error (error, 1, 0, "failed to resolve update: %s", error_local->message);
+		g_error_free (error_local);
 		goto out;
 	}
 
 	/* this section done */
-	ret = zif_state_done (state, &error);
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* commit */
+	state_local = zif_state_get_child (state);
+	ret = zif_transaction_commit (transaction, state_local, &error_local);
+	if (!ret) {
+		g_set_error (error, 1, 0, "failed to resolve update: %s", error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+out:
+	g_ptr_array_unref (store_array_remote);
+	return ret;
+}
+
+
+/**
+ * zif_cmd_install:
+ **/
+static gboolean
+zif_cmd_install (ZifTransaction *transaction, const gchar *package_name, ZifState *state, GError **error)
+{
+	gboolean ret;
+	GError *error_local = NULL;
+	GPtrArray *array = NULL;
+	ZifPackage *package;
+	ZifState *state_local;
+	GPtrArray *store_array_local;
+	GPtrArray *store_array_remote;
+	const gchar *to_array[] = { NULL, NULL };
+
+	/* setup state */
+	zif_state_set_number_steps (state, 5);
+
+	/* add all stores */
+	store_array_local = zif_store_array_new ();
+	state_local = zif_state_get_child (state);
+	ret = zif_store_array_add_local (store_array_local, state_local, &error_local);
+	if (!ret) {
+		g_set_error (error, 1, 0, "failed to add local store: %s\n", error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* this section done */
+	ret = zif_state_done (state, error);
 	if (!ret)
 		goto out;
 
 	/* check not already installed */
 	state_local = zif_state_get_child (state);
 	to_array[0] = package_name;
-	array = zif_store_array_resolve (store_array, (gchar**)to_array, state_local, &error);
+	array = zif_store_array_resolve (store_array_local, (gchar**)to_array, state_local, &error_local);
 	if (array == NULL) {
-		g_print ("failed to get results: %s\n", error->message);
-		g_error_free (error);
+		g_set_error (error, 1, 0, "failed to get results: %s\n", error_local->message);
+		g_error_free (error_local);
 		goto out;
 	}
 	if (array->len > 0) {
-		g_print ("package already installed\n");
+		g_set_error (error, 1, 0, "package already installed\n");
 		goto out;
 	}
-	if (array != NULL) {
-		g_ptr_array_unref (array);
-	}
-	array = NULL;
-	g_ptr_array_unref (store_array);
 
 	/* this section done */
-	ret = zif_state_done (state, &error);
+	ret = zif_state_done (state, error);
 	if (!ret)
 		goto out;
 
 	/* check available */
-	store_array = zif_store_array_new ();
+	store_array_remote = zif_store_array_new ();
 	state_local = zif_state_get_child (state);
-	ret = zif_store_array_add_remote_enabled (store_array, state_local, &error);
+	ret = zif_store_array_add_remote_enabled (store_array_remote, state_local, &error_local);
 	if (!ret) {
-		g_print ("failed to add enabled stores: %s\n", error->message);
-		g_error_free (error);
+		g_set_error (error, 1, 0, "failed to add enabled stores: %s\n", error_local->message);
+		g_error_free (error_local);
 		goto out;
 	}
 
 	/* this section done */
-	ret = zif_state_done (state, &error);
+	ret = zif_state_done (state, error);
 	if (!ret)
 		goto out;
 
 	/* check we can find a package of this name */
 	to_array[0] = package_name;
-	array = zif_store_array_resolve (store_array, (gchar**)to_array, state_local, &error);
+	array = zif_store_array_resolve (store_array_remote, (gchar**)to_array, state_local, &error_local);
 	if (array == NULL) {
-		g_print ("failed to get results: %s\n", error->message);
-		g_error_free (error);
+		g_set_error (error, 1, 0, "failed to get results: %s\n", error_local->message);
+		g_error_free (error_local);
 		goto out;
 	}
 	if (array->len == 0) {
-		g_print ("could not find package in remote source\n");
+		g_set_error (error, 1, 0, "could not find package in remote source\n");
 		goto out;
 	}
 
 	/* this section done */
-	ret = zif_state_done (state, &error);
+	ret = zif_state_done (state, error);
 	if (!ret)
 		goto out;
 
 	/* install this package, TODO: what if > 1? */
 	package = g_ptr_array_index (array, 0);
-out:
-	if (array != NULL) {
-		g_ptr_array_unref (array);
+	ret = zif_transaction_add_install (transaction, package, &error_local);
+	if (!ret) {
+		g_set_error (error, 1, 0, "failed to add update %s: %s",
+			 zif_package_get_name (package),
+			 error_local->message);
+		g_error_free (error_local);
+		goto out;
 	}
-	g_ptr_array_unref (store_array);
-	g_object_unref (state_local);
+
+	/* run what we've got */
+	state_local = zif_state_get_child (state);
+	ret = zif_transaction_run (transaction, state_local, error);
+	if (!ret)
+		goto out;
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+out:
+	if (array != NULL)
+		g_ptr_array_unref (array);
+	g_ptr_array_unref (store_array_local);
+	g_ptr_array_unref (store_array_remote);
+	return ret;
+}
+
+/**
+ * zif_cmd_update:
+ **/
+static gboolean
+zif_cmd_update (ZifTransaction *transaction, const gchar *package_name, ZifState *state, GError **error)
+{
+	gboolean ret;
+	GError *error_local = NULL;
+	GPtrArray *array = NULL;
+	ZifPackage *package;
+	ZifState *state_local;
+	GPtrArray *store_array_local = NULL;
+	const gchar *to_array[] = { NULL, NULL };
+
+	/* setup state */
+	zif_state_set_number_steps (state, 3);
+
+	/* add local store */
+	store_array_local = zif_store_array_new ();
+	state_local = zif_state_get_child (state);
+	ret = zif_store_array_add_local (store_array_local, state_local, &error_local);
+	if (!ret) {
+		g_set_error (error, 1, 0, "failed to add local store: %s\n", error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* check not already installed */
+	state_local = zif_state_get_child (state);
+	to_array[0] = package_name;
+	array = zif_store_array_resolve (store_array_local, (gchar**)to_array, state_local, &error_local);
+	if (array == NULL) {
+		g_set_error (error, 1, 0, "failed to get results: %s\n", error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+	if (array->len == 0) {
+		g_set_error (error, 1, 0, "package not installed\n");
+		goto out;
+	}
+	if (array->len > 1) {
+		g_set_error (error, 1, 0, "more than one package matches\n");
+		goto out;
+	}
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* install this package, TODO: what if > 1? */
+	package = g_ptr_array_index (array, 0);
+	ret = zif_transaction_add_update (transaction, package, &error_local);
+	if (!ret) {
+		g_set_error (error, 1, 0, "failed to add update %s: %s",
+			 zif_package_get_name (package),
+			 error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* run what we've got */
+	state_local = zif_state_get_child (state);
+	ret = zif_transaction_run (transaction, state_local, error);
+	if (!ret)
+		goto out;
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+out:
+	if (array != NULL)
+		g_ptr_array_unref (array);
+	g_ptr_array_unref (store_array_local);
+	return ret;
+}
+
+
+/**
+ * zif_cmd_remove:
+ **/
+static gboolean
+zif_cmd_remove (ZifTransaction *transaction, const gchar *package_name, ZifState *state, GError **error)
+{
+	gboolean ret;
+	GError *error_local = NULL;
+	GPtrArray *array = NULL;
+	ZifPackage *package;
+	ZifState *state_local;
+	GPtrArray *store_array_local = NULL;
+	const gchar *to_array[] = { NULL, NULL };
+
+	/* setup state */
+	zif_state_set_number_steps (state, 6);
+
+	/* add local store */
+	store_array_local = zif_store_array_new ();
+	state_local = zif_state_get_child (state);
+	ret = zif_store_array_add_local (store_array_local, state_local, &error_local);
+	if (!ret) {
+		g_set_error (error, 1, 0, "failed to add local store: %s\n", error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* check not already installed */
+	state_local = zif_state_get_child (state);
+	to_array[0] = package_name;
+	array = zif_store_array_resolve (store_array_local, (gchar**)to_array, state_local, &error_local);
+	if (array == NULL) {
+		g_set_error (error, 1, 0, "failed to get results: %s\n", error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+	if (array->len == 0) {
+		g_set_error (error, 1, 0, "package not installed\n");
+		goto out;
+	}
+	if (array->len > 1) {
+		g_set_error (error, 1, 0, "more than one package matches\n");
+		goto out;
+	}
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* install this package, TODO: what if > 1? */
+	package = g_ptr_array_index (array, 0);
+	ret = zif_transaction_add_remove (transaction, package, &error_local);
+	if (!ret) {
+		g_set_error (error, 1, 0, "failed to add remove %s: %s",
+			 zif_package_get_name (package),
+			 error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* run what we've got */
+	state_local = zif_state_get_child (state);
+	ret = zif_transaction_run (transaction, state_local, error);
+	if (!ret)
+		goto out;
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+out:
+	if (array != NULL)
+		g_ptr_array_unref (array);
+	g_ptr_array_unref (store_array_local);
 	return ret;
 }
 
@@ -501,107 +782,6 @@ zif_cmd_refresh_cache (ZifState *state, gboolean force)
 		goto out;
 out:
 	g_ptr_array_unref (store_array);
-	return ret;
-}
-
-/**
- * zif_cmd_update:
- **/
-static gboolean
-zif_cmd_update (const gchar *package_name, ZifState *state)
-{
-	gboolean ret;
-	GError *error = NULL;
-	GPtrArray *array = NULL;
-	ZifPackage *package;
-	ZifState *state_local;
-	GPtrArray *store_array;
-	const gchar *to_array[] = { NULL, NULL };
-
-	/* setup state */
-	zif_state_set_number_steps (state, 4);
-
-	/* add all stores */
-	store_array = zif_store_array_new ();
-	state_local = zif_state_get_child (state);
-	ret = zif_store_array_add_local (store_array, state_local, &error);
-	if (!ret) {
-		g_print ("failed to add local store: %s\n", error->message);
-		g_error_free (error);
-		goto out;
-	}
-
-	/* this section done */
-	ret = zif_state_done (state, &error);
-	if (!ret)
-		goto out;
-
-	/* check not already installed */
-	state_local = zif_state_get_child (state);
-	to_array[0] = package_name;
-	array = zif_store_array_resolve (store_array, (gchar**)to_array, state_local, &error);
-	if (array == NULL) {
-		g_print ("failed to get results: %s\n", error->message);
-		g_error_free (error);
-		goto out;
-	}
-	if (array->len == 0) {
-		g_print ("package not already installed\n");
-		goto out;
-	}
-	if (array != NULL) {
-		g_ptr_array_unref (array);
-	}
-	array = NULL;
-	g_ptr_array_unref (store_array);
-
-	/* this section done */
-	ret = zif_state_done (state, &error);
-	if (!ret)
-		goto out;
-
-	/* check available */
-	store_array = zif_store_array_new ();
-	state_local = zif_state_get_child (state);
-	ret = zif_store_array_add_remote_enabled (store_array, state_local, &error);
-	if (!ret) {
-		g_print ("failed to add enabled stores: %s\n", error->message);
-		g_error_free (error);
-		goto out;
-	}
-
-	/* this section done */
-	ret = zif_state_done (state, &error);
-	if (!ret)
-		goto out;
-
-	/* check we can find a package of this name */
-	state_local = zif_state_get_child (state);
-	to_array[0] = package_name;
-	array = zif_store_array_resolve (store_array, (gchar**)to_array, state_local, &error);
-	if (array == NULL) {
-		g_print ("failed to get results: %s\n", error->message);
-		g_error_free (error);
-		goto out;
-	}
-	if (array->len == 0) {
-		g_print ("could not find package in remote source\n");
-		goto out;
-	}
-
-	/* this section done */
-	ret = zif_state_done (state, &error);
-	if (!ret)
-		goto out;
-
-	/* update this package, TODO: check for newer? */
-	package = g_ptr_array_index (array, 0);
-out:
-	if (array != NULL) {
-		g_ptr_array_unref (array);
-	}
-	g_ptr_array_unref (store_array);
-	g_object_unref (state_local);
 	return ret;
 }
 
@@ -772,16 +952,19 @@ main (int argc, char *argv[])
 		"  get-updates     Check for available package updates\n"
 		"  get-upgrades    Check for newer operating system versions\n"
 		"  help            Display a helpful usage message\n"
+		"  install         Install a package\n"
 		"  refresh-cache   Generate the metadata cache\n"
-		"  repo-list       Display the configured software repositories\n"
-		"  repo-enable     Enable a specific software repository\n"
+		"  remove          Remove a package\n"
 		"  repo-disable    Disable a specific software repository\n"
+		"  repo-enable     Enable a specific software repository\n"
+		"  repo-list       Display the configured software repositories\n"
 		"  resolve         Find a given package name\n"
 		"  search-category Search package details for the given category\n"
 		"  search-details  Search package details for the given string\n"
 		"  search-file     Search packages for the given filename\n"
 		"  search-group    Search packages in the given group\n"
 		"  search-name     Search package name for the given string\n"
+		"  update          Update a package to the newest available version\n"
 		"  upgrade         Upgrade the operating system to a newer version\n"
 		"  what-conflicts  Find what package conflicts with the given value\n"
 		"  what-obsoletes  Find what package obsoletes the given value\n"
@@ -1426,12 +1609,34 @@ main (int argc, char *argv[])
 			goto out;
 		}
 		pk_progress_bar_start (progressbar, "Installing");
-		zif_cmd_install (value, state);
+		ret = zif_cmd_install (transaction, value, state, &error);
+		if (!ret) {
+			g_print ("failed: %s\n", error->message);
+			g_error_free (error);
+			goto out;
+		}
 
 		/* no more progressbar */
 		pk_progress_bar_end (progressbar);
 
 		g_print ("not yet supported\n");
+		goto out;
+	}
+	if (g_strcmp0 (mode, "remove") == 0) {
+		if (value == NULL) {
+			g_print ("specify a package name\n");
+			goto out;
+		}
+		pk_progress_bar_start (progressbar, "Removing");
+		ret = zif_cmd_remove (transaction, value, state, &error);
+		if (!ret) {
+			g_print ("failed: %s\n", error->message);
+			g_error_free (error);
+			goto out;
+		}
+
+		/* no more progressbar */
+		pk_progress_bar_end (progressbar);
 		goto out;
 	}
 	if (g_strcmp0 (mode, "get-packages") == 0) {
@@ -2263,9 +2468,13 @@ main (int argc, char *argv[])
 			goto out;
 		}
 		pk_progress_bar_start (progressbar, "Updating");
-		zif_cmd_update (value, state);
+		ret = zif_cmd_update (transaction, value, state, &error);
+		if (!ret) {
+			g_print ("%s\n", error->message);
+			g_error_free (error);
+			goto out;
+		}
 		pk_progress_bar_end (progressbar);
-		g_print ("not yet supported\n");
 		goto out;
 	}
 	if (g_strcmp0 (mode, "get-upgrades") == 0) {
