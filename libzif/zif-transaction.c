@@ -390,6 +390,7 @@ zif_transaction_add_install (ZifTransaction *transaction,
 static gboolean
 zif_transaction_add_update_internal (ZifTransaction *transaction,
 				     ZifPackage *package,
+				     ZifPackage *update_package,
 				     ZifTransactionReason reason,
 				     GError **error)
 {
@@ -398,7 +399,7 @@ zif_transaction_add_update_internal (ZifTransaction *transaction,
 	/* add to update */
 	ret = zif_transaction_add_to_array (transaction->priv->update,
 					    package,
-					    NULL,
+					    update_package,
 					    reason);
 	if (!ret) {
 		g_set_error (error,
@@ -409,9 +410,10 @@ zif_transaction_add_update_internal (ZifTransaction *transaction,
 		goto out;
 	}
 
-	g_debug ("Add UPDATE %s [%s]",
+	g_debug ("Add UPDATE %s [%s] (with update package %s)",
 		 zif_package_get_id (package),
-		 zif_transaction_reason_to_string (reason));
+		 zif_transaction_reason_to_string (reason),
+		 update_package != NULL ? zif_package_get_id (update_package) : "none");
 out:
 	return ret;
 }
@@ -440,6 +442,7 @@ zif_transaction_add_update (ZifTransaction *transaction, ZifPackage *package, GE
 	/* add to update */
 	ret = zif_transaction_add_update_internal (transaction,
 						   package,
+						   NULL,
 						   ZIF_TRANSACTION_REASON_USER_ACTION,
 						   error);
 	return ret;
@@ -1573,6 +1576,7 @@ zif_transaction_resolve_remove_require (ZifTransactionResolve *data,
 		if (item->reason == ZIF_TRANSACTION_REASON_UPDATE) {
 			ret = zif_transaction_add_update_internal (data->transaction,
 								   package,
+								   item->package,
 								   item->reason,
 								   error);
 			if (!ret)
