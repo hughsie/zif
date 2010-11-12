@@ -2020,6 +2020,69 @@ out:
 	return ret;
 }
 
+
+/**
+ * zif_transaction_get_package_conflict_from_array:
+ **/
+static gboolean
+zif_transaction_get_package_conflict_from_array (GPtrArray *array,
+						 ZifDepend *depend,
+						 ZifPackage **package,
+						 ZifState *state,
+						 GError **error)
+{
+	gboolean ret = TRUE;
+	guint i;
+	ZifTransactionItem *item;
+	GPtrArray *satisfy_array;
+	ZifDepend *satisfies = NULL;
+	GError *error_local = NULL;
+
+	/* interate through the array */
+	satisfy_array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
+	for (i=0; i<array->len; i++) {
+		item = g_ptr_array_index (array, i);
+
+		/* does this match */
+		ret = zif_transaction_package_conflicts (item->package, depend, &satisfies, state, error);
+		if (!ret)
+			goto out;
+
+		/* gotcha, but keep looking */
+		if (satisfies != NULL) {
+			g_ptr_array_add (satisfy_array, g_object_ref (item->package));
+			g_object_unref (satisfies);
+		}
+	}
+
+	/* print what we've got */
+	g_debug ("conflict %s has %i matches",
+		 zif_depend_get_description (depend),
+		 satisfy_array->len);
+
+	/* success, but no results */
+	if (satisfy_array->len == 0) {
+		*package = NULL;
+		goto out;
+	}
+
+	/* return the newest */
+	*package = zif_package_array_get_newest (satisfy_array, &error_local);
+	if (*package == NULL) {
+		ret = FALSE;
+		g_set_error (error,
+			     ZIF_TRANSACTION_ERROR,
+			     ZIF_TRANSACTION_ERROR_FAILED,
+			     "failed to get newest: %s",
+			     error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+out:
+	g_ptr_array_unref (satisfy_array);
+	return ret;
+}
+
 /**
  * zif_transaction_get_package_conflict_from_store:
  *
@@ -2131,6 +2194,17 @@ zif_transaction_resolve_conflicts_item (ZifTransactionResolve *data,
 			goto out;
 		}
 
+		/* get packages that conflict with this in the install array */
+		if (conflicting == NULL) {
+			ret = zif_transaction_get_package_conflict_from_array (data->transaction->priv->install,
+									       depend, &conflicting,
+									       data->state, error);
+			if (!ret) {
+				g_assert (error == NULL || *error != NULL);
+				goto out;
+			}
+		}
+
 		/* something conflicts with the package */
 		if (conflicting != NULL) {
 			ret = FALSE;
@@ -2162,7 +2236,18 @@ zif_transaction_resolve_conflicts_item (ZifTransactionResolve *data,
 			goto out;
 		}
 
-		/* we conflicts with something */
+		/* does this install conflict with another package in install array */
+		if (conflicting == NULL) {
+			ret = zif_transaction_get_package_provide_from_array (data->transaction->priv->install,
+									      depend, &conflicting,
+									      data->state, error);
+			if (!ret) {
+				g_assert (error == NULL || *error != NULL);
+				goto out;
+			}
+		}
+
+		/* we conflict with something */
 		if (conflicting != NULL) {
 			ret = FALSE;
 			g_set_error (error,
