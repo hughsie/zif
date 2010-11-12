@@ -310,6 +310,12 @@ zif_transaction_func (void)
 	g_assert_cmpint (reason, ==, ZIF_TRANSACTION_REASON_INSTALL_USER_ACTION);
 	g_ptr_array_unref (packages);
 
+	/* prepare */
+	zif_state_reset (state);
+	ret = zif_transaction_prepare (transaction, state, &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
 	g_ptr_array_unref (remotes);
 	g_object_unref (state);
 	g_object_unref (local);

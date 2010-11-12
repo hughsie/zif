@@ -53,6 +53,8 @@
 #include "zif-depend.h"
 #include "zif-store.h"
 #include "zif-store-array.h"
+#include "zif-package-remote.h"
+#include "zif-package-meta.h"
 
 #define ZIF_TRANSACTION_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_TRANSACTION, ZifTransactionPrivate))
 
@@ -2655,6 +2657,14 @@ gboolean
 zif_transaction_prepare (ZifTransaction *transaction, ZifState *state, GError **error)
 {
 	gboolean ret = FALSE;
+	guint i;
+	ZifTransactionItem *item;
+	ZifPackage *package;
+	GPtrArray *download = NULL;
+	GError *error_local = NULL;
+	ZifState *state_loop;
+	ZifState *state_local;
+	gboolean exists = FALSE;
 
 	g_return_val_if_fail (ZIF_IS_TRANSACTION (transaction), FALSE);
 	g_return_val_if_fail (zif_state_valid (state), FALSE);
@@ -2670,12 +2680,92 @@ zif_transaction_prepare (ZifTransaction *transaction, ZifState *state, GError **
 		goto out;
 	}
 
-	//FIXME
-	g_set_error (error,
-		     ZIF_TRANSACTION_ERROR,
-		     ZIF_TRANSACTION_ERROR_NOT_SUPPORTED,
-		     "not yet supported");
+	/* 1. check downloads exist
+	 * 2. download them
+	 */
+	zif_state_set_number_steps (state, 2);
+
+	/* check if the packages need downloading */
+	download = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
+	state_local = zif_state_get_child (state);
+	zif_state_set_number_steps (state_local, transaction->priv->install->len);
+	for (i=0; i<transaction->priv->install->len; i++) {
+		item = g_ptr_array_index (transaction->priv->install, i);
+		state_loop = zif_state_get_child (state_local);
+
+		/* this is a meta package in make check */
+		if (ZIF_IS_PACKAGE_META (item->package)) {
+			g_debug ("no processing %s in the test suite",
+				 zif_package_get_id (item->package));
+			continue;
+		}
+
+		/* see if download already exists */
+		g_debug ("checking %s",
+			 zif_package_get_id (item->package));
+		ret = zif_package_remote_is_downloaded (ZIF_PACKAGE_REMOTE (item->package), &exists, state_loop, &error_local);
+		if (!ret) {
+			g_propagate_prefixed_error (error, error_local,
+						    "cannot check download %s: ",
+						    zif_package_get_id (item->package));
+			goto out;
+		}
+
+		/* doesn't exist, so add to the list */
+		if (!exists) {
+			g_debug ("add to dowload queue %s",
+				 zif_package_get_id (item->package));
+			g_ptr_array_add (download, g_object_ref (item->package));
+		} else {
+			g_debug ("package %s is already downloaded",
+				 zif_package_get_id (item->package));
+		}
+
+		/* done */
+		ret = zif_state_done (state_local, error);
+		if (!ret)
+			goto out;
+	}
+
+	/* done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* download files */
+	if (download->len > 0) {
+		state_local = zif_state_get_child (state);
+		zif_state_set_number_steps (state_local, download->len);
+		for (i=0; i<download->len; i++) {
+			package = g_ptr_array_index (download, i);
+			state_loop = zif_state_get_child (state_local);
+			g_debug ("downloading %s",
+				 zif_package_get_id (package));
+			ret = zif_package_remote_download (ZIF_PACKAGE_REMOTE (package), NULL, state_loop, &error_local);
+			if (!ret) {
+				g_propagate_prefixed_error (error, error_local,
+							    "cannot download %s: ",
+							    zif_package_get_id (package));
+				goto out;
+			}
+
+			/* done */
+			ret = zif_state_done (state_local, error);
+			if (!ret)
+				goto out;
+		}
+	}
+
+	/* done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* success */
+	transaction->priv->state = ZIF_TRANSACTION_STATE_PREPARED;
 out:
+	if (download != NULL)
+		g_ptr_array_unref (download);
 	return ret;
 }
 
@@ -2716,6 +2806,10 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 		     ZIF_TRANSACTION_ERROR,
 		     ZIF_TRANSACTION_ERROR_NOT_SUPPORTED,
 		     "not yet supported");
+	goto out;
+
+	/* success */
+	transaction->priv->state = ZIF_TRANSACTION_STATE_COMMITTED;
 out:
 	return ret;
 }
