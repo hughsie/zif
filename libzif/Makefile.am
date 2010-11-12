@@ -26,121 +26,122 @@ libzif_includedir = $(includedir)/libzif
 
 libzif_include_HEADERS =					\
 	zif.h							\
-	zif-lock.h						\
-	zif-state.h						\
-	zif-string.h						\
+	zif-category.h						\
+	zif-changeset.h						\
+	zif-config.h						\
 	zif-depend.h						\
+	zif-download.h						\
+	zif-groups.h						\
+	zif-lock.h						\
+	zif-manifest.h						\
+	zif-md.h						\
+	zif-md-metalink.h					\
+	zif-md-mirrorlist.h					\
+	zif-monitor.h						\
 	zif-package.h						\
 	zif-package-local.h					\
 	zif-package-remote.h					\
-	zif-changeset.h						\
+	zif-release.h						\
+	zif-repos.h						\
+	zif-state.h						\
+	zif-store-array.h					\
 	zif-store.h						\
-	zif-category.h						\
 	zif-store-local.h					\
 	zif-store-remote.h					\
-	zif-store-array.h					\
-	zif-repos.h						\
-	zif-utils.h						\
-	zif-release.h						\
+	zif-string.h						\
+	zif-transaction.h					\
 	zif-update.h						\
 	zif-update-info.h					\
 	zif-upgrade.h						\
-	zif-groups.h						\
-	zif-config.h						\
-	zif-transaction.h					\
-	zif-md.h						\
-	zif-md-mirrorlist.h					\
-	zif-md-metalink.h					\
-	zif-monitor.h						\
-	zif-version.h						\
-	zif-download.h
+	zif-utils.h						\
+	zif-version.h
 
 libzif_la_SOURCES =						\
-	zif-lock.c						\
-	zif-lock.h						\
-	zif-state.c						\
-	zif-state.h						\
-	zif-changeset.c						\
-	zif-changeset.h						\
-	zif-string.c						\
-	zif-string.h						\
-	zif-depend.c						\
-	zif-depend.h						\
 	zif-category.c						\
 	zif-category.h						\
-	zif-package.c						\
-	zif-package.h						\
-	zif-package-local.c					\
-	zif-package-local.h					\
-	zif-package-remote.c					\
-	zif-package-remote.h					\
-	zif-package-meta.c					\
-	zif-package-meta.h					\
-	zif-store.c						\
-	zif-store.h						\
-	zif-legal.c						\
-	zif-legal.h						\
-	zif-store-local.c					\
-	zif-store-local.h					\
-	zif-store-remote.c					\
-	zif-store-remote.h					\
-	zif-store-meta.c					\
-	zif-store-meta.h					\
-	zif-marshal.c						\
-	zif-marshal.h						\
-	zif-md.c						\
-	zif-md.h						\
-	zif-media.c						\
-	zif-media.h						\
-	zif-md-filelists-sql.c					\
-	zif-md-filelists-sql.h					\
-	zif-md-filelists-xml.c					\
-	zif-md-filelists-xml.h					\
-	zif-md-primary-sql.c					\
-	zif-md-primary-sql.h					\
-	zif-md-other-sql.c					\
-	zif-md-other-sql.h					\
-	zif-md-primary-xml.c					\
-	zif-md-primary-xml.h					\
-	zif-md-metalink.c					\
-	zif-md-metalink.h					\
-	zif-md-delta.c						\
-	zif-md-delta.h						\
-	zif-md-mirrorlist.c					\
-	zif-md-mirrorlist.h					\
-	zif-md-comps.c						\
-	zif-md-comps.h						\
-	zif-md-updateinfo.c					\
-	zif-md-updateinfo.h					\
-	zif-store-array.c					\
-	zif-store-array.h					\
-	zif-repos.c						\
-	zif-repos.h						\
-	zif-utils.c						\
-	zif-utils.h						\
-	zif-groups.c						\
-	zif-groups.h						\
+	zif-changeset.c						\
+	zif-changeset.h						\
 	zif-config.c						\
 	zif-config.h						\
 	zif-delta.c						\
 	zif-delta.h						\
+	zif-depend.c						\
+	zif-depend.h						\
+	zif-download.c						\
+	zif-download.h						\
+	zif-groups.c						\
+	zif-groups.h						\
+	zif-legal.c						\
+	zif-legal.h						\
+	zif-lock.c						\
+	zif-lock.h						\
+	zif-manifest.c						\
+	zif-manifest.h						\
+	zif-marshal.c						\
+	zif-marshal.h						\
+	zif-md.c						\
+	zif-md-comps.c						\
+	zif-md-comps.h						\
+	zif-md-delta.c						\
+	zif-md-delta.h						\
+	zif-md-filelists-sql.c					\
+	zif-md-filelists-sql.h					\
+	zif-md-filelists-xml.c					\
+	zif-md-filelists-xml.h					\
+	zif-md.h						\
+	zif-md-metalink.c					\
+	zif-md-metalink.h					\
+	zif-md-mirrorlist.c					\
+	zif-md-mirrorlist.h					\
+	zif-md-other-sql.c					\
+	zif-md-other-sql.h					\
+	zif-md-primary-sql.c					\
+	zif-md-primary-sql.h					\
+	zif-md-primary-xml.c					\
+	zif-md-primary-xml.h					\
+	zif-md-updateinfo.c					\
+	zif-md-updateinfo.h					\
+	zif-media.c						\
+	zif-media.h						\
+	zif-monitor.c						\
+	zif-monitor.h						\
+	zif-package.c						\
+	zif-package.h						\
+	zif-package-local.c					\
+	zif-package-local.h					\
+	zif-package-meta.c					\
+	zif-package-meta.h					\
+	zif-package-remote.c					\
+	zif-package-remote.h					\
+	zif-release.c						\
+	zif-release.h						\
+	zif-repos.c						\
+	zif-repos.h						\
+	zif-state.c						\
+	zif-state.h						\
+	zif-store-array.c					\
+	zif-store-array.h					\
+	zif-store.c						\
+	zif-store.h						\
+	zif-store-local.c					\
+	zif-store-local.h					\
+	zif-store-meta.c					\
+	zif-store-meta.h					\
+	zif-store-remote.c					\
+	zif-store-remote.h					\
+	zif-string.c						\
+	zif-string.h						\
+	zif-transaction.c					\
+	zif-transaction.h					\
 	zif-update.c						\
 	zif-update.h						\
 	zif-update-info.c					\
 	zif-update-info.h					\
 	zif-upgrade.c						\
 	zif-upgrade.h						\
-	zif-monitor.c						\
-	zif-monitor.h						\
-	zif-release.c						\
-	zif-release.h						\
-	zif-transaction.c					\
-	zif-transaction.h					\
-	zif-manifest.c						\
-	zif-manifest.h						\
-	zif-version.h						\
-	zif-download.c						\
-	zif-download.h
+	zif-utils.c						\
+	zif-utils.h						\
+	zif-version.h
 
 zif-marshal.c: zif-marshal.list
 	echo "#include \"zif-marshal.h\"" > $@ && \

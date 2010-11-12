@@ -712,6 +712,8 @@ main (int argc, char *argv[])
 	ZifLock *lock = NULL;
 	ZifRelease *release = NULL;
 	ZifDepend *depend = NULL;
+	ZifTransaction *transaction = NULL;
+	ZifManifest *manifest = NULL;
 	guint i;
 	guint pid;
 	guint uid;
@@ -724,6 +726,7 @@ main (int argc, char *argv[])
 	GOptionContext *context;
 	gchar *options_help;
 	gboolean verbose = FALSE;
+	gboolean skip_broken = FALSE;
 	gchar *config_file = NULL;
 	gchar *http_proxy = NULL;
 	gchar *repos_dir = NULL;
@@ -744,6 +747,8 @@ main (int argc, char *argv[])
 			_("Proxy server setting"), NULL },
 		{ "age", 'a', 0, G_OPTION_ARG_INT, &age,
 			_("Permitted age of the cache in seconds, 0 for never (default)"), NULL },
+		{ "skip-broken", 's', 0, G_OPTION_ARG_NONE, &skip_broken,
+			_("Skip broken dependencies rather than failing"), NULL },
 		{ NULL}
 	};
 
@@ -906,6 +911,14 @@ main (int argc, char *argv[])
 	g_signal_connect (state, "subpercentage-changed", G_CALLBACK (zif_state_subpercentage_changed_cb), NULL);
 	g_signal_connect (state, "allow-cancel-changed", G_CALLBACK (zif_state_allow_cancel_changed_cb), NULL);
 	g_signal_connect (state, "action-changed", G_CALLBACK (zif_state_action_changed_cb), NULL);
+
+	/* ZifTransaction */
+	transaction = zif_transaction_new ();
+	zif_transaction_set_store_local (transaction, ZIF_STORE (store_local));
+	zif_transaction_set_skip_broken (transaction, skip_broken);
+
+	/* ZifManifest */
+	manifest = zif_manifest_new ();
 
 	/* for the signal handler */
 	_state = state;
@@ -2334,6 +2347,10 @@ out:
 		g_ptr_array_unref (store_array);
 	if (depend != NULL)
 		g_object_unref (depend);
+	if (transaction != NULL)
+		g_object_unref (transaction);
+	if (manifest != NULL)
+		g_object_unref (manifest);
 	if (store_local != NULL)
 		g_object_unref (store_local);
 	if (repos != NULL)
