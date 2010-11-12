@@ -80,6 +80,15 @@ typedef enum {
 	ZIF_TRANSACTION_REASON_LAST
 } ZifTransactionReason;
 
+typedef enum {
+	ZIF_TRANSACTION_STATE_CLEAN,
+	ZIF_TRANSACTION_STATE_RESOLVED,
+	ZIF_TRANSACTION_STATE_PREPARED,
+	ZIF_TRANSACTION_STATE_COMMITTED,
+	ZIF_TRANSACTION_STATE_INVALID,
+	ZIF_TRANSACTION_STATE_LAST
+} ZifTransactionState;
+
 GQuark		 zif_transaction_error_quark		(void);
 GType		 zif_transaction_get_type		(void);
 
@@ -96,6 +105,12 @@ gboolean	 zif_transaction_add_remove		(ZifTransaction	*transaction,
 gboolean	 zif_transaction_resolve		(ZifTransaction	*transaction,
 							 ZifState	*state,
 							 GError		**error);
+gboolean	 zif_transaction_prepare		(ZifTransaction	*transaction,
+							 ZifState	*state,
+							 GError		**error);
+gboolean	 zif_transaction_commit			(ZifTransaction	*transaction,
+							 ZifState	*state,
+							 GError		**error);
 void		 zif_transaction_set_store_local	(ZifTransaction	*transaction,
 							 ZifStore	*store);
 void		 zif_transaction_set_stores_remote	(ZifTransaction	*transaction,
@@ -104,7 +119,7 @@ void		 zif_transaction_set_skip_broken	(ZifTransaction	*transaction,
 							 gboolean	 skip_broken);
 void		 zif_transaction_set_verbose		(ZifTransaction	*transaction,
 							 gboolean	 verbose);
-void		 zif_transaction_clear			(ZifTransaction	*transaction);
+void		 zif_transaction_reset			(ZifTransaction	*transaction);
 GPtrArray	*zif_transaction_get_install		(ZifTransaction	*transaction);
 GPtrArray	*zif_transaction_get_update		(ZifTransaction	*transaction);
 GPtrArray	*zif_transaction_get_remove		(ZifTransaction	*transaction);
@@ -112,6 +127,8 @@ const gchar	*zif_transaction_reason_to_string	(ZifTransactionReason reason);
 ZifTransactionReason	zif_transaction_get_reason	(ZifTransaction	*transaction,
 							 ZifPackage	*package,
 							 GError		**error);
+const gchar	*zif_transaction_state_to_string	(ZifTransactionState state);
+ZifTransactionState zif_transaction_get_state		(ZifTransaction	*transaction);
 
 G_END_DECLS
 

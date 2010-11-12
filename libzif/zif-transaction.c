@@ -65,6 +65,7 @@ struct _ZifTransactionPrivate
 	GPtrArray		*stores_remote;
 	gboolean		 skip_broken;
 	gboolean		 verbose;
+	ZifTransactionState	 state;
 };
 
 typedef struct {
@@ -124,6 +125,32 @@ zif_transaction_reason_to_string (ZifTransactionReason reason)
 	g_warning ("cannot convert reason %i to string", reason);
 	return NULL;
 }
+
+/**
+ * zif_transaction_state_to_string:
+ * @state: the #ZifTransactionState enum, e.g. %ZIF_TRANSACTION_STATE_RESOLVED
+ *
+ * Gets the string representation of the transaction state.
+ *
+ * Return value: A constant string
+ *
+ * Since: 0.1.3
+ **/
+const gchar *
+zif_transaction_state_to_string (ZifTransactionState state)
+{
+	if (state == ZIF_TRANSACTION_STATE_CLEAN)
+		return "clean";
+	if (state == ZIF_TRANSACTION_STATE_RESOLVED)
+		return "resolved";
+	if (state == ZIF_TRANSACTION_STATE_PREPARED)
+		return "prepared";
+	if (state == ZIF_TRANSACTION_STATE_COMMITTED)
+		return "committed";
+	g_warning ("cannot convert state %i to string", state);
+	return NULL;
+}
+
 
 /**
  * zif_transaction_get_package_array:
@@ -2572,12 +2599,94 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 	}
 
 	/* success */
+	transaction->priv->state = ZIF_TRANSACTION_STATE_RESOLVED;
 	g_debug ("done depsolve");
 	zif_transaction_show_array ("installing", transaction->priv->install);
 	zif_transaction_show_array ("removing", transaction->priv->remove);
 	ret = TRUE;
 out:
 	g_free (data);
+	return ret;
+}
+
+/**
+ * zif_transaction_prepare:
+ * @transaction: the #ZifTransaction object
+ * @state: a #ZifState to use for progress reporting
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Prepares the transaction ensuring all packages are downloaded.
+ *
+ * Return value: %TRUE for success
+ *
+ * Since: 0.1.3
+ **/
+gboolean
+zif_transaction_prepare (ZifTransaction *transaction, ZifState *state, GError **error)
+{
+	gboolean ret = FALSE;
+
+	g_return_val_if_fail (ZIF_IS_TRANSACTION (transaction), FALSE);
+	g_return_val_if_fail (zif_state_valid (state), FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+	/* is valid */
+	if (transaction->priv->state != ZIF_TRANSACTION_STATE_RESOLVED) {
+		g_set_error (error,
+			     ZIF_TRANSACTION_ERROR,
+			     ZIF_TRANSACTION_ERROR_FAILED,
+			     "not in resolve state, instead is %s",
+			     zif_transaction_state_to_string (transaction->priv->state));
+		goto out;
+	}
+
+	//FIXME
+	g_set_error (error,
+		     ZIF_TRANSACTION_ERROR,
+		     ZIF_TRANSACTION_ERROR_NOT_SUPPORTED,
+		     "not yet supported");
+out:
+	return ret;
+}
+
+
+/**
+ * zif_transaction_commit:
+ * @transaction: the #ZifTransaction object
+ * @state: a #ZifState to use for progress reporting
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Commits all the changes to disk.
+ *
+ * Return value: %TRUE for success
+ *
+ * Since: 0.1.3
+ **/
+gboolean
+zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **error)
+{
+	gboolean ret = FALSE;
+
+	g_return_val_if_fail (ZIF_IS_TRANSACTION (transaction), FALSE);
+	g_return_val_if_fail (zif_state_valid (state), FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+	/* is valid */
+	if (transaction->priv->state != ZIF_TRANSACTION_STATE_PREPARED) {
+		g_set_error (error,
+			     ZIF_TRANSACTION_ERROR,
+			     ZIF_TRANSACTION_ERROR_FAILED,
+			     "not in prepared state, instead is %s",
+			     zif_transaction_state_to_string (transaction->priv->state));
+		goto out;
+	}
+
+	//FIXME
+	g_set_error (error,
+		     ZIF_TRANSACTION_ERROR,
+		     ZIF_TRANSACTION_ERROR_NOT_SUPPORTED,
+		     "not yet supported");
+out:
 	return ret;
 }
 
@@ -2652,8 +2761,27 @@ zif_transaction_set_verbose (ZifTransaction *transaction, gboolean verbose)
 	transaction->priv->verbose = verbose;
 }
 
+
 /**
- * zif_transaction_clear:
+ * zif_transaction_get_reason:
+ * @transaction: the #ZifTransaction object
+ * @package: the #ZifPackage object
+ *
+ * Gets the reason why the package is in the install or remove array.
+ *
+ * Return value: A #ZifTransactionState enumerated value, or %ZIF_TRANSACTION_STATE_INVALID for error.
+ *
+ * Since: 0.1.3
+ **/
+ZifTransactionState
+zif_transaction_get_state (ZifTransaction *transaction)
+{
+	g_return_val_if_fail (ZIF_IS_TRANSACTION (transaction), ZIF_TRANSACTION_STATE_INVALID);
+	return transaction->priv->state;
+}
+
+/**
+ * zif_transaction_reset:
  * @transaction: the #ZifTransaction object
  *
  * Clears any pending or completed packages and returns the transaction
@@ -2662,12 +2790,13 @@ zif_transaction_set_verbose (ZifTransaction *transaction, gboolean verbose)
  * Since: 0.1.3
  **/
 void
-zif_transaction_clear (ZifTransaction *transaction)
+zif_transaction_reset (ZifTransaction *transaction)
 {
 	g_return_if_fail (ZIF_IS_TRANSACTION (transaction));
 	g_ptr_array_set_size (transaction->priv->install, 0);
 	g_ptr_array_set_size (transaction->priv->update, 0);
 	g_ptr_array_set_size (transaction->priv->remove, 0);
+	transaction->priv->state = ZIF_TRANSACTION_STATE_CLEAN;
 }
 
 /**
