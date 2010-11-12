@@ -190,7 +190,7 @@ zif_md_primary_sql_search (ZifMdPrimarySql *md, const gchar *statement,
 	rc = sqlite3_exec (md->priv->db, statement, zif_md_primary_sql_sqlite_create_package_cb, data, &error_msg);
 	if (rc != SQLITE_OK) {
 		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_BAD_SQL,
-			     "SQL error: %s\n", error_msg);
+			     "SQL error: %s", error_msg);
 		sqlite3_free (error_msg);
 		g_ptr_array_unref (data->packages);
 		goto out;
@@ -412,6 +412,76 @@ zif_md_primary_sql_sqlite_pkgkey_cb (void *data, gint argc, gchar **argv, gchar 
 }
 
 /**
+ * zif_md_primary_sql_flags_to_flag:
+ **/
+static ZifDependFlag
+zif_md_primary_sql_flags_to_flag (const gchar *flags)
+{
+	if (flags == NULL)
+		return ZIF_DEPEND_FLAG_ANY;
+	if (g_strcmp0 (flags, "EQ") == 0)
+		return ZIF_DEPEND_FLAG_EQUAL;
+	if (g_strcmp0 (flags, "LT") == 0)
+		return ZIF_DEPEND_FLAG_LESS;
+	if (g_strcmp0 (flags, "GT") == 0)
+		return ZIF_DEPEND_FLAG_GREATER;
+	if (g_strcmp0 (flags, "LE") == 0)
+		return ZIF_DEPEND_FLAG_LESS | ZIF_DEPEND_FLAG_EQUAL;
+	if (g_strcmp0 (flags, "GE") == 0)
+		return ZIF_DEPEND_FLAG_GREATER | ZIF_DEPEND_FLAG_EQUAL;
+	g_warning ("unknown flag string %s", flags);
+	return ZIF_DEPEND_FLAG_UNKNOWN;
+}
+
+/**
+ * zif_md_primary_sql_sqlite_depend_cb:
+ **/
+static gint
+zif_md_primary_sql_sqlite_depend_cb (void *data, gint argc, gchar **argv, gchar **col_name)
+{
+	gint i;
+	GString *version;
+	ZifDepend *depend;
+	GPtrArray *array = (GPtrArray *) data;
+
+	/* get the depend */
+	version = g_string_new ("");
+	depend = zif_depend_new ();
+	for (i=0; i<argc; i++) {
+		if (g_strcmp0 (col_name[i], "name") == 0) {
+			zif_depend_set_name (depend, argv[i]);
+		} else if (g_strcmp0 (col_name[i], "epoch") == 0) {
+			/* only add epoch if not zero */
+			if (argv[i] != NULL && g_strcmp0 (argv[i], "0") != 0)
+				g_string_append (version, argv[i]);
+		} else if (g_strcmp0 (col_name[i], "version") == 0) {
+			/* only add version if not NULL */
+			if (argv[i] != NULL) {
+				if (version->len > 0)
+					g_string_append (version, ":");
+				g_string_append (version, argv[i]);
+			}
+		} else if (g_strcmp0 (col_name[i], "release") == 0) {
+			/* only add release if not NULL */
+			if (argv[i] != NULL) {
+				if (version->len > 0)
+					g_string_append (version, "-");
+				g_string_append (version, argv[i]);
+			}
+		} else if (g_strcmp0 (col_name[i], "flags") == 0) {
+			zif_depend_set_flag (depend,
+					     zif_md_primary_sql_flags_to_flag (argv[i]));
+		} else {
+			g_warning ("unrecognized: %s=%s", col_name[i], argv[i]);
+		}
+	}
+	zif_depend_set_version (depend, version->str);
+	g_ptr_array_add (array, depend);
+	g_string_free (version, TRUE);
+	return 0;
+}
+
+/**
  * zif_md_primary_sql_what_depends:
  **/
 static GPtrArray *
@@ -466,7 +536,7 @@ zif_md_primary_sql_what_depends (ZifMd *md, const gchar *table_name, ZifDepend *
 	rc = sqlite3_exec (md_primary_sql->priv->db, statement, zif_md_primary_sql_sqlite_pkgkey_cb, pkgkey_array, &error_msg);
 	if (rc != SQLITE_OK) {
 		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_BAD_SQL,
-			     "SQL error: %s\n", error_msg);
+			     "SQL error: %s", error_msg);
 		sqlite3_free (error_msg);
 		goto out;
 	}
@@ -556,6 +626,151 @@ zif_md_primary_sql_what_conflicts (ZifMd *md, ZifDepend *depend,
 }
 
 /**
+ * zif_md_primary_sql_get_provides:
+ **/
+static GPtrArray *
+zif_md_primary_sql_get_depends (ZifMd *md,
+				const gchar *type,
+				ZifPackage *package,
+				ZifState *state,
+				GError **error)
+{
+	const gchar *epoch = NULL;
+	guint pkgkey;
+	const gchar *release = NULL;
+	const gchar *version = NULL;
+	gchar *error_msg = NULL;
+	gchar *evr;
+	gchar *statement = NULL;
+	gchar *statement_pkgkey = NULL;
+	gint rc;
+	GPtrArray *array = NULL;
+	GPtrArray *array_tmp = NULL;
+	GPtrArray *pkgkey_array;
+	ZifMdPrimarySql *md_primary_sql = ZIF_MD_PRIMARY_SQL (md);
+
+	evr = g_strdup (zif_package_get_version (package));
+	zif_package_convert_evr (evr, &epoch, &version, &release);
+
+	/* find packages */
+	pkgkey_array = g_ptr_array_new ();
+	statement = g_strdup_printf ("SELECT pkgKey FROM packages WHERE "
+				     "name = '%s' AND "
+				     "epoch = '%s' AND "
+				     "version = '%s' AND "
+				     "release = '%s' AND "
+				     "arch = '%s';",
+				     zif_package_get_name (package),
+				     epoch != NULL ? epoch : "0",
+				     version,
+				     release,
+				     zif_package_get_arch (package));
+	g_debug ("running %s on %s",
+		 statement,
+		 zif_md_get_filename_uncompressed (md));
+	rc = sqlite3_exec (md_primary_sql->priv->db,
+			   statement,
+			   zif_md_primary_sql_sqlite_pkgkey_cb,
+			   pkgkey_array,
+			   &error_msg);
+	if (rc != SQLITE_OK) {
+		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_BAD_SQL,
+			     "SQL error: %s", error_msg);
+		sqlite3_free (error_msg);
+		goto out;
+	}
+
+	/* nothing */
+	if (pkgkey_array->len == 0) {
+		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED,
+			     "failed to find the %s package",
+			     zif_package_get_id (package));
+		goto out;
+	}
+
+	/* more than one */
+	if (pkgkey_array->len > 1) {
+		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED,
+			     "failed to find unique %s package",
+			     zif_package_get_id (package));
+		goto out;
+	}
+	pkgkey = GPOINTER_TO_INT (g_ptr_array_index (pkgkey_array, 0));
+
+	/* get depend array for the package key */
+	array_tmp = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
+	statement_pkgkey = g_strdup_printf ("SELECT name, flags, epoch, "
+					    "version, release FROM %s WHERE "
+					    "pkgkey = '%i';",
+					    type, pkgkey);
+	g_debug ("running %s on %s",
+		 statement_pkgkey,
+		 zif_md_get_filename_uncompressed (md));
+	rc = sqlite3_exec (md_primary_sql->priv->db,
+			   statement_pkgkey,
+			   zif_md_primary_sql_sqlite_depend_cb,
+			   array_tmp,
+			   &error_msg);
+	if (rc != SQLITE_OK) {
+		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_BAD_SQL,
+			     "SQL error: %s", error_msg);
+		sqlite3_free (error_msg);
+		goto out;
+	}
+
+	/* success */
+	array = g_ptr_array_ref (array_tmp);
+out:
+	if (array_tmp != NULL)
+		g_ptr_array_unref (array_tmp);
+	g_ptr_array_unref (pkgkey_array);
+	g_free (statement);
+	g_free (statement_pkgkey);
+	g_free (evr);
+	return array;
+}
+
+/**
+ * zif_md_primary_sql_get_provides:
+ **/
+static GPtrArray *
+zif_md_primary_sql_get_provides (ZifMd *md, ZifPackage *package,
+				 ZifState *state, GError **error)
+{
+	return zif_md_primary_sql_get_depends (md, "provides", package, state, error);
+}
+
+/**
+ * zif_md_primary_sql_get_requires:
+ **/
+static GPtrArray *
+zif_md_primary_sql_get_requires (ZifMd *md, ZifPackage *package,
+				 ZifState *state, GError **error)
+{
+	return zif_md_primary_sql_get_depends (md, "requires", package, state, error);
+}
+
+/**
+ * zif_md_primary_sql_get_obsoletes:
+ **/
+static GPtrArray *
+zif_md_primary_sql_get_obsoletes (ZifMd *md, ZifPackage *package,
+				  ZifState *state, GError **error)
+{
+	return zif_md_primary_sql_get_depends (md, "obsoletes", package, state, error);
+}
+
+/**
+ * zif_md_primary_sql_get_conflicts:
+ **/
+static GPtrArray *
+zif_md_primary_sql_get_conflicts (ZifMd *md, ZifPackage *package,
+				  ZifState *state, GError **error)
+{
+	return zif_md_primary_sql_get_depends (md, "conflicts", package, state, error);
+}
+
+/**
  * zif_md_primary_sql_find_package:
  **/
 static GPtrArray *
@@ -636,6 +851,10 @@ zif_md_primary_sql_class_init (ZifMdPrimarySqlClass *klass)
 	md_class->what_provides = zif_md_primary_sql_what_provides;
 	md_class->what_obsoletes = zif_md_primary_sql_what_obsoletes;
 	md_class->what_conflicts = zif_md_primary_sql_what_conflicts;
+	md_class->get_provides = zif_md_primary_sql_get_provides;
+	md_class->get_requires = zif_md_primary_sql_get_requires;
+	md_class->get_obsoletes = zif_md_primary_sql_get_obsoletes;
+	md_class->get_conflicts = zif_md_primary_sql_get_conflicts;
 	md_class->resolve = zif_md_primary_sql_resolve;
 	md_class->get_packages = zif_md_primary_sql_get_packages;
 	md_class->find_package = zif_md_primary_sql_find_package;
