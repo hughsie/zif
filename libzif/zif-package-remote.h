@@ -69,6 +69,17 @@ void			 zif_package_remote_set_pkgid		(ZifPackageRemote *pkg,
 								 const gchar	*pkgid);
 void			 zif_package_remote_set_store_remote	(ZifPackageRemote *pkg,
 								 ZifStoreRemote	*store);
+gboolean		 zif_package_remote_is_downloaded	(ZifPackageRemote *pkg,
+								 gboolean	*exists,
+								 ZifState	*state,
+								 GError		**error);
+gboolean		 zif_package_remote_download		(ZifPackageRemote *pkg,
+								 const gchar	*directory,
+								 ZifState	*state,
+								 GError		**error);
+ZifUpdate		*zif_package_remote_get_update_detail	(ZifPackageRemote *package,
+								 ZifState	*state,
+								 GError		**error);
 
 G_END_DECLS
 

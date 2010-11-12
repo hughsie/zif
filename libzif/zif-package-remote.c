@@ -189,6 +189,163 @@ zif_package_remote_set_pkgid (ZifPackageRemote *pkg, const gchar *pkgid)
 }
 
 /**
+ * zif_package_remote_get_download_cache_location:
+ **/
+static gchar *
+zif_package_remote_get_download_cache_location (ZifPackageRemote *pkg, ZifState *state, GError **error)
+{
+	const gchar *filename;
+	const gchar *directory;
+	gchar *basename = NULL;
+	gchar *location = NULL;
+
+	g_return_val_if_fail (ZIF_IS_PACKAGE_REMOTE (pkg), NULL);
+
+	/* get filename */
+	filename = zif_package_get_filename (ZIF_PACKAGE (pkg), state, error);
+	if (filename == NULL)
+		goto out;
+
+	/* get the path */
+	basename = g_path_get_basename (filename);
+	directory = zif_store_remote_get_local_directory (pkg->priv->store_remote);
+	if (directory == NULL) {
+		g_set_error (error,
+			     ZIF_PACKAGE_ERROR,
+			     ZIF_PACKAGE_ERROR_FAILED,
+			     "failed to get local directory for %s",
+			     zif_package_get_id (ZIF_PACKAGE (pkg)));
+		goto out;
+	}
+	location = g_build_filename (directory, "packages", basename, NULL);
+out:
+	g_free (basename);
+	return location;
+}
+
+/**
+ * zif_package_remote_is_downloaded:
+ * @pkg: the #ZifPackageRemote object
+ * @exists: if the package exists or not
+ * @state: a #ZifState to use for progress reporting
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Gets if the package is downloaded and exists in the local cache.
+ *
+ * Return value: %TRUE if it already exists
+ *
+ * Since: 0.1.3
+ **/
+gboolean
+zif_package_remote_is_downloaded (ZifPackageRemote *pkg, gboolean *exists, ZifState *state, GError **error)
+{
+	gchar *location;
+	gboolean ret = FALSE;
+
+	g_return_val_if_fail (ZIF_IS_PACKAGE_REMOTE (pkg), FALSE);
+	g_return_val_if_fail (exists != NULL, FALSE);
+
+	/* get the location */
+	location = zif_package_remote_get_download_cache_location (pkg, state, error);
+	if (location == NULL)
+		goto out;
+
+	/* test if it exists */
+	*exists = g_file_test (location, G_FILE_TEST_EXISTS);
+
+	/* success */
+	ret = TRUE;
+out:
+	g_free (location);
+	return ret;
+}
+
+
+/**
+ * zif_package_remote_download:
+ * @pkg: the #ZifPackageRemote object
+ * @directory: the local directory to save to, or %NULL to use the package cache
+ * @state: a #ZifState to use for progress reporting
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Downloads a package.
+ *
+ * Return value: %TRUE for success, %FALSE for failure
+ *
+ * Since: 0.1.3
+ **/
+gboolean
+zif_package_remote_download (ZifPackageRemote *pkg, const gchar *directory, ZifState *state, GError **error)
+{
+	gboolean ret = FALSE;
+	ZifStoreRemote *store_remote = NULL;
+	GError *error_local = NULL;
+	ZifState *state_local = NULL;
+	const gchar *filename;
+	gchar *directory_new = NULL;
+
+	g_return_val_if_fail (ZIF_IS_PACKAGE_REMOTE (pkg), FALSE);
+	g_return_val_if_fail (zif_state_valid (state), FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+	/* two steps, TODO: the second will take longer than the first */
+	zif_state_set_number_steps (state, 2);
+
+	/* directory is optional */
+	if (directory == NULL) {
+		directory = zif_store_remote_get_local_directory (pkg->priv->store_remote);
+		if (directory == NULL) {
+			g_set_error (error,
+				     ZIF_PACKAGE_ERROR,
+				     ZIF_PACKAGE_ERROR_FAILED,
+				     "failed to get local directory for %s",
+				     zif_package_get_id (ZIF_PACKAGE (pkg)));
+			goto out;
+		}
+		directory_new = g_build_filename (directory, "packages", NULL);
+	} else {
+		directory_new = g_strdup (directory);
+	}
+
+	/* get filename */
+	state_local = zif_state_get_child (state);
+	filename = zif_package_get_filename (ZIF_PACKAGE (pkg), state_local, error);
+	if (filename == NULL)
+		goto out;
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* create a chain of states */
+	state_local = zif_state_get_child (state);
+
+	/* download from the store */
+	ret = zif_store_remote_download (pkg->priv->store_remote,
+					 filename,
+					 directory_new,
+					 state_local,
+					 &error_local);
+	if (!ret) {
+		g_set_error (error, ZIF_PACKAGE_ERROR, ZIF_PACKAGE_ERROR_FAILED,
+			     "cannot download from store: %s", error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+out:
+	g_free (directory_new);
+	if (store_remote != NULL)
+		g_object_unref (store_remote);
+	return ret;
+}
+
+/**
  * zif_package_remote_set_store_remote:
  * @pkg: the #ZifPackageRemote object
  * @store: the #ZifStoreRemote that created this package
@@ -205,6 +362,44 @@ zif_package_remote_set_store_remote (ZifPackageRemote *pkg, ZifStoreRemote *stor
 	g_return_if_fail (ZIF_IS_STORE_REMOTE (store));
 	g_return_if_fail (pkg->priv->store_remote == NULL);
 	pkg->priv->store_remote = g_object_ref (store);
+}
+
+
+/**
+ * zif_package_remote_get_update_detail:
+ * @package: the #ZifPackageRemote object
+ * @state: a #ZifState to use for progress reporting
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Gets the update detail for a package.
+ *
+ * Return value: a %ZifUpdate, or %NULL for failure
+ *
+ * Since: 0.1.3
+ **/
+ZifUpdate *
+zif_package_remote_get_update_detail (ZifPackageRemote *package, ZifState *state, GError **error)
+{
+	ZifUpdate *update = NULL;
+	GError *error_local = NULL;
+
+	g_return_val_if_fail (ZIF_IS_PACKAGE_REMOTE (package), NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+	g_return_val_if_fail (package->priv->store_remote != NULL, NULL);
+
+	/* download from the store */
+	update = zif_store_remote_get_update_detail (package->priv->store_remote,
+						     zif_package_get_id (ZIF_PACKAGE (package)),
+						     state, &error_local);
+	if (update == NULL) {
+		g_set_error (error, ZIF_PACKAGE_ERROR, ZIF_PACKAGE_ERROR_FAILED,
+			     "cannot get update detail from store: %s", error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+out:
+	return update;
 }
 
 /*

@@ -1382,104 +1382,7 @@ zif_monitor_func (void)
 static void
 zif_package_func (void)
 {
-	gboolean ret;
-	gchar *filename;
-	gchar *pidfile;
-	GError *error = NULL;
-	GPtrArray *changelog;
-	GPtrArray *array;
-	ZifConfig *config;
-	ZifLock *lock;
-	ZifPackage *package;
-	ZifRepos *repos;
-	ZifState *state;
-	ZifStoreLocal *store;
-	ZifUpdate *update;
-
-	/* set this up as dummy */
-	config = zif_config_new ();
-	filename = zif_test_get_data_file ("yum.conf");
-	zif_config_set_filename (config, filename, NULL);
-	g_free (filename);
-
-	pidfile = g_build_filename (g_get_tmp_dir (), "zif.lock", NULL);
-	zif_config_set_string (config, "pidfile", pidfile, NULL);
-	g_free (pidfile);
-
-	filename = zif_test_get_data_file (".");
-	zif_config_set_string (config, "cachedir", filename, NULL);
-	g_free (filename);
-
-	state = zif_state_new ();
-
-	lock = zif_lock_new ();
-	ret = zif_lock_set_locked (lock, NULL, &error);
-	g_assert_no_error (error);
-	g_assert (ret);
-
-	store = zif_store_local_new ();
-	g_assert (store != NULL);
-	filename = zif_test_get_data_file ("root");
-	zif_store_local_set_prefix (store, filename, &error);
-	g_free (filename);
-	g_assert_no_error (error);
-	g_assert (ret);
-
-	repos = zif_repos_new ();
-	filename = zif_test_get_data_file ("repos");
-	ret = zif_repos_set_repos_dir (repos, filename, &error);
-	g_free (filename);
-	g_assert_no_error (error);
-	g_assert (ret);
-
-	/* set a package ID that does not exist */
-	package = zif_package_new ();
-	ret = zif_package_set_id (package, "hal;2.30.1-1.fc13;i686;fedora", &error);
-	g_assert_no_error (error);
-	g_assert (ret);
-
-	/* this is a base class, so this should fail */
-	array = zif_package_get_files (package, state, &error);
-	g_assert_error (error, ZIF_PACKAGE_ERROR, ZIF_PACKAGE_ERROR_FAILED);
-	g_assert (array == NULL);
-	g_clear_error (&error);
-
-	/* get the update detail */
-	zif_state_reset (state);
-	update = zif_package_get_update_detail (package, state, &error);
-	g_assert_error (error, ZIF_PACKAGE_ERROR, ZIF_PACKAGE_ERROR_FAILED);
-	g_assert (update == NULL);
-	g_object_unref (package);
-	g_clear_error (&error);
-
-	/* set a package ID that does exist */
-	package = zif_package_new ();
-	ret = zif_package_set_id (package, "gnome-power-manager;2.30.1-1.fc13;i686;fedora", &error);
-	g_assert_no_error (error);
-	g_assert (ret);
-
-	/* get the update detail */
-	zif_state_reset (state);
-	update = zif_package_get_update_detail (package, state, &error);
-	g_assert_no_error (error);
-	g_assert (update != NULL);
-	g_assert_cmpstr (zif_update_get_id (update), ==, "FEDORA-2010-9999");
-
-	changelog = zif_update_get_changelog (update);
-	g_assert (changelog != NULL);
-	g_assert_cmpint (changelog->len, ==, 1);
-
-	/* set to unlocked */
-	g_assert (zif_lock_set_unlocked (lock, NULL));
-
-	g_ptr_array_unref (changelog);
-	g_object_unref (update);
-	g_object_unref (repos);
-	g_object_unref (store);
-	g_object_unref (lock);
-	g_object_unref (package);
-	g_object_unref (state);
-	g_object_unref (config);
+	return;
 }
 
 static void
@@ -1571,12 +1474,163 @@ zif_package_meta_func (void)
 static void
 zif_package_remote_func (void)
 {
+	gchar *filename;
+	GError *error = NULL;
 	ZifPackage *pkg;
+	ZifStoreRemote *store_remote;
+	ZifPackage *package;
+	ZifState *state;
+	GPtrArray *changelog;
+	ZifString *string;
+	gboolean exists = FALSE;
+	gboolean ret;
+	ZifUpdate *update;
+	gchar *pidfile;
+	ZifConfig *config;
+	ZifLock *lock;
+	ZifRepos *repos;
+	ZifStoreLocal *store;
+
+	/* delete files we created */
+	g_unlink ("../data/tests/./fedora/packages/powerman-2.3.5-2.fc13.i686.rpm");
+
+	/* set this up as dummy */
+	config = zif_config_new ();
+	filename = zif_test_get_data_file ("yum.conf");
+	zif_config_set_filename (config, filename, NULL);
+	zif_config_set_boolean (config, "network", TRUE, NULL);
+	g_free (filename);
+
+	pidfile = g_build_filename (g_get_tmp_dir (), "zif.lock", NULL);
+	zif_config_set_string (config, "pidfile", pidfile, NULL);
+	g_free (pidfile);
+
+	filename = zif_test_get_data_file (".");
+	zif_config_set_string (config, "cachedir", filename, NULL);
+	g_free (filename);
+
+	state = zif_state_new ();
+
+	lock = zif_lock_new ();
+	ret = zif_lock_set_locked (lock, NULL, &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	store = zif_store_local_new ();
+	g_assert (store != NULL);
+	filename = zif_test_get_data_file ("root");
+	zif_store_local_set_prefix (store, filename, &error);
+	g_free (filename);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	repos = zif_repos_new ();
+	filename = zif_test_get_data_file ("repos");
+	ret = zif_repos_set_repos_dir (repos, filename, &error);
+	g_free (filename);
+	g_assert_no_error (error);
+	g_assert (ret);
 
 	pkg = zif_package_remote_new ();
 	g_assert (pkg != NULL);
+	state = zif_state_new ();
 
+	/* get remote store */
+	store_remote = zif_store_remote_new ();
+	zif_state_reset (state);
+	filename = zif_test_get_data_file ("repos/fedora.repo");
+	ret = zif_store_remote_set_from_file (store_remote, filename, "fedora", state, &error);
+	g_free (filename);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	/* set a package ID that does exist */
+	package = zif_package_remote_new ();
+	ret = zif_package_set_id (package, "gnome-power-manager;2.30.1-1.fc13;i686;fedora", &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	/* set remote store */
+	zif_package_remote_set_store_remote (ZIF_PACKAGE_REMOTE (package), store_remote);
+
+	/* get the update detail */
+	zif_state_reset (state);
+	update = zif_package_remote_get_update_detail (ZIF_PACKAGE_REMOTE (package), state, &error);
+	g_assert_no_error (error);
+	g_assert (update != NULL);
+	g_assert_cmpstr (zif_update_get_id (update), ==, "FEDORA-2010-9999");
+
+	changelog = zif_update_get_changelog (update);
+	g_assert (changelog != NULL);
+	g_assert_cmpint (changelog->len, ==, 1);
+
+	g_object_unref (package);
+
+	/* set a package ID that does not exist */
+	package = zif_package_remote_new ();
+	ret = zif_package_set_id (package, "hal;2.30.1-1.fc13;i686;fedora", &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	/* set remote store */
+	zif_package_remote_set_store_remote (ZIF_PACKAGE_REMOTE (package), store_remote);
+
+	/* get the update detail */
+	zif_state_reset (state);
+	update = zif_package_remote_get_update_detail (ZIF_PACKAGE_REMOTE (package), state, &error);
+	g_assert_error (error, ZIF_PACKAGE_ERROR, ZIF_PACKAGE_ERROR_FAILED);
+	g_assert (update == NULL);
+	g_object_unref (package);
+	g_clear_error (&error);
+
+	/* set a package ID that does not exist */
+	package = zif_package_remote_new ();
+	ret = zif_package_set_id (package, "hal;2.30.1-1.fc13;i686;fedora", &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	/* set location */
+	string = zif_string_new ("Packages/powerman-2.3.5-2.fc13.i686.rpm");
+	zif_package_set_location_href (package, string);
+	zif_string_unref (string);
+
+	/* set remote store */
+	zif_package_remote_set_store_remote (ZIF_PACKAGE_REMOTE (package), store_remote);
+
+	/* check not downloaded */
+	zif_state_reset (state);
+	ret = zif_package_remote_is_downloaded (ZIF_PACKAGE_REMOTE (package), &exists, state, &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+	g_assert (!exists);
+
+	/* download it */
+	ret = zif_package_remote_download (ZIF_PACKAGE_REMOTE (package), NULL, state, &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	/* check downloaded */
+	zif_state_reset (state);
+	ret = zif_package_remote_is_downloaded (ZIF_PACKAGE_REMOTE (package), &exists, state, &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+	g_assert (exists);
+
+	/* set to unlocked */
+	g_assert (zif_lock_set_unlocked (lock, NULL));
+
+	/* delete files we created */
+	g_unlink ("../data/tests/./fedora/packages/powerman-2.3.5-2.fc13.i686.rpm");
+
+	g_object_unref (config);
+	g_object_unref (lock);
+	g_object_unref (package);
 	g_object_unref (pkg);
+	g_object_unref (repos);
+	g_object_unref (state);
+	g_object_unref (store);
+	g_object_unref (store_remote);
+	g_ptr_array_unref (changelog);
 }
 
 static void

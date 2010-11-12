@@ -1615,6 +1615,23 @@ out:
 /**
  * zif_store_remote_set_id:
  * @state: a #ZifState to use for progress reporting
+ *
+ * Gets the directory used for this repo, e.g. /var/cache/yum/i386/fedora
+ *
+ * Return value: the directory the repo downloads cache file to
+ *
+ * Since: 0.1.3
+ **/
+const gchar *
+zif_store_remote_get_local_directory (ZifStoreRemote *store)
+{
+	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), NULL);
+	return store->priv->directory;
+}
+
+/**
+ * zif_store_remote_set_id:
+ * @state: a #ZifState to use for progress reporting
  * @id: the repository id, e.g. "fedora"
  *
  * Sets the ID for the #ZifStoreRemote

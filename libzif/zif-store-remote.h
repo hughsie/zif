@@ -112,6 +112,7 @@ gboolean	 zif_store_remote_check			(ZifStoreRemote		*store,
 							 GError			**error);
 void		 zif_store_remote_set_id		(ZifStoreRemote		*store,
 							 const gchar		*id);
+const gchar	*zif_store_remote_get_local_directory	(ZifStoreRemote		*store);
 
 G_END_DECLS
 

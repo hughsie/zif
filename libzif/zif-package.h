@@ -172,14 +172,6 @@ void			 zif_package_set_conflicts	(ZifPackage	*package,
 							 GPtrArray	*conflicts);
 void			 zif_package_set_time_file	(ZifPackage	*package,
 							 guint64	 time_file);
-/* actions */
-gboolean		 zif_package_download		(ZifPackage	*package,
-							 const gchar	*directory,
-							 ZifState	*state,
-							 GError		**error);
-ZifUpdate		*zif_package_get_update_detail	(ZifPackage	*package,
-							 ZifState	*state,
-							 GError		**error);
 const gchar		*zif_package_get_package_id	(ZifPackage	*package);
 void			 zif_package_print		(ZifPackage	*package);
 gboolean		 zif_package_is_devel		(ZifPackage	*package);

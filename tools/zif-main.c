@@ -186,7 +186,8 @@ zif_cmd_download (const gchar *package_name, ZifState *state)
 
 	/* download package file */
 	package = g_ptr_array_index (array, 0);
-	ret = zif_package_download (package, "/tmp", state_local, &error);
+	ret = zif_package_remote_download (ZIF_PACKAGE_REMOTE (package),
+					   "/tmp", state_local, &error);
 	if (!ret) {
 		g_print ("failed to download: %s\n", error->message);
 		g_error_free (error);
@@ -1189,7 +1190,7 @@ main (int argc, char *argv[])
 
 			package = g_ptr_array_index (array, i);
 			state_loop = zif_state_get_child (state_local);
-			update = zif_package_get_update_detail (package, state_loop, &error);
+			update = zif_package_remote_get_update_detail (ZIF_PACKAGE_REMOTE (package), state_loop, &error);
 			if (update == NULL) {
 				g_print ("failed to get update detail for %s: %s\n",
 					 zif_package_get_id (package), error->message);
