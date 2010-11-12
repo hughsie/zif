@@ -165,10 +165,12 @@ zif_depend_satisfies (ZifDepend *got, ZifDepend *need)
 		   zif_depend_get_description (got),
 		   zif_depend_get_description (need));
 out:
-	g_debug ("tested satisfiability of %s:%s = %s",
-		 zif_depend_get_description (got),
-		 zif_depend_get_description (need),
-		 ret ? "TRUE" : "FALSE");
+	if (0) {
+		g_debug ("tested satisfiability of %s:%s = %s",
+			 zif_depend_get_description (got),
+			 zif_depend_get_description (need),
+			 ret ? "TRUE" : "FALSE");
+	}
 	return ret;
 }
 

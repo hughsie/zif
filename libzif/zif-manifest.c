@@ -572,6 +572,9 @@ zif_manifest_check (ZifManifest *manifest,
 	ret = g_key_file_get_boolean (keyfile, "Zif Manifest", "SkipBroken", NULL);
 	zif_transaction_set_skip_broken (transaction, ret);
 
+	/* always set verbose */
+	zif_transaction_set_verbose (transaction, TRUE);
+
 	/* installs */
 	transaction_install = g_key_file_get_string (keyfile, "Zif Manifest", "TransactionInstall", NULL);
 	if (transaction_install != NULL) {
@@ -634,13 +637,18 @@ zif_manifest_check (ZifManifest *manifest,
 	zif_state_reset (state);
 	ret = zif_transaction_resolve (transaction, state, &error_local);
 	if (!ret) {
-		g_set_error (error,
-			     ZIF_MANIFEST_ERROR,
-			     ZIF_MANIFEST_ERROR_FAILED,
-			     "failed to add resolve transaction: %s",
-			     error_local->message);
-		g_error_free (error_local);
-		goto out;
+		/* this is special */
+		if (error_local->code == ZIF_TRANSACTION_ERROR_NOTHING_TO_DO) {
+			g_clear_error (&error_local);
+		} else {
+			g_set_error (error,
+				     ZIF_MANIFEST_ERROR,
+				     ZIF_MANIFEST_ERROR_FAILED,
+				     "failed to add resolve transaction: %s",
+				     error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
 	}
 
 	/* add the output of the resolve to the fake local repo */

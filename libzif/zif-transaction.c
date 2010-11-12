@@ -64,6 +64,7 @@ struct _ZifTransactionPrivate
 	ZifStore		*store_local;
 	GPtrArray		*stores_remote;
 	gboolean		 skip_broken;
+	gboolean		 verbose;
 };
 
 typedef struct {
@@ -544,12 +545,17 @@ zif_transaction_package_file_depend (ZifPackage *package,
 	}
 
 	/* search array */
-	g_debug ("%i files for %s",
-		 provides->len,
-		 zif_package_get_id (package));
+	if (0) {
+		g_debug ("%i files for %s",
+			 provides->len,
+			 zif_package_get_id (package));
+		for (i=0; i<provides->len; i++) {
+			filename_tmp = g_ptr_array_index (provides, i);
+			g_debug ("require: %s:%s", filename_tmp, filename);
+		}
+	}
 	for (i=0; i<provides->len; i++) {
 		filename_tmp = g_ptr_array_index (provides, i);
-		g_debug ("require: %s:%s", filename_tmp, filename);
 		if (g_strcmp0 (filename_tmp, filename) == 0) {
 			*satisfies = zif_depend_new ();
 			zif_depend_set_flag (*satisfies, ZIF_DEPEND_FLAG_ANY);
@@ -647,9 +653,11 @@ zif_transaction_package_requires (ZifPackage *package,
 	ZifDepend *depend_tmp;
 
 	/* get the list of requires (which is cached after the first access) */
-	g_debug ("Find out if %s requires %s",
-		 zif_package_get_id (package),
-		 zif_depend_get_description (depend));
+	if (0) {
+		g_debug ("Find out if %s requires %s",
+			 zif_package_get_id (package),
+			 zif_depend_get_description (depend));
+	}
 	zif_state_reset (state);
 	requires = zif_package_get_requires (package, state, &error_local);
 	if (requires == NULL) {
@@ -665,19 +673,20 @@ zif_transaction_package_requires (ZifPackage *package,
 	}
 
 	/* find what we're looking for */
-	g_debug ("got %i requires for %s",
-		 requires->len,
-		 zif_package_get_id (package));
-	for (i=0; i<requires->len; i++) {
-		depend_tmp = g_ptr_array_index (requires, i);
-		g_debug ("%i.\t%s",
-			 i+1,
-			 zif_depend_get_description (depend_tmp));
+	if (0) {
+		g_debug ("got %i requires for %s",
+			 requires->len,
+			 zif_package_get_id (package));
+		for (i=0; i<requires->len; i++) {
+			depend_tmp = g_ptr_array_index (requires, i);
+			g_debug ("%i.\t%s",
+				 i+1,
+				 zif_depend_get_description (depend_tmp));
+		}
 	}
 	depend_description = zif_depend_get_description (depend);
 	for (i=0; i<requires->len; i++) {
 		depend_tmp = g_ptr_array_index (requires, i);
-		g_debug ("require: %s:%s", depend_description, zif_depend_get_description (depend_tmp));
 		if (zif_depend_satisfies (depend, depend_tmp)) {
 			g_debug ("%s satisfied by %s",
 				 zif_depend_get_description (depend_tmp),
@@ -1052,8 +1061,10 @@ zif_transaction_get_package_requires_from_store (ZifStore *store,
 		item = zif_transaction_get_item_from_array (already_marked_to_remove,
 							    package);
 		if (item != NULL) {
-			g_debug ("not getting requires for %s, as already in remove array",
-				 zif_package_get_id (package));
+			if (0) {
+				g_debug ("not getting requires for %s, as already in remove array",
+					 zif_package_get_id (package));
+			}
 			continue;
 		}
 
@@ -1469,9 +1480,11 @@ zif_transaction_resolve_remove_require (ZifTransactionResolve *data,
 	GPtrArray *local_provides = NULL;
 
 	/* does anything *else* provide the depend that's installed? */
-	g_debug ("find anything installed that also provides %s (currently provided by %s)",
-		 zif_depend_get_description (depend),
-		 zif_package_get_id (item->package));
+	if (data->transaction->priv->verbose) {
+		g_debug ("find anything installed that also provides %s (currently provided by %s)",
+			 zif_depend_get_description (depend),
+			 zif_package_get_id (item->package));
+	}
 	zif_state_reset (data->state);
 	local_provides = zif_store_what_provides (data->transaction->priv->store_local,
 						  depend,
@@ -1502,9 +1515,11 @@ zif_transaction_resolve_remove_require (ZifTransactionResolve *data,
 	}
 
 	/* find if anything in the local store requires this package */
-	g_debug ("find anything installed that requires %s provided by %s",
-		 zif_depend_get_description (depend),
-		 zif_package_get_id (item->package));
+	if (data->transaction->priv->verbose) {
+		g_debug ("find anything installed that requires %s provided by %s",
+			 zif_depend_get_description (depend),
+			 zif_package_get_id (item->package));
+	}
 	ret = zif_transaction_get_package_requires_from_store (data->transaction->priv->store_local,
 							       depend,
 							       data->transaction->priv->remove,
@@ -1523,13 +1538,15 @@ zif_transaction_resolve_remove_require (ZifTransactionResolve *data,
 	}
 
 	/* print */
-	g_debug ("%i packages require %s provided by %s",
-		 package_requires->len,
-		 zif_depend_get_description (depend),
-		 zif_package_get_id (item->package));
-	for (i=0; i<package_requires->len; i++) {
-		package = g_ptr_array_index (package_requires, i);
-		g_debug ("%i.\t%s", i+1, zif_package_get_id (package));
+	if (data->transaction->priv->verbose) {
+		g_debug ("%i packages require %s provided by %s",
+			 package_requires->len,
+			 zif_depend_get_description (depend),
+			 zif_package_get_id (item->package));
+		for (i=0; i<package_requires->len; i++) {
+			package = g_ptr_array_index (package_requires, i);
+			g_debug ("%i.\t%s", i+1, zif_package_get_id (package));
+		}
 	}
 	for (i=0; i<package_requires->len; i++) {
 		package = g_ptr_array_index (package_requires, i);
@@ -1548,8 +1565,10 @@ zif_transaction_resolve_remove_require (ZifTransactionResolve *data,
 		g_assert (satisfies != NULL);
 
 		/* find out if anything in the install queue already provides the depend */
-		g_debug ("find out if %s is provided in the install queue",
-			 zif_depend_get_description (satisfies));
+		if (data->transaction->priv->verbose) {
+			g_debug ("find out if %s is provided in the install queue",
+				 zif_depend_get_description (satisfies));
+		}
 		ret = zif_transaction_get_package_provide_from_array (data->transaction->priv->install,
 								      satisfies,
 								      &package_in_install,
@@ -1654,10 +1673,12 @@ zif_transaction_resolve_remove_item (ZifTransactionResolve *data,
 	}
 
 	/* find each provide */
-	g_debug ("got %i provides", provides->len);
-	for (i=0; i<provides->len; i++) {
-		depend = g_ptr_array_index (provides, i);
-		g_debug ("%i.\t%s", i+1, zif_depend_get_description (depend));
+	if (data->transaction->priv->verbose) {
+		g_debug ("got %i provides", provides->len);
+		for (i=0; i<provides->len; i++) {
+			depend = g_ptr_array_index (provides, i);
+			g_debug ("%i.\t%s", i+1, zif_depend_get_description (depend));
+		}
 	}
 	for (i=0; i<provides->len; i++) {
 		depend = g_ptr_array_index (provides, i);
@@ -2538,6 +2559,18 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 		}
 	}
 
+	/* anything to do? */
+	if (transaction->priv->install->len == 0 &&
+	    transaction->priv->update->len == 0 &&
+	    transaction->priv->remove->len == 0) {
+		ret = FALSE;
+		g_set_error_literal (error,
+				     ZIF_TRANSACTION_ERROR,
+				     ZIF_TRANSACTION_ERROR_NOTHING_TO_DO,
+				     "no packages will be installed, removed or updated");
+		goto out;
+	}
+
 	/* success */
 	g_debug ("done depsolve");
 	zif_transaction_show_array ("installing", transaction->priv->install);
@@ -2600,6 +2633,23 @@ zif_transaction_set_skip_broken (ZifTransaction *transaction, gboolean skip_brok
 {
 	g_return_if_fail (ZIF_IS_TRANSACTION (transaction));
 	transaction->priv->skip_broken = skip_broken;
+}
+
+/**
+ * zif_transaction_set_verbose:
+ * @transaction: the #ZifTransaction object
+ * @verbose: if an insane amount of debugging should be printed
+ *
+ * Sets the printing policy for the transaction. You only need to set
+ * this to true if you are debugging a problem with the depsolver.
+ *
+ * Since: 0.1.3
+ **/
+void
+zif_transaction_set_verbose (ZifTransaction *transaction, gboolean verbose)
+{
+	g_return_if_fail (ZIF_IS_TRANSACTION (transaction));
+	transaction->priv->verbose = verbose;
 }
 
 /**

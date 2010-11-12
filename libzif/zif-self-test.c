@@ -234,6 +234,7 @@ zif_transaction_func (void)
 
 	state = zif_state_new ();
 	transaction = zif_transaction_new ();
+	zif_transaction_set_verbose (transaction, TRUE);
 
 	/* create dummy package for testing */
 	package = ZIF_PACKAGE (zif_package_local_new ());
@@ -272,6 +273,7 @@ zif_transaction_func (void)
 
 	/* resolve */
 	transaction = zif_transaction_new ();
+	zif_transaction_set_verbose (transaction, TRUE);
 
 	package = zif_package_meta_new ();
 	ret = zif_package_set_id (package, "test;0.0.1;i386;data", &error);
