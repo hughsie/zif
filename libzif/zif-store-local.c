@@ -125,6 +125,23 @@ out:
 }
 
 /**
+ * zif_store_local_get_prefix:
+ * @store: the #ZifStoreLocal object
+ *
+ * Gets the prefix to use for the install root.
+ *
+ * Return value: The install prefix, e.g. "/"
+ *
+ * Since: 0.1.3
+ **/
+const gchar *
+zif_store_local_get_prefix (ZifStoreLocal *store)
+{
+	g_return_val_if_fail (ZIF_IS_STORE_LOCAL (store), NULL);
+	return store->priv->prefix;
+}
+
+/**
  * zif_store_local_load:
  **/
 static gboolean

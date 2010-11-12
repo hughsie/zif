@@ -60,6 +60,7 @@ ZifStoreLocal	*zif_store_local_new		(void);
 gboolean	 zif_store_local_set_prefix	(ZifStoreLocal		*store,
 						 const gchar		*prefix,
 						 GError			**error);
+const gchar	*zif_store_local_get_prefix	(ZifStoreLocal		*store);
 
 G_END_DECLS
 
