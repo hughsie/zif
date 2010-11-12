@@ -2686,6 +2686,13 @@ zif_transaction_prepare (ZifTransaction *transaction, ZifState *state, GError **
 		goto out;
 	}
 
+	/* nothing to download */
+	if (transaction->priv->install->len == 0) {
+		transaction->priv->state = ZIF_TRANSACTION_STATE_PREPARED;
+		ret = TRUE;
+		goto out;
+	}
+
 	/* 1. check downloads exist
 	 * 2. download them
 	 */
