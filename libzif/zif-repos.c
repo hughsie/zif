@@ -48,6 +48,7 @@ struct _ZifReposPrivate
 	gboolean		 loaded;
 	gchar			*repos_dir;
 	ZifMonitor		*monitor;
+	ZifConfig		*config;
 	GPtrArray		*list;
 	GPtrArray		*enabled;
 	guint			 monitor_changed_id;
@@ -75,10 +76,13 @@ zif_repos_error_quark (void)
 /**
  * zif_repos_set_repos_dir:
  * @repos: the #ZifRepos object
- * @repos_dir: the directory, e.g. "/etc/yum.repos.d"
+ * @repos_dir: the directory, e.g. "/etc/yum.repos.d", or NULL to use the default
  * @error: a #GError which is used on failure, or %NULL
  *
  * Set the repository directory.
+ *
+ * Using @repos_dir set to %NULL to use the value from the config file
+ * has been supported since 0.1.3. Earlier versions will assert.
  *
  * Return value: %TRUE for success, %FALSE for failure
  *
@@ -87,25 +91,43 @@ zif_repos_error_quark (void)
 gboolean
 zif_repos_set_repos_dir (ZifRepos *repos, const gchar *repos_dir, GError **error)
 {
-	gboolean ret;
+	gboolean ret = FALSE;
+	gchar *repos_dir_real = NULL;
 	GError *error_local = NULL;
 
 	g_return_val_if_fail (ZIF_IS_REPOS (repos), FALSE);
 	g_return_val_if_fail (repos->priv->repos_dir == NULL, FALSE);
 	g_return_val_if_fail (!repos->priv->loaded, FALSE);
-	g_return_val_if_fail (repos_dir != NULL, FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
+	/* get from config file */
+	if (repos_dir == NULL) {
+		repos_dir_real = zif_config_get_string (repos->priv->config,
+							"reposdir",
+							&error_local);
+		if (repos_dir_real == NULL) {
+			g_set_error (error,
+				     ZIF_STORE_ERROR,
+				     ZIF_STORE_ERROR_FAILED,
+				     "default reposdir not available: %s",
+				     error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+	} else {
+		repos_dir_real = g_strdup (repos_dir);
+	}
+
 	/* check directory exists */
-	ret = g_file_test (repos_dir, G_FILE_TEST_IS_DIR);
+	ret = g_file_test (repos_dir_real, G_FILE_TEST_IS_DIR);
 	if (!ret) {
 		g_set_error (error, ZIF_REPOS_ERROR, ZIF_REPOS_ERROR_FAILED,
-			     "repo directory %s does not exist", repos_dir);
+			     "repo directory %s does not exist", repos_dir_real);
 		goto out;
 	}
 
 	/* setup watch */
-	ret = zif_monitor_add_watch (repos->priv->monitor, repos_dir, &error_local);
+	ret = zif_monitor_add_watch (repos->priv->monitor, repos_dir_real, &error_local);
 	if (!ret) {
 		g_set_error (error, ZIF_REPOS_ERROR, ZIF_REPOS_ERROR_FAILED,
 			     "failed to setup watch: %s", error_local->message);
@@ -113,8 +135,9 @@ zif_repos_set_repos_dir (ZifRepos *repos, const gchar *repos_dir, GError **error
 		goto out;
 	}
 
-	repos->priv->repos_dir = g_strdup (repos_dir);
+	repos->priv->repos_dir = g_strdup (repos_dir_real);
 out:
+	g_free (repos_dir_real);
 	return ret;
 }
 
@@ -491,6 +514,7 @@ zif_repos_finalize (GObject *object)
 
 	g_signal_handler_disconnect (repos->priv->monitor, repos->priv->monitor_changed_id);
 	g_object_unref (repos->priv->monitor);
+	g_object_unref (repos->priv->config);
 	g_free (repos->priv->repos_dir);
 
 	g_ptr_array_unref (repos->priv->list);
@@ -521,6 +545,7 @@ zif_repos_init (ZifRepos *repos)
 	repos->priv->list = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	repos->priv->enabled = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	repos->priv->monitor = zif_monitor_new ();
+	repos->priv->config = zif_config_new ();
 	repos->priv->monitor_changed_id =
 		g_signal_connect (repos->priv->monitor, "changed",
 				  G_CALLBACK (zif_repos_file_monitor_cb), repos);

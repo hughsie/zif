@@ -923,7 +923,6 @@ main (int argc, char *argv[])
 	gboolean skip_broken = FALSE;
 	gchar *config_file = NULL;
 	gchar *http_proxy = NULL;
-	gchar *repos_dir = NULL;
 	gchar *root = NULL;
 	gchar **distro_id_split = NULL;
 	const gchar *to_array[] = { NULL, NULL };
@@ -1082,13 +1081,7 @@ main (int argc, char *argv[])
 
 	/* ZifRepos */
 	repos = zif_repos_new ();
-	repos_dir = zif_config_get_string (config, "reposdir", &error);
-	if (repos_dir == NULL) {
-		g_error ("failed to get repos dir: %s", error->message);
-		g_error_free (error);
-		goto out;
-	}
-	ret = zif_repos_set_repos_dir (repos, repos_dir, &error);
+	ret = zif_repos_set_repos_dir (repos, NULL, &error);
 	if (!ret) {
 		g_error ("failed to set repos dir: %s", error->message);
 		g_error_free (error);
@@ -2601,7 +2594,6 @@ out:
 	g_object_unref (progressbar);
 	g_strfreev (distro_id_split);
 	g_free (root);
-	g_free (repos_dir);
 	g_free (http_proxy);
 	g_free (config_file);
 	g_free (options_help);
