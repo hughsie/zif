@@ -90,6 +90,7 @@
 struct _ZifStatePrivate
 {
 	guint			 steps;
+	guint			*step_data;
 	guint			 current;
 	guint			 last_percentage;
 	ZifState		*child;
@@ -728,6 +729,10 @@ zif_state_reset (ZifState *state)
 		state->priv->child = NULL;
 	}
 
+	/* no more step data */
+	g_free (state->priv->step_data);
+	state->priv->step_data = NULL;
+
 	return TRUE;
 }
 
@@ -848,6 +853,87 @@ zif_state_set_number_steps_real (ZifState *state, guint steps, const gchar *strl
 }
 
 /**
+ * zif_state_set_steps:
+ * @value: the step weighting
+ *
+ * This sets the step weighting, which you will want to do if one action
+ * will take a bigger chunk of time than another.
+ *
+ * All the values must add up to 100, and the list must end with -1.
+ *
+ * Return value: %TRUE for success
+ *
+ * Since: 0.1.3
+ **/
+gboolean
+zif_state_set_steps (ZifState *state, GError **error, gint value, ...)
+{
+	va_list args;
+	guint i;
+	gint value_temp;
+	guint total;
+	gboolean ret = FALSE;
+
+	g_return_val_if_fail (ZIF_IS_STATE (state), FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+	/* we must set at least one thing */
+	total = value;
+
+	/* process the valist */
+	va_start (args, value);
+	for (i=0;; i++) {
+		value_temp = va_arg (args, gint);
+		if (value_temp == -1)
+			break;
+		total += (guint) value_temp;
+	}
+	va_end (args);
+
+	/* does not sum to 100% */
+	if (total != 100) {
+		g_set_error (error,
+			     ZIF_STATE_ERROR,
+			     ZIF_STATE_ERROR_INVALID,
+			     "percentage not 100: %i",
+			     total);
+		goto out;
+	}
+
+	/* set step number */
+	ret = zif_state_set_number_steps_real (state, i+1, NULL);
+	if (!ret) {
+		g_set_error (error,
+			     ZIF_STATE_ERROR,
+			     ZIF_STATE_ERROR_INVALID,
+			     "failed to set number steps: %i",
+			     i+1);
+		goto out;
+	}
+
+	/* save this data */
+	total = value;
+	state->priv->step_data = g_new0 (guint, i+2);
+	state->priv->step_data[0] = total;
+	va_start (args, value);
+	for (i=0;; i++) {
+		value_temp = va_arg (args, gint);
+		if (value_temp == -1)
+			break;
+
+		/* we pre-add the data to make access simpler */
+		total += (guint) value_temp;
+		state->priv->step_data[i+1] = total;
+	}
+	va_end (args);
+
+	/* success */
+	ret = TRUE;
+out:
+	return ret;
+}
+
+/**
  * zif_state_done_real:
  * @state: the #ZifState object
  * @error: A #GError or %NULL
@@ -926,7 +1012,13 @@ zif_state_done_real (ZifState *state, GError **error, const gchar *strloc)
 	state->priv->current++;
 
 	/* find new percentage */
-	percentage = zif_state_discrete_to_percent (state->priv->current, state->priv->steps);
+	if (state->priv->step_data == NULL) {
+		percentage = zif_state_discrete_to_percent (state->priv->current,
+							    state->priv->steps);
+	} else {
+		/* this is cumalative, for speedy access */
+		percentage = state->priv->step_data[state->priv->current - 1];
+	}
 	zif_state_set_percentage (state, (guint) percentage);
 
 	/* reset child if it exists */
@@ -986,9 +1078,10 @@ zif_state_finalize (GObject *object)
 	state = ZIF_STATE (object);
 
 	/* unref child too */
+	zif_state_reset (state);
 	g_free (state->priv->id);
 	g_free (state->priv->action_hint);
-	zif_state_reset (state);
+	g_free (state->priv->step_data);
 	if (state->priv->parent != NULL)
 		g_object_unref (state->priv->parent);
 	if (state->priv->cancellable != NULL)

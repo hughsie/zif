@@ -101,6 +101,9 @@ ZifState	*zif_state_get_child			(ZifState		*state);
 gboolean	 zif_state_set_number_steps_real	(ZifState		*state,
 							 guint			 steps,
 							 const gchar		*strloc);
+gboolean	 zif_state_set_steps			(ZifState		*state,
+							 GError			**error,
+							 gint			 value, ...);
 gboolean	 zif_state_set_percentage		(ZifState		*state,
 							 guint			 percentage);
 guint		 zif_state_get_percentage		(ZifState		*state);

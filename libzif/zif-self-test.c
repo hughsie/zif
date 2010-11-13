@@ -1964,6 +1964,49 @@ zif_state_func (void)
 
 	g_object_unref (state);
 	g_object_unref (child);
+
+	/* test non-equal steps */
+	state = zif_state_new ();
+	ret = zif_state_set_steps (state,
+				   &error,
+				   20, /* prepare */
+				   60, /* download */
+				   10, /* install */
+				   -1);
+	g_assert_error (error, ZIF_STATE_ERROR, ZIF_STATE_ERROR_INVALID);
+	g_assert (!ret);
+	g_clear_error (&error);
+
+	/* okay this time */
+	ret = zif_state_set_steps (state, &error, 20, 60, 20, -1);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	/* verify nothing */
+	g_assert_cmpint (zif_state_get_percentage (state), ==, 0);
+
+	ret = zif_state_done (state, &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	/* verify 20% */
+	g_assert_cmpint (zif_state_get_percentage (state), ==, 20);
+
+	ret = zif_state_done (state, &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	/* verify 80% */
+	g_assert_cmpint (zif_state_get_percentage (state), ==, 80);
+
+	ret = zif_state_done (state, &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	/* verify 100% */
+	g_assert_cmpint (zif_state_get_percentage (state), ==, 100);
+
+	g_object_unref (state);
 }
 
 static void
