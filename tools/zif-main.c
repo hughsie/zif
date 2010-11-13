@@ -919,6 +919,7 @@ main (int argc, char *argv[])
 	GOptionContext *context;
 	gchar *options_help;
 	gboolean verbose = FALSE;
+	gboolean profile = FALSE;
 	gboolean skip_broken = FALSE;
 	gchar *config_file = NULL;
 	gchar *http_proxy = NULL;
@@ -930,6 +931,8 @@ main (int argc, char *argv[])
 	const GOptionEntry options[] = {
 		{ "verbose", 'v', 0, G_OPTION_ARG_NONE, &verbose,
 			_("Show extra debugging information"), NULL },
+		{ "profile", '\0', 0, G_OPTION_ARG_NONE, &profile,
+			_("Enable low level profiling of Zif"), NULL },
 		{ "offline", 'o', 0, G_OPTION_ARG_NONE, &offline,
 			_("Work offline when possible"), NULL },
 		{ "config", 'c', 0, G_OPTION_ARG_STRING, &config_file,
@@ -1104,6 +1107,7 @@ main (int argc, char *argv[])
 
 	/* ZifState */
 	state = zif_state_new ();
+	zif_state_set_enable_profile (state, profile);
 	g_signal_connect (state, "percentage-changed", G_CALLBACK (zif_state_percentage_changed_cb), NULL);
 	g_signal_connect (state, "subpercentage-changed", G_CALLBACK (zif_state_subpercentage_changed_cb), NULL);
 	g_signal_connect (state, "allow-cancel-changed", G_CALLBACK (zif_state_allow_cancel_changed_cb), NULL);
