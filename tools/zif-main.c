@@ -1075,12 +1075,6 @@ main (int argc, char *argv[])
 
 	/* ZifRepos */
 	repos = zif_repos_new ();
-	ret = zif_repos_set_repos_dir (repos, NULL, &error);
-	if (!ret) {
-		g_error ("failed to set repos dir: %s", error->message);
-		g_error_free (error);
-		goto out;
-	}
 
 	/* ZifGroups */
 	groups = zif_groups_new ();

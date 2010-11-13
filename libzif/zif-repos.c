@@ -227,6 +227,7 @@ zif_repos_load (ZifRepos *repos, ZifState *state, GError **error)
 	gboolean ret = TRUE;
 	ZifStoreRemote *store;
 	ZifState *state_local;
+	ZifState *state_loop;
 	GError *error_local = NULL;
 	GDir *dir;
 	const gchar *filename;
@@ -234,7 +235,6 @@ zif_repos_load (ZifRepos *repos, ZifState *state, GError **error)
 	GPtrArray *repofiles = NULL;
 
 	g_return_val_if_fail (ZIF_IS_REPOS (repos), FALSE);
-	g_return_val_if_fail (repos->priv->repos_dir != NULL, FALSE);
 	g_return_val_if_fail (zif_state_valid (state), FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
@@ -244,6 +244,36 @@ zif_repos_load (ZifRepos *repos, ZifState *state, GError **error)
 
 	/* set action */
 	zif_state_action_start (state, ZIF_STATE_ACTION_LOADING_REPOS, NULL);
+
+	/* set steps */
+	if (repos->priv->repos_dir == NULL) {
+		ret = zif_state_set_steps (state,
+					   error,
+					   5, /* set repodir */
+					   5, /* read the repo filenames */
+					   10, /* add each repo */
+					   80, /* get enabled */
+					   -1);
+	} else {
+		ret = zif_state_set_steps (state,
+					   error,
+					   10, /* read the repo filenames */
+					   10, /* add each repo */
+					   80, /* get enabled */
+					   -1);
+	}
+	if (!ret)
+		goto out;
+
+	/* load default repodir from config file */
+	if (repos->priv->repos_dir == NULL) {
+		ret = zif_repos_set_repos_dir (repos, NULL, error);
+		if (!ret)
+			goto out;
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
+	}
 
 	/* search repos dir */
 	dir = g_dir_open (repos->priv->repos_dir, 0, &error_local);
@@ -265,8 +295,14 @@ zif_repos_load (ZifRepos *repos, ZifState *state, GError **error)
 	}
 	g_dir_close (dir);
 
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
 	/* setup state with the correct number of steps */
-	zif_state_set_number_steps (state, repofiles->len + 1);
+	state_local = zif_state_get_child (state);
+	zif_state_set_number_steps (state_local, repofiles->len);
 
 	/* for each repo files */
 	for (i=0; i < repofiles->len; i++) {
@@ -282,8 +318,8 @@ zif_repos_load (ZifRepos *repos, ZifState *state, GError **error)
 		}
 
 		/* add all repos for filename */
-		state_local = zif_state_get_child (state);
-		ret = zif_repos_get_for_filename (repos, filename, state_local, &error_local);
+		state_loop = zif_state_get_child (state_local);
+		ret = zif_repos_get_for_filename (repos, filename, state_loop, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_REPOS_ERROR, ZIF_REPOS_ERROR_FAILED,
 				     "failed to get filename %s: %s", filename, error_local->message);
@@ -294,7 +330,7 @@ zif_repos_load (ZifRepos *repos, ZifState *state, GError **error)
 		}
 
 		/* this section done */
-		ret = zif_state_done (state, error);
+		ret = zif_state_done (state_local, error);
 		if (!ret)
 			goto out;
 	}
@@ -303,16 +339,23 @@ zif_repos_load (ZifRepos *repos, ZifState *state, GError **error)
 	if (!ret)
 		goto out;
 
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
 	/* need to sort by id predictably */
 	g_ptr_array_sort (repos->priv->list, (GCompareFunc) zif_repos_sort_store_cb);
 
 	/* find enabled */
+	state_local = zif_state_get_child (state);
+	zif_state_set_number_steps (state_local, repos->priv->list->len);
 	for (i=0; i<repos->priv->list->len; i++) {
 		store = g_ptr_array_index (repos->priv->list, i);
 
 		/* get repo enabled state */
-		state_local = zif_state_get_child (state);
-		ret = zif_store_remote_get_enabled (store, state_local, &error_local);
+		state_loop = zif_state_get_child (state_local);
+		ret = zif_store_remote_get_enabled (store, state_loop, &error_local);
 		if (error_local != NULL) {
 			g_set_error (error, ZIF_REPOS_ERROR, ZIF_REPOS_ERROR_FAILED,
 				     "failed to get repo state for %s: %s", zif_store_get_id (ZIF_STORE (store)), error_local->message);
@@ -324,6 +367,11 @@ zif_repos_load (ZifRepos *repos, ZifState *state, GError **error)
 		/* if enabled, add to array */
 		if (ret)
 			g_ptr_array_add (repos->priv->enabled, g_object_ref (store));
+
+		/* this section done */
+		ret = zif_state_done (state_local, error);
+		if (!ret)
+			goto out;
 	}
 
 	/* this section done */
