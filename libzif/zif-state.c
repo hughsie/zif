@@ -142,6 +142,23 @@ zif_state_error_quark (void)
 }
 
 /**
+ * zif_state_set_enable_profile:
+ * @state: the #ZifState object
+ * @enable_profile: if profiling should be enabled
+ *
+ * This enables profiling of ZifState. This may be useful in development,
+ * but be warned; enabling profiling makes #ZifState very slow.
+ *
+ * Since: 0.1.3
+ **/
+void
+zif_state_set_enable_profile (ZifState *state, gboolean enable_profile)
+{
+	g_return_if_fail (ZIF_IS_STATE (state));
+	state->priv->enable_profile = enable_profile;
+}
+
+/**
  * zif_state_set_error_handler:
  * @state: the #ZifState object
  * @error_handler_cb: a #ZifStateErrorHandlerCb which returns %FALSE if the error is fatal
@@ -777,6 +794,9 @@ zif_state_get_child (ZifState *state)
 					     state->priv->error_handler_cb,
 					     state->priv->error_handler_user_data);
 	}
+
+	/* set the profile state */
+	zif_state_set_enable_profile (child, state->priv->enable_profile);
 
 	return child;
 }

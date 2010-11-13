@@ -121,6 +121,8 @@ gboolean	 zif_state_finished_real		(ZifState		*state,
 							 G_GNUC_WARN_UNUSED_RESULT;
 gboolean	 zif_state_reset			(ZifState		*state);
 gboolean	 zif_state_valid			(ZifState		*state);
+void		 zif_state_set_enable_profile		(ZifState		*state,
+							 gboolean		 enable_profile);
 
 /* cancellation */
 GCancellable	*zif_state_get_cancellable		(ZifState		*state);
