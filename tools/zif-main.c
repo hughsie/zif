@@ -990,6 +990,7 @@ main (int argc, char *argv[])
 	g_option_context_free (context);
 
 	progressbar = pk_progress_bar_new ();
+	pk_progress_bar_set_on_console (progressbar, !verbose);
 
 	/* do stuff on ctrl-c */
 	signal (SIGINT, zif_main_sigint_cb);

@@ -58,6 +58,8 @@ gboolean	 pk_progress_bar_set_value		(ZifProgressBar	*progress_bar,
 							 guint		 value);
 void		 pk_progress_bar_set_allow_cancel	(ZifProgressBar	*progress_bar,
 							 gboolean	 allow_cancel);
+void		 pk_progress_bar_set_on_console		(ZifProgressBar	*progress_bar,
+							 gboolean	 on_console);
 gboolean	 pk_progress_bar_start			(ZifProgressBar	*progress_bar,
 							 const gchar	*text);
 gboolean	 pk_progress_bar_end			(ZifProgressBar	*progress_bar);

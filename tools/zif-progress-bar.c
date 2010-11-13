@@ -39,6 +39,7 @@ struct ZifProgressBarPrivate
 	guint			 padding;
 	guint			 timer_id;
 	gboolean		 allow_cancel;
+	gboolean		 on_console;
 	ZifProgressBarPulseState	 pulse_state;
 };
 
@@ -46,6 +47,16 @@ struct ZifProgressBarPrivate
 #define ZIF_PROGRESS_BAR_PULSE_TIMEOUT		40 /* ms */
 
 G_DEFINE_TYPE (ZifProgressBar, pk_progress_bar, G_TYPE_OBJECT)
+
+/**
+ * pk_progress_bar_set_padding:
+ **/
+void
+pk_progress_bar_set_on_console (ZifProgressBar *progress_bar, gboolean on_console)
+{
+	g_return_if_fail (ZIF_IS_PROGRESS_BAR (progress_bar));
+	progress_bar->priv->on_console = on_console;
+}
 
 /**
  * pk_progress_bar_set_padding:
@@ -116,6 +127,13 @@ pk_progress_bar_set_percentage (ZifProgressBar *self, guint percentage)
 	}
 
 	self->priv->percentage = percentage;
+
+	/* no console */
+	if (!self->priv->on_console) {
+		g_print ("Percentage: %i\n", percentage);
+		goto out;
+	}
+
 	pk_progress_bar_draw (self, self->priv->value);
 out:
 	return TRUE;
@@ -187,8 +205,19 @@ pk_progress_bar_draw_pulse_bar (ZifProgressBar *self)
 void
 pk_progress_bar_set_allow_cancel (ZifProgressBar *self, gboolean allow_cancel)
 {
+	/* nothing to do */
+	if (self->priv->allow_cancel == allow_cancel)
+		goto out;
+
+	/* no console */
+	if (!self->priv->on_console) {
+		g_print ("Allow cancel: %s\n", allow_cancel ? "TRUE" : "FALSE");
+		goto out;
+	}
 	self->priv->allow_cancel = allow_cancel;
 	pk_progress_bar_draw (self, self->priv->value);
+out:
+	return;
 }
 
 /**
@@ -208,6 +237,10 @@ pk_progress_bar_set_value (ZifProgressBar *self, guint value)
 
 	/* save */
 	self->priv->value = value;
+
+	/* no console */
+	if (!self->priv->on_console)
+		goto out;
 
 	/* either pulse or display */
 	if (value == ZIF_PROGRESS_BAR_PERCENTAGE_INVALID) {
@@ -265,9 +298,15 @@ pk_strpad (const gchar *data, guint length)
 gboolean
 pk_progress_bar_start (ZifProgressBar *self, const gchar *text)
 {
-	gchar *text_pad;
+	gchar *text_pad = NULL;
 
 	g_return_val_if_fail (ZIF_IS_PROGRESS_BAR (self), FALSE);
+
+	/* no console */
+	if (!self->priv->on_console) {
+		g_print ("Start: %s\n", text);
+		goto out;
+	}
 
 	/* finish old value */
 	if (self->priv->value != 0 && self->priv->value != 100) {
@@ -290,6 +329,7 @@ pk_progress_bar_start (ZifProgressBar *self, const gchar *text)
 	self->priv->value = 0;
 	pk_progress_bar_draw (self, 0);
 
+out:
 	g_free (text_pad);
 	return TRUE;
 }
@@ -304,9 +344,14 @@ pk_progress_bar_end (ZifProgressBar *self)
 
 	self->priv->value = 100;
 	self->priv->percentage = 100;
+
+	/* no console */
+	if (!self->priv->on_console)
+		goto out;
+
 	pk_progress_bar_draw (self, 100);
 	g_print ("\n");
-
+out:
 	return TRUE;
 }
 
