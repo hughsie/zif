@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*-
  *
- * Copyright (C) 2009 Richard Hughes <richard@hughsie.com>
+ * Copyright (C) 2009-2010 Richard Hughes <richard@hughsie.com>
  *
  * Licensed under the GNU General Public License Version 2
  *
@@ -567,6 +567,8 @@ zif_state_action_to_string (ZifStateAction action)
 		return "decompressing";
 	if (action == ZIF_STATE_ACTION_DEPSOLVING)
 		return "depsolving";
+	if (action == ZIF_STATE_ACTION_COMMITTING)
+		return "committing";
 	if (action == ZIF_STATE_ACTION_UNKNOWN)
 		return "unknown";
 	return NULL;

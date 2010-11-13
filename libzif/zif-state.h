@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*-
  *
- * Copyright (C) 2009 Richard Hughes <richard@hughsie.com>
+ * Copyright (C) 2009-2010 Richard Hughes <richard@hughsie.com>
  *
  * Licensed under the GNU General Public License Version 2
  *
@@ -55,6 +55,7 @@ typedef enum {
 	ZIF_STATE_ACTION_LOADING_REPOS,
 	ZIF_STATE_ACTION_DECOMPRESSING,
 	ZIF_STATE_ACTION_DEPSOLVING,
+	ZIF_STATE_ACTION_COMMITTING,
 	ZIF_STATE_ACTION_UNKNOWN
 } ZifStateAction;
 
