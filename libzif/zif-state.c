@@ -325,7 +325,7 @@ zif_state_set_allow_cancel (ZifState *state, gboolean allow_cancel)
 /**
  * zif_state_set_percentage:
  * @state: the #ZifState object
- * @percentage: A manual percentage value
+ * @percentage: A manual percentage value between 0% and 100%
  *
  * Set a percentage manually.
  * NOTE: this must be above what was previously set, or it will be rejected.
@@ -343,9 +343,19 @@ zif_state_set_percentage (ZifState *state, guint percentage)
 	if (percentage == state->priv->last_percentage)
 		goto out;
 
+	/* is it invalid */
+	if (percentage > 100) {
+		zif_state_print_parent_chain (state->priv->child, 0);
+		g_warning ("percentage %i%% is invalid on %p!",
+			   percentage, state);
+		goto out;
+	}
+
 	/* is it less */
 	if (percentage < state->priv->last_percentage) {
-		g_warning ("percentage cannot go down from %i to %i on %p!", state->priv->last_percentage, percentage, state);
+		zif_state_print_parent_chain (state->priv->child, 0);
+		g_warning ("percentage cannot go down from %i to %i on %p!",
+			   state->priv->last_percentage, percentage, state);
 		goto out;
 	}
 
