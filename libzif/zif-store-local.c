@@ -181,8 +181,6 @@ zif_store_local_load (ZifStore *store, ZifState *state, GError **error)
 	ZifStoreLocal *local = ZIF_STORE_LOCAL (store);
 
 	g_return_val_if_fail (ZIF_IS_STORE_LOCAL (store), FALSE);
-	g_return_val_if_fail (local->priv->prefix != NULL, FALSE);
-	g_return_val_if_fail (local->priv->packages != NULL, FALSE);
 	g_return_val_if_fail (zif_state_valid (state), FALSE);
 
 	/* not locked */
@@ -198,13 +196,36 @@ zif_store_local_load (ZifStore *store, ZifState *state, GError **error)
 		goto out;
 
 	/* setup steps */
-	ret = zif_state_set_steps (state,
-				   error,
-				   20, /* open db */
-				   80, /* add packages */
-				   -1);
+	if (local->priv->prefix == NULL) {
+		ret = zif_state_set_steps (state,
+					   error,
+					   10, /* set prefix */
+					   10, /* open db */
+					   80, /* add packages */
+					   -1);
+	} else {
+		ret = zif_state_set_steps (state,
+					   error,
+					   20, /* open db */
+					   80, /* add packages */
+					   -1);
+	}
 	if (!ret)
 		goto out;
+
+	/* use default prefix */
+	if (local->priv->prefix == NULL) {
+
+		/* set prefix */
+		ret = zif_store_local_set_prefix (local, NULL, error);
+		if (!ret)
+			goto out;
+
+		/* this section done */
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
+	}
 
 	retval = rpmdbOpen (local->priv->prefix, &db, O_RDONLY, 0777);
 	if (retval != 0) {
@@ -276,7 +297,6 @@ zif_store_local_search_name (ZifStore *store, gchar **search, ZifState *state, G
 
 	g_return_val_if_fail (ZIF_IS_STORE_LOCAL (store), NULL);
 	g_return_val_if_fail (search != NULL, NULL);
-	g_return_val_if_fail (local->priv->prefix != NULL, NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 
 	/* not locked */
@@ -379,7 +399,6 @@ zif_store_local_search_category (ZifStore *store, gchar **search, ZifState *stat
 
 	g_return_val_if_fail (ZIF_IS_STORE_LOCAL (store), NULL);
 	g_return_val_if_fail (search != NULL, NULL);
-	g_return_val_if_fail (local->priv->prefix != NULL, NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 
 	/* not locked */
@@ -478,7 +497,6 @@ zif_store_local_search_details (ZifStore *store, gchar **search, ZifState *state
 
 	g_return_val_if_fail (ZIF_IS_STORE_LOCAL (store), NULL);
 	g_return_val_if_fail (search != NULL, NULL);
-	g_return_val_if_fail (local->priv->prefix != NULL, NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 
 	/* not locked */
@@ -581,7 +599,6 @@ zif_store_local_search_group (ZifStore *store, gchar **search, ZifState *state, 
 	ZifStoreLocal *local = ZIF_STORE_LOCAL (store);
 
 	g_return_val_if_fail (ZIF_IS_STORE_LOCAL (store), NULL);
-	g_return_val_if_fail (local->priv->prefix != NULL, NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 
 	/* not locked */
@@ -680,7 +697,6 @@ zif_store_local_search_file (ZifStore *store, gchar **search, ZifState *state, G
 	ZifStoreLocal *local = ZIF_STORE_LOCAL (store);
 
 	g_return_val_if_fail (ZIF_IS_STORE_LOCAL (store), NULL);
-	g_return_val_if_fail (local->priv->prefix != NULL, NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 
 	/* not locked */
@@ -793,7 +809,6 @@ zif_store_local_resolve (ZifStore *store, gchar **search, ZifState *state, GErro
 
 	g_return_val_if_fail (ZIF_IS_STORE_LOCAL (store), NULL);
 	g_return_val_if_fail (search != NULL, NULL);
-	g_return_val_if_fail (local->priv->prefix != NULL, NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 
 	/* not locked */
@@ -893,7 +908,6 @@ zif_store_local_what_provides (ZifStore *store, ZifDepend *depend, ZifState *sta
 
 	g_return_val_if_fail (ZIF_IS_STORE_LOCAL (store), NULL);
 	g_return_val_if_fail (depend != NULL, NULL);
-	g_return_val_if_fail (local->priv->prefix != NULL, NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 
 	/* not locked */
@@ -993,7 +1007,6 @@ zif_store_local_what_obsoletes (ZifStore *store, ZifDepend *depend, ZifState *st
 
 	g_return_val_if_fail (ZIF_IS_STORE_LOCAL (store), NULL);
 	g_return_val_if_fail (depend != NULL, NULL);
-	g_return_val_if_fail (local->priv->prefix != NULL, NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 
 	/* not locked */
@@ -1093,7 +1106,6 @@ zif_store_local_what_conflicts (ZifStore *store, ZifDepend *depend, ZifState *st
 
 	g_return_val_if_fail (ZIF_IS_STORE_LOCAL (store), NULL);
 	g_return_val_if_fail (depend != NULL, NULL);
-	g_return_val_if_fail (local->priv->prefix != NULL, NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 
 	/* not locked */
@@ -1188,7 +1200,6 @@ zif_store_local_get_packages (ZifStore *store, ZifState *state, GError **error)
 	ZifStoreLocal *local = ZIF_STORE_LOCAL (store);
 
 	g_return_val_if_fail (ZIF_IS_STORE_LOCAL (store), NULL);
-	g_return_val_if_fail (local->priv->prefix != NULL, NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 
 	/* not locked */
@@ -1277,7 +1288,6 @@ zif_store_local_find_package (ZifStore *store, const gchar *package_id, ZifState
 	ZifStoreLocal *local = ZIF_STORE_LOCAL (store);
 
 	g_return_val_if_fail (ZIF_IS_STORE_LOCAL (store), NULL);
-	g_return_val_if_fail (local->priv->prefix != NULL, NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 
 	/* not locked */
