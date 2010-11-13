@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*-
  *
- * Copyright (C) 2009 Richard Hughes <richard@hughsie.com>
+ * Copyright (C) 2009-2010 Richard Hughes <richard@hughsie.com>
  *
  * Licensed under the GNU General Public License Version 2
  *
@@ -26,7 +26,7 @@
 
 G_BEGIN_DECLS
 
-#define ZIF_TYPE_PROGRESS_BAR		(pk_progress_bar_get_type ())
+#define ZIF_TYPE_PROGRESS_BAR		(zif_progress_bar_get_type ())
 #define ZIF_PROGRESS_BAR(o)		(G_TYPE_CHECK_INSTANCE_CAST ((o), ZIF_TYPE_PROGRESS_BAR, ZifProgressBar))
 #define ZIF_PROGRESS_BAR_CLASS(k)	(G_TYPE_CHECK_CLASS_CAST((k), ZIF_TYPE_PROGRESS_BAR, ZifProgressBarClass))
 #define ZIF_IS_PROGRESS_BAR(o)		(G_TYPE_CHECK_INSTANCE_TYPE ((o), ZIF_TYPE_PROGRESS_BAR))
@@ -46,23 +46,23 @@ typedef struct
 	GObjectClass		 parent_class;
 } ZifProgressBarClass;
 
-GType		 pk_progress_bar_get_type		(void);
-ZifProgressBar	*pk_progress_bar_new			(void);
-gboolean	 pk_progress_bar_set_size		(ZifProgressBar	*progress_bar,
+GType		 zif_progress_bar_get_type		(void);
+ZifProgressBar	*zif_progress_bar_new			(void);
+gboolean	 zif_progress_bar_set_size		(ZifProgressBar	*progress_bar,
 							 guint		 size);
-gboolean	 pk_progress_bar_set_padding		(ZifProgressBar	*progress_bar,
+gboolean	 zif_progress_bar_set_padding		(ZifProgressBar	*progress_bar,
 							 guint		 padding);
-gboolean	 pk_progress_bar_set_percentage		(ZifProgressBar	*progress_bar,
+gboolean	 zif_progress_bar_set_percentage	(ZifProgressBar	*progress_bar,
 							 guint		 percentage);
-gboolean	 pk_progress_bar_set_value		(ZifProgressBar	*progress_bar,
+gboolean	 zif_progress_bar_set_value		(ZifProgressBar	*progress_bar,
 							 guint		 value);
-void		 pk_progress_bar_set_allow_cancel	(ZifProgressBar	*progress_bar,
+void		 zif_progress_bar_set_allow_cancel	(ZifProgressBar	*progress_bar,
 							 gboolean	 allow_cancel);
-void		 pk_progress_bar_set_on_console		(ZifProgressBar	*progress_bar,
+void		 zif_progress_bar_set_on_console	(ZifProgressBar	*progress_bar,
 							 gboolean	 on_console);
-gboolean	 pk_progress_bar_start			(ZifProgressBar	*progress_bar,
+gboolean	 zif_progress_bar_start			(ZifProgressBar	*progress_bar,
 							 const gchar	*text);
-gboolean	 pk_progress_bar_end			(ZifProgressBar	*progress_bar);
+gboolean	 zif_progress_bar_end			(ZifProgressBar	*progress_bar);
 
 G_END_DECLS
 

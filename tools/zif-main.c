@@ -100,8 +100,8 @@ zif_print_packages (GPtrArray *array)
 static void
 zif_state_percentage_changed_cb (ZifState *state, guint percentage, gpointer data)
 {
-	pk_progress_bar_set_value (progressbar, percentage);
-	pk_progress_bar_set_percentage (progressbar, percentage);
+	zif_progress_bar_set_value (progressbar, percentage);
+	zif_progress_bar_set_percentage (progressbar, percentage);
 }
 
 /**
@@ -110,7 +110,7 @@ zif_state_percentage_changed_cb (ZifState *state, guint percentage, gpointer dat
 static void
 zif_state_subpercentage_changed_cb (ZifState *state, guint percentage, gpointer data)
 {
-//	pk_progress_bar_set_percentage (progressbar, percentage);
+//	zif_progress_bar_set_percentage (progressbar, percentage);
 }
 
 /**
@@ -119,7 +119,7 @@ zif_state_subpercentage_changed_cb (ZifState *state, guint percentage, gpointer 
 static void
 zif_state_allow_cancel_changed_cb (ZifState *state, gboolean allow_cancel, gpointer data)
 {
-	pk_progress_bar_set_allow_cancel (progressbar, allow_cancel);
+	zif_progress_bar_set_allow_cancel (progressbar, allow_cancel);
 }
 
 /**
@@ -232,7 +232,7 @@ zif_cmd_get_depends (const gchar *package_name, ZifState *state)
 	GString *string;
 
 	/* setup progressbar */
-	pk_progress_bar_start (progressbar, "Getting depends");
+	zif_progress_bar_start (progressbar, "Getting depends");
 
 	/* use a temp string to get output results */
 	string = g_string_new ("");
@@ -343,7 +343,7 @@ zif_cmd_get_depends (const gchar *package_name, ZifState *state)
 		goto out;
 
 	/* no more progressbar */
-	pk_progress_bar_end (progressbar);
+	zif_progress_bar_end (progressbar);
 
 	/* success */
 	g_print ("%s", string->str);
@@ -989,8 +989,8 @@ main (int argc, char *argv[])
 	options_help = g_option_context_get_help (context, TRUE, NULL);
 	g_option_context_free (context);
 
-	progressbar = pk_progress_bar_new ();
-	pk_progress_bar_set_on_console (progressbar, !verbose);
+	progressbar = zif_progress_bar_new ();
+	zif_progress_bar_set_on_console (progressbar, !verbose);
 
 	/* do stuff on ctrl-c */
 	signal (SIGINT, zif_main_sigint_cb);
@@ -1126,14 +1126,14 @@ main (int argc, char *argv[])
 	}
 
 	/* setup progressbar */
-	pk_progress_bar_set_padding (progressbar, 30);
-	pk_progress_bar_set_size (progressbar, 30);
+	zif_progress_bar_set_padding (progressbar, 30);
+	zif_progress_bar_set_size (progressbar, 30);
 
 	mode = argv[1];
 	value = argv[2];
 	if (g_strcmp0 (mode, "get-updates") == 0) {
 
-		pk_progress_bar_start (progressbar, "Getting updates");
+		zif_progress_bar_start (progressbar, "Getting updates");
 
 		/* setup state with the correct number of steps */
 		zif_state_set_number_steps (state, 5);
@@ -1256,7 +1256,7 @@ main (int argc, char *argv[])
 			goto out;
 
 		/* no more progressbar */
-		pk_progress_bar_end (progressbar);
+		zif_progress_bar_end (progressbar);
 
 		zif_print_packages (array);
 		g_ptr_array_unref (array);
@@ -1267,7 +1267,7 @@ main (int argc, char *argv[])
 	if (g_strcmp0 (mode, "get-categories") == 0) {
 		ZifCategory *obj;
 
-		pk_progress_bar_start (progressbar, "Getting categories");
+		zif_progress_bar_start (progressbar, "Getting categories");
 
 		/* setup state with the correct number of steps */
 		zif_state_set_number_steps (state, 2);
@@ -1302,7 +1302,7 @@ main (int argc, char *argv[])
 			goto out;
 
 		/* no more progressbar */
-		pk_progress_bar_end (progressbar);
+		zif_progress_bar_end (progressbar);
 
 		/* dump to console */
 		for (i=0; i<array->len; i++) {
@@ -1350,7 +1350,7 @@ main (int argc, char *argv[])
 
 	if (g_strcmp0 (mode, "clean") == 0) {
 
-		pk_progress_bar_start (progressbar, "Cleaning");
+		zif_progress_bar_start (progressbar, "Cleaning");
 
 		/* setup state with the correct number of steps */
 		zif_state_set_number_steps (state, 2);
@@ -1385,7 +1385,7 @@ main (int argc, char *argv[])
 			goto out;
 
 		/* no more progressbar */
-		pk_progress_bar_end (progressbar);
+		zif_progress_bar_end (progressbar);
 
 		goto out;
 	}
@@ -1403,11 +1403,11 @@ main (int argc, char *argv[])
 			g_print ("specify a package name\n");
 			goto out;
 		}
-		pk_progress_bar_start (progressbar, "Downloading");
+		zif_progress_bar_start (progressbar, "Downloading");
 		zif_cmd_download (value, state);
 
 		/* no more progressbar */
-		pk_progress_bar_end (progressbar);
+		zif_progress_bar_end (progressbar);
 		goto out;
 	}
 	if (g_strcmp0 (mode, "get-files") == 0) {
@@ -1418,7 +1418,7 @@ main (int argc, char *argv[])
 			goto out;
 		}
 
-		pk_progress_bar_start (progressbar, "Get file data");
+		zif_progress_bar_start (progressbar, "Get file data");
 
 		/* setup state with the correct number of steps */
 		zif_state_set_number_steps (state, 3);
@@ -1484,7 +1484,7 @@ main (int argc, char *argv[])
 		}
 
 		/* no more progressbar */
-		pk_progress_bar_end (progressbar);
+		zif_progress_bar_end (progressbar);
 
 		/* free results */
 		g_ptr_array_unref (array);
@@ -1517,7 +1517,7 @@ main (int argc, char *argv[])
 		const gchar *url;
 		guint64 size;
 
-		pk_progress_bar_start (progressbar, "Getting details");
+		zif_progress_bar_start (progressbar, "Getting details");
 
 		/* setup state with the correct number of steps */
 		zif_state_set_number_steps (state, 4);
@@ -1577,7 +1577,7 @@ main (int argc, char *argv[])
 		zif_state_set_number_steps (state_local, array->len);
 
 		/* no more progressbar */
-		pk_progress_bar_end (progressbar);
+		zif_progress_bar_end (progressbar);
 
 		for (i=0; i<array->len; i++) {
 			package = g_ptr_array_index (array, i);
@@ -1618,7 +1618,7 @@ main (int argc, char *argv[])
 			g_print ("specify a package name\n");
 			goto out;
 		}
-		pk_progress_bar_start (progressbar, "Installing");
+		zif_progress_bar_start (progressbar, "Installing");
 		ret = zif_cmd_install (transaction, value, state, &error);
 		if (!ret) {
 			g_print ("failed: %s\n", error->message);
@@ -1627,7 +1627,7 @@ main (int argc, char *argv[])
 		}
 
 		/* no more progressbar */
-		pk_progress_bar_end (progressbar);
+		zif_progress_bar_end (progressbar);
 		goto out;
 	}
 	if (g_strcmp0 (mode, "remove") == 0) {
@@ -1635,7 +1635,7 @@ main (int argc, char *argv[])
 			g_print ("specify a package name\n");
 			goto out;
 		}
-		pk_progress_bar_start (progressbar, "Removing");
+		zif_progress_bar_start (progressbar, "Removing");
 		ret = zif_cmd_remove (transaction, value, state, &error);
 		if (!ret) {
 			g_print ("failed: %s\n", error->message);
@@ -1644,12 +1644,12 @@ main (int argc, char *argv[])
 		}
 
 		/* no more progressbar */
-		pk_progress_bar_end (progressbar);
+		zif_progress_bar_end (progressbar);
 		goto out;
 	}
 	if (g_strcmp0 (mode, "get-packages") == 0) {
 
-		pk_progress_bar_start (progressbar, "Getting packages");
+		zif_progress_bar_start (progressbar, "Getting packages");
 
 		/* setup state with the correct number of steps */
 		zif_state_set_number_steps (state, 3);
@@ -1696,7 +1696,7 @@ main (int argc, char *argv[])
 			goto out;
 
 		/* no more progressbar */
-		pk_progress_bar_end (progressbar);
+		zif_progress_bar_end (progressbar);
 
 		zif_print_packages (array);
 		g_ptr_array_unref (array);
@@ -1708,7 +1708,7 @@ main (int argc, char *argv[])
 			value = "/home/hughsie/rpmbuild/REPOS/fedora/11/i386/zif-0.1.0-0.8.20090511git.fc11.i586.rpm";
 			//goto out;
 		}
-		pk_progress_bar_start (progressbar, "Installing");
+		zif_progress_bar_start (progressbar, "Installing");
 		package = ZIF_PACKAGE (zif_package_local_new ());
 		ret = zif_package_local_set_from_filename (ZIF_PACKAGE_LOCAL (package), value, &error);
 		if (!ret)
@@ -1717,18 +1717,18 @@ main (int argc, char *argv[])
 		g_object_unref (package);
 
 		/* no more progressbar */
-		pk_progress_bar_end (progressbar);
+		zif_progress_bar_end (progressbar);
 
 		g_print ("not yet supported\n");
 		goto out;
 	}
 	if (g_strcmp0 (mode, "refresh-cache") == 0) {
 
-		pk_progress_bar_start (progressbar, "Refreshing cache");
+		zif_progress_bar_start (progressbar, "Refreshing cache");
 		zif_cmd_refresh_cache (state, FALSE);
 
 		/* no more progressbar */
-		pk_progress_bar_end (progressbar);
+		zif_progress_bar_end (progressbar);
 		goto out;
 	}
 	if (g_strcmp0 (mode, "reinstall") == 0) {
@@ -1740,7 +1740,7 @@ main (int argc, char *argv[])
 		guint length;
 		gchar *id_pad;
 
-		pk_progress_bar_start (progressbar, "Getting repo list");
+		zif_progress_bar_start (progressbar, "Getting repo list");
 
 		/* get list */
 		array = zif_repos_get_stores (repos, state, &error);
@@ -1751,7 +1751,7 @@ main (int argc, char *argv[])
 		}
 
 		/* no more progressbar */
-		pk_progress_bar_end (progressbar);
+		zif_progress_bar_end (progressbar);
 
 		/* get maximum id string length */
 		for (i=0; i<array->len; i++) {
@@ -1782,7 +1782,7 @@ main (int argc, char *argv[])
 			goto out;
 		}
 
-		pk_progress_bar_start (progressbar, "Enabling repo");
+		zif_progress_bar_start (progressbar, "Enabling repo");
 
 		/* setup state with the correct number of steps */
 		zif_state_set_number_steps (state, 2);
@@ -1815,7 +1815,7 @@ main (int argc, char *argv[])
 			goto out;
 
 		/* no more progressbar */
-		pk_progress_bar_end (progressbar);
+		zif_progress_bar_end (progressbar);
 
 		goto out;
 	}
@@ -1825,7 +1825,7 @@ main (int argc, char *argv[])
 			goto out;
 		}
 
-		pk_progress_bar_start (progressbar, "Disabling repo");
+		zif_progress_bar_start (progressbar, "Disabling repo");
 
 		/* setup state with the correct number of steps */
 		zif_state_set_number_steps (state, 2);
@@ -1858,7 +1858,7 @@ main (int argc, char *argv[])
 			goto out;
 
 		/* no more progressbar */
-		pk_progress_bar_end (progressbar);
+		zif_progress_bar_end (progressbar);
 
 		goto out;
 	}
@@ -1868,7 +1868,7 @@ main (int argc, char *argv[])
 			goto out;
 		}
 
-		pk_progress_bar_start (progressbar, "Resolving");
+		zif_progress_bar_start (progressbar, "Resolving");
 
 		/* setup state with the correct number of steps */
 		zif_state_set_number_steps (state, 3);
@@ -1916,7 +1916,7 @@ main (int argc, char *argv[])
 			goto out;
 
 		/* no more progressbar */
-		pk_progress_bar_end (progressbar);
+		zif_progress_bar_end (progressbar);
 
 		zif_print_packages (array);
 		g_ptr_array_unref (array);
@@ -1928,7 +1928,7 @@ main (int argc, char *argv[])
 			goto out;
 		}
 
-		pk_progress_bar_start (progressbar, "Resolving ID");
+		zif_progress_bar_start (progressbar, "Resolving ID");
 
 		/* setup state with the correct number of steps */
 		zif_state_set_number_steps (state, 3);
@@ -1982,7 +1982,7 @@ main (int argc, char *argv[])
 			goto out;
 
 		/* no more progressbar */
-		pk_progress_bar_end (progressbar);
+		zif_progress_bar_end (progressbar);
 
 		zif_print_package (package, 0);
 		g_object_unref (package);
@@ -1994,7 +1994,7 @@ main (int argc, char *argv[])
 			goto out;
 		}
 
-		pk_progress_bar_start (progressbar, "Searching name");
+		zif_progress_bar_start (progressbar, "Searching name");
 
 		/* setup state with the correct number of steps */
 		zif_state_set_number_steps (state, 3);
@@ -2053,7 +2053,7 @@ main (int argc, char *argv[])
 			goto out;
 		}
 
-		pk_progress_bar_start (progressbar, "Searching details");
+		zif_progress_bar_start (progressbar, "Searching details");
 
 		/* setup state with the correct number of steps */
 		zif_state_set_number_steps (state, 3);
@@ -2102,7 +2102,7 @@ main (int argc, char *argv[])
 			goto out;
 
 		/* no more progressbar */
-		pk_progress_bar_end (progressbar);
+		zif_progress_bar_end (progressbar);
 
 		zif_print_packages (array);
 		g_ptr_array_unref (array);
@@ -2114,7 +2114,7 @@ main (int argc, char *argv[])
 			goto out;
 		}
 
-		pk_progress_bar_start (progressbar, "Searching file");
+		zif_progress_bar_start (progressbar, "Searching file");
 
 		/* setup state with the correct number of steps */
 		zif_state_set_number_steps (state, 3);
@@ -2163,7 +2163,7 @@ main (int argc, char *argv[])
 			goto out;
 
 		/* no more progressbar */
-		pk_progress_bar_end (progressbar);
+		zif_progress_bar_end (progressbar);
 
 		zif_print_packages (array);
 		g_ptr_array_unref (array);
@@ -2175,7 +2175,7 @@ main (int argc, char *argv[])
 			goto out;
 		}
 
-		pk_progress_bar_start (progressbar, "Search group");
+		zif_progress_bar_start (progressbar, "Search group");
 
 		/* setup state with the correct number of steps */
 		zif_state_set_number_steps (state, 3);
@@ -2223,7 +2223,7 @@ main (int argc, char *argv[])
 			goto out;
 
 		/* no more progressbar */
-		pk_progress_bar_end (progressbar);
+		zif_progress_bar_end (progressbar);
 
 		zif_print_packages (array);
 		g_ptr_array_unref (array);
@@ -2235,7 +2235,7 @@ main (int argc, char *argv[])
 			goto out;
 		}
 
-		pk_progress_bar_start (progressbar, "Search category");
+		zif_progress_bar_start (progressbar, "Search category");
 
 		/* setup state with the correct number of steps */
 		zif_state_set_number_steps (state, 2);
@@ -2270,7 +2270,7 @@ main (int argc, char *argv[])
 			goto out;
 
 		/* no more progressbar */
-		pk_progress_bar_end (progressbar);
+		zif_progress_bar_end (progressbar);
 
 		zif_print_packages (array);
 		g_ptr_array_unref (array);
@@ -2282,7 +2282,7 @@ main (int argc, char *argv[])
 			goto out;
 		}
 
-		pk_progress_bar_start (progressbar, "Conflicts");
+		zif_progress_bar_start (progressbar, "Conflicts");
 
 		/* setup state with the correct number of steps */
 		zif_state_set_number_steps (state, 3);
@@ -2334,7 +2334,7 @@ main (int argc, char *argv[])
 			goto out;
 
 		/* no more progressbar */
-		pk_progress_bar_end (progressbar);
+		zif_progress_bar_end (progressbar);
 
 		zif_print_packages (array);
 		g_ptr_array_unref (array);
@@ -2347,7 +2347,7 @@ main (int argc, char *argv[])
 			goto out;
 		}
 
-		pk_progress_bar_start (progressbar, "Obsoletes");
+		zif_progress_bar_start (progressbar, "Obsoletes");
 
 		/* setup state with the correct number of steps */
 		zif_state_set_number_steps (state, 3);
@@ -2399,7 +2399,7 @@ main (int argc, char *argv[])
 			goto out;
 
 		/* no more progressbar */
-		pk_progress_bar_end (progressbar);
+		zif_progress_bar_end (progressbar);
 
 		zif_print_packages (array);
 		g_ptr_array_unref (array);
@@ -2411,7 +2411,7 @@ main (int argc, char *argv[])
 			goto out;
 		}
 
-		pk_progress_bar_start (progressbar, "Provides");
+		zif_progress_bar_start (progressbar, "Provides");
 
 		/* setup state with the correct number of steps */
 		zif_state_set_number_steps (state, 3);
@@ -2464,7 +2464,7 @@ main (int argc, char *argv[])
 			goto out;
 
 		/* no more progressbar */
-		pk_progress_bar_end (progressbar);
+		zif_progress_bar_end (progressbar);
 
 		zif_print_packages (array);
 		g_ptr_array_unref (array);
@@ -2475,19 +2475,19 @@ main (int argc, char *argv[])
 			g_print ("specify a package name\n");
 			goto out;
 		}
-		pk_progress_bar_start (progressbar, "Updating");
+		zif_progress_bar_start (progressbar, "Updating");
 		ret = zif_cmd_update (transaction, value, state, &error);
 		if (!ret) {
 			g_print ("%s\n", error->message);
 			g_error_free (error);
 			goto out;
 		}
-		pk_progress_bar_end (progressbar);
+		zif_progress_bar_end (progressbar);
 		goto out;
 	}
 	if (g_strcmp0 (mode, "get-upgrades") == 0) {
 		ZifUpgrade *upgrade;
-		pk_progress_bar_start (progressbar, "Getting upgrades");
+		zif_progress_bar_start (progressbar, "Getting upgrades");
 
 		version = zif_config_get_uint (config, "releasever", NULL);
 		array = zif_release_get_upgrades_new (release, version, state, &error);
@@ -2498,7 +2498,7 @@ main (int argc, char *argv[])
 		}
 
 		/* done with the bar */
-		pk_progress_bar_end (progressbar);
+		zif_progress_bar_end (progressbar);
 
 		/* print the results */
 		g_print ("Distribution upgrades available:\n");
@@ -2518,7 +2518,7 @@ main (int argc, char *argv[])
 			g_print ("specify a distro name, e.g. 'fedora-9'\n");
 			goto out;
 		}
-		pk_progress_bar_start (progressbar, "Upgrading");
+		zif_progress_bar_start (progressbar, "Upgrading");
 
 		/* check valid */
 		distro_id_split = g_strsplit (value, "-", -1);
@@ -2554,7 +2554,7 @@ main (int argc, char *argv[])
 //		g_unlink ("/boot/upgrade/vmlinuz");
 //		g_unlink ("/boot/upgrade/initrd.img");
 
-		pk_progress_bar_end (progressbar);
+		zif_progress_bar_end (progressbar);
 		goto out;
 	}
 	
