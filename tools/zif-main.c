@@ -137,7 +137,7 @@ zif_state_action_changed_cb (ZifState *state, ZifStateAction action, const gchar
  * zif_cmd_download:
  **/
 static gboolean
-zif_cmd_download (const gchar *package_name, ZifState *state)
+zif_cmd_download (gchar **package_names, ZifState *state)
 {
 	gboolean ret;
 	GError *error = NULL;
@@ -145,7 +145,6 @@ zif_cmd_download (const gchar *package_name, ZifState *state)
 	ZifPackage *package;
 	ZifState *state_local;
 	GPtrArray *store_array;
-	const gchar *to_array[] = { NULL, NULL };
 
 	/* setup state */
 	zif_state_set_number_steps (state, 3);
@@ -167,8 +166,7 @@ zif_cmd_download (const gchar *package_name, ZifState *state)
 
 	/* resolve package name */
 	state_local = zif_state_get_child (state);
-	to_array[0] = package_name;
-	array = zif_store_array_resolve (store_array, (gchar **)to_array, state_local, &error);
+	array = zif_store_array_resolve (store_array, package_names, state_local, &error);
 	if (array == NULL) {
 		g_print ("failed to get results: %s\n", error->message);
 		g_error_free (error);
@@ -212,7 +210,7 @@ out:
  * zif_cmd_get_depends:
  **/
 static gboolean
-zif_cmd_get_depends (const gchar *package_name, ZifState *state)
+zif_cmd_get_depends (gchar **package_names, ZifState *state)
 {
 	gboolean ret;
 	GError *error = NULL;
@@ -228,7 +226,6 @@ zif_cmd_get_depends (const gchar *package_name, ZifState *state)
 	const gchar *package_id;
 	guint i, j;
 	gchar **split;
-	const gchar *to_array[] = { NULL, NULL };
 	GString *string;
 
 	/* setup progressbar */
@@ -265,8 +262,7 @@ zif_cmd_get_depends (const gchar *package_name, ZifState *state)
 
 	/* resolve package name */
 	state_local = zif_state_get_child (state);
-	to_array[0] = package_name;
-	array = zif_store_array_resolve (store_array, (gchar**)to_array, state_local, &error);
+	array = zif_store_array_resolve (store_array, (gchar**)package_names, state_local, &error);
 	if (array == NULL) {
 		g_print ("failed to get results: %s\n", error->message);
 		g_error_free (error);
@@ -463,7 +459,7 @@ out:
  * zif_cmd_install:
  **/
 static gboolean
-zif_cmd_install (ZifTransaction *transaction, const gchar *package_name, ZifState *state, GError **error)
+zif_cmd_install (ZifTransaction *transaction, gchar **package_names, ZifState *state, GError **error)
 {
 	gboolean ret;
 	GError *error_local = NULL;
@@ -472,7 +468,6 @@ zif_cmd_install (ZifTransaction *transaction, const gchar *package_name, ZifStat
 	ZifState *state_local;
 	GPtrArray *store_array_local = NULL;
 	GPtrArray *store_array_remote = NULL;
-	const gchar *to_array[] = { NULL, NULL };
 
 	/* setup state */
 	zif_state_set_number_steps (state, 5);
@@ -494,8 +489,7 @@ zif_cmd_install (ZifTransaction *transaction, const gchar *package_name, ZifStat
 
 	/* check not already installed */
 	state_local = zif_state_get_child (state);
-	to_array[0] = package_name;
-	array = zif_store_array_resolve (store_array_local, (gchar**)to_array, state_local, &error_local);
+	array = zif_store_array_resolve (store_array_local, package_names, state_local, &error_local);
 	if (array == NULL) {
 		ret = FALSE;
 		g_set_error (error, 1, 0, "failed to get results: %s\n", error_local->message);
@@ -529,8 +523,7 @@ zif_cmd_install (ZifTransaction *transaction, const gchar *package_name, ZifStat
 		goto out;
 
 	/* check we can find a package of this name */
-	to_array[0] = package_name;
-	array = zif_store_array_resolve (store_array_remote, (gchar**)to_array, state_local, &error_local);
+	array = zif_store_array_resolve (store_array_remote, package_names, state_local, &error_local);
 	if (array == NULL) {
 		ret = FALSE;
 		g_set_error (error, 1, 0, "failed to get results: %s\n", error_local->message);
@@ -582,7 +575,7 @@ out:
  * zif_cmd_update:
  **/
 static gboolean
-zif_cmd_update (ZifTransaction *transaction, const gchar *package_name, ZifState *state, GError **error)
+zif_cmd_update (ZifTransaction *transaction, gchar **package_names, ZifState *state, GError **error)
 {
 	gboolean ret;
 	GError *error_local = NULL;
@@ -590,7 +583,6 @@ zif_cmd_update (ZifTransaction *transaction, const gchar *package_name, ZifState
 	ZifPackage *package;
 	ZifState *state_local;
 	GPtrArray *store_array_local = NULL;
-	const gchar *to_array[] = { NULL, NULL };
 
 	/* setup state */
 	zif_state_set_number_steps (state, 3);
@@ -612,8 +604,7 @@ zif_cmd_update (ZifTransaction *transaction, const gchar *package_name, ZifState
 
 	/* check not already installed */
 	state_local = zif_state_get_child (state);
-	to_array[0] = package_name;
-	array = zif_store_array_resolve (store_array_local, (gchar**)to_array, state_local, &error_local);
+	array = zif_store_array_resolve (store_array_local, package_names, state_local, &error_local);
 	if (array == NULL) {
 		ret = FALSE;
 		g_set_error (error, 1, 0, "failed to get results: %s\n", error_local->message);
@@ -669,7 +660,7 @@ out:
  * zif_cmd_remove:
  **/
 static gboolean
-zif_cmd_remove (ZifTransaction *transaction, const gchar *package_name, ZifState *state, GError **error)
+zif_cmd_remove (ZifTransaction *transaction, gchar **package_names, ZifState *state, GError **error)
 {
 	gboolean ret;
 	GError *error_local = NULL;
@@ -677,7 +668,6 @@ zif_cmd_remove (ZifTransaction *transaction, const gchar *package_name, ZifState
 	ZifPackage *package;
 	ZifState *state_local;
 	GPtrArray *store_array_local = NULL;
-	const gchar *to_array[] = { NULL, NULL };
 
 	/* setup state */
 	zif_state_set_number_steps (state, 6);
@@ -699,8 +689,7 @@ zif_cmd_remove (ZifTransaction *transaction, const gchar *package_name, ZifState
 
 	/* check not already installed */
 	state_local = zif_state_get_child (state);
-	to_array[0] = package_name;
-	array = zif_store_array_resolve (store_array_local, (gchar**)to_array, state_local, &error_local);
+	array = zif_store_array_resolve (store_array_local, package_names, state_local, &error_local);
 	if (array == NULL) {
 		ret = FALSE;
 		g_set_error (error, 1, 0, "failed to get results: %s\n", error_local->message);
@@ -925,7 +914,7 @@ main (int argc, char *argv[])
 	gchar *http_proxy = NULL;
 	gchar *root = NULL;
 	gchar **distro_id_split = NULL;
-	const gchar *to_array[] = { NULL, NULL };
+	gchar **values;
 
 	const GOptionEntry options[] = {
 		{ "verbose", 'v', 0, G_OPTION_ARG_NONE, &verbose,
@@ -1122,6 +1111,7 @@ main (int argc, char *argv[])
 
 	mode = argv[1];
 	value = argv[2];
+	values = (gchar**) &argv[2];
 	if (g_strcmp0 (mode, "get-updates") == 0) {
 
 		zif_progress_bar_start (progressbar, "Getting updates");
@@ -1246,7 +1236,6 @@ main (int argc, char *argv[])
 		if (!ret)
 			goto out;
 
-		/* no more progressbar */
 		zif_progress_bar_end (progressbar);
 
 		zif_print_packages (array);
@@ -1292,7 +1281,6 @@ main (int argc, char *argv[])
 		if (!ret)
 			goto out;
 
-		/* no more progressbar */
 		zif_progress_bar_end (progressbar);
 
 		/* dump to console */
@@ -1375,7 +1363,6 @@ main (int argc, char *argv[])
 		if (!ret)
 			goto out;
 
-		/* no more progressbar */
 		zif_progress_bar_end (progressbar);
 
 		goto out;
@@ -1386,7 +1373,7 @@ main (int argc, char *argv[])
 			g_print ("specify a package name\n");
 			goto out;
 		}
-		zif_cmd_get_depends (value, state);
+		zif_cmd_get_depends (values, state);
 		goto out;
 	}
 	if (g_strcmp0 (mode, "download") == 0) {
@@ -1395,9 +1382,7 @@ main (int argc, char *argv[])
 			goto out;
 		}
 		zif_progress_bar_start (progressbar, "Downloading");
-		zif_cmd_download (value, state);
-
-		/* no more progressbar */
+		zif_cmd_download (values, state);
 		zif_progress_bar_end (progressbar);
 		goto out;
 	}
@@ -1444,8 +1429,7 @@ main (int argc, char *argv[])
 
 		/* resolve */
 		state_local = zif_state_get_child (state);
-		to_array[0] = value;
-		array = zif_store_array_resolve (store_array, (gchar**)to_array, state_local, &error);
+		array = zif_store_array_resolve (store_array, values, state_local, &error);
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
@@ -1474,7 +1458,6 @@ main (int argc, char *argv[])
 			g_print ("Failed to match any packages to '%s'\n", value);
 		}
 
-		/* no more progressbar */
 		zif_progress_bar_end (progressbar);
 
 		/* free results */
@@ -1546,8 +1529,7 @@ main (int argc, char *argv[])
 			goto out;
 		}
 		state_local = zif_state_get_child (state);
-		to_array[0] = value;
-		array = zif_store_array_resolve (store_array, (gchar**)to_array, state_local, &error);
+		array = zif_store_array_resolve (store_array, values, state_local, &error);
 
 		/* this section done */
 		ret = zif_state_done (state, &error);
@@ -1567,7 +1549,6 @@ main (int argc, char *argv[])
 		state_local = zif_state_get_child (state);
 		zif_state_set_number_steps (state_local, array->len);
 
-		/* no more progressbar */
 		zif_progress_bar_end (progressbar);
 
 		for (i=0; i<array->len; i++) {
@@ -1610,14 +1591,13 @@ main (int argc, char *argv[])
 			goto out;
 		}
 		zif_progress_bar_start (progressbar, "Installing");
-		ret = zif_cmd_install (transaction, value, state, &error);
+		ret = zif_cmd_install (transaction, values, state, &error);
 		if (!ret) {
 			g_print ("failed: %s\n", error->message);
 			g_error_free (error);
 			goto out;
 		}
 
-		/* no more progressbar */
 		zif_progress_bar_end (progressbar);
 		goto out;
 	}
@@ -1627,14 +1607,13 @@ main (int argc, char *argv[])
 			goto out;
 		}
 		zif_progress_bar_start (progressbar, "Removing");
-		ret = zif_cmd_remove (transaction, value, state, &error);
+		ret = zif_cmd_remove (transaction, values, state, &error);
 		if (!ret) {
 			g_print ("failed: %s\n", error->message);
 			g_error_free (error);
 			goto out;
 		}
 
-		/* no more progressbar */
 		zif_progress_bar_end (progressbar);
 		goto out;
 	}
@@ -1686,7 +1665,6 @@ main (int argc, char *argv[])
 		if (!ret)
 			goto out;
 
-		/* no more progressbar */
 		zif_progress_bar_end (progressbar);
 
 		zif_print_packages (array);
@@ -1707,7 +1685,6 @@ main (int argc, char *argv[])
 		zif_package_print (package);
 		g_object_unref (package);
 
-		/* no more progressbar */
 		zif_progress_bar_end (progressbar);
 
 		g_print ("not yet supported\n");
@@ -1718,7 +1695,6 @@ main (int argc, char *argv[])
 		zif_progress_bar_start (progressbar, "Refreshing cache");
 		zif_cmd_refresh_cache (state, FALSE);
 
-		/* no more progressbar */
 		zif_progress_bar_end (progressbar);
 		goto out;
 	}
@@ -1741,7 +1717,6 @@ main (int argc, char *argv[])
 			goto out;
 		}
 
-		/* no more progressbar */
 		zif_progress_bar_end (progressbar);
 
 		/* get maximum id string length */
@@ -1805,7 +1780,6 @@ main (int argc, char *argv[])
 		if (!ret)
 			goto out;
 
-		/* no more progressbar */
 		zif_progress_bar_end (progressbar);
 
 		goto out;
@@ -1848,7 +1822,6 @@ main (int argc, char *argv[])
 		if (!ret)
 			goto out;
 
-		/* no more progressbar */
 		zif_progress_bar_end (progressbar);
 
 		goto out;
@@ -1893,8 +1866,7 @@ main (int argc, char *argv[])
 			goto out;
 
 		state_local = zif_state_get_child (state);
-		to_array[0] = value;
-		array = zif_store_array_resolve (store_array, (gchar**)to_array, state_local, &error);
+		array = zif_store_array_resolve (store_array, values, state_local, &error);
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
@@ -1906,7 +1878,6 @@ main (int argc, char *argv[])
 		if (!ret)
 			goto out;
 
-		/* no more progressbar */
 		zif_progress_bar_end (progressbar);
 
 		zif_print_packages (array);
@@ -1972,7 +1943,6 @@ main (int argc, char *argv[])
 		if (!ret)
 			goto out;
 
-		/* no more progressbar */
 		zif_progress_bar_end (progressbar);
 
 		zif_print_package (package, 0);
@@ -2019,8 +1989,7 @@ main (int argc, char *argv[])
 			goto out;
 
 		state_local = zif_state_get_child (state);
-		to_array[0] = value;
-		array = zif_store_array_search_name (store_array, (gchar**)to_array, state_local, &error);
+		array = zif_store_array_search_name (store_array, values, state_local, &error);
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
@@ -2079,8 +2048,7 @@ main (int argc, char *argv[])
 			goto out;
 
 		state_local = zif_state_get_child (state);
-		to_array[0] = value;
-		array = zif_store_array_search_details (store_array, (gchar**)to_array, state_local, &error);
+		array = zif_store_array_search_details (store_array, values, state_local, &error);
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
@@ -2092,7 +2060,6 @@ main (int argc, char *argv[])
 		if (!ret)
 			goto out;
 
-		/* no more progressbar */
 		zif_progress_bar_end (progressbar);
 
 		zif_print_packages (array);
@@ -2140,8 +2107,7 @@ main (int argc, char *argv[])
 			goto out;
 
 		state_local = zif_state_get_child (state);
-		to_array[0] = value;
-		array = zif_store_array_search_file (store_array, (gchar**)to_array, state_local, &error);
+		array = zif_store_array_search_file (store_array, values, state_local, &error);
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
@@ -2153,7 +2119,6 @@ main (int argc, char *argv[])
 		if (!ret)
 			goto out;
 
-		/* no more progressbar */
 		zif_progress_bar_end (progressbar);
 
 		zif_print_packages (array);
@@ -2200,8 +2165,7 @@ main (int argc, char *argv[])
 			goto out;
 
 		state_local = zif_state_get_child (state);
-		to_array[0] = value;
-		array = zif_store_array_search_group (store_array, (gchar**)to_array, state_local, &error);
+		array = zif_store_array_search_group (store_array, values, state_local, &error);
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
@@ -2213,7 +2177,6 @@ main (int argc, char *argv[])
 		if (!ret)
 			goto out;
 
-		/* no more progressbar */
 		zif_progress_bar_end (progressbar);
 
 		zif_print_packages (array);
@@ -2247,8 +2210,7 @@ main (int argc, char *argv[])
 			goto out;
 
 		state_local = zif_state_get_child (state);
-		to_array[0] = value;
-		array = zif_store_array_search_category (store_array, (gchar**)to_array, state_local, &error);
+		array = zif_store_array_search_category (store_array, values, state_local, &error);
 		if (array == NULL) {
 			g_print ("failed to get results: %s\n", error->message);
 			g_error_free (error);
@@ -2260,7 +2222,6 @@ main (int argc, char *argv[])
 		if (!ret)
 			goto out;
 
-		/* no more progressbar */
 		zif_progress_bar_end (progressbar);
 
 		zif_print_packages (array);
@@ -2324,7 +2285,6 @@ main (int argc, char *argv[])
 		if (!ret)
 			goto out;
 
-		/* no more progressbar */
 		zif_progress_bar_end (progressbar);
 
 		zif_print_packages (array);
@@ -2389,7 +2349,6 @@ main (int argc, char *argv[])
 		if (!ret)
 			goto out;
 
-		/* no more progressbar */
 		zif_progress_bar_end (progressbar);
 
 		zif_print_packages (array);
@@ -2454,7 +2413,6 @@ main (int argc, char *argv[])
 		if (!ret)
 			goto out;
 
-		/* no more progressbar */
 		zif_progress_bar_end (progressbar);
 
 		zif_print_packages (array);
@@ -2467,7 +2425,7 @@ main (int argc, char *argv[])
 			goto out;
 		}
 		zif_progress_bar_start (progressbar, "Updating");
-		ret = zif_cmd_update (transaction, value, state, &error);
+		ret = zif_cmd_update (transaction, values, state, &error);
 		if (!ret) {
 			g_print ("%s\n", error->message);
 			g_error_free (error);
