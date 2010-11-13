@@ -38,14 +38,15 @@
 #include <rpm/rpmdb.h>
 #include <fcntl.h>
 
+#include "zif-config.h"
+#include "zif-depend.h"
+#include "zif-groups.h"
+#include "zif-lock.h"
+#include "zif-monitor.h"
+#include "zif-package-local.h"
 #include "zif-store.h"
 #include "zif-store-local.h"
-#include "zif-groups.h"
-#include "zif-package-local.h"
-#include "zif-monitor.h"
 #include "zif-string.h"
-#include "zif-depend.h"
-#include "zif-lock.h"
 #include "zif-utils.h"
 
 #define ZIF_STORE_LOCAL_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_STORE_LOCAL, ZifStoreLocalPrivate))
@@ -58,6 +59,7 @@ struct _ZifStoreLocalPrivate
 	ZifGroups		*groups;
 	ZifMonitor		*monitor;
 	ZifLock			*lock;
+	ZifConfig		*config;
 	guint			 monitor_changed_id;
 };
 
@@ -67,10 +69,13 @@ static gpointer zif_store_local_object = NULL;
 /**
  * zif_store_local_set_prefix:
  * @store: the #ZifStoreLocal object
- * @prefix: the install root, e.g. "/"
+ * @prefix: the install root, e.g. "/", or NULL to use the default
  * @error: a #GError which is used on failure, or %NULL
  *
  * Sets the prefix to use for the install root.
+ *
+ * Using @prefix set to %NULL to use the value from the config file
+ * has been supported since 0.1.3. Earlier versions will assert.
  *
  * Return value: %TRUE for success, %FALSE for failure
  *
@@ -79,24 +84,42 @@ static gpointer zif_store_local_object = NULL;
 gboolean
 zif_store_local_set_prefix (ZifStoreLocal *store, const gchar *prefix, GError **error)
 {
-	gboolean ret;
+	gboolean ret = FALSE;
 	GError *error_local = NULL;
 	gchar *filename = NULL;
+	gchar *prefix_real = NULL;
 
 	g_return_val_if_fail (ZIF_IS_STORE_LOCAL (store), FALSE);
-	g_return_val_if_fail (prefix != NULL, FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
+	/* get from config file */
+	if (prefix == NULL) {
+		prefix_real = zif_config_get_string (store->priv->config,
+						     "prefix",
+						     &error_local);
+		if (prefix_real == NULL) {
+			g_set_error (error,
+				     ZIF_STORE_ERROR,
+				     ZIF_STORE_ERROR_FAILED,
+				     "default prefix not available: %s",
+				     error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+	} else {
+		prefix_real = g_strdup (prefix);
+	}
+
 	/* check file exists */
-	ret = g_file_test (prefix, G_FILE_TEST_IS_DIR);
+	ret = g_file_test (prefix_real, G_FILE_TEST_IS_DIR);
 	if (!ret) {
 		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
-			     "prefix %s does not exist", prefix);
+			     "prefix %s does not exist", prefix_real);
 		goto out;
 	}
 
 	/* is the same */
-	if (g_strcmp0 (prefix, store->priv->prefix) == 0)
+	if (g_strcmp0 (prefix_real, store->priv->prefix) == 0)
 		goto out;
 
 	/* empty cache */
@@ -107,7 +130,7 @@ zif_store_local_set_prefix (ZifStoreLocal *store, const gchar *prefix, GError **
 	}
 
 	/* setup watch */
-	filename = g_build_filename (prefix, "var", "lib", "rpm", "Packages", NULL);
+	filename = g_build_filename (prefix_real, "var", "lib", "rpm", "Packages", NULL);
 	ret = zif_monitor_add_watch (store->priv->monitor, filename, &error_local);
 	if (!ret) {
 		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
@@ -118,8 +141,9 @@ zif_store_local_set_prefix (ZifStoreLocal *store, const gchar *prefix, GError **
 
 	/* save new value */
 	g_free (store->priv->prefix);
-	store->priv->prefix = g_strdup (prefix);
+	store->priv->prefix = g_strdup (prefix_real);
 out:
+	g_free (prefix_real);
 	g_free (filename);
 	return ret;
 }
@@ -1407,6 +1431,7 @@ zif_store_local_finalize (GObject *object)
 	g_signal_handler_disconnect (store->priv->monitor, store->priv->monitor_changed_id);
 	g_object_unref (store->priv->monitor);
 	g_object_unref (store->priv->lock);
+	g_object_unref (store->priv->config);
 	g_free (store->priv->prefix);
 
 	G_OBJECT_CLASS (zif_store_local_parent_class)->finalize (object);
@@ -1452,6 +1477,7 @@ zif_store_local_init (ZifStoreLocal *store)
 	store->priv->groups = zif_groups_new ();
 	store->priv->monitor = zif_monitor_new ();
 	store->priv->lock = zif_lock_new ();
+	store->priv->config = zif_config_new ();
 	store->priv->prefix = NULL;
 	store->priv->loaded = FALSE;
 	store->priv->monitor_changed_id =

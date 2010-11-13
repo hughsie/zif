@@ -1032,6 +1032,12 @@ main (int argc, char *argv[])
 		g_error_free (error);
 		goto out;
 	}
+	ret = zif_config_set_string (config, "prefix", root, &error);
+	if (!ret) {
+		g_error ("failed to set prefix: %s", error->message);
+		g_error_free (error);
+		goto out;
+	}
 
 	/* are we allowed to access the repos */
 	if (!offline)
@@ -1067,7 +1073,7 @@ main (int argc, char *argv[])
 
 	/* ZifStoreLocal */
 	store_local = zif_store_local_new ();
-	ret = zif_store_local_set_prefix (store_local, root, &error);
+	ret = zif_store_local_set_prefix (store_local, NULL, &error);
 	if (!ret) {
 		g_error ("failed to set prefix: %s", error->message);
 		g_error_free (error);
