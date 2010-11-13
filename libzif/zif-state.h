@@ -88,6 +88,7 @@ typedef enum {
 #define zif_state_done(state, error)			zif_state_done_real(state, error, G_STRLOC)
 #define zif_state_finished(state, error)		zif_state_finished_real(state, error, G_STRLOC)
 #define zif_state_set_number_steps(state, steps)	zif_state_set_number_steps_real(state, steps, G_STRLOC)
+#define zif_state_set_steps(state, error, value, args...)	zif_state_set_steps_real(state, error, G_STRLOC, value, ## args)
 
 typedef gboolean (*ZifStateErrorHandlerCb)		(const GError		*error,
 							 gpointer		 user_data);
@@ -101,8 +102,9 @@ ZifState	*zif_state_get_child			(ZifState		*state);
 gboolean	 zif_state_set_number_steps_real	(ZifState		*state,
 							 guint			 steps,
 							 const gchar		*strloc);
-gboolean	 zif_state_set_steps			(ZifState		*state,
+gboolean	 zif_state_set_steps_real		(ZifState		*state,
 							 GError			**error,
+							 const gchar		*strloc,
 							 gint			 value, ...);
 gboolean	 zif_state_set_percentage		(ZifState		*state,
 							 guint			 percentage);

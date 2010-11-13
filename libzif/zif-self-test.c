@@ -1967,6 +1967,7 @@ zif_state_func (void)
 
 	/* test non-equal steps */
 	state = zif_state_new ();
+	zif_state_set_enable_profile (state, TRUE);
 	ret = zif_state_set_steps (state,
 				   &error,
 				   20, /* prepare */
@@ -1985,6 +1986,8 @@ zif_state_func (void)
 	/* verify nothing */
 	g_assert_cmpint (zif_state_get_percentage (state), ==, 0);
 
+	g_usleep (18 * 10 * 1000);
+
 	ret = zif_state_done (state, &error);
 	g_assert_no_error (error);
 	g_assert (ret);
@@ -1992,12 +1995,16 @@ zif_state_func (void)
 	/* verify 20% */
 	g_assert_cmpint (zif_state_get_percentage (state), ==, 20);
 
+	g_usleep (50 * 10 * 1000);
+
 	ret = zif_state_done (state, &error);
 	g_assert_no_error (error);
 	g_assert (ret);
 
 	/* verify 80% */
 	g_assert_cmpint (zif_state_get_percentage (state), ==, 80);
+
+	g_usleep (19 * 10 * 1000);
 
 	ret = zif_state_done (state, &error);
 	g_assert_no_error (error);

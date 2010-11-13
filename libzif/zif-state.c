@@ -91,6 +91,7 @@ struct _ZifStatePrivate
 {
 	guint			 steps;
 	guint			*step_data;
+	gdouble			*step_profile;
 	guint			 current;
 	guint			 last_percentage;
 	ZifState		*child;
@@ -731,7 +732,9 @@ zif_state_reset (ZifState *state)
 
 	/* no more step data */
 	g_free (state->priv->step_data);
+	g_free (state->priv->step_profile);
 	state->priv->step_data = NULL;
+	state->priv->step_profile = NULL;
 
 	return TRUE;
 }
@@ -853,7 +856,7 @@ zif_state_set_number_steps_real (ZifState *state, guint steps, const gchar *strl
 }
 
 /**
- * zif_state_set_steps:
+ * zif_state_set_steps_real:
  * @value: the step weighting
  *
  * This sets the step weighting, which you will want to do if one action
@@ -866,7 +869,7 @@ zif_state_set_number_steps_real (ZifState *state, guint steps, const gchar *strl
  * Since: 0.1.3
  **/
 gboolean
-zif_state_set_steps (ZifState *state, GError **error, gint value, ...)
+zif_state_set_steps_real (ZifState *state, GError **error, const gchar *strloc, gint value, ...)
 {
 	va_list args;
 	guint i;
@@ -901,7 +904,7 @@ zif_state_set_steps (ZifState *state, GError **error, gint value, ...)
 	}
 
 	/* set step number */
-	ret = zif_state_set_number_steps_real (state, i+1, NULL);
+	ret = zif_state_set_number_steps_real (state, i+1, strloc);
 	if (!ret) {
 		g_set_error (error,
 			     ZIF_STATE_ERROR,
@@ -914,6 +917,7 @@ zif_state_set_steps (ZifState *state, GError **error, gint value, ...)
 	/* save this data */
 	total = value;
 	state->priv->step_data = g_new0 (guint, i+2);
+	state->priv->step_profile = g_new0 (gdouble, i+2);
 	state->priv->step_data[0] = total;
 	va_start (args, value);
 	for (i=0;; i++) {
@@ -934,6 +938,41 @@ out:
 }
 
 /**
+ * zif_state_show_profile:
+ **/
+static void
+zif_state_show_profile (ZifState *state)
+{
+	gdouble div;
+	gdouble total_time = 0.0f;
+	GString *result;
+	guint i;
+	guint uncumalitive = 0;
+
+	/* get the total time so we can work out the divisor */
+	for (i=0; i<state->priv->steps; i++)
+		total_time += state->priv->step_profile[i];
+	div = total_time / 100.0f;
+
+	/* what we set */
+	result = g_string_new ("steps were set as [ ");
+	for (i=0; i<state->priv->steps; i++) {
+		g_string_append_printf (result, "%i, ",
+					state->priv->step_data[i] - uncumalitive);
+		uncumalitive = state->priv->step_data[i];
+	}
+
+	/* what we _should_ have set */
+	g_string_append_printf (result, "-1 ] but should have been: [ ");
+	for (i=0; i<state->priv->steps; i++) {
+		g_string_append_printf (result, "%.0f, ",
+					state->priv->step_profile[i] / div);
+	}
+	g_debug ("%s-1 ] at %s", result->str, state->priv->id);
+	g_string_free (result, TRUE);
+}
+
+/**
  * zif_state_done_real:
  * @state: the #ZifState object
  * @error: A #GError or %NULL
@@ -948,8 +987,8 @@ gboolean
 zif_state_done_real (ZifState *state, GError **error, const gchar *strloc)
 {
 	gboolean ret = TRUE;
-	gfloat percentage;
 	gdouble elapsed;
+	gfloat percentage;
 
 	g_return_val_if_fail (ZIF_IS_STATE (state), FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
@@ -974,13 +1013,15 @@ zif_state_done_real (ZifState *state, GError **error, const gchar *strloc)
 
 	/* check the interval was too big in allow_cancel false mode */
 	if (state->priv->enable_profile) {
+		elapsed = g_timer_elapsed (state->priv->timer, NULL);
 		if (!state->priv->allow_cancel_changed_state && state->priv->current > 0) {
-			elapsed = g_timer_elapsed (state->priv->timer, NULL);
 			if (elapsed > 0.1f) {
 				g_warning ("%.1fms between zif_state_done() and no zif_state_set_allow_cancel()", elapsed * 1000);
 				zif_state_print_parent_chain (state, 0);
 			}
 		}
+		/* save the duration in the array */
+		state->priv->step_profile[state->priv->current] = elapsed;
 		g_timer_start (state->priv->timer);
 	}
 
@@ -1020,6 +1061,13 @@ zif_state_done_real (ZifState *state, GError **error, const gchar *strloc)
 		percentage = state->priv->step_data[state->priv->current - 1];
 	}
 	zif_state_set_percentage (state, (guint) percentage);
+
+	/* show any profiling stats */
+	if (state->priv->enable_profile &&
+	    state->priv->current == state->priv->steps &&
+	    state->priv->step_profile != NULL) {
+		zif_state_show_profile (state);
+	}
 
 	/* reset child if it exists */
 	if (state->priv->child != NULL)
@@ -1082,6 +1130,7 @@ zif_state_finalize (GObject *object)
 	g_free (state->priv->id);
 	g_free (state->priv->action_hint);
 	g_free (state->priv->step_data);
+	g_free (state->priv->step_profile);
 	if (state->priv->parent != NULL)
 		g_object_unref (state->priv->parent);
 	if (state->priv->cancellable != NULL)
