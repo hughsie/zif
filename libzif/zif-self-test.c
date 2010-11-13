@@ -1763,6 +1763,7 @@ zif_state_func (void)
 {
 	ZifState *state;
 	ZifState *child;
+	ZifState *child_child;
 	gboolean ret;
 	guint i;
 	GError *error = NULL;
@@ -1986,7 +1987,24 @@ zif_state_func (void)
 	/* verify nothing */
 	g_assert_cmpint (zif_state_get_percentage (state), ==, 0);
 
-	g_usleep (18 * 10 * 1000);
+	/* child step should increment according to the custom steps */
+	child = zif_state_get_child (state);
+	zif_state_set_number_steps (child, 2);
+
+	/* start child */
+	g_usleep (9 * 10 * 1000);
+	ret = zif_state_done (child, &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	/* verify 10% */
+	g_assert_cmpint (zif_state_get_percentage (state), ==, 10);
+
+	/* finish child */
+	g_usleep (9 * 10 * 1000);
+	ret = zif_state_done (child, &error);
+	g_assert_no_error (error);
+	g_assert (ret);
 
 	ret = zif_state_done (state, &error);
 	g_assert_no_error (error);
@@ -1995,7 +2013,56 @@ zif_state_func (void)
 	/* verify 20% */
 	g_assert_cmpint (zif_state_get_percentage (state), ==, 20);
 
-	g_usleep (50 * 10 * 1000);
+	/* child step should increment according to the custom steps */
+	child = zif_state_get_child (state);
+	ret = zif_state_set_steps (child,
+				   &error,
+				   25,
+				   75,
+				   -1);
+
+	/* start child */
+	g_usleep (25 * 10 * 1000);
+	ret = zif_state_done (child, &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	/* verify bilinear interpolation is working */
+	g_assert_cmpint (zif_state_get_percentage (state), ==, 35);
+
+	/*
+	 * 0        20                             80         100
+	 * |---------||----------------------------||---------|
+	 *            |       35                   |
+	 *            |-------||-------------------| (25%)
+	 *                     |              75.5 |
+	 *                     |---------------||--| (90%)
+	 */
+	child_child = zif_state_get_child (child);
+	ret = zif_state_set_steps (child_child,
+				   &error,
+				   90,
+				   10,
+				   -1);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	ret = zif_state_done (child_child, &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	/* verify bilinear interpolation (twice) is working for subpercentage */
+	g_assert_cmpint (zif_state_get_percentage (state), ==, 75);
+
+	ret = zif_state_done (child_child, &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	/* finish child */
+	g_usleep (25 * 10 * 1000);
+	ret = zif_state_done (child, &error);
+	g_assert_no_error (error);
+	g_assert (ret);
 
 	ret = zif_state_done (state, &error);
 	g_assert_no_error (error);

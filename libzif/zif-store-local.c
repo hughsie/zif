@@ -173,8 +173,14 @@ zif_store_local_load (ZifStore *store, ZifState *state, GError **error)
 	if (local->priv->loaded)
 		goto out;
 
-	/* setup state with the correct number of steps */
-	zif_state_set_number_steps (state, 2);
+	/* setup steps */
+	ret = zif_state_set_steps (state,
+				   error,
+				   20, /* open db */
+				   80, /* add packages */
+				   -1);
+	if (!ret)
+		goto out;
 
 	retval = rpmdbOpen (local->priv->prefix, &db, O_RDONLY, 0777);
 	if (retval != 0) {
@@ -235,6 +241,7 @@ zif_store_local_search_name (ZifStore *store, gchar **search, ZifState *state, G
 {
 	guint i, j;
 	GPtrArray *array = NULL;
+	GPtrArray *array_tmp = NULL;
 	ZifPackage *package;
 	const gchar *package_id;
 	gchar *split_name;
@@ -256,11 +263,18 @@ zif_store_local_search_name (ZifStore *store, gchar **search, ZifState *state, G
 		goto out;
 	}
 
-	/* we have a different number of steps depending if we are loaded or not */
-	if (local->priv->loaded)
+	/* setup steps */
+	if (local->priv->loaded) {
 		zif_state_set_number_steps (state, 1);
-	else
-		zif_state_set_number_steps (state, 2);
+	} else {
+		ret = zif_state_set_steps (state,
+					   error,
+					   80, /* load */
+					   20, /* search */
+					   -1);
+		if (!ret)
+			goto out;
+	}
 
 	/* if not already loaded, load */
 	if (!local->priv->loaded) {
@@ -291,14 +305,14 @@ zif_store_local_search_name (ZifStore *store, gchar **search, ZifState *state, G
 	zif_state_set_number_steps (state_local, local->priv->packages->len);
 
 	/* iterate list */
-	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
+	array_tmp = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	for (i=0;i<local->priv->packages->len;i++) {
 		package = g_ptr_array_index (local->priv->packages, i);
 		package_id = zif_package_get_id (package);
 		split_name = zif_package_id_get_name (package_id);
 		for (j=0; search[j] != NULL; j++) {
 			if (strcasestr (split_name, search[j]) != NULL) {
-				g_ptr_array_add (array, g_object_ref (package));
+				g_ptr_array_add (array_tmp, g_object_ref (package));
 				break;
 			}
 		}
@@ -314,7 +328,12 @@ zif_store_local_search_name (ZifStore *store, gchar **search, ZifState *state, G
 	ret = zif_state_done (state, error);
 	if (!ret)
 		goto out;
+
+	/* success */
+	array = g_ptr_array_ref (array_tmp);
 out:
+	if (array_tmp != NULL)
+		g_ptr_array_unref (array_tmp);
 	return array;
 }
 
@@ -346,11 +365,18 @@ zif_store_local_search_category (ZifStore *store, gchar **search, ZifState *stat
 		goto out;
 	}
 
-	/* we have a different number of steps depending if we are loaded or not */
-	if (local->priv->loaded)
+	/* setup steps */
+	if (local->priv->loaded) {
 		zif_state_set_number_steps (state, 1);
-	else
-		zif_state_set_number_steps (state, 2);
+	} else {
+		ret = zif_state_set_steps (state,
+					   error,
+					   80, /* load */
+					   20, /* search */
+					   -1);
+		if (!ret)
+			goto out;
+	}
 
 	/* if not already loaded, load */
 	if (!local->priv->loaded) {
@@ -439,10 +465,17 @@ zif_store_local_search_details (ZifStore *store, gchar **search, ZifState *state
 	}
 
 	/* we have a different number of steps depending if we are loaded or not */
-	if (local->priv->loaded)
+	if (local->priv->loaded) {
 		zif_state_set_number_steps (state, 1);
-	else
-		zif_state_set_number_steps (state, 2);
+	} else {
+		ret = zif_state_set_steps (state,
+					   error,
+					   10, /* load */
+					   90, /* search */
+					   -1);
+		if (!ret)
+			goto out;
+	}
 
 	/* if not already loaded, load */
 	if (!local->priv->loaded) {
@@ -534,11 +567,18 @@ zif_store_local_search_group (ZifStore *store, gchar **search, ZifState *state, 
 		goto out;
 	}
 
-	/* we have a different number of steps depending if we are loaded or not */
-	if (local->priv->loaded)
+	/* setup steps */
+	if (local->priv->loaded) {
 		zif_state_set_number_steps (state, 1);
-	else
-		zif_state_set_number_steps (state, 2);
+	} else {
+		ret = zif_state_set_steps (state,
+					   error,
+					   80, /* load */
+					   20, /* search */
+					   -1);
+		if (!ret)
+			goto out;
+	}
 
 	/* if not already loaded, load */
 	if (!local->priv->loaded) {
@@ -626,11 +666,18 @@ zif_store_local_search_file (ZifStore *store, gchar **search, ZifState *state, G
 		goto out;
 	}
 
-	/* we have a different number of steps depending if we are loaded or not */
-	if (local->priv->loaded)
+	/* setup steps */
+	if (local->priv->loaded) {
 		zif_state_set_number_steps (state, 1);
-	else
-		zif_state_set_number_steps (state, 2);
+	} else {
+		ret = zif_state_set_steps (state,
+					   error,
+					   80, /* load */
+					   20, /* search */
+					   -1);
+		if (!ret)
+			goto out;
+	}
 
 	/* if not already loaded, load */
 	if (!local->priv->loaded) {
@@ -732,11 +779,18 @@ zif_store_local_resolve (ZifStore *store, gchar **search, ZifState *state, GErro
 		goto out;
 	}
 
-	/* we have a different number of steps depending if we are loaded or not */
-	if (local->priv->loaded)
+	/* setup steps */
+	if (local->priv->loaded) {
 		zif_state_set_number_steps (state, 1);
-	else
-		zif_state_set_number_steps (state, 2);
+	} else {
+		ret = zif_state_set_steps (state,
+					   error,
+					   80, /* load */
+					   20, /* search */
+					   -1);
+		if (!ret)
+			goto out;
+	}
 
 	/* if not already loaded, load */
 	if (!local->priv->loaded) {
@@ -825,11 +879,18 @@ zif_store_local_what_provides (ZifStore *store, ZifDepend *depend, ZifState *sta
 		goto out;
 	}
 
-	/* we have a different number of steps depending if we are loaded or not */
-	if (local->priv->loaded)
+	/* setup steps */
+	if (local->priv->loaded) {
 		zif_state_set_number_steps (state, 1);
-	else
-		zif_state_set_number_steps (state, 2);
+	} else {
+		ret = zif_state_set_steps (state,
+					   error,
+					   80, /* load */
+					   20, /* search */
+					   -1);
+		if (!ret)
+			goto out;
+	}
 
 	/* if not already loaded, load */
 	if (!local->priv->loaded) {
@@ -918,11 +979,18 @@ zif_store_local_what_obsoletes (ZifStore *store, ZifDepend *depend, ZifState *st
 		goto out;
 	}
 
-	/* we have a different number of steps depending if we are loaded or not */
-	if (local->priv->loaded)
+	/* setup steps */
+	if (local->priv->loaded) {
 		zif_state_set_number_steps (state, 1);
-	else
-		zif_state_set_number_steps (state, 2);
+	} else {
+		ret = zif_state_set_steps (state,
+					   error,
+					   80, /* load */
+					   20, /* search */
+					   -1);
+		if (!ret)
+			goto out;
+	}
 
 	/* if not already loaded, load */
 	if (!local->priv->loaded) {
@@ -1011,11 +1079,18 @@ zif_store_local_what_conflicts (ZifStore *store, ZifDepend *depend, ZifState *st
 		goto out;
 	}
 
-	/* we have a different number of steps depending if we are loaded or not */
-	if (local->priv->loaded)
+	/* setup steps */
+	if (local->priv->loaded) {
 		zif_state_set_number_steps (state, 1);
-	else
-		zif_state_set_number_steps (state, 2);
+	} else {
+		ret = zif_state_set_steps (state,
+					   error,
+					   80, /* load */
+					   20, /* search */
+					   -1);
+		if (!ret)
+			goto out;
+	}
 
 	/* if not already loaded, load */
 	if (!local->priv->loaded) {
@@ -1099,11 +1174,18 @@ zif_store_local_get_packages (ZifStore *store, ZifState *state, GError **error)
 		goto out;
 	}
 
-	/* we have a different number of steps depending if we are loaded or not */
-	if (local->priv->loaded)
+	/* setup steps */
+	if (local->priv->loaded) {
 		zif_state_set_number_steps (state, 1);
-	else
-		zif_state_set_number_steps (state, 2);
+	} else {
+		ret = zif_state_set_steps (state,
+					   error,
+					   80, /* load */
+					   20, /* search */
+					   -1);
+		if (!ret)
+			goto out;
+	}
 
 	/* if not already loaded, load */
 	if (!local->priv->loaded) {
@@ -1181,11 +1263,18 @@ zif_store_local_find_package (ZifStore *store, const gchar *package_id, ZifState
 		goto out;
 	}
 
-	/* we have a different number of steps depending if we are loaded or not */
-	if (local->priv->loaded)
+	/* setup steps */
+	if (local->priv->loaded) {
 		zif_state_set_number_steps (state, 1);
-	else
-		zif_state_set_number_steps (state, 2);
+	} else {
+		ret = zif_state_set_steps (state,
+					   error,
+					   80, /* load */
+					   20, /* search */
+					   -1);
+		if (!ret)
+			goto out;
+	}
 
 	/* if not already loaded, load */
 	if (!local->priv->loaded) {

@@ -505,11 +505,23 @@ zif_md_primary_sql_what_depends (ZifMd *md, const gchar *table_name, ZifDepend *
 
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 
-	/* setup state */
-	if (md_primary_sql->priv->loaded)
-		zif_state_set_number_steps (state, 2);
-	else
-		zif_state_set_number_steps (state, 3);
+	/* setup steps */
+	if (md_primary_sql->priv->loaded) {
+		ret = zif_state_set_steps (state,
+					   error,
+					   80, /* sql query */
+					   20, /* search */
+					   -1);
+	} else {
+		ret = zif_state_set_steps (state,
+					   error,
+					   60, /* load */
+					   20, /* sql query */
+					   20, /* search */
+					   -1);
+	}
+	if (!ret)
+		goto out;
 
 	/* if not already loaded, load */
 	if (!md_primary_sql->priv->loaded) {

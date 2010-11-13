@@ -435,10 +435,17 @@ zif_store_remote_download (ZifStoreRemote *store, const gchar *filename, const g
 repomd_confirm:
 
 	/* setup state */
-	if (store->priv->loaded_metadata)
+	if (store->priv->loaded_metadata) {
 		zif_state_set_number_steps (state, 1);
-	else
-		zif_state_set_number_steps (state, 2);
+	} else {
+		ret = zif_state_set_steps (state,
+					   error,
+					   80, /* load */
+					   20, /* download */
+					   -1);
+		if (!ret)
+			goto out;
+	}
 
 	/* if not already loaded, load */
 	if (!store->priv->loaded_metadata) {
@@ -559,10 +566,28 @@ zif_store_remote_get_update_detail (ZifStoreRemote *store, const gchar *package_
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* setup state */
-	if (store->priv->loaded_metadata)
-		zif_state_set_number_steps (state, 5);
-	else
-		zif_state_set_number_steps (state, 6);
+	if (store->priv->loaded_metadata) {
+		ret = zif_state_set_steps (state,
+					   error,
+					   20, /* get detail for package */
+					   20, /* find package */
+					   20, /* get changelog */
+					   20, /* resolve */
+					   20, /* add changeset */
+					   -1);
+	} else {
+		ret = zif_state_set_steps (state,
+					   error,
+					   75, /* load metadata */
+					   5, /* get detail for package */
+					   5, /* find package */
+					   5, /* get changelog */
+					   5, /* resolve */
+					   5, /* add changeset */
+					   -1);
+	}
+	if (!ret)
+		goto out;
 
 	/* if not already loaded, load */
 	if (!store->priv->loaded_metadata) {
@@ -735,7 +760,14 @@ zif_store_remote_add_metalink (ZifStoreRemote *store, ZifState *state, GError **
 		goto out;
 	}
 
-	zif_state_set_number_steps (state, 2);
+	/* set state */
+	ret = zif_state_set_steps (state,
+				   error,
+				   80, /* download */
+				   20, /* parse */
+				   -1);
+	if (!ret)
+		goto out;
 
 	/* find if the file already exists */
 	ret = g_file_test (filename, G_FILE_TEST_EXISTS);
@@ -802,7 +834,14 @@ zif_store_remote_add_mirrorlist (ZifStoreRemote *store, ZifState *state, GError 
 		goto out;
 	}
 
-	zif_state_set_number_steps (state, 2);
+	/* set state */
+	ret = zif_state_set_steps (state,
+				   error,
+				   80, /* download */
+				   20, /* parse */
+				   -1);
+	if (!ret)
+		goto out;
 
 	/* find if the file already exists */
 	ret = g_file_test (filename, G_FILE_TEST_EXISTS);
@@ -923,7 +962,15 @@ zif_store_remote_load_metadata_try (ZifStoreRemote *store, ZifState *state, GErr
 	};
 
 	/* setup state */
-	zif_state_set_number_steps (state, 4);
+	ret = zif_state_set_steps (state,
+				   error,
+				   25, /* add mirror list */
+				   25, /* add metalink */
+				   45, /* download repomd */
+				   5, /* parse repomd */
+				   -1);
+	if (!ret)
+		goto out;
 
 	/* extract details from mirrorlist */
 	if (store->priv->mirrorlist != NULL) {
@@ -1149,7 +1196,14 @@ zif_store_remote_refresh_md (ZifStoreRemote *remote, ZifMd *md, gboolean force, 
 	g_return_val_if_fail (zif_state_valid (state), FALSE);
 
 	/* setup progress */
-	zif_state_set_number_steps (state, 3);
+	ret = zif_state_set_steps (state,
+				   error,
+				   20, /* check uncompressed */
+				   60, /* download */
+				   20, /* decompress */
+				   -1);
+	if (!ret)
+		goto out;
 
 	/* get filename */
 	filename = zif_md_get_location (md);
@@ -1248,7 +1302,14 @@ zif_store_remote_refresh (ZifStore *store, gboolean force, ZifState *state, GErr
 	}
 
 	/* setup state with the correct number of steps */
-	zif_state_set_number_steps (state, 3);
+	ret = zif_state_set_steps (state,
+				   error,
+				   15, /* download repomd */
+				   5, /* load metadata */
+				   80, /* refresh each metadata */
+				   -1);
+	if (!ret)
+		goto out;
 
 	/* not locked */
 	ret = zif_lock_is_locked (remote->priv->lock, NULL);
@@ -1359,7 +1420,13 @@ zif_store_remote_load (ZifStore *store, ZifState *state, GError **error)
 		goto out;
 
 	/* setup state with the correct number of steps */
-	zif_state_set_number_steps (state, 2);
+	ret = zif_state_set_steps (state,
+				   error,
+				   80, /* load from file */
+				   20, /* parse */
+				   -1);
+	if (!ret)
+		goto out;
 
 	file = g_key_file_new ();
 	ret = g_key_file_load_from_file (file, remote->priv->repo_filename, G_KEY_FILE_NONE, &error_local);
@@ -1529,10 +1596,22 @@ zif_store_remote_clean (ZifStore *store, ZifState *state, GError **error)
 	}
 
 	/* setup state with the correct number of steps */
-	if (remote->priv->loaded_metadata)
-		zif_state_set_number_steps (state, ZIF_MD_KIND_LAST);
-	else
-		zif_state_set_number_steps (state, 1+ZIF_MD_KIND_LAST);
+	if (remote->priv->loaded_metadata) {
+		ret = zif_state_set_steps (state,
+					   error,
+					   90, /* clean each repo */
+					   10, /* clean repomd */
+					   -1);
+	} else {
+		ret = zif_state_set_steps (state,
+					   error,
+					   90, /* load metadata */
+					   8, /* clean each repo */
+					   2, /* clean repomd */
+					   -1);
+	}
+	if (!ret)
+		goto out;
 
 	/* load metadata */
 	if (!remote->priv->loaded_metadata) {
@@ -1553,6 +1632,8 @@ zif_store_remote_clean (ZifStore *store, ZifState *state, GError **error)
 	}
 
 	/* set MD id and filename for each repo type */
+	state_local = zif_state_get_child (state);
+	zif_state_set_number_steps (state_local, ZIF_MD_KIND_LAST - 1);
 	for (i=1; i<ZIF_MD_KIND_LAST; i++) {
 		md = zif_store_remote_get_md_from_type (remote, i);
 		if (md == NULL) {
@@ -1584,10 +1665,15 @@ zif_store_remote_clean (ZifStore *store, ZifState *state, GError **error)
 		}
 skip:
 		/* this section done */
-		ret = zif_state_done (state, error);
+		ret = zif_state_done (state_local, error);
 		if (!ret)
 			goto out;
 	}
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 
 	/* clean master (last) */
 	exists = g_file_test (remote->priv->repomd_filename, G_FILE_TEST_EXISTS);
@@ -1830,10 +1916,17 @@ zif_store_remote_resolve (ZifStore *store, gchar **search, ZifState *state, GErr
 	}
 
 	/* setup state */
-	if (remote->priv->loaded_metadata)
+	if (remote->priv->loaded_metadata) {
 		zif_state_set_number_steps (state, 1);
-	else
-		zif_state_set_number_steps (state, 2);
+	} else {
+		ret = zif_state_set_steps (state,
+					   error,
+					   80, /* load */
+					   20, /* resolve */
+					   -1);
+		if (!ret)
+			goto out;
+	}
 
 	/* load metadata */
 	if (!remote->priv->loaded_metadata) {
@@ -1894,10 +1987,17 @@ zif_store_remote_search_name (ZifStore *store, gchar **search, ZifState *state, 
 	}
 
 	/* setup state */
-	if (remote->priv->loaded_metadata)
+	if (remote->priv->loaded_metadata) {
 		zif_state_set_number_steps (state, 1);
-	else
-		zif_state_set_number_steps (state, 2);
+	} else {
+		ret = zif_state_set_steps (state,
+					   error,
+					   80, /* load */
+					   20, /* search name */
+					   -1);
+		if (!ret)
+			goto out;
+	}
 
 	/* load metadata */
 	if (!remote->priv->loaded_metadata) {
@@ -1958,10 +2058,17 @@ zif_store_remote_search_details (ZifStore *store, gchar **search, ZifState *stat
 	}
 
 	/* setup state */
-	if (remote->priv->loaded_metadata)
+	if (remote->priv->loaded_metadata) {
 		zif_state_set_number_steps (state, 1);
-	else
-		zif_state_set_number_steps (state, 2);
+	} else {
+		ret = zif_state_set_steps (state,
+					   error,
+					   80, /* load */
+					   20, /* search details */
+					   -1);
+		if (!ret)
+			goto out;
+	}
 
 	/* load metadata */
 	if (!remote->priv->loaded_metadata) {
@@ -2015,7 +2122,13 @@ zif_store_remote_search_category_resolve (ZifStore *store, const gchar *name, Zi
 	store_local = zif_store_local_new ();
 
 	/* setup steps */
-	zif_state_set_number_steps (state, 2);
+	ret = zif_state_set_steps (state,
+				   error,
+				   50, /* resolve local */
+				   50, /* resolve remote */
+				   -1);
+	if (!ret)
+		goto out;
 
 	/* is already installed? */
 	state_local = zif_state_get_child (state);
@@ -2109,10 +2222,22 @@ zif_store_remote_search_category (ZifStore *store, gchar **group_id, ZifState *s
 	}
 
 	/* setup state */
-	if (remote->priv->loaded_metadata)
-		zif_state_set_number_steps (state, 2);
-	else
-		zif_state_set_number_steps (state, 3);
+	if (remote->priv->loaded_metadata) {
+		ret = zif_state_set_steps (state,
+					   error,
+					   10, /* get packages */
+					   90, /* search category */
+					   -1);
+	} else {
+		ret = zif_state_set_steps (state,
+					   error,
+					   90, /* load metadata */
+					   2, /* get packages */
+					   8, /* search category */
+					   -1);
+	}
+	if (!ret)
+		goto out;
 
 	/* load metadata */
 	if (!remote->priv->loaded_metadata) {
@@ -2249,10 +2374,17 @@ zif_store_remote_search_group (ZifStore *store, gchar **search, ZifState *state,
 	}
 
 	/* setup state */
-	if (remote->priv->loaded_metadata)
+	if (remote->priv->loaded_metadata) {
 		zif_state_set_number_steps (state, 1);
-	else
-		zif_state_set_number_steps (state, 2);
+	} else {
+		ret = zif_state_set_steps (state,
+					   error,
+					   80, /* load */
+					   20, /* search */
+					   -1);
+		if (!ret)
+			goto out;
+	}
 
 	/* load metadata */
 	if (!remote->priv->loaded_metadata) {
@@ -2340,10 +2472,17 @@ zif_store_remote_find_package (ZifStore *store, const gchar *package_id, ZifStat
 	}
 
 	/* setup state */
-	if (remote->priv->loaded_metadata)
+	if (remote->priv->loaded_metadata) {
 		zif_state_set_number_steps (state, 1);
-	else
-		zif_state_set_number_steps (state, 2);
+	} else {
+		ret = zif_state_set_steps (state,
+					   error,
+					   80, /* load */
+					   20, /* search */
+					   -1);
+		if (!ret)
+			goto out;
+	}
 
 	/* load metadata */
 	if (!remote->priv->loaded_metadata) {
@@ -2428,10 +2567,17 @@ zif_store_remote_get_packages (ZifStore *store, ZifState *state, GError **error)
 	}
 
 	/* setup state */
-	if (remote->priv->loaded_metadata)
+	if (remote->priv->loaded_metadata) {
 		zif_state_set_number_steps (state, 1);
-	else
-		zif_state_set_number_steps (state, 2);
+	} else {
+		ret = zif_state_set_steps (state,
+					   error,
+					   80, /* load */
+					   20, /* search */
+					   -1);
+		if (!ret)
+			goto out;
+	}
 
 	/* load metadata */
 	if (!remote->priv->loaded_metadata) {
@@ -2497,10 +2643,22 @@ zif_store_remote_get_categories (ZifStore *store, ZifState *state, GError **erro
 	}
 
 	/* setup state */
-	if (remote->priv->loaded_metadata)
-		zif_state_set_number_steps (state, 2);
-	else
-		zif_state_set_number_steps (state, 3);
+	if (remote->priv->loaded_metadata) {
+		ret = zif_state_set_steps (state,
+					   error,
+					   50, /* get categories */
+					   50, /* get groups */
+					   -1);
+	} else {
+		ret = zif_state_set_steps (state,
+					   error,
+					   90, /* load metadata */
+					   5, /* get categories */
+					   5, /* get groups */
+					   -1);
+	}
+	if (!ret)
+		goto out;
 
 	/* load metadata */
 	if (!remote->priv->loaded_metadata) {
@@ -2644,10 +2802,17 @@ zif_store_remote_get_updates (ZifStore *store, GPtrArray *packages,
 	}
 
 	/* setup state */
-	if (remote->priv->loaded_metadata)
+	if (remote->priv->loaded_metadata) {
 		zif_state_set_number_steps (state, 1);
-	else
-		zif_state_set_number_steps (state, 2);
+	} else {
+		ret = zif_state_set_steps (state,
+					   error,
+					   80, /* load */
+					   20, /* resolve */
+					   -1);
+		if (!ret)
+			goto out;
+	}
 
 	/* load metadata */
 	if (!remote->priv->loaded_metadata) {
@@ -2767,10 +2932,17 @@ zif_store_remote_what_provides (ZifStore *store, ZifDepend *depend,
 	}
 
 	/* setup state */
-	if (remote->priv->loaded_metadata)
+	if (remote->priv->loaded_metadata) {
 		zif_state_set_number_steps (state, 1);
-	else
-		zif_state_set_number_steps (state, 2);
+	} else {
+		ret = zif_state_set_steps (state,
+					   error,
+					   80, /* load */
+					   20, /* what provides */
+					   -1);
+		if (!ret)
+			goto out;
+	}
 
 	/* load metadata */
 	if (!remote->priv->loaded_metadata) {
@@ -2832,10 +3004,17 @@ zif_store_remote_what_obsoletes (ZifStore *store, ZifDepend *depend,
 	}
 
 	/* setup state */
-	if (remote->priv->loaded_metadata)
+	if (remote->priv->loaded_metadata) {
 		zif_state_set_number_steps (state, 1);
-	else
-		zif_state_set_number_steps (state, 2);
+	} else {
+		ret = zif_state_set_steps (state,
+					   error,
+					   80, /* load */
+					   20, /* obsoletes */
+					   -1);
+		if (!ret)
+			goto out;
+	}
 
 	/* load metadata */
 	if (!remote->priv->loaded_metadata) {
@@ -2897,10 +3076,17 @@ zif_store_remote_what_conflicts (ZifStore *store, ZifDepend *depend,
 	}
 
 	/* setup state */
-	if (remote->priv->loaded_metadata)
+	if (remote->priv->loaded_metadata) {
 		zif_state_set_number_steps (state, 1);
-	else
-		zif_state_set_number_steps (state, 2);
+	} else {
+		ret = zif_state_set_steps (state,
+					   error,
+					   80, /* load */
+					   20, /* conflicts */
+					   -1);
+		if (!ret)
+			goto out;
+	}
 
 	/* load metadata */
 	if (!remote->priv->loaded_metadata) {
@@ -2968,10 +3154,22 @@ zif_store_remote_search_file (ZifStore *store, gchar **search, ZifState *state, 
 	}
 
 	/* setup state */
-	if (remote->priv->loaded_metadata)
-		zif_state_set_number_steps (state, 2);
-	else
-		zif_state_set_number_steps (state, 3);
+	if (remote->priv->loaded_metadata) {
+		ret = zif_state_set_steps (state,
+					   error,
+					   50, /* search file */
+					   50, /* get pkgids */
+					   -1);
+	} else {
+		ret = zif_state_set_steps (state,
+					   error,
+					   90, /* load metadata */
+					   5, /* search file */
+					   5, /* get pkgids */
+					   -1);
+	}
+	if (!ret)
+		goto out;
 
 	/* load metadata */
 	if (!remote->priv->loaded_metadata) {

@@ -501,10 +501,17 @@ zif_md_primary_xml_filter (ZifMd *md, ZifPackageFilterFunc filter_func, gpointer
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* setup state */
-	if (md_primary->priv->loaded)
+	if (md_primary->priv->loaded) {
 		zif_state_set_number_steps (state, 1);
-	else
-		zif_state_set_number_steps (state, 2);
+	} else {
+		ret = zif_state_set_steps (state,
+					   error,
+					   80, /* load */
+					   20, /* search */
+					   -1);
+		if (!ret)
+			goto out;
+	}
 
 	/* if not already loaded, load */
 	if (!md_primary->priv->loaded) {

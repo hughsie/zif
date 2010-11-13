@@ -2693,10 +2693,14 @@ zif_transaction_prepare (ZifTransaction *transaction, ZifState *state, GError **
 		goto out;
 	}
 
-	/* 1. check downloads exist
-	 * 2. download them
-	 */
-	zif_state_set_number_steps (state, 2);
+	/* set steps */
+	ret = zif_state_set_steps (state,
+				   error,
+				   10, /* check downloads exist */
+				   90, /* download them */
+				   -1);
+	if (!ret)
+		goto out;
 
 	/* check if the packages need downloading */
 	download = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);

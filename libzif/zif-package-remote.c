@@ -288,8 +288,14 @@ zif_package_remote_download (ZifPackageRemote *pkg, const gchar *directory, ZifS
 	g_return_val_if_fail (zif_state_valid (state), FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
-	/* two steps, TODO: the second will take longer than the first */
-	zif_state_set_number_steps (state, 2);
+	/* setup steps */
+	ret = zif_state_set_steps (state,
+				   error,
+				   5,
+				   95,
+				   -1);
+	if (!ret)
+		goto out;
 
 	/* directory is optional */
 	if (directory == NULL) {

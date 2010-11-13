@@ -449,17 +449,18 @@ zif_md_load (ZifMd *md, ZifState *state, GError **error)
 		return FALSE;
 	}
 
-	/* set steps:
-	 *
-	 * 1. check uncompressed
-	 * 2. check compressed
-	 * 3. get new compressed
-	 * 3. nothing
-	 * 4. decompress compressed
-	 * 5. check compressed
-	 * 6. klass->load
-	 */
-	zif_state_set_number_steps (state, 6);
+	/* set steps */
+	ret = zif_state_set_steps (state,
+				   error,
+				   10, /* check uncompressed */
+				   10, /* check compressed */
+				   30, /* get new compressed */
+				   20, /* decompress compressed */
+				   10, /* check compressed */
+				   20, /* klass->load */
+				   -1);
+	if (!ret)
+		goto out;
 
 	/* optimise: if uncompressed file is okay, then don't even check the compressed file */
 	state_local = zif_state_get_child (state);
@@ -514,15 +515,17 @@ zif_md_load (ZifMd *md, ZifState *state, GError **error)
 		if (!ret)
 			goto out;
 
-		/* set steps:
-		 *
-		 * 1. download new repomd
-		 * 2. load the new repomd
-		 * 3. download new compressed repo file
-		 * 4. check compressed file against new repomd
-		 */
+		/* set steps */
 		state_local = zif_state_get_child (state);
-		zif_state_set_number_steps (state_local, 4);
+		ret = zif_state_set_steps (state_local,
+					   error,
+					   30, /* download new repomd */
+					   20, /* load the new repomd */
+					   20, /* download new compressed repo file */
+					   30, /* check compressed file against new repomd */
+					   -1);
+		if (!ret)
+			goto out;
 
 		/* if not online, then this is fatal */
 		ret = zif_config_get_boolean (md->priv->config, "network", NULL);
@@ -1515,12 +1518,19 @@ zif_md_file_check (ZifMd *md, gboolean use_uncompressed, ZifState *state, GError
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
 	/* setup state */
-	zif_state_set_number_steps (state, 2);
+	ret = zif_state_set_steps (state,
+				   error,
+				   20, /* load */
+				   80, /* check checksum */
+				   -1);
+	if (!ret)
+		goto out;
 
 	/* metalink has no checksum... */
 	if (md->priv->kind == ZIF_MD_KIND_METALINK ||
 	    md->priv->kind == ZIF_MD_KIND_MIRRORLIST) {
-		g_debug ("skipping checksum check on %s", zif_md_kind_to_text (md->priv->kind));
+		g_debug ("skipping checksum check on %s",
+			 zif_md_kind_to_text (md->priv->kind));
 		ret = zif_state_finished (state, error);
 		goto out;
 	}

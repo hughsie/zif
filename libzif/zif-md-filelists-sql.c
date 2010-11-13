@@ -292,7 +292,22 @@ zif_md_filelists_sql_search_file (ZifMd *md, gchar **search,
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* set steps */
-	zif_state_set_number_steps (state, 1 + !md_filelists_sql->priv->loaded + g_strv_length (search));
+	if (md_filelists_sql->priv->loaded) {
+		ret = zif_state_set_steps (state,
+					   error,
+					   50, /* search */
+					   50, /* convert pkgkey */
+					   -1);
+	} else {
+		ret = zif_state_set_steps (state,
+					   error,
+					   50, /* load */
+					   25, /* search */
+					   25, /* convert pkgkey */
+					   -1);
+	}
+	if (!ret)
+		goto out;
 
 	/* if not already loaded, load */
 	if (!md_filelists_sql->priv->loaded) {
@@ -312,6 +327,8 @@ zif_md_filelists_sql_search_file (ZifMd *md, gchar **search,
 	}
 
 	/* search each part of the array */
+	state_local = zif_state_get_child (state);
+	zif_state_set_number_steps (state_local, g_strv_length (search));
 	pkgkey_array = g_ptr_array_new ();
 	for (j=0; search[j] != NULL; j++) {
 
@@ -341,10 +358,15 @@ zif_md_filelists_sql_search_file (ZifMd *md, gchar **search,
 		}
 
 		/* done */
-		ret = zif_state_done (state, error);
+		ret = zif_state_done (state_local, error);
 		if (!ret)
 			goto out;
 	}
+
+	/* done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 
 	/* convert each pkgKey */
 	array_tmp = g_ptr_array_new_with_free_func ((GDestroyNotify) g_free);

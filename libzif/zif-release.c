@@ -667,10 +667,14 @@ zif_release_get_treeinfo (ZifRelease *release, ZifReleaseUpgradeData *data, ZifS
 	ZifState *state_local;
 	ZifReleasePrivate *priv = release->priv;
 
-	/* 1. get treeinfo
-	 * 2. parse it
-	 */
-	zif_state_set_number_steps (state, 2);
+	/* set steps */
+	ret = zif_state_set_steps (state,
+				   error,
+				   90, /* get treeinfo */
+				   10, /* parse it */
+				   -1);
+	if (!ret)
+		goto out;
 
 	/* get .treeinfo from a mirror in the installmirrorlist */
 	treeinfo_filename = g_build_filename (priv->cache_dir, ".treeinfo", NULL);
@@ -1233,22 +1237,46 @@ zif_release_upgrade_version (ZifRelease *release, guint version, ZifReleaseUpgra
 		}
 	}
 
-	/* 1. setup
-	 * 2. get installmirrorlist
-	 * 3. parse installmirrorlist
-	 * 4. download treeinfo
-	 * 5. download kernel
-	 * 6. download initrd
-	 * (6) download stage2
-	 * (6) download packages
-	 * 7. install kernel
-	 */
-	if (upgrade_kind == ZIF_RELEASE_UPGRADE_KIND_MINIMAL)
-		zif_state_set_number_steps (state, 7);
-	else if (upgrade_kind == ZIF_RELEASE_UPGRADE_KIND_DEFAULT)
-		zif_state_set_number_steps (state, 8);
-	else if (upgrade_kind == ZIF_RELEASE_UPGRADE_KIND_COMPLETE)
-		zif_state_set_number_steps (state, 9);
+	/* setup steps */
+	if (upgrade_kind == ZIF_RELEASE_UPGRADE_KIND_MINIMAL) {
+		ret = zif_state_set_steps (state,
+					   error,
+					   1, /* setup */
+					   5, /* get installmirrorlist */
+					   1, /* parse installmirrorlist */
+					   3, /* download treeinfo */
+					   15, /* download kernel */
+					   70, /* download initrd */
+					   5, /* install kernel */
+					   -1);
+	} else if (upgrade_kind == ZIF_RELEASE_UPGRADE_KIND_DEFAULT) {
+		ret = zif_state_set_steps (state,
+					   error,
+					   1, /* setup */
+					   5, /* get installmirrorlist */
+					   1, /* parse installmirrorlist */
+					   3, /* download treeinfo */
+					   15, /* download kernel */
+					   20, /* download initrd */
+					   50, /* download stage2 */
+					   5, /* install kernel */
+					   -1);
+	} else if (upgrade_kind == ZIF_RELEASE_UPGRADE_KIND_COMPLETE) {
+		ret = zif_state_set_steps (state,
+					   error,
+					   1, /* setup */
+					   5, /* get installmirrorlist */
+					   1, /* parse installmirrorlist */
+					   3, /* download treeinfo */
+					   5, /* download kernel */
+					   20, /* download initrd */
+					   30, /* download stage2 */
+					   30, /* download packages */
+					   5, /* install kernel */
+					   -1);
+	}
+	if (!ret)
+		goto out;
 
 	/* get the correct object */
 	state_local = zif_state_get_child (state);
