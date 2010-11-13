@@ -612,6 +612,7 @@ zif_state_child_percentage_changed_cb (ZifState *child, guint percentage, ZifSta
 	gfloat offset;
 	gfloat range;
 	gfloat extra;
+	guint parent_percentage;
 
 	/* propagate up the stack if ZifState has only one step */
 	if (state->priv->steps == 1) {
@@ -634,6 +635,19 @@ zif_state_child_percentage_changed_cb (ZifState *child, guint percentage, ZifSta
 		return;
 	}
 
+	/* we have to deal with non-linear steps */
+	if (state->priv->step_data != NULL) {
+		/* we don't store zero */
+		if (state->priv->current == 0) {
+			parent_percentage = percentage * state->priv->step_data[state->priv->current] / 100;
+		} else {
+			/* bilinearly interpolate for speed */
+			parent_percentage = (((100 - percentage) * state->priv->step_data[state->priv->current-1]) +
+					     (percentage * state->priv->step_data[state->priv->current])) / 100;
+		}
+		goto out;
+	}
+
 	/* get the offset */
 	offset = zif_state_discrete_to_percent (state->priv->current, state->priv->steps);
 
@@ -648,7 +662,9 @@ zif_state_child_percentage_changed_cb (ZifState *child, guint percentage, ZifSta
 	extra = ((gfloat) percentage / 100.0f) * range;
 
 	/* emit from the parent */
-	zif_state_set_percentage (state, (guint) (offset + extra));
+	parent_percentage = (guint) (offset + extra);
+out:
+	zif_state_set_percentage (state, parent_percentage);
 }
 
 /**
