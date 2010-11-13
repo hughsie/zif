@@ -1020,8 +1020,10 @@ zif_state_done_real (ZifState *state, GError **error, const gchar *strloc)
 				zif_state_print_parent_chain (state, 0);
 			}
 		}
+
 		/* save the duration in the array */
-		state->priv->step_profile[state->priv->current] = elapsed;
+		if (state->priv->step_profile != NULL)
+			state->priv->step_profile[state->priv->current] = elapsed;
 		g_timer_start (state->priv->timer);
 	}
 
