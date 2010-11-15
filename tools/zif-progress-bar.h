@@ -48,14 +48,16 @@ typedef struct
 
 GType		 zif_progress_bar_get_type		(void);
 ZifProgressBar	*zif_progress_bar_new			(void);
-gboolean	 zif_progress_bar_set_size		(ZifProgressBar	*progress_bar,
+void		 zif_progress_bar_set_size		(ZifProgressBar	*progress_bar,
 							 guint		 size);
-gboolean	 zif_progress_bar_set_padding		(ZifProgressBar	*progress_bar,
+void		 zif_progress_bar_set_padding		(ZifProgressBar	*progress_bar,
 							 guint		 padding);
-gboolean	 zif_progress_bar_set_percentage	(ZifProgressBar	*progress_bar,
+void		 zif_progress_bar_set_percentage	(ZifProgressBar	*progress_bar,
 							 guint		 percentage);
-gboolean	 zif_progress_bar_set_value		(ZifProgressBar	*progress_bar,
+void		 zif_progress_bar_set_value		(ZifProgressBar	*progress_bar,
 							 guint		 value);
+void		 zif_progress_bar_set_action		(ZifProgressBar	*progress_bar,
+							 const gchar	*action);
 void		 zif_progress_bar_set_allow_cancel	(ZifProgressBar	*progress_bar,
 							 gboolean	 allow_cancel);
 void		 zif_progress_bar_set_on_console	(ZifProgressBar	*progress_bar,
