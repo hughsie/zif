@@ -208,6 +208,10 @@ zif_md_set_filename (ZifMd *md, const gchar *filename)
 	g_return_if_fail (ZIF_IS_MD (md));
 	g_return_if_fail (filename != NULL);
 
+	/* the same */
+	if (g_strcmp0 (md->priv->filename, filename) == 0)
+		return;
+
 	/* this is the compressed name */
 	g_free (md->priv->filename);
 	md->priv->filename = g_strdup (filename);
@@ -267,6 +271,10 @@ zif_md_set_location (ZifMd *md, const gchar *location)
 {
 	g_return_if_fail (ZIF_IS_MD (md));
 	g_return_if_fail (location != NULL);
+
+	/* the same */
+	if (g_strcmp0 (md->priv->location, location) == 0)
+		return;
 
 	/* save new value */
 	g_free (md->priv->location);
@@ -345,6 +353,10 @@ zif_md_set_id (ZifMd *md, const gchar *id)
 {
 	g_return_if_fail (ZIF_IS_MD (md));
 	g_return_if_fail (id != NULL);
+
+	/* the same */
+	if (g_strcmp0 (md->priv->id, id) == 0)
+		return;
 
 	g_free (md->priv->id);
 	md->priv->id = g_strdup (id);
