@@ -1097,14 +1097,14 @@ zif_cmd_get_updates (ZifCmdPrivate *priv, gchar **values, GError **error)
 {
 	gboolean ret = FALSE;
 	GPtrArray *array = NULL;
+	GPtrArray *array_tmp;
 	GPtrArray *store_array = NULL;
+	guint i;
+	guint j;
+	ZifPackage *package;
 	ZifState *state_local;
-
-	/* not supported */
-	state_local = NULL;
-	g_set_error (error, 1, 0, "not supported");
-	goto out;
-#if 0
+	ZifStore *store_local = NULL;
+	ZifTransaction *transaction = NULL;
 
 	/* TRANSLATORS: performing action */
 	zif_progress_bar_start (priv->progressbar, _("Getting updates"));
@@ -1112,9 +1112,98 @@ zif_cmd_get_updates (ZifCmdPrivate *priv, gchar **values, GError **error)
 	/* setup state with the correct number of steps */
 	ret = zif_state_set_steps (priv->state,
 				   error,
-				   xxx, 5);
+				   25, /* add remote */
+				   20, /* get local packages */
+				   5, /* filter newest */
+				   25, /* add packages to update queue */
+				   25, /* resolve updates */
+				   -1);
 	if (!ret)
 		goto out;
+
+	/* add remote stores to array */
+	store_array = zif_store_array_new ();
+	state_local = zif_state_get_child (priv->state);
+	ret = zif_store_array_add_remote_enabled (store_array, state_local, error);
+	if (!ret)
+		goto out;
+
+	/* setup transaction */
+	transaction = zif_transaction_new ();
+	store_local = zif_store_local_new ();
+	zif_transaction_set_skip_broken (transaction, priv->skip_broken);
+	zif_transaction_set_store_local (transaction, store_local);
+	zif_transaction_set_stores_remote (transaction, store_array);
+
+	/* this section done */
+	ret = zif_state_done (priv->state, error);
+	if (!ret)
+		goto out;
+
+	/* get packages */
+	state_local = zif_state_get_child (priv->state);
+	array = zif_store_get_packages (store_local, state_local, error);
+	if (array == NULL) {
+		ret = FALSE;
+		goto out;
+	}
+
+	/* this section done */
+	ret = zif_state_done (priv->state, error);
+	if (!ret)
+		goto out;
+
+	/* remove any packages that are not newest (think kernel) */
+	zif_package_array_filter_newest (array);
+
+	/* this section done */
+	ret = zif_state_done (priv->state, error);
+	if (!ret)
+		goto out;
+
+	/* add each package as an update */
+	g_debug ("adding %i packages", array->len);
+	for (i=0; i<array->len; i++) {
+		package = g_ptr_array_index (array, i);
+		ret = zif_transaction_add_update (transaction, package, error);
+		if (!ret)
+			goto out;
+	}
+
+	/* this section done */
+	ret = zif_state_done (priv->state, error);
+	if (!ret)
+		goto out;
+
+	/* resolve */
+	state_local = zif_state_get_child (priv->state);
+	ret = zif_transaction_resolve (transaction, state_local, error);
+	if (!ret)
+		goto out;
+
+	/* this section done */
+	ret = zif_state_done (priv->state, error);
+	if (!ret)
+		goto out;
+
+	zif_progress_bar_end (priv->progressbar);
+
+	/* print what's going to happen */
+	g_print ("%s\n", _("Transaction summary:"));
+	for (i=0; i<ZIF_TRANSACTION_REASON_LAST; i++) {
+		array_tmp = zif_transaction_get_array_for_reason (transaction, i);
+		if (array_tmp->len > 0)
+			g_print ("  %s:\n", zif_transaction_reason_to_string (i));
+		for (j=0; j<array_tmp->len; j++) {
+			package = g_ptr_array_index (array_tmp, j);
+			g_print ("  %i.\t%s\n", j+1, zif_package_get_id (package));
+		}
+		g_ptr_array_unref (array_tmp);
+	}
+
+#if 0
+
+
 
 	/* get the installed packages */
 	state_local = zif_state_get_child (priv->state);
@@ -1241,6 +1330,10 @@ zif_cmd_get_updates (ZifCmdPrivate *priv, gchar **values, GError **error)
 	/* success */
 	ret = TRUE;
 out:
+	if (store_local != NULL)
+		g_object_unref (store_local);
+	if (transaction != NULL)
+		g_object_unref (transaction);
 	if (store_array != NULL)
 		g_ptr_array_unref (store_array);
 	if (array != NULL)
