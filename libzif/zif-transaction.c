@@ -462,11 +462,8 @@ zif_transaction_add_update_internal (ZifTransaction *transaction,
 					    update_package,
 					    reason);
 	if (!ret) {
-		g_set_error (error,
-			     ZIF_TRANSACTION_ERROR,
-			     ZIF_TRANSACTION_ERROR_FAILED,
-			     "Not adding already added package for update %s",
-			     zif_package_get_id (package));
+		/* an already added update is not a failure condition */
+		ret = TRUE;
 		goto out;
 	}
 
