@@ -51,8 +51,9 @@
  **/
 struct _ZifPackageLocalPrivate
 {
-	ZifGroups		*groups;
+	gchar			*filename;
 	Header			 header;
+	ZifGroups		*groups;
 };
 
 G_DEFINE_TYPE (ZifPackageLocal, zif_package_local, ZIF_TYPE_PACKAGE)
@@ -560,7 +561,7 @@ zif_package_local_set_from_filename (ZifPackageLocal *pkg, const gchar *filename
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
 	/* open the file for reading */
-	fd = Fopen(filename, "r.fdio");
+	fd = Fopen (filename, "r.fdio");
 	if (fd == NULL) {
 		g_set_error (error, ZIF_PACKAGE_ERROR, ZIF_PACKAGE_ERROR_FAILED,
 			     "failed to open %s", filename);
@@ -597,6 +598,9 @@ zif_package_local_set_from_filename (ZifPackageLocal *pkg, const gchar *filename
 		g_error_free (error_local);
 		goto out;
 	}
+
+	/* save this in case it's added to the transaction */
+	pkg->priv->filename = g_strdup (filename);
 out:
 	/* close header and file */
 	if (ts != NULL)
@@ -606,6 +610,35 @@ out:
 	if (fd != NULL)
 		Fclose (fd);
 	return ret;
+}
+
+/**
+ * zif_package_local_get_filename:
+ * @pkg: the #ZifPackageLocal object
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Gets the filename used to create this package when using
+ * zif_package_local_set_from_filename().
+ *
+ * We need to use the filename if the package is later added to the
+ * transaction.
+ *
+ * Return value: The filename that was used to create this package, or %NULL
+ *
+ * Since: 0.1.3
+ **/
+const gchar *
+zif_package_local_get_filename (ZifPackageLocal *pkg, GError **error)
+{
+	g_return_val_if_fail (ZIF_IS_PACKAGE_LOCAL (pkg), FALSE);
+	if (pkg->priv->filename == NULL) {
+		g_set_error (error,
+			     ZIF_PACKAGE_ERROR,
+			     ZIF_PACKAGE_ERROR_FAILED,
+			     "no filename set for %s",
+			     zif_package_get_id (ZIF_PACKAGE (pkg)));
+	}
+	return pkg->priv->filename;
 }
 
 /**
@@ -620,6 +653,7 @@ zif_package_local_finalize (GObject *object)
 	g_return_if_fail (ZIF_IS_PACKAGE_LOCAL (object));
 	pkg = ZIF_PACKAGE_LOCAL (object);
 
+	g_free (pkg->priv->filename);
 	g_object_unref (pkg->priv->groups);
 	if (pkg->priv->header != NULL)
 		headerUnlink (pkg->priv->header);

@@ -653,7 +653,6 @@ zif_transaction_package_provides (ZifPackage *package,
 				  ZifState *state,
 				  GError **error)
 {
-	const gchar *depend_description;
 	gboolean ret = TRUE;
 	GError *error_local = NULL;
 	GPtrArray *provides = NULL;
@@ -686,7 +685,6 @@ zif_transaction_package_provides (ZifPackage *package,
 	}
 
 	/* find what we're looking for */
-	depend_description = zif_depend_get_description (depend);
 	for (i=0; i<provides->len; i++) {
 		depend_tmp = g_ptr_array_index (provides, i);
 		ret = zif_depend_satisfies (depend, depend_tmp);
@@ -717,7 +715,6 @@ zif_transaction_package_requires (ZifPackage *package,
 				  ZifState *state,
 				  GError **error)
 {
-	const gchar *depend_description;
 	gboolean ret = TRUE;
 	GError *error_local = NULL;
 	GPtrArray *requires;
@@ -756,7 +753,6 @@ zif_transaction_package_requires (ZifPackage *package,
 				 zif_depend_get_description (depend_tmp));
 		}
 	}
-	depend_description = zif_depend_get_description (depend);
 	for (i=0; i<requires->len; i++) {
 		depend_tmp = g_ptr_array_index (requires, i);
 		if (zif_depend_satisfies (depend, depend_tmp)) {
@@ -1899,7 +1895,7 @@ zif_transaction_resolve_update_item (ZifTransactionResolve *data,
 	GPtrArray *obsoletes = NULL;
 	guint i;
 	ZifDepend *depend;
-	ZifPackage *package;
+	ZifPackage *package = NULL;
 
 	/* does anything obsolete this package */
 	depend = zif_depend_new ();
@@ -2067,7 +2063,6 @@ zif_transaction_package_conflicts (ZifPackage *package,
 				   ZifState *state,
 				   GError **error)
 {
-	const gchar *depend_description;
 	gboolean ret = TRUE;
 	GError *error_local = NULL;
 	GPtrArray *conflicts = NULL;
@@ -2090,7 +2085,6 @@ zif_transaction_package_conflicts (ZifPackage *package,
 	}
 
 	/* find what we're looking for */
-	depend_description = zif_depend_get_description (depend);
 	for (i=0; i<conflicts->len; i++) {
 		depend_tmp = g_ptr_array_index (conflicts, i);
 		ret = zif_depend_satisfies (depend, depend_tmp);
@@ -2730,13 +2724,19 @@ zif_transaction_prepare (ZifTransaction *transaction, ZifState *state, GError **
 	zif_state_set_number_steps (state_local, transaction->priv->install->len);
 	for (i=0; i<transaction->priv->install->len; i++) {
 		item = g_ptr_array_index (transaction->priv->install, i);
-		state_loop = zif_state_get_child (state_local);
 
 		/* this is a meta package in make check */
 		if (ZIF_IS_PACKAGE_META (item->package)) {
 			g_debug ("no processing %s in the test suite",
 				 zif_package_get_id (item->package));
-			continue;
+			goto skip;
+		}
+
+		/* this is a package file we're local-installing */
+		if (ZIF_IS_PACKAGE_LOCAL (item->package)) {
+			g_debug ("no processing %s as it's already local",
+				 zif_package_get_id (item->package));
+			goto skip;
 		}
 
 		/* see if download already exists */
@@ -2745,10 +2745,12 @@ zif_transaction_prepare (ZifTransaction *transaction, ZifState *state, GError **
 		zif_state_action_start (state,
 					ZIF_STATE_ACTION_CHECKING,
 					zif_package_get_name (item->package));
+		state_loop = zif_state_get_child (state_local);
 		cache_filename = zif_package_remote_get_cache_filename (ZIF_PACKAGE_REMOTE (item->package),
 									state_loop,
 									&error_local);
 		if (cache_filename == NULL) {
+			ret = FALSE;
 			g_propagate_prefixed_error (error, error_local,
 						    "cannot check download %s: ",
 						    zif_package_get_id (item->package));
@@ -2764,7 +2766,7 @@ zif_transaction_prepare (ZifTransaction *transaction, ZifState *state, GError **
 			g_debug ("package %s is already downloaded",
 				 zif_package_get_id (item->package));
 		}
-
+skip:
 		/* done */
 		ret = zif_state_done (state_local, error);
 		if (!ret)
@@ -2923,9 +2925,14 @@ zif_transaction_add_install_to_ts (ZifTransactionCommit *commit,
 	gboolean ret = FALSE;
 
 	/* get the local file */
-	cache_filename = zif_package_remote_get_cache_filename (ZIF_PACKAGE_REMOTE (package),
-								state,
-								error);
+	if (ZIF_IS_PACKAGE_LOCAL (package)) {
+		cache_filename = zif_package_local_get_filename (ZIF_PACKAGE_LOCAL (package),
+								 error);
+	} else {
+		cache_filename = zif_package_remote_get_cache_filename (ZIF_PACKAGE_REMOTE (package),
+									state,
+									error);
+	}
 	if (cache_filename == NULL)
 		goto out;
 
@@ -3040,8 +3047,15 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 		/* remove it */
 		hdr = zif_package_local_get_header (ZIF_PACKAGE_LOCAL (item->package));
 		retval = rpmtsAddEraseElement (commit->ts, hdr, -1);
-		if (retval != 0)
-			g_error ("failed to add");
+		if (retval != 0) {
+			ret = FALSE;
+			g_set_error (error,
+				     ZIF_TRANSACTION_ERROR,
+				     ZIF_TRANSACTION_ERROR_FAILED,
+				     "could not add erase element (%i)",
+				     retval);
+			goto out;
+		}
 	}
 
 	rpmtsSetVSFlags (commit->ts, flags);

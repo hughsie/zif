@@ -281,7 +281,7 @@ zif_manifest_add_package_to_transaction (ZifManifest *manifest,
 					 ZifState *state,
 					 GError **error)
 {
-	ZifPackage *package;
+	ZifPackage *package = NULL;
 	gboolean ret = FALSE;
 	GError *error_local = NULL;
 	const gchar *to_array[] = { NULL, NULL };

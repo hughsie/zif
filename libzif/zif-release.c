@@ -754,7 +754,7 @@ out:
 static gboolean
 zif_release_get_kernel (ZifRelease *release, ZifReleaseUpgradeData *data, ZifState *state, GError **error)
 {
-	gboolean ret;
+	gboolean ret = FALSE;
 	GError *error_local = NULL;
 	gchar *kernel = NULL;
 	gchar *checksum = NULL;
@@ -813,7 +813,7 @@ out:
 static gboolean
 zif_release_get_initrd (ZifRelease *release, ZifReleaseUpgradeData *data, ZifState *state, GError **error)
 {
-	gboolean ret;
+	gboolean ret = FALSE;
 	GError *error_local = NULL;
 	gchar *initrd = NULL;
 	gchar *checksum = NULL;

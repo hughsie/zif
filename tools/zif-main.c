@@ -639,10 +639,10 @@ zif_cmd_get_depends (ZifCmdPrivate *priv, gchar **values, GError **error)
 	/* setup state */
 	ret = zif_state_set_steps (priv->state,
 				   error,
-				   25,
-				   25,
-				   25,
-				   25,
+				   25, /* add local and remote */
+				   25, /* resolve */
+				   25, /* get requires */
+				   25, /* what requires loop */
 				   -1);
 	if (!ret)
 		goto out;
@@ -697,11 +697,11 @@ zif_cmd_get_depends (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 	/* match a package to each require */
 	state_local = zif_state_get_child (priv->state);
-	zif_state_set_number_steps (priv->state, requires->len);
+	zif_state_set_number_steps (state_local, requires->len);
 	for (i=0; i<requires->len; i++) {
 
 		/* setup deeper state */
-		state_loop = zif_state_get_child (priv->state);
+		state_loop = zif_state_get_child (state_local);
 
 		require = g_ptr_array_index (requires, i);
 		require_str = zif_depend_get_description (require);
@@ -729,7 +729,7 @@ zif_cmd_get_depends (ZifCmdPrivate *priv, gchar **values, GError **error)
 		g_ptr_array_unref (provides);
 
 		/* this section done */
-		ret = zif_state_done (priv->state, error);
+		ret = zif_state_done (state_local, error);
 		if (!ret)
 			goto out;
 	}
@@ -1677,6 +1677,7 @@ zif_cmd_local_install (ZifCmdPrivate *priv, gchar **values, GError **error)
 {
 	gboolean ret = FALSE;
 	ZifPackage *package = NULL;
+	ZifState *state_local;
 	ZifTransaction *transaction = NULL;
 
 	/* check we have a value */
@@ -1687,13 +1688,50 @@ zif_cmd_local_install (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 	/* TRANSLATORS: performing action */
 	zif_progress_bar_start (priv->progressbar, _("Installing a local file"));
-	package = ZIF_PACKAGE (zif_package_local_new ());
-#if 0
-	ret = zif_package_local_set_from_filename (ZIF_PACKAGE_LOCAL (package), value, error);
+	/* setup state */
+	ret = zif_state_set_steps (priv->state,
+				   error,
+				   1, /* read local files */
+				   49, /* add install to transaction */
+				   50, /* run transaction */
+				   -1);
 	if (!ret)
-		g_error ("failed: %s", error->message);
-	zif_package_print (package);
-#endif
+		goto out;
+
+	/* read file */
+	package = zif_package_local_new ();
+	ret = zif_package_local_set_from_filename (ZIF_PACKAGE_LOCAL (package),
+						   values[0],
+						   error);
+	if (!ret)
+		goto out;
+
+	/* this section done */
+	ret = zif_state_done (priv->state, error);
+	if (!ret)
+		goto out;
+
+	/* add the file to the transaction */
+	transaction = zif_transaction_new ();
+	ret = zif_transaction_add_install (transaction, package, error);
+	if (!ret)
+		goto out;
+
+	/* this section done */
+	ret = zif_state_done (priv->state, error);
+	if (!ret)
+		goto out;
+
+	/* run what we've got */
+	state_local = zif_state_get_child (priv->state);
+	ret = zif_transaction_run (priv, transaction, state_local, error);
+	if (!ret)
+		goto out;
+
+	/* this section done */
+	ret = zif_state_done (priv->state, error);
+	if (!ret)
+		goto out;
 
 	zif_progress_bar_end (priv->progressbar);
 
@@ -1769,7 +1807,7 @@ zif_cmd_remove (ZifCmdPrivate *priv, gchar **values, GError **error)
 	GPtrArray *array = NULL;
 	GPtrArray *store_array = NULL;
 	ZifState *state_local;
-	gboolean ret;
+	gboolean ret = FALSE;
 	GError *error_local = NULL;
 	ZifPackage *package;
 	GPtrArray *store_array_local = NULL;

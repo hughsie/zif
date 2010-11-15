@@ -323,7 +323,12 @@ zif_package_meta_set_from_filename (ZifPackageMeta *pkg, const gchar *filename, 
 	arch = zif_package_meta_get_string (pkg, "Arch");
 	if (arch == NULL)
 		arch = g_strdup ("i386");
-	package_id = zif_package_id_from_nevra (name, 0, version, release, arch, "meta");
+	package_id = zif_package_id_from_nevra (name,
+						epoch,
+						version,
+						release,
+						arch,
+						"meta");
 
 	/* save id */
 	ret = zif_package_set_id (ZIF_PACKAGE (pkg), package_id, error);

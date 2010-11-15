@@ -67,6 +67,8 @@ gboolean		 zif_package_local_set_from_filename	(ZifPackageLocal *pkg,
 								 GError		**error)
 								 G_GNUC_WARN_UNUSED_RESULT;
 Header			 zif_package_local_get_header		(ZifPackageLocal *pkg);
+const gchar		*zif_package_local_get_filename		(ZifPackageLocal *pkg,
+								 GError		**error);
 
 G_END_DECLS
 
