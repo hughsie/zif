@@ -585,7 +585,6 @@ const gchar *
 zif_package_get_id (ZifPackage *package)
 {
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
-	g_return_val_if_fail (package->priv->package_id != NULL, NULL);
 	return package->priv->package_id;
 }
 
