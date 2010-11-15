@@ -1606,7 +1606,7 @@ zif_package_remote_func (void)
 
 	/* check not downloaded */
 	zif_state_reset (state);
-	cache_filename = zif_package_remote_get_cache_filename (ZIF_PACKAGE_REMOTE (package), state, &error);
+	cache_filename = zif_package_get_cache_filename (package, state, &error);
 	g_assert_no_error (error);
 	g_assert (ret);
 	g_assert (!g_file_test (cache_filename, G_FILE_TEST_EXISTS));
@@ -1618,7 +1618,7 @@ zif_package_remote_func (void)
 
 	/* check downloaded */
 	zif_state_reset (state);
-	cache_filename = zif_package_remote_get_cache_filename (ZIF_PACKAGE_REMOTE (package), state, &error);
+	cache_filename = zif_package_get_cache_filename (package, state, &error);
 	g_assert_no_error (error);
 	g_assert (ret);
 	g_assert (g_file_test (cache_filename, G_FILE_TEST_EXISTS));

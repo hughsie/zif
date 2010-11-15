@@ -51,7 +51,6 @@ struct _ZifPackageRemotePrivate
 {
 	ZifGroups		*groups;
 	ZifStoreRemote		*store_remote;
-	gchar			*cache_filename;
 	gchar			*pkgid;
 };
 
@@ -190,31 +189,16 @@ zif_package_remote_set_pkgid (ZifPackageRemote *pkg, const gchar *pkgid)
 }
 
 /**
- * zif_package_remote_get_cache_filename:
- * @pkg: the #ZifPackageRemote object
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
- *
- * Gets the local package filename, which is the full local path the
- * package would be found in the package cache. e.g.
- * /var/cache/yum/i386/fedora/hal-0.5.7-1.fc13.rpm
- *
- * Return value: The package filename.
- *
- * Since: 0.1.3
+ * zif_package_remote_ensure_cache_filename:
  **/
-const gchar *
-zif_package_remote_get_cache_filename (ZifPackageRemote *pkg, ZifState *state, GError **error)
+static gboolean
+zif_package_remote_ensure_cache_filename (ZifPackageRemote *pkg, ZifState *state, GError **error)
 {
 	const gchar *filename;
 	const gchar *directory;
 	gchar *basename = NULL;
-
-	g_return_val_if_fail (ZIF_IS_PACKAGE_REMOTE (pkg), NULL);
-
-	/* return from cache */
-	if (pkg->priv->cache_filename != NULL)
-		goto out;
+	gchar *cache_filename = NULL;
+	gboolean ret = FALSE;
 
 	/* get filename */
 	filename = zif_package_get_filename (ZIF_PACKAGE (pkg), state, error);
@@ -233,11 +217,14 @@ zif_package_remote_get_cache_filename (ZifPackageRemote *pkg, ZifState *state, G
 		goto out;
 	}
 
-	/* save in the cache, which allows us to return a const */
-	pkg->priv->cache_filename = g_build_filename (directory, "packages", basename, NULL);
+	/* save in the package */
+	ret = TRUE;
+	cache_filename = g_build_filename (directory, "packages", basename, NULL);
+	zif_package_set_cache_filename (ZIF_PACKAGE (pkg), cache_filename);
 out:
 	g_free (basename);
-	return pkg->priv->cache_filename;
+	g_free (cache_filename);
+	return ret;
 }
 
 /**
@@ -452,6 +439,13 @@ zif_package_remote_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, ZifS
 		/* set for this package */
 		zif_package_set_conflicts (pkg, array);
 
+	} else if (type == ZIF_PACKAGE_ENSURE_TYPE_CACHE_FILENAME) {
+
+		/* get the file list for this package */
+		ret = zif_package_remote_ensure_cache_filename (pkg_remote, state, error);
+		if (!ret)
+			goto out;
+
 	} else if (type == ZIF_PACKAGE_ENSURE_TYPE_GROUP) {
 		/* group */
 		text = zif_package_get_category (pkg, state, error);
@@ -491,7 +485,6 @@ zif_package_remote_finalize (GObject *object)
 	g_return_if_fail (ZIF_IS_PACKAGE_REMOTE (object));
 	pkg = ZIF_PACKAGE_REMOTE (object);
 
-	g_free (pkg->priv->cache_filename);
 	g_free (pkg->priv->pkgid);
 	g_object_unref (pkg->priv->groups);
 	if (pkg->priv->store_remote != NULL)

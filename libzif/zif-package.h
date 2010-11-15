@@ -61,6 +61,7 @@ typedef enum {
 	ZIF_PACKAGE_ENSURE_TYPE_PROVIDES,
 	ZIF_PACKAGE_ENSURE_TYPE_CONFLICTS,
 	ZIF_PACKAGE_ENSURE_TYPE_OBSOLETES,
+	ZIF_PACKAGE_ENSURE_TYPE_CACHE_FILENAME,
 	ZIF_PACKAGE_ENSURE_TYPE_LAST
 } ZifPackageEnsureType;
 
@@ -117,6 +118,9 @@ const gchar		*zif_package_get_category	(ZifPackage	*package,
 const gchar		*zif_package_get_group		(ZifPackage	*package,
 							 ZifState	*state,
 							 GError		**error);
+const gchar		*zif_package_get_cache_filename	(ZifPackage	*package,
+							 ZifState	*state,
+							 GError		**error);
 guint64			 zif_package_get_size		(ZifPackage	*package,
 							 ZifState	*state,
 							 GError		**error);
@@ -158,6 +162,8 @@ void			 zif_package_set_category	(ZifPackage	*package,
 							 ZifString	*category);
 void			 zif_package_set_group		(ZifPackage	*package,
 							 ZifString	*group);
+void			 zif_package_set_cache_filename	(ZifPackage	*package,
+							 const gchar	*cache_filename);
 void			 zif_package_set_size		(ZifPackage	*package,
 							 guint64	 size);
 void			 zif_package_set_files		(ZifPackage	*package,

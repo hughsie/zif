@@ -2746,9 +2746,9 @@ zif_transaction_prepare (ZifTransaction *transaction, ZifState *state, GError **
 					ZIF_STATE_ACTION_CHECKING,
 					zif_package_get_name (item->package));
 		state_loop = zif_state_get_child (state_local);
-		cache_filename = zif_package_remote_get_cache_filename (ZIF_PACKAGE_REMOTE (item->package),
-									state_loop,
-									&error_local);
+		cache_filename = zif_package_get_cache_filename (item->package,
+								 state_loop,
+								 &error_local);
 		if (cache_filename == NULL) {
 			ret = FALSE;
 			g_propagate_prefixed_error (error, error_local,
@@ -2925,14 +2925,9 @@ zif_transaction_add_install_to_ts (ZifTransactionCommit *commit,
 	gboolean ret = FALSE;
 
 	/* get the local file */
-	if (ZIF_IS_PACKAGE_LOCAL (package)) {
-		cache_filename = zif_package_local_get_filename (ZIF_PACKAGE_LOCAL (package),
-								 error);
-	} else {
-		cache_filename = zif_package_remote_get_cache_filename (ZIF_PACKAGE_REMOTE (package),
-									state,
-									error);
-	}
+	cache_filename = zif_package_get_cache_filename (package,
+							 state,
+							 error);
 	if (cache_filename == NULL)
 		goto out;
 

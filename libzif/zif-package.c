@@ -48,6 +48,7 @@ struct _ZifPackagePrivate
 {
 	gchar			**package_id_split;
 	gchar			*package_id;
+	gchar			*cache_filename;
 	ZifString		*summary;
 	ZifString		*description;
 	ZifString		*license;
@@ -980,6 +981,43 @@ zif_package_get_group (ZifPackage *package, ZifState *state, GError **error)
 }
 
 /**
+ * zif_package_get_filename:
+ * @package: the #ZifPackage object
+ * @state: a #ZifState to use for progress reporting
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Gets the filename used to create this package when using
+ * zif_package_local_set_from_filename() for a local package or the
+ * filename of the cached file for a remote package.
+ *
+ * For example, the full local path of a remote package would be:
+ * /var/cache/yum/i386/fedora/hal-0.5.7-1.fc13.rpm
+ *
+ * Return value: The package filename, or %NULL
+ *
+ * Since: 0.1.3
+ **/
+const gchar *
+zif_package_get_cache_filename (ZifPackage *package, ZifState *state, GError **error)
+{
+	gboolean ret;
+
+	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
+	g_return_val_if_fail (package->priv->package_id_split != NULL, NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+	/* not exists */
+	if (package->priv->cache_filename == NULL) {
+		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_CACHE_FILENAME, state, error);
+		if (!ret)
+			return NULL;
+	}
+
+	return package->priv->cache_filename;
+}
+
+/**
  * zif_package_get_size:
  * @package: the #ZifPackage object
  * @state: a #ZifState to use for progress reporting
@@ -1388,6 +1426,29 @@ zif_package_set_group (ZifPackage *package, ZifString *group)
 }
 
 /**
+ * zif_package_set_cache_filename:
+ * @package: the #ZifPackage object
+ * @cache_filename: the cache filename
+ *
+ * Sets the cache filename, which is the full location of the local
+ * package file on the filesystem.
+ *
+ * Note: this doesn't actually have to exist, but it must point to the
+ * default location.
+ *
+ * Since: 0.1.3
+ **/
+void
+zif_package_set_cache_filename (ZifPackage *package, const gchar *cache_filename)
+{
+	g_return_if_fail (ZIF_IS_PACKAGE (package));
+	g_return_if_fail (cache_filename != NULL);
+	g_return_if_fail (package->priv->cache_filename == NULL);
+
+	package->priv->cache_filename = g_strdup (cache_filename);
+}
+
+/**
  * zif_package_set_size:
  * @package: the #ZifPackage object
  * @size: the package size in bytes
@@ -1513,6 +1574,7 @@ zif_package_finalize (GObject *object)
 	g_return_if_fail (ZIF_IS_PACKAGE (object));
 	package = ZIF_PACKAGE (object);
 
+	g_free (package->priv->cache_filename);
 	g_free (package->priv->package_id);
 	g_strfreev (package->priv->package_id_split);
 	if (package->priv->summary != NULL)
