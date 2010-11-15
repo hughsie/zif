@@ -2488,7 +2488,9 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 
 	/* whilst there are unresolved dependencies, keep trying */
 	data = g_new0 (ZifTransactionResolve, 1);
-	data->state = zif_state_new (); /* <-- used as we can't do progress in a sane way */
+	zif_state_set_number_steps (state, 1);
+	data->state = zif_state_get_child (state);
+	zif_state_set_report_progress (data->state, FALSE); /* <-- used as we can't do progress in a sane way */
 	data->transaction = transaction;
 	data->unresolved_dependencies = TRUE;
 	while (data->unresolved_dependencies) {

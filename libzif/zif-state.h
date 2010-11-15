@@ -99,6 +99,8 @@ ZifState	*zif_state_new				(void);
 ZifState	*zif_state_get_child			(ZifState		*state);
 
 /* percentage changed */
+void		 zif_state_set_report_progress		(ZifState		*state,
+							 gboolean		 report_progress);
 gboolean	 zif_state_set_number_steps_real	(ZifState		*state,
 							 guint			 steps,
 							 const gchar		*strloc);

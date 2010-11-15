@@ -113,6 +113,7 @@ struct _ZifStatePrivate
 	ZifStateAction		 action;
 	gchar			*action_hint;
 	ZifStateAction		 last_action;
+	gboolean		 report_progress;
 };
 
 enum {
@@ -141,6 +142,28 @@ zif_state_error_quark (void)
 	if (!quark)
 		quark = g_quark_from_static_string ("zif_state_error");
 	return quark;
+}
+
+/**
+ * zif_state_set_report_progress:
+ * @state: the #ZifState object
+ * @report_progress: if we care about percentage status
+ *
+ * This disables progress tracking for ZifState. This is generally a bad
+ * thing to do, except when you know you cannot guess the number of steps
+ * in the state.
+ *
+ * Using this function also reduced the amount of time spent getting a
+ * child state using zif_state_get_child() as a refcounted version of
+ * the parent is returned instead.
+ *
+ * Since: 0.1.3
+ **/
+void
+zif_state_set_report_progress (ZifState *state, gboolean report_progress)
+{
+	g_return_if_fail (ZIF_IS_STATE (state));
+	state->priv->report_progress = report_progress;
 }
 
 /**
@@ -338,6 +361,12 @@ gboolean
 zif_state_set_percentage (ZifState *state, guint percentage)
 {
 	gboolean ret = FALSE;
+
+	/* do we care */
+	if (!state->priv->report_progress) {
+		ret = TRUE;
+		goto out;
+	}
 
 	/* is it the same */
 	if (percentage == state->priv->last_percentage)
@@ -721,7 +750,15 @@ zif_state_child_action_changed_cb (ZifState *child, ZifStateAction action, const
 gboolean
 zif_state_reset (ZifState *state)
 {
+	gboolean ret = TRUE;
+
 	g_return_val_if_fail (ZIF_IS_STATE (state), FALSE);
+
+	/* do we care */
+	if (!state->priv->report_progress) {
+		ret = TRUE;
+		goto out;
+	}
 
 	/* reset values */
 	state->priv->steps = 0;
@@ -761,8 +798,8 @@ zif_state_reset (ZifState *state)
 	g_free (state->priv->step_profile);
 	state->priv->step_data = NULL;
 	state->priv->step_profile = NULL;
-
-	return TRUE;
+out:
+	return ret;
 }
 
 /**
@@ -792,6 +829,12 @@ zif_state_get_child (ZifState *state)
 	ZifState *child = NULL;
 
 	g_return_val_if_fail (ZIF_IS_STATE (state), NULL);
+
+	/* do we care */
+	if (!state->priv->report_progress) {
+		child = g_object_ref (state);
+		goto out;
+	}
 
 	/* already set child */
 	if (state->priv->child != NULL) {
@@ -831,7 +874,7 @@ zif_state_get_child (ZifState *state)
 
 	/* set the profile state */
 	zif_state_set_enable_profile (child, state->priv->enable_profile);
-
+out:
 	return child;
 }
 
@@ -850,15 +893,23 @@ zif_state_get_child (ZifState *state)
 gboolean
 zif_state_set_number_steps_real (ZifState *state, guint steps, const gchar *strloc)
 {
+	gboolean ret = FALSE;
+
 	g_return_val_if_fail (ZIF_IS_STATE (state), FALSE);
 	g_return_val_if_fail (steps != 0, FALSE);
+
+	/* do we care */
+	if (!state->priv->report_progress) {
+		ret = TRUE;
+		goto out;
+	}
 
 	/* did we call done on a state that did not have a size set? */
 	if (state->priv->steps != 0) {
 		g_warning ("steps already set to %i, can't set %i! [%s]",
 			     state->priv->steps, steps, strloc);
 		zif_state_print_parent_chain (state, 0);
-		return FALSE;
+		goto out;
 	}
 
 	/* set id */
@@ -878,7 +929,10 @@ zif_state_set_number_steps_real (ZifState *state, guint steps, const gchar *strl
 	/* global share just got smaller */
 	state->priv->global_share /= steps;
 
-	return TRUE;
+	/* success */
+	ret = TRUE;
+out:
+	return ret;
 }
 
 /**
@@ -905,6 +959,12 @@ zif_state_set_steps_real (ZifState *state, GError **error, const gchar *strloc, 
 
 	g_return_val_if_fail (ZIF_IS_STATE (state), FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+	/* do we care */
+	if (!state->priv->report_progress) {
+		ret = TRUE;
+		goto out;
+	}
 
 	/* we must set at least one thing */
 	total = value;
@@ -1027,6 +1087,10 @@ zif_state_done_real (ZifState *state, GError **error, const gchar *strloc)
 		goto out;
 	}
 
+	/* do we care */
+	if (!state->priv->report_progress)
+		goto out;
+
 	/* did we call done on a state that did not have a size set? */
 	if (state->priv->steps == 0) {
 		g_set_error (error, ZIF_STATE_ERROR, ZIF_STATE_ERROR_INVALID,
@@ -1118,6 +1182,8 @@ out:
 gboolean
 zif_state_finished_real (ZifState *state, GError **error, const gchar *strloc)
 {
+	gboolean ret = TRUE;
+
 	g_return_val_if_fail (ZIF_IS_STATE (state), FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
@@ -1125,8 +1191,13 @@ zif_state_finished_real (ZifState *state, GError **error, const gchar *strloc)
 	if (g_cancellable_is_cancelled (state->priv->cancellable)) {
 		g_set_error_literal (error, ZIF_STATE_ERROR, ZIF_STATE_ERROR_CANCELLED,
 				     "cancelled by user action");
-		return FALSE;
+		ret = FALSE;
+		goto out;
 	}
+
+	/* do we care */
+	if (!state->priv->report_progress)
+		goto out;
 
 	/* is already at 100%? */
 	if (state->priv->current == state->priv->steps)
@@ -1138,7 +1209,7 @@ zif_state_finished_real (ZifState *state, GError **error, const gchar *strloc)
 	/* set new percentage */
 	zif_state_set_percentage (state, 100);
 out:
-	return TRUE;
+	return ret;
 }
 
 /**
@@ -1235,6 +1306,7 @@ zif_state_init (ZifState *state)
 	state->priv->action = ZIF_STATE_ACTION_UNKNOWN;
 	state->priv->last_action = ZIF_STATE_ACTION_UNKNOWN;
 	state->priv->timer = g_timer_new ();
+	state->priv->report_progress = TRUE;
 }
 
 /**

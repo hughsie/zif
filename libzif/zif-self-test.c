@@ -2082,6 +2082,35 @@ zif_state_func (void)
 	g_assert_cmpint (zif_state_get_percentage (state), ==, 100);
 
 	g_object_unref (state);
+
+	/* test a state where we don't care about progress */
+	state = zif_state_new ();
+	zif_state_set_report_progress (state, FALSE);
+
+	zif_state_set_number_steps (state, 3);
+	g_assert_cmpint (zif_state_get_percentage (state), ==, 0);
+
+	ret = zif_state_done (state, &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+	g_assert_cmpint (zif_state_get_percentage (state), ==, 0);
+
+	ret = zif_state_done (state, &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	child = zif_state_get_child (state);
+	g_assert (child != NULL);
+	zif_state_set_number_steps (child, 2);
+	ret = zif_state_done (child, &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+	ret = zif_state_done (child, &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+	g_assert_cmpint (zif_state_get_percentage (state), ==, 0);
+
+	g_object_unref (state);
 }
 
 static void
