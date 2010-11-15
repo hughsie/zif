@@ -1432,10 +1432,10 @@ zif_transaction_run (ZifCmdPrivate *priv, ZifTransaction *transaction, ZifState 
 	/* setup steps */
 	ret = zif_state_set_steps (state,
 				   error,
-				   25, /* add remote stores */
-				   25, /* resolve */
-				   25, /* prepare */
-				   25, /* commit */
+				   1, /* add remote stores */
+				   30, /* resolve */
+				   30, /* prepare */
+				   39, /* commit */
 				   -1);
 	if (!ret)
 		goto out;
@@ -1560,11 +1560,11 @@ zif_cmd_install (ZifCmdPrivate *priv, gchar **values, GError **error)
 	/* setup state */
 	ret = zif_state_set_steps (priv->state,
 				   error,
-				   20,
-				   20,
-				   20,
-				   20,
-				   20,
+				   1, /* add local */
+				   23, /* resolve */
+				   1, /* add remote */
+				   45, /* find remote */
+				   30, /* run transaction */
 				   -1);
 	if (!ret)
 		goto out;
@@ -1787,12 +1787,9 @@ zif_cmd_remove (ZifCmdPrivate *priv, gchar **values, GError **error)
 	/* setup state */
 	ret = zif_state_set_steps (priv->state,
 				   error,
-				   20,
-				   20,
-				   20,
-				   20,
-				   10,
-				   10,
+				   1, /* add local */
+				   30, /* resolve */
+				   69, /* transaction run */
 				   -1);
 	if (!ret)
 		goto out;

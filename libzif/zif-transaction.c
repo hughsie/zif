@@ -48,13 +48,22 @@
 
 #include <string.h>
 #include <glib.h>
+#include <fcntl.h>
 
-#include "zif-transaction.h"
+#include <rpm/rpmdb.h>
+#include <rpm/rpmlib.h>
+#include <rpm/rpmlog.h>
+#include <rpm/rpmps.h>
+#include <rpm/rpmts.h>
+
 #include "zif-depend.h"
-#include "zif-store.h"
-#include "zif-store-array.h"
-#include "zif-package-remote.h"
 #include "zif-package-meta.h"
+#include "zif-package-local.h"
+#include "zif-package-remote.h"
+#include "zif-store-array.h"
+#include "zif-store.h"
+#include "zif-store-local.h"
+#include "zif-transaction.h"
 
 #define ZIF_TRANSACTION_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_TRANSACTION, ZifTransactionPrivate))
 
@@ -2641,6 +2650,11 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 		goto out;
 	}
 
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
 	/* success */
 	transaction->priv->state = ZIF_TRANSACTION_STATE_RESOLVED;
 	g_debug ("done depsolve");
@@ -2678,7 +2692,7 @@ zif_transaction_prepare (ZifTransaction *transaction, ZifState *state, GError **
 	GError *error_local = NULL;
 	ZifState *state_loop;
 	ZifState *state_local;
-	gboolean exists = FALSE;
+	const gchar *cache_filename;
 
 	g_return_val_if_fail (ZIF_IS_TRANSACTION (transaction), FALSE);
 	g_return_val_if_fail (zif_state_valid (state), FALSE);
@@ -2731,8 +2745,10 @@ zif_transaction_prepare (ZifTransaction *transaction, ZifState *state, GError **
 		zif_state_action_start (state,
 					ZIF_STATE_ACTION_CHECKING,
 					zif_package_get_name (item->package));
-		ret = zif_package_remote_is_downloaded (ZIF_PACKAGE_REMOTE (item->package), &exists, state_loop, &error_local);
-		if (!ret) {
+		cache_filename = zif_package_remote_get_cache_filename (ZIF_PACKAGE_REMOTE (item->package),
+									state_loop,
+									&error_local);
+		if (cache_filename == NULL) {
 			g_propagate_prefixed_error (error, error_local,
 						    "cannot check download %s: ",
 						    zif_package_get_id (item->package));
@@ -2740,7 +2756,7 @@ zif_transaction_prepare (ZifTransaction *transaction, ZifState *state, GError **
 		}
 
 		/* doesn't exist, so add to the list */
-		if (!exists) {
+		if (!g_file_test (cache_filename, G_FILE_TEST_EXISTS)) {
 			g_debug ("add to dowload queue %s",
 				 zif_package_get_id (item->package));
 			g_ptr_array_add (download, g_object_ref (item->package));
@@ -2797,6 +2813,149 @@ out:
 	return ret;
 }
 
+typedef struct {
+	ZifTransaction		*transaction;
+	rpmts			 ts;
+	FD_t			 fd;
+} ZifTransactionCommit;
+
+/**
+ * zif_transaction_ts_progress_cb:
+ **/
+static void *
+zif_transaction_ts_progress_cb (const void *arg,
+				const rpmCallbackType what,
+				const rpm_loff_t amount,
+				const rpm_loff_t total,
+				fnpyKey key, void *data)
+{
+	Header h = (Header) arg;
+	void *rc = NULL;
+	const char *filename = (const char *) key;
+
+	ZifTransactionCommit *commit = (ZifTransactionCommit *) data;
+
+	switch (what) {
+		case RPMCALLBACK_INST_OPEN_FILE:
+
+			/* valid? */
+			if (filename == NULL || filename[0] == '\0')
+				return NULL;
+
+			/* open the file and return file descriptor */
+			commit->fd = Fopen (filename, "r.ufdio");
+			return (void *) commit->fd;
+			break;
+
+		case RPMCALLBACK_INST_CLOSE_FILE:
+
+			/* just close the file */
+			if (commit->fd != NULL) {
+				Fclose (commit->fd);
+				commit->fd = NULL;
+			}
+			break;
+
+		case RPMCALLBACK_INST_START:
+		case RPMCALLBACK_UNINST_START:
+			if (h == NULL)
+				break;
+
+			g_debug ("start: %s,%s amount=%i",
+				filename,
+				headerFormat (h,
+					      "%{NAME}-%{VERSION}-%{RELEASE}.%{ARCH}",
+					      NULL),
+				(gint32) total);
+			break;
+
+		case RPMCALLBACK_TRANS_PROGRESS:
+		case RPMCALLBACK_INST_PROGRESS:
+		case RPMCALLBACK_UNINST_PROGRESS:
+
+			g_debug ("progress %i/%i", (gint32) amount, (gint32) total);
+			break;
+
+		case RPMCALLBACK_TRANS_START:
+
+			g_debug ("preparing transaction with %i items", (gint32) total);
+			break;
+
+		case RPMCALLBACK_TRANS_STOP:
+			g_debug ("transaction stop");
+			break;
+
+		case RPMCALLBACK_UNINST_STOP:
+
+			g_debug ("uninst stop");
+			break;
+
+		case RPMCALLBACK_UNPACK_ERROR:
+		case RPMCALLBACK_CPIO_ERROR:
+		case RPMCALLBACK_SCRIPT_ERROR:
+		case RPMCALLBACK_UNKNOWN:
+		case RPMCALLBACK_REPACKAGE_PROGRESS:
+		case RPMCALLBACK_REPACKAGE_START:
+		case RPMCALLBACK_REPACKAGE_STOP:
+			g_debug ("something uninteresting");
+			break;
+		default:
+			g_warning ("something else entirely");
+			break;
+	}
+
+	return rc;
+}
+
+/**
+ * zif_transaction_add_install_to_ts:
+ **/
+static gboolean
+zif_transaction_add_install_to_ts (ZifTransactionCommit *commit,
+				   ZifPackage *package,
+				   ZifState *state,
+				   GError **error)
+{
+	gint res;
+	const gchar *cache_filename;
+	Header hdr;
+	FD_t fd;
+	gboolean ret = FALSE;
+
+	/* get the local file */
+	cache_filename = zif_package_remote_get_cache_filename (ZIF_PACKAGE_REMOTE (package),
+								state,
+								error);
+	if (cache_filename == NULL)
+		goto out;
+
+	/* open this */
+	fd = Fopen (cache_filename, "r.ufdio");
+	res = rpmReadPackageFile (commit->ts, fd, NULL, &hdr);
+	Fclose (fd);
+	if (res != RPMRC_OK) {
+		g_set_error (error,
+			     ZIF_TRANSACTION_ERROR,
+			     ZIF_TRANSACTION_ERROR_FAILED,
+			     "failed to open: %s [%i]",
+			     cache_filename, res);
+		goto out;
+	}
+
+	/* add to the transaction */
+	res = rpmtsAddInstallElement (commit->ts, hdr, (fnpyKey) cache_filename, 0, NULL);
+	if (res != 0) {
+		g_set_error (error,
+			     ZIF_TRANSACTION_ERROR,
+			     ZIF_TRANSACTION_ERROR_FAILED,
+			     "failed to add install element: %s [%i]",
+			     cache_filename, res);
+		goto out;
+	}
+	ret = TRUE;
+out:
+	return ret;
+}
 
 /**
  * zif_transaction_commit:
@@ -2813,7 +2972,17 @@ out:
 gboolean
 zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **error)
 {
+	const gchar *prefix;
 	gboolean ret = FALSE;
+	gint retval;
+	guint i;
+	Header hdr;
+	int flags;
+	int rc;
+	rpmdb db = NULL;
+	rpmps probs = NULL;
+	ZifTransactionItem *item;
+	ZifTransactionCommit *commit = NULL;
 
 	g_return_val_if_fail (ZIF_IS_TRANSACTION (transaction), FALSE);
 	g_return_val_if_fail (zif_state_valid (state), FALSE);
@@ -2829,16 +2998,103 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 		goto out;
 	}
 
-	//FIXME
-	g_set_error (error,
-		     ZIF_TRANSACTION_ERROR,
-		     ZIF_TRANSACTION_ERROR_NOT_SUPPORTED,
-		     "not yet supported");
-	goto out;
+	/* set state */
+	zif_state_action_start (state, ZIF_STATE_ACTION_COMMITTING, NULL);
+	if (transaction->priv->verbose)
+		rpmSetVerbosity (RPMLOG_DEBUG);
+
+	/* we can't get this from ZifStoreLocal, as when the db is changed,
+	 * it is marked dirty and unloaded */
+	prefix = zif_store_local_get_prefix (ZIF_STORE_LOCAL (transaction->priv->store_local));
+	retval = rpmdbOpen (prefix, &db, O_RDWR, 0777);
+	if (retval != 0) {
+		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+				     "failed to open rpmdb");
+		ret = FALSE;
+		goto out;
+	}
+
+
+	commit = g_new0 (ZifTransactionCommit, 1);
+	commit->ts = rpmtsCreate ();
+	commit->transaction = transaction;
+	rpmtsSetRootDir (commit->ts, prefix);
+	rpmtsSetNotifyCallback (commit->ts, zif_transaction_ts_progress_cb, commit);
+
+	flags = rpmtsSetVSFlags (commit->ts, _RPMVSF_NOSIGNATURES | _RPMVSF_NODIGESTS);
+
+	/* add things to install */
+	for (i=0; i<transaction->priv->install->len; i++) {
+		item = g_ptr_array_index (transaction->priv->install, i);
+		zif_state_reset (state); //FIXME
+		ret = zif_transaction_add_install_to_ts (commit, item->package, state, error);
+		if (!ret)
+			goto out;
+	}
+
+	/* add things to remove */
+	for (i=0; i<transaction->priv->remove->len; i++) {
+		item = g_ptr_array_index (transaction->priv->remove, i);
+		zif_state_reset (state); //FIXME
+
+		/* remove it */
+		hdr = zif_package_local_get_header (ZIF_PACKAGE_LOCAL (item->package));
+		retval = rpmtsAddEraseElement (commit->ts, hdr, -1);
+		if (retval != 0)
+			g_error ("failed to add");
+	}
+
+	rpmtsSetVSFlags (commit->ts, flags);
+	rpmtsSetFlags (commit->ts, RPMTRANS_FLAG_NONE);
+
+	/* run the transaction */
+	rc = rpmtsRun (commit->ts, NULL, RPMPROB_FILTER_NONE);
+	if (rc < 0) {
+		g_set_error (error,
+			     ZIF_TRANSACTION_ERROR,
+			     ZIF_TRANSACTION_ERROR_FAILED,
+			     "Error %i running transaction", rc);
+		goto out;
+	}
+	if (rc > 0) {
+		rpmpsi psi;
+		rpmProblem prob;
+		const gchar *msg;
+
+		/* get a list of problems */
+		probs = rpmtsProblems (commit->ts);
+
+		/* parse problems */
+		psi = rpmpsInitIterator (probs);
+		while (rpmpsNextIterator (psi) >= 0) {
+			prob = rpmpsGetProblem (psi);
+			msg = rpmProblemGetStr (prob);
+			g_warning ("problem: %s", msg);
+		}
+		rpmpsFreeIterator (psi);
+
+		ret = FALSE;
+		g_set_error (error,
+			     ZIF_TRANSACTION_ERROR,
+			     ZIF_TRANSACTION_ERROR_FAILED,
+			     "Error running transaction. check stdout");
+		goto out;
+	}
 
 	/* success */
+	ret = TRUE;
 	transaction->priv->state = ZIF_TRANSACTION_STATE_COMMITTED;
+	g_debug ("Done!");
 out:
+	if (probs != NULL)
+		rpmpsFree (probs);
+	if (db != NULL)
+		rpmdbClose (db);
+	if (commit != NULL) {
+		if (commit->ts != NULL)
+			rpmtsFree (commit->ts);
+		g_free (commit);
+	}
 	return ret;
 }
 

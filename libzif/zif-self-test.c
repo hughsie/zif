@@ -1489,10 +1489,10 @@ zif_package_remote_func (void)
 	ZifState *state;
 	GPtrArray *changelog;
 	ZifString *string;
-	gboolean exists = FALSE;
 	gboolean ret;
 	ZifUpdate *update;
 	gchar *pidfile;
+	const gchar *cache_filename;
 	ZifConfig *config;
 	ZifLock *lock;
 	ZifRepos *repos;
@@ -1606,10 +1606,10 @@ zif_package_remote_func (void)
 
 	/* check not downloaded */
 	zif_state_reset (state);
-	ret = zif_package_remote_is_downloaded (ZIF_PACKAGE_REMOTE (package), &exists, state, &error);
+	cache_filename = zif_package_remote_get_cache_filename (ZIF_PACKAGE_REMOTE (package), state, &error);
 	g_assert_no_error (error);
 	g_assert (ret);
-	g_assert (!exists);
+	g_assert (!g_file_test (cache_filename, G_FILE_TEST_EXISTS));
 
 	/* download it */
 	ret = zif_package_remote_download (ZIF_PACKAGE_REMOTE (package), NULL, state, &error);
@@ -1618,10 +1618,10 @@ zif_package_remote_func (void)
 
 	/* check downloaded */
 	zif_state_reset (state);
-	ret = zif_package_remote_is_downloaded (ZIF_PACKAGE_REMOTE (package), &exists, state, &error);
+	cache_filename = zif_package_remote_get_cache_filename (ZIF_PACKAGE_REMOTE (package), state, &error);
 	g_assert_no_error (error);
 	g_assert (ret);
-	g_assert (exists);
+	g_assert (g_file_test (cache_filename, G_FILE_TEST_EXISTS));
 
 	/* set to unlocked */
 	g_assert (zif_lock_set_unlocked (lock, NULL));
