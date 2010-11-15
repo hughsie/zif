@@ -28,6 +28,8 @@
 
 #include <glib-object.h>
 
+#include "zif-state.h"
+
 G_BEGIN_DECLS
 
 #define ZIF_TYPE_MANIFEST		(zif_manifest_get_type ())
@@ -64,6 +66,7 @@ GQuark		 zif_manifest_error_quark		(void);
 ZifManifest	*zif_manifest_new			(void);
 gboolean	 zif_manifest_check			(ZifManifest	*manifest,
 							 const gchar	*filename,
+							 ZifState	*state,
 							 GError		**error);
 
 G_END_DECLS

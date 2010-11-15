@@ -216,10 +216,14 @@ zif_manifest_add_packages_to_store (ZifManifest *manifest,
 	gchar **split;
 	gchar **data;
 	gchar *filename;
+	guint len;
 	gboolean ret = TRUE;
 
 	/* add each package */
 	split = g_strsplit (packages, ",", -1);
+	len = g_strv_length (split);
+	if (len > 0)
+		zif_state_set_number_steps (state, len);
 	for (i=0; split[i] != NULL; i++) {
 
 		/* specified as an package-id with data */
@@ -230,7 +234,7 @@ zif_manifest_add_packages_to_store (ZifManifest *manifest,
 			g_strfreev (data);
 			if (!ret)
 				goto out;
-			continue;
+			goto skip;
 		}
 
 		/* specified as a package-id */
@@ -239,7 +243,7 @@ zif_manifest_add_packages_to_store (ZifManifest *manifest,
 			ret = zif_manifest_add_package_id_to_store (manifest, store, split[i], error);
 			if (!ret)
 				goto out;
-			continue;
+			goto skip;
 		}
 
 		/* specified as a filename */
@@ -251,7 +255,7 @@ zif_manifest_add_packages_to_store (ZifManifest *manifest,
 			g_free (filename);
 			if (!ret)
 				break;
-			continue;
+			goto skip;
 		}
 
 		/* not recognised, and no hint */
@@ -262,6 +266,11 @@ zif_manifest_add_packages_to_store (ZifManifest *manifest,
 			     "Failed to add invalid item %s",
 			     split[i]);
 		goto out;
+skip:
+		/* this section done */
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
 	}
 out:
 	g_strfreev (split);
@@ -375,23 +384,35 @@ zif_manifest_add_packages_to_transaction (ZifManifest *manifest,
 					  GError **error)
 {
 	guint i;
+	guint len;
 	gchar **split;
 	gboolean ret = TRUE;
+	ZifState *state_local;
 
 	/* add each package */
 	split = g_strsplit (packages, ",", -1);
+	len = g_strv_length (split);
+	if (len > 0)
+		zif_state_set_number_steps (state, len);
 	for (i=0; split[i] != NULL; i++) {
+		state_local = zif_state_get_child (state);
 		ret = zif_manifest_add_package_to_transaction (manifest,
 							       transaction,
 							       store,
 							       action,
 							       split[i],
 							       store_hint,
-							       state,
+							       state_local,
 							       error);
 		if (!ret)
 			break;
+
+		/* this section done */
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
 	}
+out:
 	g_strfreev (split);
 	return ret;
 }
@@ -483,8 +504,9 @@ out:
  **/
 gboolean
 zif_manifest_check (ZifManifest *manifest,
-				const gchar *filename,
-				GError **error)
+		    const gchar *filename,
+		    ZifState *state,
+		    GError **error)
 {
 	gboolean added_something = FALSE;
 	gboolean ret;
@@ -496,11 +518,11 @@ zif_manifest_check (ZifManifest *manifest,
 	gchar *transaction_remove = NULL;
 	gchar *transaction_update = NULL;
 	GError *error_local = NULL;
-	GKeyFile *keyfile;
+	GKeyFile *keyfile = NULL;
 	GPtrArray *remote_array = NULL;
 	GPtrArray *resolve_install = NULL;
 	GPtrArray *resolve_remove = NULL;
-	ZifState *state = NULL;
+	ZifState *state_local;
 	ZifStore *local = NULL;
 	ZifStore *remote = NULL;
 	ZifTransaction *transaction = NULL;
@@ -508,8 +530,22 @@ zif_manifest_check (ZifManifest *manifest,
 	g_return_val_if_fail (ZIF_IS_MANIFEST (manifest), FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
+	/* setup steps */
+	ret = zif_state_set_steps (state,
+				   error,
+				   10, /* load from file */
+				   10, /* add local */
+				   10, /* add remote */
+				   10, /* add install packages to transaction */
+				   10, /* add update packages to transaction */
+				   10, /* add remove packages to transaction */
+				   30, /* resolve packages */
+				   10, /* check */
+				   -1);
+	if (!ret)
+		goto out;
+
 	/* load file */
-	state = zif_state_new ();
 	dirname = g_path_get_dirname (filename);
 	keyfile = g_key_file_new ();
 	g_debug ("             ---            ");
@@ -526,6 +562,11 @@ zif_manifest_check (ZifManifest *manifest,
 		goto out;
 	}
 
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
 	/* skip this */
 	ret = g_key_file_get_boolean (keyfile, "Zif Manifest", "Disable", NULL);
 	if (ret) {
@@ -538,29 +579,41 @@ zif_manifest_check (ZifManifest *manifest,
 	zif_store_meta_set_is_local (ZIF_STORE_META (local), TRUE);
 	packages_local = g_key_file_get_string (keyfile, "Zif Manifest", "AddLocal", NULL);
 	if (packages_local != NULL) {
+		state_local = zif_state_get_child (state);
 		ret = zif_manifest_add_packages_to_store (manifest,
 							  local,
 							  dirname,
 							  packages_local,
-							  state,
+							  state_local,
 							  error);
 		if (!ret)
 			goto out;
 	}
 
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
 	/* get remote store */
 	remote = zif_store_meta_new ();
 	packages_remote = g_key_file_get_string (keyfile, "Zif Manifest", "AddRemote", NULL);
 	if (packages_remote != NULL) {
+		state_local = zif_state_get_child (state);
 		ret = zif_manifest_add_packages_to_store (manifest,
 							  remote,
 							  dirname,
 							  packages_remote,
-							  state,
+							  state_local,
 							  error);
 		if (!ret)
 			goto out;
 	}
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 
 	/* setup transaction */
 	transaction = zif_transaction_new ();
@@ -579,50 +632,68 @@ zif_manifest_check (ZifManifest *manifest,
 	/* installs */
 	transaction_install = g_key_file_get_string (keyfile, "Zif Manifest", "TransactionInstall", NULL);
 	if (transaction_install != NULL) {
+		state_local = zif_state_get_child (state);
 		ret = zif_manifest_add_packages_to_transaction (manifest,
 								transaction,
 								remote,
 								ZIF_MANIFEST_ACTION_INSTALL,
 								transaction_install,
 								remote,
-								state,
+								state_local,
 								error);
 		if (!ret)
 			goto out;
 		added_something = TRUE;
 	}
 
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
 	/* remove */
 	transaction_remove = g_key_file_get_string (keyfile, "Zif Manifest", "TransactionRemove", NULL);
 	if (transaction_remove != NULL) {
+		state_local = zif_state_get_child (state);
 		ret = zif_manifest_add_packages_to_transaction (manifest,
 								transaction,
 								local,
 								ZIF_MANIFEST_ACTION_REMOVE,
 								transaction_remove,
 								local,
-								state,
+								state_local,
 								error);
 		if (!ret)
 			goto out;
 		added_something = TRUE;
 	}
 
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
 	/* update */
 	transaction_update = g_key_file_get_string (keyfile, "Zif Manifest", "TransactionUpdate", NULL);
 	if (transaction_update != NULL) {
+		state_local = zif_state_get_child (state);
 		ret = zif_manifest_add_packages_to_transaction (manifest,
 								transaction,
 								local,
 								ZIF_MANIFEST_ACTION_UPDATE,
 								transaction_update,
 								local,
-								state,
+								state_local,
 								error);
 		if (!ret)
 			goto out;
 		added_something = TRUE;
 	}
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 
 	/* was anything added? */
 	if (!added_something) {
@@ -635,8 +706,8 @@ zif_manifest_check (ZifManifest *manifest,
 	}
 
 	/* resolve */
-	zif_state_reset (state);
-	ret = zif_transaction_resolve (transaction, state, &error_local);
+	state_local = zif_state_get_child (state);
+	ret = zif_transaction_resolve (transaction, state_local, &error_local);
 	if (!ret) {
 		/* this is special */
 		if (error_local->code == ZIF_TRANSACTION_ERROR_NOTHING_TO_DO) {
@@ -651,6 +722,11 @@ zif_manifest_check (ZifManifest *manifest,
 			goto out;
 		}
 	}
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 
 	/* add the output of the resolve to the fake local repo */
 	resolve_install = zif_transaction_get_install (transaction);
@@ -690,6 +766,11 @@ zif_manifest_check (ZifManifest *manifest,
 	} else {
 		g_warning ("PostInstalled usually required in %s...", filename);
 	}
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 out:
 	g_free (transaction_install);
 	g_free (transaction_remove);
@@ -697,8 +778,6 @@ out:
 	g_free (packages_local);
 	g_free (packages_remote);
 	g_free (post_installed);
-	if (state != NULL)
-		g_object_unref (state);
 	if (local != NULL)
 		g_object_unref (local);
 	if (remote != NULL)
@@ -711,7 +790,8 @@ out:
 		g_ptr_array_unref (resolve_install);
 	if (resolve_remove != NULL)
 		g_ptr_array_unref (resolve_remove);
-	g_key_file_free (keyfile);
+	if (keyfile != NULL)
+		g_key_file_free (keyfile);
 	g_free (dirname);
 	return ret;
 }

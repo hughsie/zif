@@ -1754,6 +1754,7 @@ zif_cmd_manifest_check (ZifCmdPrivate *priv, gchar **values, GError **error)
 	gboolean ret = FALSE;
 	guint i;
 	ZifManifest *manifest = NULL;
+	ZifState *state_local;
 
 	/* check we have a value */
 	if (values == NULL || values[0] == NULL) {
@@ -1770,7 +1771,8 @@ zif_cmd_manifest_check (ZifCmdPrivate *priv, gchar **values, GError **error)
 	/* check the manifest */
 	manifest = zif_manifest_new ();
 	for (i=0; values[i] != NULL; i++) {
-		ret = zif_manifest_check (manifest, values[i], error);
+		state_local = zif_state_get_child (priv->state);
+		ret = zif_manifest_check (manifest, values[i], state_local, error);
 		if (!ret)
 			goto out;
 

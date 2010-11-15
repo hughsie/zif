@@ -180,6 +180,7 @@ zif_manifest_func (void)
 	gchar *path;
 	guint i;
 	GPtrArray *array;
+	ZifState *state;
 
 	/* create new manifest */
 	manifest = zif_manifest_new ();
@@ -206,15 +207,18 @@ zif_manifest_func (void)
 	g_ptr_array_sort (array, (GCompareFunc) zif_indirect_strcmp);
 
 	/* run each sample transactions */
+	state = zif_state_new ();
 	for (i=0; i<array->len; i++) {
 		filename = g_ptr_array_index (array, i);
-		ret = zif_manifest_check (manifest, filename, &error);
+		zif_state_reset (state);
+		ret = zif_manifest_check (manifest, filename, state, &error);
 		g_assert_no_error (error);
 		g_assert (ret);
 	}
 
 	g_ptr_array_unref (array);
 	g_free (dirname);
+	g_object_unref (state);
 	g_object_unref (manifest);
 }
 
