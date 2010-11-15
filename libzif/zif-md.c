@@ -461,14 +461,14 @@ zif_md_load (ZifMd *md, ZifState *state, GError **error)
 		return FALSE;
 	}
 
-	/* set steps */
+	/* set steps: FIXME this needs splitting out to be able to do this properly */
 	ret = zif_state_set_steps (state,
 				   error,
-				   10, /* check uncompressed */
+				   20, /* check uncompressed */
 				   10, /* check compressed */
-				   30, /* get new compressed */
-				   20, /* decompress compressed */
-				   10, /* check compressed */
+				   20, /* get new compressed */
+				   10, /* decompress compressed */
+				   20, /* check compressed */
 				   20, /* klass->load */
 				   -1);
 	if (!ret)
@@ -1569,6 +1569,7 @@ zif_md_file_check (ZifMd *md, gboolean use_uncompressed, ZifState *state, GError
 		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED,
 			     "failed to get file information of %s: %s", filename, error_local->message);
 		g_error_free (error_local);
+		ret = FALSE;
 		goto out;
 	}
 

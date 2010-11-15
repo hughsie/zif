@@ -837,8 +837,8 @@ zif_store_remote_add_mirrorlist (ZifStoreRemote *store, ZifState *state, GError 
 	/* set state */
 	ret = zif_state_set_steps (state,
 				   error,
-				   80, /* download */
-				   20, /* parse */
+				   99, /* download */
+				   1, /* parse */
 				   -1);
 	if (!ret)
 		goto out;
@@ -962,13 +962,30 @@ zif_store_remote_load_metadata_try (ZifStoreRemote *store, ZifState *state, GErr
 	};
 
 	/* setup state */
-	ret = zif_state_set_steps (state,
-				   error,
-				   25, /* add mirror list */
-				   25, /* add metalink */
-				   45, /* download repomd */
-				   5, /* parse repomd */
-				   -1);
+	if (store->priv->mirrorlist != NULL) {
+		g_assert (store->priv->metalink == NULL);
+		ret = zif_state_set_steps (state,
+					   error,
+					   50, /* add mirror list */
+					   45, /* download repomd */
+					   5, /* parse repomd */
+					   -1);
+	} else if (store->priv->metalink != NULL) {
+		g_assert (store->priv->mirrorlist == NULL);
+		ret = zif_state_set_steps (state,
+					   error,
+					   50, /* add metalink */
+					   45, /* download repomd */
+					   5, /* parse repomd */
+					   -1);
+	} else {
+		g_assert (store->priv->mirrorlist == NULL);
+		ret = zif_state_set_steps (state,
+					   error,
+					   50, /* download repomd */
+					   50, /* parse repomd */
+					   -1);
+	}
 	if (!ret)
 		goto out;
 
@@ -982,12 +999,12 @@ zif_store_remote_load_metadata_try (ZifStoreRemote *store, ZifState *state, GErr
 			g_error_free (error_local);
 			goto out;
 		}
-	}
 
-	/* this section done */
-	ret = zif_state_done (state, error);
-	if (!ret)
-		goto out;
+		/* this section done */
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
+	}
 
 	/* extract details from metalink */
 	if (store->priv->metalink != NULL) {
@@ -999,12 +1016,12 @@ zif_store_remote_load_metadata_try (ZifStoreRemote *store, ZifState *state, GErr
 			g_error_free (error_local);
 			goto out;
 		}
-	}
 
-	/* this section done */
-	ret = zif_state_done (state, error);
-	if (!ret)
-		goto out;
+		/* this section done */
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
+	}
 
 	/* repomd file does not exist */
 	ret = g_file_test (store->priv->repomd_filename, G_FILE_TEST_EXISTS);
@@ -1658,7 +1675,9 @@ zif_store_remote_clean (ZifStore *store, ZifState *state, GError **error)
 		if (!ret) {
 			if (error_local->domain == ZIF_MD_ERROR &&
 			    error_local->code == ZIF_MD_ERROR_NO_FILENAME) {
-				g_warning ("failed to clean as no filename for %s", remote->priv->id);
+				g_debug ("failed to clean %s as no filename in %s",
+					 zif_md_kind_to_text (i),
+					 remote->priv->id);
 				g_clear_error (&error_local);
 				goto skip;
 			}
@@ -1996,8 +2015,8 @@ zif_store_remote_search_name (ZifStore *store, gchar **search, ZifState *state, 
 	} else {
 		ret = zif_state_set_steps (state,
 					   error,
-					   80, /* load */
-					   20, /* search name */
+					   2, /* load */
+					   98, /* search name */
 					   -1);
 		if (!ret)
 			goto out;
