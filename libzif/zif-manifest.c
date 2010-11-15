@@ -227,6 +227,7 @@ zif_manifest_add_packages_to_store (ZifManifest *manifest,
 			data = g_strsplit (split[i], "@", -1);
 			g_debug ("adding package-id %s", data[0]);
 			ret = zif_manifest_add_package_id_with_data_to_store (manifest, store, data[0], data+1, error);
+			g_strfreev (data);
 			if (!ret)
 				goto out;
 			continue;
@@ -592,13 +593,13 @@ zif_manifest_check (ZifManifest *manifest,
 	}
 
 	/* remove */
-	transaction_install = g_key_file_get_string (keyfile, "Zif Manifest", "TransactionRemove", NULL);
-	if (transaction_install != NULL) {
+	transaction_remove = g_key_file_get_string (keyfile, "Zif Manifest", "TransactionRemove", NULL);
+	if (transaction_remove != NULL) {
 		ret = zif_manifest_add_packages_to_transaction (manifest,
 								transaction,
 								local,
 								ZIF_MANIFEST_ACTION_REMOVE,
-								transaction_install,
+								transaction_remove,
 								local,
 								state,
 								error);
@@ -608,13 +609,13 @@ zif_manifest_check (ZifManifest *manifest,
 	}
 
 	/* update */
-	transaction_install = g_key_file_get_string (keyfile, "Zif Manifest", "TransactionUpdate", NULL);
-	if (transaction_install != NULL) {
+	transaction_update = g_key_file_get_string (keyfile, "Zif Manifest", "TransactionUpdate", NULL);
+	if (transaction_update != NULL) {
 		ret = zif_manifest_add_packages_to_transaction (manifest,
 								transaction,
 								local,
 								ZIF_MANIFEST_ACTION_UPDATE,
-								transaction_install,
+								transaction_update,
 								local,
 								state,
 								error);

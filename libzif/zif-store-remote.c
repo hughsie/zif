@@ -1397,6 +1397,7 @@ zif_store_remote_load (ZifStore *store, ZifState *state, GError **error)
 	gchar *metadata_expire = NULL;
 	GError *error_local = NULL;
 	gchar *temp;
+	gchar *temp_expand;
 	gchar *filename;
 	gchar *media_root;
 	gboolean got_baseurl = FALSE;
@@ -1498,7 +1499,10 @@ zif_store_remote_load (ZifStore *store, ZifState *state, GError **error)
 	/* get base url (allowed to be blank) */
 	temp = g_key_file_get_string (file, remote->priv->id, "baseurl", NULL);
 	if (temp != NULL && temp[0] != '\0') {
-		zif_download_location_add_uri (remote->priv->download, zif_config_expand_substitutions (remote->priv->config, temp, NULL), NULL);
+		temp_expand = zif_config_expand_substitutions (remote->priv->config, temp, NULL);
+		zif_download_location_add_uri (remote->priv->download,
+					       temp_expand, NULL);
+		g_free (temp_expand);
 		got_baseurl = TRUE;
 	}
 	g_free (temp);

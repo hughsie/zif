@@ -200,6 +200,7 @@ zif_manifest_func (void)
 		g_ptr_array_add (array, path);
 		filename = g_dir_read_name (dir);
 	}
+	g_dir_close (dir);
 
 	/* sort this */
 	g_ptr_array_sort (array, (GCompareFunc) zif_indirect_strcmp);

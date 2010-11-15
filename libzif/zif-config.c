@@ -299,6 +299,7 @@ zif_config_strreplace (GString *string, const gchar *find, const gchar *replace)
 	value = g_strjoinv (replace, array);
 	g_strfreev (array);
 	g_string_assign (string, value);
+	g_free (value);
 	return TRUE;
 }
 
