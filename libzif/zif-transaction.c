@@ -63,6 +63,9 @@ struct _ZifTransactionPrivate
 	GPtrArray		*install;
 	GPtrArray		*update;
 	GPtrArray		*remove;
+	GHashTable		*install_hash;
+	GHashTable		*update_hash;
+	GHashTable		*remove_hash;
 	ZifStore		*store_local;
 	GPtrArray		*stores_remote;
 	gboolean		 skip_broken;
@@ -227,23 +230,18 @@ zif_transaction_item_free (ZifTransactionItem *item)
 }
 
 /**
- * zif_transaction_get_item_from_array:
+ * zif_transaction_get_item_from_hash:
  **/
 static ZifTransactionItem *
-zif_transaction_get_item_from_array (GPtrArray *array, ZifPackage *package)
+zif_transaction_get_item_from_hash (GHashTable *hash, ZifPackage *package)
 {
 	ZifTransactionItem *item;
-	guint i;
 	const gchar *package_id;
 
 	/* find a package that matches */
 	package_id = zif_package_get_id (package);
-	for (i=0; i<array->len; i++) {
-		item = g_ptr_array_index (array, i);
-		if (g_strcmp0 (zif_package_get_id (item->package), package_id) == 0)
-			return item;
-	}
-	return NULL;
+	item = g_hash_table_lookup (hash, package_id);
+	return item;
 }
 
 /**
@@ -291,10 +289,10 @@ zif_transaction_get_reason (ZifTransaction *transaction,
 	g_return_val_if_fail (error == NULL || *error == NULL, ZIF_TRANSACTION_REASON_INVALID);
 
 	/* find the package */
-	item = zif_transaction_get_item_from_array (transaction->priv->install, package);
+	item = zif_transaction_get_item_from_hash (transaction->priv->install_hash, package);
 	if (item != NULL)
 		return item->reason;
-	item = zif_transaction_get_item_from_array (transaction->priv->remove, package);
+	item = zif_transaction_get_item_from_hash (transaction->priv->remove_hash, package);
 	if (item != NULL)
 		return item->reason;
 
@@ -351,6 +349,7 @@ zif_transaction_get_array_for_reason (ZifTransaction *transaction, ZifTransactio
  **/
 static gboolean
 zif_transaction_add_to_array (GPtrArray *array,
+			      GHashTable *hash,
 			      ZifPackage *package,
 			      ZifPackage *update_package,
 			      ZifTransactionReason reason)
@@ -359,7 +358,7 @@ zif_transaction_add_to_array (GPtrArray *array,
 	ZifTransactionItem *item;
 
 	/* already added? */
-	item = zif_transaction_get_item_from_array (array, package);
+	item = zif_transaction_get_item_from_hash (hash, package);
 	if (item != NULL)
 		goto out;
 
@@ -371,6 +370,11 @@ zif_transaction_add_to_array (GPtrArray *array,
 	if (update_package != NULL)
 		item->update_package = g_object_ref (update_package);
 	g_ptr_array_add (array, item);
+
+	/* add to hash table also for super-quick lookup */
+	g_hash_table_insert (hash,
+			     g_strdup (zif_package_get_id (package)),
+			     item);
 
 	/* success */
 	ret = TRUE;
@@ -392,6 +396,7 @@ zif_transaction_add_install_internal (ZifTransaction *transaction,
 
 	/* add to install */
 	ret = zif_transaction_add_to_array (transaction->priv->install,
+					    transaction->priv->install_hash,
 					    package,
 					    update_package,
 					    reason);
@@ -458,6 +463,7 @@ zif_transaction_add_update_internal (ZifTransaction *transaction,
 
 	/* add to update */
 	ret = zif_transaction_add_to_array (transaction->priv->update,
+					    transaction->priv->update_hash,
 					    package,
 					    update_package,
 					    reason);
@@ -519,6 +525,7 @@ zif_transaction_add_remove_internal (ZifTransaction *transaction,
 
 	/* add to remove */
 	ret = zif_transaction_add_to_array (transaction->priv->remove,
+					    transaction->priv->remove_hash,
 					    package,
 					    update_package,
 					    reason);
@@ -1081,7 +1088,7 @@ out:
 static gboolean
 zif_transaction_get_package_requires_from_store (ZifStore *store,
 						 ZifDepend *depend,
-						 GPtrArray *already_marked_to_remove,
+						 GHashTable *already_marked_to_remove,
 						 GPtrArray **requires,
 						 ZifState *state,
 						 GError **error)
@@ -1114,8 +1121,8 @@ zif_transaction_get_package_requires_from_store (ZifStore *store,
 		package = g_ptr_array_index (array, i);
 
 		/* is already being removed? */
-		item = zif_transaction_get_item_from_array (already_marked_to_remove,
-							    package);
+		item = zif_transaction_get_item_from_hash (already_marked_to_remove,
+							   package);
 		if (item != NULL) {
 			if (0) {
 				g_debug ("not getting requires for %s, as already in remove array",
@@ -1451,8 +1458,8 @@ zif_transaction_resolve_install_item (ZifTransactionResolve *data,
 		}
 
 		/* remove it, if it has not been removed already */
-		item_tmp = zif_transaction_get_item_from_array (data->transaction->priv->remove,
-								package_oldest);
+		item_tmp = zif_transaction_get_item_from_hash (data->transaction->priv->remove_hash,
+							       package_oldest);
 		if (item_tmp == NULL) {
 			g_debug ("installing package %s would have %i versions installed (maximum %i) so removing %s",
 				 zif_package_get_id (item->package),
@@ -1578,7 +1585,7 @@ zif_transaction_resolve_remove_require (ZifTransactionResolve *data,
 	}
 	ret = zif_transaction_get_package_requires_from_store (data->transaction->priv->store_local,
 							       depend,
-							       data->transaction->priv->remove,
+							       data->transaction->priv->remove_hash,
 							       &package_requires,
 							       data->state, error);
 	if (!ret)
@@ -1941,8 +1948,8 @@ zif_transaction_resolve_update_item (ZifTransactionResolve *data,
 			goto out;
 
 		/* is already installed */
-		if (zif_transaction_get_item_from_array (data->transaction->priv->install,
-							 package) != NULL)
+		if (zif_transaction_get_item_from_hash (data->transaction->priv->install_hash,
+							package) != NULL)
 			goto success;
 
 		/* add the new package */
@@ -2421,6 +2428,7 @@ zif_transaction_resolve_wind_back_failure_package (ZifTransaction *transaction, 
 		g_debug ("REMOVE %s as CANCELLED",
 			 zif_package_get_id (item_tmp->package));
 		g_ptr_array_remove (transaction->priv->install, item_tmp);
+		g_hash_table_remove (transaction->priv->install_hash, item_tmp);
 	}
 
 	/* remove the thing we just added to remove queue too */
@@ -2430,6 +2438,7 @@ zif_transaction_resolve_wind_back_failure_package (ZifTransaction *transaction, 
 		g_debug ("REMOVE %s as CANCELLED",
 			 zif_package_get_id (item_tmp->package));
 		g_ptr_array_remove (transaction->priv->remove, item_tmp);
+		g_hash_table_remove (transaction->priv->remove_hash, item_tmp);
 	}
 }
 
@@ -2939,6 +2948,9 @@ zif_transaction_reset (ZifTransaction *transaction)
 	g_ptr_array_set_size (transaction->priv->install, 0);
 	g_ptr_array_set_size (transaction->priv->update, 0);
 	g_ptr_array_set_size (transaction->priv->remove, 0);
+	g_hash_table_remove_all (transaction->priv->install_hash);
+	g_hash_table_remove_all (transaction->priv->update_hash);
+	g_hash_table_remove_all (transaction->priv->remove_hash);
 	transaction->priv->state = ZIF_TRANSACTION_STATE_CLEAN;
 }
 
@@ -2955,6 +2967,9 @@ zif_transaction_finalize (GObject *object)
 	g_ptr_array_unref (transaction->priv->install);
 	g_ptr_array_unref (transaction->priv->update);
 	g_ptr_array_unref (transaction->priv->remove);
+	g_hash_table_destroy (transaction->priv->install_hash);
+	g_hash_table_destroy (transaction->priv->update_hash);
+	g_hash_table_destroy (transaction->priv->remove_hash);
 	if (transaction->priv->store_local != NULL)
 		g_object_unref (transaction->priv->store_local);
 	if (transaction->priv->stores_remote != NULL)
@@ -2984,12 +2999,15 @@ zif_transaction_init (ZifTransaction *transaction)
 
 	/* packages we want to install */
 	transaction->priv->install = g_ptr_array_new_with_free_func ((GDestroyNotify) zif_transaction_item_free);
+	transaction->priv->install_hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
 
 	/* packages we want to update */
 	transaction->priv->update = g_ptr_array_new_with_free_func ((GDestroyNotify) zif_transaction_item_free);
+	transaction->priv->update_hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
 
 	/* packages we want to remove */
 	transaction->priv->remove = g_ptr_array_new_with_free_func ((GDestroyNotify) zif_transaction_item_free);;
+	transaction->priv->remove_hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
 }
 
 /**
