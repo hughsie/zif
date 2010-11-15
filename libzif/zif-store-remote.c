@@ -2595,8 +2595,8 @@ zif_store_remote_get_packages (ZifStore *store, ZifState *state, GError **error)
 	} else {
 		ret = zif_state_set_steps (state,
 					   error,
-					   80, /* load */
-					   20, /* search */
+					   10, /* load */
+					   90, /* search */
 					   -1);
 		if (!ret)
 			goto out;

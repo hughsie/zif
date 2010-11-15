@@ -1793,6 +1793,139 @@ out:
 }
 
 /**
+ * zif_cmd_manifest_dump:
+ **/
+static gboolean
+zif_cmd_manifest_dump (ZifCmdPrivate *priv, gchar **values, GError **error)
+{
+	gboolean ret = FALSE;
+	GPtrArray *array_local = NULL;
+	GPtrArray *array_remote = NULL;
+	GPtrArray *store_array = NULL;
+	GString *string = NULL;
+	guint i;
+	ZifPackage *package;
+	ZifState *state_local;
+	ZifStore *store_local = NULL;
+
+	/* check we have a value */
+	if (values == NULL || values[0] == NULL) {
+		g_set_error (error, 1, 0, "specify a filename");
+		goto out;
+	}
+
+	if (!g_str_has_suffix (values[0], ".manifest")) {
+		g_set_error (error, 1, 0, "%s does not end in manifest", values[0]);
+		goto out;
+	}
+
+	/* TRANSLATORS: performing action */
+	zif_progress_bar_start (priv->progressbar, _("Dumping manifest to file"));
+
+	/* setup state with the correct number of steps */
+	ret = zif_state_set_steps (priv->state,
+				   error,
+				   1, /* add local */
+				   1, /* add remote */
+				   90, /* get local packages */
+				   6, /* get remote packages */
+				   2, /* save */
+				   -1);
+	if (!ret)
+		goto out;
+
+	/* add both local and remote packages */
+	store_array = zif_store_array_new ();
+	state_local = zif_state_get_child (priv->state);
+	ret = zif_store_array_add_local (store_array, state_local, error);
+	if (!ret)
+		goto out;
+
+	/* this section done */
+	ret = zif_state_done (priv->state, error);
+	if (!ret)
+		goto out;
+
+	state_local = zif_state_get_child (priv->state);
+	ret = zif_store_array_add_remote_enabled (store_array, state_local, error);
+	if (!ret)
+		goto out;
+
+	/* this section done */
+	ret = zif_state_done (priv->state, error);
+	if (!ret)
+		goto out;
+
+	state_local = zif_state_get_child (priv->state);
+	array_remote = zif_store_array_get_packages (store_array, state_local, error);
+	if (array_remote == NULL) {
+		ret = FALSE;
+		goto out;
+	}
+
+	/* this section done */
+	ret = zif_state_done (priv->state, error);
+	if (!ret)
+		goto out;
+
+	store_local = zif_store_local_new ();
+	state_local = zif_state_get_child (priv->state);
+	array_local = zif_store_get_packages (store_local, state_local, error);
+	if (array_local == NULL) {
+		ret = FALSE;
+		goto out;
+	}
+
+	/* this section done */
+	ret = zif_state_done (priv->state, error);
+	if (!ret)
+		goto out;
+
+	/* save to file */
+	string = g_string_new ("[Zif Manifest]\n");
+	g_string_append (string, "AddLocal=");
+	for (i=0; i<array_local->len; i++) {
+		package = g_ptr_array_index (array_local, i);
+		g_string_append (string, zif_package_get_id (package));
+		g_string_append (string, ",");
+	}
+	g_string_set_size (string, string->len - 1);
+	g_string_append (string, "\n");
+	g_string_append (string, "AddRemote=");
+	for (i=0; i<array_remote->len; i++) {
+		package = g_ptr_array_index (array_remote, i);
+		g_string_append (string, zif_package_get_id (package));
+		g_string_append (string, ",");
+	}
+	g_string_set_size (string, string->len - 1);
+	g_string_append (string, "\n");
+
+	/* save */
+	ret = g_file_set_contents (values[0], string->str, string->len, error);
+	if (!ret)
+		goto out;
+
+	/* this section done */
+	ret = zif_state_done (priv->state, error);
+	if (!ret)
+		goto out;
+
+	zif_progress_bar_end (priv->progressbar);
+out:
+	if (store_local != NULL)
+		g_object_unref (store_local);
+	if (store_array != NULL)
+		g_ptr_array_unref (store_array);
+	if (array_local != NULL)
+		g_ptr_array_unref (array_local);
+	if (array_remote != NULL)
+		g_ptr_array_unref (array_remote);
+	if (string != NULL)
+		g_string_free (string, TRUE);
+	return ret;
+}
+
+/**
  * zif_cmd_refresh_cache:
  **/
 static gboolean
@@ -3293,6 +3426,11 @@ main (int argc, char *argv[])
 		     /* TRANSLATORS: command description */
 		     _("Check a transaction manifest"),
 		     zif_cmd_manifest_check);
+	zif_cmd_add (priv->cmd_array,
+		     "manifest-dump",
+		     /* TRANSLATORS: command description */
+		     _("Dump a transaction manifest to a file"),
+		     zif_cmd_manifest_dump);
 	zif_cmd_add (priv->cmd_array,
 		     "refresh-cache",
 		     /* TRANSLATORS: command description */
