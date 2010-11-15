@@ -43,6 +43,7 @@
 #include <rpm/rpmdb.h>
 #include <fcntl.h>
 
+#include "zif-array.h"
 #include "zif-store.h"
 #include "zif-store-meta.h"
 #include "zif-groups.h"
@@ -57,30 +58,11 @@
 
 struct _ZifStoreMetaPrivate
 {
-	GPtrArray		*packages;
+	ZifArray		*packages;
 	gboolean		 is_local;
 };
 
 G_DEFINE_TYPE (ZifStoreMeta, zif_store_meta, ZIF_TYPE_STORE)
-
-/**
- * zif_store_meta_locate_package:
- **/
-static ZifPackage *
-zif_store_meta_locate_package (ZifStoreMeta *store, ZifPackage *package)
-{
-	guint i;
-	const gchar *package_id;
-	ZifPackage *package_tmp;
-
-	package_id = zif_package_get_id (package);
-	for (i=0; i<store->priv->packages->len; i++) {
-		package_tmp = g_ptr_array_index (store->priv->packages, i);
-		if (g_strcmp0 (package_id, zif_package_get_id (package_tmp)) == 0)
-			return package_tmp;
-	}
-	return NULL;
-}
 
 /**
  * zif_store_meta_add_package:
@@ -98,14 +80,14 @@ gboolean
 zif_store_meta_add_package (ZifStoreMeta *store, ZifPackage *package, GError **error)
 {
 	gboolean ret = TRUE;
-	ZifPackage *package_tmp;
+	GObject *package_tmp;
 
 	g_return_val_if_fail (ZIF_IS_STORE_META (store), FALSE);
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
 	/* check it's not already added */
-	package_tmp = zif_store_meta_locate_package (store, package);
+	package_tmp = zif_array_lookup (store->priv->packages, G_OBJECT (package));
 	if (package_tmp != NULL) {
 		ret = FALSE;
 		g_set_error (error,
@@ -120,7 +102,7 @@ zif_store_meta_add_package (ZifStoreMeta *store, ZifPackage *package, GError **e
 	g_debug ("adding %s to %s",
 		 zif_package_get_id (package),
 		 zif_store_get_id (ZIF_STORE (store)));
-	g_ptr_array_add (store->priv->packages, g_object_ref (package));
+	zif_array_add (store->priv->packages, G_OBJECT (package));
 out:
 	return ret;
 }
@@ -174,14 +156,14 @@ gboolean
 zif_store_meta_remove_package (ZifStoreMeta *store, ZifPackage *package, GError **error)
 {
 	gboolean ret = TRUE;
-	ZifPackage *package_tmp;
+	GObject *package_tmp;
 
 	g_return_val_if_fail (ZIF_IS_STORE_META (store), FALSE);
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
 	/* check it's not already removed */
-	package_tmp = zif_store_meta_locate_package (store, package);
+	package_tmp = zif_array_lookup (store->priv->packages, G_OBJECT (package));
 	if (package_tmp == NULL) {
 		ret = FALSE;
 		g_set_error (error,
@@ -194,9 +176,9 @@ zif_store_meta_remove_package (ZifStoreMeta *store, ZifPackage *package, GError 
 
 	/* just remove */
 	g_debug ("removing %s from %s",
-		 zif_package_get_id (package),
+		 zif_package_get_id (ZIF_PACKAGE (package)),
 		 zif_store_get_id (ZIF_STORE (store)));
-	g_ptr_array_remove (store->priv->packages, package_tmp);
+	zif_array_remove (store->priv->packages, package_tmp);
 out:
 	return ret;
 }
@@ -282,7 +264,7 @@ zif_store_meta_search_name (ZifStore *store, gchar **search, ZifState *state, GE
 	/* iterate list */
 	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	for (i=0;i<meta->priv->packages->len;i++) {
-		package = g_ptr_array_index (meta->priv->packages, i);
+		package = ZIF_PACKAGE (zif_array_index (meta->priv->packages, i));
 		package_id = zif_package_get_id (package);
 		split_name = zif_package_id_get_name (package_id);
 		for (j=0; search[j] != NULL; j++) {
@@ -333,7 +315,7 @@ zif_store_meta_resolve (ZifStore *store, gchar **search, ZifState *state, GError
 	/* iterate list */
 	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	for (i=0;i<meta->priv->packages->len;i++) {
-		package = g_ptr_array_index (meta->priv->packages, i);
+		package = ZIF_PACKAGE (zif_array_index (meta->priv->packages, i));
 		package_id = zif_package_get_id (package);
 		split_name = zif_package_id_get_name (package_id);
 		for (j=0; search[j] != NULL; j++) {
@@ -364,7 +346,7 @@ zif_store_meta_get_packages (ZifStore *store, ZifState *state, GError **error)
 	g_return_val_if_fail (ZIF_IS_STORE_META (store), NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 
-	return g_ptr_array_ref (meta->priv->packages);
+	return zif_array_get_array (meta->priv->packages);
 }
 
 /**
@@ -397,7 +379,7 @@ zif_store_meta_find_package (ZifStore *store, const gchar *package_id, ZifState 
 	/* iterate list */
 	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	for (i=0;i<meta->priv->packages->len;i++) {
-		package_tmp = g_ptr_array_index (meta->priv->packages, i);
+		package_tmp = ZIF_PACKAGE (zif_array_index (meta->priv->packages, i));
 		package_id_tmp = zif_package_get_id (package_tmp);
 		if (g_strcmp0 (package_id_tmp, package_id) == 0)
 			g_ptr_array_add (array, g_object_ref (package_tmp));
@@ -466,7 +448,7 @@ zif_store_meta_what_provides (ZifStore *store, ZifDepend *depend,
 	/* iterate list */
 	array_tmp = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	for (i=0;i<meta->priv->packages->len;i++) {
-		package = g_ptr_array_index (meta->priv->packages, i);
+		package = ZIF_PACKAGE (zif_array_index (meta->priv->packages, i));
 
 		/* get package provides */
 		state_local = zif_state_get_child (state);
@@ -540,7 +522,7 @@ zif_store_meta_what_obsoletes (ZifStore *store, ZifDepend *depend,
 	/* iterate list */
 	array_tmp = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	for (i=0;i<meta->priv->packages->len;i++) {
-		package = g_ptr_array_index (meta->priv->packages, i);
+		package = ZIF_PACKAGE (zif_array_index (meta->priv->packages, i));
 
 		/* get package obsoletes */
 		state_local = zif_state_get_child (state);
@@ -605,7 +587,7 @@ zif_store_meta_print (ZifStore *store)
 	g_return_if_fail (meta->priv->packages->len != 0);
 
 	for (i=0;i<meta->priv->packages->len;i++) {
-		package = g_ptr_array_index (meta->priv->packages, i);
+		package = ZIF_PACKAGE (zif_array_index (meta->priv->packages, i));
 		zif_package_print (package);
 	}
 }
@@ -622,7 +604,7 @@ zif_store_meta_finalize (GObject *object)
 	g_return_if_fail (ZIF_IS_STORE_META (object));
 	store = ZIF_STORE_META (object);
 
-	g_ptr_array_unref (store->priv->packages);
+	g_object_unref (store->priv->packages);
 
 	G_OBJECT_CLASS (zif_store_meta_parent_class)->finalize (object);
 }
@@ -657,7 +639,9 @@ static void
 zif_store_meta_init (ZifStoreMeta *store)
 {
 	store->priv = ZIF_STORE_META_GET_PRIVATE (store);
-	store->priv->packages = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
+	store->priv->packages = zif_array_new ();
+	zif_array_set_mapping_func (store->priv->packages,
+				    (ZifArrayMappingFuncCb) zif_package_get_id);
 }
 
 /**
