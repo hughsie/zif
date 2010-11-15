@@ -1523,7 +1523,7 @@ zif_package_remote_func (void)
 	g_assert_no_error (error);
 	g_assert (ret);
 
-	store = zif_store_local_new ();
+	store = ZIF_STORE_LOCAL (zif_store_local_new ());
 	g_assert (store != NULL);
 	filename = zif_test_get_data_file ("root");
 	zif_store_local_set_prefix (store, filename, &error);
@@ -1543,7 +1543,7 @@ zif_package_remote_func (void)
 	state = zif_state_new ();
 
 	/* get remote store */
-	store_remote = zif_store_remote_new ();
+	store_remote = ZIF_STORE_REMOTE (zif_store_remote_new ());
 	zif_state_reset (state);
 	filename = zif_test_get_data_file ("repos/fedora.repo");
 	ret = zif_store_remote_set_from_file (store_remote, filename, "fedora", state, &error);
@@ -2129,7 +2129,7 @@ zif_store_local_func (void)
 	g_free (filename);
 	g_assert (ret);
 
-	store = zif_store_local_new ();
+	store = ZIF_STORE_LOCAL (zif_store_local_new ());
 	g_assert (store != NULL);
 
 	lock = zif_lock_new ();
@@ -2371,7 +2371,7 @@ zif_store_remote_func (void)
 	/* use state object */
 	state = zif_state_new ();
 
-	store = zif_store_remote_new ();
+	store = ZIF_STORE_REMOTE (zif_store_remote_new ());
 	g_assert (store != NULL);
 
 	lock = zif_lock_new ();
@@ -2393,7 +2393,7 @@ zif_store_remote_func (void)
 	filename = zif_test_get_data_file ("yum-comps-groups.conf");
 	zif_groups_set_mapping_file (groups, filename, NULL);
 	g_free (filename);
-	store_local = zif_store_local_new ();
+	store_local = ZIF_STORE_LOCAL (zif_store_local_new ());
 	filename = zif_test_get_data_file ("root");
 	zif_store_local_set_prefix (store_local, filename, NULL);
 	g_free (filename);
@@ -2503,7 +2503,7 @@ zif_store_remote_func (void)
 	g_object_unref (store);
 
 	/* location does not exist */
-	store = zif_store_remote_new ();
+	store = ZIF_STORE_REMOTE (zif_store_remote_new ());
 	zif_state_reset (state);
 	filename = zif_test_get_data_file ("invalid.repo");
 	ret = zif_store_remote_set_from_file (store, filename, "invalid", state, &error);
@@ -2526,7 +2526,7 @@ zif_store_remote_func (void)
 	g_clear_error (&error);
 
 	/* check with invalid repomd */
-	store = zif_store_remote_new ();
+	store = ZIF_STORE_REMOTE (zif_store_remote_new ());
 	zif_state_reset (state);
 	filename = zif_test_get_data_file ("corrupt-repomd.repo");
 	ret = zif_store_remote_set_from_file (store, filename, "corrupt-repomd", state, &error);
@@ -2554,7 +2554,7 @@ zif_store_remote_func (void)
 
 	/* check with invalid repomd */
 	g_object_unref (store);
-	store = zif_store_remote_new ();
+	store = ZIF_STORE_REMOTE (zif_store_remote_new ());
 	zif_state_reset (state);
 	filename = zif_test_get_data_file ("corrupt-repomd.repo");
 	ret = zif_store_remote_set_from_file (store, filename, "corrupt-repomd", state, &error);

@@ -177,7 +177,7 @@ zif_repos_get_for_filename (ZifRepos *repos, const gchar *filename, ZifState *st
 
 	/* create each repo */
 	for (i=0; repos_groups[i] != NULL; i++) {
-		store = zif_store_remote_new ();
+		store = ZIF_STORE_REMOTE (zif_store_remote_new ());
 		state_local = zif_state_get_child (state);
 		ret = zif_store_remote_set_from_file (store, path, repos_groups[i], state_local, &error_local);
 		if (!ret) {

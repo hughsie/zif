@@ -1502,7 +1502,7 @@ zif_store_local_init (ZifStoreLocal *store)
  *
  * Since: 0.1.0
  **/
-ZifStoreLocal *
+ZifStore *
 zif_store_local_new (void)
 {
 	if (zif_store_local_object != NULL) {
@@ -1511,6 +1511,6 @@ zif_store_local_new (void)
 		zif_store_local_object = g_object_new (ZIF_TYPE_STORE_LOCAL, NULL);
 		g_object_add_weak_pointer (zif_store_local_object, &zif_store_local_object);
 	}
-	return ZIF_STORE_LOCAL (zif_store_local_object);
+	return ZIF_STORE (zif_store_local_object);
 }
 

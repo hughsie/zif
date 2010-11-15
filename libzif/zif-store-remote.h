@@ -57,7 +57,7 @@ struct _ZifStoreRemoteClass
 };
 
 GType		 zif_store_remote_get_type		(void);
-ZifStoreRemote	*zif_store_remote_new			(void);
+ZifStore	*zif_store_remote_new			(void);
 gboolean	 zif_store_remote_set_from_file		(ZifStoreRemote		*store,
 							 const gchar		*filename,
 							 const gchar		*id,

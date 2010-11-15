@@ -56,7 +56,7 @@ struct _ZifStoreLocalClass
 };
 
 GType		 zif_store_local_get_type	(void);
-ZifStoreLocal	*zif_store_local_new		(void);
+ZifStore	*zif_store_local_new		(void);
 gboolean	 zif_store_local_set_prefix	(ZifStoreLocal		*store,
 						 const gchar		*prefix,
 						 GError			**error);

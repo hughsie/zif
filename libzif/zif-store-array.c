@@ -159,12 +159,12 @@ zif_store_array_add_stores (GPtrArray *store_array, GPtrArray *stores)
 gboolean
 zif_store_array_add_local (GPtrArray *store_array, ZifState *state, GError **error)
 {
-	ZifStoreLocal *store;
+	ZifStore *store;
 
 	g_return_val_if_fail (zif_state_valid (state), FALSE);
 
 	store = zif_store_local_new ();
-	zif_store_array_add_store (store_array, ZIF_STORE (store));
+	zif_store_array_add_store (store_array, store);
 	g_object_unref (store);
 
 	return TRUE;

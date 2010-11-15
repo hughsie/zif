@@ -1334,7 +1334,7 @@ zif_transaction_run (ZifCmdPrivate *priv, ZifTransaction *transaction, ZifState 
 	guint i, j;
 	ZifPackage *package;
 	ZifState *state_local;
-	ZifStoreLocal *store_local = NULL;
+	ZifStore *store_local = NULL;
 
 	/* setup steps */
 	ret = zif_state_set_steps (state,
@@ -1359,7 +1359,7 @@ zif_transaction_run (ZifCmdPrivate *priv, ZifTransaction *transaction, ZifState 
 
 	/* set local store */
 	store_local = zif_store_local_new ();
-	zif_transaction_set_store_local (transaction, ZIF_STORE (store_local));
+	zif_transaction_set_store_local (transaction, store_local);
 	zif_transaction_set_skip_broken (transaction, priv->skip_broken);
 
 	/* add remote stores */

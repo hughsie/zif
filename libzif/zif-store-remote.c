@@ -558,7 +558,7 @@ zif_store_remote_get_update_detail (ZifStoreRemote *store, const gchar *package_
 	ZifUpdate *update = NULL;
 	gchar *split_name = NULL;
 	gchar **split_installed = NULL;
-	ZifStoreLocal *store_local = NULL;
+	ZifStore *store_local = NULL;
 	const gchar *version;
 	gchar *to_array[] = { NULL, NULL };
 
@@ -676,7 +676,7 @@ zif_store_remote_get_update_detail (ZifStoreRemote *store, const gchar *package_
 	split_name = zif_package_id_get_name (package_id);
 	store_local = zif_store_local_new ();
 	to_array[0] = split_name;
-	array_installed = zif_store_resolve (ZIF_STORE (store_local), to_array, state_local, &error_local);
+	array_installed = zif_store_resolve (store_local, to_array, state_local, &error_local);
 	if (array_installed == NULL) {
 		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 			     "failed to resolve installed package for update: %s", error_local->message);
@@ -2133,7 +2133,7 @@ static ZifPackage *
 zif_store_remote_search_category_resolve (ZifStore *store, const gchar *name, ZifState *state, GError **error)
 {
 	gboolean ret;
-	ZifStoreLocal *store_local = NULL;
+	ZifStore *store_local = NULL;
 	GError *error_local = NULL;
 	GPtrArray *array = NULL;
 	ZifPackage *package = NULL;
@@ -2156,7 +2156,7 @@ zif_store_remote_search_category_resolve (ZifStore *store, const gchar *name, Zi
 	/* is already installed? */
 	state_local = zif_state_get_child (state);
 	to_array[0] = name;
-	array = zif_store_resolve (ZIF_STORE (store_local), (gchar**) to_array, state_local, &error_local);
+	array = zif_store_resolve (store_local, (gchar**) to_array, state_local, &error_local);
 	if (array == NULL) {
 		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 			     "failed to resolve installed package %s: %s", name, error_local->message);
@@ -3724,11 +3724,11 @@ out:
  *
  * Since: 0.1.0
  **/
-ZifStoreRemote *
+ZifStore *
 zif_store_remote_new (void)
 {
 	ZifStoreRemote *store;
 	store = g_object_new (ZIF_TYPE_STORE_REMOTE, NULL);
-	return ZIF_STORE_REMOTE (store);
+	return ZIF_STORE (store);
 }
 
