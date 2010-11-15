@@ -158,7 +158,22 @@ zif_depend_satisfies (ZifDepend *got, ZifDepend *need)
 		goto out;
 	}
 
+	/* got: bash < 0.2.0, need: bash = 0.3.0' - never valid */
+	if (got->priv->flag == ZIF_DEPEND_FLAG_LESS &&
+	    need->priv->flag == ZIF_DEPEND_FLAG_EQUAL) {
+		ret = FALSE;
+		goto out;
+	}
+
+	/* got: bash > 0.2.0, need: bash = 0.3.0' - never valid */
+	if (got->priv->flag == ZIF_DEPEND_FLAG_GREATER &&
+	    need->priv->flag == ZIF_DEPEND_FLAG_EQUAL) {
+		ret = FALSE;
+		goto out;
+	}
+
 	/* not sure */
+	ret = FALSE;
 	g_warning ("not sure how to compare %s and %s for %s:%s",
 		   zif_depend_flag_to_string (got->priv->flag),
 		   zif_depend_flag_to_string (need->priv->flag),
