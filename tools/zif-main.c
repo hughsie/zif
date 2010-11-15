@@ -1746,6 +1746,53 @@ out:
 }
 
 /**
+ * zif_cmd_manifest_check:
+ **/
+static gboolean
+zif_cmd_manifest_check (ZifCmdPrivate *priv, gchar **values, GError **error)
+{
+	gboolean ret = FALSE;
+	guint i;
+	ZifManifest *manifest = NULL;
+
+	/* check we have a value */
+	if (values == NULL || values[0] == NULL) {
+		g_set_error (error, 1, 0, "specify a filename");
+		goto out;
+	}
+
+	/* TRANSLATORS: performing action */
+	zif_progress_bar_start (priv->progressbar, _("Checking manifest files"));
+
+	/* setup state */
+	zif_state_set_number_steps (priv->state, g_strv_length (values));
+
+	/* check the manifest */
+	manifest = zif_manifest_new ();
+	for (i=0; values[i] != NULL; i++) {
+		ret = zif_manifest_check (manifest, values[i], error);
+		if (!ret)
+			goto out;
+
+		/* this section done */
+		ret = zif_state_done (priv->state, error);
+		if (!ret)
+			goto out;
+	}
+
+	/* success */
+	zif_progress_bar_end (priv->progressbar);
+	g_print ("%s\n", _("All manifest files were checked successfully"));
+
+	/* success */
+	ret = TRUE;
+out:
+	if (manifest != NULL)
+		g_object_unref (manifest);
+	return ret;
+}
+
+/**
  * zif_cmd_refresh_cache:
  **/
 static gboolean
@@ -3241,6 +3288,11 @@ main (int argc, char *argv[])
 		     /* TRANSLATORS: command description */
 		     _("Install a local package"),
 		     zif_cmd_local_install);
+	zif_cmd_add (priv->cmd_array,
+		     "manifest-check",
+		     /* TRANSLATORS: command description */
+		     _("Check a transaction manifest"),
+		     zif_cmd_manifest_check);
 	zif_cmd_add (priv->cmd_array,
 		     "refresh-cache",
 		     /* TRANSLATORS: command description */
