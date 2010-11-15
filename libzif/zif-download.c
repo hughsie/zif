@@ -453,16 +453,12 @@ zif_download_location_add_uri (ZifDownload *download, const gchar *uri, GError *
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
 	/* already added */
-	if (zif_download_location_array_get_index (download->priv->array, uri) != G_MAXUINT) {
-		g_set_error (error,
-			     ZIF_DOWNLOAD_ERROR,
-			     ZIF_DOWNLOAD_ERROR_FAILED,
-			     "The URI %s as already been added", uri);
-		return FALSE;
-	}
+	if (zif_download_location_array_get_index (download->priv->array, uri) != G_MAXUINT)
+		goto out;
 
 	/* add to array */
 	g_ptr_array_add (download->priv->array, g_strdup (uri));
+out:
 	return TRUE;
 }
 
