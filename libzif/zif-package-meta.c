@@ -201,7 +201,6 @@ zif_package_meta_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, ZifSta
 			ret = FALSE;
 			goto out;
 		}
-		zif_package_set_provides (pkg, depends);
 
 		/* a package has to provide itself */
 		depend = zif_depend_new ();
@@ -209,6 +208,7 @@ zif_package_meta_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, ZifSta
 		zif_depend_set_name (depend, zif_package_get_name (pkg));
 		zif_depend_set_version (depend, zif_package_get_version (pkg));
 		g_ptr_array_add (depends, depend);
+		zif_package_set_provides (pkg, depends);
 
 		g_ptr_array_unref (depends);
 

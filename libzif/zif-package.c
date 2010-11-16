@@ -67,6 +67,10 @@ struct _ZifPackagePrivate
 	GHashTable		*provides_hash;
 	GHashTable		*obsoletes_hash;
 	GHashTable		*conflicts_hash;
+	GHashTable		*requires_any_hash;
+	GHashTable		*provides_any_hash;
+	GHashTable		*obsoletes_any_hash;
+	GHashTable		*conflicts_any_hash;
 	gboolean		 installed;
 };
 
@@ -593,7 +597,6 @@ zif_package_satisfies_file_depend (ZifPackage *package,
 	guint i;
 
 	/* get files */
-	zif_state_reset (state);
 	provides = zif_package_get_files (package, state, &error_local);
 	if (provides == NULL) {
 		ret = FALSE;
@@ -608,15 +611,6 @@ zif_package_satisfies_file_depend (ZifPackage *package,
 	}
 
 	/* search array */
-	if (0) {
-		g_debug ("%i files for %s",
-			 provides->len,
-			 zif_package_get_id (package));
-		for (i=0; i<provides->len; i++) {
-			filename_tmp = g_ptr_array_index (provides, i);
-			g_debug ("require: %s:%s", filename_tmp, filename);
-		}
-	}
 	for (i=0; i<provides->len; i++) {
 		filename_tmp = g_ptr_array_index (provides, i);
 		if (g_strcmp0 (filename_tmp, filename) == 0) {
@@ -658,6 +652,7 @@ zif_package_provides (ZifPackage *package,
 	gboolean ret = TRUE;
 	GError *error_local = NULL;
 	GPtrArray *provides = NULL;
+	GPtrArray *files = NULL;
 	guint i;
 	ZifDepend *depend_tmp;
 	const gchar *depend_id;
@@ -668,7 +663,55 @@ zif_package_provides (ZifPackage *package,
 	g_return_val_if_fail (state != NULL, FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
-	/* search in the cache */
+	if (zif_depend_get_name (depend)[0] == '/') {
+		/* get the list of files */
+		files = zif_package_get_files (package, state, &error_local);
+		if (files == NULL) {
+			ret = FALSE;
+			g_set_error (error,
+				     ZIF_PACKAGE_ERROR,
+				     ZIF_PACKAGE_ERROR_FAILED,
+				     "failed to get provides for %s: %s",
+				     zif_package_get_id (package),
+				     error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+	} else {
+		/* get the list of provides */
+		provides = zif_package_get_provides (package, state, &error_local);
+		if (provides == NULL) {
+			ret = FALSE;
+			g_set_error (error,
+				     ZIF_PACKAGE_ERROR,
+				     ZIF_PACKAGE_ERROR_FAILED,
+				     "failed to get provides for %s: %s",
+				     zif_package_get_id (package),
+				     error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+	}
+
+	/* search in the 'any' cache first */
+	if (zif_depend_get_flag (depend) == ZIF_DEPEND_FLAG_ANY) {
+		depend_id = zif_depend_get_name (depend);
+		ret = g_hash_table_lookup_extended (package->priv->provides_any_hash,
+						    depend_id,
+						    NULL,
+						    (void **) &depend_tmp);
+		if (ret) {
+			/* object is in the cache */
+			*satisfies = g_object_ref (depend_tmp);
+		} else {
+			/* object is not in the cache, but we already added all entries */
+			ret = TRUE;
+			*satisfies = NULL;
+		}
+		goto out;
+	}
+
+	/* then the 'description' cache */
 	depend_id = zif_depend_get_description (depend);
 	ret = g_hash_table_lookup_extended (package->priv->provides_hash,
 					    depend_id,
@@ -694,21 +737,6 @@ zif_package_provides (ZifPackage *package,
 		goto out;
 	}
 
-	/* get the list of provides */
-	zif_state_reset (state);
-	provides = zif_package_get_provides (package, state, &error_local);
-	if (provides == NULL) {
-		ret = FALSE;
-		g_set_error (error,
-			     ZIF_PACKAGE_ERROR,
-			     ZIF_PACKAGE_ERROR_FAILED,
-			     "failed to get provides for %s: %s",
-			     zif_package_get_id (package),
-			     error_local->message);
-		g_error_free (error_local);
-		goto out;
-	}
-
 	/* find what we're looking for */
 	for (i=0; i<provides->len; i++) {
 		depend_tmp = g_ptr_array_index (provides, i);
@@ -730,6 +758,8 @@ zif_package_provides (ZifPackage *package,
 out:
 	if (provides != NULL)
 		g_ptr_array_unref (provides);
+	if (files != NULL)
+		g_ptr_array_unref (files);
 	return ret;
 }
 
@@ -762,7 +792,39 @@ zif_package_requires (ZifPackage *package,
 	ZifDepend *depend_tmp;
 	const gchar *depend_id;
 
-	/* search in the cache */
+	/* get the list of requires */
+	requires = zif_package_get_requires (package, state, &error_local);
+	if (requires == NULL) {
+		ret = FALSE;
+		g_set_error (error,
+			     ZIF_PACKAGE_ERROR,
+			     ZIF_PACKAGE_ERROR_FAILED,
+			     "failed to get requires for %s: %s",
+			     zif_package_get_id (package),
+			     error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* search in the 'any' cache first */
+	if (zif_depend_get_flag (depend) == ZIF_DEPEND_FLAG_ANY) {
+		depend_id = zif_depend_get_name (depend);
+		ret = g_hash_table_lookup_extended (package->priv->requires_any_hash,
+						    depend_id,
+						    NULL,
+						    (void **) &depend_tmp);
+		if (ret) {
+			/* object is in the cache */
+			*satisfies = g_object_ref (depend_tmp);
+		} else {
+			/* object is not in the cache, but we already added all entries */
+			ret = TRUE;
+			*satisfies = NULL;
+		}
+		goto out;
+	}
+
+	/* then the 'description' cache */
 	depend_id = zif_depend_get_description (depend);
 	ret = g_hash_table_lookup_extended (package->priv->requires_hash,
 					    depend_id,
@@ -775,26 +837,6 @@ zif_package_requires (ZifPackage *package,
 			/* cache hit, but does not provide */
 			*satisfies = NULL;
 		}
-		goto out;
-	}
-
-	/* get the list of requires */
-	if (0) {
-		g_debug ("Find out if %s requires %s",
-			 zif_package_get_id (package),
-			 zif_depend_get_description (depend));
-	}
-	zif_state_reset (state);
-	requires = zif_package_get_requires (package, state, &error_local);
-	if (requires == NULL) {
-		ret = FALSE;
-		g_set_error (error,
-			     ZIF_PACKAGE_ERROR,
-			     ZIF_PACKAGE_ERROR_FAILED,
-			     "failed to get requires for %s: %s",
-			     zif_package_get_id (package),
-			     error_local->message);
-		g_error_free (error_local);
 		goto out;
 	}
 
@@ -865,7 +907,39 @@ zif_package_conflicts (ZifPackage *package,
 	ZifDepend *depend_tmp;
 	const gchar *depend_id;
 
-	/* search in the cache */
+	/* get the list of conflicts */
+	conflicts = zif_package_get_conflicts (package, state, &error_local);
+	if (conflicts == NULL) {
+		ret = FALSE;
+		g_set_error (error,
+			     ZIF_PACKAGE_ERROR,
+			     ZIF_PACKAGE_ERROR_FAILED,
+			     "failed to get conflicts for %s: %s",
+			     zif_package_get_id (package),
+			     error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* search in the 'any' cache first */
+	if (zif_depend_get_flag (depend) == ZIF_DEPEND_FLAG_ANY) {
+		depend_id = zif_depend_get_name (depend);
+		ret = g_hash_table_lookup_extended (package->priv->conflicts_any_hash,
+						    depend_id,
+						    NULL,
+						    (void **) &depend_tmp);
+		if (ret) {
+			/* object is in the cache */
+			*satisfies = g_object_ref (depend_tmp);
+		} else {
+			/* object is not in the cache, but we already added all entries */
+			ret = TRUE;
+			*satisfies = NULL;
+		}
+		goto out;
+	}
+
+	/* then the 'description' cache */
 	depend_id = zif_depend_get_description (depend);
 	ret = g_hash_table_lookup_extended (package->priv->conflicts_hash,
 					    depend_id,
@@ -878,21 +952,6 @@ zif_package_conflicts (ZifPackage *package,
 			/* cache hit, but does not provide */
 			*satisfies = NULL;
 		}
-		goto out;
-	}
-
-	/* get the list of conflicts */
-	zif_state_reset (state);
-	conflicts = zif_package_get_conflicts (package, state, &error_local);
-	if (conflicts == NULL) {
-		ret = FALSE;
-		g_set_error (error,
-			     ZIF_PACKAGE_ERROR,
-			     ZIF_PACKAGE_ERROR_FAILED,
-			     "failed to get conflicts for %s: %s",
-			     zif_package_get_id (package),
-			     error_local->message);
-		g_error_free (error_local);
 		goto out;
 	}
 
@@ -949,7 +1008,39 @@ zif_package_obsoletes (ZifPackage *package,
 	ZifDepend *depend_tmp;
 	const gchar *depend_id;
 
-	/* search in the cache */
+	/* get the list of obsoletes */
+	obsoletes = zif_package_get_obsoletes (package, state, &error_local);
+	if (obsoletes == NULL) {
+		ret = FALSE;
+		g_set_error (error,
+			     ZIF_PACKAGE_ERROR,
+			     ZIF_PACKAGE_ERROR_FAILED,
+			     "failed to get obsoletes for %s: %s",
+			     zif_package_get_id (package),
+			     error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* search in the 'any' cache first */
+	if (zif_depend_get_flag (depend) == ZIF_DEPEND_FLAG_ANY) {
+		depend_id = zif_depend_get_name (depend);
+		ret = g_hash_table_lookup_extended (package->priv->obsoletes_any_hash,
+						    depend_id,
+						    NULL,
+						    (void **) &depend_tmp);
+		if (ret) {
+			/* object is in the cache */
+			*satisfies = g_object_ref (depend_tmp);
+		} else {
+			/* object is not in the cache, but we already added all entries */
+			ret = TRUE;
+			*satisfies = NULL;
+		}
+		goto out;
+	}
+
+	/* then the 'description' cache */
 	depend_id = zif_depend_get_description (depend);
 	ret = g_hash_table_lookup_extended (package->priv->obsoletes_hash,
 					    depend_id,
@@ -962,21 +1053,6 @@ zif_package_obsoletes (ZifPackage *package,
 			/* cache hit, but does not provide */
 			*satisfies = NULL;
 		}
-		goto out;
-	}
-
-	/* get the list of obsoletes */
-	zif_state_reset (state);
-	obsoletes = zif_package_get_obsoletes (package, state, &error_local);
-	if (obsoletes == NULL) {
-		ret = FALSE;
-		g_set_error (error,
-			     ZIF_PACKAGE_ERROR,
-			     ZIF_PACKAGE_ERROR_FAILED,
-			     "failed to get obsoletes for %s: %s",
-			     zif_package_get_id (package),
-			     error_local->message);
-		g_error_free (error_local);
 		goto out;
 	}
 
@@ -1911,9 +1987,24 @@ zif_package_set_size (ZifPackage *package, guint64 size)
 void
 zif_package_set_files (ZifPackage *package, GPtrArray *files)
 {
+	const gchar *filename;
+	guint i;
+	ZifDepend *depend_tmp;
+
 	g_return_if_fail (ZIF_IS_PACKAGE (package));
 	g_return_if_fail (files != NULL);
 	g_return_if_fail (package->priv->files == NULL);
+
+	/* add files as provides to 'any' cache */
+	for (i=0; i<files->len; i++) {
+		filename = g_ptr_array_index (files, i);
+		depend_tmp = zif_depend_new ();
+		zif_depend_set_flag (depend_tmp, ZIF_DEPEND_FLAG_ANY);
+		zif_depend_set_name (depend_tmp, filename);
+		g_hash_table_insert (package->priv->provides_any_hash,
+				     g_strdup (zif_depend_get_name (depend_tmp)),
+				     depend_tmp);
+	}
 
 	package->priv->files = g_ptr_array_ref (files);
 }
@@ -1930,9 +2021,20 @@ zif_package_set_files (ZifPackage *package, GPtrArray *files)
 void
 zif_package_set_requires (ZifPackage *package, GPtrArray *requires)
 {
+	guint i;
+	ZifDepend *depend_tmp;
+
 	g_return_if_fail (ZIF_IS_PACKAGE (package));
 	g_return_if_fail (requires != NULL);
 	g_return_if_fail (package->priv->requires == NULL);
+
+	/* add items to 'any' cache */
+	for (i=0; i<requires->len; i++) {
+		depend_tmp = g_ptr_array_index (requires, i);
+		g_hash_table_insert (package->priv->requires_any_hash,
+				     g_strdup (zif_depend_get_name (depend_tmp)),
+				     g_object_ref (depend_tmp));
+	}
 
 	package->priv->requires = g_ptr_array_ref (requires);
 }
@@ -1949,9 +2051,20 @@ zif_package_set_requires (ZifPackage *package, GPtrArray *requires)
 void
 zif_package_set_provides (ZifPackage *package, GPtrArray *provides)
 {
+	guint i;
+	ZifDepend *depend_tmp;
+
 	g_return_if_fail (ZIF_IS_PACKAGE (package));
 	g_return_if_fail (provides != NULL);
 	g_return_if_fail (package->priv->provides == NULL);
+
+	/* add items to 'any' cache */
+	for (i=0; i<provides->len; i++) {
+		depend_tmp = g_ptr_array_index (provides, i);
+		g_hash_table_insert (package->priv->provides_any_hash,
+				     g_strdup (zif_depend_get_name (depend_tmp)),
+				     g_object_ref (depend_tmp));
+	}
 
 	package->priv->provides = g_ptr_array_ref (provides);
 }
@@ -1968,9 +2081,20 @@ zif_package_set_provides (ZifPackage *package, GPtrArray *provides)
 void
 zif_package_set_obsoletes (ZifPackage *package, GPtrArray *obsoletes)
 {
+	guint i;
+	ZifDepend *depend_tmp;
+
 	g_return_if_fail (ZIF_IS_PACKAGE (package));
 	g_return_if_fail (obsoletes != NULL);
 	g_return_if_fail (package->priv->obsoletes == NULL);
+
+	/* add items to 'any' cache */
+	for (i=0; i<obsoletes->len; i++) {
+		depend_tmp = g_ptr_array_index (obsoletes, i);
+		g_hash_table_insert (package->priv->obsoletes_any_hash,
+				     g_strdup (zif_depend_get_name (depend_tmp)),
+				     g_object_ref (depend_tmp));
+	}
 
 	package->priv->obsoletes = g_ptr_array_ref (obsoletes);
 }
@@ -1987,9 +2111,20 @@ zif_package_set_obsoletes (ZifPackage *package, GPtrArray *obsoletes)
 void
 zif_package_set_conflicts (ZifPackage *package, GPtrArray *conflicts)
 {
+	guint i;
+	ZifDepend *depend_tmp;
+
 	g_return_if_fail (ZIF_IS_PACKAGE (package));
 	g_return_if_fail (conflicts != NULL);
 	g_return_if_fail (package->priv->conflicts == NULL);
+
+	/* add items to 'any' cache */
+	for (i=0; i<conflicts->len; i++) {
+		depend_tmp = g_ptr_array_index (conflicts, i);
+		g_hash_table_insert (package->priv->conflicts_any_hash,
+				     g_strdup (zif_depend_get_name (depend_tmp)),
+				     g_object_ref (depend_tmp));
+	}
 
 	package->priv->conflicts = g_ptr_array_ref (conflicts);
 }
@@ -2035,6 +2170,10 @@ zif_package_finalize (GObject *object)
 	g_hash_table_destroy (package->priv->provides_hash);
 	g_hash_table_destroy (package->priv->obsoletes_hash);
 	g_hash_table_destroy (package->priv->conflicts_hash);
+	g_hash_table_destroy (package->priv->requires_any_hash);
+	g_hash_table_destroy (package->priv->provides_any_hash);
+	g_hash_table_destroy (package->priv->obsoletes_any_hash);
+	g_hash_table_destroy (package->priv->conflicts_any_hash);
 
 	G_OBJECT_CLASS (zif_package_parent_class)->finalize (object);
 }
@@ -2057,10 +2196,41 @@ static void
 zif_package_init (ZifPackage *package)
 {
 	package->priv = ZIF_PACKAGE_GET_PRIVATE (package);
-	package->priv->requires_hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
-	package->priv->provides_hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
-	package->priv->obsoletes_hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
-	package->priv->conflicts_hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+
+	/* this provides a O(1) lookup for the entire provide */
+	package->priv->requires_hash = g_hash_table_new_full (g_str_hash,
+							      g_str_equal,
+							      g_free,
+							      NULL);
+	package->priv->provides_hash = g_hash_table_new_full (g_str_hash,
+							      g_str_equal,
+							      g_free, NULL);
+	package->priv->obsoletes_hash = g_hash_table_new_full (g_str_hash,
+							      g_str_equal,
+							      g_free, NULL);
+	package->priv->conflicts_hash = g_hash_table_new_full (g_str_hash,
+							      g_str_equal,
+							      g_free, NULL);
+
+	/* this provides a O(1) lookup for the provide name, which
+	 * may seem odd, but it's required for the ZIF_DEPEND_FLAG_ANY
+	 * check, and 'any' happens 99.5% of the time in reality */
+	package->priv->requires_any_hash = g_hash_table_new_full (g_str_hash,
+							      g_str_equal,
+							      g_free,
+							      (GDestroyNotify) g_object_unref);
+	package->priv->provides_any_hash = g_hash_table_new_full (g_str_hash,
+							      g_str_equal,
+							      g_free,
+							      (GDestroyNotify) g_object_unref);
+	package->priv->obsoletes_any_hash = g_hash_table_new_full (g_str_hash,
+							      g_str_equal,
+							      g_free,
+							      (GDestroyNotify) g_object_unref);
+	package->priv->conflicts_any_hash = g_hash_table_new_full (g_str_hash,
+							      g_str_equal,
+							      g_free,
+							      (GDestroyNotify) g_object_unref);
 }
 
 /**
