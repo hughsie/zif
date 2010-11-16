@@ -2575,10 +2575,19 @@ out:
 	return ret;
 }
 
+typedef enum {
+	ZIF_TRANSACTION_STEP_STARTED,
+	ZIF_TRANSACTION_STEP_PREPARING,
+	ZIF_TRANSACTION_STEP_WRITING
+} ZifTransactionStep;
+
 typedef struct {
 	ZifTransaction		*transaction;
+	ZifState		*state;
+	ZifState		*child;
 	rpmts			 ts;
 	FD_t			 fd;
+	ZifTransactionStep	 step;
 } ZifTransactionCommit;
 
 /**
@@ -2591,9 +2600,11 @@ zif_transaction_ts_progress_cb (const void *arg,
 				const rpm_loff_t total,
 				fnpyKey key, void *data)
 {
+	const char *filename = (const char *) key;
+	gboolean ret;
+	GError *error_local = NULL;
 	Header h = (Header) arg;
 	void *rc = NULL;
-	const char *filename = (const char *) key;
 
 	ZifTransactionCommit *commit = (ZifTransactionCommit *) data;
 
@@ -2623,33 +2634,62 @@ zif_transaction_ts_progress_cb (const void *arg,
 			if (h == NULL)
 				break;
 
-			g_debug ("start: %s,%s amount=%i",
-				filename,
-				headerFormat (h,
-					      "%{NAME}-%{VERSION}-%{RELEASE}.%{ARCH}",
-					      NULL),
-				(gint32) total);
+			/* install or remove start */
+			commit->step = ZIF_TRANSACTION_STEP_WRITING;
+			commit->child = zif_state_get_child (commit->state);
+			zif_state_action_start (commit->child, ZIF_STATE_ACTION_COMMITTING, filename);
+			g_debug ("start: %s size=%i", filename, (gint32) total);
 			break;
 
 		case RPMCALLBACK_TRANS_PROGRESS:
 		case RPMCALLBACK_INST_PROGRESS:
 		case RPMCALLBACK_UNINST_PROGRESS:
 
+			/* we're preparing the transaction */
+			if (commit->step == ZIF_TRANSACTION_STEP_PREPARING) {
+				g_debug ("ignoring preparing %i / %i",
+					 (gint32) amount, (gint32) total);
+				break;
+			}
+
+			/* progress */
 			g_debug ("progress %i/%i", (gint32) amount, (gint32) total);
+			g_debug ("%f", (100.0f / (gfloat) total) * (gfloat) amount);
+			zif_state_set_percentage (commit->child, (100.0f / (gfloat) total) * (gfloat) amount);
+			if (amount == total) {
+				ret = zif_state_done (commit->state, &error_local);
+				if (!ret) {
+					g_warning ("state increment failed: %s",
+						   error_local->message);
+					g_error_free (error_local);
+				}
+			}
 			break;
 
 		case RPMCALLBACK_TRANS_START:
 
+			/* we setup the state */
 			g_debug ("preparing transaction with %i items", (gint32) total);
+			zif_state_set_number_steps (commit->state, total);
+			commit->step = ZIF_TRANSACTION_STEP_PREPARING;
 			break;
 
 		case RPMCALLBACK_TRANS_STOP:
+
+			/* don't do anything */
 			g_debug ("transaction stop");
 			break;
 
 		case RPMCALLBACK_UNINST_STOP:
 
-			g_debug ("uninst stop");
+			/* no idea */
+			g_debug ("uninstall done");
+			ret = zif_state_done (commit->state, &error_local);
+			if (!ret) {
+				g_warning ("state increment failed: %s",
+					   error_local->message);
+				g_error_free (error_local);
+			}
 			break;
 
 		case RPMCALLBACK_UNPACK_ERROR:
@@ -2743,6 +2783,8 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 	int rc;
 	rpmdb db = NULL;
 	rpmps probs = NULL;
+	ZifState *state_local;
+	ZifState *state_loop;
 	ZifTransactionItem *item;
 	ZifTransactionCommit *commit = NULL;
 
@@ -2761,6 +2803,14 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 	}
 
 	/* set state */
+	ret = zif_state_set_steps (state,
+				   error,
+				   2, /* install */
+				   2, /* remove */
+				   96, /* commit */
+				   -1);
+	if (!ret)
+		goto out;
 	zif_state_action_start (state, ZIF_STATE_ACTION_COMMITTING, NULL);
 	if (transaction->priv->verbose)
 		rpmSetVerbosity (RPMLOG_DEBUG);
@@ -2776,7 +2826,7 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 		goto out;
 	}
 
-
+	/* setup the transaction */
 	commit = g_new0 (ZifTransactionCommit, 1);
 	commit->ts = rpmtsCreate ();
 	commit->transaction = transaction;
@@ -2786,18 +2836,36 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 	flags = rpmtsSetVSFlags (commit->ts, _RPMVSF_NOSIGNATURES | _RPMVSF_NODIGESTS);
 
 	/* add things to install */
+	state_local = zif_state_get_child (state);
+	if (transaction->priv->install->len > 0)
+		zif_state_set_number_steps (state_local,
+					    transaction->priv->install->len);
 	for (i=0; i<transaction->priv->install->len; i++) {
 		item = g_ptr_array_index (transaction->priv->install, i);
-		zif_state_reset (state); //FIXME
-		ret = zif_transaction_add_install_to_ts (commit, item->package, state, error);
+
+		/* add the install */
+		state_loop = zif_state_get_child (state_local);
+		ret = zif_transaction_add_install_to_ts (commit,
+							 item->package,
+							 state_loop,
+							 error);
+		if (!ret)
+			goto out;
+
+		/* this section done */
+		ret = zif_state_done (state_local, error);
 		if (!ret)
 			goto out;
 	}
 
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
 	/* add things to remove */
 	for (i=0; i<transaction->priv->remove->len; i++) {
 		item = g_ptr_array_index (transaction->priv->remove, i);
-		zif_state_reset (state); //FIXME
 
 		/* remove it */
 		hdr = zif_package_local_get_header (ZIF_PACKAGE_LOCAL (item->package));
@@ -2813,8 +2881,14 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 		}
 	}
 
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
 	rpmtsSetVSFlags (commit->ts, flags);
 	rpmtsSetFlags (commit->ts, RPMTRANS_FLAG_NONE);
+	commit->state = zif_state_get_child (state);
 
 	/* run the transaction */
 	rc = rpmtsRun (commit->ts, NULL, RPMPROB_FILTER_NONE);
@@ -2850,8 +2924,12 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 		goto out;
 	}
 
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
 	/* success */
-	ret = TRUE;
 	transaction->priv->state = ZIF_TRANSACTION_STATE_COMMITTED;
 	g_debug ("Done!");
 out:

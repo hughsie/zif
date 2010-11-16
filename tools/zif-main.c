@@ -1702,9 +1702,9 @@ zif_cmd_install (ZifCmdPrivate *priv, gchar **values, GError **error)
 		goto out;
 
 	/* install these packages */
+	transaction = zif_transaction_new ();
 	for (i=0; i<array->len; i++) {
 		package = g_ptr_array_index (array, i);
-		transaction = zif_transaction_new ();
 		ret = zif_transaction_add_install (transaction, package, &error_local);
 		if (!ret) {
 			g_set_error (error, 1, 0, "failed to add install %s: %s",
@@ -2130,9 +2130,9 @@ zif_cmd_remove (ZifCmdPrivate *priv, gchar **values, GError **error)
 		goto out;
 
 	/* remove these packages */
+	transaction = zif_transaction_new ();
 	for (i=0; i<array->len; i++) {
 		package = g_ptr_array_index (array, i);
-		transaction = zif_transaction_new ();
 		ret = zif_transaction_add_remove (transaction, package, error);
 		if (!ret)
 			goto out;
@@ -2892,9 +2892,9 @@ zif_cmd_update (ZifCmdPrivate *priv, gchar **values, GError **error)
 		goto out;
 
 	/* install this package */
+	transaction = zif_transaction_new ();
 	for (i=0; i<array->len; i++) {
 		package = g_ptr_array_index (array, i);
-		transaction = zif_transaction_new ();
 		ret = zif_transaction_add_update (transaction, package, error);
 		if (!ret)
 			goto out;
