@@ -61,6 +61,7 @@ rm -f $RPM_BUILD_ROOT%{_libdir}/libzif*.la
 %{_bindir}/zif
 %{_libdir}/*libzif*.so.*
 %{_mandir}/man1/*.1.gz
+%config %{_sysconfdir}/bash_completion.d/*-completion.bash
 
 %files devel
 %defattr(-,root,root,-)
