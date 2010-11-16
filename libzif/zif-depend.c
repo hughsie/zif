@@ -255,7 +255,7 @@ zif_depend_to_string (ZifDepend *depend)
 const gchar *
 zif_depend_get_description (ZifDepend *depend)
 {
-	g_return_val_if_fail (ZIF_IS_DEPEND (depend), NULL);
+	g_return_val_if_fail (depend != NULL, NULL);
 	g_return_val_if_fail (depend->priv->name != NULL, NULL);
 	g_return_val_if_fail (depend->priv->flag != ZIF_DEPEND_FLAG_UNKNOWN, NULL);
 
@@ -285,7 +285,7 @@ zif_depend_get_description (ZifDepend *depend)
 ZifDependFlag
 zif_depend_get_flag (ZifDepend *depend)
 {
-	g_return_val_if_fail (ZIF_IS_DEPEND (depend), ZIF_DEPEND_FLAG_UNKNOWN);
+	g_return_val_if_fail (depend != NULL, ZIF_DEPEND_FLAG_UNKNOWN);
 	return depend->priv->flag;
 }
 
@@ -302,7 +302,7 @@ zif_depend_get_flag (ZifDepend *depend)
 const gchar *
 zif_depend_get_name (ZifDepend *depend)
 {
-	g_return_val_if_fail (ZIF_IS_DEPEND (depend), NULL);
+	g_return_val_if_fail (depend != NULL, NULL);
 	return depend->priv->name;
 }
 
@@ -319,7 +319,7 @@ zif_depend_get_name (ZifDepend *depend)
 const gchar *
 zif_depend_get_version (ZifDepend *depend)
 {
-	g_return_val_if_fail (ZIF_IS_DEPEND (depend), NULL);
+	g_return_val_if_fail (depend != NULL, NULL);
 	return depend->priv->version;
 }
 
@@ -335,7 +335,7 @@ zif_depend_get_version (ZifDepend *depend)
 void
 zif_depend_set_flag (ZifDepend *depend, ZifDependFlag flag)
 {
-	g_return_if_fail (ZIF_IS_DEPEND (depend));
+	g_return_if_fail (depend != NULL);
 	g_return_if_fail (flag != ZIF_DEPEND_FLAG_UNKNOWN);
 	depend->priv->flag = flag;
 	depend->priv->description_ok = FALSE;
@@ -353,7 +353,7 @@ zif_depend_set_flag (ZifDepend *depend, ZifDependFlag flag)
 void
 zif_depend_set_name (ZifDepend *depend, const gchar *name)
 {
-	g_return_if_fail (ZIF_IS_DEPEND (depend));
+	g_return_if_fail (depend != NULL);
 	g_return_if_fail (name != NULL);
 	g_return_if_fail (depend->priv->name == NULL);
 
@@ -373,7 +373,7 @@ zif_depend_set_name (ZifDepend *depend, const gchar *name)
 void
 zif_depend_set_version (ZifDepend *depend, const gchar *version)
 {
-	g_return_if_fail (ZIF_IS_DEPEND (depend));
+	g_return_if_fail (depend != NULL);
 	g_return_if_fail (version != NULL);
 	g_return_if_fail (depend->priv->version == NULL);
 

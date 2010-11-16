@@ -808,7 +808,6 @@ out:
 static void
 zif_state_set_global_share (ZifState *state, gdouble global_share)
 {
-	g_return_if_fail (ZIF_IS_STATE (state));
 	state->priv->global_share = global_share;
 }
 
@@ -895,7 +894,7 @@ zif_state_set_number_steps_real (ZifState *state, guint steps, const gchar *strl
 {
 	gboolean ret = FALSE;
 
-	g_return_val_if_fail (ZIF_IS_STATE (state), FALSE);
+	g_return_val_if_fail (state != NULL, FALSE);
 	g_return_val_if_fail (steps != 0, FALSE);
 
 	/* do we care */
@@ -957,7 +956,7 @@ zif_state_set_steps_real (ZifState *state, GError **error, const gchar *strloc, 
 	guint total;
 	gboolean ret = FALSE;
 
-	g_return_val_if_fail (ZIF_IS_STATE (state), FALSE);
+	g_return_val_if_fail (state != NULL, FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
 	/* do we care */
@@ -1076,7 +1075,7 @@ zif_state_done_real (ZifState *state, GError **error, const gchar *strloc)
 	gdouble elapsed;
 	gfloat percentage;
 
-	g_return_val_if_fail (ZIF_IS_STATE (state), FALSE);
+	g_return_val_if_fail (state != NULL, FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
 	/* are we cancelled */
@@ -1184,7 +1183,7 @@ zif_state_finished_real (ZifState *state, GError **error, const gchar *strloc)
 {
 	gboolean ret = TRUE;
 
-	g_return_val_if_fail (ZIF_IS_STATE (state), FALSE);
+	g_return_val_if_fail (state != NULL, FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
 	/* are we cancelled */
