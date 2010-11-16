@@ -3391,7 +3391,7 @@ main (int argc, char *argv[])
 	uid = getuid ();
 	if (uid != 0) {
 		/* TRANSLATORS: we can't run as the user */
-		g_print ("%s", _("This program has to be run as the root user."));
+		g_print ("%s\n", _("This program has to be run as the root user."));
 		goto out;
 	}
 
