@@ -397,7 +397,8 @@ zif_cmd_download (ZifCmdPrivate *priv, gchar **values, GError **error)
 	}
 	if (array->len == 0) {
 		ret = FALSE;
-		g_set_error (error, 1, 0, "no package found");
+		/* TRANSLATORS: error message */
+		g_set_error (error, 1, 0, _("No %s package was found"), values[0]);
 		goto out;
 	}
 
@@ -1502,7 +1503,6 @@ static gboolean
 zif_transaction_run (ZifCmdPrivate *priv, ZifTransaction *transaction, ZifState *state, GError **error)
 {
 	gboolean ret;
-	GError *error_local = NULL;
 	GPtrArray *array_tmp;
 	GPtrArray *store_array_remote = NULL;
 	guint i, j;
@@ -1524,12 +1524,9 @@ zif_transaction_run (ZifCmdPrivate *priv, ZifTransaction *transaction, ZifState 
 	/* get remote enabled stores */
 	store_array_remote = zif_store_array_new ();
 	state_local = zif_state_get_child (state);
-	ret = zif_store_array_add_remote_enabled (store_array_remote, state_local, &error_local);
-	if (!ret) {
-		g_set_error (error, 1, 0, "failed to add remote: %s", error_local->message);
-		g_error_free (error_local);
+	ret = zif_store_array_add_remote_enabled (store_array_remote, state_local, error);
+	if (!ret)
 		goto out;
-	}
 
 	/* set local store */
 	store_local = zif_store_local_new ();
@@ -1546,12 +1543,9 @@ zif_transaction_run (ZifCmdPrivate *priv, ZifTransaction *transaction, ZifState 
 
 	/* resolve */
 	state_local = zif_state_get_child (state);
-	ret = zif_transaction_resolve (transaction, state_local, &error_local);
-	if (!ret) {
-		g_set_error (error, 1, 0, "failed to resolve update: %s", error_local->message);
-		g_error_free (error_local);
+	ret = zif_transaction_resolve (transaction, state_local, error);
+	if (!ret)
 		goto out;
-	}
 
 	/* print what's going to happen */
 	g_print ("%s\n", _("Transaction summary:"));
@@ -1569,7 +1563,8 @@ zif_transaction_run (ZifCmdPrivate *priv, ZifTransaction *transaction, ZifState 
 	/* confirm */
 	if (!priv->assume_yes && !zif_cmd_prompt (_("Run transaction?"))) {
 		ret = FALSE;
-		g_set_error (error, 1, 0, "User declined action");
+		/* TRANSLATORS: error message */
+		g_set_error_literal (error, 1, 0, _("User declined action"));
 		goto out;
 	}
 
@@ -1580,12 +1575,9 @@ zif_transaction_run (ZifCmdPrivate *priv, ZifTransaction *transaction, ZifState 
 
 	/* prepare */
 	state_local = zif_state_get_child (state);
-	ret = zif_transaction_prepare (transaction, state_local, &error_local);
-	if (!ret) {
-		g_set_error (error, 1, 0, "failed to prepare transaction: %s", error_local->message);
-		g_error_free (error_local);
+	ret = zif_transaction_prepare (transaction, state_local, error);
+	if (!ret)
 		goto out;
-	}
 
 	/* this section done */
 	ret = zif_state_done (state, error);
@@ -1594,12 +1586,9 @@ zif_transaction_run (ZifCmdPrivate *priv, ZifTransaction *transaction, ZifState 
 
 	/* commit */
 	state_local = zif_state_get_child (state);
-	ret = zif_transaction_commit (transaction, state_local, &error_local);
-	if (!ret) {
-		g_set_error (error, 1, 0, "failed to commit transaction: %s", error_local->message);
-		g_error_free (error_local);
+	ret = zif_transaction_commit (transaction, state_local, error);
+	if (!ret)
 		goto out;
-	}
 
 	/* this section done */
 	ret = zif_state_done (state, error);
@@ -1672,7 +1661,8 @@ zif_cmd_install (ZifCmdPrivate *priv, gchar **values, GError **error)
 	}
 	if (array->len > 0) {
 		ret = FALSE;
-		g_set_error (error, 1, 0, "package already installed");
+		/* TRANSLATORS: error message */
+		g_set_error (error, 1, 0, _("%s is already installed"), values[0]);
 		goto out;
 	}
 
@@ -1701,7 +1691,8 @@ zif_cmd_install (ZifCmdPrivate *priv, gchar **values, GError **error)
 	}
 	if (array->len == 0) {
 		ret = FALSE;
-		g_set_error (error, 1, 0, "could not find package in remote source");
+		/* TRANSLATORS: error message */
+		g_set_error (error, 1, 0, _("Could not find %s in repositories"), values[0]);
 		goto out;
 	}
 
@@ -2080,7 +2071,6 @@ static gboolean
 zif_cmd_remove (ZifCmdPrivate *priv, gchar **values, GError **error)
 {
 	gboolean ret = FALSE;
-	GError *error_local = NULL;
 	GPtrArray *array = NULL;
 	GPtrArray *store_array_local = NULL;
 	GPtrArray *store_array = NULL;
@@ -2111,7 +2101,7 @@ zif_cmd_remove (ZifCmdPrivate *priv, gchar **values, GError **error)
 	/* add local store */
 	store_array_local = zif_store_array_new ();
 	state_local = zif_state_get_child (priv->state);
-	ret = zif_store_array_add_local (store_array_local, state_local, &error_local);
+	ret = zif_store_array_add_local (store_array_local, state_local, error);
 	if (!ret)
 		goto out;
 
@@ -2122,14 +2112,15 @@ zif_cmd_remove (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 	/* check not already installed */
 	state_local = zif_state_get_child (priv->state);
-	array = zif_store_array_resolve (store_array_local, values, state_local, &error_local);
+	array = zif_store_array_resolve (store_array_local, values, state_local, error);
 	if (array == NULL) {
 		ret = FALSE;
 		goto out;
 	}
 	if (array->len == 0) {
 		ret = FALSE;
-		g_set_error (error, 1, 0, "package not installed");
+		/* TRANSLATORS: error message */
+		g_set_error (error, 1, 0, _("The package is not installed"));
 		goto out;
 	}
 
@@ -2142,14 +2133,9 @@ zif_cmd_remove (ZifCmdPrivate *priv, gchar **values, GError **error)
 	for (i=0; i<array->len; i++) {
 		package = g_ptr_array_index (array, i);
 		transaction = zif_transaction_new ();
-		ret = zif_transaction_add_remove (transaction, package, &error_local);
-		if (!ret) {
-			g_set_error (error, 1, 0, "failed to add remove %s: %s",
-				 zif_package_get_name (package),
-				 error_local->message);
-			g_error_free (error_local);
+		ret = zif_transaction_add_remove (transaction, package, error);
+		if (!ret)
 			goto out;
-		}
 	}
 
 	/* run what we've got */
@@ -2847,7 +2833,6 @@ static gboolean
 zif_cmd_update (ZifCmdPrivate *priv, gchar **values, GError **error)
 {
 	gboolean ret = FALSE;
-	GError *error_local = NULL;
 	GPtrArray *array = NULL;
 	GPtrArray *store_array_local = NULL;
 	GPtrArray *store_array = NULL;
@@ -2878,12 +2863,9 @@ zif_cmd_update (ZifCmdPrivate *priv, gchar **values, GError **error)
 	/* add local store */
 	store_array_local = zif_store_array_new ();
 	state_local = zif_state_get_child (priv->state);
-	ret = zif_store_array_add_local (store_array_local, state_local, &error_local);
-	if (!ret) {
-		g_set_error (error, 1, 0, "failed to add local store: %s", error_local->message);
-		g_error_free (error_local);
+	ret = zif_store_array_add_local (store_array_local, state_local, error);
+	if (!ret)
 		goto out;
-	}
 
 	/* this section done */
 	ret = zif_state_done (priv->state, error);
@@ -2892,16 +2874,15 @@ zif_cmd_update (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 	/* check not already installed */
 	state_local = zif_state_get_child (priv->state);
-	array = zif_store_array_resolve (store_array_local, values, state_local, &error_local);
+	array = zif_store_array_resolve (store_array_local, values, state_local, error);
 	if (array == NULL) {
 		ret = FALSE;
-		g_set_error (error, 1, 0, "failed to get results: %s", error_local->message);
-		g_error_free (error_local);
 		goto out;
 	}
 	if (array->len == 0) {
 		ret = FALSE;
-		g_set_error (error, 1, 0, "package not installed");
+		/* TRANSLATORS: error message */
+		g_set_error (error, 1, 0, _("The %s package is not installed"), values[0]);
 		goto out;
 	}
 
@@ -2914,14 +2895,9 @@ zif_cmd_update (ZifCmdPrivate *priv, gchar **values, GError **error)
 	for (i=0; i<array->len; i++) {
 		package = g_ptr_array_index (array, i);
 		transaction = zif_transaction_new ();
-		ret = zif_transaction_add_update (transaction, package, &error_local);
-		if (!ret) {
-			g_set_error (error, 1, 0, "failed to add update %s: %s",
-				 zif_package_get_name (package),
-				 error_local->message);
-			g_error_free (error_local);
+		ret = zif_transaction_add_update (transaction, package, error);
+		if (!ret)
 			goto out;
-		}
 	}
 
 	/* run what we've got */
@@ -3642,8 +3618,106 @@ main (int argc, char *argv[])
 	ret = zif_cmd_run (priv, argv[1], (gchar**) &argv[2], &error);
 	zif_progress_bar_end (priv->progressbar);
 	if (!ret) {
-		/* TODO: translate errors */
-		g_print ("Failed: %s\n", error->message);
+		const gchar *message;
+		if (error->domain == ZIF_STATE_ERROR) {
+			switch (error->code) {
+			case ZIF_STATE_ERROR_CANCELLED:
+				/* TRANSLATORS: error message */
+				message = _("Cancelled");
+				break;
+			case ZIF_STATE_ERROR_INVALID:
+				/* TRANSLATORS: error message */
+				message = _("The system state was invalid");
+				break;
+			default:
+				/* TRANSLATORS: error message */
+				message = _("Unhandled state error");
+			}
+		} else if (error->domain == ZIF_TRANSACTION_ERROR) {
+			switch (error->code) {
+			case ZIF_TRANSACTION_ERROR_FAILED:
+				/* TRANSLATORS: error message */
+				message = _("The transaction failed");
+				break;
+			case ZIF_TRANSACTION_ERROR_NOTHING_TO_DO:
+				/* TRANSLATORS: error message */
+				message = _("Nothing to do");
+				break;
+			case ZIF_TRANSACTION_ERROR_NOT_SUPPORTED:
+				/* TRANSLATORS: error message */
+				message = _("No supported");
+				break;
+			case ZIF_TRANSACTION_ERROR_CONFLICTING:
+				/* TRANSLATORS: error message */
+				message = _("The transaction conflicts");
+				break;
+			default:
+				/* TRANSLATORS: error message */
+				message = _("Unhandled transaction error");
+			}
+		} else if (error->domain == ZIF_STORE_ERROR) {
+			switch (error->code) {
+			case ZIF_STORE_ERROR_FAILED:
+				/* TRANSLATORS: error message */
+				message = _("Failed to store");
+				break;
+			case ZIF_STORE_ERROR_FAILED_AS_OFFLINE:
+				/* TRANSLATORS: error message */
+				message = _("Failed as offline");
+				break;
+			case ZIF_STORE_ERROR_FAILED_TO_FIND:
+				/* TRANSLATORS: error message */
+				message = _("Failed to find");
+				break;
+			case ZIF_STORE_ERROR_FAILED_TO_DOWNLOAD:
+				/* TRANSLATORS: error message */
+				message = _("Failed to download");
+				break;
+			case ZIF_STORE_ERROR_ARRAY_IS_EMPTY:
+				/* TRANSLATORS: error message */
+				message = _("Store array is empty");
+				break;
+			case ZIF_STORE_ERROR_NO_SUPPORT:
+				/* TRANSLATORS: error message */
+				message = _("Not supported");
+				break;
+			case ZIF_STORE_ERROR_NOT_LOCKED:
+				/* TRANSLATORS: error message */
+				message = _("Not locked");
+				break;
+			case ZIF_STORE_ERROR_MULTIPLE_MATCHES:
+				/* TRANSLATORS: error message */
+				message = _("There are multiple matches");
+				break;
+			default:
+				/* TRANSLATORS: error message */
+				message = _("Unhandled store error");
+			}
+		} else if (error->domain == ZIF_PACKAGE_ERROR) {
+			switch (error->code) {
+			case ZIF_PACKAGE_ERROR_FAILED:
+				/* TRANSLATORS: error message */
+				message = _("Package operation failed");
+				break;
+			default:
+				/* TRANSLATORS: error message */
+				message = _("Unhandled package error");
+			}
+		} else if (error->domain == 1) {
+			/* local error, already translated */
+			message = NULL;
+		} else {
+			/* TRANSLATORS: we suck */
+			message = _("Failed");
+			g_warning ("%s:%i",
+				   g_quark_to_string (error->domain),
+				   error->code);
+		}
+
+		/* print translated errors */
+		if (message != NULL)
+			g_print ("%s: ", message);
+		g_print ("%s\n", error->message);
 		g_error_free (error);
 		retval = 1;
 		goto out;
