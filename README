@@ -49,8 +49,8 @@ since then, I wrote Zif. Zif is designed to work on Fedora, and only Fedora.
 It's not designed to be run by the end user, it's only designed to be run as part
 of a program using libzif.
 
-PackageKit has a tiny zif backend, and it seems to work basically as well as the
-yum backend ever did. It's certainly not feature complete, but of the methods
+PackageKit has a zif compatible backend, and it seems to work basically as well
+as the native code ever did. It's certainly not feature complete, but of the methods
 that I have written, all of them are faster than yum, and all of them are a lot
 kinder to the user. Zif is designed to only do what the user wants, and not do
 lots of cleverness in the background. To solve the difficult desktop problems
@@ -63,41 +63,39 @@ Zif features:
 • Modern GObject library with GCancellation and GError
 • Full state support for accurate progress reporting
 • Downloads using libsoup
-• Internally ref-counted strings for speed
-• Remote, installed and local packages handled as abstract packages
-• Local and remote sources handled using an abstract sack
-• Self test program (248 tests)
-• Zif has a test binary, but it's not shipped in the tarball
+• Internally ref-counted arrays and strings for speed
+• Remote, virtual, installed and local packages handled as abstract objects
+• Local, virtual and remote sources handled using an abstract sack
+• Self test program (602 tests with 49 test transactions)
 
 Zif is compatible with rpm, yum and the Fedora infrastructure, specifically:
 • Shares the yum lock
-• Uses librpm to get data from rpm
+• Uses librpm to get data from rpm andto install and remove packages
 • Reads and updates yum metadata (primary, filelists, updateinfo, other,
   metalink, mirrorlist, comps)
 • Reads standard yum repo files
 • Reads a subset of comps for distro-specific groups
-• Uses optional metalink/mirrorlist repository handling
+• Uses metalink/mirrorlist repository handling
 • Still uses yum.conf main config file
 • Uses the PackageKit categories->group mapping file
 
 What doesn't work:
-• Depsolving (leave to libsatsolver?)
-• Installing using librpm
+• Depsolving (it works, but it's really slow)
 • Checking of signed repodata
-• Multiarch
 • YumDB of storing where packages come from
+• Installing updates using deltas
+• Key handling and GPG callbacks
 • Some old style yum metadata (ZifMdOtherXml)
 
 Comparisons:
-• Zif is about 40% quicker for queries than using the yum API
+• Zif is typically 40% quicker for queries than using the yum API
 • Zif is comparable to yum for cold startup time
 • Zif uses existing fedora metadata, rather than razor which replaces everything
 • Zif is much slower than razor when reading from the package database
 • Zif is much faster (>400%?) for warm startup time
-• Zif has sane error reporting
+• Zif has sane and predictable error reporting
 • Zif does not have random runtime exceptions (no DivisionByZero...)
-• Zif has no "write" support for rpm yet
-• Zif is threadsafe (but rpm still isn't, obviously)
+• Zif is threadsafe (but librpm still isn't, obviously)
 • Zif has no plugins (both an advantage and a regression)
 • Zif was designed as a shared library, not a python module
 • Zif is more clever when downloading the minimum number of metadata files
@@ -105,6 +103,5 @@ Comparisons:
 • Zif has no user or developer community
 • Zif compiles on FreeBSD and for Windows
 
-If this zif experiment goes well for read-only, maybe we can think about writing
-some of the rpmdb stuff. Until then it's just a library born out of curiosity.
-
+If this zif experiment goes well then Fedora might start installing Zif
+by default. Until then it's just a library born out of curiosity.
