@@ -1386,6 +1386,38 @@ out:
 }
 
 /**
+ * zif_cmd_get_config_value:
+ **/
+static gboolean
+zif_cmd_get_config_value (ZifCmdPrivate *priv, gchar **values, GError **error)
+{
+	gboolean ret = FALSE;
+	gchar *value = NULL;
+
+	/* check we have a value */
+	if (values == NULL || values[0] == NULL) {
+		g_set_error (error, 1, 0, "specify a config key");
+		goto out;
+	}
+
+	/* get value */
+	value = zif_config_get_string (priv->config, values[0], NULL);
+	if (value == NULL) {
+		g_set_error (error, 1, 0, "no value for %s", values[0]);
+		goto out;
+	}
+
+	/* print the results */
+	g_print ("%s = '%s':\n", values[0], value);
+
+	/* success */
+	ret = TRUE;
+out:
+	g_free (value);
+	return ret;
+}
+
+/**
  * zif_cmd_help:
  **/
 static gboolean
@@ -3408,6 +3440,11 @@ main (int argc, char *argv[])
 		     /* TRANSLATORS: command description */
 		     _("Check for newer operating system versions"),
 		     zif_cmd_get_upgrades);
+	zif_cmd_add (priv->cmd_array,
+		     "get-config-value",
+		     /* TRANSLATORS: command description */
+		     _("Get an expanded value from the config file"),
+		     zif_cmd_get_config_value);
 	zif_cmd_add (priv->cmd_array,
 		     "help",
 		     /* TRANSLATORS: command description */
