@@ -29,8 +29,9 @@
 #include <glib-object.h>
 #include <gio/gio.h>
 
-#include "zif-string.h"
+#include "zif-depend.h"
 #include "zif-state.h"
+#include "zif-string.h"
 
 G_BEGIN_DECLS
 
@@ -140,6 +141,27 @@ GPtrArray		*zif_package_get_conflicts	(ZifPackage	*package,
 							 ZifState	*state,
 							 GError		**error);
 guint64			 zif_package_get_time_file	(ZifPackage	*package);
+
+gboolean		 zif_package_provides		(ZifPackage	*package,
+							 ZifDepend	*depend,
+							 ZifDepend	**satisfies,
+							 ZifState	*state,
+							 GError		**error);
+gboolean		 zif_package_conflicts		(ZifPackage	*package,
+							 ZifDepend	*depend,
+							 ZifDepend	**satisfies,
+							 ZifState	*state,
+							 GError		**error);
+gboolean		 zif_package_requires		(ZifPackage	*package,
+							 ZifDepend	*depend,
+							 ZifDepend	**satisfies,
+							 ZifState	*state,
+							 GError		**error);
+gboolean		 zif_package_obsoletes		(ZifPackage	*package,
+							 ZifDepend	*depend,
+							 ZifDepend	**satisfies,
+							 ZifState	*state,
+							 GError		**error);
 
 /* internal setters */
 gboolean		 zif_package_set_id		(ZifPackage	*package,

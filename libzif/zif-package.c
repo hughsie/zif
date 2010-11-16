@@ -573,6 +573,348 @@ out:
 }
 
 /**
+ * zif_package_satisfies_file_depend:
+ **/
+static gboolean
+zif_package_satisfies_file_depend (ZifPackage *package,
+				   const gchar *filename,
+				   ZifDepend **satisfies,
+				   ZifState *state,
+				   GError **error)
+{
+	gboolean ret = TRUE;
+	GError *error_local = NULL;
+	const gchar *filename_tmp;
+	GPtrArray *provides;
+	guint i;
+
+	/* get files */
+	zif_state_reset (state);
+	provides = zif_package_get_files (package, state, &error_local);
+	if (provides == NULL) {
+		ret = FALSE;
+		g_set_error (error,
+			     ZIF_PACKAGE_ERROR,
+			     ZIF_PACKAGE_ERROR_FAILED,
+			     "failed to get files for %s: %s",
+			     zif_package_get_id (package),
+			     error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* search array */
+	if (0) {
+		g_debug ("%i files for %s",
+			 provides->len,
+			 zif_package_get_id (package));
+		for (i=0; i<provides->len; i++) {
+			filename_tmp = g_ptr_array_index (provides, i);
+			g_debug ("require: %s:%s", filename_tmp, filename);
+		}
+	}
+	for (i=0; i<provides->len; i++) {
+		filename_tmp = g_ptr_array_index (provides, i);
+		if (g_strcmp0 (filename_tmp, filename) == 0) {
+			*satisfies = zif_depend_new ();
+			zif_depend_set_flag (*satisfies, ZIF_DEPEND_FLAG_ANY);
+			zif_depend_set_name (*satisfies, filename);
+			goto out;
+		}
+	}
+
+	/* success, but did not find */
+	*satisfies = NULL;
+out:
+	return ret;
+}
+
+/**
+ * zif_package_provides:
+ * @package: the #ZifPackage object
+ * @depend: the dependency to try and satisfy
+ * @satisfies: the matched dependency, free with g_object_unref() if not %NULL
+ * @state: a #ZifState to use for progress reporting
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Gets the package dependency that satisfies the supplied dependency.
+ *
+ * Return value: %TRUE if the package was searched.
+ * Use @satisfies == %NULL to detect a missing dependency.
+ *
+ * Since: 0.1.3
+ **/
+gboolean
+zif_package_provides (ZifPackage *package,
+		      ZifDepend *depend,
+		      ZifDepend **satisfies,
+		      ZifState *state,
+		      GError **error)
+{
+	gboolean ret = TRUE;
+	GError *error_local = NULL;
+	GPtrArray *provides = NULL;
+	guint i;
+	ZifDepend *depend_tmp;
+
+//g_print ("XXX: PROVIDE: %s: %s\n", zif_package_get_id (package), zif_depend_get_description (depend));
+
+	/* is this a file require */
+	if (zif_depend_get_name (depend)[0] == '/') {
+		ret = zif_package_satisfies_file_depend (package,
+							 zif_depend_get_name (depend),
+							 satisfies,
+							 state,
+							 error);
+		goto out;
+	}
+
+	/* get the list of provides */
+	zif_state_reset (state);
+	provides = zif_package_get_provides (package, state, &error_local);
+	if (provides == NULL) {
+		ret = FALSE;
+		g_set_error (error,
+			     ZIF_PACKAGE_ERROR,
+			     ZIF_PACKAGE_ERROR_FAILED,
+			     "failed to get provides for %s: %s",
+			     zif_package_get_id (package),
+			     error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* find what we're looking for */
+	for (i=0; i<provides->len; i++) {
+		depend_tmp = g_ptr_array_index (provides, i);
+		ret = zif_depend_satisfies (depend, depend_tmp);
+		if (ret) {
+			*satisfies = g_object_ref (depend_tmp);
+			goto out;
+		}
+	}
+
+	/* success, but did not find */
+	ret = TRUE;
+	*satisfies = NULL;
+out:
+	if (provides != NULL)
+		g_ptr_array_unref (provides);
+	return ret;
+}
+
+/**
+ * zif_package_requires:
+ * @package: the #ZifPackage object
+ * @depend: the dependency to try and satisfy
+ * @satisfies: the matched dependency, free with g_object_unref() if not %NULL
+ * @state: a #ZifState to use for progress reporting
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Gets the package dependency that satisfies the supplied dependency.
+ *
+ * Return value: %TRUE if the package was searched.
+ * Use @satisfies == %NULL to detect a missing dependency.
+ *
+ * Since: 0.1.3
+ **/
+gboolean
+zif_package_requires (ZifPackage *package,
+		      ZifDepend *depend,
+		      ZifDepend **satisfies,
+		      ZifState *state,
+		      GError **error)
+{
+	gboolean ret = TRUE;
+	GError *error_local = NULL;
+	GPtrArray *requires;
+	guint i;
+	ZifDepend *depend_tmp;
+
+//g_print ("XXX: REQUIRE: %s: %s\n", zif_package_get_id (package), zif_depend_get_description (depend));
+
+	/* get the list of requires */
+	if (0) {
+		g_debug ("Find out if %s requires %s",
+			 zif_package_get_id (package),
+			 zif_depend_get_description (depend));
+	}
+	zif_state_reset (state);
+	requires = zif_package_get_requires (package, state, &error_local);
+	if (requires == NULL) {
+		ret = FALSE;
+		g_set_error (error,
+			     ZIF_PACKAGE_ERROR,
+			     ZIF_PACKAGE_ERROR_FAILED,
+			     "failed to get requires for %s: %s",
+			     zif_package_get_id (package),
+			     error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* find what we're looking for */
+	if (0) {
+		g_debug ("got %i requires for %s",
+			 requires->len,
+			 zif_package_get_id (package));
+		for (i=0; i<requires->len; i++) {
+			depend_tmp = g_ptr_array_index (requires, i);
+			g_debug ("%i.\t%s",
+				 i+1,
+				 zif_depend_get_description (depend_tmp));
+		}
+	}
+	for (i=0; i<requires->len; i++) {
+		depend_tmp = g_ptr_array_index (requires, i);
+		if (zif_depend_satisfies (depend, depend_tmp)) {
+			g_debug ("%s satisfied by %s",
+				 zif_depend_get_description (depend_tmp),
+				 zif_package_get_id (package));
+			ret = TRUE;
+			*satisfies = g_object_ref (depend_tmp);
+			goto out;
+		}
+	}
+
+	/* success, but did not find */
+	ret = TRUE;
+	*satisfies = NULL;
+out:
+	if (requires != NULL)
+		g_ptr_array_unref (requires);
+	return ret;
+}
+
+/**
+ * zif_package_conflicts:
+ * @package: the #ZifPackage object
+ * @depend: the dependency to try and satisfy
+ * @satisfies: the matched dependency, free with g_object_unref() if not %NULL
+ * @state: a #ZifState to use for progress reporting
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Gets the package dependency that satisfies the supplied dependency.
+ *
+ * Return value: %TRUE if the package was searched.
+ * Use @satisfies == %NULL to detect a missing dependency.
+ *
+ * Since: 0.1.3
+ **/
+gboolean
+zif_package_conflicts (ZifPackage *package,
+		       ZifDepend *depend,
+		       ZifDepend **satisfies,
+		       ZifState *state,
+		       GError **error)
+{
+	gboolean ret = TRUE;
+	GError *error_local = NULL;
+	GPtrArray *conflicts = NULL;
+	guint i;
+	ZifDepend *depend_tmp;
+
+//g_print ("XXX: CONFLICT: %s: %s\n", zif_package_get_id (package), zif_depend_get_description (depend));
+
+	/* get the list of conflicts */
+	zif_state_reset (state);
+	conflicts = zif_package_get_conflicts (package, state, &error_local);
+	if (conflicts == NULL) {
+		ret = FALSE;
+		g_set_error (error,
+			     ZIF_PACKAGE_ERROR,
+			     ZIF_PACKAGE_ERROR_FAILED,
+			     "failed to get conflicts for %s: %s",
+			     zif_package_get_id (package),
+			     error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* find what we're looking for */
+	for (i=0; i<conflicts->len; i++) {
+		depend_tmp = g_ptr_array_index (conflicts, i);
+		ret = zif_depend_satisfies (depend, depend_tmp);
+		if (ret) {
+			*satisfies = g_object_ref (depend_tmp);
+			goto out;
+		}
+	}
+
+	/* success, but did not find */
+	ret = TRUE;
+	*satisfies = NULL;
+out:
+	if (conflicts != NULL)
+		g_ptr_array_unref (conflicts);
+	return ret;
+}
+
+/**
+ * zif_package_obsoletes:
+ * @package: the #ZifPackage object
+ * @depend: the dependency to try and satisfy
+ * @satisfies: the matched dependency, free with g_object_unref() if not %NULL
+ * @state: a #ZifState to use for progress reporting
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Gets the package dependency that satisfies the supplied dependency.
+ *
+ * Return value: %TRUE if the package was searched.
+ * Use @satisfies == %NULL to detect a missing dependency.
+ *
+ * Since: 0.1.3
+ **/
+gboolean
+zif_package_obsoletes (ZifPackage *package,
+		       ZifDepend *depend,
+		       ZifDepend **satisfies,
+		       ZifState *state,
+		       GError **error)
+{
+	gboolean ret = TRUE;
+	GError *error_local = NULL;
+	GPtrArray *obsoletes = NULL;
+	guint i;
+	ZifDepend *depend_tmp;
+
+//g_print ("XXX: OBSOLETE: %s: %s\n", zif_package_get_id (package), zif_depend_get_description (depend));
+
+	/* get the list of obsoletes */
+	zif_state_reset (state);
+	obsoletes = zif_package_get_obsoletes (package, state, &error_local);
+	if (obsoletes == NULL) {
+		ret = FALSE;
+		g_set_error (error,
+			     ZIF_PACKAGE_ERROR,
+			     ZIF_PACKAGE_ERROR_FAILED,
+			     "failed to get obsoletes for %s: %s",
+			     zif_package_get_id (package),
+			     error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* find what we're looking for */
+	for (i=0; i<obsoletes->len; i++) {
+		depend_tmp = g_ptr_array_index (obsoletes, i);
+		ret = zif_depend_satisfies (depend, depend_tmp);
+		if (ret) {
+			*satisfies = g_object_ref (depend_tmp);
+			goto out;
+		}
+	}
+
+	/* success, but did not find */
+	ret = TRUE;
+	*satisfies = NULL;
+out:
+	if (obsoletes != NULL)
+		g_ptr_array_unref (obsoletes);
+	return ret;
+}
+
+/**
  * zif_package_get_id:
  * @package: the #ZifPackage object
  *

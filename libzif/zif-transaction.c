@@ -586,195 +586,6 @@ zif_transaction_add_remove (ZifTransaction *transaction, ZifPackage *package, GE
 }
 
 /**
- * zif_transaction_package_file_depend:
- **/
-static gboolean
-zif_transaction_package_file_depend (ZifPackage *package,
-				     const gchar *filename,
-				     ZifDepend **satisfies,
-				     ZifState *state,
-				     GError **error)
-{
-	gboolean ret = TRUE;
-	GError *error_local = NULL;
-	const gchar *filename_tmp;
-	GPtrArray *provides;
-	guint i;
-
-	/* get files */
-	zif_state_reset (state);
-	provides = zif_package_get_files (package, state, &error_local);
-	if (provides == NULL) {
-		ret = FALSE;
-		g_set_error (error,
-			     ZIF_TRANSACTION_ERROR,
-			     ZIF_TRANSACTION_ERROR_FAILED,
-			     "failed to get files for %s: %s",
-			     zif_package_get_id (package),
-			     error_local->message);
-		g_error_free (error_local);
-		goto out;
-	}
-
-	/* search array */
-	if (0) {
-		g_debug ("%i files for %s",
-			 provides->len,
-			 zif_package_get_id (package));
-		for (i=0; i<provides->len; i++) {
-			filename_tmp = g_ptr_array_index (provides, i);
-			g_debug ("require: %s:%s", filename_tmp, filename);
-		}
-	}
-	for (i=0; i<provides->len; i++) {
-		filename_tmp = g_ptr_array_index (provides, i);
-		if (g_strcmp0 (filename_tmp, filename) == 0) {
-			*satisfies = zif_depend_new ();
-			zif_depend_set_flag (*satisfies, ZIF_DEPEND_FLAG_ANY);
-			zif_depend_set_name (*satisfies, filename);
-			goto out;
-		}
-	}
-
-	/* success, but did not find */
-	*satisfies = NULL;
-out:
-	return ret;
-}
-
-/**
- * zif_transaction_package_provides:
- * @satisfies: the matched depend, free with g_object_unref() in for not %NULL
- **/
-static gboolean
-zif_transaction_package_provides (ZifPackage *package,
-				  ZifDepend *depend,
-				  ZifDepend **satisfies,
-				  ZifState *state,
-				  GError **error)
-{
-	gboolean ret = TRUE;
-	GError *error_local = NULL;
-	GPtrArray *provides = NULL;
-	guint i;
-	ZifDepend *depend_tmp;
-
-	/* is this a file require */
-	if (zif_depend_get_name (depend)[0] == '/') {
-		ret = zif_transaction_package_file_depend (package,
-							   zif_depend_get_name (depend),
-							   satisfies,
-							   state,
-							   error);
-		goto out;
-	}
-
-	/* get the list of provides (which is cached after the first access) */
-	zif_state_reset (state);
-	provides = zif_package_get_provides (package, state, &error_local);
-	if (provides == NULL) {
-		ret = FALSE;
-		g_set_error (error,
-			     ZIF_TRANSACTION_ERROR,
-			     ZIF_TRANSACTION_ERROR_FAILED,
-			     "failed to get provides for %s: %s",
-			     zif_package_get_id (package),
-			     error_local->message);
-		g_error_free (error_local);
-		goto out;
-	}
-
-	/* find what we're looking for */
-	for (i=0; i<provides->len; i++) {
-		depend_tmp = g_ptr_array_index (provides, i);
-		ret = zif_depend_satisfies (depend, depend_tmp);
-		if (ret) {
-			*satisfies = g_object_ref (depend_tmp);
-			goto out;
-		}
-	}
-
-	/* success, but did not find */
-	ret = TRUE;
-	*satisfies = NULL;
-out:
-	if (provides != NULL)
-		g_ptr_array_unref (provides);
-	return ret;
-}
-
-/**
- * zif_transaction_package_requires:
- *
- * Satisfies is the dep that satisfies the query. Free with g_object_unref().
- **/
-static gboolean
-zif_transaction_package_requires (ZifPackage *package,
-				  ZifDepend *depend,
-				  ZifDepend **satisfies,
-				  ZifState *state,
-				  GError **error)
-{
-	gboolean ret = TRUE;
-	GError *error_local = NULL;
-	GPtrArray *requires;
-	guint i;
-	ZifDepend *depend_tmp;
-
-	/* get the list of requires (which is cached after the first access) */
-	if (0) {
-		g_debug ("Find out if %s requires %s",
-			 zif_package_get_id (package),
-			 zif_depend_get_description (depend));
-	}
-	zif_state_reset (state);
-	requires = zif_package_get_requires (package, state, &error_local);
-	if (requires == NULL) {
-		ret = FALSE;
-		g_set_error (error,
-			     ZIF_TRANSACTION_ERROR,
-			     ZIF_TRANSACTION_ERROR_FAILED,
-			     "failed to get requires for %s: %s",
-			     zif_package_get_id (package),
-			     error_local->message);
-		g_error_free (error_local);
-		goto out;
-	}
-
-	/* find what we're looking for */
-	if (0) {
-		g_debug ("got %i requires for %s",
-			 requires->len,
-			 zif_package_get_id (package));
-		for (i=0; i<requires->len; i++) {
-			depend_tmp = g_ptr_array_index (requires, i);
-			g_debug ("%i.\t%s",
-				 i+1,
-				 zif_depend_get_description (depend_tmp));
-		}
-	}
-	for (i=0; i<requires->len; i++) {
-		depend_tmp = g_ptr_array_index (requires, i);
-		if (zif_depend_satisfies (depend, depend_tmp)) {
-			g_debug ("%s satisfied by %s",
-				 zif_depend_get_description (depend_tmp),
-				 zif_package_get_id (package));
-			ret = TRUE;
-			*satisfies = g_object_ref (depend_tmp);
-			goto out;
-		}
-	}
-
-	/* success, but did not find */
-	ret = TRUE;
-	*satisfies = NULL;
-out:
-	if (requires != NULL)
-		g_ptr_array_unref (requires);
-	return ret;
-}
-
-/**
  * zif_transaction_get_package_provide_from_array:
  **/
 static gboolean
@@ -794,7 +605,7 @@ zif_transaction_get_package_provide_from_array (GPtrArray *array,
 		item = g_ptr_array_index (array, i);
 
 		/* does this match */
-		ret = zif_transaction_package_provides (item->package,
+		ret = zif_package_provides (item->package,
 							depend,
 							&satisfies,
 							state,
@@ -925,7 +736,7 @@ _zif_package_array_filter_packages_by_depend_version (GPtrArray *array,
 	/* remove entries that do not satisfy the best dep */
 	for (i=0; i<array->len;) {
 		package = g_ptr_array_index (array, i);
-		ret = zif_transaction_package_provides (package, depend, &satisfies, state, error);
+		ret = zif_package_provides (package, depend, &satisfies, state, error);
 		if (!ret)
 			goto out;
 		if (satisfies == NULL) {
@@ -963,7 +774,7 @@ zif_transaction_get_package_provide_from_package_array (GPtrArray *array,
 		package_tmp = g_ptr_array_index (array, i);
 
 		/* does this match */
-		ret = zif_transaction_package_provides (package_tmp, depend, &satisfies, state, error);
+		ret = zif_package_provides (package_tmp, depend, &satisfies, state, error);
 		if (!ret)
 			goto out;
 
@@ -1137,7 +948,7 @@ zif_transaction_get_package_requires_from_store (ZifStore *store,
 		}
 
 		/* get requires */
-		ret = zif_transaction_package_requires (package,
+		ret = zif_package_requires (package,
 							depend,
 							&satisfies,
 							state,
@@ -1625,7 +1436,7 @@ zif_transaction_resolve_remove_require (ZifTransactionResolve *data,
 
 		/* is the thing that the package requires provided by something in install
 		 * NOTE: we need to get the actual depend of the package, not the thing passed to us */
-		ret = zif_transaction_package_requires (package, depend, &satisfies, data->state, error);
+		ret = zif_package_requires (package, depend, &satisfies, data->state, error);
 		if (!ret)
 			goto out;
 
@@ -2053,57 +1864,6 @@ out:
 }
 
 /**
- * zif_transaction_package_conflicts:
- * @satisfies: the matched depend, free with g_object_unref() in for not %NULL
- **/
-static gboolean
-zif_transaction_package_conflicts (ZifPackage *package,
-				   ZifDepend *depend,
-				   ZifDepend **satisfies,
-				   ZifState *state,
-				   GError **error)
-{
-	gboolean ret = TRUE;
-	GError *error_local = NULL;
-	GPtrArray *conflicts = NULL;
-	guint i;
-	ZifDepend *depend_tmp;
-
-	/* get the list of conflicts (which is cached after the first access) */
-	zif_state_reset (state);
-	conflicts = zif_package_get_conflicts (package, state, &error_local);
-	if (conflicts == NULL) {
-		ret = FALSE;
-		g_set_error (error,
-			     ZIF_TRANSACTION_ERROR,
-			     ZIF_TRANSACTION_ERROR_FAILED,
-			     "failed to get conflicts for %s: %s",
-			     zif_package_get_id (package),
-			     error_local->message);
-		g_error_free (error_local);
-		goto out;
-	}
-
-	/* find what we're looking for */
-	for (i=0; i<conflicts->len; i++) {
-		depend_tmp = g_ptr_array_index (conflicts, i);
-		ret = zif_depend_satisfies (depend, depend_tmp);
-		if (ret) {
-			*satisfies = g_object_ref (depend_tmp);
-			goto out;
-		}
-	}
-
-	/* success, but did not find */
-	ret = TRUE;
-	*satisfies = NULL;
-out:
-	if (conflicts != NULL)
-		g_ptr_array_unref (conflicts);
-	return ret;
-}
-
-/**
  * zif_transaction_get_package_conflict_from_package_array:
  **/
 static gboolean
@@ -2126,7 +1886,7 @@ zif_transaction_get_package_conflict_from_package_array (GPtrArray *array,
 		package_tmp = g_ptr_array_index (array, i);
 
 		/* does this match */
-		ret = zif_transaction_package_conflicts (package_tmp, depend, &satisfies, state, error);
+		ret = zif_package_conflicts (package_tmp, depend, &satisfies, state, error);
 		if (!ret)
 			goto out;
 
@@ -2189,7 +1949,7 @@ zif_transaction_get_package_conflict_from_array (GPtrArray *array,
 		item = g_ptr_array_index (array, i);
 
 		/* does this match */
-		ret = zif_transaction_package_conflicts (item->package, depend, &satisfies, state, error);
+		ret = zif_package_conflicts (item->package, depend, &satisfies, state, error);
 		if (!ret)
 			goto out;
 
