@@ -1620,6 +1620,7 @@ static gboolean
 zif_cmd_install (ZifCmdPrivate *priv, gchar **values, GError **error)
 {
 	gboolean ret = FALSE;
+	guint i;
 	GError *error_local = NULL;
 	GPtrArray *array = NULL;
 	GPtrArray *store_array_local = NULL;
@@ -1709,16 +1710,18 @@ zif_cmd_install (ZifCmdPrivate *priv, gchar **values, GError **error)
 	if (!ret)
 		goto out;
 
-	/* install this package, TODO: what if > 1? */
-	package = g_ptr_array_index (array, 0);
-	transaction = zif_transaction_new ();
-	ret = zif_transaction_add_install (transaction, package, &error_local);
-	if (!ret) {
-		g_set_error (error, 1, 0, "failed to add update %s: %s",
-			 zif_package_get_name (package),
-			 error_local->message);
-		g_error_free (error_local);
-		goto out;
+	/* install these packages */
+	for (i=0; i<array->len; i++) {
+		package = g_ptr_array_index (array, i);
+		transaction = zif_transaction_new ();
+		ret = zif_transaction_add_install (transaction, package, &error_local);
+		if (!ret) {
+			g_set_error (error, 1, 0, "failed to add install %s: %s",
+				 zif_package_get_name (package),
+				 error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
 	}
 
 	/* run what we've got */
@@ -1757,6 +1760,8 @@ static gboolean
 zif_cmd_local_install (ZifCmdPrivate *priv, gchar **values, GError **error)
 {
 	gboolean ret = FALSE;
+	GPtrArray *array = NULL;
+	guint i;
 	ZifPackage *package = NULL;
 	ZifState *state_local;
 	ZifTransaction *transaction = NULL;
@@ -1780,23 +1785,30 @@ zif_cmd_local_install (ZifCmdPrivate *priv, gchar **values, GError **error)
 		goto out;
 
 	/* read file */
-	package = zif_package_local_new ();
-	ret = zif_package_local_set_from_filename (ZIF_PACKAGE_LOCAL (package),
-						   values[0],
-						   error);
-	if (!ret)
-		goto out;
+	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
+	for (i=0; values[i] != NULL; i++) {
+		package = zif_package_local_new ();
+		g_ptr_array_add (array, package);
+		ret = zif_package_local_set_from_filename (ZIF_PACKAGE_LOCAL (package),
+							   values[i],
+							   error);
+		if (!ret)
+			goto out;
+	}
 
 	/* this section done */
 	ret = zif_state_done (priv->state, error);
 	if (!ret)
 		goto out;
 
-	/* add the file to the transaction */
+	/* add the files to the transaction */
 	transaction = zif_transaction_new ();
-	ret = zif_transaction_add_install (transaction, package, error);
-	if (!ret)
-		goto out;
+	for (i=0; i<array->len; i++) {
+		package = g_ptr_array_index (array, i);
+		ret = zif_transaction_add_install (transaction, package, error);
+		if (!ret)
+			goto out;
+	}
 
 	/* this section done */
 	ret = zif_state_done (priv->state, error);
@@ -1819,10 +1831,10 @@ zif_cmd_local_install (ZifCmdPrivate *priv, gchar **values, GError **error)
 	/* success */
 	ret = TRUE;
 out:
+	if (array != NULL)
+		g_ptr_array_unref (array);
 	if (transaction != NULL)
 		g_object_unref (transaction);
-	if (package != NULL)
-		g_object_unref (package);
 	return ret;
 }
 
@@ -2067,13 +2079,14 @@ out:
 static gboolean
 zif_cmd_remove (ZifCmdPrivate *priv, gchar **values, GError **error)
 {
-	GPtrArray *array = NULL;
-	GPtrArray *store_array = NULL;
-	ZifState *state_local;
 	gboolean ret = FALSE;
 	GError *error_local = NULL;
-	ZifPackage *package;
+	GPtrArray *array = NULL;
 	GPtrArray *store_array_local = NULL;
+	GPtrArray *store_array = NULL;
+	guint i;
+	ZifPackage *package;
+	ZifState *state_local;
 	ZifTransaction *transaction = NULL;
 
 	/* check we have a value */
@@ -2119,27 +2132,24 @@ zif_cmd_remove (ZifCmdPrivate *priv, gchar **values, GError **error)
 		g_set_error (error, 1, 0, "package not installed");
 		goto out;
 	}
-	if (array->len > 1) {
-		ret = FALSE;
-		g_set_error (error, 1, 0, "more than one package matches");
-		goto out;
-	}
 
 	/* this section done */
 	ret = zif_state_done (priv->state, error);
 	if (!ret)
 		goto out;
 
-	/* install this package, TODO: what if > 1? */
-	package = g_ptr_array_index (array, 0);
-	transaction = zif_transaction_new ();
-	ret = zif_transaction_add_remove (transaction, package, &error_local);
-	if (!ret) {
-		g_set_error (error, 1, 0, "failed to add remove %s: %s",
-			 zif_package_get_name (package),
-			 error_local->message);
-		g_error_free (error_local);
-		goto out;
+	/* remove these packages */
+	for (i=0; i<array->len; i++) {
+		package = g_ptr_array_index (array, i);
+		transaction = zif_transaction_new ();
+		ret = zif_transaction_add_remove (transaction, package, &error_local);
+		if (!ret) {
+			g_set_error (error, 1, 0, "failed to add remove %s: %s",
+				 zif_package_get_name (package),
+				 error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
 	}
 
 	/* run what we've got */
@@ -2837,12 +2847,13 @@ static gboolean
 zif_cmd_update (ZifCmdPrivate *priv, gchar **values, GError **error)
 {
 	gboolean ret = FALSE;
-	GPtrArray *array = NULL;
-	GPtrArray *store_array = NULL;
-	ZifState *state_local;
 	GError *error_local = NULL;
-	ZifPackage *package;
+	GPtrArray *array = NULL;
 	GPtrArray *store_array_local = NULL;
+	GPtrArray *store_array = NULL;
+	guint i;
+	ZifPackage *package;
+	ZifState *state_local;
 	ZifTransaction *transaction = NULL;
 
 	/* check we have a value */
@@ -2893,27 +2904,24 @@ zif_cmd_update (ZifCmdPrivate *priv, gchar **values, GError **error)
 		g_set_error (error, 1, 0, "package not installed");
 		goto out;
 	}
-	if (array->len > 1) {
-		ret = FALSE;
-		g_set_error (error, 1, 0, "more than one package matches");
-		goto out;
-	}
 
 	/* this section done */
 	ret = zif_state_done (priv->state, error);
 	if (!ret)
 		goto out;
 
-	/* install this package, TODO: what if > 1? */
-	package = g_ptr_array_index (array, 0);
-	transaction = zif_transaction_new ();
-	ret = zif_transaction_add_update (transaction, package, &error_local);
-	if (!ret) {
-		g_set_error (error, 1, 0, "failed to add update %s: %s",
-			 zif_package_get_name (package),
-			 error_local->message);
-		g_error_free (error_local);
-		goto out;
+	/* install this package */
+	for (i=0; i<array->len; i++) {
+		package = g_ptr_array_index (array, i);
+		transaction = zif_transaction_new ();
+		ret = zif_transaction_add_update (transaction, package, &error_local);
+		if (!ret) {
+			g_set_error (error, 1, 0, "failed to add update %s: %s",
+				 zif_package_get_name (package),
+				 error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
 	}
 
 	/* run what we've got */
