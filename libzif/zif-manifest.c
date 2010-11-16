@@ -712,6 +712,9 @@ zif_manifest_check (ZifManifest *manifest,
 		/* this is special */
 		if (error_local->code == ZIF_TRANSACTION_ERROR_NOTHING_TO_DO) {
 			g_clear_error (&error_local);
+			ret = zif_state_finished (state_local, error);
+			if (!ret)
+				goto out;
 		} else {
 			g_set_error (error,
 				     ZIF_MANIFEST_ERROR,

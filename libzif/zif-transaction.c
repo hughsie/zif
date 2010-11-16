@@ -2010,10 +2010,10 @@ skip:
 	if (value <= 0) {
 		g_set_error (error,
 			     ZIF_TRANSACTION_ERROR,
-			     ZIF_TRANSACTION_ERROR_FAILED,
+			     ZIF_TRANSACTION_ERROR_NOTHING_TO_DO,
 			     "installed package %s is newer than package updated %s",
-			     zif_package_get_id (package),
-			     zif_package_get_id (item->package));
+			     zif_package_get_id (item->package),
+			     zif_package_get_id (package));
 		goto out;
 	}
 
