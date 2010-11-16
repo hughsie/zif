@@ -132,12 +132,12 @@ zif_transaction_reason_to_string (ZifTransactionReason reason)
 		return "remove-user-action";
 	if (reason == ZIF_TRANSACTION_REASON_UPDATE_USER_ACTION)
 		return "update-user-action";
-	if (reason == ZIF_TRANSACTION_REASON_INSTALL_ONLYN)
-		return "install-onlyn";
+	if (reason == ZIF_TRANSACTION_REASON_REMOVE_AS_ONLYN)
+		return "remove-as-onlyn";
 	if (reason == ZIF_TRANSACTION_REASON_INSTALL_DEPEND)
 		return "install-depend";
-	if (reason == ZIF_TRANSACTION_REASON_OBSOLETE)
-		return "obsolete";
+	if (reason == ZIF_TRANSACTION_REASON_REMOVE_OBSOLETE)
+		return "remove-obsolete";
 	if (reason == ZIF_TRANSACTION_REASON_REMOVE_FOR_UPDATE)
 		return "remove-for-update";
 	if (reason == ZIF_TRANSACTION_REASON_INSTALL_FOR_UPDATE)
@@ -1285,7 +1285,7 @@ zif_transaction_resolve_install_item (ZifTransactionResolve *data,
 			ret = zif_transaction_add_remove_internal (data->transaction,
 								   package_oldest,
 								   NULL,
-								   ZIF_TRANSACTION_REASON_INSTALL_ONLYN,
+								   ZIF_TRANSACTION_REASON_REMOVE_AS_ONLYN,
 								   error);
 			if (!ret) {
 				g_assert (error == NULL || *error != NULL);
@@ -1758,7 +1758,7 @@ zif_transaction_resolve_update_item (ZifTransactionResolve *data,
 		ret = zif_transaction_add_remove_internal (data->transaction,
 							   item->package,
 							   item->package,
-							   ZIF_TRANSACTION_REASON_OBSOLETE,
+							   ZIF_TRANSACTION_REASON_REMOVE_OBSOLETE,
 							   error);
 		if (!ret)
 			goto out;
