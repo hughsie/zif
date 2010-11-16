@@ -2321,11 +2321,14 @@ zif_cmd_repo_list (ZifCmdPrivate *priv, gchar **values, GError **error)
 	gboolean ret;
 	gchar *id_pad;
 	GPtrArray *array;
+	GString *string = NULL;
 	guint i;
 	guint length;
 	guint max_length = 0;
 	ZifRepos *repos;
 	ZifStore *store_tmp;
+	gboolean enabled;
+	const gchar *name;
 
 	/* ZifRepos */
 	repos = zif_repos_new ();
@@ -2340,8 +2343,6 @@ zif_cmd_repo_list (ZifCmdPrivate *priv, gchar **values, GError **error)
 		goto out;
 	}
 
-	zif_progress_bar_end (priv->progressbar);
-
 	/* get maximum id string length */
 	for (i=0; i<array->len; i++) {
 		store_tmp = g_ptr_array_index (array, i);
@@ -2351,22 +2352,40 @@ zif_cmd_repo_list (ZifCmdPrivate *priv, gchar **values, GError **error)
 			max_length = length;
 	}
 
-	/* print */
+	/* populate string */
+	string = g_string_new ("");
 	for (i=0; i<array->len; i++) {
 		store_tmp = g_ptr_array_index (array, i);
 		id_pad = zif_strpad (zif_store_get_id (store_tmp), max_length);
-		g_print ("%s\t%s\t%s\n",
-			 id_pad,
-			 zif_store_remote_get_enabled (ZIF_STORE_REMOTE (store_tmp),
-						       priv->state, NULL) ? "enabled " : "disabled",
-			 zif_store_remote_get_name (ZIF_STORE_REMOTE (store_tmp),
-						    priv->state, NULL));
+
+		/* get data */
+		zif_state_reset (priv->state);
+		name =  zif_store_remote_get_name (ZIF_STORE_REMOTE (store_tmp),
+						   priv->state, error);
+		if (name == NULL) {
+			ret = FALSE;
+			goto out;
+		}
+		zif_state_reset (priv->state);
+		enabled = zif_store_remote_get_enabled (ZIF_STORE_REMOTE (store_tmp),
+							priv->state, NULL);
+		g_string_append (string, id_pad);
+		g_string_append (string, enabled ? " enabled   " : " disabled  ");
+		g_string_append (string, name);
+		g_string_append (string, "\n");
 		g_free (id_pad);
 	}
+
+	zif_progress_bar_end (priv->progressbar);
+
+	/* print */
+	g_print ("%s", string->str);
 
 	/* success */
 	ret = TRUE;
 out:
+	if (string != NULL)
+		g_string_free (string, TRUE);
 	g_object_unref (repos);
 	if (array != NULL)
 		g_ptr_array_unref (array);

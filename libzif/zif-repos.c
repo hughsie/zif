@@ -302,7 +302,8 @@ zif_repos_load (ZifRepos *repos, ZifState *state, GError **error)
 
 	/* setup state with the correct number of steps */
 	state_local = zif_state_get_child (state);
-	zif_state_set_number_steps (state_local, repofiles->len);
+	if (repofiles->len > 0)
+		zif_state_set_number_steps (state_local, repofiles->len);
 
 	/* for each repo files */
 	for (i=0; i < repofiles->len; i++) {
@@ -349,7 +350,8 @@ zif_repos_load (ZifRepos *repos, ZifState *state, GError **error)
 
 	/* find enabled */
 	state_local = zif_state_get_child (state);
-	zif_state_set_number_steps (state_local, repos->priv->list->len);
+	if (repos->priv->list->len > 0)
+		zif_state_set_number_steps (state_local, repos->priv->list->len);
 	for (i=0; i<repos->priv->list->len; i++) {
 		store = g_ptr_array_index (repos->priv->list, i);
 
