@@ -477,40 +477,6 @@ zif_store_get_packages (ZifStore *store, ZifState *state, GError **error)
 }
 
 /**
- * zif_store_get_updates:
- * @store: the #ZifStore object
- * @packages: an array of #ZifPackage's
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
- *
- * Return a list of packages that are updatable.
- *
- * Return value: an array of #ZifPackage's
- *
- * Since: 0.1.0
- **/
-GPtrArray *
-zif_store_get_updates (ZifStore *store, GPtrArray *packages,
-		       ZifState *state, GError **error)
-{
-	ZifStoreClass *klass = ZIF_STORE_GET_CLASS (store);
-
-	g_return_val_if_fail (ZIF_IS_STORE (store), NULL);
-	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
-	g_return_val_if_fail (packages != NULL, NULL);
-	g_return_val_if_fail (zif_state_valid (state), NULL);
-
-	/* no support */
-	if (klass->get_updates == NULL) {
-		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_NO_SUPPORT,
-				     "operation cannot be performed on this store");
-		return NULL;
-	}
-
-	return klass->get_updates (store, packages, state, error);
-}
-
-/**
  * zif_store_find_package:
  * @store: the #ZifStore object
  * @package_id: the package ID which defines the package

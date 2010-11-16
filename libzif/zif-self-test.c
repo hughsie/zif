@@ -2374,7 +2374,6 @@ zif_store_remote_func (void)
 	ZifGroups *groups;
 	ZifStoreRemote *store;
 	ZifStoreLocal *store_local;
-	GPtrArray *packages;
 	ZifConfig *config;
 	ZifLock *lock;
 	ZifState *state;
@@ -2430,18 +2429,6 @@ zif_store_remote_func (void)
 	filename = zif_test_get_data_file ("root");
 	zif_store_local_set_prefix (store_local, filename, NULL);
 	g_free (filename);
-
-	zif_state_reset (state);
-	packages = zif_store_get_packages (ZIF_STORE (store_local), state, &error);
-	g_assert_no_error (error);
-	g_assert (packages != NULL);
-	zif_package_array_filter_newest (packages);
-	zif_state_reset (state);
-	array = zif_store_get_updates (ZIF_STORE (store), packages, state, &error);
-	g_assert_no_error (error);
-	g_assert (array != NULL);
-	g_ptr_array_unref (array);
-	g_ptr_array_unref (packages);
 
 	zif_state_reset (state);
 	g_assert (!zif_store_remote_is_devel (store, state, NULL));

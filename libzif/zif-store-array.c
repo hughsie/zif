@@ -48,7 +48,6 @@
 
 typedef enum {
 	ZIF_ROLE_GET_PACKAGES,
-	ZIF_ROLE_GET_UPDATES,
 	ZIF_ROLE_RESOLVE,
 	ZIF_ROLE_SEARCH_DETAILS,
 	ZIF_ROLE_SEARCH_FILE,
@@ -70,8 +69,6 @@ zif_role_to_string (ZifRole role)
 {
 	if (role == ZIF_ROLE_GET_PACKAGES)
 		return "get-packages";
-	if (role == ZIF_ROLE_GET_UPDATES)
-		return "get-updates";
 	if (role == ZIF_ROLE_RESOLVE)
 		return "resolve";
 	if (role == ZIF_ROLE_SEARCH_DETAILS)
@@ -308,8 +305,6 @@ zif_store_array_repos_search (GPtrArray *store_array, ZifRole role, gpointer sea
 			part = zif_store_search_file (store, (gchar**)search, state_local, &error_local);
 		else if (role == ZIF_ROLE_GET_PACKAGES)
 			part = zif_store_get_packages (store, state_local, &error_local);
-		else if (role == ZIF_ROLE_GET_UPDATES)
-			part = zif_store_get_updates (store, (GPtrArray *) (gchar**)search, state_local, &error_local);
 		else if (role == ZIF_ROLE_WHAT_PROVIDES)
 			part = zif_store_what_provides (store, (ZifDepend*) search, state_local, &error_local);
 		else if (role == ZIF_ROLE_WHAT_OBSOLETES)
@@ -756,29 +751,6 @@ zif_store_array_get_packages (GPtrArray *store_array,
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 	return zif_store_array_repos_search (store_array, ZIF_ROLE_GET_PACKAGES, NULL,
-					     state, error);
-}
-
-/**
- * zif_store_array_get_updates:
- * @store_array: the #GPtrArray of #ZifStores
- * @packages: the #GPtrArray of #ZifPackages to check for updates
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
- *
- * Return a list of packages that are updatable.
- *
- * Return value: an array of #ZifPackage's
- *
- * Since: 0.1.0
- **/
-GPtrArray *
-zif_store_array_get_updates (GPtrArray *store_array, GPtrArray *packages,
-			     ZifState *state, GError **error)
-{
-	g_return_val_if_fail (zif_state_valid (state), NULL);
-	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
-	return zif_store_array_repos_search (store_array, ZIF_ROLE_GET_UPDATES, (gchar **) packages,
 					     state, error);
 }
 

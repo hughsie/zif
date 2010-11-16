@@ -106,10 +106,6 @@ struct _ZifStoreClass
 	GPtrArray	*(*get_packages)	(ZifStore		*store,
 						 ZifState		*state,
 						 GError			**error);
-	GPtrArray	*(*get_updates)		(ZifStore		*store,
-						 GPtrArray		*packages,
-						 ZifState		*state,
-						 GError			**error);
 	ZifPackage	*(*find_package)	(ZifStore		*store,
 						 const gchar		*package_id,
 						 ZifState		*state,
@@ -183,10 +179,6 @@ GPtrArray	*zif_store_what_conflicts	(ZifStore		*store,
 						 ZifState		*state,
 						 GError			**error);
 GPtrArray	*zif_store_get_packages		(ZifStore		*store,
-						 ZifState		*state,
-						 GError			**error);
-GPtrArray	*zif_store_get_updates		(ZifStore		*store,
-						 GPtrArray		*packages,
 						 ZifState		*state,
 						 GError			**error);
 ZifPackage	*zif_store_find_package		(ZifStore		*store,
