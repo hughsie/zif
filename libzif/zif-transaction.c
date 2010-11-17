@@ -607,10 +607,10 @@ zif_transaction_get_package_provide_from_array (GPtrArray *array,
 
 		/* does this match */
 		ret = zif_package_provides (item->package,
-							depend,
-							&satisfies,
-							state,
-							error);
+					    depend,
+					    &satisfies,
+					    state,
+					    error);
 		if (!ret) {
 			g_assert (error == NULL || *error != NULL);
 			goto out;
@@ -632,65 +632,64 @@ out:
 }
 
 /**
- * zif_transaction_get_package_provide_from_package_array:
+ * _zif_package_array_filter_best_provide:
  **/
 static gboolean
-zif_transaction_get_package_provide_from_package_array (GPtrArray *array,
-							ZifDepend *depend,
-							ZifPackage **package,
-							ZifState *state,
-							GError **error)
+_zif_package_array_filter_best_provide (GPtrArray *array,
+					ZifDepend *depend,
+					ZifPackage **package,
+					ZifState *state,
+					GError **error)
 {
 	gboolean ret = TRUE;
-	GPtrArray *satisfy_array;
 	ZifDepend *best_depend = NULL;
 	GError *error_local = NULL;
 
-	/* get an array of packages that provide this */
+	/* get the best depend for the results */
 	ret = zif_package_array_provide (array, depend, &best_depend,
-					 &satisfy_array, state, error);
+					 NULL, state, error);
 	if (!ret)
 		goto out;
 
 	/* print what we've got */
 	g_debug ("provide %s has %i matches",
 		 zif_depend_get_description (depend),
-		 satisfy_array->len);
+		 array->len);
 	if (best_depend != NULL) {
 		g_debug ("best depend was %s",
 			 zif_depend_get_description (best_depend));
 	}
 
 	/* filter these down so we get best architectures listed first */
-	if (satisfy_array->len > 1) {
-		zif_package_array_filter_best_arch (satisfy_array);
-		g_debug ("after filtering by arch, array now %i packages", satisfy_array->len);
+	if (array->len > 1) {
+		zif_package_array_filter_best_arch (array);
+		g_debug ("after filtering by arch, array now %i packages", array->len);
 	}
 
 	/* if the depends are the same, choose the one with the biggest version */
-	if (satisfy_array->len > 1) {
-		ret = zif_package_array_filter_provide (satisfy_array,
+	if (array->len > 1) {
+		ret = zif_package_array_filter_provide (array,
 							best_depend,
 							state, error);
 		if (!ret)
 			goto out;
-		g_debug ("after filtering by depend, array now %i packages", satisfy_array->len);
+		g_debug ("after filtering by depend, array now %i packages", array->len);
 	}
 
 	/* filter these down so we get smallest names listed first */
-	if (satisfy_array->len > 1) {
-		zif_package_array_filter_smallest_name (satisfy_array);
-		g_debug ("after filtering by name length, array now %i packages", satisfy_array->len);
+	if (array->len > 1) {
+		zif_package_array_filter_smallest_name (array);
+		g_debug ("after filtering by name length, array now %i packages", array->len);
 	}
 
 	/* success, but no results */
-	if (satisfy_array->len == 0) {
+	if (array->len == 0) {
 		*package = NULL;
 		goto out;
 	}
 
 	/* return the newest */
-	*package = zif_package_array_get_newest (satisfy_array, &error_local);
+	*package = zif_package_array_get_newest (array, &error_local);
 	if (*package == NULL) {
 		ret = FALSE;
 		g_set_error (error,
@@ -704,7 +703,6 @@ zif_transaction_get_package_provide_from_package_array (GPtrArray *array,
 out:
 	if (best_depend != NULL)
 		g_object_unref (best_depend);
-	g_ptr_array_unref (satisfy_array);
 	return ret;
 }
 
@@ -720,33 +718,59 @@ zif_transaction_get_package_provide_from_store (ZifStore *store,
 						ZifState *state,
 						GError **error)
 {
-	GPtrArray *array;
+	GPtrArray *array = NULL;
 	GError *error_local = NULL;
-	gboolean ret = FALSE;
+	gboolean ret;
+	ZifState *state_local;
 
-	/* get the package list */
-	zif_state_reset (state);
-	array = zif_store_get_packages (store, state, &error_local);
+	/* setup states */
+	ret = zif_state_set_steps (state,
+				   error,
+				   80, /* search */
+				   20, /* filter */
+				   -1);
+	if (!ret)
+		goto out;
+
+	/* get provides */
+	state_local = zif_state_get_child (state);
+	array = zif_store_what_provides (store, depend, state, &error_local);
 	if (array == NULL) {
-		g_set_error (error,
-			     ZIF_TRANSACTION_ERROR,
-			     ZIF_TRANSACTION_ERROR_FAILED,
-			     "failed to get installed package list: %s",
-			     error_local->message);
-		g_error_free (error_local);
-		goto out;
+		/* ignore this error */
+		if (error_local->domain == ZIF_STORE_ERROR &&
+		    error_local->code == ZIF_STORE_ERROR_ARRAY_IS_EMPTY) {
+			g_error_free (error_local);
+		} else {
+			g_propagate_error (error, error_local);
+			goto out;
+		}
 	}
 
-	/* search it */
-	ret = zif_transaction_get_package_provide_from_package_array (array,
-								      depend,
-								      package,
-								      state,
-								      error);
-	if (!ret) {
-		g_assert (error == NULL || *error != NULL);
+	/* done */
+	ret = zif_state_done (state, error);
+	if (!ret)
 		goto out;
+
+	/* filter by best depend */
+	if (array != NULL && array->len > 0) {
+
+		/* get an array of packages that provide this */
+		state_local = zif_state_get_child (state);
+		ret = _zif_package_array_filter_best_provide (array, depend,
+							      package, state_local, error);
+		if (!ret)
+			goto out;
+	} else {
+		*package = NULL;
 	}
+
+	/* done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* success */
+	ret = TRUE;
 out:
 	if (array != NULL)
 		g_ptr_array_unref (array);

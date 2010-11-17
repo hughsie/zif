@@ -61,6 +61,7 @@ struct _ZifPackagePrivate
 	GPtrArray		*files;
 	GPtrArray		*requires;
 	GPtrArray		*provides;
+	gboolean		 provides_set;
 	GPtrArray		*obsoletes;
 	GPtrArray		*conflicts;
 	GHashTable		*requires_hash;
@@ -433,53 +434,6 @@ out:
 }
 
 /**
- * zif_package_satisfies_file_depend:
- **/
-static gboolean
-zif_package_satisfies_file_depend (ZifPackage *package,
-				   const gchar *filename,
-				   ZifDepend **satisfies,
-				   ZifState *state,
-				   GError **error)
-{
-	gboolean ret = TRUE;
-	GError *error_local = NULL;
-	const gchar *filename_tmp;
-	GPtrArray *provides;
-	guint i;
-
-	/* get files */
-	provides = zif_package_get_files (package, state, &error_local);
-	if (provides == NULL) {
-		ret = FALSE;
-		g_set_error (error,
-			     ZIF_PACKAGE_ERROR,
-			     ZIF_PACKAGE_ERROR_FAILED,
-			     "failed to get files for %s: %s",
-			     zif_package_get_id (package),
-			     error_local->message);
-		g_error_free (error_local);
-		goto out;
-	}
-
-	/* search array */
-	for (i=0; i<provides->len; i++) {
-		filename_tmp = g_ptr_array_index (provides, i);
-		if (g_strcmp0 (filename_tmp, filename) == 0) {
-			*satisfies = zif_depend_new ();
-			zif_depend_set_flag (*satisfies, ZIF_DEPEND_FLAG_ANY);
-			zif_depend_set_name (*satisfies, filename);
-			goto out;
-		}
-	}
-
-	/* success, but did not find */
-	*satisfies = NULL;
-out:
-	return ret;
-}
-
-/**
  * zif_package_provides:
  * @package: the #ZifPackage object
  * @depend: the dependency to try and satisfy
@@ -515,34 +469,18 @@ zif_package_provides (ZifPackage *package,
 	g_return_val_if_fail (state != NULL, FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
-	if (zif_depend_get_name (depend)[0] == '/') {
-		/* get the list of files */
-		files = zif_package_get_files (package, state, &error_local);
-		if (files == NULL) {
-			ret = FALSE;
-			g_set_error (error,
-				     ZIF_PACKAGE_ERROR,
-				     ZIF_PACKAGE_ERROR_FAILED,
-				     "failed to get provides for %s: %s",
-				     zif_package_get_id (package),
-				     error_local->message);
-			g_error_free (error_local);
-			goto out;
-		}
-	} else {
-		/* get the list of provides */
-		provides = zif_package_get_provides (package, state, &error_local);
-		if (provides == NULL) {
-			ret = FALSE;
-			g_set_error (error,
-				     ZIF_PACKAGE_ERROR,
-				     ZIF_PACKAGE_ERROR_FAILED,
-				     "failed to get provides for %s: %s",
-				     zif_package_get_id (package),
-				     error_local->message);
-			g_error_free (error_local);
-			goto out;
-		}
+	/* get the list of provides */
+	provides = zif_package_get_provides (package, state, &error_local);
+	if (provides == NULL) {
+		ret = FALSE;
+		g_set_error (error,
+			     ZIF_PACKAGE_ERROR,
+			     ZIF_PACKAGE_ERROR_FAILED,
+			     "failed to get provides for %s: %s",
+			     zif_package_get_id (package),
+			     error_local->message);
+		g_error_free (error_local);
+		goto out;
 	}
 
 	/* search in the 'any' cache first */
@@ -576,16 +514,6 @@ zif_package_provides (ZifPackage *package,
 			/* cache hit, but does not provide */
 			*satisfies = NULL;
 		}
-		goto out;
-	}
-
-	/* is this a file require */
-	if (zif_depend_get_name (depend)[0] == '/') {
-		ret = zif_package_satisfies_file_depend (package,
-							 zif_depend_get_name (depend),
-							 satisfies,
-							 state,
-							 error);
 		goto out;
 	}
 
@@ -1498,8 +1426,13 @@ zif_package_get_provides (ZifPackage *package, ZifState *state, GError **error)
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* not exists */
-	if (package->priv->provides == NULL) {
+	if (!package->priv->provides_set) {
 		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_PROVIDES, state, error);
+		if (!ret)
+			return NULL;
+	}
+	if (package->priv->files == NULL) {
+		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_FILES, state, error);
 		if (!ret)
 			return NULL;
 	}
@@ -1856,6 +1789,7 @@ zif_package_set_files (ZifPackage *package, GPtrArray *files)
 		g_hash_table_insert (package->priv->provides_any_hash,
 				     g_strdup (zif_depend_get_name (depend_tmp)),
 				     depend_tmp);
+		g_ptr_array_add (package->priv->provides, g_object_ref (depend_tmp));
 	}
 
 	package->priv->files = g_ptr_array_ref (files);
@@ -1908,7 +1842,10 @@ zif_package_set_provides (ZifPackage *package, GPtrArray *provides)
 
 	g_return_if_fail (ZIF_IS_PACKAGE (package));
 	g_return_if_fail (provides != NULL);
-	g_return_if_fail (package->priv->provides == NULL);
+	g_return_if_fail (!package->priv->provides_set);
+
+	/* track this as a bool, as the array is already created */
+	package->priv->provides_set = TRUE;
 
 	/* add items to 'any' cache */
 	for (i=0; i<provides->len; i++) {
@@ -1918,7 +1855,11 @@ zif_package_set_provides (ZifPackage *package, GPtrArray *provides)
 				     g_object_ref (depend_tmp));
 	}
 
-	package->priv->provides = g_ptr_array_ref (provides);
+	/* add to the array, not replace */
+	for (i=0; i<provides->len; i++) {
+		depend_tmp = g_ptr_array_index (provides, i);
+		g_ptr_array_add (package->priv->provides, g_object_ref (depend_tmp));
+	}
 }
 
 /**
@@ -2048,6 +1989,10 @@ static void
 zif_package_init (ZifPackage *package)
 {
 	package->priv = ZIF_PACKAGE_GET_PRIVATE (package);
+
+	/* we have to create this now to allow us to call
+	 * zif_package_set_files() before zif_package_set_provides() */
+	package->priv->provides = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 
 	/* this provides a O(1) lookup for the entire provide */
 	package->priv->requires_hash = g_hash_table_new_full (g_str_hash,
