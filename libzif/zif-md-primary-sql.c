@@ -150,10 +150,10 @@ zif_md_primary_sql_sqlite_create_package_cb (void *data, gint argc, gchar **argv
 	return 0;
 }
 
-#define ZIF_MD_PRIMARY_SQL_HEADER "SELECT pkgId, name, arch, version, " \
-				  "epoch, release, summary, description, url, " \
-				  "rpm_license, rpm_group, size_package, location_href, "\
-				  "time_file FROM packages"
+#define ZIF_MD_PRIMARY_SQL_HEADER "SELECT p.pkgId, p.name, p.arch, p.version, " \
+				  "p.epoch, p.release, p.summary, p.description, p.url, " \
+				  "p.rpm_license, p.rpm_group, p.size_package, p.location_href, "\
+				  "p.time_file FROM packages p"
 
 /**
  * zif_md_primary_sql_search:
@@ -268,7 +268,7 @@ zif_md_primary_sql_resolve (ZifMd *md, gchar **search, ZifState *state, GError *
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* simple name match */
-	statement = zif_md_primary_sql_get_statement_for_pred ("name = '###'", search);
+	statement = zif_md_primary_sql_get_statement_for_pred ("p.name = '###'", search);
 	array = zif_md_primary_sql_search (md_primary_sql, statement, state, error);
 	g_free (statement);
 	return array;
@@ -289,7 +289,7 @@ zif_md_primary_sql_search_name (ZifMd *md, gchar **search, ZifState *state, GErr
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* fuzzy name match */
-	statement = zif_md_primary_sql_get_statement_for_pred ("name LIKE '%%###%%'", search);
+	statement = zif_md_primary_sql_get_statement_for_pred ("p.name LIKE '%%###%%'", search);
 	array = zif_md_primary_sql_search (md_primary_sql, statement, state, error);
 	g_free (statement);
 
@@ -311,9 +311,9 @@ zif_md_primary_sql_search_details (ZifMd *md, gchar **search, ZifState *state, G
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* fuzzy details match */
-	statement = zif_md_primary_sql_get_statement_for_pred ("name LIKE '%%###%%' OR "
-							       "summary LIKE '%%###%%' OR "
-							       "description LIKE '%%###%%'", search);
+	statement = zif_md_primary_sql_get_statement_for_pred ("p.name LIKE '%%###%%' OR "
+							       "p.summary LIKE '%%###%%' OR "
+							       "p.description LIKE '%%###%%'", search);
 	array = zif_md_primary_sql_search (md_primary_sql, statement, state, error);
 	g_free (statement);
 
@@ -335,7 +335,7 @@ zif_md_primary_sql_search_group (ZifMd *md, gchar **search, ZifState *state, GEr
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* simple group match */
-	statement = zif_md_primary_sql_get_statement_for_pred ("rpm_group = '###'", search);
+	statement = zif_md_primary_sql_get_statement_for_pred ("p.rpm_group = '###'", search);
 	array = zif_md_primary_sql_search (md_primary_sql, statement, state, error);
 	g_free (statement);
 
@@ -357,59 +357,11 @@ zif_md_primary_sql_search_pkgid (ZifMd *md, gchar **search, ZifState *state, GEr
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* simple pkgid match */
-	statement = zif_md_primary_sql_get_statement_for_pred ("pkgid = '###'", search);
+	statement = zif_md_primary_sql_get_statement_for_pred ("p.pkgid = '###'", search);
 	array = zif_md_primary_sql_search (md_primary_sql, statement, state, error);
 	g_free (statement);
 
 	return array;
-}
-
-/**
- * zif_md_primary_sql_search_pkgkey:
- **/
-static GPtrArray *
-zif_md_primary_sql_search_pkgkey (ZifMd *md, guint pkgkey,
-				  ZifState *state, GError **error)
-{
-	gchar *statement;
-	GPtrArray *array;
-	ZifMdPrimarySql *md_primary_sql = ZIF_MD_PRIMARY_SQL (md);
-
-	g_return_val_if_fail (ZIF_IS_MD_PRIMARY_SQL (md), NULL);
-	g_return_val_if_fail (zif_state_valid (state), NULL);
-	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
-
-	/* search with predicate */
-	statement = g_strdup_printf (ZIF_MD_PRIMARY_SQL_HEADER " WHERE pkgKey = '%i'", pkgkey);
-	array = zif_md_primary_sql_search (md_primary_sql, statement, state, error);
-	g_free (statement);
-	return array;
-}
-
-/**
- * zif_md_primary_sql_sqlite_pkgkey_cb:
- **/
-static gint
-zif_md_primary_sql_sqlite_pkgkey_cb (void *data, gint argc, gchar **argv, gchar **col_name)
-{
-	gint i;
-	guint pkgkey;
-	gchar *endptr = NULL;
-	GPtrArray *array = (GPtrArray *) data;
-
-	/* get the ID */
-	for (i=0; i<argc; i++) {
-		if (g_strcmp0 (col_name[i], "pkgKey") == 0) {
-			pkgkey = g_ascii_strtoull (argv[i], &endptr, 10);
-			if (argv[i] == endptr)
-				g_warning ("failed to parse pkgKey %s", argv[i]);
-			else
-				g_ptr_array_add (array, GUINT_TO_POINTER (pkgkey));
-		} else {
-			g_warning ("unrecognized: %s=%s", col_name[i], argv[i]);
-		}
-	}
-	return 0;
 }
 
 /**
@@ -495,13 +447,8 @@ zif_md_primary_sql_what_depends (ZifMd *md, const gchar *table_name, ZifDepend *
 	gboolean ret;
 	GError *error_local = NULL;
 	GPtrArray *array = NULL;
-	GPtrArray *array_tmp = NULL;
-	GPtrArray *pkgkey_array = NULL;
-	guint i;
-	guint pkgkey;
 	ZifState *state_local;
-	ZifState *state_loop;
-	ZifPackage *package;
+	ZifMdPrimarySqlData *data = NULL;
 	ZifMdPrimarySql *md_primary_sql = ZIF_MD_PRIMARY_SQL (md);
 
 	g_return_val_if_fail (zif_state_valid (state), NULL);
@@ -510,15 +457,13 @@ zif_md_primary_sql_what_depends (ZifMd *md, const gchar *table_name, ZifDepend *
 	if (md_primary_sql->priv->loaded) {
 		ret = zif_state_set_steps (state,
 					   error,
-					   80, /* sql query */
-					   10, /* search */
+					   90, /* sql query */
 					   10, /* filter */
 					   -1);
 	} else {
 		ret = zif_state_set_steps (state,
 					   error,
-					   60, /* load */
-					   20, /* sql query */
+					   80, /* load */
 					   10, /* search */
 					   10, /* filter */
 					   -1);
@@ -543,12 +488,17 @@ zif_md_primary_sql_what_depends (ZifMd *md, const gchar *table_name, ZifDepend *
 			goto out;
 	}
 
-	/* create data struct we can pass to the callback */
-	pkgkey_array = g_ptr_array_new ();
-	statement = g_strdup_printf ("SELECT pkgKey FROM %s WHERE name = '%s'",
+	/* resolve each depend name to a package */
+	statement = g_strdup_printf (ZIF_MD_PRIMARY_SQL_HEADER ", %s depend WHERE "
+				     "p.pkgKey = depend.pkgKey AND "
+				     "depend.name = '%s';",
 				     table_name,
 				     zif_depend_get_name (depend));
-	rc = sqlite3_exec (md_primary_sql->priv->db, statement, zif_md_primary_sql_sqlite_pkgkey_cb, pkgkey_array, &error_msg);
+	data = g_new0 (ZifMdPrimarySqlData, 1);
+	data->md = md_primary_sql;
+	data->id = zif_md_get_id (ZIF_MD (md));
+	data->packages = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
+	rc = sqlite3_exec (md_primary_sql->priv->db, statement, zif_md_primary_sql_sqlite_create_package_cb, data, &error_msg);
 	if (rc != SQLITE_OK) {
 		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_BAD_SQL,
 			     "SQL error: %s", error_msg);
@@ -556,48 +506,8 @@ zif_md_primary_sql_what_depends (ZifMd *md, const gchar *table_name, ZifDepend *
 		goto out;
 	}
 
-	/* this section done */
-	ret = zif_state_done (state, error);
-	if (!ret)
-		goto out;
-
-	/* output array */
-	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
-
-	/* resolve each pkgkey to a package */
-	state_local = zif_state_get_child (state);
-	if (pkgkey_array->len > 0)
-		zif_state_set_number_steps (state_local, pkgkey_array->len);
-	for (i=0; i<pkgkey_array->len; i++) {
-		pkgkey = GPOINTER_TO_UINT (g_ptr_array_index (pkgkey_array, i));
-
-		/* get packages for pkgKey */
-		state_loop = zif_state_get_child (state_local);
-		array_tmp = zif_md_primary_sql_search_pkgkey (md, pkgkey, state_loop, error);
-		if (array_tmp == NULL) {
-			g_ptr_array_unref (array);
-			array = NULL;
-			goto out;
-		}
-
-		/* check we only got one result */
-		if (array_tmp->len == 0) {
-			g_warning ("no package for pkgKey %i", pkgkey);
-		} else if (array_tmp->len > 1 || array_tmp->len == 0) {
-			g_warning ("more than one package for pkgKey %i", pkgkey);
-		} else {
-			package = g_ptr_array_index (array_tmp, 0);
-			g_ptr_array_add (array, g_object_ref (package));
-		}
-
-		/* clear array */
-		g_ptr_array_unref (array_tmp);
-
-		/* this section done */
-		ret = zif_state_done (state_local, error);
-		if (!ret)
-			goto out;
-	}
+	/* success */
+	array = g_ptr_array_ref (data->packages);
 
 	/* this section done */
 	ret = zif_state_done (state, error);
@@ -635,9 +545,11 @@ zif_md_primary_sql_what_depends (ZifMd *md, const gchar *table_name, ZifDepend *
 	if (!ret)
 		goto out;
 out:
+	if (data != NULL) {
+		g_ptr_array_unref (data->packages);
+		g_free (data);
+	}
 	g_free (statement);
-	if (pkgkey_array != NULL)
-		g_ptr_array_unref (pkgkey_array);
 	return array;
 }
 
@@ -682,30 +594,30 @@ zif_md_primary_sql_get_depends (ZifMd *md,
 				GError **error)
 {
 	const gchar *epoch = NULL;
-	guint pkgkey;
 	const gchar *release = NULL;
 	const gchar *version = NULL;
 	gchar *error_msg = NULL;
 	gchar *evr;
 	gchar *statement = NULL;
-	gchar *statement_pkgkey = NULL;
 	gint rc;
 	GPtrArray *array = NULL;
 	GPtrArray *array_tmp = NULL;
-	GPtrArray *pkgkey_array;
 	ZifMdPrimarySql *md_primary_sql = ZIF_MD_PRIMARY_SQL (md);
 
 	evr = g_strdup (zif_package_get_version (package));
 	zif_package_convert_evr (evr, &epoch, &version, &release);
 
-	/* find packages */
-	pkgkey_array = g_ptr_array_new ();
-	statement = g_strdup_printf ("SELECT pkgKey FROM packages WHERE "
-				     "name = '%s' AND "
-				     "epoch = '%s' AND "
-				     "version = '%s' AND "
-				     "release = '%s' AND "
-				     "arch = '%s';",
+	/* get depend array for the package */
+	array_tmp = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
+	statement = g_strdup_printf ("SELECT depend.name, depend.flags, depend.epoch, "
+				     "depend.version, depend.release FROM %s depend, packages WHERE "
+				     "packages.pkgKey = depend.pkgKey AND "
+				     "packages.name = '%s' AND "
+				     "packages.epoch = '%s' AND "
+				     "packages.version = '%s' AND "
+				     "packages.release = '%s' AND "
+				     "packages.arch = '%s';",
+				     type,
 				     zif_package_get_name (package),
 				     epoch != NULL ? epoch : "0",
 				     version,
@@ -716,44 +628,6 @@ zif_md_primary_sql_get_depends (ZifMd *md,
 		 zif_md_get_filename_uncompressed (md));
 	rc = sqlite3_exec (md_primary_sql->priv->db,
 			   statement,
-			   zif_md_primary_sql_sqlite_pkgkey_cb,
-			   pkgkey_array,
-			   &error_msg);
-	if (rc != SQLITE_OK) {
-		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_BAD_SQL,
-			     "SQL error: %s", error_msg);
-		sqlite3_free (error_msg);
-		goto out;
-	}
-
-	/* nothing */
-	if (pkgkey_array->len == 0) {
-		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED,
-			     "failed to find the %s package",
-			     zif_package_get_id (package));
-		goto out;
-	}
-
-	/* more than one */
-	if (pkgkey_array->len > 1) {
-		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED,
-			     "failed to find unique %s package",
-			     zif_package_get_id (package));
-		goto out;
-	}
-	pkgkey = GPOINTER_TO_INT (g_ptr_array_index (pkgkey_array, 0));
-
-	/* get depend array for the package key */
-	array_tmp = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
-	statement_pkgkey = g_strdup_printf ("SELECT name, flags, epoch, "
-					    "version, release FROM %s WHERE "
-					    "pkgkey = '%i';",
-					    type, pkgkey);
-	g_debug ("running %s on %s",
-		 statement_pkgkey,
-		 zif_md_get_filename_uncompressed (md));
-	rc = sqlite3_exec (md_primary_sql->priv->db,
-			   statement_pkgkey,
 			   zif_md_primary_sql_sqlite_depend_cb,
 			   array_tmp,
 			   &error_msg);
@@ -769,9 +643,7 @@ zif_md_primary_sql_get_depends (ZifMd *md,
 out:
 	if (array_tmp != NULL)
 		g_ptr_array_unref (array_tmp);
-	g_ptr_array_unref (pkgkey_array);
 	g_free (statement);
-	g_free (statement_pkgkey);
 	g_free (evr);
 	return array;
 }
@@ -833,7 +705,7 @@ zif_md_primary_sql_find_package (ZifMd *md, const gchar *package_id, ZifState *s
 
 	/* search with predicate, TODO: search version (epoch+release) */
 	split = zif_package_id_split (package_id);
-	statement = g_strdup_printf (ZIF_MD_PRIMARY_SQL_HEADER " WHERE name = '%s' AND arch = '%s'",
+	statement = g_strdup_printf (ZIF_MD_PRIMARY_SQL_HEADER " WHERE p.name = '%s' AND p.arch = '%s'",
 				     split[ZIF_PACKAGE_ID_NAME], split[ZIF_PACKAGE_ID_ARCH]);
 	array = zif_md_primary_sql_search (md_primary_sql, statement, state, error);
 	g_free (statement);
