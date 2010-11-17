@@ -214,6 +214,7 @@ zif_log_handler_cb (const gchar *log_domain, GLogLevelFlags log_level,
 typedef struct {
 	gboolean		 skip_broken;
 	gboolean		 assume_yes;
+	gboolean		 assume_no;
 	GOptionContext		*context;
 	GPtrArray		*cmd_array;
 	ZifConfig		*config;
@@ -1562,7 +1563,8 @@ zif_transaction_run (ZifCmdPrivate *priv, ZifTransaction *transaction, ZifState 
 	}
 
 	/* confirm */
-	if (!priv->assume_yes && !zif_cmd_prompt (_("Run transaction?"))) {
+	if (priv->assume_no ||
+            (!priv->assume_yes && !zif_cmd_prompt (_("Run transaction?")))) {
 		ret = FALSE;
 		/* TRANSLATORS: error message */
 		g_set_error_literal (error, 1, 0, _("User declined action"));
@@ -3276,6 +3278,7 @@ main (int argc, char *argv[])
 	gboolean skip_broken = FALSE;
 	gboolean verbose = FALSE;
 	gboolean assume_yes = FALSE;
+	gboolean assume_no = FALSE;
 	gchar *cmd_descriptions = NULL;
 	gchar *config_file = NULL;
 	gchar *http_proxy = NULL;
@@ -3310,6 +3313,8 @@ main (int argc, char *argv[])
 			_("Skip broken dependencies rather than failing"), NULL },
 		{ "assume-yes", 'y', 0, G_OPTION_ARG_NONE, &assume_yes,
 			_("Assume yes to all questions"), NULL },
+		{ "assume-no", 'n', 0, G_OPTION_ARG_NONE, &assume_no,
+			_("Assume no to all questions"), NULL },
 		{ NULL}
 	};
 
@@ -3333,6 +3338,7 @@ main (int argc, char *argv[])
 	/* save in the private data */
 	priv->skip_broken = skip_broken;
 	priv->assume_yes = assume_yes;
+	priv->assume_no = assume_no;
 
 	/* do stuff on ctrl-c */
 	signal (SIGINT, zif_main_sigint_cb);
