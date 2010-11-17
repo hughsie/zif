@@ -762,38 +762,15 @@ zif_transaction_get_package_provide_from_package_array (GPtrArray *array,
 							GError **error)
 {
 	gboolean ret = TRUE;
-	guint i;
-	ZifPackage *package_tmp;
 	GPtrArray *satisfy_array;
-	ZifDepend *satisfies = NULL;
 	ZifDepend *best_depend = NULL;
 	GError *error_local = NULL;
 
-	/* interate through the array */
-	satisfy_array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
-	for (i=0; i<array->len; i++) {
-		package_tmp = g_ptr_array_index (array, i);
-
-		/* does this match */
-		ret = zif_package_provides (package_tmp, depend, &satisfies, state, error);
-		if (!ret)
-			goto out;
-
-		/* gotcha, but keep looking */
-		if (satisfies != NULL) {
-			g_ptr_array_add (satisfy_array, g_object_ref (package_tmp));
-
-			/* ensure we track the best depend */
-			if (best_depend == NULL ||
-			    zif_depend_compare (satisfies, best_depend) > 0) {
-				if (best_depend != NULL)
-					g_object_unref (best_depend);
-				best_depend = g_object_ref (satisfies);
-			}
-
-			g_object_unref (satisfies);
-		}
-	}
+	/* get an array of packages that provide this */
+	ret = zif_package_array_provide (array, depend, &best_depend,
+					 &satisfy_array, state, error);
+	if (!ret)
+		goto out;
 
 	/* print what we've got */
 	g_debug ("provide %s has %i matches",
@@ -1875,28 +1852,14 @@ zif_transaction_get_package_conflict_from_package_array (GPtrArray *array,
 							 GError **error)
 {
 	gboolean ret = TRUE;
-	guint i;
-	ZifPackage *package_tmp;
 	GPtrArray *satisfy_array;
-	ZifDepend *satisfies = NULL;
 	GError *error_local = NULL;
 
-	/* interate through the array */
-	satisfy_array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
-	for (i=0; i<array->len; i++) {
-		package_tmp = g_ptr_array_index (array, i);
-
-		/* does this match */
-		ret = zif_package_conflicts (package_tmp, depend, &satisfies, state, error);
-		if (!ret)
-			goto out;
-
-		/* gotcha, but keep looking */
-		if (satisfies != NULL) {
-			g_ptr_array_add (satisfy_array, g_object_ref (package_tmp));
-			g_object_unref (satisfies);
-		}
-	}
+	/* get an array of packages that provide this */
+	ret = zif_package_array_conflict (array, depend, NULL,
+					  &satisfy_array, state, error);
+	if (!ret)
+		goto out;
 
 	/* print what we've got */
 	g_debug ("conflict %s has %i matches",

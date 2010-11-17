@@ -29,6 +29,7 @@
 #include <glib.h>
 
 #include "zif-package.h"
+#include "zif-depend.h"
 
 G_BEGIN_DECLS
 
@@ -39,6 +40,30 @@ ZifPackage	*zif_package_array_get_newest		(GPtrArray	*array,
 ZifPackage	*zif_package_array_get_oldest		(GPtrArray	*array,
 							 GError		**error);
 gboolean	 zif_package_array_filter_newest	(GPtrArray	*packages);
+gboolean	 zif_package_array_provide		(GPtrArray	*array,
+							 ZifDepend	*depend,
+							 ZifDepend	**best_depend,
+							 GPtrArray	**results,
+							 ZifState	*state,
+							 GError		**error);
+gboolean	 zif_package_array_require		(GPtrArray	*array,
+							 ZifDepend	*depend,
+							 ZifDepend	**best_depend,
+							 GPtrArray	**results,
+							 ZifState	*state,
+							 GError		**error);
+gboolean	 zif_package_array_conflict		(GPtrArray	*array,
+							 ZifDepend	*depend,
+							 ZifDepend	**best_depend,
+							 GPtrArray	**results,
+							 ZifState	*state,
+							 GError		**error);
+gboolean	 zif_package_array_obsolete		(GPtrArray	*array,
+							 ZifDepend	*depend,
+							 ZifDepend	**best_depend,
+							 GPtrArray	**results,
+							 ZifState	*state,
+							 GError		**error);
 
 G_END_DECLS
 

@@ -192,3 +192,227 @@ zif_package_array_filter_newest (GPtrArray *packages)
 	g_hash_table_unref (hash);
 	return  ret;
 }
+
+/**
+ * zif_package_array_depend:
+ **/
+static gboolean
+zif_package_array_depend (GPtrArray *array,
+			   ZifDepend *depend,
+			   ZifDepend **best_depend,
+			   GPtrArray **provides,
+			   ZifPackageEnsureType type,
+			   ZifState *state,
+			   GError **error)
+{
+	gboolean ret = TRUE;
+	guint i;
+	ZifPackage *package_tmp;
+	ZifDepend *satisfies = NULL;
+	ZifDepend *best_depend_tmp = NULL;
+
+	/* create results array */
+	if (provides != NULL)
+		*provides = zif_package_array_new ();
+
+	/* interate through the array */
+	for (i=0; i<array->len; i++) {
+		package_tmp = g_ptr_array_index (array, i);
+
+		/* does this match */
+		switch (type) {
+		case ZIF_PACKAGE_ENSURE_TYPE_PROVIDES:
+			ret = zif_package_provides (package_tmp,
+						    depend,
+						    &satisfies,
+						    state,
+						    error);
+			break;
+		case ZIF_PACKAGE_ENSURE_TYPE_REQUIRES:
+			ret = zif_package_requires (package_tmp,
+						    depend,
+						    &satisfies,
+						    state,
+						    error);
+			break;
+		case ZIF_PACKAGE_ENSURE_TYPE_CONFLICTS:
+			ret = zif_package_conflicts (package_tmp,
+						    depend,
+						    &satisfies,
+						    state,
+						    error);
+			break;
+		case ZIF_PACKAGE_ENSURE_TYPE_OBSOLETES:
+			ret = zif_package_obsoletes (package_tmp,
+						    depend,
+						    &satisfies,
+						    state,
+						    error);
+			break;
+		default:
+			g_assert_not_reached ();
+		}
+		if (!ret)
+			goto out;
+
+		/* gotcha, but keep looking */
+		if (satisfies != NULL) {
+			if (provides != NULL)
+				g_ptr_array_add (*provides, g_object_ref (package_tmp));
+
+			/* ensure we track the best depend */
+			if (best_depend != NULL &&
+			    (best_depend_tmp == NULL ||
+			     zif_depend_compare (satisfies, best_depend_tmp) > 0)) {
+				if (best_depend_tmp != NULL)
+					g_object_unref (best_depend_tmp);
+				best_depend_tmp = g_object_ref (satisfies);
+			}
+
+			g_object_unref (satisfies);
+		}
+	}
+
+	/* if we supplied an address for it, return it */
+	if (best_depend != NULL) {
+		*best_depend = NULL;
+		if (best_depend_tmp != NULL)
+			*best_depend = g_object_ref (best_depend_tmp);
+	}
+out:
+	if (best_depend_tmp != NULL)
+		g_object_unref (best_depend_tmp);
+	return ret;
+}
+
+/**
+ * zif_package_array_provide:
+ * @array: array of %ZifPackage's
+ * @depend: the dependency to try and satisfy
+ * @best_depend: the best matched dependency, free with g_object_unref() if not %NULL
+ * @results: the matched dependencies, free with g_ptr_array_unref() if not %NULL
+ * @state: a #ZifState to use for progress reporting
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Gets the package dependencies that satisfy the supplied dependency.
+ *
+ * Return value: %TRUE if the array was searched.
+ * Use @results->len == 0 to detect a missing dependency.
+ *
+ * Since: 0.1.3
+ **/
+gboolean
+zif_package_array_provide (GPtrArray *array,
+			   ZifDepend *depend,
+			   ZifDepend **best_depend,
+			   GPtrArray **results,
+			   ZifState *state,
+			   GError **error)
+{
+	return zif_package_array_depend (array,
+					 depend,
+					 best_depend,
+					 results,
+					 ZIF_PACKAGE_ENSURE_TYPE_PROVIDES,
+					 state,
+					 error);
+}
+
+/**
+ * zif_package_array_require:
+ * @array: array of %ZifPackage's
+ * @depend: the dependency to try and satisfy
+ * @best_depend: the best matched dependency, free with g_object_unref() if not %NULL
+ * @results: the matched dependencies, free with g_ptr_array_unref() if not %NULL
+ * @state: a #ZifState to use for progress reporting
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Gets the package dependencies that satisfy the supplied dependency.
+ *
+ * Return value: %TRUE if the array was searched.
+ * Use @results->len == 0 to detect a missing dependency.
+ *
+ * Since: 0.1.3
+ **/
+gboolean
+zif_package_array_require (GPtrArray *array,
+			   ZifDepend *depend,
+			   ZifDepend **best_depend,
+			   GPtrArray **results,
+			   ZifState *state,
+			   GError **error)
+{
+	return zif_package_array_depend (array,
+					 depend,
+					 best_depend,
+					 results,
+					 ZIF_PACKAGE_ENSURE_TYPE_REQUIRES,
+					 state,
+					 error);
+}
+
+/**
+ * zif_package_array_conflict:
+ * @array: array of %ZifPackage's
+ * @depend: the dependency to try and satisfy
+ * @best_depend: the best matched dependency, free with g_object_unref() if not %NULL
+ * @results: the matched dependencies, free with g_ptr_array_unref() if not %NULL
+ * @state: a #ZifState to use for progress reporting
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Gets the package dependencies that satisfy the supplied dependency.
+ *
+ * Return value: %TRUE if the array was searched.
+ * Use @results->len == 0 to detect a missing dependency.
+ *
+ * Since: 0.1.3
+ **/
+gboolean
+zif_package_array_conflict (GPtrArray *array,
+			    ZifDepend *depend,
+			    ZifDepend **best_depend,
+			    GPtrArray **results,
+			    ZifState *state,
+			    GError **error)
+{
+	return zif_package_array_depend (array,
+					 depend,
+					 best_depend,
+					 results,
+					 ZIF_PACKAGE_ENSURE_TYPE_CONFLICTS,
+					 state,
+					 error);
+}
+
+/**
+ * zif_package_array_obsolete:
+ * @array: array of %ZifPackage's
+ * @depend: the dependency to try and satisfy
+ * @best_depend: the best matched dependency, free with g_object_unref() if not %NULL
+ * @results: the matched dependencies, free with g_ptr_array_unref() if not %NULL
+ * @state: a #ZifState to use for progress reporting
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Gets the package dependencies that satisfy the supplied dependency.
+ *
+ * Return value: %TRUE if the array was searched.
+ * Use @results->len == 0 to detect a missing dependency.
+ *
+ * Since: 0.1.3
+ **/
+gboolean
+zif_package_array_obsolete (GPtrArray *array,
+			    ZifDepend *depend,
+			    ZifDepend **best_depend,
+			    GPtrArray **results,
+			    ZifState *state,
+			    GError **error)
+{
+	return zif_package_array_depend (array,
+					 depend,
+					 best_depend,
+					 results,
+					 ZIF_PACKAGE_ENSURE_TYPE_OBSOLETES,
+					 state,
+					 error);
+}
