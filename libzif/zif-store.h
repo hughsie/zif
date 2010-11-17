@@ -95,6 +95,10 @@ struct _ZifStoreClass
 						 ZifDepend		*depend,
 						 ZifState		*state,
 						 GError			**error);
+	GPtrArray	*(*what_requires)	(ZifStore		*store,
+						 ZifDepend		*depend,
+						 ZifState		*state,
+						 GError			**error);
 	GPtrArray	*(*what_obsoletes)	(ZifStore		*store,
 						 ZifDepend		*depend,
 						 ZifState		*state,
@@ -167,6 +171,10 @@ GPtrArray	*zif_store_resolve		(ZifStore		*store,
 						 ZifState		*state,
 						 GError			**error);
 GPtrArray	*zif_store_what_provides	(ZifStore		*store,
+						 ZifDepend		*depend,
+						 ZifState		*state,
+						 GError			**error);
+GPtrArray	*zif_store_what_requires	(ZifStore		*store,
 						 ZifDepend		*depend,
 						 ZifState		*state,
 						 GError			**error);

@@ -564,6 +564,16 @@ zif_md_primary_sql_what_provides (ZifMd *md, ZifDepend *depend,
 }
 
 /**
+ * zif_md_primary_sql_what_requires:
+ **/
+static GPtrArray *
+zif_md_primary_sql_what_requires (ZifMd *md, ZifDepend *depend,
+				  ZifState *state, GError **error)
+{
+	return zif_md_primary_sql_what_depends (md, "requires", depend, state, error);
+}
+
+/**
  * zif_md_primary_sql_what_obsoletes:
  **/
 static GPtrArray *
@@ -767,6 +777,7 @@ zif_md_primary_sql_class_init (ZifMdPrimarySqlClass *klass)
 	md_class->search_group = zif_md_primary_sql_search_group;
 	md_class->search_pkgid = zif_md_primary_sql_search_pkgid;
 	md_class->what_provides = zif_md_primary_sql_what_provides;
+	md_class->what_requires = zif_md_primary_sql_what_requires;
 	md_class->what_obsoletes = zif_md_primary_sql_what_obsoletes;
 	md_class->what_conflicts = zif_md_primary_sql_what_conflicts;
 	md_class->get_provides = zif_md_primary_sql_get_provides;

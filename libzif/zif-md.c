@@ -991,6 +991,48 @@ out:
 	return array;
 }
 
+
+/**
+ * zif_md_what_requires:
+ * @md: the #ZifMd object
+ * @depend: the #ZifDepend provide
+ * @state: a #ZifState to use for progress reporting
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Finds all packages that match the given provide.
+ *
+ * Return value: an array of #ZifPackageRemote's
+ *
+ * Since: 0.1.3
+ **/
+GPtrArray *
+zif_md_what_requires (ZifMd *md, ZifDepend *depend,
+		      ZifState *state, GError **error)
+{
+	GPtrArray *array = NULL;
+	ZifMdClass *klass = ZIF_MD_GET_CLASS (md);
+
+	g_return_val_if_fail (ZIF_IS_MD (md), NULL);
+	g_return_val_if_fail (ZIF_IS_DEPEND (depend), NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+	/* no support */
+	if (klass->what_provides == NULL) {
+		g_set_error (error,
+			     ZIF_MD_ERROR,
+			     ZIF_MD_ERROR_NO_SUPPORT,
+			     "operation cannot be performed on md type %s",
+			     zif_md_kind_to_text (zif_md_get_kind (md)));
+		goto out;
+	}
+
+	/* do subclassed action */
+	array = klass->what_requires (md, depend, state, error);
+out:
+	return array;
+}
+
 /**
  * zif_md_what_obsoletes:
  * @md: the #ZifMd object

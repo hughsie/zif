@@ -88,6 +88,10 @@ GPtrArray	*zif_store_array_what_provides		(GPtrArray		*store_array,
 							 ZifDepend		*depend,
 							 ZifState		*state,
 							 GError			**error);
+GPtrArray	*zif_store_array_what_requires		(GPtrArray		*store_array,
+							 ZifDepend		*depend,
+							 ZifState		*state,
+							 GError			**error);
 GPtrArray	*zif_store_array_what_obsoletes		(GPtrArray		*store_array,
 							 ZifDepend		*depend,
 							 ZifState		*state,

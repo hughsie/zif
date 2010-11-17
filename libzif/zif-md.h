@@ -88,6 +88,10 @@ struct _ZifMdClass
 						 ZifDepend		*depend,
 						 ZifState		*state,
 						 GError			**error);
+	GPtrArray	*(*what_requires)	(ZifMd			*md,
+						 ZifDepend		*depend,
+						 ZifState		*state,
+						 GError			**error);
 	GPtrArray	*(*what_obsoletes)	(ZifMd			*md,
 						 ZifDepend		*depend,
 						 ZifState		*state,
@@ -232,6 +236,10 @@ GPtrArray	*zif_md_search_pkgid			(ZifMd		*md,
 							 ZifState	*state,
 							 GError		**error);
 GPtrArray	*zif_md_what_provides			(ZifMd		*md,
+							 ZifDepend	*depend,
+							 ZifState	*state,
+							 GError		**error);
+GPtrArray	*zif_md_what_requires			(ZifMd		*md,
 							 ZifDepend	*depend,
 							 ZifState	*state,
 							 GError		**error);

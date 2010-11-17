@@ -57,6 +57,7 @@ typedef enum {
 	ZIF_ROLE_WHAT_PROVIDES,
 	ZIF_ROLE_WHAT_OBSOLETES,
 	ZIF_ROLE_WHAT_CONFLICTS,
+	ZIF_ROLE_WHAT_REQUIRES,
 	ZIF_ROLE_GET_CATEGORIES,
 	ZIF_ROLE_UNKNOWN
 } ZifRole;
@@ -83,6 +84,8 @@ zif_role_to_string (ZifRole role)
 		return "search-category";
 	if (role == ZIF_ROLE_WHAT_PROVIDES)
 		return "what-provides";
+	if (role == ZIF_ROLE_WHAT_REQUIRES)
+		return "what-requires";
 	if (role == ZIF_ROLE_WHAT_OBSOLETES)
 		return "what-obsoletes";
 	if (role == ZIF_ROLE_WHAT_CONFLICTS)
@@ -307,6 +310,8 @@ zif_store_array_repos_search (GPtrArray *store_array, ZifRole role, gpointer sea
 			part = zif_store_get_packages (store, state_local, &error_local);
 		else if (role == ZIF_ROLE_WHAT_PROVIDES)
 			part = zif_store_what_provides (store, (ZifDepend*) search, state_local, &error_local);
+		else if (role == ZIF_ROLE_WHAT_REQUIRES)
+			part = zif_store_what_requires (store, (ZifDepend*) search, state_local, &error_local);
 		else if (role == ZIF_ROLE_WHAT_OBSOLETES)
 			part = zif_store_what_obsoletes (store, (ZifDepend*) search, state_local, &error_local);
 		else if (role == ZIF_ROLE_WHAT_CONFLICTS)
@@ -774,6 +779,29 @@ zif_store_array_what_provides (GPtrArray *store_array, ZifDepend *depend,
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 	return zif_store_array_repos_search (store_array, ZIF_ROLE_WHAT_PROVIDES, depend,
+					     state, error);
+}
+
+/**
+ * zif_store_array_what_requires:
+ * @store_array: the #GPtrArray of #ZifStores
+ * @depend: A #ZifDepend to search for
+ * @state: a #ZifState to use for progress reporting
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Find packages that require a specific string.
+ *
+ * Return value: an array of #ZifPackage's
+ *
+ * Since: 0.1.3
+ **/
+GPtrArray *
+zif_store_array_what_requires (GPtrArray *store_array, ZifDepend *depend,
+			       ZifState *state, GError **error)
+{
+	g_return_val_if_fail (zif_state_valid (state), NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+	return zif_store_array_repos_search (store_array, ZIF_ROLE_WHAT_REQUIRES, depend,
 					     state, error);
 }
 

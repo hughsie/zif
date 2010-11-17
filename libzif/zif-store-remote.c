@@ -2863,6 +2863,78 @@ out:
 }
 
 /**
+ * zif_store_remote_what_requires:
+ **/
+static GPtrArray *
+zif_store_remote_what_requires (ZifStore *store, ZifDepend *depend,
+				 ZifState *state, GError **error)
+{
+	gboolean ret;
+	GError *error_local = NULL;
+	GPtrArray *array = NULL;
+	ZifState *state_local;
+	ZifStoreRemote *remote = ZIF_STORE_REMOTE (store);
+	ZifMd *primary;
+
+	g_return_val_if_fail (zif_state_valid (state), NULL);
+
+	/* not locked */
+	ret = zif_lock_is_locked (remote->priv->lock, NULL);
+	if (!ret) {
+		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_NOT_LOCKED,
+				     "not locked");
+		goto out;
+	}
+
+	/* setup state */
+	if (remote->priv->loaded_metadata) {
+		zif_state_set_number_steps (state, 1);
+	} else {
+		ret = zif_state_set_steps (state,
+					   error,
+					   80, /* load */
+					   20, /* obsoletes */
+					   -1);
+		if (!ret)
+			goto out;
+	}
+
+	/* load metadata */
+	if (!remote->priv->loaded_metadata) {
+		state_local = zif_state_get_child (state);
+		ret = zif_store_remote_load_metadata (remote, state_local, &error_local);
+		if (!ret) {
+			g_set_error (error, error_local->domain, error_local->code,
+				     "failed to load metadata xml: %s", error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+
+		/* this section done */
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
+	}
+
+	/* get details */
+	state_local = zif_state_get_child (state);
+	primary = zif_store_remote_get_primary (remote, error);
+	if (primary == NULL)
+		goto out;
+	array = zif_md_what_requires (primary, depend,
+				      state_local, error);
+	if (array == NULL)
+		goto out;
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+out:
+	return array;
+}
+
+/**
  * zif_store_remote_what_obsoletes:
  **/
 static GPtrArray *
@@ -3494,6 +3566,7 @@ zif_store_remote_class_init (ZifStoreRemoteClass *klass)
 	store_class->search_file = zif_store_remote_search_file;
 	store_class->resolve = zif_store_remote_resolve;
 	store_class->what_provides = zif_store_remote_what_provides;
+	store_class->what_requires = zif_store_remote_what_requires;
 	store_class->what_obsoletes = zif_store_remote_what_obsoletes;
 	store_class->what_conflicts = zif_store_remote_what_conflicts;
 	store_class->get_packages = zif_store_remote_get_packages;

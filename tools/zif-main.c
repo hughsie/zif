@@ -3240,6 +3240,89 @@ out:
 }
 
 /**
+ * zif_cmd_what_requires:
+ **/
+static gboolean
+zif_cmd_what_requires (ZifCmdPrivate *priv, gchar **values, GError **error)
+{
+	gboolean ret = FALSE;
+	GPtrArray *array = NULL;
+	GPtrArray *store_array = NULL;
+	ZifDepend *depend = NULL;
+	ZifState *state_local;
+
+	/* check we have a value */
+	if (values == NULL || values[0] == NULL) {
+		/* TRANSLATORS: user needs to specify something */
+		g_set_error (error, 1, 0, _("No search term specified"));
+		goto out;
+	}
+
+	/* TRANSLATORS: performing action */
+	zif_progress_bar_start (priv->progressbar, _("Requires"));
+
+	/* setup state with the correct number of steps */
+	ret = zif_state_set_steps (priv->state,
+				   error,
+				   2, /* add local */
+				   3, /* add remote */
+				   95, /* search */
+				   -1);
+	if (!ret)
+		goto out;
+
+	/* add both local and remote packages */
+	store_array = zif_store_array_new ();
+	state_local = zif_state_get_child (priv->state);
+	ret = zif_store_array_add_local (store_array, state_local, error);
+	if (!ret)
+		goto out;
+
+	/* this section done */
+	ret = zif_state_done (priv->state, error);
+	if (!ret)
+		goto out;
+
+	state_local = zif_state_get_child (priv->state);
+	ret = zif_store_array_add_remote_enabled (store_array, state_local, error);
+	if (!ret)
+		goto out;
+
+	/* this section done */
+	ret = zif_state_done (priv->state, error);
+	if (!ret)
+		goto out;
+
+	/* parse the depend */
+	depend = zif_depend_new ();
+	ret = zif_depend_parse_description (depend, values[0], error);
+	if (!ret)
+		goto out;
+	state_local = zif_state_get_child (priv->state);
+	array = zif_store_array_what_requires (store_array, depend, state_local, error);
+	if (array == NULL) {
+		ret = FALSE;
+		goto out;
+	}
+
+	/* this section done */
+	ret = zif_state_done (priv->state, error);
+	if (!ret)
+		goto out;
+
+	zif_progress_bar_end (priv->progressbar);
+	zif_print_packages (array);
+out:
+	if (depend != NULL)
+		g_object_unref (depend);
+	if (store_array != NULL)
+		g_ptr_array_unref (store_array);
+	if (array != NULL)
+		g_ptr_array_unref (array);
+	return ret;
+}
+
+/**
  * zif_cmd_run:
  **/
 static gboolean
@@ -3614,6 +3697,11 @@ main (int argc, char *argv[])
 		     /* TRANSLATORS: command description */
 		     _("Find what package provides the given value"),
 		     zif_cmd_what_provides);
+	zif_cmd_add (priv->cmd_array,
+		     "what-requires",
+		     /* TRANSLATORS: command description */
+		     _("Find what package requires the given value"),
+		     zif_cmd_what_requires);
 
 	/* get a list of the commands */
 	cmd_descriptions = zif_cmd_get_descriptions (priv->cmd_array);
