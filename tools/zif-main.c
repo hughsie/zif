@@ -3043,7 +3043,7 @@ zif_cmd_what_conflicts (ZifCmdPrivate *priv, gchar **values, GError **error)
 	if (!ret)
 		goto out;
 	state_local = zif_state_get_child (priv->state);
-	array = zif_store_array_what_obsoletes (store_array, depend, state_local, error);
+	array = zif_store_array_what_conflicts (store_array, depend, state_local, error);
 	if (array == NULL) {
 		ret = FALSE;
 		goto out;
@@ -3206,7 +3206,6 @@ zif_cmd_what_provides (ZifCmdPrivate *priv, gchar **values, GError **error)
 	ret = zif_depend_parse_description (depend, values[0], error);
 	if (!ret)
 		goto out;
-	g_object_unref (depend);
 	state_local = zif_state_get_child (priv->state);
 	array = zif_store_array_what_provides (store_array, depend, state_local, error);
 	if (array == NULL) {
