@@ -29,6 +29,7 @@
 #endif
 
 #include <glib.h>
+#include <string.h>
 
 #include "zif-package-array.h"
 
@@ -191,6 +192,151 @@ zif_package_array_filter_newest (GPtrArray *packages)
 	}
 	g_hash_table_unref (hash);
 	return  ret;
+}
+
+/**
+ * zif_package_array_filter_best_arch:
+ * @array: array of %ZifPackage's
+ *
+ * Filters the array so that only the best version of a package remains.
+ *
+ * If we have the following packages:
+ *  - glibc.i386
+ *  - hal.i386
+ *  - glibc.i686
+ *
+ * Then we output:
+ *  - glibc.i686
+ *
+ * Since: 0.1.3
+ **/
+void
+zif_package_array_filter_best_arch (GPtrArray *array)
+{
+	ZifPackage *package;
+	guint i;
+	const gchar *arch;
+	const gchar *best_arch = NULL;
+
+	/* find the best arch */
+	for (i=0; i<array->len; i++) {
+		package = g_ptr_array_index (array, i);
+		arch = zif_package_get_arch (package);
+		if (g_strcmp0 (arch, "x86_64") == 0)
+			break;
+		if (g_strcmp0 (arch, best_arch) > 0) {
+			best_arch = arch;
+		}
+	}
+
+	/* if no obvious best, skip */
+	g_debug ("bestarch=%s", best_arch);
+	if (best_arch == NULL)
+		return;
+
+	/* remove any that are not best */
+	for (i=0; i<array->len;) {
+		package = g_ptr_array_index (array, i);
+		arch = zif_package_get_arch (package);
+		if (g_strcmp0 (arch, best_arch) != 0) {
+			g_ptr_array_remove_index_fast (array, i);
+			continue;
+		}
+		i++;
+	}
+}
+
+/**
+ * zif_package_array_filter_smallest_name:
+ * @array: array of %ZifPackage's
+ *
+ * Filters the array so that only the smallest name of a package remains.
+ *
+ * If we have the following packages:
+ *  - glibc.i386
+ *  - hal.i386
+ *
+ * Then we output:
+ *  - hal.i686
+ *
+ * As it has the smallest name. I know it's insane, but it's what yum does.
+ *
+ * Since: 0.1.3
+ **/
+void
+zif_package_array_filter_smallest_name (GPtrArray *array)
+{
+	ZifPackage *package;
+	guint i;
+	guint length;
+	guint shortest = G_MAXUINT;
+
+	/* find the smallest name */
+	for (i=0; i<array->len; i++) {
+		package = g_ptr_array_index (array, i);
+		length = strlen (zif_package_get_name (package));
+		if (length < shortest)
+			shortest = length;
+	}
+
+	/* remove entries that are longer than the shortest name */
+	for (i=0; i<array->len;) {
+		package = g_ptr_array_index (array, i);
+		length = strlen (zif_package_get_name (package));
+		if (length != shortest) {
+			g_ptr_array_remove_index_fast (array, i);
+			continue;
+		}
+		i++;
+	}
+}
+
+/**
+ * zif_package_array_filter_depend_version:
+ * @packages: array of %ZifPackage's
+ * @state: a #ZifState to use for progress reporting
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Filters the list by the best depend version.
+ *
+ * Return value: %TRUE if the array was searched successfully
+ *
+ * Since: 0.1.3
+ **/
+gboolean
+zif_package_array_filter_depend_version (GPtrArray *array,
+					 ZifDepend *depend,
+					 ZifState *state,
+					 GError **error)
+{
+	guint i;
+	gboolean ret = TRUE;
+	ZifPackage *package;
+	ZifDepend *satisfies = NULL;
+	ZifState *state_local;
+	ZifState *state_loop;
+
+	/* remove entries that do not satisfy the best dep */
+	state_local = zif_state_get_child (state);
+	zif_state_set_number_steps (state_local, array->len);
+	for (i=0; i<array->len;) {
+		package = g_ptr_array_index (array, i);
+		state_loop = zif_state_get_child (state_local);
+		ret = zif_package_provides (package, depend, &satisfies, state_loop, error);
+		if (!ret)
+			goto out;
+		ret = zif_state_done (state_local, error);
+		if (!ret)
+			goto out;
+		if (satisfies == NULL) {
+			g_ptr_array_remove_index_fast (array, i);
+			continue;
+		}
+		g_object_unref (satisfies);
+		i++;
+	}
+out:
+	return ret;
 }
 
 /**

@@ -632,126 +632,6 @@ out:
 }
 
 /**
- * _zif_package_array_filter_packages_by_best_arch:
- *
- * If we have the following packages:
- *  - glibc.i386
- *  - hal.i386
- *  - glibc.i686
- *
- * Then we output:
- *  - glibc.i686
- *
- **/
-static void
-_zif_package_array_filter_packages_by_best_arch (GPtrArray *array)
-{
-	ZifPackage *package;
-	guint i;
-	const gchar *arch;
-	const gchar *best_arch = NULL;
-
-	/* find the best arch */
-	for (i=0; i<array->len; i++) {
-		package = g_ptr_array_index (array, i);
-		arch = zif_package_get_arch (package);
-		if (g_strcmp0 (arch, "x86_64") == 0)
-			break;
-		if (g_strcmp0 (arch, best_arch) > 0) {
-			best_arch = arch;
-		}
-	}
-
-	/* if no obvious best, skip */
-	g_debug ("bestarch=%s", best_arch);
-	if (best_arch == NULL)
-		return;
-
-	/* remove any that are not best */
-	for (i=0; i<array->len;) {
-		package = g_ptr_array_index (array, i);
-		arch = zif_package_get_arch (package);
-		if (g_strcmp0 (arch, best_arch) != 0) {
-			g_ptr_array_remove_index_fast (array, i);
-			continue;
-		}
-		i++;
-	}
-}
-
-/**
- * _zif_package_array_filter_packages_by_smallest_name:
- *
- * If we have the following packages:
- *  - glibc.i386
- *  - hal.i386
- *
- * Then we output:
- *  - hal.i686
- *
- * As it has the smallest name. I know it's insane, but it's what yum does.
- *
- **/
-static void
-_zif_package_array_filter_packages_by_smallest_name (GPtrArray *array)
-{
-	ZifPackage *package;
-	guint i;
-	guint length;
-	guint shortest = G_MAXUINT;
-
-	/* find the smallest name */
-	for (i=0; i<array->len; i++) {
-		package = g_ptr_array_index (array, i);
-		length = strlen (zif_package_get_name (package));
-		if (length < shortest)
-			shortest = length;
-	}
-
-	/* remove entries that are longer than the shortest name */
-	for (i=0; i<array->len;) {
-		package = g_ptr_array_index (array, i);
-		length = strlen (zif_package_get_name (package));
-		if (length != shortest) {
-			g_ptr_array_remove_index_fast (array, i);
-			continue;
-		}
-		i++;
-	}
-}
-
-/**
- * _zif_package_array_filter_packages_by_depend_version:
- **/
-static gboolean
-_zif_package_array_filter_packages_by_depend_version (GPtrArray *array,
-						      ZifDepend *depend,
-						      ZifState *state,
-						      GError **error)
-{
-	guint i;
-	gboolean ret = TRUE;
-	ZifPackage *package;
-	ZifDepend *satisfies = NULL;
-
-	/* remove entries that do not satisfy the best dep */
-	for (i=0; i<array->len;) {
-		package = g_ptr_array_index (array, i);
-		ret = zif_package_provides (package, depend, &satisfies, state, error);
-		if (!ret)
-			goto out;
-		if (satisfies == NULL) {
-			g_ptr_array_remove_index_fast (array, i);
-			continue;
-		}
-		g_object_unref (satisfies);
-		i++;
-	}
-out:
-	return ret;
-}
-
-/**
  * zif_transaction_get_package_provide_from_package_array:
  **/
 static gboolean
@@ -783,13 +663,13 @@ zif_transaction_get_package_provide_from_package_array (GPtrArray *array,
 
 	/* filter these down so we get best architectures listed first */
 	if (satisfy_array->len > 1) {
-		_zif_package_array_filter_packages_by_best_arch (satisfy_array);
+		zif_package_array_filter_best_arch (satisfy_array);
 		g_debug ("after filtering by arch, array now %i packages", satisfy_array->len);
 	}
 
 	/* if the depends are the same, choose the one with the biggest version */
 	if (satisfy_array->len > 1) {
-		ret = _zif_package_array_filter_packages_by_depend_version (satisfy_array,
+		ret = zif_package_array_filter_depend_version (satisfy_array,
 									    best_depend,
 									    state, error);
 		if (!ret)
@@ -799,7 +679,7 @@ zif_transaction_get_package_provide_from_package_array (GPtrArray *array,
 
 	/* filter these down so we get smallest names listed first */
 	if (satisfy_array->len > 1) {
-		_zif_package_array_filter_packages_by_smallest_name (satisfy_array);
+		zif_package_array_filter_smallest_name (satisfy_array);
 		g_debug ("after filtering by name length, array now %i packages", satisfy_array->len);
 	}
 

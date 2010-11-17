@@ -40,6 +40,12 @@ ZifPackage	*zif_package_array_get_newest		(GPtrArray	*array,
 ZifPackage	*zif_package_array_get_oldest		(GPtrArray	*array,
 							 GError		**error);
 gboolean	 zif_package_array_filter_newest	(GPtrArray	*packages);
+void		 zif_package_array_filter_best_arch	(GPtrArray	*array);
+void		 zif_package_array_filter_smallest_name	(GPtrArray	*array);
+gboolean	 zif_package_array_filter_depend_version (GPtrArray	*array,
+							 ZifDepend	*depend,
+							 ZifState	*state,
+							 GError		**error);
 gboolean	 zif_package_array_provide		(GPtrArray	*array,
 							 ZifDepend	*depend,
 							 ZifDepend	**best_depend,
