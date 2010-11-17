@@ -57,6 +57,7 @@
 #include <rpm/rpmts.h>
 
 #include "zif-depend.h"
+#include "zif-package-array.h"
 #include "zif-package-meta.h"
 #include "zif-package-local.h"
 #include "zif-package-remote.h"

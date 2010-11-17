@@ -53,6 +53,7 @@
 #include "zif-media.h"
 #include "zif-monitor.h"
 #include "zif-package.h"
+#include "zif-package-array.h"
 #include "zif-package-remote.h"
 #include "zif-store.h"
 #include "zif-store-local.h"

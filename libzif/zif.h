@@ -35,6 +35,7 @@
 #include <zif-md-metalink.h>
 #include <zif-md-mirrorlist.h>
 #include <zif-package.h>
+#include <zif-package-array.h>
 #include <zif-package-local.h>
 #include <zif-package-remote.h>
 #include <zif-release.h>

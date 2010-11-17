@@ -39,6 +39,7 @@ libzif_include_HEADERS =					\
 	zif-md-mirrorlist.h					\
 	zif-monitor.h						\
 	zif-package.h						\
+	zif-package-array.h					\
 	zif-package-local.h					\
 	zif-package-remote.h					\
 	zif-release.h						\
@@ -109,6 +110,8 @@ libzif_la_SOURCES =						\
 	zif-monitor.h						\
 	zif-package.c						\
 	zif-package.h						\
+	zif-package-array.c					\
+	zif-package-array.h					\
 	zif-package-local.c					\
 	zif-package-local.h					\
 	zif-package-meta.c					\

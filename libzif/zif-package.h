@@ -211,11 +211,6 @@ gint			 zif_package_compare		(ZifPackage	*a,
 							 ZifPackage	*b);
 gboolean		 zif_package_is_compatible_arch	(ZifPackage	*a,
 							 ZifPackage	*b);
-ZifPackage		*zif_package_array_get_newest	(GPtrArray	*array,
-							 GError		**error);
-ZifPackage		*zif_package_array_get_oldest	(GPtrArray	*array,
-							 GError		**error);
-gboolean		 zif_package_array_filter_newest (GPtrArray	*packages);
 const gchar		*zif_package_ensure_type_to_string (ZifPackageEnsureType type);
 
 G_END_DECLS
