@@ -292,40 +292,212 @@ zif_package_array_filter_smallest_name (GPtrArray *array)
 }
 
 /**
- * zif_package_array_filter_depend_version:
+ * zif_package_array_filter_provide:
  * @packages: array of %ZifPackage's
+ * @depend: the dependancy to test against
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
- * Filters the list by the best depend version.
+ * Filters the list by the dependency satisfiability.
  *
  * Return value: %TRUE if the array was searched successfully
  *
  * Since: 0.1.3
  **/
 gboolean
-zif_package_array_filter_depend_version (GPtrArray *array,
-					 ZifDepend *depend,
-					 ZifState *state,
-					 GError **error)
+zif_package_array_filter_provide (GPtrArray *array,
+				  ZifDepend *depend,
+				  ZifState *state,
+				  GError **error)
 {
 	guint i;
 	gboolean ret = TRUE;
 	ZifPackage *package;
 	ZifDepend *satisfies = NULL;
 	ZifState *state_local;
-	ZifState *state_loop;
 
-	/* remove entries that do not satisfy the best dep */
-	state_local = zif_state_get_child (state);
-	zif_state_set_number_steps (state_local, array->len);
+	/* shortcut */
+	if (array->len == 0)
+		goto out;
+
+	/* remove entries that do not satisfy the dep */
+	zif_state_set_number_steps (state, array->len);
 	for (i=0; i<array->len;) {
 		package = g_ptr_array_index (array, i);
-		state_loop = zif_state_get_child (state_local);
-		ret = zif_package_provides (package, depend, &satisfies, state_loop, error);
+		state_local = zif_state_get_child (state);
+		ret = zif_package_provides (package,
+					    depend,
+					    &satisfies,
+					    state_local,
+					    error);
 		if (!ret)
 			goto out;
-		ret = zif_state_done (state_local, error);
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
+		if (satisfies == NULL) {
+			g_ptr_array_remove_index_fast (array, i);
+			continue;
+		}
+		g_object_unref (satisfies);
+		i++;
+	}
+out:
+	return ret;
+}
+
+/**
+ * zif_package_array_filter_require:
+ * @packages: array of %ZifPackage's
+ * @depend: the dependancy to test against
+ * @state: a #ZifState to use for progress reporting
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Filters the list by the dependency satisfiability.
+ *
+ * Return value: %TRUE if the array was searched successfully
+ *
+ * Since: 0.1.3
+ **/
+gboolean
+zif_package_array_filter_require (GPtrArray *array,
+				  ZifDepend *depend,
+				  ZifState *state,
+				  GError **error)
+{
+	guint i;
+	gboolean ret = TRUE;
+	ZifPackage *package;
+	ZifDepend *satisfies = NULL;
+	ZifState *state_local;
+
+	/* shortcut */
+	if (array->len == 0)
+		goto out;
+
+	/* remove entries that do not satisfy the dep */
+	zif_state_set_number_steps (state, array->len);
+	for (i=0; i<array->len;) {
+		package = g_ptr_array_index (array, i);
+		state_local = zif_state_get_child (state);
+		ret = zif_package_requires (package,
+					    depend,
+					    &satisfies,
+					    state_local,
+					    error);
+		if (!ret)
+			goto out;
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
+		if (satisfies == NULL) {
+			g_ptr_array_remove_index_fast (array, i);
+			continue;
+		}
+		g_object_unref (satisfies);
+		i++;
+	}
+out:
+	return ret;
+}
+
+/**
+ * zif_package_array_filter_conflict:
+ * @packages: array of %ZifPackage's
+ * @depend: the dependancy to test against
+ * @state: a #ZifState to use for progress reporting
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Filters the list by the dependency satisfiability.
+ *
+ * Return value: %TRUE if the array was searched successfully
+ *
+ * Since: 0.1.3
+ **/
+gboolean
+zif_package_array_filter_conflict (GPtrArray *array,
+				   ZifDepend *depend,
+				   ZifState *state,
+				   GError **error)
+{
+	guint i;
+	gboolean ret = TRUE;
+	ZifPackage *package;
+	ZifDepend *satisfies = NULL;
+	ZifState *state_local;
+
+	/* shortcut */
+	if (array->len == 0)
+		goto out;
+
+	/* remove entries that do not satisfy the dep */
+	zif_state_set_number_steps (state, array->len);
+	for (i=0; i<array->len;) {
+		package = g_ptr_array_index (array, i);
+		state_local = zif_state_get_child (state);
+		ret = zif_package_conflicts (package,
+					     depend,
+					     &satisfies,
+					     state_local,
+					     error);
+		if (!ret)
+			goto out;
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
+		if (satisfies == NULL) {
+			g_ptr_array_remove_index_fast (array, i);
+			continue;
+		}
+		g_object_unref (satisfies);
+		i++;
+	}
+out:
+	return ret;
+}
+
+/**
+ * zif_package_array_filter_obsolete:
+ * @packages: array of %ZifPackage's
+ * @depend: the dependancy to test against
+ * @state: a #ZifState to use for progress reporting
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Filters the list by the dependency satisfiability.
+ *
+ * Return value: %TRUE if the array was searched successfully
+ *
+ * Since: 0.1.3
+ **/
+gboolean
+zif_package_array_filter_obsolete (GPtrArray *array,
+				   ZifDepend *depend,
+				   ZifState *state,
+				   GError **error)
+{
+	guint i;
+	gboolean ret = TRUE;
+	ZifPackage *package;
+	ZifDepend *satisfies = NULL;
+	ZifState *state_local;
+
+	/* shortcut */
+	if (array->len == 0)
+		goto out;
+
+	/* remove entries that do not satisfy the dep */
+	zif_state_set_number_steps (state, array->len);
+	for (i=0; i<array->len;) {
+		package = g_ptr_array_index (array, i);
+		state_local = zif_state_get_child (state);
+		ret = zif_package_obsoletes (package,
+					     depend,
+					     &satisfies,
+					     state_local,
+					     error);
+		if (!ret)
+			goto out;
+		ret = zif_state_done (state, error);
 		if (!ret)
 			goto out;
 		if (satisfies == NULL) {

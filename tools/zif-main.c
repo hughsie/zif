@@ -1228,8 +1228,9 @@ zif_cmd_get_updates (ZifCmdPrivate *priv, gchar **values, GError **error)
 	for (i=0; i<array->len; i++) {
 		package = ZIF_PACKAGE (g_ptr_array_index (array, i));
 		depend = zif_depend_new ();
-		zif_depend_set_flag (depend, ZIF_DEPEND_FLAG_ANY);
+		zif_depend_set_flag (depend, ZIF_DEPEND_FLAG_EQUAL);
 		zif_depend_set_name (depend, zif_package_get_name (package));
+		zif_depend_set_version (depend, zif_package_get_version (package));
 
 		/* find if anything obsoletes this */
 		state_loop = zif_state_get_child (state_local);
@@ -3008,9 +3009,9 @@ zif_cmd_what_conflicts (ZifCmdPrivate *priv, gchar **values, GError **error)
 	/* setup state with the correct number of steps */
 	ret = zif_state_set_steps (priv->state,
 				   error,
-				   80,
-				   10,
-				   10,
+				   2, /* add local */
+				   3, /* add remote */
+				   95, /* search */
 				   -1);
 	if (!ret)
 		goto out;
@@ -3090,9 +3091,9 @@ zif_cmd_what_obsoletes (ZifCmdPrivate *priv, gchar **values, GError **error)
 	/* setup state with the correct number of steps */
 	ret = zif_state_set_steps (priv->state,
 				   error,
-				   80,
-				   10,
-				   10,
+				   2, /* add local */
+				   3, /* add remote */
+				   95, /* search */
 				   -1);
 	if (!ret)
 		goto out;
@@ -3172,9 +3173,9 @@ zif_cmd_what_provides (ZifCmdPrivate *priv, gchar **values, GError **error)
 	/* setup state with the correct number of steps */
 	ret = zif_state_set_steps (priv->state,
 				   error,
-				   80,
-				   10,
-				   10,
+				   2, /* add local */
+				   3, /* add remote */
+				   95, /* search */
 				   -1);
 	if (!ret)
 		goto out;

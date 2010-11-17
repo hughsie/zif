@@ -669,9 +669,9 @@ zif_transaction_get_package_provide_from_package_array (GPtrArray *array,
 
 	/* if the depends are the same, choose the one with the biggest version */
 	if (satisfy_array->len > 1) {
-		ret = zif_package_array_filter_depend_version (satisfy_array,
-									    best_depend,
-									    state, error);
+		ret = zif_package_array_filter_provide (satisfy_array,
+							best_depend,
+							state, error);
 		if (!ret)
 			goto out;
 		g_debug ("after filtering by depend, array now %i packages", satisfy_array->len);

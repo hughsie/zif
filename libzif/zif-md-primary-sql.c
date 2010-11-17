@@ -39,6 +39,7 @@
 
 #include "zif-md.h"
 #include "zif-md-primary-sql.h"
+#include "zif-package-array.h"
 #include "zif-package-remote.h"
 #include "zif-utils.h"
 
@@ -510,14 +511,16 @@ zif_md_primary_sql_what_depends (ZifMd *md, const gchar *table_name, ZifDepend *
 		ret = zif_state_set_steps (state,
 					   error,
 					   80, /* sql query */
-					   20, /* search */
+					   10, /* search */
+					   10, /* filter */
 					   -1);
 	} else {
 		ret = zif_state_set_steps (state,
 					   error,
 					   60, /* load */
 					   20, /* sql query */
-					   20, /* search */
+					   10, /* search */
+					   10, /* filter */
 					   -1);
 	}
 	if (!ret)
@@ -594,6 +597,37 @@ zif_md_primary_sql_what_depends (ZifMd *md, const gchar *table_name, ZifDepend *
 		ret = zif_state_done (state_local, error);
 		if (!ret)
 			goto out;
+	}
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* filter results */
+	state_local = zif_state_get_child (state);
+	if (g_strcmp0 (table_name, "provides") == 0) {
+		ret = zif_package_array_filter_provide (array,
+							depend,
+							state_local,
+							error);
+	} else if (g_strcmp0 (table_name, "requires") == 0) {
+		ret = zif_package_array_filter_require (array,
+							depend,
+							state_local,
+							error);
+	} else if (g_strcmp0 (table_name, "obsoletes") == 0) {
+		ret = zif_package_array_filter_obsolete (array,
+							 depend,
+							 state_local,
+							 error);
+	} else if (g_strcmp0 (table_name, "conflicts") == 0) {
+		ret = zif_package_array_filter_conflict (array,
+							 depend,
+							 state_local,
+							 error);
+	} else {
+		g_assert_not_reached ();
 	}
 
 	/* this section done */
