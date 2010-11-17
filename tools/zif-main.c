@@ -2541,7 +2541,8 @@ zif_cmd_search_details (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 	/* check we have a value */
 	if (values == NULL || values[0] == NULL) {
-		g_set_error (error, 1, 0, "specify a search term");
+		/* TRANSLATORS: user needs to specify something */
+		g_set_error (error, 1, 0, _("No search term specified"));
 		goto out;
 	}
 
@@ -2695,7 +2696,8 @@ zif_cmd_search_group (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 	/* check we have a value */
 	if (values == NULL || values[0] == NULL) {
-		g_set_error (error, 1, 0, "specify a search term");
+		/* TRANSLATORS: user needs to specify something */
+		g_set_error (error, 1, 0, _("No search term specified"));
 		goto out;
 	}
 
@@ -2769,7 +2771,8 @@ zif_cmd_search_name (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 	/* check we have a value */
 	if (values == NULL || values[0] == NULL) {
-		g_set_error (error, 1, 0, "specify a search term");
+		/* TRANSLATORS: user needs to specify something */
+		g_set_error (error, 1, 0, _("No search term specified"));
 		goto out;
 	}
 
@@ -3001,7 +3004,8 @@ zif_cmd_what_conflicts (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 	/* check we have a value */
 	if (values == NULL || values[0] == NULL) {
-		g_set_error (error, 1, 0, "specify a search term");
+		/* TRANSLATORS: user needs to specify something */
+		g_set_error (error, 1, 0, _("No search term specified"));
 		goto out;
 	}
 
@@ -3083,7 +3087,8 @@ zif_cmd_what_obsoletes (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 	/* check we have a value */
 	if (values == NULL || values[0] == NULL) {
-		g_set_error (error, 1, 0, "specify a search term");
+		/* TRANSLATORS: user needs to specify something */
+		g_set_error (error, 1, 0, _("No search term specified"));
 		goto out;
 	}
 
@@ -3165,7 +3170,8 @@ zif_cmd_what_provides (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 	/* check we have a value */
 	if (values == NULL || values[0] == NULL) {
-		g_set_error (error, 1, 0, "specify a search term");
+		/* TRANSLATORS: user needs to specify something */
+		g_set_error (error, 1, 0, _("No search term specified"));
 		goto out;
 	}
 
