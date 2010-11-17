@@ -43,6 +43,7 @@
 #include "zif-groups.h"
 #include "zif-lock.h"
 #include "zif-monitor.h"
+#include "zif-package-array.h"
 #include "zif-package-local.h"
 #include "zif-store.h"
 #include "zif-store-local.h"
@@ -894,14 +895,10 @@ out:
 static GPtrArray *
 zif_store_local_what_provides (ZifStore *store, ZifDepend *depend, ZifState *state, GError **error)
 {
-	guint i;
 	GPtrArray *array = NULL;
-	ZifPackage *package;
 	GError *error_local = NULL;
 	gboolean ret;
-	ZifDepend *satisfies;
 	ZifState *state_local = NULL;
-	ZifState *state_loop = NULL;
 	ZifStoreLocal *local = ZIF_STORE_LOCAL (store);
 
 	g_return_val_if_fail (ZIF_IS_STORE_LOCAL (store), NULL);
@@ -953,30 +950,13 @@ zif_store_local_what_provides (ZifStore *store, ZifDepend *depend, ZifState *sta
 		goto out;
 	}
 
-	/* setup state with the correct number of steps */
+	/* just use the helper function */
 	state_local = zif_state_get_child (state);
-	zif_state_set_number_steps (state_local, local->priv->packages->len);
-
-	/* iterate list */
-	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
-	for (i=0;i<local->priv->packages->len;i++) {
-		package = g_ptr_array_index (local->priv->packages, i);
-
-		/* find if this package provides the depend */
-		state_loop = zif_state_get_child (state_local);
-		ret = zif_package_provides (package, depend, &satisfies, state_loop, error);
-		if (!ret)
-			goto out;
-		if (satisfies != NULL) {
-			g_ptr_array_add (array, g_object_ref (package));
-			g_object_unref (satisfies);
-		}
-
-		/* this section done */
-		ret = zif_state_done (state_local, error);
-		if (!ret)
-			goto out;
-	}
+	ret = zif_package_array_provide (local->priv->packages,
+					  depend, NULL, &array,
+					  state_local, error);
+	if (!ret)
+		goto out;
 
 	/* this section done */
 	ret = zif_state_done (state, error);
@@ -992,16 +972,10 @@ out:
 static GPtrArray *
 zif_store_local_what_obsoletes (ZifStore *store, ZifDepend *depend, ZifState *state, GError **error)
 {
-	guint i;
-	guint j;
 	GPtrArray *array = NULL;
-	ZifPackage *package;
-	GPtrArray *provides;
 	GError *error_local = NULL;
 	gboolean ret;
-	ZifDepend *provide;
 	ZifState *state_local = NULL;
-	ZifState *state_loop = NULL;
 	ZifStoreLocal *local = ZIF_STORE_LOCAL (store);
 
 	g_return_val_if_fail (ZIF_IS_STORE_LOCAL (store), NULL);
@@ -1053,29 +1027,13 @@ zif_store_local_what_obsoletes (ZifStore *store, ZifDepend *depend, ZifState *st
 		goto out;
 	}
 
-	/* setup state with the correct number of steps */
+	/* just use the helper function */
 	state_local = zif_state_get_child (state);
-	zif_state_set_number_steps (state_local, local->priv->packages->len);
-
-	/* iterate list */
-	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
-	for (i=0;i<local->priv->packages->len;i++) {
-		package = g_ptr_array_index (local->priv->packages, i);
-		state_loop = zif_state_get_child (state_local);
-		provides = zif_package_get_obsoletes (package, state_loop, NULL);
-		for (j=0; j<provides->len; j++) {
-			provide = g_ptr_array_index (provides, j);
-			if (zif_depend_satisfies (provide, depend)) {
-				g_ptr_array_add (array, g_object_ref (package));
-				break;
-			}
-		}
-
-		/* this section done */
-		ret = zif_state_done (state_local, error);
-		if (!ret)
-			goto out;
-	}
+	ret = zif_package_array_obsolete (local->priv->packages,
+					  depend, NULL, &array,
+					  state_local, error);
+	if (!ret)
+		goto out;
 
 	/* this section done */
 	ret = zif_state_done (state, error);
@@ -1091,16 +1049,10 @@ out:
 static GPtrArray *
 zif_store_local_what_conflicts (ZifStore *store, ZifDepend *depend, ZifState *state, GError **error)
 {
-	guint i;
-	guint j;
 	GPtrArray *array = NULL;
-	ZifPackage *package;
-	GPtrArray *provides;
 	GError *error_local = NULL;
 	gboolean ret;
-	ZifDepend *provide;
 	ZifState *state_local = NULL;
-	ZifState *state_loop = NULL;
 	ZifStoreLocal *local = ZIF_STORE_LOCAL (store);
 
 	g_return_val_if_fail (ZIF_IS_STORE_LOCAL (store), NULL);
@@ -1152,29 +1104,13 @@ zif_store_local_what_conflicts (ZifStore *store, ZifDepend *depend, ZifState *st
 		goto out;
 	}
 
-	/* setup state with the correct number of steps */
+	/* just use the helper function */
 	state_local = zif_state_get_child (state);
-	zif_state_set_number_steps (state_local, local->priv->packages->len);
-
-	/* iterate list */
-	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
-	for (i=0;i<local->priv->packages->len;i++) {
-		package = g_ptr_array_index (local->priv->packages, i);
-		state_loop = zif_state_get_child (state_local);
-		provides = zif_package_get_conflicts (package, state_loop, NULL);
-		for (j=0; j<provides->len; j++) {
-			provide = g_ptr_array_index (provides, j);
-			if (zif_depend_satisfies (provide, depend)) {
-				g_ptr_array_add (array, g_object_ref (package));
-				break;
-			}
-		}
-
-		/* this section done */
-		ret = zif_state_done (state_local, error);
-		if (!ret)
-			goto out;
-	}
+	ret = zif_package_array_conflict (local->priv->packages,
+					  depend, NULL, &array,
+					  state_local, error);
+	if (!ret)
+		goto out;
 
 	/* this section done */
 	ret = zif_state_done (state, error);
