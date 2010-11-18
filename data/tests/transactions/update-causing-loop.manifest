@@ -1,0 +1,9 @@
+# Update a single package, with the old version having a provides required
+# by another installed package.
+
+[Zif Manifest]
+AddLocal=hal;0.3.0-1;i386;meta,gnome-power-manager;1.0.0-1;i386;meta
+AddRemote=gnome-power-manager;1.0.1-1;i386;meta@Requires:hal = 0.3.1-1,hal;0.3.1-1;i386;meta@Requires:hal-info
+TransactionUpdate=gnome-power-manager
+PostInstalled=hal;0.3.0-1;i386;meta,gnome-power-manager;1.0.0-1;i386;meta
+SkipBroken=1
