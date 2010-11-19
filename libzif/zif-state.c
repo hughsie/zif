@@ -404,7 +404,7 @@ zif_state_set_percentage (ZifState *state, guint percentage)
 	state->priv->last_percentage = percentage;
 
 	/* are we so low we don't care */
-	if (state->priv->global_share < 0.01)
+	if (state->priv->global_share < 0.001)
 		goto out;
 
 	/* emit */
