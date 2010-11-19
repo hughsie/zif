@@ -1564,6 +1564,27 @@ zif_transaction_reason_to_string_localized (ZifTransactionReason reason)
 	return str;
 }
 
+/* print what's going to happen */
+static void
+zif_main_show_transaction (ZifTransaction *transaction)
+{
+	GPtrArray *array;
+	guint i, j;
+	ZifPackage *package;
+
+	g_print ("%s\n", _("Transaction summary:"));
+	for (i=0; i<ZIF_TRANSACTION_REASON_LAST; i++) {
+		array = zif_transaction_get_array_for_reason (transaction, i);
+		if (array->len > 0)
+			g_print ("  %s:\n", zif_transaction_reason_to_string_localized (i));
+		for (j=0; j<array->len; j++) {
+			package = g_ptr_array_index (array, j);
+			g_print ("  %i.\t%s\n", j+1, zif_package_get_id (package));
+		}
+		g_ptr_array_unref (array);
+	}
+}
+
 /**
  * zif_transaction_run:
  **/
@@ -1571,10 +1592,7 @@ static gboolean
 zif_transaction_run (ZifCmdPrivate *priv, ZifTransaction *transaction, ZifState *state, GError **error)
 {
 	gboolean ret;
-	GPtrArray *array_tmp;
 	GPtrArray *store_array_remote = NULL;
-	guint i, j;
-	ZifPackage *package;
 	ZifState *state_local;
 	ZifStore *store_local = NULL;
 
@@ -1615,18 +1633,8 @@ zif_transaction_run (ZifCmdPrivate *priv, ZifTransaction *transaction, ZifState 
 	if (!ret)
 		goto out;
 
-	/* print what's going to happen */
-	g_print ("%s\n", _("Transaction summary:"));
-	for (i=0; i<ZIF_TRANSACTION_REASON_LAST; i++) {
-		array_tmp = zif_transaction_get_array_for_reason (transaction, i);
-		if (array_tmp->len > 0)
-			g_print ("  %s:\n", zif_transaction_reason_to_string_localized (i));
-		for (j=0; j<array_tmp->len; j++) {
-			package = g_ptr_array_index (array_tmp, j);
-			g_print ("  %i.\t%s\n", j+1, zif_package_get_id (package));
-		}
-		g_ptr_array_unref (array_tmp);
-	}
+	/* show */
+	zif_main_show_transaction (transaction);
 
 	/* confirm */
 	if (priv->assume_no ||
@@ -3524,6 +3532,256 @@ out:
 }
 
 /**
+ * zif_cmd_shell:
+ **/
+static gboolean
+zif_cmd_shell (ZifCmdPrivate *priv, gchar **values, GError **error)
+{
+	gboolean ret;
+	gchar buffer[1024];
+	gchar *old_buffer = NULL;
+	gchar **split;
+	GError *error_local = NULL;
+	GPtrArray *array;
+	GPtrArray *stores_remote = NULL;
+	GTimer *timer;
+	guint i;
+	ZifPackage *package;
+	ZifState *state_local;
+	ZifStore *store_local = NULL;
+	ZifTransaction *transaction = NULL;
+
+	/* use a timer to tell how long each thing took */
+	timer = g_timer_new ();
+
+	/* setup state */
+	ret = zif_state_set_steps (priv->state,
+				   error,
+				   1, /* add remote */
+				   19, /* find remote */
+				   80, /* run transaction */
+				   -1);
+	if (!ret)
+		goto out;
+
+	/* add remote */
+	state_local = zif_state_get_child (priv->state);
+	stores_remote = zif_store_array_new ();
+	ret = zif_store_array_add_remote_enabled (stores_remote, state_local, error);
+	if (!ret)
+		goto out;
+
+	/* setup transaction */
+	store_local = zif_store_local_new ();
+	transaction = zif_transaction_new ();
+	zif_transaction_set_store_local (transaction, store_local);
+	zif_transaction_set_stores_remote (transaction, stores_remote);
+
+	g_print ("\n");
+	g_print (_("Welcome to the shell. Type '%s' to finish."), "exit");
+	do {
+		g_print ("\n(took %.1fms) Zif> ", g_timer_elapsed (timer, NULL) * 1000);
+		fgets (buffer, 1024, stdin);
+		g_strdelimit (buffer, "\n", '\0');
+
+		/* reset timer */
+		g_timer_reset (timer);
+
+		/* no input */
+		if (g_strcmp0 (buffer, "") == 0)
+			continue;
+
+		/* save this so "." works */
+		if (g_strcmp0 (buffer, ".") == 0) {
+			g_strlcpy (buffer, old_buffer, 1024);
+		} else {
+			g_free (old_buffer);
+			old_buffer = g_strdup (buffer);
+		}
+
+		/* parse commands */
+		split = g_strsplit (buffer, " ", -1);
+		if (g_strcmp0 (split[0], "exit") == 0) {
+			break;
+		}
+
+		/* reset the transaction */
+		if (g_strcmp0 (split[0], "reset") == 0) {
+			zif_transaction_reset (transaction);
+			continue;
+		}
+
+		/* show the transaction */
+		if (g_strcmp0 (split[0], "show") == 0) {
+			zif_main_show_transaction (transaction);
+			continue;
+		}
+
+		/* resolve the transaction */
+		if (g_strcmp0 (split[0], "resolve") == 0 &&
+		    split[1] == NULL) {
+			zif_state_reset (priv->state);
+			ret = zif_transaction_resolve (transaction, priv->state, &error_local);
+			if (!ret) {
+				g_print ("%s\n", error_local->message);
+				g_clear_error (&error_local);
+			}
+			continue;
+		}
+
+		/* prepare the transaction */
+		if (g_strcmp0 (split[0], "prepare") == 0) {
+			zif_state_reset (priv->state);
+			ret = zif_transaction_prepare (transaction, priv->state, &error_local);
+			if (!ret) {
+				g_print ("%s\n", error_local->message);
+				g_clear_error (&error_local);
+			}
+			continue;
+		}
+
+		/* commit the transaction */
+		if (g_strcmp0 (split[0], "commit") == 0) {
+			zif_state_reset (priv->state);
+			ret = zif_transaction_commit (transaction, priv->state, &error_local);
+			if (!ret) {
+				g_print ("%s\n", error_local->message);
+				g_clear_error (&error_local);
+			}
+			zif_transaction_reset (transaction);
+			continue;
+		}
+
+		/* install a package */
+		if (g_strcmp0 (split[0], "install") == 0) {
+			zif_state_reset (priv->state);
+			if (zif_package_id_check (split[1])) {
+				package = zif_store_array_find_package (stores_remote, split[1], priv->state, &error_local);
+				if (package == NULL) {
+					g_print ("%s\n", error_local->message);
+					g_clear_error (&error_local);
+				} else {
+					ret = zif_transaction_add_install (transaction, package, &error_local);
+					if (!ret) {
+						g_print ("%s\n", error_local->message);
+						g_clear_error (&error_local);
+					}
+					g_object_unref (package);
+				}
+			} else {
+				array = zif_store_array_resolve (stores_remote, &split[1], priv->state, &error_local);
+				if (array == NULL) {
+					g_print ("%s\n", error_local->message);
+					g_clear_error (&error_local);
+					continue;
+				}
+				for (i=0; i<array->len; i++) {
+					package = g_ptr_array_index (array, i);
+					ret = zif_transaction_add_install (transaction, package, &error_local);
+					if (!ret) {
+						g_print ("%s\n", error_local->message);
+						g_clear_error (&error_local);
+					}
+				}
+				g_ptr_array_unref (array);
+			}
+			continue;
+		}
+
+		/* remove a package */
+		if (g_strcmp0 (split[0], "remove") == 0) {
+			zif_state_reset (priv->state);
+			if (zif_package_id_check (split[1])) {
+				package = zif_store_find_package (store_local, split[1], priv->state, &error_local);
+				if (package == NULL) {
+					g_print ("%s\n", error_local->message);
+					g_clear_error (&error_local);
+				} else {
+					ret = zif_transaction_add_remove (transaction, package, &error_local);
+					if (!ret) {
+						g_print ("%s\n", error_local->message);
+						g_clear_error (&error_local);
+					}
+					g_object_unref (package);
+				}
+			} else {
+				array = zif_store_resolve (store_local, &split[1], priv->state, &error_local);
+				if (array == NULL) {
+					g_print ("%s\n", error_local->message);
+					g_clear_error (&error_local);
+					continue;
+				}
+				for (i=0; i<array->len; i++) {
+					package = g_ptr_array_index (array, i);
+					ret = zif_transaction_add_remove (transaction, package, &error_local);
+					if (!ret) {
+						g_print ("%s\n", error_local->message);
+						g_clear_error (&error_local);
+					}
+				}
+				g_ptr_array_unref (array);
+			}
+			continue;
+		}
+
+		/* install an update */
+		if (g_strcmp0 (split[0], "update") == 0) {
+			zif_state_reset (priv->state);
+			if (zif_package_id_check (split[1])) {
+				package = zif_store_find_package (store_local, split[1], priv->state, &error_local);
+				if (package == NULL) {
+					g_print ("%s\n", error_local->message);
+					g_clear_error (&error_local);
+				} else {
+					ret = zif_transaction_add_update (transaction, package, &error_local);
+					if (!ret) {
+						g_print ("%s\n", error_local->message);
+						g_clear_error (&error_local);
+					}
+					g_object_unref (package);
+				}
+			} else {
+				array = zif_store_resolve (store_local, &split[1], priv->state, &error_local);
+				if (array == NULL) {
+					g_print ("%s\n", error_local->message);
+					g_clear_error (&error_local);
+					continue;
+				}
+				for (i=0; i<array->len; i++) {
+					package = g_ptr_array_index (array, i);
+					ret = zif_transaction_add_update (transaction, package, &error_local);
+					if (!ret) {
+						g_print ("%s\n", error_local->message);
+						g_clear_error (&error_local);
+					}
+				}
+				g_ptr_array_unref (array);
+			}
+			continue;
+		}
+
+		/* try to run normal commands */
+		zif_state_reset (priv->state);
+		g_print ("Warning: running non-native command, do not use for profiling...\n");
+		ret = zif_cmd_run (priv, split[0], &split[1], &error_local);
+		if (!ret) {
+			g_print ("%s\n", error_local->message);
+			g_clear_error (&error_local);
+		}
+	} while (TRUE);
+out:
+	if (store_local != NULL)
+		g_object_unref (store_local);
+	if (transaction != NULL)
+		g_object_unref (transaction);
+	if (stores_remote != NULL)
+		g_ptr_array_unref (stores_remote);
+	g_timer_destroy (timer);
+	g_free (old_buffer);
+	return ret;
+}
+
+/**
  * main:
  **/
 int
@@ -3840,6 +4098,11 @@ main (int argc, char *argv[])
 		     /* TRANSLATORS: command description */
 		     _("Search package name for the given string"),
 		     zif_cmd_search_name);
+	zif_cmd_add (priv->cmd_array,
+		     "shell",
+		     /* TRANSLATORS: command description */
+		     _("Run an interactive shell"),
+		     zif_cmd_shell);
 	zif_cmd_add (priv->cmd_array,
 		     "update",
 		     /* TRANSLATORS: command description */
