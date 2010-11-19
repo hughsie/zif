@@ -1087,6 +1087,9 @@ out:
 
 /**
  * zif_cmd_get_updates:
+ *
+ * Returns an array of the *new* packages, not the things that are
+ * going to be updated.
  **/
 static GPtrArray *
 zif_get_update_array (ZifCmdPrivate *priv, ZifState *state, GError **error)
@@ -2895,6 +2898,76 @@ out:
 	return ret;
 }
 
+
+/**
+ * zif_cmd_update_all:
+ **/
+static gboolean
+zif_cmd_update_all (ZifCmdPrivate *priv, gchar **values, GError **error)
+{
+	gboolean ret;
+	GPtrArray *array = NULL;
+	guint i;
+	ZifPackage *package;
+	ZifState *state_local;
+	ZifTransaction *transaction = NULL;
+
+	/* TRANSLATORS: performing action */
+	zif_progress_bar_start (priv->progressbar, _("Updating everything"));
+
+	/* setup state */
+	ret = zif_state_set_steps (priv->state,
+				   error,
+				   10, /* get list of updates */
+				   5, /* add updates */
+				   85, /* run transaction */
+				   -1);
+	if (!ret)
+		goto out;
+
+	/* get updates array */
+	state_local = zif_state_get_child (priv->state);
+	array = zif_get_update_array (priv, state_local, error);
+	if (array == NULL) {
+		ret = FALSE;
+		goto out;
+	}
+
+	/* this section done */
+	ret = zif_state_done (priv->state, error);
+	if (!ret)
+		goto out;
+
+	/* update these packages */
+	transaction = zif_transaction_new ();
+	zif_transaction_set_skip_broken (transaction, priv->skip_broken);
+	for (i=0; i<array->len; i++) {
+		package = g_ptr_array_index (array, i);
+		ret = zif_transaction_add_install (transaction, package, error);
+		if (!ret)
+			goto out;
+	}
+
+	/* run what we've got */
+	state_local = zif_state_get_child (priv->state);
+	ret = zif_transaction_run (priv, transaction, state_local, error);
+	if (!ret)
+		goto out;
+
+	/* this section done */
+	ret = zif_state_done (priv->state, error);
+	if (!ret)
+		goto out;
+
+	zif_progress_bar_end (priv->progressbar);
+out:
+	if (transaction != NULL)
+		g_object_unref (transaction);
+	if (array != NULL)
+		g_ptr_array_unref (array);
+	return ret;
+}
+
 /**
  * zif_cmd_update:
  **/
@@ -2912,7 +2985,7 @@ zif_cmd_update (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 	/* check we have a value */
 	if (values == NULL || values[0] == NULL) {
-		g_set_error (error, 1, 0, "specify a package name");
+		ret = zif_cmd_update_all (priv, values, error);
 		goto out;
 	}
 
@@ -2960,8 +3033,9 @@ zif_cmd_update (ZifCmdPrivate *priv, gchar **values, GError **error)
 	if (!ret)
 		goto out;
 
-	/* install this package */
+	/* update this package */
 	transaction = zif_transaction_new ();
+	zif_transaction_set_skip_broken (transaction, priv->skip_broken);
 	for (i=0; i<array->len; i++) {
 		package = g_ptr_array_index (array, i);
 		ret = zif_transaction_add_update (transaction, package, error);
