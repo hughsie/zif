@@ -1158,8 +1158,9 @@ skip_resolve:
 	g_set_error (error,
 		     ZIF_TRANSACTION_ERROR,
 		     ZIF_TRANSACTION_ERROR_FAILED,
-		     "nothing provides %s",
-		     zif_depend_get_description (depend));
+		     "nothing provides %s which is required by %s",
+		     zif_depend_get_description (depend),
+		     zif_package_get_id (reason));
 out:
 	if (already_installed != NULL)
 		g_ptr_array_unref (already_installed);
