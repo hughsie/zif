@@ -45,6 +45,9 @@
 
 #define ZIF_MD_PRIMARY_SQL_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_MD_PRIMARY_SQL, ZifMdPrimarySqlPrivate))
 
+/* sqlite has a maximum of about 1000, but optimum seems about 300 */
+#define ZIF_MD_PRIMARY_SQL_MAX_EXPRESSION_DEPTH 300
+
 /**
  * ZifMdPrimarySqlPrivate:
  *
@@ -444,7 +447,7 @@ zif_md_primary_sql_what_depends (ZifMd *md, const gchar *table_name, GPtrArray *
 	GString *statement = NULL;
 	gchar *error_msg = NULL;
 	gint rc;
-	guint i;
+	guint i, j;
 	gboolean ret;
 	GError *error_local = NULL;
 	GPtrArray *array = NULL;
@@ -500,29 +503,32 @@ zif_md_primary_sql_what_depends (ZifMd *md, const gchar *table_name, GPtrArray *
 	 * thousands of indervidual queries */
 	statement = g_string_new ("");
 	g_string_append (statement, "BEGIN;\n");
-	g_string_append_printf (statement, ZIF_MD_PRIMARY_SQL_HEADER ", %s depend WHERE "
-				"p.pkgKey = depend.pkgKey AND (",
-				table_name);
 
-	for (i=0; i<depends->len; i++) {
-		depend_tmp = g_ptr_array_index (depends, i);
-		g_string_append_printf (statement, "depend.name = '%s' OR ",
-					zif_depend_get_name (depend_tmp));
+	for (j=0; j<depends->len; j+= ZIF_MD_PRIMARY_SQL_MAX_EXPRESSION_DEPTH) {
+		g_string_append_printf (statement, ZIF_MD_PRIMARY_SQL_HEADER ", %s depend WHERE "
+					"p.pkgKey = depend.pkgKey AND (",
+					table_name);
+
+		for (i=j; i<depends->len && (i-j)<ZIF_MD_PRIMARY_SQL_MAX_EXPRESSION_DEPTH; i++) {
+			depend_tmp = g_ptr_array_index (depends, i);
+			g_string_append_printf (statement, "depend.name = '%s' OR ",
+						zif_depend_get_name (depend_tmp));
+		}
+		/* remove trailing OR */
+		g_string_set_size (statement, statement->len - 4);
+		g_string_append (statement, ");\n");
 	}
-	/* remove trailing OR */
-	g_string_set_size (statement, statement->len - 4);
-	g_string_append (statement, ");");
 	g_string_append (statement, "END;\n");
 
 	/* execute the query */
 	rc = sqlite3_exec (md_primary_sql->priv->db, statement->str, zif_md_primary_sql_sqlite_create_package_cb, data, &error_msg);
 	if (rc != SQLITE_OK) {
+		ret = FALSE;
 		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_BAD_SQL,
 			     "SQL error: %s", error_msg);
 		sqlite3_free (error_msg);
 		goto out;
 	}
-
 
 	sqlite3_exec (md_primary_sql->priv->db, "END;", NULL, NULL, NULL);
 
