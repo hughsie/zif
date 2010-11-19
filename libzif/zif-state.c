@@ -1053,7 +1053,7 @@ zif_state_show_profile (ZifState *state)
 		g_string_append_printf (result, "%.0f, ",
 					state->priv->step_profile[i] / div);
 	}
-	g_debug ("%s-1 ] at %s", result->str, state->priv->id);
+	g_printerr ("%s-1 ] at %s\n", result->str, state->priv->id);
 	g_string_free (result, TRUE);
 }
 

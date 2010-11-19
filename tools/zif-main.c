@@ -1687,10 +1687,10 @@ zif_cmd_install (ZifCmdPrivate *priv, gchar **values, GError **error)
 	ret = zif_state_set_steps (priv->state,
 				   error,
 				   1, /* add local */
-				   23, /* resolve */
+				   5, /* resolve */
 				   1, /* add remote */
-				   45, /* find remote */
-				   30, /* run transaction */
+				   13, /* find remote */
+				   80, /* run transaction */
 				   -1);
 	if (!ret)
 		goto out;
@@ -2911,9 +2911,9 @@ zif_cmd_update (ZifCmdPrivate *priv, gchar **values, GError **error)
 	/* setup state */
 	ret = zif_state_set_steps (priv->state,
 				   error,
-				   80,
-				   10,
-				   10,
+				   1, /* add local */
+				   5, /* add updates */
+				   94, /* run transaction */
 				   -1);
 	if (!ret)
 		goto out;
