@@ -1773,6 +1773,9 @@ zif_cmd_install (ZifCmdPrivate *priv, gchar **values, GError **error)
 		goto out;
 	}
 
+	/* we only want the newest version installed */
+	zif_package_array_filter_newest (array);
+
 	/* this section done */
 	ret = zif_state_done (priv->state, error);
 	if (!ret)
