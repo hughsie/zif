@@ -498,6 +498,9 @@ zif_md_primary_sql_what_depends (ZifMd *md, const gchar *table_name, ZifDepend *
 	data->md = md_primary_sql;
 	data->id = zif_md_get_id (ZIF_MD (md));
 	data->packages = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
+	g_debug ("running %s on %s",
+		 statement,
+		 zif_md_get_filename_uncompressed (md));
 	rc = sqlite3_exec (md_primary_sql->priv->db, statement, zif_md_primary_sql_sqlite_create_package_cb, data, &error_msg);
 	if (rc != SQLITE_OK) {
 		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_BAD_SQL,

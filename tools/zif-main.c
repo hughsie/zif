@@ -1094,8 +1094,8 @@ out:
 /**
  * zif_cmd_get_updates:
  **/
-static gboolean
-zif_cmd_get_updates (ZifCmdPrivate *priv, gchar **values, GError **error)
+static GPtrArray *
+zif_get_update_array (ZifCmdPrivate *priv, ZifState *state, GError **error)
 {
 	gboolean ret = FALSE;
 	gchar **search = NULL;
@@ -1113,13 +1113,9 @@ zif_cmd_get_updates (ZifCmdPrivate *priv, gchar **values, GError **error)
 	ZifState *state_local;
 	ZifState *state_loop;
 	ZifStore *store_local = NULL;
-	ZifTransaction *transaction = NULL;
-
-	/* TRANSLATORS: performing action */
-	zif_progress_bar_start (priv->progressbar, _("Getting updates"));
 
 	/* setup state with the correct number of steps */
-	ret = zif_state_set_steps (priv->state,
+	ret = zif_state_set_steps (state,
 				   error,
 				   2, /* add remote */
 				   5, /* get local packages */
@@ -1127,33 +1123,25 @@ zif_cmd_get_updates (ZifCmdPrivate *priv, gchar **values, GError **error)
 				   10, /* resolve local list to remote */
 				   10, /* add obsoletes */
 				   70, /* filter out anything not newer */
-//				   5, /* add packages to update queue */
-//				   25, /* resolve updates */
 				   -1);
 	if (!ret)
 		goto out;
 
 	/* add remote stores to array */
 	store_array = zif_store_array_new ();
-	state_local = zif_state_get_child (priv->state);
+	state_local = zif_state_get_child (state);
 	ret = zif_store_array_add_remote_enabled (store_array, state_local, error);
 	if (!ret)
 		goto out;
 
-	/* setup transaction */
-	transaction = zif_transaction_new ();
-	store_local = zif_store_local_new ();
-	zif_transaction_set_skip_broken (transaction, priv->skip_broken);
-	zif_transaction_set_store_local (transaction, store_local);
-	zif_transaction_set_stores_remote (transaction, store_array);
-
 	/* this section done */
-	ret = zif_state_done (priv->state, error);
+	ret = zif_state_done (state, error);
 	if (!ret)
 		goto out;
 
 	/* get packages */
-	state_local = zif_state_get_child (priv->state);
+	state_local = zif_state_get_child (state);
+	store_local = zif_store_local_new ();
 	array = zif_store_get_packages (store_local, state_local, error);
 	if (array == NULL) {
 		ret = FALSE;
@@ -1161,7 +1149,7 @@ zif_cmd_get_updates (ZifCmdPrivate *priv, gchar **values, GError **error)
 	}
 
 	/* this section done */
-	ret = zif_state_done (priv->state, error);
+	ret = zif_state_done (state, error);
 	if (!ret)
 		goto out;
 
@@ -1169,7 +1157,7 @@ zif_cmd_get_updates (ZifCmdPrivate *priv, gchar **values, GError **error)
 	zif_package_array_filter_newest (array);
 
 	/* this section done */
-	ret = zif_state_done (priv->state, error);
+	ret = zif_state_done (state, error);
 	if (!ret)
 		goto out;
 
@@ -1179,7 +1167,7 @@ zif_cmd_get_updates (ZifCmdPrivate *priv, gchar **values, GError **error)
 		package = g_ptr_array_index (array, i);
 		search[i] = g_strdup (zif_package_get_name (package));
 	}
-	state_local = zif_state_get_child (priv->state);
+	state_local = zif_state_get_child (state);
 	updates = zif_store_array_resolve (store_array, search, state_local, error);
 	if (updates == NULL) {
 		ret = FALSE;
@@ -1187,7 +1175,7 @@ zif_cmd_get_updates (ZifCmdPrivate *priv, gchar **values, GError **error)
 	}
 
 	/* this section done */
-	ret = zif_state_done (priv->state, error);
+	ret = zif_state_done (state, error);
 	if (!ret)
 		goto out;
 
@@ -1219,12 +1207,12 @@ zif_cmd_get_updates (ZifCmdPrivate *priv, gchar **values, GError **error)
 	}
 
 	/* this section done */
-	ret = zif_state_done (priv->state, error);
+	ret = zif_state_done (state, error);
 	if (!ret)
 		goto out;
 
 	/* add obsoletes */
-	state_local = zif_state_get_child (priv->state);
+	state_local = zif_state_get_child (state);
 	zif_state_set_number_steps (state_local, array->len);
 	for (i=0; i<array->len; i++) {
 		package = ZIF_PACKAGE (g_ptr_array_index (array, i));
@@ -1256,14 +1244,55 @@ zif_cmd_get_updates (ZifCmdPrivate *priv, gchar **values, GError **error)
 	}
 
 	/* this section done */
-	ret = zif_state_done (priv->state, error);
+	ret = zif_state_done (state, error);
 	if (!ret)
 		goto out;
+
+	/* success */
+	ret = TRUE;
+out:
+	g_strfreev (search);
+	if (store_local != NULL)
+		g_object_unref (store_local);
+	if (store_array != NULL)
+		g_ptr_array_unref (store_array);
+	if (array != NULL)
+		g_ptr_array_unref (array);
+	if (updates != NULL)
+		g_ptr_array_unref (updates);
+	return updates_available;
+}
+
+/**
+ * zif_cmd_get_updates:
+ **/
+static gboolean
+zif_cmd_get_updates (ZifCmdPrivate *priv, gchar **values, GError **error)
+{
+	gboolean ret = FALSE;
+	GPtrArray *array = NULL;
+	ZifTransaction *transaction = NULL;
+
+	/* TRANSLATORS: performing action */
+	zif_progress_bar_start (priv->progressbar, _("Getting updates"));
+
+	/* get the update list */
+	array = zif_get_update_array (priv, priv->state, error);
+	if (array == NULL)
+		goto out;
+
 #if 0
+	/* setup transaction */
+	transaction = zif_transaction_new ();
+	store_local = zif_store_local_new ();
+	zif_transaction_set_skip_broken (transaction, priv->skip_broken);
+	zif_transaction_set_store_local (transaction, store_local);
+	zif_transaction_set_stores_remote (transaction, store_array);
+
 	/* add each package as an update */
-	g_debug ("adding %i packages", updates_available->len);
-	for (i=0; i<updates_available->len; i++) {
-		package = g_ptr_array_index (updates_available, i);
+	g_debug ("adding %i packages", array->len);
+	for (i=0; i<array->len; i++) {
+		package = g_ptr_array_index (array, i);
 		ret = zif_transaction_add_update (transaction, package, error);
 		if (!ret)
 			goto out;
@@ -1301,10 +1330,12 @@ zif_cmd_get_updates (ZifCmdPrivate *priv, gchar **values, GError **error)
 	}
 #else
 	zif_progress_bar_end (priv->progressbar);
-	zif_print_packages (updates_available);
+	zif_print_packages (array);
 #endif
 
 #if 0
+//	GPtrArray *array_tmp;
+//	guint i;
 
 	/* get update details */
 	state_local = zif_state_get_child (priv->state);
@@ -1370,26 +1401,14 @@ zif_cmd_get_updates (ZifCmdPrivate *priv, gchar **values, GError **error)
 	ret = zif_state_done (priv->state, error);
 	if (!ret)
 		goto out;
-
-	zif_print_packages (array);
-
 #endif
 	/* success */
 	ret = TRUE;
 out:
-	g_strfreev (search);
-	if (store_local != NULL)
-		g_object_unref (store_local);
 	if (transaction != NULL)
 		g_object_unref (transaction);
-	if (store_array != NULL)
-		g_ptr_array_unref (store_array);
 	if (array != NULL)
 		g_ptr_array_unref (array);
-	if (updates != NULL)
-		g_ptr_array_unref (updates);
-	if (updates_available != NULL)
-		g_ptr_array_unref (updates_available);
 	return ret;
 }
 
