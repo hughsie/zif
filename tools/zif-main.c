@@ -1526,7 +1526,7 @@ zif_transaction_reason_to_string_localized (ZifTransactionReason reason)
 		break;
 	case ZIF_TRANSACTION_REASON_INSTALL_FOR_UPDATE:
 		/* TRANSLATORS: this is the reason the action is to be taken */
-		str = _("Installing for update");
+		str = _("Updating to new versions");
 		break;
 	case ZIF_TRANSACTION_REASON_INSTALL_USER_ACTION:
 		/* TRANSLATORS: this is the reason the action is to be taken */
@@ -1542,7 +1542,7 @@ zif_transaction_reason_to_string_localized (ZifTransactionReason reason)
 		break;
 	case ZIF_TRANSACTION_REASON_REMOVE_FOR_UPDATE:
 		/* TRANSLATORS: this is the reason the action is to be taken */
-		str = _("Removing for update");
+		str = _("Removing old versions");
 		break;
 	case ZIF_TRANSACTION_REASON_REMOVE_OBSOLETE:
 		/* TRANSLATORS: this is the reason the action is to be taken */
