@@ -616,11 +616,10 @@ zif_cmd_get_depends (ZifCmdPrivate *priv, gchar **values, GError **error)
 	GPtrArray *store_array = NULL;
 	ZifState *state_local;
 	ZifPackage *package;
-	ZifState *state_loop;
 	GPtrArray *requires = NULL;
 	ZifDepend *require;
 	const gchar *require_str;
-	GPtrArray *provides;
+	GPtrArray *provides = NULL;
 	const gchar *package_id;
 	guint i, j;
 	gchar **split;
@@ -700,40 +699,33 @@ zif_cmd_get_depends (ZifCmdPrivate *priv, gchar **values, GError **error)
 	/* match a package to each require */
 	state_local = zif_state_get_child (priv->state);
 	zif_state_set_number_steps (state_local, requires->len);
+
+	/* setup deeper state */
 	for (i=0; i<requires->len; i++) {
-
-		/* setup deeper state */
-		state_loop = zif_state_get_child (state_local);
-
 		require = g_ptr_array_index (requires, i);
 		require_str = zif_depend_get_description (require);
 		g_string_append_printf (string, "  dependency: %s\n", require_str);
+	}
 
-		/* find the package providing the depend */
-		provides = zif_store_array_what_provides (store_array, require, state_loop, error);
-		if (provides == NULL) {
-			ret = FALSE;
-			goto out;
-		}
+	/* find the packages providing the depends */
+	state_local = zif_state_get_child (priv->state);
+	provides = zif_store_array_what_provides (store_array, requires, state_local, error);
+	if (provides == NULL) {
+		ret = FALSE;
+		goto out;
+	}
 
-		/* print all of them */
-		for (j=0;j<provides->len;j++) {
-			package = g_ptr_array_index (provides, j);
-			package_id = zif_package_get_id (package);
-			split = zif_package_id_split (package_id);
-			g_string_append_printf (string, "   provider: %s-%s.%s (%s)\n",
-						split[ZIF_PACKAGE_ID_NAME],
-						split[ZIF_PACKAGE_ID_VERSION],
-						split[ZIF_PACKAGE_ID_ARCH],
-						split[ZIF_PACKAGE_ID_DATA]);
-			g_strfreev (split);
-		}
-		g_ptr_array_unref (provides);
-
-		/* this section done */
-		ret = zif_state_done (state_local, error);
-		if (!ret)
-			goto out;
+	/* print all of them */
+	for (j=0;j<provides->len;j++) {
+		package = g_ptr_array_index (provides, j);
+		package_id = zif_package_get_id (package);
+		split = zif_package_id_split (package_id);
+		g_string_append_printf (string, "   provider: %s-%s.%s (%s)\n",
+					split[ZIF_PACKAGE_ID_NAME],
+					split[ZIF_PACKAGE_ID_VERSION],
+					split[ZIF_PACKAGE_ID_ARCH],
+					split[ZIF_PACKAGE_ID_DATA]);
+		g_strfreev (split);
 	}
 
 	/* this section done */
@@ -750,6 +742,8 @@ zif_cmd_get_depends (ZifCmdPrivate *priv, gchar **values, GError **error)
 out:
 	if (string != NULL)
 		g_string_free (string, TRUE);
+	if (provides != NULL)
+		g_ptr_array_unref (provides);
 	if (requires != NULL)
 		g_ptr_array_unref (requires);
 	if (array != NULL)
@@ -1101,17 +1095,17 @@ zif_get_update_array (ZifCmdPrivate *priv, ZifState *state, GError **error)
 	gchar **search = NULL;
 	gint val;
 	GPtrArray *array = NULL;
-	GPtrArray *array_tmp;
+	GPtrArray *array_obsoletes = NULL;
 	GPtrArray *store_array = NULL;
 	GPtrArray *updates_available = NULL;
 	GPtrArray *updates = NULL;
+	GPtrArray *depend_array = NULL;
 	guint i;
 	guint j;
 	ZifDepend *depend;
 	ZifPackage *package;
 	ZifPackage *update;
 	ZifState *state_local;
-	ZifState *state_loop;
 	ZifStore *store_local = NULL;
 
 	/* setup state with the correct number of steps */
@@ -1212,36 +1206,30 @@ zif_get_update_array (ZifCmdPrivate *priv, ZifState *state, GError **error)
 		goto out;
 
 	/* add obsoletes */
-	state_local = zif_state_get_child (state);
-	zif_state_set_number_steps (state_local, array->len);
+	depend_array = zif_object_array_new ();
 	for (i=0; i<array->len; i++) {
 		package = ZIF_PACKAGE (g_ptr_array_index (array, i));
 		depend = zif_depend_new ();
 		zif_depend_set_flag (depend, ZIF_DEPEND_FLAG_EQUAL);
 		zif_depend_set_name (depend, zif_package_get_name (package));
 		zif_depend_set_version (depend, zif_package_get_version (package));
-
-		/* find if anything obsoletes this */
-		state_loop = zif_state_get_child (state_local);
-		array_tmp = zif_store_array_what_obsoletes (store_array, depend, state_loop, error);
-		if (array_tmp == NULL)
-			goto out;
-		for (j=0; j<array_tmp->len; j++) {
-			update = ZIF_PACKAGE (g_ptr_array_index (array_tmp, j));
-			g_debug ("*** obsolete %s to %s",
-				 zif_package_get_name (package),
-				 zif_package_get_name (update));
-			g_ptr_array_add (updates_available, g_object_ref (update));
-		}
-
-		/* this section done */
-		ret = zif_state_done (state_local, error);
-		if (!ret)
-			goto out;
-
+		zif_object_array_add (depend_array, depend);
 		g_object_unref (depend);
-		g_ptr_array_unref (array_tmp);
 	}
+
+	/* find if anything obsoletes these */
+	state_local = zif_state_get_child (state);
+	array_obsoletes = zif_store_array_what_obsoletes (store_array, depend_array, state_local, error);
+	if (array_obsoletes == NULL)
+		goto out;
+	for (j=0; j<array_obsoletes->len; j++) {
+		update = ZIF_PACKAGE (g_ptr_array_index (array_obsoletes, j));
+		g_debug ("*** obsolete %s",
+			 zif_package_get_name (update));
+	}
+
+	/* add obsolete array to updates */
+	zif_object_array_add_array (updates_available, array_obsoletes);
 
 	/* this section done */
 	ret = zif_state_done (state, error);
@@ -1254,8 +1242,12 @@ out:
 	g_strfreev (search);
 	if (store_local != NULL)
 		g_object_unref (store_local);
+	if (depend_array != NULL)
+		g_ptr_array_unref (depend_array);
 	if (store_array != NULL)
 		g_ptr_array_unref (store_array);
+	if (array_obsoletes != NULL)
+		g_ptr_array_unref (array_obsoletes);
 	if (array != NULL)
 		g_ptr_array_unref (array);
 	if (updates != NULL)
@@ -3062,6 +3054,38 @@ out:
 }
 
 /**
+ * zif_cmd_parse_depends:
+ **/
+static GPtrArray *
+zif_cmd_parse_depends (gchar **values, GError **error)
+{
+	gboolean ret;
+	GPtrArray *depend_array = NULL;
+	GPtrArray *depend_array_tmp = NULL;
+	guint i;
+	ZifDepend *depend;
+
+	/* parse the depends */
+	depend_array_tmp = zif_object_array_new ();
+	for (i=0; values[i] != NULL; i++) {
+		depend = zif_depend_new ();
+		ret = zif_depend_parse_description (depend, values[i], error);
+		if (!ret) {
+			g_object_unref (depend);
+			goto out;
+		}
+		g_ptr_array_add (depend_array_tmp, depend);
+	}
+
+	/* success */
+	depend_array = g_ptr_array_ref (depend_array_tmp);
+out:
+	if (depend_array_tmp != NULL)
+		g_ptr_array_unref (depend_array_tmp);
+	return depend_array;
+}
+
+/**
  * zif_cmd_what_conflicts:
  **/
 static gboolean
@@ -3070,7 +3094,7 @@ zif_cmd_what_conflicts (ZifCmdPrivate *priv, gchar **values, GError **error)
 	gboolean ret = FALSE;
 	GPtrArray *array = NULL;
 	GPtrArray *store_array = NULL;
-	ZifDepend *depend = NULL;
+	GPtrArray *depend_array = NULL;
 	ZifState *state_local;
 
 	/* check we have a value */
@@ -3116,12 +3140,13 @@ zif_cmd_what_conflicts (ZifCmdPrivate *priv, gchar **values, GError **error)
 		goto out;
 
 	/* parse the depend */
-	depend = zif_depend_new ();
-	ret = zif_depend_parse_description (depend, values[0], error);
-	if (!ret)
+	depend_array = zif_cmd_parse_depends (values, error);
+	if (depend_array == NULL) {
+		ret = FALSE;
 		goto out;
+	}
 	state_local = zif_state_get_child (priv->state);
-	array = zif_store_array_what_conflicts (store_array, depend, state_local, error);
+	array = zif_store_array_what_conflicts (store_array, depend_array, state_local, error);
 	if (array == NULL) {
 		ret = FALSE;
 		goto out;
@@ -3135,8 +3160,6 @@ zif_cmd_what_conflicts (ZifCmdPrivate *priv, gchar **values, GError **error)
 	zif_progress_bar_end (priv->progressbar);
 	zif_print_packages (array);
 out:
-	if (depend != NULL)
-		g_object_unref (depend);
 	if (store_array != NULL)
 		g_ptr_array_unref (store_array);
 	if (array != NULL)
@@ -3153,7 +3176,7 @@ zif_cmd_what_obsoletes (ZifCmdPrivate *priv, gchar **values, GError **error)
 	gboolean ret = FALSE;
 	GPtrArray *array = NULL;
 	GPtrArray *store_array = NULL;
-	ZifDepend *depend = NULL;
+	GPtrArray *depend_array = NULL;
 	ZifState *state_local;
 
 	/* check we have a value */
@@ -3199,12 +3222,13 @@ zif_cmd_what_obsoletes (ZifCmdPrivate *priv, gchar **values, GError **error)
 		goto out;
 
 	/* parse the depend */
-	depend = zif_depend_new ();
-	ret = zif_depend_parse_description (depend, values[0], error);
-	if (!ret)
+	depend_array = zif_cmd_parse_depends (values, error);
+	if (depend_array == NULL) {
+		ret = FALSE;
 		goto out;
+	}
 	state_local = zif_state_get_child (priv->state);
-	array = zif_store_array_what_obsoletes (store_array, depend, state_local, error);
+	array = zif_store_array_what_obsoletes (store_array, depend_array, state_local, error);
 	if (array == NULL) {
 		ret = FALSE;
 		goto out;
@@ -3218,8 +3242,6 @@ zif_cmd_what_obsoletes (ZifCmdPrivate *priv, gchar **values, GError **error)
 	zif_progress_bar_end (priv->progressbar);
 	zif_print_packages (array);
 out:
-	if (depend != NULL)
-		g_object_unref (depend);
 	if (store_array != NULL)
 		g_ptr_array_unref (store_array);
 	if (array != NULL)
@@ -3236,7 +3258,7 @@ zif_cmd_what_provides (ZifCmdPrivate *priv, gchar **values, GError **error)
 	gboolean ret = FALSE;
 	GPtrArray *array = NULL;
 	GPtrArray *store_array = NULL;
-	ZifDepend *depend = NULL;
+	GPtrArray *depend_array = NULL;
 	ZifState *state_local;
 
 	/* check we have a value */
@@ -3282,12 +3304,13 @@ zif_cmd_what_provides (ZifCmdPrivate *priv, gchar **values, GError **error)
 		goto out;
 
 	/* parse the depend */
-	depend = zif_depend_new ();
-	ret = zif_depend_parse_description (depend, values[0], error);
-	if (!ret)
+	depend_array = zif_cmd_parse_depends (values, error);
+	if (depend_array == NULL) {
+		ret = FALSE;
 		goto out;
+	}
 	state_local = zif_state_get_child (priv->state);
-	array = zif_store_array_what_provides (store_array, depend, state_local, error);
+	array = zif_store_array_what_provides (store_array, depend_array, state_local, error);
 	if (array == NULL) {
 		ret = FALSE;
 		goto out;
@@ -3301,8 +3324,6 @@ zif_cmd_what_provides (ZifCmdPrivate *priv, gchar **values, GError **error)
 	zif_progress_bar_end (priv->progressbar);
 	zif_print_packages (array);
 out:
-	if (depend != NULL)
-		g_object_unref (depend);
 	if (store_array != NULL)
 		g_ptr_array_unref (store_array);
 	if (array != NULL)
@@ -3319,6 +3340,7 @@ zif_cmd_what_requires (ZifCmdPrivate *priv, gchar **values, GError **error)
 	gboolean ret = FALSE;
 	GPtrArray *array = NULL;
 	GPtrArray *store_array = NULL;
+	GPtrArray *depend_array = NULL;
 	ZifDepend *depend = NULL;
 	ZifState *state_local;
 
@@ -3365,12 +3387,13 @@ zif_cmd_what_requires (ZifCmdPrivate *priv, gchar **values, GError **error)
 		goto out;
 
 	/* parse the depend */
-	depend = zif_depend_new ();
-	ret = zif_depend_parse_description (depend, values[0], error);
-	if (!ret)
+	depend_array = zif_cmd_parse_depends (values, error);
+	if (depend_array == NULL) {
+		ret = FALSE;
 		goto out;
+	}
 	state_local = zif_state_get_child (priv->state);
-	array = zif_store_array_what_requires (store_array, depend, state_local, error);
+	array = zif_store_array_what_requires (store_array, depend_array, state_local, error);
 	if (array == NULL) {
 		ret = FALSE;
 		goto out;

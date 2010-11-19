@@ -57,6 +57,7 @@
 #include <rpm/rpmts.h>
 
 #include "zif-depend.h"
+#include "zif-object-array.h"
 #include "zif-package-array.h"
 #include "zif-package-meta.h"
 #include "zif-package-local.h"
@@ -704,6 +705,7 @@ _zif_package_array_filter_best_provide (GPtrArray *array,
 	gboolean ret = TRUE;
 	ZifDepend *best_depend = NULL;
 	GError *error_local = NULL;
+	GPtrArray *depend_array = NULL;
 
 	/* get the best depend for the results */
 	ret = zif_package_array_provide (array, depend, &best_depend,
@@ -728,8 +730,10 @@ _zif_package_array_filter_best_provide (GPtrArray *array,
 
 	/* if the depends are the same, choose the one with the biggest version */
 	if (array->len > 1) {
+		depend_array = zif_object_array_new ();
+		zif_object_array_add (depend_array, best_depend);
 		ret = zif_package_array_filter_provide (array,
-							best_depend,
+							depend_array,
 							state, error);
 		if (!ret)
 			goto out;
@@ -763,6 +767,8 @@ _zif_package_array_filter_best_provide (GPtrArray *array,
 out:
 	if (best_depend != NULL)
 		g_object_unref (best_depend);
+	if (depend_array != NULL)
+		g_ptr_array_unref (depend_array);
 	return ret;
 }
 
@@ -779,6 +785,7 @@ zif_transaction_get_package_provide_from_store (ZifStore *store,
 						GError **error)
 {
 	GPtrArray *array = NULL;
+	GPtrArray *depend_array = NULL;
 	GError *error_local = NULL;
 	gboolean ret;
 	ZifState *state_local;
@@ -792,11 +799,13 @@ zif_transaction_get_package_provide_from_store (ZifStore *store,
 	if (!ret)
 		goto out;
 
-g_debug ("find provide %s in %s", zif_depend_get_description (depend), zif_store_get_id (store));
+	/* add to array for searching */
+	depend_array = zif_object_array_new ();
+	zif_object_array_add (depend_array, depend);
 
 	/* get provides */
 	state_local = zif_state_get_child (state);
-	array = zif_store_what_provides (store, depend, state, &error_local);
+	array = zif_store_what_provides (store, depend_array, state, &error_local);
 	if (array == NULL) {
 		/* ignore this error */
 		if (error_local->domain == ZIF_STORE_ERROR &&
@@ -836,6 +845,8 @@ g_debug ("find provide %s in %s", zif_depend_get_description (depend), zif_store
 out:
 	if (array != NULL)
 		g_ptr_array_unref (array);
+	if (depend_array != NULL)
+		g_ptr_array_unref (depend_array);
 	return ret;
 
 }
@@ -1318,6 +1329,7 @@ zif_transaction_resolve_remove_require (ZifTransactionResolve *data,
 {
 	gboolean ret = TRUE;
 	guint i;
+	GPtrArray *depend_array = NULL;
 	GPtrArray *package_requires = NULL;
 	GPtrArray *related_packages = NULL;
 	ZifPackage *package;
@@ -1333,8 +1345,10 @@ zif_transaction_resolve_remove_require (ZifTransactionResolve *data,
 			 zif_package_get_id (item->package));
 	}
 	zif_state_reset (data->state);
+	depend_array = zif_object_array_new ();
+	zif_object_array_add (depend_array, depend);
 	local_provides = zif_store_what_provides (data->transaction->priv->store_local,
-						  depend,
+						  depend_array,
 						  data->state,
 						  &error_local);
 	if (local_provides == NULL) {
@@ -1470,6 +1484,8 @@ zif_transaction_resolve_remove_require (ZifTransactionResolve *data,
 out:
 	if (related_packages != NULL)
 		g_ptr_array_unref (related_packages);
+	if (depend_array != NULL)
+		g_ptr_array_unref (depend_array);
 	if (local_provides != NULL)
 		g_ptr_array_unref (local_provides);
 	if (package_requires != NULL)
@@ -1683,6 +1699,7 @@ zif_transaction_resolve_update_item (ZifTransactionResolve *data,
 	GError *error_local = NULL;
 	gint value;
 	GPtrArray *obsoletes = NULL;
+	GPtrArray *depend_array = NULL;
 	GPtrArray *related_packages = NULL;
 	guint i;
 	ZifDepend *depend;
@@ -1700,8 +1717,10 @@ zif_transaction_resolve_update_item (ZifTransactionResolve *data,
 
 	/* search the remote stores */
 	zif_state_reset (data->state);
+	depend_array = zif_object_array_new ();
+	zif_object_array_add (depend_array, depend);
 	obsoletes = zif_store_array_what_obsoletes (data->transaction->priv->stores_remote,
-						    depend,
+						    depend_array,
 						    data->state,
 						    &error_local);
 	if (obsoletes == NULL) {
@@ -1841,6 +1860,8 @@ success:
 	/* mark as resolved, so we don't try to process this again */
 	item->resolved = TRUE;
 out:
+	if (depend_array != NULL)
+		g_ptr_array_unref (depend_array);
 	if (related_packages != NULL)
 		g_ptr_array_unref (related_packages);
 	if (obsoletes != NULL)

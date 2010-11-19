@@ -50,6 +50,7 @@
 #include "zif-md-updateinfo.h"
 #include "zif-media.h"
 #include "zif-monitor.h"
+#include "zif-object-array.h"
 #include "zif-package.h"
 #include "zif-package-local.h"
 #include "zif-package-remote.h"
@@ -2137,6 +2138,7 @@ zif_store_local_func (void)
 	gchar *filename;
 	gchar *pidfile;
 	ZifDepend *depend;
+	GPtrArray *depend_array;
 
 	/* set these up as dummy */
 	config = zif_config_new ();
@@ -2233,37 +2235,46 @@ zif_store_local_func (void)
 	g_assert_cmpint (array->len, ==, 1);
 	g_ptr_array_unref (array);
 
+	depend_array = zif_object_array_new ();
+
 	zif_state_reset (state);
 	depend = zif_depend_new ();
 	zif_depend_set_flag (depend, ZIF_DEPEND_FLAG_ANY);
 	zif_depend_set_name (depend, "Test(Interface)");
-	array = zif_store_what_provides (ZIF_STORE (store), depend, state, &error);
+	zif_object_array_add (depend_array, depend);
+	array = zif_store_what_provides (ZIF_STORE (store), depend_array, state, &error);
 	g_assert_no_error (error);
 	g_assert (array != NULL);
 	g_assert_cmpint (array->len, ==, 1);
 	g_ptr_array_unref (array);
 	g_object_unref (depend);
+	g_ptr_array_set_size (depend_array, 0);
 
 	zif_state_reset (state);
 	depend = zif_depend_new ();
 	zif_depend_set_flag (depend, ZIF_DEPEND_FLAG_ANY);
 	zif_depend_set_name (depend, "new-test");
-	array = zif_store_what_conflicts (ZIF_STORE (store), depend, state, &error);
+	zif_object_array_add (depend_array, depend);
+	array = zif_store_what_conflicts (ZIF_STORE (store), depend_array, state, &error);
 	g_assert_no_error (error);
 	g_assert (array != NULL);
 	g_assert_cmpint (array->len, ==, 1);
 	g_ptr_array_unref (array);
 	g_object_unref (depend);
+	g_ptr_array_set_size (depend_array, 0);
 
 	zif_state_reset (state);
 	depend = zif_depend_new ();
 	zif_depend_set_flag (depend, ZIF_DEPEND_FLAG_ANY);
 	zif_depend_set_name (depend, "obsolete-package");
-	array = zif_store_what_obsoletes (ZIF_STORE (store), depend, state, &error);
+	zif_object_array_add (depend_array, depend);
+	array = zif_store_what_obsoletes (ZIF_STORE (store), depend_array, state, &error);
 	g_assert_no_error (error);
 	g_assert (array != NULL);
 	g_assert_cmpint (array->len, ==, 1);
 	g_object_unref (depend);
+
+	g_ptr_array_unref (depend_array);
 
 	/* get this package */
 	package = g_ptr_array_index (array, 0);

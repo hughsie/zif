@@ -294,7 +294,7 @@ zif_package_array_filter_smallest_name (GPtrArray *array)
 /**
  * zif_package_array_filter_provide:
  * @packages: array of %ZifPackage's
- * @depend: the dependancy to test against
+ * @depends: an array of #ZifDepend's
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -306,14 +306,15 @@ zif_package_array_filter_smallest_name (GPtrArray *array)
  **/
 gboolean
 zif_package_array_filter_provide (GPtrArray *array,
-				  ZifDepend *depend,
+				  GPtrArray *depends,
 				  ZifState *state,
 				  GError **error)
 {
-	guint i;
+	guint i, j;
 	gboolean ret = TRUE;
 	ZifPackage *package;
 	ZifDepend *satisfies = NULL;
+	ZifDepend *depend_tmp;
 	ZifState *state_local;
 
 	/* shortcut */
@@ -325,13 +326,21 @@ zif_package_array_filter_provide (GPtrArray *array,
 	for (i=0; i<array->len;) {
 		package = g_ptr_array_index (array, i);
 		state_local = zif_state_get_child (state);
-		ret = zif_package_provides (package,
-					    depend,
-					    &satisfies,
-					    state_local,
-					    error);
-		if (!ret)
-			goto out;
+
+		/* try each depend as 'OR' */
+		for (j=0; j<depends->len; j++) {
+			depend_tmp = g_ptr_array_index (depends, j);
+			zif_state_reset (state_local); //FIXME
+			ret = zif_package_provides (package,
+						    depend_tmp,
+						    &satisfies,
+						    state_local,
+						    error);
+			if (!ret)
+				goto out;
+			if (satisfies != NULL)
+				break;
+		}
 		ret = zif_state_done (state, error);
 		if (!ret)
 			goto out;
@@ -349,7 +358,7 @@ out:
 /**
  * zif_package_array_filter_require:
  * @packages: array of %ZifPackage's
- * @depend: the dependancy to test against
+ * @depends: an array of #ZifDepend's
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -361,14 +370,15 @@ out:
  **/
 gboolean
 zif_package_array_filter_require (GPtrArray *array,
-				  ZifDepend *depend,
+				  GPtrArray *depends,
 				  ZifState *state,
 				  GError **error)
 {
-	guint i;
+	guint i, j;
 	gboolean ret = TRUE;
 	ZifPackage *package;
 	ZifDepend *satisfies = NULL;
+	ZifDepend *depend_tmp;
 	ZifState *state_local;
 
 	/* shortcut */
@@ -380,13 +390,21 @@ zif_package_array_filter_require (GPtrArray *array,
 	for (i=0; i<array->len;) {
 		package = g_ptr_array_index (array, i);
 		state_local = zif_state_get_child (state);
-		ret = zif_package_requires (package,
-					    depend,
-					    &satisfies,
-					    state_local,
-					    error);
-		if (!ret)
-			goto out;
+
+		/* try each depend as 'OR' */
+		for (j=0; j<depends->len; j++) {
+			depend_tmp = g_ptr_array_index (depends, j);
+			zif_state_reset (state_local); //FIXME
+			ret = zif_package_requires (package,
+						    depend_tmp,
+						    &satisfies,
+						    state_local,
+						    error);
+			if (!ret)
+				goto out;
+			if (satisfies != NULL)
+				break;
+		}
 		ret = zif_state_done (state, error);
 		if (!ret)
 			goto out;
@@ -404,7 +422,7 @@ out:
 /**
  * zif_package_array_filter_conflict:
  * @packages: array of %ZifPackage's
- * @depend: the dependancy to test against
+ * @depends: an array of #ZifDepend's
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -416,14 +434,15 @@ out:
  **/
 gboolean
 zif_package_array_filter_conflict (GPtrArray *array,
-				   ZifDepend *depend,
+				   GPtrArray *depends,
 				   ZifState *state,
 				   GError **error)
 {
-	guint i;
+	guint i, j;
 	gboolean ret = TRUE;
 	ZifPackage *package;
 	ZifDepend *satisfies = NULL;
+	ZifDepend *depend_tmp;
 	ZifState *state_local;
 
 	/* shortcut */
@@ -435,13 +454,21 @@ zif_package_array_filter_conflict (GPtrArray *array,
 	for (i=0; i<array->len;) {
 		package = g_ptr_array_index (array, i);
 		state_local = zif_state_get_child (state);
-		ret = zif_package_conflicts (package,
-					     depend,
-					     &satisfies,
-					     state_local,
-					     error);
-		if (!ret)
-			goto out;
+
+		/* try each depend as 'OR' */
+		for (j=0; j<depends->len; j++) {
+			depend_tmp = g_ptr_array_index (depends, j);
+			zif_state_reset (state_local); //FIXME
+			ret = zif_package_conflicts (package,
+						     depend_tmp,
+						     &satisfies,
+						     state_local,
+						     error);
+			if (!ret)
+				goto out;
+			if (satisfies != NULL)
+				break;
+		}
 		ret = zif_state_done (state, error);
 		if (!ret)
 			goto out;
@@ -459,7 +486,7 @@ out:
 /**
  * zif_package_array_filter_obsolete:
  * @packages: array of %ZifPackage's
- * @depend: the dependancy to test against
+ * @depends: an array of #ZifDepend's
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -471,14 +498,15 @@ out:
  **/
 gboolean
 zif_package_array_filter_obsolete (GPtrArray *array,
-				   ZifDepend *depend,
+				   GPtrArray *depends,
 				   ZifState *state,
 				   GError **error)
 {
-	guint i;
+	guint i, j;
 	gboolean ret = TRUE;
 	ZifPackage *package;
 	ZifDepend *satisfies = NULL;
+	ZifDepend *depend_tmp;
 	ZifState *state_local;
 
 	/* shortcut */
@@ -490,13 +518,21 @@ zif_package_array_filter_obsolete (GPtrArray *array,
 	for (i=0; i<array->len;) {
 		package = g_ptr_array_index (array, i);
 		state_local = zif_state_get_child (state);
-		ret = zif_package_obsoletes (package,
-					     depend,
-					     &satisfies,
-					     state_local,
-					     error);
-		if (!ret)
-			goto out;
+
+		/* try each depend as 'OR' */
+		for (j=0; j<depends->len; j++) {
+			depend_tmp = g_ptr_array_index (depends, j);
+			zif_state_reset (state_local); //FIXME
+			ret = zif_package_obsoletes (package,
+						     depend_tmp,
+						     &satisfies,
+						     state_local,
+						     error);
+			if (!ret)
+				goto out;
+			if (satisfies != NULL)
+				break;
+		}
 		ret = zif_state_done (state, error);
 		if (!ret)
 			goto out;

@@ -38,6 +38,7 @@ libzif_include_HEADERS =					\
 	zif-md-metalink.h					\
 	zif-md-mirrorlist.h					\
 	zif-monitor.h						\
+	zif-object-array.h					\
 	zif-package.h						\
 	zif-package-array.h					\
 	zif-package-local.h					\
@@ -108,6 +109,8 @@ libzif_la_SOURCES =						\
 	zif-media.h						\
 	zif-monitor.c						\
 	zif-monitor.h						\
+	zif-object-array.c					\
+	zif-object-array.h					\
 	zif-package.c						\
 	zif-package.h						\
 	zif-package-array.c					\

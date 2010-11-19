@@ -953,7 +953,7 @@ out:
 /**
  * zif_md_what_provides:
  * @md: the #ZifMd object
- * @depend: the #ZifDepend provide
+ * @depends: an array of #ZifDepend's provide
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -964,14 +964,14 @@ out:
  * Since: 0.1.3
  **/
 GPtrArray *
-zif_md_what_provides (ZifMd *md, ZifDepend *depend,
+zif_md_what_provides (ZifMd *md, GPtrArray *depends,
 		      ZifState *state, GError **error)
 {
 	GPtrArray *array = NULL;
 	ZifMdClass *klass = ZIF_MD_GET_CLASS (md);
 
 	g_return_val_if_fail (ZIF_IS_MD (md), NULL);
-	g_return_val_if_fail (ZIF_IS_DEPEND (depend), NULL);
+	g_return_val_if_fail (depends != NULL, NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
@@ -986,7 +986,7 @@ zif_md_what_provides (ZifMd *md, ZifDepend *depend,
 	}
 
 	/* do subclassed action */
-	array = klass->what_provides (md, depend, state, error);
+	array = klass->what_provides (md, depends, state, error);
 out:
 	return array;
 }
@@ -995,7 +995,7 @@ out:
 /**
  * zif_md_what_requires:
  * @md: the #ZifMd object
- * @depend: the #ZifDepend provide
+ * @depends: an array of #ZifDepend's provide
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -1006,14 +1006,14 @@ out:
  * Since: 0.1.3
  **/
 GPtrArray *
-zif_md_what_requires (ZifMd *md, ZifDepend *depend,
+zif_md_what_requires (ZifMd *md, GPtrArray *depends,
 		      ZifState *state, GError **error)
 {
 	GPtrArray *array = NULL;
 	ZifMdClass *klass = ZIF_MD_GET_CLASS (md);
 
 	g_return_val_if_fail (ZIF_IS_MD (md), NULL);
-	g_return_val_if_fail (ZIF_IS_DEPEND (depend), NULL);
+	g_return_val_if_fail (depends != NULL, NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
@@ -1028,7 +1028,7 @@ zif_md_what_requires (ZifMd *md, ZifDepend *depend,
 	}
 
 	/* do subclassed action */
-	array = klass->what_requires (md, depend, state, error);
+	array = klass->what_requires (md, depends, state, error);
 out:
 	return array;
 }
@@ -1036,7 +1036,7 @@ out:
 /**
  * zif_md_what_obsoletes:
  * @md: the #ZifMd object
- * @depend: the #ZifDepend obsolete
+ * @depends: an array of #ZifDepend's obsolete
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -1047,14 +1047,14 @@ out:
  * Since: 0.1.3
  **/
 GPtrArray *
-zif_md_what_obsoletes (ZifMd *md, ZifDepend *depend,
+zif_md_what_obsoletes (ZifMd *md, GPtrArray *depends,
 		       ZifState *state, GError **error)
 {
 	GPtrArray *array = NULL;
 	ZifMdClass *klass = ZIF_MD_GET_CLASS (md);
 
 	g_return_val_if_fail (ZIF_IS_MD (md), NULL);
-	g_return_val_if_fail (ZIF_IS_DEPEND (depend), NULL);
+	g_return_val_if_fail (depends != NULL, NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
@@ -1069,7 +1069,7 @@ zif_md_what_obsoletes (ZifMd *md, ZifDepend *depend,
 	}
 
 	/* do subclassed action */
-	array = klass->what_obsoletes (md, depend, state, error);
+	array = klass->what_obsoletes (md, depends, state, error);
 out:
 	return array;
 }
@@ -1077,25 +1077,25 @@ out:
 /**
  * zif_md_what_conflicts:
  * @md: the #ZifMd object
- * @depend: the #ZifDepend conflict
+ * @depends: an array of #ZifDepend's conflict
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
- * Finds all packages that conflict with the given depend.
+ * Finds all packages that conflict with the given depends.
  *
  * Return value: an array of #ZifPackageRemote's
  *
  * Since: 0.1.3
  **/
 GPtrArray *
-zif_md_what_conflicts (ZifMd *md, ZifDepend *depend,
+zif_md_what_conflicts (ZifMd *md, GPtrArray *depends,
 		       ZifState *state, GError **error)
 {
 	GPtrArray *array = NULL;
 	ZifMdClass *klass = ZIF_MD_GET_CLASS (md);
 
 	g_return_val_if_fail (ZIF_IS_MD (md), NULL);
-	g_return_val_if_fail (ZIF_IS_DEPEND (depend), NULL);
+	g_return_val_if_fail (depends != NULL, NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
@@ -1110,7 +1110,7 @@ zif_md_what_conflicts (ZifMd *md, ZifDepend *depend,
 	}
 
 	/* do subclassed action */
-	array = klass->what_conflicts (md, depend, state, error);
+	array = klass->what_conflicts (md, depends, state, error);
 out:
 	return array;
 }

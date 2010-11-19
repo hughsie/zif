@@ -85,19 +85,19 @@ struct _ZifMdClass
 						 ZifState		*state,
 						 GError			**error);
 	GPtrArray	*(*what_provides)	(ZifMd			*md,
-						 ZifDepend		*depend,
+						 GPtrArray		*depends,
 						 ZifState		*state,
 						 GError			**error);
 	GPtrArray	*(*what_requires)	(ZifMd			*md,
-						 ZifDepend		*depend,
+						 GPtrArray		*depends,
 						 ZifState		*state,
 						 GError			**error);
 	GPtrArray	*(*what_obsoletes)	(ZifMd			*md,
-						 ZifDepend		*depend,
+						 GPtrArray		*depends,
 						 ZifState		*state,
 						 GError			**error);
 	GPtrArray	*(*what_conflicts)	(ZifMd			*md,
-						 ZifDepend		*depend,
+						 GPtrArray		*depends,
 						 ZifState		*state,
 						 GError			**error);
 	GPtrArray	*(*resolve)		(ZifMd			*md,
@@ -236,19 +236,19 @@ GPtrArray	*zif_md_search_pkgid			(ZifMd		*md,
 							 ZifState	*state,
 							 GError		**error);
 GPtrArray	*zif_md_what_provides			(ZifMd		*md,
-							 ZifDepend	*depend,
+							 GPtrArray	*depends,
 							 ZifState	*state,
 							 GError		**error);
 GPtrArray	*zif_md_what_requires			(ZifMd		*md,
-							 ZifDepend	*depend,
+							 GPtrArray	*depends,
 							 ZifState	*state,
 							 GError		**error);
 GPtrArray	*zif_md_what_obsoletes			(ZifMd		*md,
-							 ZifDepend	*depend,
+							 GPtrArray	*depends,
 							 ZifState	*state,
 							 GError		**error);
 GPtrArray	*zif_md_what_conflicts			(ZifMd		*md,
-							 ZifDepend	*depend,
+							 GPtrArray	*depends,
 							 ZifState	*state,
 							 GError		**error);
 GPtrArray	*zif_md_resolve				(ZifMd		*md,

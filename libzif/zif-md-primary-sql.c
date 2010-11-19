@@ -438,16 +438,18 @@ zif_md_primary_sql_sqlite_depend_cb (void *data, gint argc, gchar **argv, gchar 
  * zif_md_primary_sql_what_depends:
  **/
 static GPtrArray *
-zif_md_primary_sql_what_depends (ZifMd *md, const gchar *table_name, ZifDepend *depend,
+zif_md_primary_sql_what_depends (ZifMd *md, const gchar *table_name, GPtrArray *depends,
 				 ZifState *state, GError **error)
 {
-	gchar *statement = NULL;
+	GString *statement = NULL;
 	gchar *error_msg = NULL;
 	gint rc;
+	guint i;
 	gboolean ret;
 	GError *error_local = NULL;
 	GPtrArray *array = NULL;
 	ZifState *state_local;
+	ZifDepend *depend_tmp;
 	ZifMdPrimarySqlData *data = NULL;
 	ZifMdPrimarySql *md_primary_sql = ZIF_MD_PRIMARY_SQL (md);
 
@@ -488,26 +490,41 @@ zif_md_primary_sql_what_depends (ZifMd *md, const gchar *table_name, ZifDepend *
 			goto out;
 	}
 
-	/* resolve each depend name to a package */
-	statement = g_strdup_printf (ZIF_MD_PRIMARY_SQL_HEADER ", %s depend WHERE "
-				     "p.pkgKey = depend.pkgKey AND "
-				     "depend.name = '%s';",
-				     table_name,
-				     zif_depend_get_name (depend));
+	/* a struct to return results */
 	data = g_new0 (ZifMdPrimarySqlData, 1);
 	data->md = md_primary_sql;
 	data->id = zif_md_get_id (ZIF_MD (md));
 	data->packages = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
-	g_debug ("running %s on %s",
-		 statement,
-		 zif_md_get_filename_uncompressed (md));
-	rc = sqlite3_exec (md_primary_sql->priv->db, statement, zif_md_primary_sql_sqlite_create_package_cb, data, &error_msg);
+
+	/* create one super huge statement with 'ORs' rather than doing
+	 * thousands of indervidual queries */
+	statement = g_string_new ("");
+	g_string_append (statement, "BEGIN;\n");
+	g_string_append_printf (statement, ZIF_MD_PRIMARY_SQL_HEADER ", %s depend WHERE "
+				"p.pkgKey = depend.pkgKey AND (",
+				table_name);
+
+	for (i=0; i<depends->len; i++) {
+		depend_tmp = g_ptr_array_index (depends, i);
+		g_string_append_printf (statement, "depend.name = '%s' OR ",
+					zif_depend_get_name (depend_tmp));
+	}
+	/* remove trailing OR */
+	g_string_set_size (statement, statement->len - 4);
+	g_string_append (statement, ");");
+	g_string_append (statement, "END;\n");
+
+	/* execute the query */
+	rc = sqlite3_exec (md_primary_sql->priv->db, statement->str, zif_md_primary_sql_sqlite_create_package_cb, data, &error_msg);
 	if (rc != SQLITE_OK) {
 		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_BAD_SQL,
 			     "SQL error: %s", error_msg);
 		sqlite3_free (error_msg);
 		goto out;
 	}
+
+
+	sqlite3_exec (md_primary_sql->priv->db, "END;", NULL, NULL, NULL);
 
 	/* success */
 	array = g_ptr_array_ref (data->packages);
@@ -521,22 +538,22 @@ zif_md_primary_sql_what_depends (ZifMd *md, const gchar *table_name, ZifDepend *
 	state_local = zif_state_get_child (state);
 	if (g_strcmp0 (table_name, "provides") == 0) {
 		ret = zif_package_array_filter_provide (array,
-							depend,
+							depends,
 							state_local,
 							error);
 	} else if (g_strcmp0 (table_name, "requires") == 0) {
 		ret = zif_package_array_filter_require (array,
-							depend,
+							depends,
 							state_local,
 							error);
 	} else if (g_strcmp0 (table_name, "obsoletes") == 0) {
 		ret = zif_package_array_filter_obsolete (array,
-							 depend,
+							 depends,
 							 state_local,
 							 error);
 	} else if (g_strcmp0 (table_name, "conflicts") == 0) {
 		ret = zif_package_array_filter_conflict (array,
-							 depend,
+							 depends,
 							 state_local,
 							 error);
 	} else {
@@ -552,7 +569,8 @@ out:
 		g_ptr_array_unref (data->packages);
 		g_free (data);
 	}
-	g_free (statement);
+	if (statement != NULL)
+		g_string_free (statement, TRUE);
 	return array;
 }
 
@@ -560,40 +578,40 @@ out:
  * zif_md_primary_sql_what_provides:
  **/
 static GPtrArray *
-zif_md_primary_sql_what_provides (ZifMd *md, ZifDepend *depend,
+zif_md_primary_sql_what_provides (ZifMd *md, GPtrArray *depends,
 				  ZifState *state, GError **error)
 {
-	return zif_md_primary_sql_what_depends (md, "provides", depend, state, error);
+	return zif_md_primary_sql_what_depends (md, "provides", depends, state, error);
 }
 
 /**
  * zif_md_primary_sql_what_requires:
  **/
 static GPtrArray *
-zif_md_primary_sql_what_requires (ZifMd *md, ZifDepend *depend,
+zif_md_primary_sql_what_requires (ZifMd *md, GPtrArray *depends,
 				  ZifState *state, GError **error)
 {
-	return zif_md_primary_sql_what_depends (md, "requires", depend, state, error);
+	return zif_md_primary_sql_what_depends (md, "requires", depends, state, error);
 }
 
 /**
  * zif_md_primary_sql_what_obsoletes:
  **/
 static GPtrArray *
-zif_md_primary_sql_what_obsoletes (ZifMd *md, ZifDepend *depend,
+zif_md_primary_sql_what_obsoletes (ZifMd *md, GPtrArray *depends,
 				   ZifState *state, GError **error)
 {
-	return zif_md_primary_sql_what_depends (md, "obsoletes", depend, state, error);
+	return zif_md_primary_sql_what_depends (md, "obsoletes", depends, state, error);
 }
 
 /**
  * zif_md_primary_sql_what_conflicts:
  **/
 static GPtrArray *
-zif_md_primary_sql_what_conflicts (ZifMd *md, ZifDepend *depend,
+zif_md_primary_sql_what_conflicts (ZifMd *md, GPtrArray *depends,
 				   ZifState *state, GError **error)
 {
-	return zif_md_primary_sql_what_depends (md, "conflicts", depend, state, error);
+	return zif_md_primary_sql_what_depends (md, "conflicts", depends, state, error);
 }
 
 /**

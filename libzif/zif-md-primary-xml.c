@@ -738,13 +738,14 @@ zif_md_primary_xml_search_pkgid (ZifMd *md, gchar **search, ZifState *state, GEr
 static gboolean
 zif_md_primary_xml_what_provides_cb (ZifPackage *package, gpointer user_data)
 {
-	guint i;
+	guint i, j;
 	gboolean ret = FALSE;
 	GPtrArray *array = NULL;
 	ZifState *state_tmp;
 	ZifDepend *depend_tmp;
+	ZifDepend *depend;
 	GError *error = NULL;
-	ZifDepend *depend = (ZifDepend *) user_data;
+	GPtrArray *depends = (GPtrArray *) user_data;
 
 	state_tmp = zif_state_new ();
 	array = zif_package_get_provides (package, state_tmp, &error);
@@ -757,9 +758,12 @@ zif_md_primary_xml_what_provides_cb (ZifPackage *package, gpointer user_data)
 	/* find a depends string */
 	for (i=0; i<array->len; i++) {
 		depend_tmp = g_ptr_array_index (array, i);
-		if (zif_depend_compare (depend_tmp, depend) == 0) {
-			ret = TRUE;
-			goto out;
+		for (j=0; j<depends->len; j++) {
+			depend = g_ptr_array_index (depends, j);
+			if (zif_depend_compare (depend_tmp, depend) == 0) {
+				ret = TRUE;
+				goto out;
+			}
 		}
 	}
 out:
@@ -775,13 +779,14 @@ out:
 static gboolean
 zif_md_primary_xml_what_obsoletes_cb (ZifPackage *package, gpointer user_data)
 {
-	guint i;
+	guint i, j;
 	gboolean ret = FALSE;
 	GPtrArray *array = NULL;
 	ZifState *state_tmp;
 	ZifDepend *depend_tmp;
+	ZifDepend *depend;
 	GError *error = NULL;
-	ZifDepend *depend = (ZifDepend *) user_data;
+	GPtrArray *depends = (GPtrArray *) user_data;
 
 	state_tmp = zif_state_new ();
 	array = zif_package_get_obsoletes (package, state_tmp, &error);
@@ -794,9 +799,12 @@ zif_md_primary_xml_what_obsoletes_cb (ZifPackage *package, gpointer user_data)
 	/* find a depends string */
 	for (i=0; i<array->len; i++) {
 		depend_tmp = g_ptr_array_index (array, i);
-		if (zif_depend_compare (depend_tmp, depend) == 0) {
-			ret = TRUE;
-			goto out;
+		for (j=0; j<depends->len; j++) {
+			depend = g_ptr_array_index (depends, j);
+			if (zif_depend_compare (depend_tmp, depend) == 0) {
+				ret = TRUE;
+				goto out;
+			}
 		}
 	}
 out:
@@ -812,13 +820,14 @@ out:
 static gboolean
 zif_md_primary_xml_what_conflicts_cb (ZifPackage *package, gpointer user_data)
 {
-	guint i;
+	guint i, j;
 	gboolean ret = FALSE;
 	GPtrArray *array = NULL;
 	ZifState *state_tmp;
 	ZifDepend *depend_tmp;
+	ZifDepend *depend;
 	GError *error = NULL;
-	ZifDepend *depend = (ZifDepend *) user_data;
+	GPtrArray *depends = (GPtrArray *) user_data;
 
 	state_tmp = zif_state_new ();
 	array = zif_package_get_conflicts (package, state_tmp, &error);
@@ -831,9 +840,12 @@ zif_md_primary_xml_what_conflicts_cb (ZifPackage *package, gpointer user_data)
 	/* find a depends string */
 	for (i=0; i<array->len; i++) {
 		depend_tmp = g_ptr_array_index (array, i);
-		if (zif_depend_compare (depend_tmp, depend) == 0) {
-			ret = TRUE;
-			goto out;
+		for (j=0; j<depends->len; j++) {
+			depend = g_ptr_array_index (depends, j);
+			if (zif_depend_compare (depend_tmp, depend) == 0) {
+				ret = TRUE;
+				goto out;
+			}
 		}
 	}
 out:
@@ -847,11 +859,11 @@ out:
  * zif_md_primary_xml_what_provides:
  **/
 static GPtrArray *
-zif_md_primary_xml_what_provides (ZifMd *md, ZifDepend *depend,
+zif_md_primary_xml_what_provides (ZifMd *md, GPtrArray *depends,
 				  ZifState *state, GError **error)
 {
 	g_return_val_if_fail (zif_state_valid (state), NULL);
-	return zif_md_primary_xml_filter (md, zif_md_primary_xml_what_provides_cb, (gpointer) depend,
+	return zif_md_primary_xml_filter (md, zif_md_primary_xml_what_provides_cb, (gpointer) depends,
 					  state, error);
 }
 
@@ -859,11 +871,11 @@ zif_md_primary_xml_what_provides (ZifMd *md, ZifDepend *depend,
  * zif_md_primary_xml_what_obsoletes:
  **/
 static GPtrArray *
-zif_md_primary_xml_what_obsoletes (ZifMd *md, ZifDepend *depend,
+zif_md_primary_xml_what_obsoletes (ZifMd *md, GPtrArray *depends,
 				   ZifState *state, GError **error)
 {
 	g_return_val_if_fail (zif_state_valid (state), NULL);
-	return zif_md_primary_xml_filter (md, zif_md_primary_xml_what_obsoletes_cb, (gpointer) depend,
+	return zif_md_primary_xml_filter (md, zif_md_primary_xml_what_obsoletes_cb, (gpointer) depends,
 					  state, error);
 }
 
@@ -871,11 +883,11 @@ zif_md_primary_xml_what_obsoletes (ZifMd *md, ZifDepend *depend,
  * zif_md_primary_xml_what_conflicts:
  **/
 static GPtrArray *
-zif_md_primary_xml_what_conflicts (ZifMd *md, ZifDepend *depend,
+zif_md_primary_xml_what_conflicts (ZifMd *md, GPtrArray *depends,
 				   ZifState *state, GError **error)
 {
 	g_return_val_if_fail (zif_state_valid (state), NULL);
-	return zif_md_primary_xml_filter (md, zif_md_primary_xml_what_conflicts_cb, (gpointer) depend,
+	return zif_md_primary_xml_filter (md, zif_md_primary_xml_what_conflicts_cb, (gpointer) depends,
 					  state, error);
 }
 

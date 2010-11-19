@@ -43,19 +43,19 @@ gboolean	 zif_package_array_filter_newest	(GPtrArray	*packages);
 void		 zif_package_array_filter_best_arch	(GPtrArray	*array);
 void		 zif_package_array_filter_smallest_name	(GPtrArray	*array);
 gboolean	 zif_package_array_filter_provide	(GPtrArray	*array,
-							 ZifDepend	*depend,
+							 GPtrArray	*depends,
 							 ZifState	*state,
 							 GError		**error);
 gboolean	 zif_package_array_filter_require	(GPtrArray	*array,
-							 ZifDepend	*depend,
+							 GPtrArray	*depends,
 							 ZifState	*state,
 							 GError		**error);
 gboolean	 zif_package_array_filter_obsolete	(GPtrArray	*array,
-							 ZifDepend	*depend,
+							 GPtrArray	*depends,
 							 ZifState	*state,
 							 GError		**error);
 gboolean	 zif_package_array_filter_conflict	(GPtrArray	*array,
-							 ZifDepend	*depend,
+							 GPtrArray	*depends,
 							 ZifState	*state,
 							 GError		**error);
 gboolean	 zif_package_array_provide		(GPtrArray	*array,

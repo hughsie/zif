@@ -48,6 +48,7 @@
 #include "zif-store-meta.h"
 #include "zif-groups.h"
 #include "zif-package-meta.h"
+#include "zif-object-array.h"
 #include "zif-monitor.h"
 #include "zif-string.h"
 #include "zif-depend.h"
@@ -413,11 +414,14 @@ out:
 }
 
 /**
- * zif_store_meta_what_provides:
+ * zif_store_meta_what_depends:
  **/
 static GPtrArray *
-zif_store_meta_what_provides (ZifStore *store, ZifDepend *depend,
-			       ZifState *state, GError **error)
+zif_store_meta_what_depends (ZifStore *store,
+			     ZifPackageEnsureType type,
+			     GPtrArray *depends,
+			     ZifState *state,
+			     GError **error)
 {
 	gboolean ret = FALSE;
 	GError *error_local = NULL;
@@ -426,13 +430,15 @@ zif_store_meta_what_provides (ZifStore *store, ZifDepend *depend,
 	GPtrArray *provides;
 	guint i;
 	guint j;
+	guint k;
+	ZifDepend *depend;
 	ZifDepend *depend_tmp;
 	ZifPackage *package;
 	ZifState *state_local;
 	ZifStoreMeta *meta = ZIF_STORE_META (store);
 
 	g_return_val_if_fail (ZIF_IS_STORE_META (store), NULL);
-	g_return_val_if_fail (ZIF_IS_DEPEND (depend), NULL);
+	g_return_val_if_fail (depends != NULL, NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 
 	/* check we have packages */
@@ -446,18 +452,36 @@ zif_store_meta_what_provides (ZifStore *store, ZifDepend *depend,
 	zif_state_set_number_steps (state, meta->priv->packages->len);
 
 	/* iterate list */
-	array_tmp = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
+	array_tmp = zif_object_array_new ();
 	for (i=0;i<meta->priv->packages->len;i++) {
 		package = ZIF_PACKAGE (zif_array_index (meta->priv->packages, i));
 
 		/* get package provides */
 		state_local = zif_state_get_child (state);
-		provides = zif_package_get_provides (package, state_local, &error_local);
+		if (type == ZIF_PACKAGE_ENSURE_TYPE_PROVIDES) {
+			provides = zif_package_get_provides (package,
+							     state_local,
+							     &error_local);
+		} else if (type == ZIF_PACKAGE_ENSURE_TYPE_REQUIRES) {
+			provides = zif_package_get_requires (package,
+							     state_local,
+							     &error_local);
+		} else if (type == ZIF_PACKAGE_ENSURE_TYPE_CONFLICTS) {
+			provides = zif_package_get_conflicts (package,
+							      state_local,
+							      &error_local);
+		} else if (type == ZIF_PACKAGE_ENSURE_TYPE_OBSOLETES) {
+			provides = zif_package_get_obsoletes (package,
+							      state_local,
+							      &error_local);
+		} else {
+			g_assert_not_reached ();
+		}
 		if (provides == NULL) {
 			g_set_error (error,
 				     ZIF_STORE_ERROR,
 				     ZIF_STORE_ERROR_FAILED,
-				     "failed to get provides for %s: %s",
+				     "failed to get provides/requires for %s: %s",
 				     zif_package_get_id (package),
 				     error_local->message);
 			g_error_free (error_local);
@@ -465,9 +489,12 @@ zif_store_meta_what_provides (ZifStore *store, ZifDepend *depend,
 		}
 		for (j=0; j<provides->len; j++) {
 			depend_tmp = g_ptr_array_index (provides, j);
-			if (zif_depend_satisfies (depend_tmp, depend)) {
-				g_ptr_array_add (array_tmp, g_object_ref (package));
-				break;
+			for (k=0; k<depends->len; k++) {
+				depend = g_ptr_array_index (depends, k);
+				if (zif_depend_satisfies (depend_tmp, depend)) {
+					zif_object_array_add (array_tmp, package);
+					break;
+				}
 			}
 		}
 		g_ptr_array_unref (provides);
@@ -486,78 +513,33 @@ out:
 	return array;
 }
 
+
+/**
+ * zif_store_meta_what_provides:
+ **/
+static GPtrArray *
+zif_store_meta_what_provides (ZifStore *store, GPtrArray *depends,
+			      ZifState *state, GError **error)
+{
+	return zif_store_meta_what_depends (store,
+					    ZIF_PACKAGE_ENSURE_TYPE_PROVIDES,
+					    depends,
+					    state,
+					    error);
+}
+
 /**
  * zif_store_meta_what_obsoletes:
  **/
 static GPtrArray *
-zif_store_meta_what_obsoletes (ZifStore *store, ZifDepend *depend,
+zif_store_meta_what_obsoletes (ZifStore *store, GPtrArray *depends,
 			       ZifState *state, GError **error)
 {
-	gboolean ret = FALSE;
-	GError *error_local = NULL;
-	GPtrArray *array = NULL;
-	GPtrArray *array_tmp = NULL;
-	GPtrArray *obsoletes;
-	guint i;
-	guint j;
-	ZifDepend *depend_tmp;
-	ZifPackage *package;
-	ZifState *state_local;
-	ZifStoreMeta *meta = ZIF_STORE_META (store);
-
-	g_return_val_if_fail (ZIF_IS_STORE_META (store), NULL);
-	g_return_val_if_fail (ZIF_IS_DEPEND (depend), NULL);
-	g_return_val_if_fail (zif_state_valid (state), NULL);
-
-	/* check we have packages */
-	if (meta->priv->packages->len == 0) {
-		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_ARRAY_IS_EMPTY,
-				     "cannot resolve, no packages in meta sack");
-		goto out;
-	}
-
-	/* we just search a virtual in-memory-sack */
-	zif_state_set_number_steps (state, meta->priv->packages->len);
-
-	/* iterate list */
-	array_tmp = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
-	for (i=0;i<meta->priv->packages->len;i++) {
-		package = ZIF_PACKAGE (zif_array_index (meta->priv->packages, i));
-
-		/* get package obsoletes */
-		state_local = zif_state_get_child (state);
-		obsoletes = zif_package_get_obsoletes (package, state_local, &error_local);
-		if (obsoletes == NULL) {
-			g_set_error (error,
-				     ZIF_STORE_ERROR,
-				     ZIF_STORE_ERROR_FAILED,
-				     "failed to get obsoletes for %s: %s",
-				     zif_package_get_id (package),
-				     error_local->message);
-			g_error_free (error_local);
-			goto out;
-		}
-		for (j=0; j<obsoletes->len; j++) {
-			depend_tmp = g_ptr_array_index (obsoletes, j);
-			if (zif_depend_satisfies (depend_tmp, depend)) {
-				g_ptr_array_add (array_tmp, g_object_ref (package));
-				break;
-			}
-		}
-		g_ptr_array_unref (obsoletes);
-
-		/* this section done */
-		ret = zif_state_done (state, error);
-		if (!ret)
-			goto out;
-	}
-
-	/* success */
-	array = g_ptr_array_ref (array_tmp);
-out:
-	if (array_tmp != NULL)
-		g_ptr_array_unref (array_tmp);
-	return array;
+	return zif_store_meta_what_depends (store,
+					    ZIF_PACKAGE_ENSURE_TYPE_OBSOLETES,
+					    depends,
+					    state,
+					    error);
 }
 
 /**

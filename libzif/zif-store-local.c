@@ -43,6 +43,7 @@
 #include "zif-groups.h"
 #include "zif-lock.h"
 #include "zif-monitor.h"
+#include "zif-object-array.h"
 #include "zif-package-array.h"
 #include "zif-package-local.h"
 #include "zif-store.h"
@@ -890,19 +891,24 @@ out:
 }
 
 /**
- * zif_store_local_what_provides:
+ * zif_store_local_what_depends:
  **/
 static GPtrArray *
-zif_store_local_what_provides (ZifStore *store, ZifDepend *depend, ZifState *state, GError **error)
+zif_store_local_what_depends (ZifStore *store, ZifPackageEnsureType type,
+			      GPtrArray *depends, ZifState *state, GError **error)
 {
 	GPtrArray *array = NULL;
+	GPtrArray *array_tmp = NULL;
+	GPtrArray *depends_tmp;
+	guint i;
+	ZifDepend *depend_tmp;
 	GError *error_local = NULL;
 	gboolean ret;
 	ZifState *state_local = NULL;
 	ZifStoreLocal *local = ZIF_STORE_LOCAL (store);
 
 	g_return_val_if_fail (ZIF_IS_STORE_LOCAL (store), NULL);
-	g_return_val_if_fail (depend != NULL, NULL);
+	g_return_val_if_fail (depends != NULL, NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 
 	/* not locked */
@@ -952,172 +958,94 @@ zif_store_local_what_provides (ZifStore *store, ZifDepend *depend, ZifState *sta
 
 	/* just use the helper function */
 	state_local = zif_state_get_child (state);
-	ret = zif_package_array_provide (local->priv->packages,
-					  depend, NULL, &array,
-					  state_local, error);
-	if (!ret)
-		goto out;
+	array_tmp = zif_object_array_new ();
+	for (i=0; i<depends->len; i++) {
+		depend_tmp = g_ptr_array_index (depends, i);
+		if (type == ZIF_PACKAGE_ENSURE_TYPE_PROVIDES) {
+			ret = zif_package_array_provide (local->priv->packages,
+							 depend_tmp, NULL,
+							 &depends_tmp,
+							 state_local,
+							 error);
+		} else if (type == ZIF_PACKAGE_ENSURE_TYPE_REQUIRES) {
+			ret = zif_package_array_require (local->priv->packages,
+							 depend_tmp, NULL,
+							 &depends_tmp,
+							 state_local,
+							 error);
+		} else if (type == ZIF_PACKAGE_ENSURE_TYPE_CONFLICTS) {
+			ret = zif_package_array_conflict (local->priv->packages,
+							  depend_tmp, NULL,
+							  &depends_tmp,
+							  state_local,
+							  error);
+		} else if (type == ZIF_PACKAGE_ENSURE_TYPE_OBSOLETES) {
+			ret = zif_package_array_obsolete (local->priv->packages,
+							  depend_tmp, NULL,
+							  &depends_tmp,
+							  state_local,
+							  error);
+		} else {
+			g_assert_not_reached ();
+		}
+		if (!ret)
+			goto out;
+
+		/* add results */
+		zif_object_array_add_array (array_tmp, depends_tmp);
+		g_ptr_array_unref (depends_tmp);
+	}
 
 	/* this section done */
 	ret = zif_state_done (state, error);
 	if (!ret)
 		goto out;
+
+	/* success */
+	array = g_ptr_array_ref (array_tmp);
 out:
+	if (array_tmp != NULL)
+		g_ptr_array_unref (array_tmp);
 	return array;
+}
+
+/**
+ * zif_store_local_what_provides:
+ **/
+static GPtrArray *
+zif_store_local_what_provides (ZifStore *store, GPtrArray *depends, ZifState *state, GError **error)
+{
+	return zif_store_local_what_depends (store,
+					     ZIF_PACKAGE_ENSURE_TYPE_PROVIDES,
+					     depends,
+					     state,
+					     error);
 }
 
 /**
  * zif_store_local_what_obsoletes:
  **/
 static GPtrArray *
-zif_store_local_what_obsoletes (ZifStore *store, ZifDepend *depend, ZifState *state, GError **error)
+zif_store_local_what_obsoletes (ZifStore *store, GPtrArray *depends, ZifState *state, GError **error)
 {
-	GPtrArray *array = NULL;
-	GError *error_local = NULL;
-	gboolean ret;
-	ZifState *state_local = NULL;
-	ZifStoreLocal *local = ZIF_STORE_LOCAL (store);
-
-	g_return_val_if_fail (ZIF_IS_STORE_LOCAL (store), NULL);
-	g_return_val_if_fail (depend != NULL, NULL);
-	g_return_val_if_fail (zif_state_valid (state), NULL);
-
-	/* not locked */
-	ret = zif_lock_is_locked (local->priv->lock, NULL);
-	if (!ret) {
-		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_NOT_LOCKED, "not locked");
-		goto out;
-	}
-
-	/* setup steps */
-	if (local->priv->loaded) {
-		zif_state_set_number_steps (state, 1);
-	} else {
-		ret = zif_state_set_steps (state,
-					   error,
-					   80, /* load */
-					   20, /* search */
-					   -1);
-		if (!ret)
-			goto out;
-	}
-
-	/* if not already loaded, load */
-	if (!local->priv->loaded) {
-		state_local = zif_state_get_child (state);
-		ret = zif_store_local_load (store, state_local, &error_local);
-		if (!ret) {
-			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
-				     "failed to load package store: %s", error_local->message);
-			g_error_free (error_local);
-			goto out;
-		}
-
-		/* this section done */
-		ret = zif_state_done (state, error);
-		if (!ret)
-			goto out;
-	}
-
-	/* check we have packages */
-	if (local->priv->packages->len == 0) {
-		g_warning ("no packages in sack, so nothing to do!");
-		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_ARRAY_IS_EMPTY,
-				     "no packages in local sack");
-		goto out;
-	}
-
-	/* just use the helper function */
-	state_local = zif_state_get_child (state);
-	ret = zif_package_array_obsolete (local->priv->packages,
-					  depend, NULL, &array,
-					  state_local, error);
-	if (!ret)
-		goto out;
-
-	/* this section done */
-	ret = zif_state_done (state, error);
-	if (!ret)
-		goto out;
-out:
-	return array;
+	return zif_store_local_what_depends (store,
+					     ZIF_PACKAGE_ENSURE_TYPE_OBSOLETES,
+					     depends,
+					     state,
+					     error);
 }
 
 /**
  * zif_store_local_what_conflicts:
  **/
 static GPtrArray *
-zif_store_local_what_conflicts (ZifStore *store, ZifDepend *depend, ZifState *state, GError **error)
+zif_store_local_what_conflicts (ZifStore *store, GPtrArray *depends, ZifState *state, GError **error)
 {
-	GPtrArray *array = NULL;
-	GError *error_local = NULL;
-	gboolean ret;
-	ZifState *state_local = NULL;
-	ZifStoreLocal *local = ZIF_STORE_LOCAL (store);
-
-	g_return_val_if_fail (ZIF_IS_STORE_LOCAL (store), NULL);
-	g_return_val_if_fail (depend != NULL, NULL);
-	g_return_val_if_fail (zif_state_valid (state), NULL);
-
-	/* not locked */
-	ret = zif_lock_is_locked (local->priv->lock, NULL);
-	if (!ret) {
-		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_NOT_LOCKED, "not locked");
-		goto out;
-	}
-
-	/* setup steps */
-	if (local->priv->loaded) {
-		zif_state_set_number_steps (state, 1);
-	} else {
-		ret = zif_state_set_steps (state,
-					   error,
-					   80, /* load */
-					   20, /* search */
-					   -1);
-		if (!ret)
-			goto out;
-	}
-
-	/* if not already loaded, load */
-	if (!local->priv->loaded) {
-		state_local = zif_state_get_child (state);
-		ret = zif_store_local_load (store, state_local, &error_local);
-		if (!ret) {
-			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
-				     "failed to load package store: %s", error_local->message);
-			g_error_free (error_local);
-			goto out;
-		}
-
-		/* this section done */
-		ret = zif_state_done (state, error);
-		if (!ret)
-			goto out;
-	}
-
-	/* check we have packages */
-	if (local->priv->packages->len == 0) {
-		g_warning ("no packages in sack, so nothing to do!");
-		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_ARRAY_IS_EMPTY,
-				     "no packages in local sack");
-		goto out;
-	}
-
-	/* just use the helper function */
-	state_local = zif_state_get_child (state);
-	ret = zif_package_array_conflict (local->priv->packages,
-					  depend, NULL, &array,
-					  state_local, error);
-	if (!ret)
-		goto out;
-
-	/* this section done */
-	ret = zif_state_done (state, error);
-	if (!ret)
-		goto out;
-out:
-	return array;
+	return zif_store_local_what_depends (store,
+					     ZIF_PACKAGE_ENSURE_TYPE_CONFLICTS,
+					     depends,
+					     state,
+					     error);
 }
 
 /**

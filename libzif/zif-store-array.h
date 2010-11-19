@@ -85,19 +85,19 @@ GPtrArray	*zif_store_array_search_file		(GPtrArray		*store_array,
 							 ZifState		*state,
 							 GError			**error);
 GPtrArray	*zif_store_array_what_provides		(GPtrArray		*store_array,
-							 ZifDepend		*depend,
+							 GPtrArray		*depends,
 							 ZifState		*state,
 							 GError			**error);
 GPtrArray	*zif_store_array_what_requires		(GPtrArray		*store_array,
-							 ZifDepend		*depend,
+							 GPtrArray		*depends,
 							 ZifState		*state,
 							 GError			**error);
 GPtrArray	*zif_store_array_what_obsoletes		(GPtrArray		*store_array,
-							 ZifDepend		*depend,
+							 GPtrArray		*depends,
 							 ZifState		*state,
 							 GError			**error);
 GPtrArray	*zif_store_array_what_conflicts		(GPtrArray		*store_array,
-							 ZifDepend		*depend,
+							 GPtrArray		*depends,
 							 ZifState		*state,
 							 GError			**error);
 GPtrArray	*zif_store_array_get_packages		(GPtrArray		*store_array,

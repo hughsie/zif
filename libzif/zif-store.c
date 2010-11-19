@@ -349,7 +349,7 @@ zif_store_resolve (ZifStore *store, gchar **search, ZifState *state, GError **er
 /**
  * zif_store_what_provides:
  * @store: the #ZifStore object
- * @depend: A #ZifDepend to search for
+ * @depends: An array of #ZifDepend's to search for
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -360,12 +360,12 @@ zif_store_resolve (ZifStore *store, gchar **search, ZifState *state, GError **er
  * Since: 0.1.3
  **/
 GPtrArray *
-zif_store_what_provides (ZifStore *store, ZifDepend *depend, ZifState *state, GError **error)
+zif_store_what_provides (ZifStore *store, GPtrArray *depends, ZifState *state, GError **error)
 {
 	ZifStoreClass *klass = ZIF_STORE_GET_CLASS (store);
 
 	g_return_val_if_fail (ZIF_IS_STORE (store), NULL);
-	g_return_val_if_fail (ZIF_IS_DEPEND (depend), NULL);
+	g_return_val_if_fail (depends != NULL, NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
@@ -376,13 +376,13 @@ zif_store_what_provides (ZifStore *store, ZifDepend *depend, ZifState *state, GE
 		return NULL;
 	}
 
-	return klass->what_provides (store, depend, state, error);
+	return klass->what_provides (store, depends, state, error);
 }
 
 /**
  * zif_store_what_requires:
  * @store: the #ZifStore object
- * @depend: A #ZifDepend to search for
+ * @depends: An array of #ZifDepend's to search for
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -393,12 +393,12 @@ zif_store_what_provides (ZifStore *store, ZifDepend *depend, ZifState *state, GE
  * Since: 0.1.3
  **/
 GPtrArray *
-zif_store_what_requires (ZifStore *store, ZifDepend *depend, ZifState *state, GError **error)
+zif_store_what_requires (ZifStore *store, GPtrArray *depends, ZifState *state, GError **error)
 {
 	ZifStoreClass *klass = ZIF_STORE_GET_CLASS (store);
 
 	g_return_val_if_fail (ZIF_IS_STORE (store), NULL);
-	g_return_val_if_fail (ZIF_IS_DEPEND (depend), NULL);
+	g_return_val_if_fail (depends != NULL, NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
@@ -409,13 +409,13 @@ zif_store_what_requires (ZifStore *store, ZifDepend *depend, ZifState *state, GE
 		return NULL;
 	}
 
-	return klass->what_requires (store, depend, state, error);
+	return klass->what_requires (store, depends, state, error);
 }
 
 /**
  * zif_store_what_obsoletes:
  * @store: the #ZifStore object
- * @depend: A #ZifDepend to search for
+ * @depends: An array of #ZifDepend's to search for
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -426,12 +426,12 @@ zif_store_what_requires (ZifStore *store, ZifDepend *depend, ZifState *state, GE
  * Since: 0.1.3
  **/
 GPtrArray *
-zif_store_what_obsoletes (ZifStore *store, ZifDepend *depend, ZifState *state, GError **error)
+zif_store_what_obsoletes (ZifStore *store, GPtrArray *depends, ZifState *state, GError **error)
 {
 	ZifStoreClass *klass = ZIF_STORE_GET_CLASS (store);
 
 	g_return_val_if_fail (ZIF_IS_STORE (store), NULL);
-	g_return_val_if_fail (ZIF_IS_DEPEND (depend), NULL);
+	g_return_val_if_fail (depends != NULL, NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
@@ -442,13 +442,13 @@ zif_store_what_obsoletes (ZifStore *store, ZifDepend *depend, ZifState *state, G
 		return NULL;
 	}
 
-	return klass->what_obsoletes (store, depend, state, error);
+	return klass->what_obsoletes (store, depends, state, error);
 }
 
 /**
  * zif_store_what_conflicts:
  * @store: the #ZifStore object
- * @depend: A #ZifDepend to search for
+ * @depends: An array of #ZifDepend's to search for
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -459,12 +459,12 @@ zif_store_what_obsoletes (ZifStore *store, ZifDepend *depend, ZifState *state, G
  * Since: 0.1.3
  **/
 GPtrArray *
-zif_store_what_conflicts (ZifStore *store, ZifDepend *depend, ZifState *state, GError **error)
+zif_store_what_conflicts (ZifStore *store, GPtrArray *depends, ZifState *state, GError **error)
 {
 	ZifStoreClass *klass = ZIF_STORE_GET_CLASS (store);
 
 	g_return_val_if_fail (ZIF_IS_STORE (store), NULL);
-	g_return_val_if_fail (ZIF_IS_DEPEND (depend), NULL);
+	g_return_val_if_fail (depends != NULL, NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
@@ -475,7 +475,7 @@ zif_store_what_conflicts (ZifStore *store, ZifDepend *depend, ZifState *state, G
 		return NULL;
 	}
 
-	return klass->what_conflicts (store, depend, state, error);
+	return klass->what_conflicts (store, depends, state, error);
 }
 
 /**

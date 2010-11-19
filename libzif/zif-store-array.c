@@ -309,13 +309,13 @@ zif_store_array_repos_search (GPtrArray *store_array, ZifRole role, gpointer sea
 		else if (role == ZIF_ROLE_GET_PACKAGES)
 			part = zif_store_get_packages (store, state_local, &error_local);
 		else if (role == ZIF_ROLE_WHAT_PROVIDES)
-			part = zif_store_what_provides (store, (ZifDepend*) search, state_local, &error_local);
+			part = zif_store_what_provides (store, (GPtrArray*) search, state_local, &error_local);
 		else if (role == ZIF_ROLE_WHAT_REQUIRES)
-			part = zif_store_what_requires (store, (ZifDepend*) search, state_local, &error_local);
+			part = zif_store_what_requires (store, (GPtrArray*) search, state_local, &error_local);
 		else if (role == ZIF_ROLE_WHAT_OBSOLETES)
-			part = zif_store_what_obsoletes (store, (ZifDepend*) search, state_local, &error_local);
+			part = zif_store_what_obsoletes (store, (GPtrArray*) search, state_local, &error_local);
 		else if (role == ZIF_ROLE_WHAT_CONFLICTS)
-			part = zif_store_what_conflicts (store, (ZifDepend*) search, state_local, &error_local);
+			part = zif_store_what_conflicts (store, (GPtrArray*) search, state_local, &error_local);
 		else if (role == ZIF_ROLE_GET_CATEGORIES)
 			part = zif_store_get_categories (store, state_local, &error_local);
 		else {
@@ -762,7 +762,7 @@ zif_store_array_get_packages (GPtrArray *store_array,
 /**
  * zif_store_array_what_provides:
  * @store_array: the #GPtrArray of #ZifStores
- * @depend: A #ZifDepend to search for
+ * @depends: A #ZifDepend to search for
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -773,19 +773,19 @@ zif_store_array_get_packages (GPtrArray *store_array,
  * Since: 0.1.3
  **/
 GPtrArray *
-zif_store_array_what_provides (GPtrArray *store_array, ZifDepend *depend,
+zif_store_array_what_provides (GPtrArray *store_array, GPtrArray *depends,
 			       ZifState *state, GError **error)
 {
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
-	return zif_store_array_repos_search (store_array, ZIF_ROLE_WHAT_PROVIDES, depend,
+	return zif_store_array_repos_search (store_array, ZIF_ROLE_WHAT_PROVIDES, depends,
 					     state, error);
 }
 
 /**
  * zif_store_array_what_requires:
  * @store_array: the #GPtrArray of #ZifStores
- * @depend: A #ZifDepend to search for
+ * @depends: A #ZifDepend to search for
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -796,19 +796,19 @@ zif_store_array_what_provides (GPtrArray *store_array, ZifDepend *depend,
  * Since: 0.1.3
  **/
 GPtrArray *
-zif_store_array_what_requires (GPtrArray *store_array, ZifDepend *depend,
+zif_store_array_what_requires (GPtrArray *store_array, GPtrArray *depends,
 			       ZifState *state, GError **error)
 {
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
-	return zif_store_array_repos_search (store_array, ZIF_ROLE_WHAT_REQUIRES, depend,
+	return zif_store_array_repos_search (store_array, ZIF_ROLE_WHAT_REQUIRES, depends,
 					     state, error);
 }
 
 /**
  * zif_store_array_what_obsoletes:
  * @store_array: the #GPtrArray of #ZifStores
- * @depend: A #ZifDepend to search for
+ * @depends: A #ZifDepend to search for
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -819,20 +819,20 @@ zif_store_array_what_requires (GPtrArray *store_array, ZifDepend *depend,
  * Since: 0.1.3
  **/
 GPtrArray *
-zif_store_array_what_obsoletes (GPtrArray *store_array, ZifDepend *depend,
+zif_store_array_what_obsoletes (GPtrArray *store_array, GPtrArray *depends,
 				ZifState *state, GError **error)
 {
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
-	return zif_store_array_repos_search (store_array, ZIF_ROLE_WHAT_OBSOLETES, depend,
+	return zif_store_array_repos_search (store_array, ZIF_ROLE_WHAT_OBSOLETES, depends,
 					     state, error);
 }
 
 /**
  * zif_store_array_what_conflicts:
  * @store_array: the #GPtrArray of #ZifStores
- * @depend: A #ZifDepend to search for
+ * @depends: A #ZifDepend to search for
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -843,13 +843,13 @@ zif_store_array_what_obsoletes (GPtrArray *store_array, ZifDepend *depend,
  * Since: 0.1.3
  **/
 GPtrArray *
-zif_store_array_what_conflicts (GPtrArray *store_array, ZifDepend *depend,
+zif_store_array_what_conflicts (GPtrArray *store_array, GPtrArray *depends,
 				ZifState *state, GError **error)
 {
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
-	return zif_store_array_repos_search (store_array, ZIF_ROLE_WHAT_CONFLICTS, depend,
+	return zif_store_array_repos_search (store_array, ZIF_ROLE_WHAT_CONFLICTS, depends,
 					     state, error);
 }
 

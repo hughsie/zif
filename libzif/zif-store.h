@@ -92,19 +92,19 @@ struct _ZifStoreClass
 						 ZifState		*state,
 						 GError			**error);
 	GPtrArray	*(*what_provides)	(ZifStore		*store,
-						 ZifDepend		*depend,
+						 GPtrArray		*depends,
 						 ZifState		*state,
 						 GError			**error);
 	GPtrArray	*(*what_requires)	(ZifStore		*store,
-						 ZifDepend		*depend,
+						 GPtrArray		*depends,
 						 ZifState		*state,
 						 GError			**error);
 	GPtrArray	*(*what_obsoletes)	(ZifStore		*store,
-						 ZifDepend		*depend,
+						 GPtrArray		*depends,
 						 ZifState		*state,
 						 GError			**error);
 	GPtrArray	*(*what_conflicts)	(ZifStore		*store,
-						 ZifDepend		*depend,
+						 GPtrArray		*depends,
 						 ZifState		*state,
 						 GError			**error);
 	GPtrArray	*(*get_packages)	(ZifStore		*store,
@@ -171,19 +171,19 @@ GPtrArray	*zif_store_resolve		(ZifStore		*store,
 						 ZifState		*state,
 						 GError			**error);
 GPtrArray	*zif_store_what_provides	(ZifStore		*store,
-						 ZifDepend		*depend,
+						 GPtrArray		*depends,
 						 ZifState		*state,
 						 GError			**error);
 GPtrArray	*zif_store_what_requires	(ZifStore		*store,
-						 ZifDepend		*depend,
+						 GPtrArray		*depends,
 						 ZifState		*state,
 						 GError			**error);
 GPtrArray	*zif_store_what_obsoletes	(ZifStore		*store,
-						 ZifDepend		*depend,
+						 GPtrArray		*depends,
 						 ZifState		*state,
 						 GError			**error);
 GPtrArray	*zif_store_what_conflicts	(ZifStore		*store,
-						 ZifDepend		*depend,
+						 GPtrArray		*depends,
 						 ZifState		*state,
 						 GError			**error);
 GPtrArray	*zif_store_get_packages		(ZifStore		*store,
