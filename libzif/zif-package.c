@@ -520,7 +520,7 @@ zif_package_provides (ZifPackage *package,
 	/* find what we're looking for */
 	for (i=0; i<provides->len; i++) {
 		depend_tmp = g_ptr_array_index (provides, i);
-		ret = zif_depend_satisfies (depend, depend_tmp);
+		ret = zif_depend_satisfies (depend_tmp, depend);
 		if (ret) {
 			*satisfies = g_object_ref (depend_tmp);
 			goto out;
@@ -634,7 +634,7 @@ zif_package_requires (ZifPackage *package,
 	}
 	for (i=0; i<requires->len; i++) {
 		depend_tmp = g_ptr_array_index (requires, i);
-		if (zif_depend_satisfies (depend, depend_tmp)) {
+		if (zif_depend_satisfies (depend_tmp, depend)) {
 			g_debug ("%s satisfied by %s",
 				 zif_depend_get_description (depend_tmp),
 				 zif_package_get_id (package));
@@ -738,7 +738,7 @@ zif_package_conflicts (ZifPackage *package,
 	/* find what we're looking for */
 	for (i=0; i<conflicts->len; i++) {
 		depend_tmp = g_ptr_array_index (conflicts, i);
-		ret = zif_depend_satisfies (depend, depend_tmp);
+		ret = zif_depend_satisfies (depend_tmp, depend);
 		if (ret) {
 			*satisfies = g_object_ref (depend_tmp);
 			goto out;
@@ -839,7 +839,7 @@ zif_package_obsoletes (ZifPackage *package,
 	/* find what we're looking for */
 	for (i=0; i<obsoletes->len; i++) {
 		depend_tmp = g_ptr_array_index (obsoletes, i);
-		ret = zif_depend_satisfies (depend, depend_tmp);
+		ret = zif_depend_satisfies (depend_tmp, depend);
 		if (ret) {
 			*satisfies = g_object_ref (depend_tmp);
 			goto out;
