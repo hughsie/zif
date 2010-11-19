@@ -1499,6 +1499,58 @@ zif_cmd_prompt (const gchar *title)
 }
 
 /**
+ * zif_transaction_reason_to_string_localized:
+ **/
+static const gchar *
+zif_transaction_reason_to_string_localized (ZifTransactionReason reason)
+{
+	const gchar *str = NULL;
+	switch (reason) {
+	case ZIF_TRANSACTION_REASON_INSTALL_DEPEND:
+		/* TRANSLATORS: this is the reason the action is to be taken */
+		str = _("Installing for dependencies");
+		break;
+	case ZIF_TRANSACTION_REASON_INSTALL_FOR_UPDATE:
+		/* TRANSLATORS: this is the reason the action is to be taken */
+		str = _("Installing for update");
+		break;
+	case ZIF_TRANSACTION_REASON_INSTALL_USER_ACTION:
+		/* TRANSLATORS: this is the reason the action is to be taken */
+		str = _("Installing");
+		break;
+	case ZIF_TRANSACTION_REASON_REMOVE_AS_ONLYN:
+		/* TRANSLATORS: this is the reason the action is to be taken */
+		str = _("Removing due to multiple versions");
+		break;
+	case ZIF_TRANSACTION_REASON_REMOVE_FOR_DEP:
+		/* TRANSLATORS: this is the reason the action is to be taken */
+		str = _("Removing for dependencies");
+		break;
+	case ZIF_TRANSACTION_REASON_REMOVE_FOR_UPDATE:
+		/* TRANSLATORS: this is the reason the action is to be taken */
+		str = _("Removing for update");
+		break;
+	case ZIF_TRANSACTION_REASON_REMOVE_OBSOLETE:
+		/* TRANSLATORS: this is the reason the action is to be taken */
+		str = _("Removing as obsolete");
+		break;
+	case ZIF_TRANSACTION_REASON_REMOVE_USER_ACTION:
+		/* TRANSLATORS: this is the reason the action is to be taken */
+		str = _("Removing");
+		break;
+	case ZIF_TRANSACTION_REASON_UPDATE_USER_ACTION:
+		/* TRANSLATORS: this is the reason the action is to be taken */
+		str = _("Updating");
+		break;
+	default:
+		/* TRANSLATORS: this is the reason the action is to be taken */
+		str = _("Unknown reason");
+		break;
+	}
+	return str;
+}
+
+/**
  * zif_transaction_run:
  **/
 static gboolean
@@ -1554,7 +1606,7 @@ zif_transaction_run (ZifCmdPrivate *priv, ZifTransaction *transaction, ZifState 
 	for (i=0; i<ZIF_TRANSACTION_REASON_LAST; i++) {
 		array_tmp = zif_transaction_get_array_for_reason (transaction, i);
 		if (array_tmp->len > 0)
-			g_print ("  %s:\n", zif_transaction_reason_to_string (i));
+			g_print ("  %s:\n", zif_transaction_reason_to_string_localized (i));
 		for (j=0; j<array_tmp->len; j++) {
 			package = g_ptr_array_index (array_tmp, j);
 			g_print ("  %i.\t%s\n", j+1, zif_package_get_id (package));
