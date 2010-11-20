@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright (C) 2009 Richard Hughes <richard@hughsie.com>
+# Copyright (C) 2009-2010 Richard Hughes <richard@hughsie.com>
 #
 # Run this to generate all the initial makefiles, etc.
 #
@@ -27,6 +27,7 @@ fi
 
 (cd $srcdir && gtkdocize) || exit 1
 (cd $srcdir && autoreconf --force --install) || exit 1
+(cd $srcdir && intltoolize) || exit 1
 
 conf_flags="--enable-gtk-doc"
 

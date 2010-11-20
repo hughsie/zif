@@ -48,6 +48,13 @@ AC_HEADER_STDC
 LT_INIT
 AM_PROG_CC_C_O
 
+# Internationalisation
+IT_PROG_INTLTOOL([0.35.0])
+GETTEXT_PACKAGE=Zif
+AC_SUBST([GETTEXT_PACKAGE])
+AM_GLIB_GNU_GETTEXT
+AC_DEFINE_UNQUOTED([GETTEXT_PACKAGE],["$GETTEXT_PACKAGE"],[gettext domain])
+
 # set up gtk-doc
 GTK_DOC_CHECK(1.9)
 
@@ -208,6 +215,7 @@ dnl - Makefiles, etc.
 dnl ---------------------------------------------------------------------------
 AC_CONFIG_FILES([
 Makefile
+po/Makefile.in
 libzif/Makefile
 libzif/zif.pc
 libzif/zif-version.h
