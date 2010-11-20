@@ -2333,9 +2333,6 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 		/* set action */
 		zif_state_action_start (state, ZIF_STATE_ACTION_DEPSOLVING, NULL);
 
-		/* set the approximate progress if possible */
-		zif_transaction_set_progress (transaction, state);
-
 		/* for each package set to be installed */
 		g_debug ("starting INSTALL on loop %i", resolve_count);
 		for (i=0; i<transaction->priv->install->len; i++) {
@@ -2369,6 +2366,9 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 				g_propagate_error (error, error_local);
 				goto out;
 			}
+
+			/* set the approximate progress if possible */
+			zif_transaction_set_progress (transaction, state);
 		}
 
 		/* for each package set to be updated */
@@ -2405,6 +2405,9 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 				g_propagate_error (error, error_local);
 				goto out;
 			}
+
+			/* set the approximate progress if possible */
+			zif_transaction_set_progress (transaction, state);
 		}
 
 		/* for each package set to be removed */
@@ -2441,6 +2444,9 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 				g_propagate_error (error, error_local);
 				goto out;
 			}
+
+			/* set the approximate progress if possible */
+			zif_transaction_set_progress (transaction, state);
 		}
 
 		/* check conflicts */
