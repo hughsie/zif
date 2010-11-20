@@ -3,6 +3,7 @@ SUBDIRS = 						\
 	docs						\
 	data						\
 	man						\
+	po						\
 	tools
 
 security-check:
