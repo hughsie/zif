@@ -461,11 +461,8 @@ zif_transaction_add_install_internal (ZifTransaction *transaction,
 					    related_packages,
 					    reason);
 	if (!ret) {
-		g_set_error (error,
-			     ZIF_TRANSACTION_ERROR,
-			     ZIF_TRANSACTION_ERROR_FAILED,
-			     "Not adding already added package for install %s",
-			     zif_package_get_id (package));
+		/* an already added install is not a failure condition */
+		ret = TRUE;
 		goto out;
 	}
 
@@ -598,11 +595,8 @@ zif_transaction_add_remove_internal (ZifTransaction *transaction,
 					    related_packages,
 					    reason);
 	if (!ret) {
-		g_set_error (error,
-			     ZIF_TRANSACTION_ERROR,
-			     ZIF_TRANSACTION_ERROR_FAILED,
-			     "Not adding already added package for remove %s",
-			     zif_package_get_id (package));
+		/* an already added remove is not a failure condition */
+		ret = TRUE;
 		goto out;
 	}
 
