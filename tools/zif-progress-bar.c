@@ -101,13 +101,13 @@ zif_progress_bar_draw (ZifProgressBar *progress_bar)
 		g_print ("        ");
 	if (progress_bar->priv->action != NULL) {
 		section = strlen (progress_bar->priv->action);
-		if (section > 75)
+		if (section > 30)
 			progress_bar->priv->action[75] = '\0';
 		g_print (" %s", progress_bar->priv->action);
 	} else {
 		section = 0;
 	}
-	for (i=section; i<75; i++)
+	for (i=section; i<30; i++)
 		g_print (" ");
 	return TRUE;
 }

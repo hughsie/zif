@@ -111,20 +111,71 @@ zif_state_allow_cancel_changed_cb (ZifState *state, gboolean allow_cancel, ZifPr
 }
 
 /**
+ * zif_state_action_to_string_localized:
+ **/
+static const gchar *
+zif_state_action_to_string_localized (ZifStateAction action)
+{
+	if (action == ZIF_STATE_ACTION_CHECKING) {
+		/* TRANSLATORS: action */
+		return _("Checking");
+	}
+	if (action == ZIF_STATE_ACTION_DOWNLOADING) {
+		/* TRANSLATORS: action */
+		return _("Downloading");
+	}
+	if (action == ZIF_STATE_ACTION_LOADING_REPOS) {
+		/* TRANSLATORS: action */
+		return _("Loading repository");
+	}
+	if (action == ZIF_STATE_ACTION_DECOMPRESSING) {
+		/* TRANSLATORS: action */
+		return _("Decompressing");
+	}
+	if (action == ZIF_STATE_ACTION_DEPSOLVING) {
+		/* TRANSLATORS: action */
+		return _("Depsolving");
+	}
+	if (action == ZIF_STATE_ACTION_COMMITTING) {
+		/* TRANSLATORS: action */
+		return _("Committing");
+	}
+	return zif_state_action_to_string (action);
+}
+
+/**
  * zif_state_action_changed_cb:
  **/
 static void
 zif_state_action_changed_cb (ZifState *state, ZifStateAction action, const gchar *action_hint, ZifProgressBar *progressbar)
 {
 	gchar *hint = NULL;
-	if (action == ZIF_STATE_ACTION_UNKNOWN)
+	gchar *basename = NULL;
+
+	/* show nothing for hint cancel */
+	if (action == ZIF_STATE_ACTION_UNKNOWN) {
+		zif_progress_bar_set_action (progressbar, NULL);
 		goto out;
-	hint = g_strdup_printf ("%s: %s",
-				zif_state_action_to_string (action),
-				action_hint != NULL ? action_hint : "");
+	}
+
+	if (action_hint == NULL) {
+		hint = g_strdup_printf ("%s",
+					zif_state_action_to_string_localized (action));
+	} else if (action_hint[0] == '/') {
+		/* only show basename */
+		basename = g_path_get_basename (action_hint);
+		hint = g_strdup_printf ("%s: %s",
+					zif_state_action_to_string_localized (action),
+					basename);
+	} else {
+		hint = g_strdup_printf ("%s: %s",
+					zif_state_action_to_string_localized (action),
+					action_hint);
+	}
 	zif_progress_bar_set_action (progressbar, hint);
 out:
 	g_free (hint);
+	g_free (basename);
 }
 
 static ZifState *_state = NULL;
