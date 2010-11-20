@@ -1367,21 +1367,6 @@ zif_cmd_get_updates (ZifCmdPrivate *priv, gchar **values, GError **error)
 	ret = zif_state_done (priv->state, error);
 	if (!ret)
 		goto out;
-
-	zif_progress_bar_end (priv->progressbar);
-
-	/* print what's going to happen */
-	g_print ("%s\n", _("Transaction summary:"));
-	for (i=0; i<ZIF_TRANSACTION_REASON_LAST; i++) {
-		array_tmp = zif_transaction_get_array_for_reason (transaction, i);
-		if (array_tmp->len > 0)
-			g_print ("  %s:\n", zif_transaction_reason_to_string (i));
-		for (j=0; j<array_tmp->len; j++) {
-			package = g_ptr_array_index (array_tmp, j);
-			g_print ("  %i.\t%s\n", j+1, zif_package_get_id (package));
-		}
-		g_ptr_array_unref (array_tmp);
-	}
 #else
 	zif_progress_bar_end (priv->progressbar);
 	zif_print_packages (array);
