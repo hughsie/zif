@@ -2232,6 +2232,58 @@ zif_transaction_resolve_wind_back_failure (ZifTransaction *transaction, ZifTrans
 }
 
 /**
+ * zif_transaction_get_array_resolved:
+ **/
+static guint
+zif_transaction_get_array_resolved (GPtrArray *array)
+{
+	guint i;
+	guint resolved_items = 0;
+	ZifTransactionItem *item;
+
+	/* count each transaction that's been processed or ignored */
+	for (i=0; i<array->len; i++) {
+		item = g_ptr_array_index (array, i);
+		if (item->resolved ||
+		    item->cancelled) {
+			resolved_items++;
+			continue;
+		}
+	}
+	return resolved_items;
+}
+
+/**
+ * zif_transaction_set_progress:
+ **/
+static void
+zif_transaction_set_progress (ZifTransaction *transaction, ZifState *state)
+{
+	guint max_items;
+	guint percentage;
+	guint resolved_items;
+
+	/* update implies install *and* remove */
+	max_items = transaction->priv->install->len +
+		    (2 * transaction->priv->update->len)+
+		    transaction->priv->remove->len;
+
+	/* calculate how many we've already processed */
+	resolved_items = zif_transaction_get_array_resolved (transaction->priv->install);
+	resolved_items += zif_transaction_get_array_resolved (transaction->priv->remove);
+	resolved_items += 2 * zif_transaction_get_array_resolved (transaction->priv->update);
+
+	/* calculate using a rough metric */
+	percentage = resolved_items * 100 / max_items;
+	g_debug ("progress is %i/%i (%i%%)",
+		 resolved_items, max_items, percentage);
+
+	/* only set if the percentage is going to go up */
+	if (zif_state_get_percentage (state) < percentage)
+		zif_state_set_percentage (state, percentage);
+}
+
+/**
  * zif_transaction_resolve:
  * @transaction: the #ZifTransaction object
  * @state: a #ZifState to use for progress reporting
@@ -2264,14 +2316,12 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 		 transaction->priv->update->len,
 		 transaction->priv->remove->len);
 
-	/* FIXME: set the number of steps and do progress */
-	zif_state_action_start (state, ZIF_STATE_ACTION_DEPSOLVING, NULL);
-
 	/* whilst there are unresolved dependencies, keep trying */
 	data = g_new0 (ZifTransactionResolve, 1);
 	zif_state_set_number_steps (state, 1);
 	data->state = zif_state_get_child (state);
-	zif_state_set_report_progress (data->state, FALSE); /* <-- used as we can't do progress in a sane way */
+	/* we can't do child progress in a sane way */
+	zif_state_set_report_progress (data->state, FALSE);
 	data->transaction = transaction;
 	data->unresolved_dependencies = TRUE;
 	while (data->unresolved_dependencies) {
@@ -2279,6 +2329,12 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 		/* reset here */
 		resolve_count++;
 		data->unresolved_dependencies = FALSE;
+
+		/* set action */
+		zif_state_action_start (state, ZIF_STATE_ACTION_DEPSOLVING, NULL);
+
+		/* set the approximate progress if possible */
+		zif_transaction_set_progress (transaction, state);
 
 		/* for each package set to be installed */
 		g_debug ("starting INSTALL on loop %i", resolve_count);
