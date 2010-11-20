@@ -136,9 +136,17 @@ zif_state_action_to_string_localized (ZifStateAction action)
 		/* TRANSLATORS: action */
 		return _("Depsolving");
 	}
-	if (action == ZIF_STATE_ACTION_COMMITTING) {
+	if (action == ZIF_STATE_ACTION_INSTALLING) {
 		/* TRANSLATORS: action */
-		return _("Committing");
+		return _("Installing");
+	}
+	if (action == ZIF_STATE_ACTION_REMOVING) {
+		/* TRANSLATORS: action */
+		return _("Removing");
+	}
+	if (action == ZIF_STATE_ACTION_PREPARING) {
+		/* TRANSLATORS: action */
+		return _("Preparing");
 	}
 	return zif_state_action_to_string (action);
 }

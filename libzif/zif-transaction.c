@@ -2678,7 +2678,6 @@ zif_transaction_ts_progress_cb (const void *arg,
 	const char *filename = (const char *) key;
 	gboolean ret;
 	GError *error_local = NULL;
-	Header h = (Header) arg;
 	void *rc = NULL;
 
 	ZifTransactionCommit *commit = (ZifTransactionCommit *) data;
@@ -2705,15 +2704,25 @@ zif_transaction_ts_progress_cb (const void *arg,
 			break;
 
 		case RPMCALLBACK_INST_START:
-		case RPMCALLBACK_UNINST_START:
-			if (h == NULL)
-				break;
 
-			/* install or remove start */
+			/* install start */
 			commit->step = ZIF_TRANSACTION_STEP_WRITING;
 			commit->child = zif_state_get_child (commit->state);
-			zif_state_action_start (commit->child, ZIF_STATE_ACTION_COMMITTING, filename);
-			g_debug ("start: %s size=%i", filename, (gint32) total);
+			zif_state_action_start (commit->child,
+						ZIF_STATE_ACTION_INSTALLING,
+						filename);
+			g_debug ("install start: %s size=%i", filename, (gint32) total);
+			break;
+
+		case RPMCALLBACK_UNINST_START:
+
+			/* remove start */
+			commit->step = ZIF_TRANSACTION_STEP_WRITING;
+			commit->child = zif_state_get_child (commit->state);
+			zif_state_action_start (commit->child,
+						ZIF_STATE_ACTION_REMOVING,
+						filename);
+			g_debug ("remove start: %s size=%i", filename, (gint32) total);
 			break;
 
 		case RPMCALLBACK_TRANS_PROGRESS:
@@ -2886,7 +2895,7 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 				   -1);
 	if (!ret)
 		goto out;
-	zif_state_action_start (state, ZIF_STATE_ACTION_COMMITTING, NULL);
+	zif_state_action_start (state, ZIF_STATE_ACTION_PREPARING, NULL);
 	if (transaction->priv->verbose)
 		rpmSetVerbosity (RPMLOG_DEBUG);
 

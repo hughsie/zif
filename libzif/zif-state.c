@@ -625,8 +625,12 @@ zif_state_action_to_string (ZifStateAction action)
 		return "decompressing";
 	if (action == ZIF_STATE_ACTION_DEPSOLVING)
 		return "depsolving";
-	if (action == ZIF_STATE_ACTION_COMMITTING)
-		return "committing";
+	if (action == ZIF_STATE_ACTION_INSTALLING)
+		return "installing";
+	if (action == ZIF_STATE_ACTION_REMOVING)
+		return "removing";
+	if (action == ZIF_STATE_ACTION_PREPARING)
+		return "preparing";
 	if (action == ZIF_STATE_ACTION_UNKNOWN)
 		return "unknown";
 	return NULL;
