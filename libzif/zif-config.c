@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*-
  *
- * Copyright (C) 2008 Richard Hughes <richard@hughsie.com>
+ * Copyright (C) 2008-2010 Richard Hughes <richard@hughsie.com>
  *
  * Licensed under the GNU General Public License Version 2
  *
@@ -55,7 +55,8 @@ struct _ZifConfigPrivate
 	gboolean		 loaded;
 	ZifMonitor		*monitor;
 	guint			 monitor_changed_id;
-	GHashTable		*hash;
+	GHashTable		*hash_override;
+	GHashTable		*hash_default;
 	gchar			**basearch_list;
 };
 
@@ -95,8 +96,6 @@ zif_config_get_string (ZifConfig *config, const gchar *key, GError **error)
 {
 	gchar *value = NULL;
 	const gchar *value_tmp;
-	const gchar *info;
-	GError *error_local = NULL;
 
 	g_return_val_if_fail (ZIF_IS_CONFIG (config), NULL);
 	g_return_val_if_fail (key != NULL, NULL);
@@ -110,63 +109,27 @@ zif_config_get_string (ZifConfig *config, const gchar *key, GError **error)
 	}
 
 	/* exists as local override */
-	value_tmp = g_hash_table_lookup (config->priv->hash, key);
+	value_tmp = g_hash_table_lookup (config->priv->hash_override, key);
 	if (value_tmp != NULL) {
 		value = g_strdup (value_tmp);
 		goto out;
 	}
 
-	/* get value */
-	value = g_key_file_get_string (config->priv->keyfile, "main", key, &error_local);
+	/* exists in config file */
+	value = g_key_file_get_string (config->priv->keyfile, "main", key, NULL);
 	if (value != NULL)
 		goto out;
 
-	/* special keys */
-	if (g_strcmp0 (key, "reposdir") == 0) {
-		value = g_strdup ("/etc/yum.repos.d");
-		goto free_error;
-	}
-	if (g_strcmp0 (key, "pidfile") == 0) {
-		value = g_strdup ("/var/run/yum.pid");
-		goto free_error;
-	}
-	if (g_strcmp0 (key, "recent") == 0) {
-		value = g_strdup ("7");
-		goto free_error;
-	}
-	if (g_strcmp0 (key, "retries") == 0) {
-		value = g_strdup ("3");
-		goto free_error;
-	}
-
-	/* special rpmkeys */
-	if (g_strcmp0 (key, "osinfo") == 0) {
-		rpmGetOsInfo (&info, NULL);
-		value = g_strdup (info);
-		goto free_error;
-	}
-	if (g_strcmp0 (key, "archinfo") == 0) {
-		rpmGetArchInfo (&info, NULL);
-		value = g_strdup (info);
-		goto free_error;
-	}
-
-	/* dumb metadata */
-	if (g_strcmp0 (key, "basearch") == 0) {
-		rpmGetArchInfo (&info, NULL);
-		if (g_strcmp0 (info, "i486") == 0 ||
-		    g_strcmp0 (info, "i586") == 0 ||
-		    g_strcmp0 (info, "i686") == 0)
-			info = "i386";
-		value = g_strdup (info);
-		goto free_error;
+	/* exists as default value */
+	value_tmp = g_hash_table_lookup (config->priv->hash_default, key);
+	if (value_tmp != NULL) {
+		value = g_strdup (value_tmp);
+		goto out;
 	}
 
 	/* nothing matched */
 	g_set_error (error, ZIF_CONFIG_ERROR, ZIF_CONFIG_ERROR_FAILED,
-		     "failed to read %s: %s", key, error_local->message);
-free_error:
-	g_error_free (error_local);
+		     "failed to get value for %s", key);
 out:
 	return value;
 }
@@ -525,7 +488,7 @@ zif_config_reset_default (ZifConfig *config, GError **error)
 {
 	g_return_val_if_fail (ZIF_IS_CONFIG (config), FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
-	g_hash_table_remove_all (config->priv->hash);
+	g_hash_table_remove_all (config->priv->hash_override);
 	return TRUE;
 }
 
@@ -575,7 +538,7 @@ zif_config_set_string (ZifConfig *config, const gchar *key, const gchar *value, 
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
 	/* already exists? */
-	value_tmp = g_hash_table_lookup (config->priv->hash, key);
+	value_tmp = g_hash_table_lookup (config->priv->hash_override, key);
 	if (value_tmp != NULL) {
 		g_set_error (error, ZIF_CONFIG_ERROR, ZIF_CONFIG_ERROR_FAILED,
 			     "already set key %s to %s, cannot overwrite with %s", key, value_tmp, value);
@@ -584,9 +547,21 @@ zif_config_set_string (ZifConfig *config, const gchar *key, const gchar *value, 
 	}
 
 	/* insert into table */
-	g_hash_table_insert (config->priv->hash, g_strdup (key), g_strdup (value));
+	g_hash_table_insert (config->priv->hash_override, g_strdup (key), g_strdup (value));
 out:
 	return ret;
+}
+
+/**
+ * zif_config_set_default:
+ **/
+static void
+zif_config_set_default (ZifConfig *config, const gchar *key, const gchar *value)
+{
+	/* just insert into table */
+	g_hash_table_insert (config->priv->hash_default,
+			     g_strdup (key),
+			     g_strdup (value));
 }
 
 /**
@@ -654,7 +629,8 @@ zif_config_finalize (GObject *object)
 	config = ZIF_CONFIG (object);
 
 	g_key_file_free (config->priv->keyfile);
-	g_hash_table_unref (config->priv->hash);
+	g_hash_table_unref (config->priv->hash_override);
+	g_hash_table_unref (config->priv->hash_default);
 	g_signal_handler_disconnect (config->priv->monitor,
 				     config->priv->monitor_changed_id);
 	g_object_unref (config->priv->monitor);
@@ -680,15 +656,87 @@ zif_config_class_init (ZifConfigClass *klass)
 static void
 zif_config_init (ZifConfig *config)
 {
+	const gchar *value;
+
 	config->priv = ZIF_CONFIG_GET_PRIVATE (config);
 	config->priv->keyfile = g_key_file_new ();
 	config->priv->loaded = FALSE;
-	config->priv->hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+	config->priv->hash_override = g_hash_table_new_full (g_str_hash, g_str_equal,
+							     g_free, g_free);
+	config->priv->hash_default = g_hash_table_new_full (g_str_hash, g_str_equal,
+							    g_free, g_free);
 	config->priv->basearch_list = NULL;
 	config->priv->monitor = zif_monitor_new ();
 	config->priv->monitor_changed_id =
 		g_signal_connect (config->priv->monitor, "changed",
 				  G_CALLBACK (zif_config_file_monitor_cb), config);
+
+	/* setup defaults */
+	zif_config_set_default (config, "cachedir", "/var/cache/yum");
+	zif_config_set_default (config, "keepcache", "true");
+	zif_config_set_default (config, "pidfile", "/var/run/yum.pid");
+	zif_config_set_default (config, "recent", "7");
+	zif_config_set_default (config, "reposdir", "/etc/yum.repos.d");
+	zif_config_set_default (config, "retries", "3");
+
+//	zif_config_set_default (config, "alwaysprompt", "true");
+//	zif_config_set_default (config, "assumeyes", "false");
+//	zif_config_set_default (config, "bandwidth", "0");
+//	zif_config_set_default (config, "disable_excludes", "");
+//	zif_config_set_default (config, "diskspacecheck", "true");
+//	zif_config_set_default (config, "enablegroups", "true");
+//	zif_config_set_default (config, "exactarchlist", "kernel,kernel-smp,kernel-hugemem,kernel-enterprise,kernel-bigmem,kernel-devel,kernel-PAE,kernel-PAE-debug");
+//	zif_config_set_default (config, "exactarch", "true");
+//	zif_config_set_default (config, "exclude", "");
+//	zif_config_set_default (config, "failovermethod", "roundrobin");
+//	zif_config_set_default (config, "gpgcheck", "true");
+//	zif_config_set_default (config, "group_package_types", "mandatory,default");
+//	zif_config_set_default (config, "groupremove_leaf_only", "false");
+//	zif_config_set_default (config, "history_record_packages", "yum,rpm");
+//	zif_config_set_default (config, "history_record", "true");
+//	zif_config_set_default (config, "http_caching", "packages");
+//	zif_config_set_default (config, "installonly_limit", "3");
+//	zif_config_set_default (config, "installonlypkgs", "kernel,kernel-bigmem,kernel-enterprise,kernel-smp,kernel-modules,kernel-debug,kernel-unsupported,kernel-source,kernel-devel,kernel-PAE,kernel-PAE-debug");
+//	zif_config_set_default (config, "keepalive", "true");
+//	zif_config_set_default (config, "kernelpkgnames", "kernel,kernel-smp,kernel-enterprise,kernel-bigmem,kernel-BOOT,kernel-PAE,kernel-PAE-debug");
+//	zif_config_set_default (config, "logfile", "/var/log/yum.log");
+//	zif_config_set_default (config, "mdpolicy", "group:primary");
+//	zif_config_set_default (config, "metadata_expire", "21600");
+//	zif_config_set_default (config, "mirrorlist_expire", "SecondsOption(60 * 60 * 24)");
+//	zif_config_set_default (config, "multilib_policy", "best");
+//	zif_config_set_default (config, "obsoletes", "true");
+//	zif_config_set_default (config, "overwrite_groups", "false");
+//	zif_config_set_default (config, "parse_default, "true");
+//	zif_config_set_default (config, "protected_packages", "zif");
+//	zif_config_set_default (config, "proxy", "");
+//	zif_config_set_default (config, "proxy_password", "");
+//	zif_config_set_default (config, "proxy_username", "");
+//	zif_config_set_default (config, "repo_gpgcheck", "true");
+//	zif_config_set_default (config, "reposdir", "/etc/yum/repos.d");
+//	zif_config_set_default (config, "rpm_check_debug", "true");
+//	zif_config_set_default (config, "rpmverbosity", "info");
+//	zif_config_set_default (config, "showdupesfromrepos", "false");
+//	zif_config_set_default (config, "skip_broken", "false");
+//	zif_config_set_default (config, "sslcacert", "");
+//	zif_config_set_default (config, "sslclientcert", "");
+//	zif_config_set_default (config, "sslclientkey", "");
+//	zif_config_set_default (config, "sslverify", "true");
+//	zif_config_set_default (config, "throttle", "0");
+//	zif_config_set_default (config, "timeout", "30");
+//	zif_config_set_default (config, "tolerant", "true");
+//	zif_config_set_default (config, "tsflags", "");
+
+	/* get info from RPM */
+	rpmGetOsInfo (&value, NULL);
+	zif_config_set_default (config, "osinfo", value);
+	rpmGetArchInfo (&value, NULL);
+	zif_config_set_default (config, "archinfo", value);
+	rpmGetArchInfo (&value, NULL);
+	if (g_strcmp0 (value, "i486") == 0 ||
+	    g_strcmp0 (value, "i586") == 0 ||
+	    g_strcmp0 (value, "i686") == 0)
+		value = "i386";
+	zif_config_set_default (config, "basearch", value);
 }
 
 /**
