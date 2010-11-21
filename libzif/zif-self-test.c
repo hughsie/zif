@@ -642,6 +642,7 @@ zif_download_func (void)
 {
 	ZifDownload *download;
 	ZifState *state;
+	ZifConfig *config;
 	GCancellable *cancellable;
 	gboolean ret;
 	GError *error = NULL;
@@ -650,6 +651,8 @@ zif_download_func (void)
 	g_assert (download != NULL);
 	state = zif_state_new ();
 	g_assert (state != NULL);
+	config = zif_config_new ();
+	g_assert (config != NULL);
 
 	/* add something sensible, but it won't resolve later on */
 	ret = zif_download_location_add_uri (download, "http://www.bbc.co.uk/pub/", &error);
@@ -678,7 +681,7 @@ zif_download_func (void)
 	g_assert (ret);
 
 	/* download using the pool of uris (only the second will work) */
-	zif_download_location_set_policy (download, ZIF_DOWNLOAD_POLICY_LINEAR);
+	zif_config_set_string (config, "failovermethod", "ordered", NULL);
 	ret = zif_download_location_full (download,
 				      "releases.txt",
 				      "/tmp/releases.txt",
@@ -727,6 +730,7 @@ goto out;
 	g_assert (!ret);
 out:
 	g_object_unref (download);
+	g_object_unref (config);
 	g_object_unref (state);
 }
 
@@ -1153,9 +1157,13 @@ zif_md_other_sql_func (void)
 	GPtrArray *array;
 	ZifChangeset *changeset;
 	ZifState *state;
+	ZifConfig *config;
 	gchar *filename;
 
 	state = zif_state_new ();
+
+	config = zif_config_new ();
+	zif_config_set_uint (config, "metadata_expire", 0, NULL);
 
 	md = zif_md_other_sql_new ();
 	g_assert (md != NULL);
@@ -1190,6 +1198,7 @@ zif_md_other_sql_func (void)
 	/* remove array */
 	g_ptr_array_unref (array);
 
+	g_object_unref (config);
 	g_object_unref (state);
 	g_object_unref (md);
 }
@@ -1528,6 +1537,7 @@ zif_package_remote_func (void)
 	filename = zif_test_get_data_file ("zif.conf");
 	zif_config_set_filename (config, filename, NULL);
 	zif_config_set_boolean (config, "network", TRUE, NULL);
+	zif_config_set_uint (config, "metadata_expire", 0, NULL);
 	g_free (filename);
 
 	pidfile = g_build_filename (g_get_tmp_dir (), "zif.lock", NULL);
@@ -2418,6 +2428,7 @@ zif_store_remote_func (void)
 	config = zif_config_new ();
 	filename = zif_test_get_data_file ("zif.conf");
 	zif_config_set_filename (config, filename, NULL);
+	zif_config_set_uint (config, "metadata_expire", 0, NULL);
 	g_free (filename);
 
 	pidfile = g_build_filename (g_get_tmp_dir (), "zif.lock", NULL);

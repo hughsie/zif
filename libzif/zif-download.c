@@ -54,8 +54,13 @@ struct _ZifDownloadPrivate
 	ZifState		*state;
 	ZifConfig		*config;
 	GPtrArray		*array;
-	ZifDownloadPolicy	 policy;
 };
+
+typedef enum {
+	ZIF_DOWNLOAD_POLICY_LINEAR,
+	ZIF_DOWNLOAD_POLICY_RANDOM,
+	ZIF_DOWNLOAD_POLICY_LAST
+} ZifDownloadPolicy;
 
 G_DEFINE_TYPE (ZifDownload, zif_download, G_TYPE_OBJECT)
 
@@ -687,10 +692,12 @@ zif_download_location_full (ZifDownload *download, const gchar *location, const 
 	gboolean ret = FALSE;
 	const gchar *uri;
 	gchar *uri_tmp;
+	gchar *failovermethod = NULL;
 	guint index;
 	GPtrArray *array = NULL;
 	GError *error_local = NULL;
 	gboolean set_error = FALSE;
+	ZifDownloadPolicy policy = ZIF_DOWNLOAD_POLICY_RANDOM;
 
 	g_return_val_if_fail (ZIF_IS_DOWNLOAD (download), FALSE);
 	g_return_val_if_fail (location != NULL, FALSE);
@@ -708,11 +715,18 @@ zif_download_location_full (ZifDownload *download, const gchar *location, const 
 		goto out;
 	}
 
+	/* get download policy */
+	failovermethod = zif_config_get_string (download->priv->config,
+						"failovermethod",
+						NULL);
+	if (g_strcmp0 (failovermethod, "ordered") == 0)
+		policy = ZIF_DOWNLOAD_POLICY_LINEAR;
+
 	/* keep trying until we get success */
 	while (array->len > 0) {
 
 		/* get the next mirror according to policy */
-		if (download->priv->policy == ZIF_DOWNLOAD_POLICY_RANDOM) {
+		if (policy == ZIF_DOWNLOAD_POLICY_RANDOM) {
 			if (array->len > 1)
 				index = g_random_int_range (0, array->len - 1);
 			else
@@ -757,6 +771,7 @@ zif_download_location_full (ZifDownload *download, const gchar *location, const 
 		goto out;
 	}
 out:
+	g_free (failovermethod);
 	return ret;
 }
 
@@ -779,22 +794,6 @@ zif_download_location (ZifDownload *download, const gchar *location, const gchar
 		       ZifState *state, GError **error)
 {
 	return zif_download_location_full (download, location, filename, 0, NULL, 0, NULL, state, error);
-}
-
-/**
- * zif_download_location_set_policy:
- * @download: the #ZifDownload object
- * @policy: the policy for choosing a URL, e.g. %ZIF_DOWNLOAD_POLICY_RANDOM
- *
- * Sets the policy for determining the next mirror to try.
- *
- * Since: 0.1.3
- **/
-void
-zif_download_location_set_policy (ZifDownload *download, ZifDownloadPolicy policy)
-{
-	g_return_if_fail (ZIF_IS_DOWNLOAD (download));
-	download->priv->policy = policy;
 }
 
 /**
@@ -877,7 +876,6 @@ zif_download_init (ZifDownload *download)
 	download->priv->state = NULL;
 	download->priv->config = zif_config_new ();
 	download->priv->array = g_ptr_array_new_with_free_func (g_free);
-	download->priv->policy = ZIF_DOWNLOAD_POLICY_RANDOM;
 }
 
 /**

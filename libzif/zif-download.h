@@ -63,12 +63,6 @@ typedef enum {
 	ZIF_DOWNLOAD_ERROR_LAST
 } ZifDownloadError;
 
-typedef enum {
-	ZIF_DOWNLOAD_POLICY_LINEAR,
-	ZIF_DOWNLOAD_POLICY_RANDOM,
-	ZIF_DOWNLOAD_POLICY_LAST
-} ZifDownloadPolicy;
-
 GType		 zif_download_get_type			(void);
 GQuark		 zif_download_error_quark		(void);
 ZifDownload	*zif_download_new			(void);
@@ -109,8 +103,6 @@ gboolean	 zif_download_location_full		(ZifDownload		*download,
 							 const gchar		*checksum,
 							 ZifState		*state,
 							 GError			**error);
-void		 zif_download_location_set_policy	(ZifDownload		*download,
-							 ZifDownloadPolicy	 policy);
 guint		 zif_download_location_get_size		(ZifDownload		*download);
 void		 zif_download_location_clear		(ZifDownload		*download);
 
