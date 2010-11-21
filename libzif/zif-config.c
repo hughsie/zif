@@ -51,7 +51,8 @@
 
 struct _ZifConfigPrivate
 {
-	GKeyFile		*keyfile;
+	GKeyFile		*file_override;
+	GKeyFile		*file_default;
 	gboolean		 loaded;
 	ZifMonitor		*monitor;
 	guint			 monitor_changed_id;
@@ -115,8 +116,11 @@ zif_config_get_string (ZifConfig *config, const gchar *key, GError **error)
 		goto out;
 	}
 
-	/* exists in config file */
-	value = g_key_file_get_string (config->priv->keyfile, "main", key, NULL);
+	/* exists in either config file */
+	value = g_key_file_get_string (config->priv->file_override, "main", key, NULL);
+	if (value != NULL)
+		goto out;
+	value = g_key_file_get_string (config->priv->file_default, "main", key, NULL);
 	if (value != NULL)
 		goto out;
 
@@ -338,6 +342,7 @@ zif_config_expand_substitutions (ZifConfig *config, const gchar *text, GError **
 	zif_config_strreplace (string, "$releasever", releasever);
 	zif_config_strreplace (string, "$basearch", basearch);
 	zif_config_strreplace (string, "$homedir", g_get_home_dir ());
+	zif_config_strreplace (string, "$srcdir", TOP_SRCDIR);
 
 	/* success */
 	retval = g_string_free (string, FALSE);
@@ -383,10 +388,13 @@ zif_config_get_release_filename (ZifConfig *config)
 /**
  * zif_config_set_filename:
  * @config: the #ZifConfig object
- * @filename: the system wide config file, e.g. "/etc/yum.conf"
+ * @filename: the system wide config file, e.g. "/etc/zif/zif.conf", or %NULL to use the default.
  * @error: a #GError which is used on failure, or %NULL
  *
  * Sets the filename to use as the system wide config file.
+ *
+ * Using @filename set to %NULL to use the default value
+ * has been supported since 0.1.3. Earlier versions will assert.
  *
  * Return value: %TRUE for success, %FALSE for failure
  *
@@ -402,35 +410,61 @@ zif_config_set_filename (ZifConfig *config, const gchar *filename, GError **erro
 	const gchar *release_filename;
 	const gchar *text;
 	GPtrArray *array;
+	gchar *filename_default = NULL;
+	gchar *filename_override = NULL;
+	gchar *filename_override_sub = NULL;
 	guint i;
 
 	g_return_val_if_fail (ZIF_IS_CONFIG (config), FALSE);
-	g_return_val_if_fail (filename != NULL, FALSE);
 	g_return_val_if_fail (!config->priv->loaded, FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
+	/* do we use te default? */
+	if (filename == NULL) {
+		filename_default = g_build_filename (SYSCONFDIR,
+						     "zif",
+						     "zif.conf",
+						     NULL);
+	} else {
+		filename_default = g_strdup (filename);
+	}
+
 	/* check file exists */
-	ret = g_file_test (filename, G_FILE_TEST_IS_REGULAR);
+	ret = g_file_test (filename_default, G_FILE_TEST_IS_REGULAR);
 	if (!ret) {
-		g_set_error (error, ZIF_CONFIG_ERROR, ZIF_CONFIG_ERROR_FAILED,
-			     "config file %s does not exist", filename);
+		g_set_error (error,
+			     ZIF_CONFIG_ERROR,
+			     ZIF_CONFIG_ERROR_FAILED,
+			     "config file %s does not exist",
+			     filename_default);
 		goto out;
 	}
 
 	/* setup watch */
-	ret = zif_monitor_add_watch (config->priv->monitor, filename, &error_local);
+	ret = zif_monitor_add_watch (config->priv->monitor,
+				     filename_default,
+				     &error_local);
 	if (!ret) {
-		g_set_error (error, ZIF_CONFIG_ERROR, ZIF_CONFIG_ERROR_FAILED,
-			     "failed to setup watch: %s", error_local->message);
+		g_set_error (error, ZIF_CONFIG_ERROR,
+			     ZIF_CONFIG_ERROR_FAILED,
+			     "failed to setup watch: %s",
+			     error_local->message);
 		g_error_free (error_local);
 		goto out;
 	}
 
-	/* load file */
-	ret = g_key_file_load_from_file (config->priv->keyfile, filename, G_KEY_FILE_NONE, &error_local);
+	/* load files */
+	g_debug ("loading config file %s", filename_default);
+	ret = g_key_file_load_from_file (config->priv->file_default,
+					 filename_default,
+					 G_KEY_FILE_NONE,
+					 &error_local);
 	if (!ret) {
-		g_set_error (error, ZIF_CONFIG_ERROR, ZIF_CONFIG_ERROR_FAILED,
-			     "failed to load config file: %s", error_local->message);
+		g_set_error (error,
+			     ZIF_CONFIG_ERROR,
+			     ZIF_CONFIG_ERROR_FAILED,
+			     "failed to load config file: %s",
+			     error_local->message);
 		g_error_free (error_local);
 		goto out;
 	}
@@ -446,16 +480,23 @@ zif_config_set_filename (ZifConfig *config, const gchar *filename, GError **erro
 		release_filename = zif_config_get_release_filename (config);
 		if (release_filename == NULL) {
 			ret = FALSE;
-			g_set_error_literal (error, ZIF_CONFIG_ERROR, ZIF_CONFIG_ERROR_FAILED,
+			g_set_error_literal (error,
+					     ZIF_CONFIG_ERROR,
+					     ZIF_CONFIG_ERROR_FAILED,
 					     "could not get a correct release filename");
 			goto out;
 		}
 
 		/* get distro constants from fedora-release */
-		ret = g_file_get_contents (release_filename, &releasever, NULL, &error_local);
+		ret = g_file_get_contents (release_filename,
+					   &releasever,
+					   NULL,
+					   &error_local);
 		if (!ret) {
-			g_set_error (error, ZIF_CONFIG_ERROR, ZIF_CONFIG_ERROR_FAILED,
-				     "failed to get distro release version: %s", error_local->message);
+			g_set_error (error, ZIF_CONFIG_ERROR,
+				     ZIF_CONFIG_ERROR_FAILED,
+				     "failed to get distro release version: %s",
+				     error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
@@ -464,10 +505,16 @@ zif_config_set_filename (ZifConfig *config, const gchar *filename, GError **erro
 		g_strdelimit (releasever, " ", '\0');
 
 		/* set local */
-		ret = zif_config_set_string (config, "releasever", releasever+15, &error_local);
+		ret = zif_config_set_string (config,
+					     "releasever",
+					     releasever+15,
+					     &error_local);
 		if (!ret) {
-			g_set_error (error, ZIF_CONFIG_ERROR, ZIF_CONFIG_ERROR_FAILED,
-				     "failed to set distro release version: %s", error_local->message);
+			g_set_error (error,
+				     ZIF_CONFIG_ERROR,
+				     ZIF_CONFIG_ERROR_FAILED,
+				     "failed to set distro release version: %s",
+				     error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
@@ -481,6 +528,43 @@ zif_config_set_filename (ZifConfig *config, const gchar *filename, GError **erro
 		g_error_free (error_local);
 		ret = FALSE;
 		goto out;
+	}
+
+
+	/* get override file */
+	filename_override = g_key_file_get_string (config->priv->file_default,
+						   "main",
+						   "override_config",
+						   NULL);
+
+	/* expand out, in case the override_config contains $srcdir */
+	filename_override_sub = zif_config_expand_substitutions (config,
+								 filename_override,
+								 NULL);
+
+	/* load override file */
+	if (filename_override_sub == NULL) {
+		g_debug ("no override file specified");
+	} else if (g_file_test (filename_override_sub,
+				G_FILE_TEST_EXISTS)) {
+		g_debug ("using override file %s",
+			 filename_override_sub);
+		ret = g_key_file_load_from_file (config->priv->file_override,
+						 filename_override_sub,
+						 G_KEY_FILE_NONE,
+						 &error_local);
+		if (!ret) {
+			g_set_error (error,
+				     ZIF_CONFIG_ERROR,
+				     ZIF_CONFIG_ERROR_FAILED,
+				     "failed to load config file: %s",
+				     error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+	} else {
+		g_debug ("override file %s does not exist",
+			 filename_override_sub);
 	}
 
 	/* add valid archs to array */
@@ -501,6 +585,9 @@ zif_config_set_filename (ZifConfig *config, const gchar *filename, GError **erro
 	}
 	g_ptr_array_unref (array);
 out:
+	g_free (filename_default);
+	g_free (filename_override);
+	g_free (filename_override_sub);
 	g_free (basearch);
 	g_free (releasever);
 	return ret;
@@ -662,7 +749,8 @@ zif_config_finalize (GObject *object)
 	g_return_if_fail (ZIF_IS_CONFIG (object));
 	config = ZIF_CONFIG (object);
 
-	g_key_file_free (config->priv->keyfile);
+	g_key_file_free (config->priv->file_override);
+	g_key_file_free (config->priv->file_default);
 	g_hash_table_unref (config->priv->hash_override);
 	g_hash_table_unref (config->priv->hash_default);
 	g_signal_handler_disconnect (config->priv->monitor,
@@ -693,7 +781,8 @@ zif_config_init (ZifConfig *config)
 	const gchar *value;
 
 	config->priv = ZIF_CONFIG_GET_PRIVATE (config);
-	config->priv->keyfile = g_key_file_new ();
+	config->priv->file_override = g_key_file_new ();
+	config->priv->file_default = g_key_file_new ();
 	config->priv->loaded = FALSE;
 	config->priv->hash_override = g_hash_table_new_full (g_str_hash, g_str_equal,
 							     g_free, g_free);
@@ -704,170 +793,6 @@ zif_config_init (ZifConfig *config)
 	config->priv->monitor_changed_id =
 		g_signal_connect (config->priv->monitor, "changed",
 				  G_CALLBACK (zif_config_file_monitor_cb), config);
-
-	/* setup defaults */
-	zif_config_set_default (config,
-				"cachedir",
-				"/var/cache/yum");
-	zif_config_set_default (config,
-				"installonly_limit",
-				"3");
-	zif_config_set_default (config,
-				"installonlypkgs",
-				"kernel,kernel-bigmem,kernel-enterprise,"
-				"kernel-smp,kernel-modules,kernel-debug,"
-				"kernel-unsupported,kernel-source,"
-				"kernel-devel,kernel-PAE,kernel-PAE-debug");
-	zif_config_set_default (config,
-				"keepcache",
-				"true");
-	zif_config_set_default (config,
-				"pidfile",
-				"/var/run/yum.pid");
-	zif_config_set_default (config,
-				"recent",
-				"7");
-	zif_config_set_default (config,
-				"reposdir",
-				"/etc/yum.repos.d");
-	zif_config_set_default (config,
-				"retries",
-				"3");
-
-#if 0
-	zif_config_set_default (config,
-				"alwaysprompt",
-				"true");
-	zif_config_set_default (config,
-				"assumeyes",
-				"false");
-	zif_config_set_default (config,
-				"bandwidth",
-				"0");
-	zif_config_set_default (config,
-				"disable_excludes",
-				"");
-	zif_config_set_default (config,
-				"diskspacecheck",
-				"true");
-	zif_config_set_default (config,
-				"enablegroups",
-				"true");
-	zif_config_set_default (config,
-				"exactarchlist",
-				"kernel,kernel-smp,kernel-hugemem,kernel-enterprise,kernel-bigmem,kernel-devel,kernel-PAE,kernel-PAE-debug");
-	zif_config_set_default (config,
-				"exactarch",
-				"true");
-	zif_config_set_default (config,
-				"exclude",
-				"");
-	zif_config_set_default (config,
-				"failovermethod",
-				"roundrobin");
-	zif_config_set_default (config,
-				"gpgcheck",
-				"true");
-	zif_config_set_default (config,
-				"group_package_types",
-				"mandatory,default");
-	zif_config_set_default (config,
-				"groupremove_leaf_only",
-				"false");
-	zif_config_set_default (config,
-				"history_record_packages",
-				"yum,rpm");
-	zif_config_set_default (config,
-				"history_record",
-				"true");
-	zif_config_set_default (config,
-				"http_caching",
-				"packages");
-	zif_config_set_default (config,
-				"keepalive",
-				"true");
-	zif_config_set_default (config,
-				"kernelpkgnames",
-				"kernel,kernel-smp,kernel-enterprise,kernel-bigmem,kernel-BOOT,kernel-PAE,kernel-PAE-debug");
-	zif_config_set_default (config,
-				"logfile",
-				"/var/log/yum.log");
-	zif_config_set_default (config,
-				"mdpolicy",
-				"group:primary");
-	zif_config_set_default (config,
-				"metadata_expire",
-				"21600");
-	zif_config_set_default (config,
-				"mirrorlist_expire",
-				"SecondsOption(60 * 60 * 24)");
-	zif_config_set_default (config,
-				"multilib_policy",
-				"best");
-	zif_config_set_default (config,
-				"obsoletes",
-				"true");
-	zif_config_set_default (config,
-				"overwrite_groups",
-				"false");
-	zif_config_set_default (config,
-				"parse_default",
-				"true");
-	zif_config_set_default (config,
-				"protected_packages",
-				"zif");
-	zif_config_set_default (config,
-				"proxy",
-				"");
-	zif_config_set_default (config,
-				"proxy_password",
-				"");
-	zif_config_set_default (config,
-				"proxy_username",
-				"");
-	zif_config_set_default (config,
-				"repo_gpgcheck",
-				"true");
-	zif_config_set_default (config,
-				"reposdir",
-				"/etc/yum/repos.d");
-	zif_config_set_default (config,
-				"rpm_check_debug",
-				"true");
-	zif_config_set_default (config,
-				"rpmverbosity",
-				"info");
-	zif_config_set_default (config,
-				"showdupesfromrepos",
-				"false");
-	zif_config_set_default (config,
-				"skip_broken",
-				"false");
-	zif_config_set_default (config,
-				"sslcacert",
-				"");
-	zif_config_set_default (config,
-				"sslclientcert",
-				"");
-	zif_config_set_default (config,
-				"sslclientkey",
-				"");
-	zif_config_set_default (config,
-				"sslverify",
-				"true");
-	zif_config_set_default (config,
-				"throttle",
-				"0");
-	zif_config_set_default (config,
-				"timeout",
-				"30");
-	zif_config_set_default (config,
-				"tolerant",
-				"true");
-	zif_config_set_default (config,
-				"tsflags",
-				"");
-#endif
 
 	/* get info from RPM */
 	rpmGetOsInfo (&value, NULL);

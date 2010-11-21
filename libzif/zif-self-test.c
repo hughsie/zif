@@ -111,7 +111,7 @@ zif_release_func (void)
 	config = zif_config_new ();
 	g_assert (config != NULL);
 
-	filename = zif_test_get_data_file ("yum.conf");
+	filename = zif_test_get_data_file ("zif.conf");
 	ret = zif_config_set_filename (config, filename, &error);
 	g_free (filename);
 	g_assert_no_error (error);
@@ -188,7 +188,7 @@ zif_manifest_func (void)
 	config = zif_config_new ();
 	g_assert (config != NULL);
 
-	filename_tmp = zif_test_get_data_file ("yum.conf");
+	filename_tmp = zif_test_get_data_file ("zif.conf");
 	ret = zif_config_set_filename (config, filename_tmp, &error);
 	g_free (filename_tmp);
 	g_assert_no_error (error);
@@ -267,24 +267,22 @@ zif_transaction_func (void)
 	g_assert_no_error (error);
 	g_assert (ret);
 
-	/* add again, should fail */
+	/* add again, shouldn't fail */
 	package2 = zif_package_new ();
 	ret = zif_package_set_id (package2, "depend;0.1-1.fc13;noarch;installed", &error);
 	ret = zif_transaction_add_install (transaction, package2, &error);
-	g_assert_error (error, ZIF_TRANSACTION_ERROR, ZIF_TRANSACTION_ERROR_FAILED);
-	g_assert (!ret);
-	g_clear_error (&error);
+	g_assert_no_error (error);
+	g_assert (ret);
 
 	/* add to remove list */
 	ret = zif_transaction_add_remove (transaction, package, &error);
 	g_assert_no_error (error);
 	g_assert (ret);
 
-	/* add again, should fail */
+	/* add again, shouldn't fail */
 	ret = zif_transaction_add_remove (transaction, package2, &error);
-	g_assert_error (error, ZIF_TRANSACTION_ERROR, ZIF_TRANSACTION_ERROR_FAILED);
-	g_assert (!ret);
-	g_clear_error (&error);
+	g_assert_no_error (error);
+	g_assert (ret);
 	g_object_unref (package);
 	g_object_unref (package2);
 	g_object_unref (transaction);
@@ -384,47 +382,54 @@ zif_config_func (void)
 	config = zif_config_new ();
 	g_assert (config != NULL);
 
-	filename = zif_test_get_data_file ("yum.conf");
+	filename = zif_test_get_data_file ("zif.conf");
 	ret = zif_config_set_filename (config, filename, &error);
 	g_free (filename);
 	g_assert_no_error (error);
 	g_assert (ret);
 
-	value = zif_config_get_string (config, "cachedir", NULL);
-	g_assert_cmpstr (value, ==, "/var/cache/yum");
+	value = zif_config_get_string (config, "cachedir", &error);
+	g_assert_no_error (error);
+	g_assert_cmpstr (value, ==, "/var/cache/zif/$basearch/$releasever");
 	g_free (value);
 
 	value = zif_config_get_string (config, "notgoingtoexists", NULL);
 	g_assert_cmpstr (value, ==, NULL);
 	g_free (value);
 
-	ret = zif_config_get_boolean (config, "exactarch", NULL);
+	ret = zif_config_get_boolean (config, "exactarch", &error);
+	g_assert_no_error (error);
 	g_assert (ret);
 
-	ret = zif_config_set_string (config, "cachedir", "/tmp/cache", NULL);
+	ret = zif_config_set_string (config, "cachedir", "/tmp/cache", &error);
+	g_assert_no_error (error);
 	g_assert (ret);
 
 	ret = zif_config_set_string (config, "cachedir", "/tmp/cache", NULL);
 	g_assert (!ret);
 
-	value = zif_config_get_string (config, "cachedir", NULL);
+	value = zif_config_get_string (config, "cachedir", &error);
+	g_assert_no_error (error);
 	g_assert_cmpstr (value, ==, "/tmp/cache");
 	g_free (value);
 
-	ret = zif_config_reset_default (config, NULL);
+	ret = zif_config_reset_default (config, &error);
 	g_assert (ret);
 
-	value = zif_config_get_string (config, "cachedir", NULL);
-	g_assert_cmpstr (value, ==, "/var/cache/yum");
+	value = zif_config_get_string (config, "cachedir", &error);
+	g_assert_no_error (error);
+	g_assert_cmpstr (value, ==, "/var/cache/zif/$basearch/$releasever");
 	g_free (value);
 
-	value = zif_config_expand_substitutions (config, "http://fedora/4/6/moo.rpm", NULL);
+	value = zif_config_expand_substitutions (config, "http://fedora/4/6/moo.rpm", &error);
+	g_assert_no_error (error);
 	g_assert_cmpstr (value, ==, "http://fedora/4/6/moo.rpm");
 	g_free (value);
 
 	array = zif_config_get_basearch_array (config);
 	len = g_strv_length (array);
-	basearch = zif_config_get_string (config, "basearch", NULL);
+	g_assert_no_error (error);
+	basearch = zif_config_get_string (config, "basearch", &error);
 	if (g_strcmp0 (basearch, "i386") == 0) {
 		g_assert_cmpint (len, ==, 5);
 		g_assert_cmpstr (array[0], ==, "i386");
@@ -825,7 +830,7 @@ zif_lock_func (void)
 	config = zif_config_new ();
 	g_assert (config != NULL);
 
-	filename = zif_test_get_data_file ("yum.conf");
+	filename = zif_test_get_data_file ("zif.conf");
 	ret = zif_config_set_filename (config, filename, &error);
 	g_free (filename);
 	g_assert_no_error (error);
@@ -1055,7 +1060,7 @@ zif_md_metalink_func (void)
 
 	state = zif_state_new ();
 	config = zif_config_new ();
-	filename = zif_test_get_data_file ("yum.conf");
+	filename = zif_test_get_data_file ("zif.conf");
 	zif_config_set_filename (config, filename, NULL);
 	g_free (filename);
 
@@ -1102,7 +1107,7 @@ zif_md_mirrorlist_func (void)
 
 	state = zif_state_new ();
 	config = zif_config_new ();
-	filename = zif_test_get_data_file ("yum.conf");
+	filename = zif_test_get_data_file ("zif.conf");
 	zif_config_set_filename (config, filename, NULL);
 	g_free (filename);
 
@@ -1520,7 +1525,7 @@ zif_package_remote_func (void)
 
 	/* set this up as dummy */
 	config = zif_config_new ();
-	filename = zif_test_get_data_file ("yum.conf");
+	filename = zif_test_get_data_file ("zif.conf");
 	zif_config_set_filename (config, filename, NULL);
 	zif_config_set_boolean (config, "network", TRUE, NULL);
 	g_free (filename);
@@ -1674,7 +1679,7 @@ zif_repos_func (void)
 
 	/* set this up as dummy */
 	config = zif_config_new ();
-	filename = zif_test_get_data_file ("yum.conf");
+	filename = zif_test_get_data_file ("zif.conf");
 	zif_config_set_filename (config, filename, NULL);
 	g_free (filename);
 
@@ -2154,7 +2159,7 @@ zif_store_local_func (void)
 
 	/* set these up as dummy */
 	config = zif_config_new ();
-	filename = zif_test_get_data_file ("yum.conf");
+	filename = zif_test_get_data_file ("zif.conf");
 	zif_config_set_filename (config, filename, NULL);
 	g_free (filename);
 
@@ -2411,7 +2416,7 @@ zif_store_remote_func (void)
 
 	/* set this up as dummy */
 	config = zif_config_new ();
-	filename = zif_test_get_data_file ("yum.conf");
+	filename = zif_test_get_data_file ("zif.conf");
 	zif_config_set_filename (config, filename, NULL);
 	g_free (filename);
 

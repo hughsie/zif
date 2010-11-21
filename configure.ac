@@ -216,6 +216,7 @@ dnl ---------------------------------------------------------------------------
 AC_CONFIG_FILES([
 Makefile
 po/Makefile.in
+etc/Makefile
 libzif/Makefile
 libzif/zif.pc
 libzif/zif-version.h

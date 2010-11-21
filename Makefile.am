@@ -1,4 +1,5 @@
 SUBDIRS = 						\
+	etc						\
 	libzif						\
 	docs						\
 	data						\

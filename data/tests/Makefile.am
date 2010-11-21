@@ -4,7 +4,7 @@ EXTRA_DIST =							\
 	data.txt						\
 	test-0.1-1.fc13.noarch.rpm				\
 	test.spec						\
-	yum.conf						\
+	zif.conf						\
 	mirrorlist.txt						\
 	metalink.xml						\
 	licenses.txt						\

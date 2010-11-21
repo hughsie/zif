@@ -12,7 +12,9 @@ INCLUDES = \
 	-DZIF_COMPILATION					\
 	-DG_LOG_DOMAIN=\"Zif\"					\
 	-DLOCALSTATEDIR=\""$(localstatedir)"\" 			\
+	-DTOP_SRCDIR=\""$(top_srcdir)"\" 			\
 	-DPACKAGE_DATA_DIR=\""$(datadir)"\"			\
+	-DSYSCONFDIR=\""$(sysconfdir)"\"			\
 	-DPACKAGE_LOCALE_DIR=\""$(prefix)/$(DATADIRNAME)/locale"\"
 
 pkgconfigdir = $(libdir)/pkgconfig
