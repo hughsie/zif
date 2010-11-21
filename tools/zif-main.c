@@ -271,7 +271,6 @@ zif_log_handler_cb (const gchar *log_domain, GLogLevelFlags log_level,
 }
 
 typedef struct {
-	gboolean		 skip_broken;
 	gboolean		 assume_yes;
 	gboolean		 assume_no;
 	GOptionContext		*context;
@@ -1339,7 +1338,6 @@ zif_cmd_get_updates (ZifCmdPrivate *priv, gchar **values, GError **error)
 	/* setup transaction */
 	transaction = zif_transaction_new ();
 	store_local = zif_store_local_new ();
-	zif_transaction_set_skip_broken (transaction, priv->skip_broken);
 	zif_transaction_set_store_local (transaction, store_local);
 	zif_transaction_set_stores_remote (transaction, store_array);
 
@@ -1592,7 +1590,6 @@ zif_transaction_run (ZifCmdPrivate *priv, ZifTransaction *transaction, ZifState 
 	/* set local store */
 	store_local = zif_store_local_new ();
 	zif_transaction_set_store_local (transaction, store_local);
-	zif_transaction_set_skip_broken (transaction, priv->skip_broken);
 
 	/* add remote stores */
 	zif_transaction_set_stores_remote (transaction, store_array_remote);
@@ -2926,7 +2923,6 @@ zif_cmd_update_all (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 	/* update these packages */
 	transaction = zif_transaction_new ();
-	zif_transaction_set_skip_broken (transaction, priv->skip_broken);
 	for (i=0; i<array->len; i++) {
 		package = g_ptr_array_index (array, i);
 		ret = zif_transaction_add_install (transaction, package, error);
@@ -3021,7 +3017,6 @@ zif_cmd_update (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 	/* update this package */
 	transaction = zif_transaction_new ();
-	zif_transaction_set_skip_broken (transaction, priv->skip_broken);
 	for (i=0; i<array->len; i++) {
 		package = g_ptr_array_index (array, i);
 		ret = zif_transaction_add_update (transaction, package, error);
@@ -3973,7 +3968,6 @@ main (int argc, char *argv[])
 	zif_progress_bar_set_size (priv->progressbar, 30);
 
 	/* save in the private data */
-	priv->skip_broken = skip_broken;
 	priv->assume_yes = assume_yes;
 	priv->assume_no = assume_no;
 
@@ -4018,6 +4012,12 @@ main (int argc, char *argv[])
 	ret = zif_config_set_string (priv->config, "prefix", root, &error);
 	if (!ret) {
 		g_error ("failed to set prefix: %s", error->message);
+		g_error_free (error);
+		goto out;
+	}
+	ret = zif_config_set_boolean (priv->config, "skip_broken", skip_broken, &error);
+	if (!ret) {
+		g_error ("failed to set skip_broken: %s", error->message);
 		g_error_free (error);
 		goto out;
 	}

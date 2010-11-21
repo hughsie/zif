@@ -119,8 +119,6 @@ void		 zif_transaction_set_store_local	(ZifTransaction	*transaction,
 							 ZifStore	*store);
 void		 zif_transaction_set_stores_remote	(ZifTransaction	*transaction,
 							 GPtrArray	*stores);
-void		 zif_transaction_set_skip_broken	(ZifTransaction	*transaction,
-							 gboolean	 skip_broken);
 void		 zif_transaction_set_verbose		(ZifTransaction	*transaction,
 							 gboolean	 verbose);
 void		 zif_transaction_reset			(ZifTransaction	*transaction);

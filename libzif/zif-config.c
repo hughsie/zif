@@ -662,7 +662,8 @@ zif_config_set_string (ZifConfig *config, const gchar *key, const gchar *value, 
 	value_tmp = g_hash_table_lookup (config->priv->hash_override, key);
 	if (value_tmp != NULL) {
 		g_set_error (error, ZIF_CONFIG_ERROR, ZIF_CONFIG_ERROR_FAILED,
-			     "already set key %s to %s, cannot overwrite with %s", key, value_tmp, value);
+			     "already set key %s to %s, cannot overwrite with %s",
+			     key, value_tmp, value);
 		ret = FALSE;
 		goto out;
 	}

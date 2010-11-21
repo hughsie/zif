@@ -42,6 +42,7 @@
 #include <glib.h>
 #include <libsoup/soup.h>
 
+#include "zif-config.h"
 #include "zif-package-meta.h"
 #include "zif-state.h"
 #include "zif-store-array.h"
@@ -59,7 +60,7 @@
  **/
 struct _ZifManifestPrivate
 {
-	gpointer		 padding;
+	ZifConfig		*config;
 };
 
 typedef enum {
@@ -624,7 +625,10 @@ zif_manifest_check (ZifManifest *manifest,
 
 	/* skip-broken */
 	ret = g_key_file_get_boolean (keyfile, "Zif Manifest", "SkipBroken", NULL);
-	zif_transaction_set_skip_broken (transaction, ret);
+	zif_config_reset_default (manifest->priv->config, NULL);
+	ret = zif_config_set_boolean (manifest->priv->config, "skip_broken", ret, error);
+	if (!ret)
+		goto out;
 
 	/* always set verbose */
 	zif_transaction_set_verbose (transaction, TRUE);
@@ -805,8 +809,11 @@ out:
 static void
 zif_manifest_finalize (GObject *object)
 {
+	ZifManifest *manifest;
 	g_return_if_fail (object != NULL);
 	g_return_if_fail (ZIF_IS_MANIFEST (object));
+	manifest = ZIF_MANIFEST (object);
+	g_object_unref (manifest->priv->config);
 	G_OBJECT_CLASS (zif_manifest_parent_class)->finalize (object);
 }
 
@@ -829,6 +836,7 @@ static void
 zif_manifest_init (ZifManifest *manifest)
 {
 	manifest->priv = ZIF_MANIFEST_GET_PRIVATE (manifest);
+	manifest->priv->config = zif_config_new ();
 }
 
 /**
