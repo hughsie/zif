@@ -4028,7 +4028,7 @@ main (int argc, char *argv[])
 
 	/* set the maximum age of the repo data */
 	if (age > 0)
-		zif_config_set_uint (priv->config, "max-age", age, NULL);
+		zif_config_set_uint (priv->config, "metadata_expire", age, NULL);
 
 	/* are we root? */
 	uid = getuid ();

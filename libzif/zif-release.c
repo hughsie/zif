@@ -163,7 +163,7 @@ zif_release_load (ZifRelease *release, ZifState *state, GError **error)
 		}
 
 		/* delete it if it's older */
-		cache_age = zif_config_get_uint (priv->config, "max-age", NULL);
+		cache_age = zif_config_get_uint (priv->config, "metadata_expire", NULL);
 		if (age > cache_age) {
 			g_debug ("deleting old %s as too old", filename);
 			ret = g_file_delete (file, NULL, &error_local);

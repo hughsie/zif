@@ -1054,7 +1054,7 @@ zif_store_remote_load_metadata_try (ZifStoreRemote *store, ZifState *state, GErr
 		goto out;
 
 	/* get the maximum age of the repo files */
-	max_age = zif_config_get_uint (store->priv->config, "max-age", NULL);
+	max_age = zif_config_get_uint (store->priv->config, "metadata_expire", NULL);
 
 	/* set MD id and filename for each repo type */
 	for (i=1; i<ZIF_MD_KIND_LAST; i++) {
