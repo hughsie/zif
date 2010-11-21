@@ -2879,6 +2879,25 @@ out:
 }
 
 /**
+ * zif_transaction_rpm_verbosity_string_to_value:
+ **/
+static gint
+zif_transaction_rpm_verbosity_string_to_value (const gchar *value)
+{
+	if (g_strcmp0 (value, "critical") == 0)
+		return RPMLOG_CRIT;
+	if (g_strcmp0 (value, "emergency") == 0)
+		return RPMLOG_EMERG;
+	if (g_strcmp0 (value, "error") == 0)
+		return RPMLOG_ERR;
+	if (g_strcmp0 (value, "warn") == 0)
+		return RPMLOG_WARNING;
+	if (g_strcmp0 (value, "debug") == 0)
+		return RPMLOG_DEBUG;
+	return RPMLOG_EMERG;
+}
+
+/**
  * zif_transaction_commit:
  * @transaction: the #ZifTransaction object
  * @state: a #ZifState to use for progress reporting
@@ -2900,6 +2919,8 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 	Header hdr;
 	int flags;
 	int rc;
+	gint verbosity;
+	gchar *verbosity_string = NULL;
 	rpmdb db = NULL;
 	rpmps probs = NULL;
 	ZifState *state_local;
@@ -2935,8 +2956,11 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 	if (!ret)
 		goto out;
 	zif_state_action_start (state, ZIF_STATE_ACTION_PREPARING, NULL);
-	if (priv->verbose)
-		rpmSetVerbosity (RPMLOG_DEBUG);
+
+	/* get verbosity from the config file */
+	verbosity_string = zif_config_get_string (priv->config, "rpmverbosity", NULL);
+	verbosity = zif_transaction_rpm_verbosity_string_to_value (verbosity_string);
+	rpmSetVerbosity (verbosity);
 
 	/* we can't get this from ZifStoreLocal, as when the db is changed,
 	 * it is marked dirty and unloaded */
@@ -3056,6 +3080,7 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 	priv->state = ZIF_TRANSACTION_STATE_COMMITTED;
 	g_debug ("Done!");
 out:
+	g_free (verbosity_string);
 	if (probs != NULL)
 		rpmpsFree (probs);
 	if (db != NULL)
