@@ -586,8 +586,28 @@ zif_transaction_add_remove_internal (ZifTransaction *transaction,
 				     ZifTransactionReason reason,
 				     GError **error)
 {
-	gboolean ret;
+	gboolean ret = FALSE;
+	guint i;
+	gchar **protected_packages = NULL;
 	gchar *related_packages_str = NULL;
+
+	/* is package protected */
+	protected_packages = zif_config_get_strv (transaction->priv->config,
+						  "protected_packages",
+						  NULL);
+	if (protected_packages != NULL) {
+		for (i=0; protected_packages[i] != NULL; i++) {
+			if (g_strcmp0 (protected_packages[i],
+				       zif_package_get_name (package)) == 0) {
+				g_set_error (error,
+					     ZIF_TRANSACTION_ERROR,
+					     ZIF_TRANSACTION_ERROR_FAILED,
+					     "cannot remove protected package %s",
+					     zif_package_get_name (package));
+				goto out;
+			}
+		}
+	}
 
 	/* add to remove */
 	ret = zif_transaction_add_to_array (transaction->priv->remove,
@@ -609,6 +629,7 @@ zif_transaction_add_remove_internal (ZifTransaction *transaction,
 		 related_packages_str);
 out:
 	g_free (related_packages_str);
+	g_strfreev (protected_packages);
 	return ret;
 }
 
