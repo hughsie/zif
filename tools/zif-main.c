@@ -1372,75 +1372,6 @@ zif_cmd_get_updates (ZifCmdPrivate *priv, gchar **values, GError **error)
 	zif_print_packages (array);
 #endif
 
-#if 0
-//	GPtrArray *array_tmp;
-//	guint i;
-
-	/* get update details */
-	state_local = zif_state_get_child (priv->state);
-	zif_state_set_number_steps (priv->state, array->len);
-	for (i=0; i<array->len; i++) {
-		ZifUpdate *update;
-		ZifUpdateInfo *info;
-		ZifChangeset *changeset;
-		GPtrArray *update_infos;
-		GPtrArray *changelog;
-		guint j;
-
-		package = g_ptr_array_index (array, i);
-		state_loop = zif_state_get_child (priv->state);
-		update = zif_package_remote_get_update_detail (ZIF_PACKAGE_REMOTE (package), state_loop, error);
-		if (update == NULL) {
-			g_set_error (error, 1, 0, "failed to get update detail for %s: %s",
-				 zif_package_get_id (package), error->message);
-			g_clear_error (error);
-
-			/* non-fatal */
-			ret = zif_state_finished (priv->state_loop, error);
-			if (!ret)
-				goto out;
-			ret = zif_state_done (priv->state, error);
-			if (!ret)
-				goto out;
-			continue;
-		}
-		g_print ("\t%s\t%s\n", "kind", zif_update_state_to_string (zif_update_get_kind (update)));
-		g_print ("\t%s\t%s\n", "id", zif_update_get_id (update));
-		g_print ("\t%s\t%s\n", "title", zif_update_get_title (update));
-		g_print ("\t%s\t%s\n", "description", zif_update_get_description (update));
-		g_print ("\t%s\t%s\n", "issued", zif_update_get_issued (update));
-		update_infos = zif_update_get_update_infos (update);
-		for (j=0; j<update_infos->len; j++) {
-			info = g_ptr_array_index (update_infos, j);
-			g_print ("\tupdateinfo[%i]:kind\t%s\n", j,
-				 zif_update_info_kind_to_string (zif_update_info_get_kind (info)));
-			g_print ("\tupdateinfo[%i]:title\t%s\n", j,
-				 zif_update_info_get_title (info));
-			g_print ("\tupdateinfo[%i]:url\t%s\n", j,
-				 zif_update_info_get_url (info));
-		}
-		changelog = zif_update_get_changelog (update);
-		for (j=0; j<changelog->len; j++) {
-			changeset = g_ptr_array_index (changelog, j);
-			g_print ("\tchangelog[%i]:author\t%s\n", j,
-				 zif_changeset_get_author (changeset));
-			g_print ("\tchangelog[%i]:version\t%s\n", j,
-				 zif_changeset_get_version (changeset));
-			g_print ("\tchangelog[%i]:description\t%s\n", j,
-				 zif_changeset_get_description (changeset));
-		}
-
-		/* this section done */
-		ret = zif_state_done (priv->state, error);
-		if (!ret)
-			goto out;
-	}
-
-	/* this section done */
-	ret = zif_state_done (priv->state, error);
-	if (!ret)
-		goto out;
-#endif
 	/* success */
 	ret = TRUE;
 out:
@@ -3126,6 +3057,150 @@ out:
 }
 
 /**
+ * zif_cmd_update_details:
+ **/
+static gboolean
+zif_cmd_update_details (ZifCmdPrivate *priv, gchar **values, GError **error)
+{
+	gboolean ret = FALSE;
+	GError *error_local = NULL;
+	GPtrArray *array = NULL;
+	GPtrArray *changelog;
+	GPtrArray *store_array_local = NULL;
+	GPtrArray *store_array = NULL;
+	GPtrArray *update_infos;
+	GString *string = NULL;
+	guint i;
+	guint j;
+	ZifChangeset *changeset;
+	ZifPackage *package;
+	ZifState *state_local;
+	ZifState *state_loop;
+	ZifUpdateInfo *info;
+	ZifUpdate *update;
+
+	/* check we have a value */
+	if (values == NULL || values[0] == NULL) {
+		ret = zif_cmd_update_all (priv, values, error);
+		goto out;
+	}
+
+	/* TRANSLATORS: performing action */
+	zif_progress_bar_start (priv->progressbar, _("Updating"));
+
+	/* setup state */
+	ret = zif_state_set_steps (priv->state,
+				   error,
+				   1, /* add remote */
+				   5, /* resolve */
+				   94, /* get data */
+				   -1);
+	if (!ret)
+		goto out;
+
+	/* add local store */
+	store_array_local = zif_store_array_new ();
+	state_local = zif_state_get_child (priv->state);
+	ret = zif_store_array_add_remote (store_array_local, state_local, error);
+	if (!ret)
+		goto out;
+
+	/* this section done */
+	ret = zif_state_done (priv->state, error);
+	if (!ret)
+		goto out;
+
+	/* check not already installed */
+	state_local = zif_state_get_child (priv->state);
+	array = zif_store_array_resolve (store_array_local, values, state_local, error);
+	if (array == NULL) {
+		ret = FALSE;
+		goto out;
+	}
+	if (array->len == 0) {
+		ret = FALSE;
+		/* TRANSLATORS: error message */
+		g_set_error (error, 1, 0, _("The %s package is not installed"), values[0]);
+		goto out;
+	}
+
+	/* this section done */
+	ret = zif_state_done (priv->state, error);
+	if (!ret)
+		goto out;
+
+	/* get update details */
+	string = g_string_new ("");
+	state_local = zif_state_get_child (priv->state);
+	zif_state_set_number_steps (state_local, array->len);
+	for (i=0; i<array->len; i++) {
+
+		package = g_ptr_array_index (array, i);
+		state_loop = zif_state_get_child (priv->state);
+		update = zif_package_remote_get_update_detail (ZIF_PACKAGE_REMOTE (package), state_loop, &error_local);
+		if (update == NULL) {
+			ret = FALSE;
+			g_set_error (error, 1, 0, "failed to get update detail for %s: %s",
+				 zif_package_get_id (package), error_local->message);
+			g_clear_error (&error_local);
+			goto out;
+		}
+		g_print ("\t%s\t%s\n", "kind", zif_update_state_to_string (zif_update_get_kind (update)));
+		g_print ("\t%s\t%s\n", "id", zif_update_get_id (update));
+		g_print ("\t%s\t%s\n", "title", zif_update_get_title (update));
+		g_print ("\t%s\t%s\n", "description", zif_update_get_description (update));
+		g_print ("\t%s\t%s\n", "issued", zif_update_get_issued (update));
+		update_infos = zif_update_get_update_infos (update);
+		for (j=0; j<update_infos->len; j++) {
+			info = g_ptr_array_index (update_infos, j);
+			g_print ("\tupdateinfo[%i]:kind\t%s\n", j,
+				 zif_update_info_kind_to_string (zif_update_info_get_kind (info)));
+			g_print ("\tupdateinfo[%i]:title\t%s\n", j,
+				 zif_update_info_get_title (info));
+			g_print ("\tupdateinfo[%i]:url\t%s\n", j,
+				 zif_update_info_get_url (info));
+		}
+		changelog = zif_update_get_changelog (update);
+		for (j=0; j<changelog->len; j++) {
+			changeset = g_ptr_array_index (changelog, j);
+			g_print ("\tchangelog[%i]:author\t%s\n", j,
+				 zif_changeset_get_author (changeset));
+			g_print ("\tchangelog[%i]:version\t%s\n", j,
+				 zif_changeset_get_version (changeset));
+			g_print ("\tchangelog[%i]:description\t%s\n", j,
+				 zif_changeset_get_description (changeset));
+		}
+
+		/* this section done */
+		ret = zif_state_done (state_local, error);
+		if (!ret)
+			goto out;
+	}
+
+	/* this section done */
+	ret = zif_state_done (priv->state, error);
+	if (!ret)
+		goto out;
+
+	zif_progress_bar_end (priv->progressbar);
+
+	/* TODO: print a formatted GString */
+	zif_print_packages (array);
+	g_print ("%s", string->str);
+
+	/* success */
+	ret = TRUE;
+out:
+	if (string != NULL)
+		g_string_free (string, TRUE);
+	if (store_array != NULL)
+		g_ptr_array_unref (store_array);
+	if (array != NULL)
+		g_ptr_array_unref (array);
+	return ret;
+}
+
+/**
  * zif_cmd_upgrade:
  **/
 static gboolean
@@ -4155,6 +4230,11 @@ main (int argc, char *argv[])
 		     /* TRANSLATORS: command description */
 		     _("Update a package to the newest available version"),
 		     zif_cmd_update);
+	zif_cmd_add (priv->cmd_array,
+		     "update-details",
+		     /* TRANSLATORS: command description */
+		     _("Display details about an update"),
+		     zif_cmd_update_details);
 	zif_cmd_add (priv->cmd_array,
 		     "upgrade",
 		     /* TRANSLATORS: command description */

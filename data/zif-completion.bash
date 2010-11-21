@@ -50,6 +50,7 @@ __zif_commandlist="
     search-group
     search-name
     update
+    update-details
     upgrade
     what-conflicts
     what-obsoletes
