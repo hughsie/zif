@@ -56,6 +56,7 @@
 #include <rpm/rpmps.h>
 #include <rpm/rpmts.h>
 
+#include "zif-config.h"
 #include "zif-depend.h"
 #include "zif-object-array.h"
 #include "zif-package-array.h"
@@ -78,6 +79,7 @@ struct _ZifTransactionPrivate
 	GHashTable		*update_hash;
 	GHashTable		*remove_hash;
 	ZifStore		*store_local;
+	ZifConfig		*config;
 	GPtrArray		*stores_remote;
 	gboolean		 skip_broken;
 	gboolean		 verbose;
@@ -1185,6 +1187,8 @@ zif_transaction_resolve_install_item (ZifTransactionResolve *data,
 	ZifPackage *package_oldest = NULL;
 	ZifTransactionItem *item_tmp;
 	guint installonlyn = 1;
+	gchar **installonlypkgs = NULL;
+	ZifTransactionPrivate *priv = data->transaction->priv;
 
 	/* is already installed and we are not already removing it */
 	to_array[0] = zif_package_get_name (item->package);
@@ -1209,10 +1213,21 @@ zif_transaction_resolve_install_item (ZifTransactionResolve *data,
 		goto out;
 	}
 
-	/* kernel is special */
-	if (g_strcmp0 (zif_package_get_name (item->package), "kernel") == 0 ||
-	    g_strcmp0 (zif_package_get_name (item->package), "kernel-devel") == 0)
-		installonlyn = 3;
+	/* some packages are special */
+	installonlypkgs = zif_config_get_strv (priv->config, "installonlypkgs", error);
+	if (installonlypkgs == NULL) {
+		ret = FALSE;
+		goto out;
+	}
+	for (i=0; installonlypkgs[i] != NULL; i++) {
+		if (g_strcmp0 (zif_package_get_name (item->package),
+			       installonlypkgs[i]) == 0) {
+			installonlyn = zif_config_get_uint (priv->config,
+							    "installonly_limit",
+							    NULL);
+			break;
+		}
+	}
 
 	/* make a list of all the packages to revert if this item fails */
 	related_packages = zif_package_array_new ();
@@ -1300,6 +1315,7 @@ out:
 	if (!ret) {
 		g_assert (error == NULL || *error != NULL);
 	}
+	g_strfreev (installonlypkgs);
 	if (related_packages != NULL)
 		g_ptr_array_unref (related_packages);
 	if (package_oldest != NULL)
@@ -3157,6 +3173,7 @@ zif_transaction_finalize (GObject *object)
 	g_return_if_fail (ZIF_IS_TRANSACTION (object));
 	transaction = ZIF_TRANSACTION (object);
 
+	g_object_unref (transaction->priv->config);
 	g_ptr_array_unref (transaction->priv->install);
 	g_ptr_array_unref (transaction->priv->update);
 	g_ptr_array_unref (transaction->priv->remove);
@@ -3189,6 +3206,8 @@ static void
 zif_transaction_init (ZifTransaction *transaction)
 {
 	transaction->priv = ZIF_TRANSACTION_GET_PRIVATE (transaction);
+
+	transaction->priv->config = zif_config_new ();
 
 	/* packages we want to install */
 	transaction->priv->install = g_ptr_array_new_with_free_func ((GDestroyNotify) zif_transaction_item_free);

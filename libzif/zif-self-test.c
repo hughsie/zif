@@ -182,6 +182,17 @@ zif_manifest_func (void)
 	guint i;
 	GPtrArray *array;
 	ZifState *state;
+	gchar *filename_tmp;
+	ZifConfig *config;
+
+	config = zif_config_new ();
+	g_assert (config != NULL);
+
+	filename_tmp = zif_test_get_data_file ("yum.conf");
+	ret = zif_config_set_filename (config, filename_tmp, &error);
+	g_free (filename_tmp);
+	g_assert_no_error (error);
+	g_assert (ret);
 
 	/* create new manifest */
 	manifest = zif_manifest_new ();
@@ -220,6 +231,7 @@ zif_manifest_func (void)
 	g_ptr_array_unref (array);
 	g_free (dirname);
 	g_object_unref (state);
+	g_object_unref (config);
 	g_object_unref (manifest);
 }
 

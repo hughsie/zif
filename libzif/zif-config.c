@@ -170,6 +170,40 @@ out:
 }
 
 /**
+ * zif_config_get_strv:
+ * @config: the #ZifConfig object
+ * @key: the key name to retrieve, e.g. "keepcache"
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Gets a string array value from a local setting, falling back to the config file.
+ *
+ * Return value: %NULL, or a string array, free with g_strfreev()
+ *
+ * Since: 0.1.3
+ **/
+gchar **
+zif_config_get_strv (ZifConfig *config, const gchar *key, GError **error)
+{
+	gchar *value;
+	gchar **split = NULL;
+
+	g_return_val_if_fail (ZIF_IS_CONFIG (config), NULL);
+	g_return_val_if_fail (key != NULL, NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+	/* get string value */
+	value = zif_config_get_string (config, key, error);
+	if (value == NULL)
+		goto out;
+
+	/* convert to array */
+	split = g_strsplit (value, ",", -1);
+out:
+	g_free (value);
+	return split;
+}
+
+/**
  * zif_config_get_uint:
  * @config: the #ZifConfig object
  * @key: the key name to retrieve, e.g. "keepcache"
@@ -672,59 +706,168 @@ zif_config_init (ZifConfig *config)
 				  G_CALLBACK (zif_config_file_monitor_cb), config);
 
 	/* setup defaults */
-	zif_config_set_default (config, "cachedir", "/var/cache/yum");
-	zif_config_set_default (config, "keepcache", "true");
-	zif_config_set_default (config, "pidfile", "/var/run/yum.pid");
-	zif_config_set_default (config, "recent", "7");
-	zif_config_set_default (config, "reposdir", "/etc/yum.repos.d");
-	zif_config_set_default (config, "retries", "3");
+	zif_config_set_default (config,
+				"cachedir",
+				"/var/cache/yum");
+	zif_config_set_default (config,
+				"installonly_limit",
+				"3");
+	zif_config_set_default (config,
+				"installonlypkgs",
+				"kernel,kernel-bigmem,kernel-enterprise,"
+				"kernel-smp,kernel-modules,kernel-debug,"
+				"kernel-unsupported,kernel-source,"
+				"kernel-devel,kernel-PAE,kernel-PAE-debug");
+	zif_config_set_default (config,
+				"keepcache",
+				"true");
+	zif_config_set_default (config,
+				"pidfile",
+				"/var/run/yum.pid");
+	zif_config_set_default (config,
+				"recent",
+				"7");
+	zif_config_set_default (config,
+				"reposdir",
+				"/etc/yum.repos.d");
+	zif_config_set_default (config,
+				"retries",
+				"3");
 
-//	zif_config_set_default (config, "alwaysprompt", "true");
-//	zif_config_set_default (config, "assumeyes", "false");
-//	zif_config_set_default (config, "bandwidth", "0");
-//	zif_config_set_default (config, "disable_excludes", "");
-//	zif_config_set_default (config, "diskspacecheck", "true");
-//	zif_config_set_default (config, "enablegroups", "true");
-//	zif_config_set_default (config, "exactarchlist", "kernel,kernel-smp,kernel-hugemem,kernel-enterprise,kernel-bigmem,kernel-devel,kernel-PAE,kernel-PAE-debug");
-//	zif_config_set_default (config, "exactarch", "true");
-//	zif_config_set_default (config, "exclude", "");
-//	zif_config_set_default (config, "failovermethod", "roundrobin");
-//	zif_config_set_default (config, "gpgcheck", "true");
-//	zif_config_set_default (config, "group_package_types", "mandatory,default");
-//	zif_config_set_default (config, "groupremove_leaf_only", "false");
-//	zif_config_set_default (config, "history_record_packages", "yum,rpm");
-//	zif_config_set_default (config, "history_record", "true");
-//	zif_config_set_default (config, "http_caching", "packages");
-//	zif_config_set_default (config, "installonly_limit", "3");
-//	zif_config_set_default (config, "installonlypkgs", "kernel,kernel-bigmem,kernel-enterprise,kernel-smp,kernel-modules,kernel-debug,kernel-unsupported,kernel-source,kernel-devel,kernel-PAE,kernel-PAE-debug");
-//	zif_config_set_default (config, "keepalive", "true");
-//	zif_config_set_default (config, "kernelpkgnames", "kernel,kernel-smp,kernel-enterprise,kernel-bigmem,kernel-BOOT,kernel-PAE,kernel-PAE-debug");
-//	zif_config_set_default (config, "logfile", "/var/log/yum.log");
-//	zif_config_set_default (config, "mdpolicy", "group:primary");
-//	zif_config_set_default (config, "metadata_expire", "21600");
-//	zif_config_set_default (config, "mirrorlist_expire", "SecondsOption(60 * 60 * 24)");
-//	zif_config_set_default (config, "multilib_policy", "best");
-//	zif_config_set_default (config, "obsoletes", "true");
-//	zif_config_set_default (config, "overwrite_groups", "false");
-//	zif_config_set_default (config, "parse_default, "true");
-//	zif_config_set_default (config, "protected_packages", "zif");
-//	zif_config_set_default (config, "proxy", "");
-//	zif_config_set_default (config, "proxy_password", "");
-//	zif_config_set_default (config, "proxy_username", "");
-//	zif_config_set_default (config, "repo_gpgcheck", "true");
-//	zif_config_set_default (config, "reposdir", "/etc/yum/repos.d");
-//	zif_config_set_default (config, "rpm_check_debug", "true");
-//	zif_config_set_default (config, "rpmverbosity", "info");
-//	zif_config_set_default (config, "showdupesfromrepos", "false");
-//	zif_config_set_default (config, "skip_broken", "false");
-//	zif_config_set_default (config, "sslcacert", "");
-//	zif_config_set_default (config, "sslclientcert", "");
-//	zif_config_set_default (config, "sslclientkey", "");
-//	zif_config_set_default (config, "sslverify", "true");
-//	zif_config_set_default (config, "throttle", "0");
-//	zif_config_set_default (config, "timeout", "30");
-//	zif_config_set_default (config, "tolerant", "true");
-//	zif_config_set_default (config, "tsflags", "");
+#if 0
+	zif_config_set_default (config,
+				"alwaysprompt",
+				"true");
+	zif_config_set_default (config,
+				"assumeyes",
+				"false");
+	zif_config_set_default (config,
+				"bandwidth",
+				"0");
+	zif_config_set_default (config,
+				"disable_excludes",
+				"");
+	zif_config_set_default (config,
+				"diskspacecheck",
+				"true");
+	zif_config_set_default (config,
+				"enablegroups",
+				"true");
+	zif_config_set_default (config,
+				"exactarchlist",
+				"kernel,kernel-smp,kernel-hugemem,kernel-enterprise,kernel-bigmem,kernel-devel,kernel-PAE,kernel-PAE-debug");
+	zif_config_set_default (config,
+				"exactarch",
+				"true");
+	zif_config_set_default (config,
+				"exclude",
+				"");
+	zif_config_set_default (config,
+				"failovermethod",
+				"roundrobin");
+	zif_config_set_default (config,
+				"gpgcheck",
+				"true");
+	zif_config_set_default (config,
+				"group_package_types",
+				"mandatory,default");
+	zif_config_set_default (config,
+				"groupremove_leaf_only",
+				"false");
+	zif_config_set_default (config,
+				"history_record_packages",
+				"yum,rpm");
+	zif_config_set_default (config,
+				"history_record",
+				"true");
+	zif_config_set_default (config,
+				"http_caching",
+				"packages");
+	zif_config_set_default (config,
+				"keepalive",
+				"true");
+	zif_config_set_default (config,
+				"kernelpkgnames",
+				"kernel,kernel-smp,kernel-enterprise,kernel-bigmem,kernel-BOOT,kernel-PAE,kernel-PAE-debug");
+	zif_config_set_default (config,
+				"logfile",
+				"/var/log/yum.log");
+	zif_config_set_default (config,
+				"mdpolicy",
+				"group:primary");
+	zif_config_set_default (config,
+				"metadata_expire",
+				"21600");
+	zif_config_set_default (config,
+				"mirrorlist_expire",
+				"SecondsOption(60 * 60 * 24)");
+	zif_config_set_default (config,
+				"multilib_policy",
+				"best");
+	zif_config_set_default (config,
+				"obsoletes",
+				"true");
+	zif_config_set_default (config,
+				"overwrite_groups",
+				"false");
+	zif_config_set_default (config,
+				"parse_default",
+				"true");
+	zif_config_set_default (config,
+				"protected_packages",
+				"zif");
+	zif_config_set_default (config,
+				"proxy",
+				"");
+	zif_config_set_default (config,
+				"proxy_password",
+				"");
+	zif_config_set_default (config,
+				"proxy_username",
+				"");
+	zif_config_set_default (config,
+				"repo_gpgcheck",
+				"true");
+	zif_config_set_default (config,
+				"reposdir",
+				"/etc/yum/repos.d");
+	zif_config_set_default (config,
+				"rpm_check_debug",
+				"true");
+	zif_config_set_default (config,
+				"rpmverbosity",
+				"info");
+	zif_config_set_default (config,
+				"showdupesfromrepos",
+				"false");
+	zif_config_set_default (config,
+				"skip_broken",
+				"false");
+	zif_config_set_default (config,
+				"sslcacert",
+				"");
+	zif_config_set_default (config,
+				"sslclientcert",
+				"");
+	zif_config_set_default (config,
+				"sslclientkey",
+				"");
+	zif_config_set_default (config,
+				"sslverify",
+				"true");
+	zif_config_set_default (config,
+				"throttle",
+				"0");
+	zif_config_set_default (config,
+				"timeout",
+				"30");
+	zif_config_set_default (config,
+				"tolerant",
+				"true");
+	zif_config_set_default (config,
+				"tsflags",
+				"");
+#endif
 
 	/* get info from RPM */
 	rpmGetOsInfo (&value, NULL);

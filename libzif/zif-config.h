@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*-
  *
- * Copyright (C) 2008 Richard Hughes <richard@hughsie.com>
+ * Copyright (C) 2008-2010 Richard Hughes <richard@hughsie.com>
  *
  * Licensed under the GNU General Public License Version 2
  *
@@ -65,6 +65,9 @@ gboolean	 zif_config_set_filename	(ZifConfig	*config,
 						 const gchar	*filename,
 						 GError		**error);
 gchar		*zif_config_get_string		(ZifConfig	*config,
+						 const gchar	*key,
+						 GError		**error);
+gchar		**zif_config_get_strv		(ZifConfig	*config,
 						 const gchar	*key,
 						 GError		**error);
 gboolean	 zif_config_get_boolean		(ZifConfig	*config,
