@@ -538,9 +538,11 @@ zif_config_set_filename (ZifConfig *config, const gchar *filename, GError **erro
 						   NULL);
 
 	/* expand out, in case the override_config contains $srcdir */
-	filename_override_sub = zif_config_expand_substitutions (config,
-								 filename_override,
-								 NULL);
+	if (filename_override != NULL) {
+		filename_override_sub = zif_config_expand_substitutions (config,
+									 filename_override,
+									 NULL);
+	}
 
 	/* load override file */
 	if (filename_override_sub == NULL) {

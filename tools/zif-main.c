@@ -3991,7 +3991,7 @@ main (int argc, char *argv[])
 
 	/* fallback */
 	if (config_file == NULL)
-		config_file = g_strdup ("/etc/yum.conf");
+		config_file = g_strdup ("/etc/zif/zif.conf");
 	if (root == NULL)
 		root = g_strdup ("/");
 

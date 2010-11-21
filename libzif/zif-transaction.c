@@ -2794,7 +2794,6 @@ zif_transaction_ts_progress_cb (const void *arg,
 
 			/* progress */
 			g_debug ("progress %i/%i", (gint32) amount, (gint32) total);
-			g_debug ("%f", (100.0f / (gfloat) total) * (gfloat) amount);
 			zif_state_set_percentage (commit->child, (100.0f / (gfloat) total) * (gfloat) amount);
 			if (amount == total) {
 				ret = zif_state_done (commit->state, &error_local);
@@ -2916,6 +2915,89 @@ zif_transaction_rpm_verbosity_string_to_value (const gchar *value)
 	if (g_strcmp0 (value, "debug") == 0)
 		return RPMLOG_DEBUG;
 	return RPMLOG_EMERG;
+}
+
+/**
+ * zif_transaction_write_log:
+ **/
+static gboolean
+zif_transaction_write_log (ZifTransaction *transaction, GError **error)
+{
+	gboolean ret = FALSE;
+	gchar *filename = NULL;
+	GFile *file = NULL;
+	GFileIOStream *stream = NULL;
+	GOutputStream *output = NULL;
+	GString *data = NULL;
+	guint i;
+	ZifTransactionItem *item;
+
+	/* open up log file */
+	filename = zif_config_get_string (transaction->priv->config,
+					  "logfile", error);
+	if (filename == NULL)
+		goto out;
+	file = g_file_new_for_path (filename);
+	g_debug ("writing to file: %s", filename);
+	stream = g_file_open_readwrite (file, NULL, error);
+	if (stream == NULL)
+		goto out;
+
+	/* format data */
+	data = g_string_new ("");
+	for (i=0; i<transaction->priv->install->len; i++) {
+		item = g_ptr_array_index (transaction->priv->install, i);
+		if (item->cancelled)
+			continue;
+		g_string_append_printf (data, "Zif: [install] %s (%s)\n",
+					zif_package_get_id (item->package),
+					zif_transaction_reason_to_string (item->reason));
+	}
+	for (i=0; i<transaction->priv->remove->len; i++) {
+		item = g_ptr_array_index (transaction->priv->remove, i);
+		if (item->cancelled)
+			continue;
+		g_string_append_printf (data, "Zif: [remove] %s (%s)\n",
+					zif_package_get_id (item->package),
+					zif_transaction_reason_to_string (item->reason));
+	}
+
+	/* write data */
+	g_debug ("writing %s", data->str);
+	output = g_io_stream_get_output_stream (G_IO_STREAM (stream));
+	if (output == NULL) {
+		g_set_error (error,
+			     ZIF_TRANSACTION_ERROR,
+			     ZIF_TRANSACTION_ERROR_FAILED,
+			     "cannot get output stream for %s",
+			     filename);
+		goto out;
+	}
+	ret = g_seekable_seek (G_SEEKABLE (output),
+			       0, G_SEEK_END,
+			       NULL, error);
+	if (!ret)
+		goto out;
+	ret = g_output_stream_write_all (output,
+					 data->str,
+					 data->len,
+					 NULL,
+					 NULL,
+					 error);
+	if (!ret)
+		goto out;
+	ret = g_output_stream_close (output, NULL, error);
+	if (!ret)
+		goto out;
+out:
+	g_free (filename);
+	if (data != NULL)
+		g_string_free (data, TRUE);
+	if (file != NULL)
+		g_object_unref (file);
+	if (stream != NULL)
+		g_object_unref (stream);
+	return ret;
 }
 
 /**
@@ -3094,6 +3176,11 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 
 	/* this section done */
 	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* append to the config file */
+	ret = zif_transaction_write_log (transaction, error);
 	if (!ret)
 		goto out;
 
