@@ -631,6 +631,10 @@ zif_state_action_to_string (ZifStateAction action)
 		return "removing";
 	if (action == ZIF_STATE_ACTION_PREPARING)
 		return "preparing";
+	if (action == ZIF_STATE_ACTION_UPDATING)
+		return "updating";
+	if (action == ZIF_STATE_ACTION_CLEANING)
+		return "cleaning";
 	if (action == ZIF_STATE_ACTION_UNKNOWN)
 		return "unknown";
 	return NULL;

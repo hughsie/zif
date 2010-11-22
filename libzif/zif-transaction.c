@@ -2808,6 +2808,46 @@ typedef struct {
 } ZifTransactionCommit;
 
 /**
+ * zif_transaction_get_item_from_cache_filename_suffix:
+ **/
+static ZifTransactionItem *
+zif_transaction_get_item_from_cache_filename_suffix (GPtrArray *array,
+						     const gchar *filename_suffix)
+{
+	guint i;
+	const gchar *cache_filename;
+	ZifTransactionItem *item;
+	ZifState *state;
+
+	/* this is safe as the cache value will already be hot */
+	state = zif_state_new ();
+	for (i=0; i<array->len; i++) {
+		item = g_ptr_array_index (array, i);
+
+		/* get filename */
+		zif_state_reset (state);
+		cache_filename = zif_package_get_cache_filename (item->package,
+								 state,
+								 NULL);
+		if (cache_filename == NULL)
+			continue;
+
+		/* success */
+		if (g_str_has_suffix (cache_filename,
+				      filename_suffix)) {
+			goto out;
+		}
+	}
+
+	/* failure */
+	item = NULL;
+out:
+	g_object_unref (state);
+	return item;
+}
+
+
+/**
  * zif_transaction_ts_progress_cb:
  **/
 static void *
@@ -2821,114 +2861,138 @@ zif_transaction_ts_progress_cb (const void *arg,
 	gboolean ret;
 	GError *error_local = NULL;
 	void *rc = NULL;
+	ZifStateAction action;
+	ZifTransactionItem *item;
 
 	ZifTransactionCommit *commit = (ZifTransactionCommit *) data;
 
 	switch (what) {
-		case RPMCALLBACK_INST_OPEN_FILE:
+	case RPMCALLBACK_INST_OPEN_FILE:
 
-			/* valid? */
-			if (filename == NULL || filename[0] == '\0')
-				return NULL;
+		/* valid? */
+		if (filename == NULL || filename[0] == '\0')
+			return NULL;
 
-			/* open the file and return file descriptor */
-			commit->fd = Fopen (filename, "r.ufdio");
-			return (void *) commit->fd;
+		/* open the file and return file descriptor */
+		commit->fd = Fopen (filename, "r.ufdio");
+		return (void *) commit->fd;
+		break;
+
+	case RPMCALLBACK_INST_CLOSE_FILE:
+
+		/* just close the file */
+		if (commit->fd != NULL) {
+			Fclose (commit->fd);
+			commit->fd = NULL;
+		}
+		break;
+
+	case RPMCALLBACK_INST_START:
+
+		/* find item */
+		item = zif_transaction_get_item_from_cache_filename_suffix (commit->transaction->priv->install,
+									    filename);
+		if (item == NULL)
+			g_assert_not_reached ();
+
+		/* map to correct action code */
+		action = ZIF_STATE_ACTION_INSTALLING;
+		if (item->reason == ZIF_TRANSACTION_REASON_INSTALL_FOR_UPDATE)
+			action = ZIF_STATE_ACTION_UPDATING;
+
+		/* install start */
+		commit->step = ZIF_TRANSACTION_STEP_WRITING;
+		commit->child = zif_state_get_child (commit->state);
+		zif_state_action_start (commit->child,
+					action,
+					zif_package_get_id (item->package));
+		g_debug ("install start: %s size=%i", filename, (gint32) total);
+		break;
+
+	case RPMCALLBACK_UNINST_START:
+
+		/* find item */
+		item = zif_transaction_get_item_from_cache_filename_suffix (commit->transaction->priv->remove,
+									    filename);
+		if (item == NULL)
+			g_assert_not_reached ();
+
+		/* map to correct action code */
+		action = ZIF_STATE_ACTION_REMOVING;
+		if (item->reason == ZIF_TRANSACTION_REASON_REMOVE_FOR_UPDATE)
+			action = ZIF_STATE_ACTION_CLEANING;
+
+		/* remove start */
+		commit->step = ZIF_TRANSACTION_STEP_WRITING;
+		commit->child = zif_state_get_child (commit->state);
+		zif_state_action_start (commit->child,
+					action,
+					zif_package_get_id (item->package));
+		g_debug ("remove start: %s size=%i", filename, (gint32) total);
+		break;
+
+	case RPMCALLBACK_TRANS_PROGRESS:
+	case RPMCALLBACK_INST_PROGRESS:
+	case RPMCALLBACK_UNINST_PROGRESS:
+
+		/* we're preparing the transaction */
+		if (commit->step == ZIF_TRANSACTION_STEP_PREPARING) {
+			g_debug ("ignoring preparing %i / %i",
+				 (gint32) amount, (gint32) total);
 			break;
+		}
 
-		case RPMCALLBACK_INST_CLOSE_FILE:
-
-			/* just close the file */
-			if (commit->fd != NULL) {
-				Fclose (commit->fd);
-				commit->fd = NULL;
-			}
-			break;
-
-		case RPMCALLBACK_INST_START:
-
-			/* install start */
-			commit->step = ZIF_TRANSACTION_STEP_WRITING;
-			commit->child = zif_state_get_child (commit->state);
-			zif_state_action_start (commit->child,
-						ZIF_STATE_ACTION_INSTALLING,
-						filename);
-			g_debug ("install start: %s size=%i", filename, (gint32) total);
-			break;
-
-		case RPMCALLBACK_UNINST_START:
-
-			/* remove start */
-			commit->step = ZIF_TRANSACTION_STEP_WRITING;
-			commit->child = zif_state_get_child (commit->state);
-			zif_state_action_start (commit->child,
-						ZIF_STATE_ACTION_REMOVING,
-						filename);
-			g_debug ("remove start: %s size=%i", filename, (gint32) total);
-			break;
-
-		case RPMCALLBACK_TRANS_PROGRESS:
-		case RPMCALLBACK_INST_PROGRESS:
-		case RPMCALLBACK_UNINST_PROGRESS:
-
-			/* we're preparing the transaction */
-			if (commit->step == ZIF_TRANSACTION_STEP_PREPARING) {
-				g_debug ("ignoring preparing %i / %i",
-					 (gint32) amount, (gint32) total);
-				break;
-			}
-
-			/* progress */
-			g_debug ("progress %i/%i", (gint32) amount, (gint32) total);
-			zif_state_set_percentage (commit->child, (100.0f / (gfloat) total) * (gfloat) amount);
-			if (amount == total) {
-				ret = zif_state_done (commit->state, &error_local);
-				if (!ret) {
-					g_warning ("state increment failed: %s",
-						   error_local->message);
-					g_error_free (error_local);
-				}
-			}
-			break;
-
-		case RPMCALLBACK_TRANS_START:
-
-			/* we setup the state */
-			g_debug ("preparing transaction with %i items", (gint32) total);
-			zif_state_set_number_steps (commit->state, total);
-			commit->step = ZIF_TRANSACTION_STEP_PREPARING;
-			break;
-
-		case RPMCALLBACK_TRANS_STOP:
-
-			/* don't do anything */
-			g_debug ("transaction stop");
-			break;
-
-		case RPMCALLBACK_UNINST_STOP:
-
-			/* no idea */
-			g_debug ("uninstall done");
+		/* progress */
+		g_debug ("progress %i/%i", (gint32) amount, (gint32) total);
+		zif_state_set_percentage (commit->child, (100.0f / (gfloat) total) * (gfloat) amount);
+		if (amount == total) {
 			ret = zif_state_done (commit->state, &error_local);
 			if (!ret) {
 				g_warning ("state increment failed: %s",
 					   error_local->message);
 				g_error_free (error_local);
 			}
-			break;
+		}
+		break;
 
-		case RPMCALLBACK_UNPACK_ERROR:
-		case RPMCALLBACK_CPIO_ERROR:
-		case RPMCALLBACK_SCRIPT_ERROR:
-		case RPMCALLBACK_UNKNOWN:
-		case RPMCALLBACK_REPACKAGE_PROGRESS:
-		case RPMCALLBACK_REPACKAGE_START:
-		case RPMCALLBACK_REPACKAGE_STOP:
-			g_debug ("something uninteresting");
-			break;
-		default:
-			g_warning ("something else entirely");
-			break;
+	case RPMCALLBACK_TRANS_START:
+
+		/* we setup the state */
+		g_debug ("preparing transaction with %i items", (gint32) total);
+		zif_state_set_number_steps (commit->state, total);
+		commit->step = ZIF_TRANSACTION_STEP_PREPARING;
+		break;
+
+	case RPMCALLBACK_TRANS_STOP:
+
+		/* don't do anything */
+		g_debug ("transaction stop");
+		break;
+
+	case RPMCALLBACK_UNINST_STOP:
+
+		/* no idea */
+		g_debug ("uninstall done");
+		ret = zif_state_done (commit->state, &error_local);
+		if (!ret) {
+			g_warning ("state increment failed: %s",
+				   error_local->message);
+			g_error_free (error_local);
+		}
+		break;
+
+	case RPMCALLBACK_UNPACK_ERROR:
+	case RPMCALLBACK_CPIO_ERROR:
+	case RPMCALLBACK_SCRIPT_ERROR:
+	case RPMCALLBACK_UNKNOWN:
+	case RPMCALLBACK_REPACKAGE_PROGRESS:
+	case RPMCALLBACK_REPACKAGE_START:
+	case RPMCALLBACK_REPACKAGE_STOP:
+		g_debug ("something uninteresting");
+		break;
+	default:
+		g_warning ("something else entirely");
+		break;
 	}
 
 	return rc;

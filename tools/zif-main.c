@@ -144,6 +144,14 @@ zif_state_action_to_string_localized (ZifStateAction action)
 		/* TRANSLATORS: action */
 		return _("Removing");
 	}
+	if (action == ZIF_STATE_ACTION_UPDATING) {
+		/* TRANSLATORS: action */
+		return _("Updating");
+	}
+	if (action == ZIF_STATE_ACTION_CLEANING) {
+		/* TRANSLATORS: action */
+		return _("Cleaning");
+	}
 	if (action == ZIF_STATE_ACTION_PREPARING) {
 		/* TRANSLATORS: action */
 		return _("Preparing");
