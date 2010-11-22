@@ -443,6 +443,41 @@ zif_transaction_get_package_id_descriptions (GPtrArray *array)
 }
 
 /**
+ * zif_transaction_check_excludes:
+ **/
+static gboolean
+zif_transaction_check_excludes (ZifTransaction *transaction,
+				ZifPackage *package,
+				GError **error)
+{
+	gboolean ret = TRUE;
+	gchar **excludes = NULL;
+	guint i;
+
+	/* check excludes */
+	excludes = zif_config_get_strv (transaction->priv->config,
+					"excludes",
+					NULL);
+	if (excludes == NULL)
+		goto out;
+	for (i=0; excludes[i] != NULL; i++) {
+		if (g_strcmp0 (excludes[i],
+			       zif_package_get_name (package)) == 0) {
+			ret = FALSE;
+			g_set_error (error,
+				     ZIF_TRANSACTION_ERROR,
+				     ZIF_TRANSACTION_ERROR_FAILED,
+				     "package %s is excluded",
+				     zif_package_get_name (package));
+			goto out;
+		}
+	}
+out:
+	g_strfreev (excludes);
+	return ret;
+}
+
+/**
  * zif_transaction_add_install_internal:
  **/
 static gboolean
@@ -454,6 +489,11 @@ zif_transaction_add_install_internal (ZifTransaction *transaction,
 {
 	gboolean ret;
 	gchar *related_packages_str = NULL;
+
+	/* check excludes */
+	ret = zif_transaction_check_excludes (transaction, package, error);
+	if (!ret)
+		goto out;
 
 	/* add to install */
 	ret = zif_transaction_add_to_array (transaction->priv->install,
@@ -522,6 +562,11 @@ zif_transaction_add_update_internal (ZifTransaction *transaction,
 {
 	gboolean ret;
 	gchar *related_packages_str = NULL;
+
+	/* check excludes */
+	ret = zif_transaction_check_excludes (transaction, package, error);
+	if (!ret)
+		goto out;
 
 	/* add to update */
 	ret = zif_transaction_add_to_array (transaction->priv->update,
@@ -608,6 +653,11 @@ zif_transaction_add_remove_internal (ZifTransaction *transaction,
 			}
 		}
 	}
+
+	/* check excludes */
+	ret = zif_transaction_check_excludes (transaction, package, error);
+	if (!ret)
+		goto out;
 
 	/* add to remove */
 	ret = zif_transaction_add_to_array (transaction->priv->remove,
@@ -2320,6 +2370,25 @@ zif_transaction_set_progress (ZifTransaction *transaction, ZifState *state)
 }
 
 /**
+ * zif_transaction_get_array_success:
+ **/
+static guint
+zif_transaction_get_array_success (GPtrArray *array)
+{
+	guint i;
+	guint success = 0;
+	ZifTransactionItem *item;
+
+	/* count each transaction that's been processed or ignored */
+	for (i=0; i<array->len; i++) {
+		item = g_ptr_array_index (array, i);
+		if (item->resolved)
+			success++;
+	}
+	return success;
+}
+
+/**
  * zif_transaction_resolve:
  * @transaction: the #ZifTransaction object
  * @state: a #ZifState to use for progress reporting
@@ -2334,14 +2403,15 @@ zif_transaction_set_progress (ZifTransaction *transaction, ZifState *state)
 gboolean
 zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **error)
 {
-	guint i;
 	gboolean ret = FALSE;
-	ZifTransactionItem *item;
-	ZifTransactionResolve *data = NULL;
-	GError *error_local = NULL;
-	guint resolve_count = 0;
 	gboolean skip_broken;
+	GError *error_local = NULL;
+	guint i;
+	guint items_success;
+	guint resolve_count = 0;
+	ZifTransactionItem *item;
 	ZifTransactionPrivate *priv;
+	ZifTransactionResolve *data = NULL;
 
 	g_return_val_if_fail (ZIF_IS_TRANSACTION (transaction), FALSE);
 	g_return_val_if_fail (zif_state_valid (state), FALSE);
@@ -2520,9 +2590,11 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 	}
 
 	/* anything to do? */
-	if (priv->install->len == 0 &&
-	    priv->update->len == 0 &&
-	    priv->remove->len == 0) {
+	items_success = zif_transaction_get_array_success (priv->install);
+	items_success += zif_transaction_get_array_success (priv->remove);
+
+	/* anything to do? */
+	if (items_success == 0) {
 		ret = FALSE;
 		g_set_error_literal (error,
 				     ZIF_TRANSACTION_ERROR,

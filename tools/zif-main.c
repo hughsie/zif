@@ -3913,6 +3913,7 @@ main (int argc, char *argv[])
 	gboolean assume_no = FALSE;
 	gchar *cmd_descriptions = NULL;
 	gchar *config_file = NULL;
+	gchar *excludes = NULL;
 	gchar *http_proxy = NULL;
 	gchar *options_help = NULL;
 	gchar *root = NULL;
@@ -3935,6 +3936,8 @@ main (int argc, char *argv[])
 			_("Work offline when possible"), NULL },
 		{ "config", 'c', 0, G_OPTION_ARG_STRING, &config_file,
 			_("Use different config file"), NULL },
+		{ "excludes", 'c', 0, G_OPTION_ARG_STRING, &excludes,
+			_("Exclude certain packages"), NULL },
 		{ "root", 'c', 0, G_OPTION_ARG_STRING, &root,
 			_("Use different rpm database root"), NULL },
 		{ "proxy", 'p', 0, G_OPTION_ARG_STRING, &http_proxy,
@@ -4012,6 +4015,12 @@ main (int argc, char *argv[])
 	ret = zif_config_set_string (priv->config, "prefix", root, &error);
 	if (!ret) {
 		g_error ("failed to set prefix: %s", error->message);
+		g_error_free (error);
+		goto out;
+	}
+	ret = zif_config_set_string (priv->config, "excludes", excludes, &error);
+	if (!ret) {
+		g_error ("failed to set excludes: %s", error->message);
 		g_error_free (error);
 		goto out;
 	}
