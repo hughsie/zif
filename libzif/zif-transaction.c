@@ -3218,6 +3218,7 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 	guint i;
 	Header hdr;
 	rpmdb db = NULL;
+	rpmprobFilterFlags problems_filter = 0;
 	rpmps probs = NULL;
 	ZifState *state_local;
 	ZifState *state_loop;
@@ -3334,6 +3335,10 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 	rpmtsSetVSFlags (commit->ts, flags);
 	rpmtsSetFlags (commit->ts, RPMTRANS_FLAG_NONE);
 	commit->state = zif_state_get_child (state);
+
+	/* filter diskspace */
+	if (!zif_config_get_boolean (priv->config, "diskspacecheck", NULL))
+		problems_filter += RPMPROB_FILTER_DISKSPACE;
 
 	/* run the transaction */
 	rc = rpmtsRun (commit->ts, NULL, RPMPROB_FILTER_NONE);
