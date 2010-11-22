@@ -3073,6 +3073,48 @@ out:
 }
 
 /**
+ * zif_transaction_delete_packages:
+ **/
+static gboolean
+zif_transaction_delete_packages (ZifTransaction *transaction, ZifState *state, GError **error)
+{
+	GFile *file;
+	guint i;
+	guint ret = TRUE;
+	ZifState *state_local;
+	ZifState *state_loop;
+	ZifTransactionItem *item;
+	ZifTransactionPrivate *priv = transaction->priv;
+
+	/* nothing to delete? */
+	if (priv->install->len == 0)
+		goto out;
+
+	/* delete each downloaded file */
+	state_local = zif_state_get_child (state);
+	zif_state_set_number_steps (state_local, priv->install->len);
+	for (i=0; i<priv->install->len; i++) {
+		item = g_ptr_array_index (priv->install, i);
+
+		/* delete the cache file */
+		state_loop = zif_state_get_child (state_local);
+		file = zif_package_get_cache_file (item->package,
+						   state_loop,
+						   error);
+		ret = g_file_delete (file, NULL, error);
+		if (!ret)
+			goto out;
+
+		/* this part done */
+		ret = zif_state_done (state_local, error);
+		if (!ret)
+			goto out;
+	}
+out:
+	return ret;
+}
+
+/**
  * zif_transaction_commit:
  * @transaction: the #ZifTransaction object
  * @state: a #ZifState to use for progress reporting
@@ -3088,20 +3130,21 @@ gboolean
 zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **error)
 {
 	const gchar *prefix;
+	gboolean keep_cache;
 	gboolean ret = FALSE;
+	gchar *verbosity_string = NULL;
+	gint flags;
+	gint rc;
 	gint retval;
+	gint verbosity;
 	guint i;
 	Header hdr;
-	int flags;
-	int rc;
-	gint verbosity;
-	gchar *verbosity_string = NULL;
 	rpmdb db = NULL;
 	rpmps probs = NULL;
 	ZifState *state_local;
 	ZifState *state_loop;
-	ZifTransactionItem *item;
 	ZifTransactionCommit *commit = NULL;
+	ZifTransactionItem *item;
 	ZifTransactionPrivate *priv;
 
 	g_return_val_if_fail (ZIF_IS_TRANSACTION (transaction), FALSE);
@@ -3126,7 +3169,9 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 				   error,
 				   2, /* install */
 				   2, /* remove */
-				   96, /* commit */
+				   91, /* commit */
+				   2, /* write log */
+				   3, /* delete files */
 				   -1);
 	if (!ret)
 		goto out;
@@ -3253,6 +3298,27 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 
 	/* append to the config file */
 	ret = zif_transaction_write_log (transaction, error);
+	if (!ret)
+		goto out;
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* remove the files we downloaded */
+	keep_cache = zif_config_get_boolean (priv->config, "keepcache", NULL);
+	if (!keep_cache) {
+		state_local = zif_state_get_child (state);
+		ret = zif_transaction_delete_packages (transaction,
+						       state_local,
+						       error);
+		if (!ret)
+			goto out;
+	}
+
+	/* this section done */
+	ret = zif_state_done (state, error);
 	if (!ret)
 		goto out;
 

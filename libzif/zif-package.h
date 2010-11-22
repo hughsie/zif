@@ -122,6 +122,9 @@ const gchar		*zif_package_get_group		(ZifPackage	*package,
 const gchar		*zif_package_get_cache_filename	(ZifPackage	*package,
 							 ZifState	*state,
 							 GError		**error);
+GFile			*zif_package_get_cache_file	(ZifPackage	*package,
+							 ZifState	*state,
+							 GError		**error);
 guint64			 zif_package_get_size		(ZifPackage	*package,
 							 ZifState	*state,
 							 GError		**error);

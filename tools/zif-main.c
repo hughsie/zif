@@ -1470,7 +1470,7 @@ zif_cmd_help (ZifCmdPrivate *priv, gchar **values, GError **error)
 }
 
 /**
- * zif_transaction_run:
+ * zif_cmd_prompt:
  **/
 static gboolean
 zif_cmd_prompt (const gchar *title)
@@ -1733,6 +1733,7 @@ zif_cmd_install (ZifCmdPrivate *priv, gchar **values, GError **error)
 		goto out;
 
 	/* check we can find a package of this name */
+	state_local = zif_state_get_child (priv->state);
 	array = zif_store_array_resolve (store_array_remote, values, state_local, error);
 	if (array == NULL) {
 		ret = FALSE;
