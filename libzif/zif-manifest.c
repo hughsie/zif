@@ -492,6 +492,37 @@ out:
 }
 
 /**
+ * zif_manifest_set_config:
+ **/
+static gboolean
+zif_manifest_set_config (ZifManifest *manifest,
+			 const gchar *config,
+			 GError **error)
+{
+	gboolean ret = TRUE;
+	gchar **split;
+	gchar **vars;
+	guint i;
+
+	/* each option */
+	split = g_strsplit (config, ",", -1);
+	for (i=0; split[i] != NULL; i++) {
+		vars = g_strsplit (split[i], ":", 2);
+		zif_config_unset (manifest->priv->config, vars[0], NULL);
+		g_debug ("config %s=%s", vars[0], vars[1]);
+		ret = zif_config_set_string (manifest->priv->config,
+					     vars[0], vars[1],
+					     error);
+		g_strfreev (vars);
+		if (!ret)
+			goto out;
+	}
+out:
+	g_strfreev (split);
+	return ret;
+}
+
+/**
  * zif_manifest_check:
  * @manifest: the #ZifManifest object
  * @filename: the maifest file to use
@@ -511,6 +542,7 @@ zif_manifest_check (ZifManifest *manifest,
 {
 	gboolean added_something = FALSE;
 	gboolean ret;
+	gchar *config = NULL;
 	gchar *dirname = NULL;
 	gchar *packages_local = NULL;
 	gchar *packages_remote = NULL;
@@ -629,6 +661,14 @@ zif_manifest_check (ZifManifest *manifest,
 	ret = zif_config_set_boolean (manifest->priv->config, "skip_broken", ret, error);
 	if (!ret)
 		goto out;
+
+	/* set config options this */
+	config = g_key_file_get_string (keyfile, "Zif Manifest", "SetConfig", NULL);
+	if (config != NULL) {
+		ret = zif_manifest_set_config (manifest, config, error);
+		if (!ret)
+			goto out;
+	}
 
 	/* always set verbose */
 	zif_transaction_set_verbose (transaction, TRUE);
@@ -785,6 +825,7 @@ out:
 	g_free (packages_local);
 	g_free (packages_remote);
 	g_free (post_installed);
+	g_free (config);
 	if (local != NULL)
 		g_object_unref (local);
 	if (remote != NULL)

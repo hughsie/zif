@@ -64,6 +64,9 @@ ZifConfig	*zif_config_new			(void);
 gboolean	 zif_config_set_filename	(ZifConfig	*config,
 						 const gchar	*filename,
 						 GError		**error);
+gboolean	 zif_config_unset		(ZifConfig	*config,
+						 const gchar	*key,
+						 GError		**error);
 gchar		*zif_config_get_string		(ZifConfig	*config,
 						 const gchar	*key,
 						 GError		**error);

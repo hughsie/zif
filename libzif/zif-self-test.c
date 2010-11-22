@@ -399,7 +399,7 @@ zif_config_func (void)
 
 	ret = zif_config_get_boolean (config, "exactarch", &error);
 	g_assert_no_error (error);
-	g_assert (ret);
+	g_assert (!ret);
 
 	ret = zif_config_set_string (config, "cachedir", "/tmp/cache", &error);
 	g_assert_no_error (error);

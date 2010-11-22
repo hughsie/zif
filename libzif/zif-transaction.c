@@ -762,13 +762,16 @@ out:
  * _zif_package_array_filter_best_provide:
  **/
 static gboolean
-_zif_package_array_filter_best_provide (GPtrArray *array,
+_zif_package_array_filter_best_provide (ZifTransaction *transaction,
+					GPtrArray *array,
 					ZifDepend *depend,
 					ZifPackage **package,
 					ZifState *state,
 					GError **error)
 {
+	gboolean exactarch;
 	gboolean ret = TRUE;
+	gchar *archinfo = NULL;
 	ZifDepend *best_depend = NULL;
 	GError *error_local = NULL;
 	GPtrArray *depend_array = NULL;
@@ -786,6 +789,15 @@ _zif_package_array_filter_best_provide (GPtrArray *array,
 	if (best_depend != NULL) {
 		g_debug ("best depend was %s",
 			 zif_depend_get_description (best_depend));
+	}
+
+	/* is the exact arch required? */
+	exactarch = zif_config_get_boolean (transaction->priv->config,
+					    "exactarch", NULL);
+	if (exactarch) {
+		archinfo = zif_config_get_string (transaction->priv->config,
+						  "archinfo", NULL);
+		zif_package_array_filter_arch (array, archinfo);
 	}
 
 	/* filter these down so we get best architectures listed first */
@@ -831,6 +843,7 @@ _zif_package_array_filter_best_provide (GPtrArray *array,
 		goto out;
 	}
 out:
+	g_free (archinfo);
 	if (best_depend != NULL)
 		g_object_unref (best_depend);
 	if (depend_array != NULL)
@@ -844,7 +857,8 @@ out:
  * Returns a package that provides something.
  **/
 static gboolean
-zif_transaction_get_package_provide_from_store (ZifStore *store,
+zif_transaction_get_package_provide_from_store (ZifTransaction *transaction,
+						ZifStore *store,
 						ZifDepend *depend,
 						ZifPackage **package,
 						ZifState *state,
@@ -893,7 +907,7 @@ zif_transaction_get_package_provide_from_store (ZifStore *store,
 
 		/* get an array of packages that provide this */
 		state_local = zif_state_get_child (state);
-		ret = _zif_package_array_filter_best_provide (array, depend,
+		ret = _zif_package_array_filter_best_provide (transaction, array, depend,
 							      package, state_local, error);
 		if (!ret)
 			goto out;
@@ -1002,7 +1016,8 @@ out:
  * Returns an array of packages that provide something.
  **/
 static gboolean
-zif_transaction_get_packages_provides_from_store_array (GPtrArray *store_array,
+zif_transaction_get_packages_provides_from_store_array (ZifTransaction *transaction,
+							GPtrArray *store_array,
 							ZifDepend *depend,
 							GPtrArray **array,
 							ZifState *state,
@@ -1019,7 +1034,8 @@ zif_transaction_get_packages_provides_from_store_array (GPtrArray *store_array,
 		store = g_ptr_array_index (store_array, i);
 
 		/* get provide */
-		ret = zif_transaction_get_package_provide_from_store (store,
+		ret = zif_transaction_get_package_provide_from_store (transaction,
+								      store,
 								      depend,
 								      &package,
 								      state,
@@ -1045,7 +1061,8 @@ out:
  * zif_transaction_get_package_provide_from_store_array:
  **/
 static gboolean
-zif_transaction_get_package_provide_from_store_array (GPtrArray *store_array,
+zif_transaction_get_package_provide_from_store_array (ZifTransaction *transaction,
+						      GPtrArray *store_array,
 						      ZifDepend *depend,
 						      ZifPackage **package,
 						      ZifState *state,
@@ -1056,7 +1073,8 @@ zif_transaction_get_package_provide_from_store_array (GPtrArray *store_array,
 	GError *error_local = NULL;
 
 	/* get the list */
-	ret = zif_transaction_get_packages_provides_from_store_array (store_array,
+	ret = zif_transaction_get_packages_provides_from_store_array (transaction,
+								      store_array,
 								      depend,
 								      &array,
 								      state,
@@ -1128,7 +1146,8 @@ zif_transaction_resolve_install_depend (ZifTransactionResolve *data,
 	/* already provided in the rpmdb */
 	g_debug ("searching for %s in local",
 		 zif_depend_get_description (depend));
-	ret = zif_transaction_get_package_provide_from_store (data->transaction->priv->store_local,
+	ret = zif_transaction_get_package_provide_from_store (data->transaction,
+							      data->transaction->priv->store_local,
 							      depend, &package_provide,
 							      data->state, error);
 	if (!ret) {
@@ -1144,7 +1163,8 @@ zif_transaction_resolve_install_depend (ZifTransactionResolve *data,
 
 	/* provided by something to be installed */
 	g_debug ("searching in remote");
-	ret = zif_transaction_get_package_provide_from_store_array (data->transaction->priv->stores_remote,
+	ret = zif_transaction_get_package_provide_from_store_array (data->transaction,
+								    data->transaction->priv->stores_remote,
 								    depend, &package_provide,
 								    data->state, error);
 	if (!ret) {
@@ -2209,7 +2229,8 @@ zif_transaction_resolve_conflicts_item (ZifTransactionResolve *data,
 		/* does this install conflict with another package */
 		g_debug ("checking conflict %s",
 			 zif_depend_get_description (depend));
-		ret = zif_transaction_get_package_provide_from_store (data->transaction->priv->store_local,
+		ret = zif_transaction_get_package_provide_from_store (data->transaction,
+								      data->transaction->priv->store_local,
 								      depend, &conflicting,
 								      data->state, error);
 		if (!ret) {

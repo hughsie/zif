@@ -247,6 +247,34 @@ zif_package_array_filter_best_arch (GPtrArray *array)
 }
 
 /**
+ * zif_package_array_filter_arch:
+ * @array: array of %ZifPackage's
+ * @arch: architecture string, e.g. "i486"
+ *
+ * Filters the array so that only the matching arch of a package remains.
+ *
+ * Since: 0.1.3
+ **/
+void
+zif_package_array_filter_arch (GPtrArray *array, const gchar *arch)
+{
+	const gchar *arch_tmp;
+	guint i;
+	ZifPackage *package;
+
+	/* remove any that are not best */
+	for (i=0; i<array->len;) {
+		package = g_ptr_array_index (array, i);
+		arch_tmp = zif_package_get_arch (package);
+		if (g_strcmp0 (arch, arch_tmp) != 0) {
+			g_ptr_array_remove_index_fast (array, i);
+			continue;
+		}
+		i++;
+	}
+}
+
+/**
  * zif_package_array_filter_smallest_name:
  * @array: array of %ZifPackage's
  *

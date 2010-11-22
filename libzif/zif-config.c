@@ -81,6 +81,40 @@ zif_config_error_quark (void)
 }
 
 /**
+ * zif_config_unset:
+ * @config: the #ZifConfig object
+ * @key: the key name to unset, e.g. "cachedir"
+ * @error: a #GError which is used on failure, or %NULL
+ *
+ * Unsets an overriden value back to the default.
+ *
+ * Return value: %TRUE for success
+ *
+ * Since: 0.1.3
+ **/
+gboolean
+zif_config_unset (ZifConfig *config, const gchar *key, GError **error)
+{
+	gboolean ret = FALSE;
+
+	g_return_val_if_fail (ZIF_IS_CONFIG (config), FALSE);
+	g_return_val_if_fail (key != NULL, FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+	/* not loaded yet */
+	if (!config->priv->loaded) {
+		g_set_error_literal (error, ZIF_CONFIG_ERROR, ZIF_CONFIG_ERROR_FAILED,
+				     "config not loaded");
+		goto out;
+	}
+
+	/* remove */
+	ret = g_hash_table_remove (config->priv->hash_override, key);
+out:
+	return ret;
+}
+
+/**
  * zif_config_get_string:
  * @config: the #ZifConfig object
  * @key: the key name to retrieve, e.g. "cachedir"
