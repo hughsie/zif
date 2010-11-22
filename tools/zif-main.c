@@ -117,43 +117,51 @@ static const gchar *
 zif_state_action_to_string_localized (ZifStateAction action)
 {
 	if (action == ZIF_STATE_ACTION_CHECKING) {
-		/* TRANSLATORS: action */
+		/* TRANSLATORS: this is when files, usually metadata or
+		 * package files are being checked for consitency */
 		return _("Checking");
 	}
 	if (action == ZIF_STATE_ACTION_DOWNLOADING) {
-		/* TRANSLATORS: action */
+		/* TRANSLATORS: a file is currently downloading */
 		return _("Downloading");
 	}
 	if (action == ZIF_STATE_ACTION_LOADING_REPOS) {
-		/* TRANSLATORS: action */
+		/* TRANSLATORS: a repository file is being read, and
+		 * the packages created internally */
 		return _("Loading repository");
 	}
 	if (action == ZIF_STATE_ACTION_DECOMPRESSING) {
-		/* TRANSLATORS: action */
+		/* TRANSLATORS: when a compressed metadata file is
+		 * being uncompressed onto the disk */
 		return _("Decompressing");
 	}
 	if (action == ZIF_STATE_ACTION_DEPSOLVING) {
-		/* TRANSLATORS: action */
+		/* TRANSLATORS: when the transaction is being resolved,
+		 * and we make sure that it makes sense by adding and
+		 * removing dependencies where required */
 		return _("Depsolving");
 	}
 	if (action == ZIF_STATE_ACTION_INSTALLING) {
-		/* TRANSLATORS: action */
+		/* TRANSLATORS: installing a package to the local system */
 		return _("Installing");
 	}
 	if (action == ZIF_STATE_ACTION_REMOVING) {
-		/* TRANSLATORS: action */
+		/* TRANSLATORS: removing (deleting) a package */
 		return _("Removing");
 	}
 	if (action == ZIF_STATE_ACTION_UPDATING) {
-		/* TRANSLATORS: action */
+		/* TRANSLATORS: updating an old version to a new version */
 		return _("Updating");
 	}
 	if (action == ZIF_STATE_ACTION_CLEANING) {
-		/* TRANSLATORS: action */
+		/* TRANSLATORS: Cleaning up after an update, where we
+		 * remove the old version */
 		return _("Cleaning");
 	}
 	if (action == ZIF_STATE_ACTION_PREPARING) {
-		/* TRANSLATORS: action */
+		/* TRANSLATORS: getting ready to do run the transaction,
+		 * doing things like checking the database and checking
+		 * for file conflicts */
 		return _("Preparing");
 	}
 	return zif_state_action_to_string (action);
@@ -378,7 +386,7 @@ zif_cmd_clean (ZifCmdPrivate *priv, gchar **values, GError **error)
 	ZifState *state_local;
 	GPtrArray *store_array = NULL;
 
-	/* TRANSLATORS: performing action */
+	/* TRANSLATORS: we're cleaning the repo, deleting old files */
 	zif_progress_bar_start (priv->progressbar, _("Cleaning"));
 
 	/* setup state with the correct number of steps */
@@ -473,7 +481,7 @@ zif_cmd_download (ZifCmdPrivate *priv, gchar **values, GError **error)
 	if (!ret)
 		goto out;
 
-	/* TRANSLATORS: performing action */
+	/* TRANSLATORS: downloading packages */
 	zif_progress_bar_start (priv->progressbar, _("Downloading"));
 
 	/* download package file */
@@ -517,8 +525,8 @@ zif_cmd_find_package (ZifCmdPrivate *priv, gchar **values, GError **error)
 		goto out;
 	}
 
-	/* TRANSLATORS: performing action */
-	zif_progress_bar_start (priv->progressbar, _("Resolving package"));
+	/* TRANSLATORS: finding packages in local and remote repos */
+	zif_progress_bar_start (priv->progressbar, _("Finding package"));
 
 	/* setup state with the correct number of steps */
 	ret = zif_state_set_steps (priv->state,
@@ -600,7 +608,7 @@ zif_cmd_get_categories (ZifCmdPrivate *priv, gchar **values, GError **error)
 	ZifCategory *obj;
 	ZifState *state_local;
 
-	/* TRANSLATORS: performing action */
+	/* TRANSLATORS: getting the hierarchical groups from the server */
 	zif_progress_bar_start (priv->progressbar, _("Getting categories"));
 
 	/* setup state with the correct number of steps */
@@ -692,11 +700,14 @@ zif_cmd_get_depends (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 	/* check we have a value */
 	if (values == NULL || values[0] == NULL) {
-		g_set_error (error, 1, 0, "specify a package name");
+		/* TRANSLATORS: error message: the user did not specify
+		 * a required value */
+		g_set_error_literal (error, 1, 0,
+				     _("Specify a package name"));
 		goto out;
 	}
 
-	/* TRANSLATORS: performing action */
+	/* TRANSLATORS: getting the list pf package dependencies for a package */
 	zif_progress_bar_start (priv->progressbar, _("Getting depends"));
 
 	/* use a temp string to get output results */
@@ -769,7 +780,8 @@ zif_cmd_get_depends (ZifCmdPrivate *priv, gchar **values, GError **error)
 	for (i=0; i<requires->len; i++) {
 		require = g_ptr_array_index (requires, i);
 		require_str = zif_depend_get_description (require);
-		g_string_append_printf (string, "  dependency: %s\n", require_str);
+		/* TRANSLATORS: this is a item prefix */
+		g_string_append_printf (string, "  %s %s\n", _("Dependency:"), require_str);
 	}
 
 	/* find the packages providing the depends */
@@ -785,7 +797,9 @@ zif_cmd_get_depends (ZifCmdPrivate *priv, gchar **values, GError **error)
 		package = g_ptr_array_index (provides, j);
 		package_id = zif_package_get_id (package);
 		split = zif_package_id_split (package_id);
-		g_string_append_printf (string, "   provider: %s-%s.%s (%s)\n",
+		/* TRANSLATORS: this is a item prefix */
+		g_string_append_printf (string, "   %s %s-%s.%s (%s)\n",
+					_("Provider:"),
 					split[ZIF_PACKAGE_ID_NAME],
 					split[ZIF_PACKAGE_ID_VERSION],
 					split[ZIF_PACKAGE_ID_ARCH],
@@ -839,7 +853,7 @@ zif_cmd_get_details (ZifCmdPrivate *priv, gchar **values, GError **error)
 	ZifState *state_local;
 	ZifState *state_loop;
 
-	/* TRANSLATORS: performing action */
+	/* TRANSLATORS: getting the details (summary, size, etc) of a package */
 	zif_progress_bar_start (priv->progressbar, _("Getting details"));
 
 	/* setup state with the correct number of steps */
@@ -877,7 +891,10 @@ zif_cmd_get_details (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 	/* check we have a value */
 	if (values == NULL || values[0] == NULL) {
-		g_set_error (error, 1, 0, "specify a package name");
+		/* TRANSLATORS: error message: the user did not specify
+		 * a required value */
+		g_set_error_literal (error, 1, 0,
+				     _("Specify a package name"));
 		goto out;
 	}
 	state_local = zif_state_get_child (priv->state);
@@ -893,7 +910,9 @@ zif_cmd_get_details (ZifCmdPrivate *priv, gchar **values, GError **error)
 		goto out;
 
 	if (array->len == 0) {
-		g_set_error (error, 1, 0, "no package found");
+		/* TRANSLATORS: error message: nothing was found */
+		g_set_error_literal (error, 1, 0,
+				     _("No package was found"));
 		goto out;
 	}
 
@@ -912,15 +931,16 @@ zif_cmd_get_details (ZifCmdPrivate *priv, gchar **values, GError **error)
 		url = zif_package_get_url (package, state_loop, NULL);
 		size = zif_package_get_size (package, state_loop, NULL);
 
-		g_print ("Name\t : %s\n", zif_package_get_name (package));
-		g_print ("Version\t : %s\n", zif_package_get_version (package));
-		g_print ("Arch\t : %s\n", zif_package_get_arch (package));
-		g_print ("Size\t : %" G_GUINT64_FORMAT " bytes\n", size);
-		g_print ("Repo\t : %s\n", zif_package_get_data (package));
-		g_print ("Summary\t : %s\n", summary);
-		g_print ("URL\t : %s\n", url);
-		g_print ("License\t : %s\n", license);
-		g_print ("Description\t : %s\n", description);
+		/* TRANSLATORS: these are headers for the package data */
+		g_print ("%s\t : %s\n", _("Name"), zif_package_get_name (package));
+		g_print ("%s\t : %s\n", _("Version"), zif_package_get_version (package));
+		g_print ("%s\t : %s\n", _("Arch"), zif_package_get_arch (package));
+		g_print ("%s\t : %" G_GUINT64_FORMAT " bytes\n", _("Size"), size);
+		g_print ("%s\t : %s\n", _("Repo"), zif_package_get_data (package));
+		g_print ("%s\t : %s\n", _("Summary"), summary);
+		g_print ("%s\t : %s\n", _("URL"), url);
+		g_print ("%s\t : %s\n", _("License"), license);
+		g_print ("%s\t : %s\n", _("Description"), description);
 
 		/* this section done */
 		ret = zif_state_done (priv->state, error);
@@ -959,12 +979,13 @@ zif_cmd_get_files (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 	/* check we have a value */
 	if (values == NULL || values[0] == NULL) {
-		g_set_error (error, 1, 0, "specify a package name");
+		/* TRANSLATORS: error message: user needs to specify a value */
+		g_set_error (error, 1, 0, _("Specify a package name"));
 		goto out;
 	}
 
-	/* TRANSLATORS: performing action */
-	zif_progress_bar_start (priv->progressbar, _("Get file data"));
+	/* TRANSLATORS: getting file lists for a package */
+	zif_progress_bar_start (priv->progressbar, _("Getting files"));
 
 	/* setup state with the correct number of steps */
 	ret = zif_state_set_steps (priv->state,
@@ -1024,7 +1045,8 @@ zif_cmd_get_files (ZifCmdPrivate *priv, gchar **values, GError **error)
 			g_print ("%s\n", (const gchar *) g_ptr_array_index (files, i));
 		g_ptr_array_unref (files);
 	} else {
-		g_set_error (error, 1, 0, "Failed to match any packages to '%s'", values[0]);
+		/* TRANSLATORS: error message */
+		g_set_error (error, 1, 0, "%s %s", _("Failed to match any packages for :"), values[0]);
 	}
 
 	zif_progress_bar_end (priv->progressbar);
@@ -1093,7 +1115,7 @@ zif_cmd_get_packages (ZifCmdPrivate *priv, gchar **values, GError **error)
 	GPtrArray *store_array = NULL;
 	ZifState *state_local;
 
-	/* TRANSLATORS: performing action */
+	/* TRANSLATORS: getting all the packages */
 	zif_progress_bar_start (priv->progressbar, _("Getting packages"));
 
 	/* setup state with the correct number of steps */
@@ -1333,7 +1355,7 @@ zif_cmd_get_updates (ZifCmdPrivate *priv, gchar **values, GError **error)
 	GPtrArray *array = NULL;
 	ZifTransaction *transaction = NULL;
 
-	/* TRANSLATORS: performing action */
+	/* TRANSLATORS: getting the list of packages that can be updated */
 	zif_progress_bar_start (priv->progressbar, _("Getting updates"));
 
 	/* get the update list */
@@ -1399,7 +1421,7 @@ zif_cmd_get_upgrades (ZifCmdPrivate *priv, gchar **values, GError **error)
 	guint version;
 	ZifUpgrade *upgrade;
 
-	/* TRANSLATORS: performing action */
+	/* TRANSLATORS: getting details of any distro upgrades */
 	zif_progress_bar_start (priv->progressbar, _("Getting upgrades"));
 
 	version = zif_config_get_uint (priv->config, "releasever", NULL);
@@ -1413,14 +1435,14 @@ zif_cmd_get_upgrades (ZifCmdPrivate *priv, gchar **values, GError **error)
 	zif_progress_bar_end (priv->progressbar);
 
 	/* print the results */
-	g_print ("Distribution upgrades available:\n");
+	g_print ("%s\n", _("Distribution upgrades available:"));
 	for (i=0; i<array->len; i++) {
 		upgrade = g_ptr_array_index (array, i);
 		if (!zif_upgrade_get_enabled (upgrade))
 			continue;
 		g_print ("%s\t[%s]\n",
 			 zif_upgrade_get_id (upgrade),
-			 zif_upgrade_get_stable (upgrade) ? "stable" : "unstable");
+			 zif_upgrade_get_stable (upgrade) ? _("stable") : _("unstable"));
 	}
 
 	/* success */
@@ -1442,14 +1464,16 @@ zif_cmd_get_config_value (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 	/* check we have a value */
 	if (values == NULL || values[0] == NULL) {
-		g_set_error (error, 1, 0, "specify a config key");
+		/* TRANSLATORS: the user didn't specify a required value */
+		g_set_error_literal (error, 1, 0, _("Specify a config key"));
 		goto out;
 	}
 
 	/* get value */
 	value = zif_config_get_string (priv->config, values[0], NULL);
 	if (value == NULL) {
-		g_set_error (error, 1, 0, "no value for %s", values[0]);
+		/* TRANSLATORS: there was no value in the config files */
+		g_set_error (error, 1, 0, _("No value for %s"), values[0]);
 		goto out;
 	}
 
@@ -1679,7 +1703,10 @@ zif_cmd_install (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 	/* check we have a value */
 	if (values == NULL || values[0] == NULL) {
-		g_set_error (error, 1, 0, "specify a package name");
+		/* TRANSLATORS: error message: the user did not specify
+		 * a required value */
+		g_set_error_literal (error, 1, 0,
+				     _("Specify a package name"));
 		goto out;
 	}
 
@@ -2143,7 +2170,10 @@ zif_cmd_remove (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 	/* check we have a value */
 	if (values == NULL || values[0] == NULL) {
-		g_set_error (error, 1, 0, "specify a package name");
+		/* TRANSLATORS: error message: the user did not specify
+		 * a required value */
+		g_set_error_literal (error, 1, 0,
+				     _("Specify a package name"));
 		goto out;
 	}
 
@@ -2463,12 +2493,15 @@ zif_cmd_resolve (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 	/* check we have a value */
 	if (values == NULL || values[0] == NULL) {
-		g_set_error (error, 1, 0, "specify a package name");
+		/* TRANSLATORS: error message: the user did not specify
+		 * a required value */
+		g_set_error_literal (error, 1, 0,
+				     _("Specify a package name"));
 		goto out;
 	}
 
-	/* TRANSLATORS: performing action */
-	zif_progress_bar_start (priv->progressbar, _("Resolving"));
+	/* TRANSLATORS: finding packages from a name */
+	zif_progress_bar_start (priv->progressbar, _("Finding package name"));
 
 	/* setup state with the correct number of steps */
 	ret = zif_state_set_steps (priv->state,
@@ -2537,11 +2570,14 @@ zif_cmd_search_category (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 	/* check we have a value */
 	if (values == NULL || values[0] == NULL) {
-		g_set_error (error, 1, 0, "specify a category");
+		/* TRANSLATORS: error message: the user did not specify
+		 * a required value */
+		g_set_error_literal (error, 1, 0,
+				     _("Specify a category"));
 		goto out;
 	}
 
-	/* TRANSLATORS: performing action */
+	/* TRANSLATORS: returning all packages that match a category */
 	zif_progress_bar_start (priv->progressbar, _("Search category"));
 
 	/* setup state with the correct number of steps */
@@ -2605,7 +2641,7 @@ zif_cmd_search_details (ZifCmdPrivate *priv, gchar **values, GError **error)
 		goto out;
 	}
 
-	/* TRANSLATORS: performing action */
+	/* TRANSLATORS: searching by package details, not just name */
 	zif_progress_bar_start (priv->progressbar, _("Searching details"));
 
 	/* setup state with the correct number of steps */
@@ -2676,11 +2712,12 @@ zif_cmd_search_file (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 	/* no files */
 	if (values == NULL || values[0] == NULL) {
-		g_set_error (error, 1, 0, "specify a filename");
+		/* TRANSLATORS: user needs to specify something */
+		g_set_error_literal (error, 1, 0, _("Specify a filename"));
 		goto out;
 	}
 
-	/* TRANSLATORS: performing action */
+	/* TRANSLATORS: searching for a specific file */
 	zif_progress_bar_start (priv->progressbar, _("Searching file"));
 
 	/* setup state with the correct number of steps */
@@ -2760,7 +2797,7 @@ zif_cmd_search_group (ZifCmdPrivate *priv, gchar **values, GError **error)
 		goto out;
 	}
 
-	/* TRANSLATORS: performing action */
+	/* TRANSLATORS: searching by a specific group */
 	zif_progress_bar_start (priv->progressbar, _("Search group"));
 
 	/* setup state with the correct number of steps */
@@ -2835,7 +2872,7 @@ zif_cmd_search_name (ZifCmdPrivate *priv, gchar **values, GError **error)
 		goto out;
 	}
 
-	/* TRANSLATORS: performing action */
+	/* TRANSLATORS: search, based on the package name only */
 	zif_progress_bar_start (priv->progressbar, _("Searching name"));
 
 	/* setup state with the correct number of steps */
@@ -2905,7 +2942,8 @@ zif_cmd_update_all (ZifCmdPrivate *priv, gchar **values, GError **error)
 	ZifState *state_local;
 	ZifTransaction *transaction = NULL;
 
-	/* TRANSLATORS: performing action */
+	/* TRANSLATORS: used when the user did not explicitly specify a
+	 * list of updates to install */
 	zif_progress_bar_start (priv->progressbar, _("Updating everything"));
 
 	/* setup state */
@@ -2981,7 +3019,7 @@ zif_cmd_update (ZifCmdPrivate *priv, gchar **values, GError **error)
 		goto out;
 	}
 
-	/* TRANSLATORS: performing action */
+	/* TRANSLATORS: updating several packages */
 	zif_progress_bar_start (priv->progressbar, _("Updating"));
 
 	/* setup state */
@@ -3090,8 +3128,8 @@ zif_cmd_update_details (ZifCmdPrivate *priv, gchar **values, GError **error)
 		goto out;
 	}
 
-	/* TRANSLATORS: performing action */
-	zif_progress_bar_start (priv->progressbar, _("Updating"));
+	/* TRANSLATORS: gettin details about an update */
+	zif_progress_bar_start (priv->progressbar, _("Getting update details"));
 
 	/* setup state */
 	ret = zif_state_set_steps (priv->state,
@@ -3150,11 +3188,13 @@ zif_cmd_update_details (ZifCmdPrivate *priv, gchar **values, GError **error)
 			g_clear_error (&error_local);
 			goto out;
 		}
-		g_print ("\t%s\t%s\n", "kind", zif_update_state_to_string (zif_update_get_kind (update)));
-		g_print ("\t%s\t%s\n", "id", zif_update_get_id (update));
-		g_print ("\t%s\t%s\n", "title", zif_update_get_title (update));
-		g_print ("\t%s\t%s\n", "description", zif_update_get_description (update));
-		g_print ("\t%s\t%s\n", "issued", zif_update_get_issued (update));
+
+		/* TRANSLATORS: these are headings for the update details */
+		g_print ("\t%s\t%s\n", _("kind"), zif_update_state_to_string (zif_update_get_kind (update)));
+		g_print ("\t%s\t%s\n", _("id"), zif_update_get_id (update));
+		g_print ("\t%s\t%s\n", _("title"), zif_update_get_title (update));
+		g_print ("\t%s\t%s\n", _("description"), zif_update_get_description (update));
+		g_print ("\t%s\t%s\n", _("issued"), zif_update_get_issued (update));
 		update_infos = zif_update_get_update_infos (update);
 		for (j=0; j<update_infos->len; j++) {
 			info = g_ptr_array_index (update_infos, j);
@@ -3217,30 +3257,35 @@ zif_cmd_upgrade (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 	/* check we have a value */
 	if (values == NULL || values[0] == NULL) {
-		g_set_error (error, 1, 0, "specify a distro name, e.g. 'fedora-9'\n");
+		/* TRANSLATORS: error message, missing value */
+		g_set_error (error, 1, 0, "%s 'fedora-9'\n", _("Specify a distro name, e.g."));
 		goto out;
 	}
 
-	/* TRANSLATORS: performing action */
+	/* TRANSLATORS: upgrading to a new distro release, *not*
+	 * updating to a new package version */
 	zif_progress_bar_start (priv->progressbar, _("Upgrading"));
 
 	/* check valid */
 	distro_id_split = g_strsplit (values[0], "-", -1);
 	if (g_strv_length (distro_id_split) != 2) {
-		g_set_error (error, 1, 0, "distribution id invalid");
+		/* TRANSLATORS: error message, invalid value */
+		g_set_error_literal (error, 1, 0, _("Distribution name invalid"));
 		goto out;
 	}
 
 	/* check fedora */
 	if (g_strcmp0 (distro_id_split[0], "fedora") != 0) {
-		g_set_error (error, 1, 0, "only 'fedora' is supported");
+		/* TRANSLATORS: error message, invalid value */
+		g_set_error_literal (error, 1, 0, _("Only 'fedora' is supported"));
 		goto out;
 	}
 
 	/* check release */
 	version = atoi (distro_id_split[1]);
 	if (version < 13 || version > 99) {
-		g_set_error (error, 1, 0, "version number %i is invalid", version);
+		/* TRANSLATORS: error message, invalid value */
+		g_set_error (error, 1, 0, _("Version number %i is invalid"), version);
 		goto out;
 	}
 
@@ -3313,7 +3358,7 @@ zif_cmd_what_conflicts (ZifCmdPrivate *priv, gchar **values, GError **error)
 		goto out;
 	}
 
-	/* TRANSLATORS: performing action */
+	/* TRANSLATORS: find out what package conflicts */
 	zif_progress_bar_start (priv->progressbar, _("Conflicts"));
 
 	/* setup state with the correct number of steps */
@@ -3395,7 +3440,7 @@ zif_cmd_what_obsoletes (ZifCmdPrivate *priv, gchar **values, GError **error)
 		goto out;
 	}
 
-	/* TRANSLATORS: performing action */
+	/* TRANSLATORS: find out what package obsoletes */
 	zif_progress_bar_start (priv->progressbar, _("Obsoletes"));
 
 	/* setup state with the correct number of steps */
@@ -3477,7 +3522,7 @@ zif_cmd_what_provides (ZifCmdPrivate *priv, gchar **values, GError **error)
 		goto out;
 	}
 
-	/* TRANSLATORS: performing action */
+	/* TRANSLATORS: find out what package provides */
 	zif_progress_bar_start (priv->progressbar, _("Provides"));
 
 	/* setup state with the correct number of steps */
@@ -3560,7 +3605,7 @@ zif_cmd_what_requires (ZifCmdPrivate *priv, gchar **values, GError **error)
 		goto out;
 	}
 
-	/* TRANSLATORS: performing action */
+	/* TRANSLATORS: find out what package requires */
 	zif_progress_bar_start (priv->progressbar, _("Requires"));
 
 	/* setup state with the correct number of steps */
@@ -3647,7 +3692,8 @@ zif_cmd_run (ZifCmdPrivate *priv, const gchar *command, gchar **values, GError *
 
 	/* not found */
 	string = g_string_new ("");
-	g_string_append_printf (string, "command '%s' not found, valid commands are:\n", command);
+	/* TRANSLATORS: error message */
+	g_string_append_printf (string, "%s\n", _("Command not found, valid commands are:"));
 	for (i=0; i<priv->cmd_array->len; i++) {
 		item = g_ptr_array_index (priv->cmd_array, i);
 		g_string_append_printf (string, " * %s\n", item->name);
