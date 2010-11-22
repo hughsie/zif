@@ -271,7 +271,6 @@ zif_log_handler_cb (const gchar *log_domain, GLogLevelFlags log_level,
 }
 
 typedef struct {
-	gboolean		 assume_yes;
 	gboolean		 assume_no;
 	GOptionContext		*context;
 	GPtrArray		*cmd_array;
@@ -1564,6 +1563,7 @@ zif_main_show_transaction (ZifTransaction *transaction)
 static gboolean
 zif_transaction_run (ZifCmdPrivate *priv, ZifTransaction *transaction, ZifState *state, GError **error)
 {
+	gboolean assume_yes;
 	gboolean ret;
 	GPtrArray *store_array_remote = NULL;
 	ZifState *state_local;
@@ -1609,8 +1609,9 @@ zif_transaction_run (ZifCmdPrivate *priv, ZifTransaction *transaction, ZifState 
 	zif_main_show_transaction (transaction);
 
 	/* confirm */
+	assume_yes = zif_config_get_boolean (priv->config, "assumeyes", NULL);
 	if (priv->assume_no ||
-            (!priv->assume_yes && !zif_cmd_prompt (_("Run transaction?")))) {
+            (!assume_yes && !zif_cmd_prompt (_("Run transaction?")))) {
 		ret = FALSE;
 		/* TRANSLATORS: error message */
 		g_set_error_literal (error, 1, 0, _("User declined action"));
@@ -3972,7 +3973,6 @@ main (int argc, char *argv[])
 	zif_progress_bar_set_size (priv->progressbar, 30);
 
 	/* save in the private data */
-	priv->assume_yes = assume_yes;
 	priv->assume_no = assume_no;
 
 	/* do stuff on ctrl-c */
@@ -4028,6 +4028,12 @@ main (int argc, char *argv[])
 	ret = zif_config_set_boolean (priv->config, "skip_broken", skip_broken, &error);
 	if (!ret) {
 		g_error ("failed to set skip_broken: %s", error->message);
+		g_error_free (error);
+		goto out;
+	}
+	ret = zif_config_set_boolean (priv->config, "assumeyes", assume_yes, &error);
+	if (!ret) {
+		g_error ("failed to set assumeyes: %s", error->message);
 		g_error_free (error);
 		goto out;
 	}
