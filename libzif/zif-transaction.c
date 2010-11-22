@@ -2389,6 +2389,16 @@ zif_transaction_get_array_success (GPtrArray *array)
 }
 
 /**
+ * zif_transaction_item_sort_cb:
+ **/
+static gint
+zif_transaction_item_sort_cb (ZifTransactionItem **a, ZifTransactionItem **b)
+{
+	return g_strcmp0 (zif_package_get_name ((*a)->package),
+			  zif_package_get_name ((*b)->package));
+}
+
+/**
  * zif_transaction_resolve:
  * @transaction: the #ZifTransaction object
  * @state: a #ZifState to use for progress reporting
@@ -2602,6 +2612,10 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 				     "no packages will be installed, removed or updated");
 		goto out;
 	}
+
+	/* sort the install and remove arrays */
+	g_ptr_array_sort (priv->install, (GCompareFunc) zif_transaction_item_sort_cb);
+	g_ptr_array_sort (priv->remove, (GCompareFunc) zif_transaction_item_sort_cb);
 
 	/* this section done */
 	ret = zif_state_done (state, error);
