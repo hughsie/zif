@@ -952,7 +952,7 @@ out:
  **/
 static gboolean
 zif_transaction_get_package_requires_from_store (ZifStore *store,
-						 ZifDepend *depend,
+						 GPtrArray *depend_array,
 						 GHashTable *already_marked_to_remove,
 						 GPtrArray **requires,
 						 ZifState *state,
@@ -961,10 +961,11 @@ zif_transaction_get_package_requires_from_store (ZifStore *store,
 	gboolean ret = TRUE;
 	GError *error_local = NULL;
 	GPtrArray *array;
-	guint i;
+	guint i, j;
+	ZifDepend *depend;
+	ZifDepend *satisfies = NULL;
 	ZifPackage *package;
 	ZifTransactionItem *item;
-	ZifDepend *satisfies = NULL;
 
 	/* get the package list */
 	zif_state_reset (state);
@@ -988,31 +989,31 @@ zif_transaction_get_package_requires_from_store (ZifStore *store,
 		/* is already being removed? */
 		item = zif_transaction_get_item_from_hash (already_marked_to_remove,
 							   package);
-		if (item != NULL) {
-			if (0) {
-				g_debug ("not getting requires for %s, as already in remove array",
-					 zif_package_get_id (package));
-			}
+		if (item != NULL)
 			continue;
+
+		for (j=0; j<depend_array->len; j++) {
+
+			/* get requires */
+			depend = g_ptr_array_index (depend_array, j);
+			ret = zif_package_requires (package,
+						    depend,
+						    &satisfies,
+						    state,
+						    error);
+			if (!ret) {
+				g_assert (error == NULL || *error != NULL);
+				goto out;
+			}
+
+			/* gotcha */
+			if (satisfies != NULL) {
+				g_debug ("adding %s to requires", zif_package_get_id (package));
+				g_ptr_array_add (*requires, g_object_ref (package));
+				g_object_unref (satisfies);
+			}
 		}
 
-		/* get requires */
-		ret = zif_package_requires (package,
-					    depend,
-					    &satisfies,
-					    state,
-					    error);
-		if (!ret) {
-			g_assert (error == NULL || *error != NULL);
-			goto out;
-		}
-
-		/* gotcha */
-		if (satisfies != NULL) {
-			g_debug ("adding %s to requires", zif_package_get_id (package));
-			g_ptr_array_add (*requires, g_object_ref (package));
-			g_object_unref (satisfies);
-		}
 	}
 
 	/* success */
@@ -1449,40 +1450,35 @@ out:
 static gboolean
 zif_transaction_resolve_remove_require (ZifTransactionResolve *data,
 					ZifTransactionItem *item,
-					ZifDepend *depend,
+					GPtrArray *depend_array,
 					GError **error)
 {
 	gboolean ret = TRUE;
-	guint i;
-	GPtrArray *depend_array = NULL;
+	guint i, j;
 	GPtrArray *package_requires = NULL;
 	GPtrArray *related_packages = NULL;
 	ZifPackage *package;
 	ZifPackage *package_in_install;
 	ZifDepend *satisfies;
+	ZifDepend *depend_tmp;
 	GError *error_local = NULL;
 	GPtrArray *local_provides = NULL;
 
 	/* does anything *else* provide the depend that's installed? */
-	if (data->transaction->priv->verbose) {
-		g_debug ("find anything installed that also provides %s (currently provided by %s)",
-			 zif_depend_get_description (depend),
-			 zif_package_get_id (item->package));
-	}
 	zif_state_reset (data->state);
-	depend_array = zif_object_array_new ();
-	zif_object_array_add (depend_array, depend);
 	local_provides = zif_store_what_provides (data->transaction->priv->store_local,
 						  depend_array,
 						  data->state,
 						  &error_local);
 	if (local_provides == NULL) {
 		ret = FALSE;
+		depend_tmp = g_ptr_array_index (depend_array, 0);
 		g_set_error (error,
 			     ZIF_TRANSACTION_ERROR,
 			     ZIF_TRANSACTION_ERROR_FAILED,
-			     "Failed to get local provide for %s: %s",
-			     zif_depend_get_description (depend),
+			     "Failed to get local provide for %s (and %i others): %s",
+			     zif_depend_get_description (depend_tmp),
+			     depend_array->len - 1,
 			     error_local->message);
 		goto out;
 	}
@@ -1501,13 +1497,14 @@ zif_transaction_resolve_remove_require (ZifTransactionResolve *data,
 	}
 
 	/* find if anything in the local store requires this package */
+	depend_tmp = g_ptr_array_index (depend_array, 0);
 	if (data->transaction->priv->verbose) {
 		g_debug ("find anything installed that requires %s provided by %s",
-			 zif_depend_get_description (depend),
+			 zif_depend_get_description (depend_tmp),
 			 zif_package_get_id (item->package));
 	}
 	ret = zif_transaction_get_package_requires_from_store (data->transaction->priv->store_local,
-							       depend,
+							       depend_array,
 							       data->transaction->priv->remove_hash,
 							       &package_requires,
 							       data->state, error);
@@ -1519,7 +1516,7 @@ zif_transaction_resolve_remove_require (ZifTransactionResolve *data,
 			     ZIF_TRANSACTION_ERROR,
 			     ZIF_TRANSACTION_ERROR_FAILED,
 			     "nothing installed requires %s",
-			     zif_depend_get_description (depend));
+			     zif_depend_get_description (depend_tmp));
 		goto out;
 	}
 
@@ -1531,7 +1528,7 @@ zif_transaction_resolve_remove_require (ZifTransactionResolve *data,
 	if (data->transaction->priv->verbose) {
 		g_debug ("%i packages require %s provided by %s",
 			 package_requires->len,
-			 zif_depend_get_description (depend),
+			 zif_depend_get_description (depend_tmp),
 			 zif_package_get_id (item->package));
 		for (i=0; i<package_requires->len; i++) {
 			package = g_ptr_array_index (package_requires, i);
@@ -1545,83 +1542,87 @@ zif_transaction_resolve_remove_require (ZifTransactionResolve *data,
 		if (item->package == package)
 			continue;
 
-		/* is the thing that the package requires provided by something in install
-		 * NOTE: we need to get the actual depend of the package, not the thing passed to us */
-		ret = zif_package_requires (package, depend, &satisfies, data->state, error);
-		if (!ret)
-			goto out;
+		/* process each depend */
+		for (j=0; j<depend_array->len; j++) {
 
-		/* this should be true, otherwise it would not have been added to the array */
-		g_assert (satisfies != NULL);
-
-		/* find out if anything in the install queue already provides the depend */
-		if (data->transaction->priv->verbose) {
-			g_debug ("find out if %s is provided in the install queue",
-				 zif_depend_get_description (satisfies));
-		}
-		ret = zif_transaction_get_package_provide_from_array (data->transaction->priv->install,
-								      satisfies,
-								      &package_in_install,
-								      data->state,
-								      error);
-		if (!ret)
-			goto out;
-		if (package_in_install != NULL) {
-			g_debug ("%s provides %s which is already being installed",
-				 zif_package_get_id (package_in_install),
-				 zif_depend_get_description (depend));
-			g_object_unref (package_in_install);
-			continue;
-		}
-
-		g_object_unref (satisfies);
-
-		/* remove this too */
-		g_debug ("depend %s is required by %s (installed), so remove",
-			 zif_depend_get_description (depend),
-			 zif_package_get_id (package));
-
-		/* add this item too */
-		g_ptr_array_add (related_packages, g_object_ref (package));
-
-		/* package is being updated, so try to update deps too */
-		if (item->reason == ZIF_TRANSACTION_REASON_REMOVE_FOR_UPDATE) {
-			ret = zif_transaction_add_update_internal (data->transaction,
-								   package,
-								   related_packages,
-								   item->reason,
-								   &error_local);
-			if (!ret) {
-				/* ignore this error */
-				if (error_local->domain == ZIF_TRANSACTION_ERROR &&
-				    error_local->code == ZIF_TRANSACTION_ERROR_NOTHING_TO_DO) {
-					ret = TRUE;
-					g_clear_error (&error_local);
-				} else {
-					g_propagate_error (error, error_local);
-					goto out;
-				}
-			}
-		} else {
-			/* remove the package */
-			ret = zif_transaction_add_remove_internal (data->transaction,
-								   package,
-								   related_packages,
-								   ZIF_TRANSACTION_REASON_REMOVE_FOR_DEP,
-								   error);
+			/* is the thing that the package requires provided by something in install
+			 * NOTE: we need to get the actual depend of the package, not the thing passed to us */
+			depend_tmp = g_ptr_array_index (depend_array, j);
+			ret = zif_package_requires (package, depend_tmp, &satisfies, data->state, error);
 			if (!ret)
 				goto out;
 
-			/* remove from the planned local store */
-			zif_array_remove (data->post_resolve_package_array, package);
+			/* this may not be true for this *specific* depend */
+			if (satisfies == NULL)
+				continue;
+
+			/* find out if anything in the install queue already provides the depend */
+			if (data->transaction->priv->verbose) {
+				g_debug ("find out if %s is provided in the install queue",
+					 zif_depend_get_description (satisfies));
+			}
+			ret = zif_transaction_get_package_provide_from_array (data->transaction->priv->install,
+									      satisfies,
+									      &package_in_install,
+									      data->state,
+									      error);
+			if (!ret)
+				goto out;
+			if (package_in_install != NULL) {
+				g_debug ("%s provides %s which is already being installed",
+					 zif_package_get_id (package_in_install),
+					 zif_depend_get_description (depend_tmp));
+				g_object_unref (package_in_install);
+				continue;
+			}
+
+			g_object_unref (satisfies);
+
+			/* remove this too */
+			g_debug ("depend %s is required by %s (installed), so remove",
+				 zif_depend_get_description (depend_tmp),
+				 zif_package_get_id (package));
+
+			/* add this item too */
+			g_ptr_array_add (related_packages, g_object_ref (package));
+
+			/* package is being updated, so try to update deps too */
+			if (item->reason == ZIF_TRANSACTION_REASON_REMOVE_FOR_UPDATE) {
+				ret = zif_transaction_add_update_internal (data->transaction,
+									   package,
+									   related_packages,
+									   item->reason,
+									   &error_local);
+				if (!ret) {
+					/* ignore this error */
+					if (error_local->domain == ZIF_TRANSACTION_ERROR &&
+					    error_local->code == ZIF_TRANSACTION_ERROR_NOTHING_TO_DO) {
+						ret = TRUE;
+						g_clear_error (&error_local);
+					} else {
+						g_propagate_error (error, error_local);
+						goto out;
+					}
+				}
+			} else {
+				/* remove the package */
+				ret = zif_transaction_add_remove_internal (data->transaction,
+									   package,
+									   related_packages,
+									   ZIF_TRANSACTION_REASON_REMOVE_FOR_DEP,
+									   error);
+				if (!ret)
+					goto out;
+
+				/* remove from the planned local store */
+				zif_array_remove (data->post_resolve_package_array, package);
+			}
 		}
 		data->unresolved_dependencies = TRUE;
 	}
 out:
 	if (related_packages != NULL)
 		g_ptr_array_unref (related_packages);
-	if (depend_array != NULL)
-		g_ptr_array_unref (depend_array);
 	if (local_provides != NULL)
 		g_ptr_array_unref (local_provides);
 	if (package_requires != NULL)
@@ -1664,12 +1665,9 @@ zif_transaction_resolve_remove_item (ZifTransactionResolve *data,
 			g_debug ("%i.\t%s", i+1, zif_depend_get_description (depend));
 		}
 	}
-	for (i=0; i<provides->len; i++) {
-		depend = g_ptr_array_index (provides, i);
-		ret = zif_transaction_resolve_remove_require (data, item, depend, error);
-		if (!ret)
-			goto out;
-	}
+	ret = zif_transaction_resolve_remove_require (data, item, provides, error);
+	if (!ret)
+		goto out;
 
 	/* item is good now all the provides exist in the set */
 	item->resolved = TRUE;
