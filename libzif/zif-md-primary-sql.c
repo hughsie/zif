@@ -518,6 +518,23 @@ zif_md_primary_sql_what_depends (ZifMd *md, const gchar *table_name, GPtrArray *
 		g_string_set_size (statement, statement->len - 4);
 		g_string_append (statement, ");\n");
 	}
+
+	/* a package always provides itself, even without an explicit provide */
+	if (g_strcmp0 (table_name, "provides") == 0) {
+		for (j=0; j<depends->len; j+= ZIF_MD_PRIMARY_SQL_MAX_EXPRESSION_DEPTH) {
+			g_string_append (statement, ZIF_MD_PRIMARY_SQL_HEADER " WHERE ");
+
+			for (i=j; i<depends->len && (i-j)<ZIF_MD_PRIMARY_SQL_MAX_EXPRESSION_DEPTH; i++) {
+				depend_tmp = g_ptr_array_index (depends, i);
+				g_string_append_printf (statement, "p.name = '%s' OR ",
+							zif_depend_get_name (depend_tmp));
+			}
+			/* remove trailing OR */
+			g_string_set_size (statement, statement->len - 4);
+			g_string_append (statement, ";\n");
+		}
+	}
+
 	g_string_append (statement, "END;\n");
 
 	/* execute the query */
