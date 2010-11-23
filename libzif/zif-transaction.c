@@ -2413,6 +2413,8 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 	/* loop until all resolved */
 	while (data->unresolved_dependencies) {
 
+back_to_install_phase:
+
 		/* reset here */
 		resolve_count++;
 		data->unresolved_dependencies = FALSE;
@@ -2458,6 +2460,7 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 
 			/* set the approximate progress if possible */
 			zif_transaction_set_progress (transaction, state);
+			goto back_to_install_phase;
 		}
 
 		/* for each package set to be updated */
@@ -2502,6 +2505,7 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 
 			/* set the approximate progress if possible */
 			zif_transaction_set_progress (transaction, state);
+			goto back_to_install_phase;
 		}
 
 		/* for each package set to be removed */
@@ -2546,6 +2550,7 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 
 			/* set the approximate progress if possible */
 			zif_transaction_set_progress (transaction, state);
+			goto back_to_install_phase;
 		}
 
 		/* check conflicts */
@@ -2603,10 +2608,10 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 	/* success */
 	priv->state = ZIF_TRANSACTION_STATE_RESOLVED;
 	g_debug ("done depsolve");
-	zif_transaction_show_array ("installing", priv->install);
-	zif_transaction_show_array ("removing", priv->remove);
 	ret = TRUE;
 out:
+	zif_transaction_show_array ("installing", priv->install);
+	zif_transaction_show_array ("removing", priv->remove);
 	if (data != NULL) {
 		g_object_unref (data->state);
 		g_free (data);
