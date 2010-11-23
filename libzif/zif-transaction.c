@@ -2488,7 +2488,7 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 
 			/* set action */
 			zif_state_action_start (state,
-						ZIF_STATE_ACTION_DEPSOLVING,
+						ZIF_STATE_ACTION_DEPSOLVING_INSTALL,
 						zif_package_get_id (item->package));
 
 			/* resolve this item */
@@ -2531,7 +2531,7 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 
 			/* set action */
 			zif_state_action_start (state,
-						ZIF_STATE_ACTION_DEPSOLVING,
+						ZIF_STATE_ACTION_DEPSOLVING_UPDATE,
 						zif_package_get_id (item->package));
 
 			/* resolve this item */
@@ -2575,7 +2575,7 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 
 			/* set action */
 			zif_state_action_start (state,
-						ZIF_STATE_ACTION_DEPSOLVING,
+						ZIF_STATE_ACTION_DEPSOLVING_REMOVE,
 						zif_package_get_id (item->package));
 
 			/* resolve this item */
@@ -2617,7 +2617,7 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 
 			/* set action */
 			zif_state_action_start (state,
-						ZIF_STATE_ACTION_DEPSOLVING,
+						ZIF_STATE_ACTION_DEPSOLVING_CONFLICTS,
 						zif_package_get_id (item->package));
 
 			/* check this item */

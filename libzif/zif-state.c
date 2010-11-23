@@ -623,8 +623,14 @@ zif_state_action_to_string (ZifStateAction action)
 		return "loading-repos";
 	if(action == ZIF_STATE_ACTION_DECOMPRESSING)
 		return "decompressing";
-	if (action == ZIF_STATE_ACTION_DEPSOLVING)
-		return "depsolving";
+	if (action == ZIF_STATE_ACTION_DEPSOLVING_INSTALL)
+		return "depsolving-install";
+	if (action == ZIF_STATE_ACTION_DEPSOLVING_REMOVE)
+		return "depsolving-remove";
+	if (action == ZIF_STATE_ACTION_DEPSOLVING_UPDATE)
+		return "depsolving-update";
+	if (action == ZIF_STATE_ACTION_DEPSOLVING_CONFLICTS)
+		return "depsolving-conflicts";
 	if (action == ZIF_STATE_ACTION_INSTALLING)
 		return "installing";
 	if (action == ZIF_STATE_ACTION_REMOVING)

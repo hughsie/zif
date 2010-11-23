@@ -135,11 +135,28 @@ zif_state_action_to_string_localized (ZifStateAction action)
 		 * being uncompressed onto the disk */
 		return _("Decompressing");
 	}
-	if (action == ZIF_STATE_ACTION_DEPSOLVING) {
+	if (action == ZIF_STATE_ACTION_DEPSOLVING_INSTALL) {
+		/* TRANSLATORS: when the transaction is being resolved,
+		 * and we make sure that it makes sense by adding
+		 * dependencies where required */
+		return _("Calculating install");
+	}
+	if (action == ZIF_STATE_ACTION_DEPSOLVING_REMOVE) {
+		/* TRANSLATORS: when the transaction is being resolved,
+		 * and we make sure that it makes sense by removing
+		 * dependencies where required */
+		return _("Calculating removal");
+	}
+	if (action == ZIF_STATE_ACTION_DEPSOLVING_UPDATE) {
 		/* TRANSLATORS: when the transaction is being resolved,
 		 * and we make sure that it makes sense by adding and
 		 * removing dependencies where required */
-		return _("Depsolving");
+		return _("Calculating update");
+	}
+	if (action == ZIF_STATE_ACTION_DEPSOLVING_CONFLICTS) {
+		/* TRANSLATORS: when the transaction is being checked
+		 * for conflicting packages */
+		return _("Checking conflicts");
 	}
 	if (action == ZIF_STATE_ACTION_INSTALLING) {
 		/* TRANSLATORS: installing a package to the local system */
