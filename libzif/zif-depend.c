@@ -387,6 +387,8 @@ zif_depend_set_version (ZifDepend *depend, const gchar *version)
 static ZifDependFlag
 zif_depend_string_to_flag (const gchar *value)
 {
+	if (g_strcmp0 (value, "~") == 0)
+		return ZIF_DEPEND_FLAG_ANY;
 	if (g_strcmp0 (value, "<") == 0)
 		return ZIF_DEPEND_FLAG_LESS;
 	if (g_strcmp0 (value, ">") == 0)
