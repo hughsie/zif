@@ -3004,6 +3004,11 @@ zif_cmd_update_all (ZifCmdPrivate *priv, gchar **values, GError **error)
 			goto out;
 	}
 
+	/* this section done */
+	ret = zif_state_done (priv->state, error);
+	if (!ret)
+		goto out;
+
 	/* run what we've got */
 	state_local = zif_state_get_child (priv->state);
 	ret = zif_transaction_run (priv, transaction, state_local, error);
