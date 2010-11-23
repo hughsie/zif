@@ -265,6 +265,10 @@ zif_package_array_filter_arch (GPtrArray *array, const gchar *arch)
 	for (i=0; i<array->len;) {
 		package = g_ptr_array_index (array, i);
 		arch_tmp = zif_package_get_arch (package);
+		if (g_strcmp0 (arch_tmp, "noarch") == 0) {
+			i++;
+			continue;
+		}
 		if (g_strcmp0 (arch, arch_tmp) != 0) {
 			g_ptr_array_remove_index_fast (array, i);
 			continue;
