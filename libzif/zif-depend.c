@@ -91,10 +91,15 @@ zif_depend_compare (ZifDepend *a, ZifDepend *b)
 gboolean
 zif_depend_satisfies (ZifDepend *got, ZifDepend *need)
 {
-	gboolean ret;
+	gboolean ret = FALSE;
 
 	g_return_val_if_fail (got->priv->flag != ZIF_DEPEND_FLAG_UNKNOWN, FALSE);
 	g_return_val_if_fail (need->priv->flag != ZIF_DEPEND_FLAG_UNKNOWN, FALSE);
+
+	/* check the first character rather than setting up the SSE2
+	 * version of strcmp which is slow to tear down */
+	if (got->priv->name[0] != need->priv->name[0])
+		goto out;
 
 	/* name does not match */
 	ret = (g_strcmp0 (got->priv->name, need->priv->name) == 0);
@@ -180,12 +185,6 @@ zif_depend_satisfies (ZifDepend *got, ZifDepend *need)
 		   zif_depend_get_description (got),
 		   zif_depend_get_description (need));
 out:
-	if (0) {
-		g_debug ("tested satisfiability of %s:%s = %s",
-			 zif_depend_get_description (got),
-			 zif_depend_get_description (need),
-			 ret ? "TRUE" : "FALSE");
-	}
 	return ret;
 }
 
