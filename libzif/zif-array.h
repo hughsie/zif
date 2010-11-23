@@ -62,13 +62,13 @@ ZifArray	*zif_array_new			(void);
 typedef const gchar *(*ZifArrayMappingFuncCb)	(GObject		*object);
 
 gboolean	 zif_array_add			(ZifArray		*array,
-						 GObject		*object);
+						 gpointer		 data);
 gboolean	 zif_array_remove		(ZifArray		*array,
-						 GObject		*object);
+						 gpointer		 data);
 gboolean	 zif_array_remove_with_key	(ZifArray		*array,
 						 const gchar		*key);
 GObject		*zif_array_lookup		(ZifArray		*array,
-						 GObject		*object);
+						 gpointer		 data);
 GObject		*zif_array_lookup_with_key	(ZifArray		*array,
 						 const gchar		*key);
 GObject		*zif_array_index		(ZifArray		*array,

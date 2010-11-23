@@ -61,11 +61,12 @@ G_DEFINE_TYPE (ZifArray, zif_array, G_TYPE_OBJECT)
  * Since: 0.1.3
  **/
 gboolean
-zif_array_add (ZifArray *array, GObject *object)
+zif_array_add (ZifArray *array, gpointer data)
 {
 	gboolean ret = TRUE;
 	GObject *object_tmp;
 	const gchar *key;
+	GObject *object = G_OBJECT (data);
 
 	g_return_val_if_fail (ZIF_IS_ARRAY (array), FALSE);
 	g_return_val_if_fail (array->priv->mapping_func != NULL, FALSE);
@@ -78,7 +79,7 @@ zif_array_add (ZifArray *array, GObject *object)
 		goto out;
 	}
 
-	/* remove */
+	/* add */
 	g_ptr_array_add (array->priv->array, g_object_ref (object));
 	g_hash_table_insert (array->priv->hash,
 			     g_strdup (key),
@@ -102,11 +103,12 @@ out:
  * Since: 0.1.3
  **/
 gboolean
-zif_array_remove (ZifArray *array, GObject *object)
+zif_array_remove (ZifArray *array, gpointer data)
 {
 	gboolean ret = TRUE;
 	GObject *object_tmp;
 	const gchar *key;
+	GObject *object = G_OBJECT (data);
 
 	g_return_val_if_fail (ZIF_IS_ARRAY (array), FALSE);
 	g_return_val_if_fail (array->priv->mapping_func != NULL, FALSE);
@@ -178,8 +180,10 @@ out:
  * Since: 0.1.3
  **/
 GObject *
-zif_array_lookup (ZifArray *array, GObject *object)
+zif_array_lookup (ZifArray *array, gpointer data)
 {
+	GObject *object = G_OBJECT (data);
+
 	g_return_val_if_fail (ZIF_IS_ARRAY (array), NULL);
 	g_return_val_if_fail (array->priv->mapping_func != NULL, NULL);
 

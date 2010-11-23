@@ -56,6 +56,7 @@
 #include <rpm/rpmps.h>
 #include <rpm/rpmts.h>
 
+#include "zif-array.h"
 #include "zif-config.h"
 #include "zif-depend.h"
 #include "zif-object-array.h"
@@ -89,6 +90,7 @@ typedef struct {
 	ZifState		*state;
 	ZifTransaction		*transaction;
 	gboolean		 unresolved_dependencies;
+	ZifArray		*post_resolve_package_array;
 } ZifTransactionResolve;
 
 G_DEFINE_TYPE (ZifTransaction, zif_transaction, G_TYPE_OBJECT)
@@ -1224,6 +1226,9 @@ zif_transaction_resolve_install_depend (ZifTransactionResolve *data,
 								   error);
 			if (!ret)
 				goto out;
+
+			/* remove from the planned local store */
+			zif_array_remove (data->post_resolve_package_array, package_provide);
 		}
 skip_resolve:
 
@@ -1235,6 +1240,10 @@ skip_resolve:
 							    error);
 		if (!ret)
 			goto out;
+
+		/* add to the planned local store */
+		zif_array_add (data->post_resolve_package_array, package_provide);
+
 		data->unresolved_dependencies = TRUE;
 		goto out;
 	}
@@ -1367,6 +1376,9 @@ zif_transaction_resolve_install_item (ZifTransactionResolve *data,
 				g_assert (error == NULL || *error != NULL);
 				goto out;
 			}
+
+			/* remove from the planned local store */
+			zif_array_remove (data->post_resolve_package_array, package_oldest);
 		}
 	}
 
@@ -1579,6 +1591,9 @@ zif_transaction_resolve_remove_require (ZifTransactionResolve *data,
 								   error);
 			if (!ret)
 				goto out;
+
+			/* remove from the planned local store */
+			zif_array_remove (data->post_resolve_package_array, package);
 		}
 		data->unresolved_dependencies = TRUE;
 	}
@@ -1841,6 +1856,9 @@ zif_transaction_resolve_update_item (ZifTransactionResolve *data,
 		if (!ret)
 			goto out;
 
+		/* remove from the planned local store */
+		zif_array_remove (data->post_resolve_package_array, item->package);
+
 		/* is already installed */
 		if (zif_transaction_get_item_from_hash (data->transaction->priv->install_hash,
 							package) != NULL)
@@ -1854,6 +1872,9 @@ zif_transaction_resolve_update_item (ZifTransactionResolve *data,
 							    error);
 		if (!ret)
 			goto out;
+
+		/* add to the planned local store */
+		zif_array_add (data->post_resolve_package_array, package);
 
 		/* ignore all the other update checks */
 		goto success;
@@ -1918,6 +1939,9 @@ skip:
 	if (!ret)
 		goto out;
 
+	/* remove from the planned local store */
+	zif_array_remove (data->post_resolve_package_array, item->package);
+
 	/* add the new package */
 	ret = zif_transaction_add_install_internal (data->transaction,
 						    package,
@@ -1926,6 +1950,9 @@ skip:
 						    error);
 	if (!ret)
 		goto out;
+
+	/* add to the planned local store */
+	zif_array_add (data->post_resolve_package_array, package);
 
 success:
 
@@ -1996,115 +2023,6 @@ out:
 	return ret;
 }
 
-
-/**
- * zif_transaction_get_package_conflict_from_array:
- **/
-static gboolean
-zif_transaction_get_package_conflict_from_array (GPtrArray *array,
-						 ZifDepend *depend,
-						 ZifPackage **package,
-						 ZifState *state,
-						 GError **error)
-{
-	gboolean ret = TRUE;
-	guint i;
-	ZifTransactionItem *item;
-	GPtrArray *satisfy_array;
-	ZifDepend *satisfies = NULL;
-	GError *error_local = NULL;
-
-	/* interate through the array */
-	satisfy_array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
-	for (i=0; i<array->len; i++) {
-		item = g_ptr_array_index (array, i);
-
-		/* does this match */
-		ret = zif_package_conflicts (item->package, depend, &satisfies, state, error);
-		if (!ret)
-			goto out;
-
-		/* gotcha, but keep looking */
-		if (satisfies != NULL) {
-			g_ptr_array_add (satisfy_array, g_object_ref (item->package));
-			g_object_unref (satisfies);
-		}
-	}
-
-	/* print what we've got */
-	g_debug ("conflict %s has %i matches",
-		 zif_depend_get_description (depend),
-		 satisfy_array->len);
-
-	/* success, but no results */
-	if (satisfy_array->len == 0) {
-		*package = NULL;
-		goto out;
-	}
-
-	/* return the newest */
-	*package = zif_package_array_get_newest (satisfy_array, &error_local);
-	if (*package == NULL) {
-		ret = FALSE;
-		g_set_error (error,
-			     ZIF_TRANSACTION_ERROR,
-			     ZIF_TRANSACTION_ERROR_FAILED,
-			     "failed to get newest: %s",
-			     error_local->message);
-		g_error_free (error_local);
-		goto out;
-	}
-out:
-	g_ptr_array_unref (satisfy_array);
-	return ret;
-}
-
-/**
- * zif_transaction_get_package_conflict_from_store:
- *
- * Returns a package that conflicts something.
- **/
-static gboolean
-zif_transaction_get_package_conflict_from_store (ZifStore *store,
-						 ZifDepend *depend,
-						 ZifPackage **package,
-						 ZifState *state,
-						 GError **error)
-{
-	GPtrArray *array;
-	GError *error_local = NULL;
-	gboolean ret = FALSE;
-
-	/* get the package list */
-	zif_state_reset (state);
-	array = zif_store_get_packages (store, state, &error_local);
-	if (array == NULL) {
-		g_set_error (error,
-			     ZIF_TRANSACTION_ERROR,
-			     ZIF_TRANSACTION_ERROR_FAILED,
-			     "failed to get installed package list: %s",
-			     error_local->message);
-		g_error_free (error_local);
-		goto out;
-	}
-
-	/* search it */
-	ret = zif_transaction_get_package_conflict_from_package_array (array,
-								       depend,
-								       package,
-								       state,
-								       error);
-	if (!ret) {
-		g_assert (error == NULL || *error != NULL);
-		goto out;
-	}
-out:
-	if (array != NULL)
-		g_ptr_array_unref (array);
-	return ret;
-
-}
-
 /**
  * zif_transaction_resolve_conflicts_item:
  **/
@@ -2119,6 +2037,8 @@ zif_transaction_resolve_conflicts_item (ZifTransactionResolve *data,
 	GPtrArray *conflicts = NULL;
 	ZifPackage *conflicting;
 	ZifDepend *depend;
+	GPtrArray *results_tmp;
+	GPtrArray *post_resolve_package_array = NULL;
 	GError *error_local = NULL;
 
 	/* get provides for the package */
@@ -2151,6 +2071,9 @@ zif_transaction_resolve_conflicts_item (ZifTransactionResolve *data,
 		goto out;
 	}
 
+	/* get local base copy */
+	post_resolve_package_array = zif_array_get_array (data->post_resolve_package_array);
+
 	g_debug ("checking %i provides for %s",
 		 provides->len,
 		 zif_package_get_id (item->package));
@@ -2161,23 +2084,12 @@ zif_transaction_resolve_conflicts_item (ZifTransactionResolve *data,
 			 zif_depend_get_description (depend));
 
 		/* get packages that conflict with this */
-		ret = zif_transaction_get_package_conflict_from_store (data->transaction->priv->store_local,
-								       depend, &conflicting,
-								       data->state, error);
+		ret = zif_transaction_get_package_conflict_from_package_array (post_resolve_package_array,
+									       depend, &conflicting,
+									       data->state, error);
 		if (!ret) {
 			g_assert (error == NULL || *error != NULL);
 			goto out;
-		}
-
-		/* get packages that conflict with this in the install array */
-		if (conflicting == NULL) {
-			ret = zif_transaction_get_package_conflict_from_array (data->transaction->priv->install,
-									       depend, &conflicting,
-									       data->state, error);
-			if (!ret) {
-				g_assert (error == NULL || *error != NULL);
-				goto out;
-			}
 		}
 
 		/* something conflicts with the package */
@@ -2203,29 +2115,22 @@ zif_transaction_resolve_conflicts_item (ZifTransactionResolve *data,
 		/* does this install conflict with another package */
 		g_debug ("checking conflict %s",
 			 zif_depend_get_description (depend));
-		ret = zif_transaction_get_package_provide_from_store (data->transaction,
-								      data->transaction->priv->store_local,
-								      depend, &conflicting,
-								      data->state, error);
-		if (!ret) {
-			g_assert (error == NULL || *error != NULL);
-			goto out;
-		}
 
-		/* does this install conflict with another package in install array */
-		if (conflicting == NULL) {
-			ret = zif_transaction_get_package_provide_from_array (data->transaction->priv->install,
-									      depend, &conflicting,
-									      data->state, error);
-			if (!ret) {
-				g_assert (error == NULL || *error != NULL);
-				goto out;
-			}
-		}
+		/* check if we conflict with something in the new
+		 * installed array */
+		ret = zif_package_array_provide (post_resolve_package_array,
+						 depend,
+						 NULL,
+						 &results_tmp,
+						 data->state,
+						 error);
+		if (!ret)
+			goto out;
 
 		/* we conflict with something */
-		if (conflicting != NULL) {
+		if (results_tmp->len > 0) {
 			ret = FALSE;
+			conflicting = zif_package_array_get_newest (results_tmp, NULL);
 			g_set_error (error,
 				     ZIF_TRANSACTION_ERROR,
 				     ZIF_TRANSACTION_ERROR_CONFLICTING,
@@ -2233,10 +2138,14 @@ zif_transaction_resolve_conflicts_item (ZifTransactionResolve *data,
 				     zif_package_get_id (item->package),
 				     zif_package_get_id (conflicting));
 			g_object_unref (conflicting);
+			g_ptr_array_unref (results_tmp);
 			goto out;
 		}
+		g_ptr_array_unref (results_tmp);
 	}
 out:
+	if (post_resolve_package_array != NULL)
+		g_ptr_array_unref (post_resolve_package_array);
 	if (provides != NULL)
 		g_ptr_array_unref (provides);
 	if (conflicts != NULL)
@@ -2394,6 +2303,53 @@ zif_transaction_item_sort_cb (ZifTransactionItem **a, ZifTransactionItem **b)
 }
 
 /**
+ * zif_transaction_setup_post_resolve_package_array:
+ *
+ * We track the installed post resolve state to make conflicts checking
+ * much quicker. We don't have to search entries that are already removed
+ * and can do saner conflicts handling.
+ **/
+static gboolean
+zif_transaction_setup_post_resolve_package_array (ZifTransactionResolve *data,
+						  GError **error)
+{
+	gboolean ret = FALSE;
+	GPtrArray *packages = NULL;
+	guint i;
+	ZifPackage *package_tmp;
+	ZifTransactionItem *item;
+	ZifTransactionPrivate *priv = data->transaction->priv;
+
+	/* add existing installed packages */
+	packages = zif_store_get_packages (priv->store_local,
+					   data->state, error);
+	if (packages == NULL)
+		goto out;
+	for (i=0; i<packages->len; i++) {
+		package_tmp = g_ptr_array_index (packages, i);
+		zif_array_add (data->post_resolve_package_array, package_tmp);
+	}
+
+	/* coldplug */
+	for (i=0; i<priv->install->len; i++) {
+		item = g_ptr_array_index (priv->install, i);
+		zif_array_add (data->post_resolve_package_array, item->package);
+	}
+	for (i=0; i<priv->remove->len; i++) {
+		item = g_ptr_array_index (priv->remove, i);
+		zif_array_remove (data->post_resolve_package_array, item->package);
+	}
+
+	/* success */
+	ret = TRUE;
+	g_debug ("%i already in world state", data->post_resolve_package_array->len);
+out:
+	if (packages != NULL)
+		g_ptr_array_unref (packages);
+	return ret;
+}
+
+/**
  * zif_transaction_resolve:
  * @transaction: the #ZifTransaction object
  * @state: a #ZifState to use for progress reporting
@@ -2441,10 +2397,20 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 	data = g_new0 (ZifTransactionResolve, 1);
 	zif_state_set_number_steps (state, 1);
 	data->state = zif_state_get_child (state);
+	data->post_resolve_package_array = zif_array_new ();
+	zif_array_set_mapping_func (data->post_resolve_package_array,
+				    (ZifArrayMappingFuncCb) zif_package_get_id);
 	/* we can't do child progress in a sane way */
 	zif_state_set_report_progress (data->state, FALSE);
 	data->transaction = transaction;
 	data->unresolved_dependencies = TRUE;
+
+	/* create a new world view of the package database */
+	ret = zif_transaction_setup_post_resolve_package_array (data, error);
+	if (!ret)
+		goto out;
+
+	/* loop until all resolved */
 	while (data->unresolved_dependencies) {
 
 		/* reset here */
