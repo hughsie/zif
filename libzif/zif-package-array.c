@@ -32,6 +32,7 @@
 #include <string.h>
 
 #include "zif-package-array.h"
+#include "zif-utils.h"
 
 /**
  * zif_package_array_new:
@@ -269,7 +270,7 @@ zif_package_array_filter_arch (GPtrArray *array, const gchar *arch)
 			i++;
 			continue;
 		}
-		if (g_strcmp0 (arch, arch_tmp) != 0) {
+		if (!zif_arch_is_native (arch, arch_tmp)) {
 			g_ptr_array_remove_index_fast (array, i);
 			continue;
 		}

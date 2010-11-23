@@ -282,6 +282,34 @@ out:
 	return val;
 }
 
+/**
+ * zif_arch_is_native:
+ * @a: the first arch string
+ * @b: the second arch string
+ *
+ * Compare two architectures to see if they are native, so for instance
+ * i386 is native on a i686 system, but x64 isn't.
+ *
+ * Return value: %TRUE if the architecture is compatible
+ *
+ * Since: 0.1.3
+ **/
+gboolean
+zif_arch_is_native (const gchar *a, const gchar *b)
+{
+	/* same */
+	if (g_strcmp0 (a, b) == 0)
+		return TRUE;
+
+	/* 32bit intel */
+	if (g_str_has_suffix (a, "86") &&
+	    g_str_has_suffix (b, "86"))
+		return TRUE;
+
+	/* others */
+	return FALSE;
+}
+
 #define ZIF_BUFFER_SIZE 16384
 
 /**

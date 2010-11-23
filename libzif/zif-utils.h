@@ -60,6 +60,8 @@ gchar		*zif_package_id_from_nevra	(const gchar	*name,
 gboolean	 zif_boolean_from_text		(const gchar	*text);
 gint		 zif_compare_evr		(const gchar	*a,
 						 const gchar	*b);
+gboolean	 zif_arch_is_native		(const gchar	*a,
+						 const gchar	*b);
 gboolean	 zif_file_untar			(const gchar	*filename,
 						 const gchar	*directory,
 						 GError		**error);

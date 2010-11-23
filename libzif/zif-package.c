@@ -167,17 +167,7 @@ zif_package_is_compatible_arch (ZifPackage *a, ZifPackage *b)
 	archa = a->priv->package_id_split[ZIF_PACKAGE_ID_ARCH];
 	archb = b->priv->package_id_split[ZIF_PACKAGE_ID_ARCH];
 
-	/* same */
-	if (g_strcmp0 (archa, archb) == 0)
-		return TRUE;
-
-	/* 32bit intel */
-	if (g_str_has_suffix (archa, "86") &&
-	    g_str_has_suffix (archb, "86"))
-		return TRUE;
-
-	/* others */
-	return FALSE;
+	return zif_arch_is_native (archa, archb);
 }
 
 /**
