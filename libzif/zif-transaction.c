@@ -2477,9 +2477,6 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 		resolve_count++;
 		data->unresolved_dependencies = FALSE;
 
-		/* set action */
-		zif_state_action_start (state, ZIF_STATE_ACTION_DEPSOLVING, NULL);
-
 		/* for each package set to be installed */
 		g_debug ("starting INSTALL on loop %i", resolve_count);
 		for (i=0; i<priv->install->len; i++) {
@@ -2488,6 +2485,11 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 				continue;
 			if (item->cancelled)
 				continue;
+
+			/* set action */
+			zif_state_action_start (state,
+						ZIF_STATE_ACTION_DEPSOLVING,
+						zif_package_get_id (item->package));
 
 			/* resolve this item */
 			ret = zif_transaction_resolve_install_item (data, item, &error_local);
@@ -2526,6 +2528,11 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 				continue;
 			if (item->cancelled)
 				continue;
+
+			/* set action */
+			zif_state_action_start (state,
+						ZIF_STATE_ACTION_DEPSOLVING,
+						zif_package_get_id (item->package));
 
 			/* resolve this item */
 			ret = zif_transaction_resolve_update_item (data, item, &error_local);
@@ -2566,6 +2573,11 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 			if (item->cancelled)
 				continue;
 
+			/* set action */
+			zif_state_action_start (state,
+						ZIF_STATE_ACTION_DEPSOLVING,
+						zif_package_get_id (item->package));
+
 			/* resolve this item */
 			ret = zif_transaction_resolve_remove_item (data, item, &error_local);
 			if (!ret) {
@@ -2602,6 +2614,11 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 			item = g_ptr_array_index (priv->install, i);
 			if (item->cancelled)
 				continue;
+
+			/* set action */
+			zif_state_action_start (state,
+						ZIF_STATE_ACTION_DEPSOLVING,
+						zif_package_get_id (item->package));
 
 			/* check this item */
 			ret = zif_transaction_resolve_conflicts_item (data, item, &error_local);

@@ -173,8 +173,7 @@ zif_state_action_to_string_localized (ZifStateAction action)
 static void
 zif_state_action_changed_cb (ZifState *state, ZifStateAction action, const gchar *action_hint, ZifProgressBar *progressbar)
 {
-	gchar *hint = NULL;
-	gchar *basename = NULL;
+	gchar *pretty_hint = NULL;
 
 	/* show nothing for hint cancel */
 	if (action == ZIF_STATE_ACTION_UNKNOWN) {
@@ -182,24 +181,30 @@ zif_state_action_changed_cb (ZifState *state, ZifStateAction action, const gchar
 		goto out;
 	}
 
+	/* new action */
+	zif_progress_bar_set_action (progressbar,
+				     zif_state_action_to_string_localized (action));
+
 	if (action_hint == NULL) {
-		hint = g_strdup_printf ("%s",
-					zif_state_action_to_string_localized (action));
+		/* ignore */
+
+	/* only show basename for filenames */
 	} else if (action_hint[0] == '/') {
-		/* only show basename */
-		basename = g_path_get_basename (action_hint);
-		hint = g_strdup_printf ("%s: %s",
-					zif_state_action_to_string_localized (action),
-					basename);
+
+		pretty_hint = g_path_get_basename (action_hint);
+
+	/* show nice name for package */
+	} else if (zif_package_id_check (action_hint)) {
+
+		pretty_hint = zif_package_id_get_printable (action_hint);
+
+	/* fallback to just showing it */
 	} else {
-		hint = g_strdup_printf ("%s: %s",
-					zif_state_action_to_string_localized (action),
-					action_hint);
+		pretty_hint = g_strdup (action_hint);
 	}
-	zif_progress_bar_set_action (progressbar, hint);
+	zif_progress_bar_set_detail (progressbar, pretty_hint);
 out:
-	g_free (hint);
-	g_free (basename);
+	g_free (pretty_hint);
 }
 
 static ZifState *_state = NULL;
@@ -1575,6 +1580,7 @@ zif_main_show_transaction (ZifTransaction *transaction)
 {
 	GPtrArray *array;
 	guint i, j;
+	gchar *printable;
 	ZifPackage *package;
 
 	g_print ("%s\n", _("Transaction summary:"));
@@ -1584,7 +1590,9 @@ zif_main_show_transaction (ZifTransaction *transaction)
 			g_print ("  %s:\n", zif_transaction_reason_to_string_localized (i));
 		for (j=0; j<array->len; j++) {
 			package = g_ptr_array_index (array, j);
-			g_print ("  %i.\t%s\n", j+1, zif_package_get_id (package));
+			printable = zif_package_id_get_printable (zif_package_get_id (package));
+			g_print ("  %i.\t%s\n", j+1, printable);
+			g_free (printable);
 		}
 		g_ptr_array_unref (array);
 	}

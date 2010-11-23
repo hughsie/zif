@@ -709,6 +709,36 @@ out:
 }
 
 /**
+ * zif_package_id_get_printable:
+ * @package_id: the PackageID to format
+ *
+ * Formats the package ID in a way that is suitable to show the user.
+ *
+ * Return value: a string or %NULL if invalid, use g_free() to free
+ *
+ * Since: 0.1.3
+ **/
+gchar *
+zif_package_id_get_printable (const gchar *package_id)
+{
+	gchar *printable = NULL;
+	gchar **split;
+
+	/* format */
+	split = zif_package_id_split (package_id);
+	if (split == NULL)
+		goto out;
+	printable = g_strdup_printf ("%s-%s.%s (%s)",
+				     split[0],
+				     split[1],
+				     split[2],
+				     split[3]);
+out:
+	g_strfreev (split);
+	return printable;
+}
+
+/**
  * zif_package_id_check:
  * @package_id: the PackageID to check
  *
