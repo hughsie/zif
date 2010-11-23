@@ -159,16 +159,15 @@ zif_package_array_filter_newest (GPtrArray *packages)
 
 	/* use a hash so it's O(n) not O(n^2) */
 	hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_object_unref);
-	for (i=0; i<packages->len; i++) {
+	for (i=0; i<packages->len;) {
 		package = ZIF_PACKAGE (g_ptr_array_index (packages, i));
 		name = zif_package_get_name (package);
-		if (name == NULL)
-			continue;
 		package_tmp = g_hash_table_lookup (hash, name);
 
 		/* does not already exist */
 		if (package_tmp == NULL) {
 			g_hash_table_insert (hash, g_strdup (name), g_object_ref (package));
+			i++;
 			continue;
 		}
 

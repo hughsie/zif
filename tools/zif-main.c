@@ -3067,6 +3067,9 @@ zif_cmd_update (ZifCmdPrivate *priv, gchar **values, GError **error)
 		goto out;
 	}
 
+	/* filter down to the newest installed version */
+	zif_package_array_filter_newest (array);
+
 	/* this section done */
 	ret = zif_state_done (priv->state, error);
 	if (!ret)
