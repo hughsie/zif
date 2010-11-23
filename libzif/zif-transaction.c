@@ -1603,12 +1603,10 @@ zif_transaction_resolve_remove_item (ZifTransactionResolve *data,
 				     GError **error)
 {
 	GPtrArray *provides = NULL;
-	GPtrArray *files = NULL;
 	guint i;
 	GError *error_local = NULL;
 	gboolean ret = FALSE;
 	ZifDepend *depend;
-	const gchar *filename;
 
 	/* make a list of anything this package provides */
 	g_debug ("getting provides for %s", zif_package_get_id (item->package));
@@ -1621,28 +1619,6 @@ zif_transaction_resolve_remove_item (ZifTransactionResolve *data,
 			     error_local->message);
 		g_error_free (error_local);
 		goto out;
-	}
-
-	/* get filelist, as a file might be depending on one of its files */
-	g_debug ("getting files for %s", zif_package_get_id (item->package));
-	zif_state_reset (data->state);
-	files = zif_package_get_files (item->package, data->state, &error_local);
-	if (files == NULL) {
-		g_set_error (error, ZIF_TRANSACTION_ERROR, ZIF_TRANSACTION_ERROR_FAILED,
-			     "failed to getfiles for %s: %s",
-			     zif_package_get_id (item->package),
-			     error_local->message);
-		g_error_free (error_local);
-		goto out;
-	}
-
-	/* add files to the provides */
-	for (i=0; i<files->len; i++) {
-		filename = g_ptr_array_index (files, i);
-		depend = zif_depend_new ();
-		zif_depend_set_name (depend, filename);
-		zif_depend_set_flag (depend, ZIF_DEPEND_FLAG_ANY);
-		g_ptr_array_add (provides, depend);
 	}
 
 	/* find each provide */
@@ -1664,8 +1640,6 @@ zif_transaction_resolve_remove_item (ZifTransactionResolve *data,
 	item->resolved = TRUE;
 	ret = TRUE;
 out:
-	if (files != NULL)
-		g_ptr_array_unref (files);
 	if (provides != NULL)
 		g_ptr_array_unref (provides);
 	return ret;
