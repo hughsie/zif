@@ -4082,7 +4082,7 @@ main (int argc, char *argv[])
 
 	/* fallback */
 	if (config_file == NULL)
-		config_file = g_strdup ("/etc/zif/zif.conf");
+		config_file = g_build_filename (SYSCONFDIR, "zif", "zif.conf", NULL);
 	if (root == NULL)
 		root = g_strdup ("/");
 
