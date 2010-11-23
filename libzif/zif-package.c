@@ -73,6 +73,10 @@ struct _ZifPackagePrivate
 	GHashTable		*provides_any_hash;
 	GHashTable		*obsoletes_any_hash;
 	GHashTable		*conflicts_any_hash;
+	gboolean		 any_file_requires;
+	gboolean		 any_file_provides;
+	gboolean		 any_file_obsoletes;
+	gboolean		 any_file_conflicts;
 	gboolean		 installed;
 };
 
@@ -474,6 +478,15 @@ zif_package_provides (ZifPackage *package,
 		goto out;
 	}
 
+	/* this is a file depend, but we know there are none so don't
+	 * even try to lookup using either hash */
+	if (zif_depend_get_name (depend)[0] == '/' &&
+	    !package->priv->any_file_provides) {
+		ret = TRUE;
+		*satisfies = NULL;
+		goto out;
+	}
+
 	/* search in the 'any' cache first */
 	if (zif_depend_get_flag (depend) == ZIF_DEPEND_FLAG_ANY) {
 		depend_id = zif_depend_get_name (depend);
@@ -576,6 +589,15 @@ zif_package_requires (ZifPackage *package,
 			     zif_package_get_id (package),
 			     error_local->message);
 		g_error_free (error_local);
+		goto out;
+	}
+
+	/* this is a file depend, but we know there are none so don't
+	 * even try to lookup using either hash */
+	if (zif_depend_get_name (depend)[0] == '/' &&
+	    !package->priv->any_file_requires) {
+		ret = TRUE;
+		*satisfies = NULL;
 		goto out;
 	}
 
@@ -684,6 +706,15 @@ zif_package_conflicts (ZifPackage *package,
 		goto out;
 	}
 
+	/* this is a file depend, but we know there are none so don't
+	 * even try to lookup using either hash */
+	if (zif_depend_get_name (depend)[0] == '/' &&
+	    !package->priv->any_file_conflicts) {
+		ret = TRUE;
+		*satisfies = NULL;
+		goto out;
+	}
+
 	/* search in the 'any' cache first */
 	if (zif_depend_get_flag (depend) == ZIF_DEPEND_FLAG_ANY) {
 		depend_id = zif_depend_get_name (depend);
@@ -784,6 +815,15 @@ zif_package_obsoletes (ZifPackage *package,
 			     zif_package_get_id (package),
 			     error_local->message);
 		g_error_free (error_local);
+		goto out;
+	}
+
+	/* this is a file depend, but we know there are none so don't
+	 * even try to lookup using either hash */
+	if (zif_depend_get_name (depend)[0] == '/' &&
+	    !package->priv->any_file_obsoletes) {
+		ret = TRUE;
+		*satisfies = NULL;
 		goto out;
 	}
 
@@ -1819,6 +1859,7 @@ zif_package_set_files (ZifPackage *package, GPtrArray *files)
 				     g_strdup (zif_depend_get_name (depend_tmp)),
 				     depend_tmp);
 		g_ptr_array_add (package->priv->provides, g_object_ref (depend_tmp));
+		package->priv->any_file_provides = TRUE;
 	}
 
 	package->priv->files = g_ptr_array_ref (files);
@@ -1849,6 +1890,10 @@ zif_package_set_requires (ZifPackage *package, GPtrArray *requires)
 		g_hash_table_insert (package->priv->requires_any_hash,
 				     g_strdup (zif_depend_get_name (depend_tmp)),
 				     g_object_ref (depend_tmp));
+
+		/* this is a file depend */
+		if (zif_depend_get_name (depend_tmp)[0] == '/')
+			package->priv->any_file_requires = TRUE;
 	}
 
 	package->priv->requires = g_ptr_array_ref (requires);
@@ -1882,6 +1927,10 @@ zif_package_set_provides (ZifPackage *package, GPtrArray *provides)
 		g_hash_table_insert (package->priv->provides_any_hash,
 				     g_strdup (zif_depend_get_name (depend_tmp)),
 				     g_object_ref (depend_tmp));
+
+		/* this is a file depend */
+		if (zif_depend_get_name (depend_tmp)[0] == '/')
+			package->priv->any_file_provides = TRUE;
 	}
 
 	/* add to the array, not replace */
@@ -1916,6 +1965,10 @@ zif_package_set_obsoletes (ZifPackage *package, GPtrArray *obsoletes)
 		g_hash_table_insert (package->priv->obsoletes_any_hash,
 				     g_strdup (zif_depend_get_name (depend_tmp)),
 				     g_object_ref (depend_tmp));
+
+		/* this is a file depend */
+		if (zif_depend_get_name (depend_tmp)[0] == '/')
+			package->priv->any_file_obsoletes = TRUE;
 	}
 
 	package->priv->obsoletes = g_ptr_array_ref (obsoletes);
@@ -1946,6 +1999,10 @@ zif_package_set_conflicts (ZifPackage *package, GPtrArray *conflicts)
 		g_hash_table_insert (package->priv->conflicts_any_hash,
 				     g_strdup (zif_depend_get_name (depend_tmp)),
 				     g_object_ref (depend_tmp));
+
+		/* this is a file depend */
+		if (zif_depend_get_name (depend_tmp)[0] == '/')
+			package->priv->any_file_conflicts = TRUE;
 	}
 
 	package->priv->conflicts = g_ptr_array_ref (conflicts);
