@@ -117,13 +117,16 @@ zif_release_func (void)
 	g_assert_no_error (error);
 	g_assert (ret);
 
+	/* dummy */
+	zif_config_set_string (config, "upgrade_cache_dir", "/tmp", NULL);
+	zif_config_set_string (config, "upgrade_boot_dir", "/tmp", NULL);
+	zif_config_set_string (config, "upgrade_repo_dir", "/tmp", NULL);
+	zif_config_set_string (config, "upgrade_releases_uri",
+			       "http://people.freedesktop.org/~hughsient/fedora/preupgrade/releases.txt", NULL);
+
 	state = zif_state_new ();
 	download = zif_download_new ();
 	release = zif_release_new ();
-	zif_release_set_cache_dir (release, "/tmp");
-	zif_release_set_boot_dir (release, "/tmp");
-	zif_release_set_repo_dir (release, "/tmp");
-	zif_release_set_uri (release, "http://people.freedesktop.org/~hughsient/fedora/preupgrade/releases.txt");
 
 	/* ensure file is not present */
 	g_unlink ("/tmp/releases.txt");

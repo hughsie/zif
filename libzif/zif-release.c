@@ -28,7 +28,7 @@
  * upgrade to the newest release.
  *
  * Before checking for upgrades, the releases release file has to be set
- * with zif_release_set_cache_dir() and any checks prior to that will fail.
+ * using the config file and any checks prior to that will fail.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -54,10 +54,6 @@ struct _ZifReleasePrivate
 	ZifDownload		*download;
 	ZifConfig		*config;
 	GPtrArray		*array;
-	gchar			*cache_dir;
-	gchar			*boot_dir;
-	gchar			*repo_dir;
-	gchar			*uri;
 	guint			 monitor_changed_id;
 };
 
@@ -131,22 +127,22 @@ zif_release_load (ZifRelease *release, ZifState *state, GError **error)
 	guint i;
 	GFile *file = NULL;
 	guint64 cache_age, age;
+	gchar *cache_dir = NULL;
+	gchar *filename = NULL;
 	gchar *temp;
 	gchar *temp_expand;
-	gchar *filename = NULL;
+	gchar *uri = NULL;
 	ZifReleasePrivate *priv = release->priv;
 
 	/* nothing set */
-	if (priv->cache_dir == NULL) {
-		g_set_error_literal (error,
-				     ZIF_RELEASE_ERROR,
-				     ZIF_RELEASE_ERROR_SETUP_INVALID,
-				     "no cache dir has been set; use zif_release_set_cache_dir()");
+	cache_dir = zif_config_get_string (priv->config,
+					   "upgrade_cache_dir",
+					   error);
+	if (cache_dir == NULL)
 		goto out;
-	}
 
 	/* download if it does not already exist */
-	filename = g_build_filename (priv->cache_dir, "releases.txt", NULL);
+	filename = g_build_filename (cache_dir, "releases.txt", NULL);
 	ret = g_file_test (filename, G_FILE_TEST_EXISTS);
 	if (ret) {
 		/* check file age */
@@ -182,8 +178,15 @@ zif_release_load (ZifRelease *release, ZifState *state, GError **error)
 		}
 	}
 	if (!ret) {
+		uri = zif_config_get_string (priv->config,
+					     "upgrade_releases_uri",
+					     error);
+		if (uri == NULL) {
+			ret = FALSE;
+			goto out;
+		}
 		ret = zif_download_file (priv->download,
-					 priv->uri,
+					 uri,
 					 filename,
 					 state, &error_local);
 		if (!ret) {
@@ -273,6 +276,8 @@ zif_release_load (ZifRelease *release, ZifState *state, GError **error)
 	/* done */
 	priv->loaded = TRUE;
 out:
+	g_free (cache_dir);
+	g_free (uri);
 	g_free (filename);
 	g_strfreev (groups);
 	if (key_file != NULL)
@@ -320,7 +325,6 @@ out:
 /**
  * zif_release_get_upgrades_new:
  * @release: the #ZifRelease object
- * @version: a distribution version, e.g. 15
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
@@ -331,11 +335,12 @@ out:
  * Since: 0.1.3
  **/
 GPtrArray *
-zif_release_get_upgrades_new (ZifRelease *release, guint version, ZifState *state, GError **error)
+zif_release_get_upgrades_new (ZifRelease *release, ZifState *state, GError **error)
 {
-	GPtrArray *array = NULL;
 	gboolean ret;
+	GPtrArray *array = NULL;
 	guint i;
+	guint version;
 	ZifUpgrade *upgrade;
 
 	g_return_val_if_fail (ZIF_IS_RELEASE (release), NULL);
@@ -348,6 +353,12 @@ zif_release_get_upgrades_new (ZifRelease *release, guint version, ZifState *stat
 		if (!ret)
 			goto out;
 	}
+
+	/* get current version */
+	version = zif_config_get_uint (release->priv->config,
+				       "releasever", error);
+	if (version == G_MAXUINT)
+		goto out;
 
 	/* success */
 	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
@@ -417,13 +428,21 @@ static gboolean
 zif_release_remove_kernel (ZifRelease *release, ZifReleaseUpgradeData *data, GError **error)
 {
 	gboolean ret;
-	GError *error_local = NULL;
+	gchar *boot_dir = NULL;
 	gchar *cmdline = NULL;
+	GError *error_local = NULL;
 	ZifReleasePrivate *priv = release->priv;
 
 	/* we're not running as root */
-	cmdline = g_strdup_printf ("/sbin/grubby --remove-kernel=%s/vmlinuz", priv->boot_dir);
-	if (!g_str_has_prefix (priv->boot_dir, "/boot")) {
+	boot_dir = zif_config_get_string (priv->config,
+					  "upgrade_boot_dir",
+					  error);
+	if (boot_dir == NULL) {
+		ret = FALSE;
+		goto out;
+	}
+	cmdline = g_strdup_printf ("/sbin/grubby --remove-kernel=%s/vmlinuz", boot_dir);
+	if (!g_str_has_prefix (boot_dir, "/boot")) {
 		g_debug ("not running grubby as not installing root, would have run '%s'", cmdline);
 		ret = TRUE;
 		goto out;
@@ -441,6 +460,7 @@ zif_release_remove_kernel (ZifRelease *release, ZifReleaseUpgradeData *data, GEr
 		goto out;
 	}
 out:
+	g_free (boot_dir);
 	g_free (cmdline);
 	return ret;
 }
@@ -452,11 +472,13 @@ static gboolean
 zif_release_add_kernel (ZifRelease *release, ZifReleaseUpgradeData *data, GError **error)
 {
 	gboolean ret;
-	GError *error_local = NULL;
-	GString *cmdline = NULL;
-	GString *args = NULL;
-	gchar *title = NULL;
 	gchar *arch = NULL;
+	gchar *boot_dir = NULL;
+	gchar *repo_dir = NULL;
+	gchar *title = NULL;
+	GError *error_local = NULL;
+	GString *args = NULL;
+	GString *cmdline = NULL;
 	ZifReleasePrivate *priv = release->priv;
 
 	/* yaboot (ppc) doesn't support spaces in titles */
@@ -480,24 +502,40 @@ zif_release_add_kernel (ZifRelease *release, ZifReleaseUpgradeData *data, GError
 					"stage2=hd:UUID=%s:/upgrade/install.img ", data->uuid_boot);
 	}
 	if (data->upgrade_kind == ZIF_RELEASE_UPGRADE_KIND_COMPLETE) {
-		g_string_append_printf (args, "repo=hd::%s ", priv->repo_dir);
+		repo_dir = zif_config_get_string (priv->config,
+						  "upgrade_repo_dir",
+						  error);
+		if (repo_dir == NULL) {
+			ret = FALSE;
+			goto out;
+		}
+		g_string_append_printf (args, "repo=hd::%s ", repo_dir);
 	}
 	g_string_append (args,
 			 "ksdevice=link ip=dhcp ipv6=dhcp ");
 
+	/* get bootdir */
+	boot_dir = zif_config_get_string (priv->config,
+					  "upgrade_boot_dir",
+					  error);
+	if (boot_dir == NULL) {
+		ret = FALSE;
+		goto out;
+	}
+
 	/* do for i386 and ppc */
 	cmdline = g_string_new ("/sbin/grubby ");
 	g_string_append_printf (cmdline,
-			        "--add-kernel=%s/vmlinuz ", priv->boot_dir);
+			        "--add-kernel=%s/vmlinuz ", boot_dir);
 	g_string_append_printf (cmdline,
-			        "--initrd=%s/initrd.img ", priv->boot_dir);
+			        "--initrd=%s/initrd.img ", boot_dir);
 	g_string_append_printf (cmdline,
 			        "--title=\"%s\" ", title);
 	g_string_append_printf (cmdline,
 			        "--args=\"%s\"", args->str);
 
 	/* we're not running as root */
-	if (!g_str_has_prefix (priv->boot_dir, "/boot")) {
+	if (!g_str_has_prefix (boot_dir, "/boot")) {
 		g_debug ("not running grubby as not installing root, would have run '%s'", cmdline->str);
 		ret = TRUE;
 		goto out;
@@ -529,6 +567,8 @@ zif_release_add_kernel (ZifRelease *release, ZifReleaseUpgradeData *data, GError
 		}
 	}
 out:
+	g_free (boot_dir);
+	g_free (repo_dir);
 	g_free (arch);
 	g_free (title);
 	if (args != NULL)
@@ -545,9 +585,19 @@ static gboolean
 zif_release_make_kernel_default_once (ZifRelease *release, GError **error)
 {
 	gboolean ret = TRUE;
+	gchar *boot_dir = NULL;
 	gchar *cmdline = NULL;
 	GError *error_local = NULL;
 	ZifReleasePrivate *priv = release->priv;
+
+	/* get bootdir */
+	boot_dir = zif_config_get_string (priv->config,
+					  "upgrade_boot_dir",
+					  error);
+	if (boot_dir == NULL) {
+		ret = FALSE;
+		goto out;
+	}
 
 	/* We want to run something like:
 	 *
@@ -555,10 +605,10 @@ zif_release_make_kernel_default_once (ZifRelease *release, GError **error)
 	 *
 	 * ...but this won't work in C and is a bodge.
 	 * Ideally we want to add --once to the list of grubby commands. */
-	cmdline = g_strdup_printf ("/sbin/grubby --set-default=%s/vmlinuz", priv->boot_dir);
+	cmdline = g_strdup_printf ("/sbin/grubby --set-default=%s/vmlinuz", boot_dir);
 
 	/* we're not running as root */
-	if (!g_str_has_prefix (priv->boot_dir, "/boot")) {
+	if (!g_str_has_prefix (boot_dir, "/boot")) {
 		g_debug ("not running grub as not installing root, would have run '%s'", cmdline);
 		goto out;
 	}
@@ -574,6 +624,7 @@ zif_release_make_kernel_default_once (ZifRelease *release, GError **error)
 		goto out;
 	}
 out:
+	g_free (boot_dir);
 	g_free (cmdline);
 	return ret;
 }
@@ -664,13 +715,14 @@ static gboolean
 zif_release_get_treeinfo (ZifRelease *release, ZifReleaseUpgradeData *data, ZifState *state, GError **error)
 {
 	gboolean ret;
-	GError *error_local = NULL;
-	gchar *treeinfo_uri = NULL;
 	gchar *basearch = NULL;
+	gchar *cache_dir = NULL;
 	gchar *treeinfo_filename = NULL;
+	gchar *treeinfo_uri = NULL;
+	GError *error_local = NULL;
 	gint version_tmp;
-	ZifState *state_local;
 	ZifReleasePrivate *priv = release->priv;
+	ZifState *state_local;
 
 	/* set steps */
 	ret = zif_state_set_steps (state,
@@ -682,7 +734,14 @@ zif_release_get_treeinfo (ZifRelease *release, ZifReleaseUpgradeData *data, ZifS
 		goto out;
 
 	/* get .treeinfo from a mirror in the installmirrorlist */
-	treeinfo_filename = g_build_filename (priv->cache_dir, ".treeinfo", NULL);
+	cache_dir = zif_config_get_string (priv->config,
+					   "upgrade_cache_dir",
+					   error);
+	if (cache_dir == NULL) {
+		ret = FALSE;
+		goto out;
+	}
+	treeinfo_filename = g_build_filename (cache_dir, ".treeinfo", NULL);
 	ret = g_file_test (treeinfo_filename, G_FILE_TEST_EXISTS);
 	if (!ret) {
 		state_local = zif_state_get_child (state);
@@ -742,6 +801,7 @@ zif_release_get_treeinfo (ZifRelease *release, ZifReleaseUpgradeData *data, ZifS
 	if (!ret)
 		goto out;
 out:
+	g_free (cache_dir);
 	g_free (basearch);
 	g_free (treeinfo_filename);
 	g_free (treeinfo_uri);
@@ -755,10 +815,11 @@ static gboolean
 zif_release_get_kernel (ZifRelease *release, ZifReleaseUpgradeData *data, ZifState *state, GError **error)
 {
 	gboolean ret = FALSE;
-	GError *error_local = NULL;
-	gchar *kernel = NULL;
+	gchar *boot_dir = NULL;
 	gchar *checksum = NULL;
 	gchar *filename = NULL;
+	gchar *kernel = NULL;
+	GError *error_local = NULL;
 	ZifReleasePrivate *priv = release->priv;
 
 	/* get data */
@@ -773,7 +834,14 @@ zif_release_get_kernel (ZifRelease *release, ZifReleaseUpgradeData *data, ZifSta
 	checksum = g_key_file_get_string (data->key_file_treeinfo, "checksums", kernel, NULL);
 
 	/* check the checksum matches */
-	filename = g_build_filename (priv->boot_dir, "vmlinuz", NULL);
+	boot_dir = zif_config_get_string (priv->config,
+					  "upgrade_boot_dir",
+					  error);
+	if (boot_dir == NULL) {
+		ret = FALSE;
+		goto out;
+	}
+	filename = g_build_filename (boot_dir, "vmlinuz", NULL);
 	ret = pk_release_checksum_matches_file (filename, checksum+7, state, &error_local);
 	if (!ret) {
 		g_debug ("failed kernel checksum: %s", error_local->message);
@@ -801,6 +869,7 @@ zif_release_get_kernel (ZifRelease *release, ZifReleaseUpgradeData *data, ZifSta
 		}
 	}
 out:
+	g_free (boot_dir);
 	g_free (kernel);
 	g_free (checksum);
 	g_free (filename);
@@ -814,10 +883,11 @@ static gboolean
 zif_release_get_initrd (ZifRelease *release, ZifReleaseUpgradeData *data, ZifState *state, GError **error)
 {
 	gboolean ret = FALSE;
-	GError *error_local = NULL;
-	gchar *initrd = NULL;
+	gchar *boot_dir = NULL;
 	gchar *checksum = NULL;
 	gchar *filename = NULL;
+	gchar *initrd = NULL;
+	GError *error_local = NULL;
 	ZifReleasePrivate *priv = release->priv;
 
 	/* get data */
@@ -832,7 +902,14 @@ zif_release_get_initrd (ZifRelease *release, ZifReleaseUpgradeData *data, ZifSta
 	checksum = g_key_file_get_string (data->key_file_treeinfo, "checksums", initrd, NULL);
 
 	/* check the checksum matches */
-	filename = g_build_filename (priv->boot_dir, "initrd.img", NULL);
+	boot_dir = zif_config_get_string (priv->config,
+					  "upgrade_boot_dir",
+					  error);
+	if (boot_dir == NULL) {
+		ret = FALSE;
+		goto out;
+	}
+	filename = g_build_filename (boot_dir, "initrd.img", NULL);
 	ret = pk_release_checksum_matches_file (filename, checksum+7, state, &error_local);
 	if (!ret) {
 		g_debug ("failed initrd checksum: %s", error_local->message);
@@ -860,6 +937,7 @@ zif_release_get_initrd (ZifRelease *release, ZifReleaseUpgradeData *data, ZifSta
 		}
 	}
 out:
+	g_free (boot_dir);
 	g_free (initrd);
 	g_free (checksum);
 	g_free (filename);
@@ -873,10 +951,11 @@ static gboolean
 zif_release_get_stage2 (ZifRelease *release, ZifReleaseUpgradeData *data, ZifState *state, GError **error)
 {
 	gboolean ret = FALSE;
-	GError *error_local = NULL;
-	gchar *stage2 = NULL;
+	gchar *boot_dir = NULL;
 	gchar *checksum = NULL;
 	gchar *filename = NULL;
+	gchar *stage2 = NULL;
+	GError *error_local = NULL;
 	ZifReleasePrivate *priv = release->priv;
 
 	/* get data */
@@ -891,7 +970,14 @@ zif_release_get_stage2 (ZifRelease *release, ZifReleaseUpgradeData *data, ZifSta
 	checksum = g_key_file_get_string (data->key_file_treeinfo, "checksums", stage2, NULL);
 
 	/* check the checksum matches */
-	filename = g_build_filename (priv->boot_dir, "install.img", NULL);
+	boot_dir = zif_config_get_string (priv->config,
+					  "upgrade_boot_dir",
+					  error);
+	if (boot_dir == NULL) {
+		ret = FALSE;
+		goto out;
+	}
+	filename = g_build_filename (boot_dir, "install.img", NULL);
 	ret = pk_release_checksum_matches_file (filename, checksum+7, state, &error_local);
 	if (!ret) {
 		g_debug ("failed stage2 checksum: %s", error_local->message);
@@ -919,6 +1005,7 @@ zif_release_get_stage2 (ZifRelease *release, ZifReleaseUpgradeData *data, ZifSta
 		}
 	}
 out:
+	g_free (boot_dir);
 	g_free (filename);
 	g_free (stage2);
 	g_free (checksum);
@@ -1025,22 +1112,41 @@ out:
 static gboolean
 zif_release_write_kickstart (ZifRelease *release, ZifReleaseUpgradeData *data, GError **error)
 {
+	gboolean ret = FALSE;
+	gchar *boot_dir = NULL;
+	gchar *keymap = NULL;
 	gchar *ks_filename;
+	gchar *lang = NULL;
+	gchar *repo_dir = NULL;
+	GError *error_local = NULL;
 	GFile *ks_file = NULL;
 	GString *string;
-	GError *error_local = NULL;
-	gboolean ret = FALSE;
-	gchar *lang = NULL;
-	gchar *keymap = NULL;
 	ZifReleasePrivate *priv = release->priv;
 
-	ks_filename = g_build_filename (priv->boot_dir, "ks.cfg", NULL);
+	/* get bootdir */
+	boot_dir = zif_config_get_string (priv->config,
+					  "upgrade_boot_dir",
+					  error);
+	if (boot_dir == NULL) {
+		ret = FALSE;
+		goto out;
+	}
+	ks_filename = g_build_filename (boot_dir, "ks.cfg", NULL);
 	ks_file = g_file_new_for_path (ks_filename);
 	string = g_string_new ("# ks.cfg generated by Zif\n");
 
 	/* get system defaults */
 	lang = zif_release_get_lang ();
 	keymap = zif_release_get_keymap ();
+
+	/* get repodir */
+	repo_dir = zif_config_get_string (priv->config,
+					  "upgrade_repo_dir",
+					  error);
+	if (repo_dir == NULL) {
+		ret = FALSE;
+		goto out;
+	}
 
 	/* get kickstart */
 	g_string_append_printf (string, "lang %s\n", lang);
@@ -1051,8 +1157,8 @@ zif_release_write_kickstart (ZifRelease *release, ZifReleaseUpgradeData *data, G
 	g_string_append (string, "reboot\n");
 	g_string_append (string, "\n");
 	g_string_append (string, "%post\n");
-	g_string_append_printf (string, "grubby --remove-kernel=%s/vmlinuz\n", priv->boot_dir);
-	g_string_append_printf (string, "rm -rf %s %s*\n", priv->boot_dir, priv->repo_dir);
+	g_string_append_printf (string, "grubby --remove-kernel=%s/vmlinuz\n", boot_dir);
+	g_string_append_printf (string, "rm -rf %s %s*\n", boot_dir, repo_dir);
 	g_string_append (string, "%end\n");
 
 	/* write file */
@@ -1069,6 +1175,8 @@ zif_release_write_kickstart (ZifRelease *release, ZifReleaseUpgradeData *data, G
 		goto out;
 	}
 out:
+	g_free (boot_dir);
+	g_free (repo_dir);
 	g_free (lang);
 	g_free (keymap);
 	g_object_unref (ks_file);
@@ -1084,13 +1192,21 @@ static gboolean
 zif_release_get_package_data (ZifRelease *release, ZifReleaseUpgradeData *data, ZifState *state, GError **error)
 {
 	gboolean ret;
-	GFile *file;
-	GError *error_local = NULL;
 	gchar *cmdline = NULL;
+	gchar *repo_dir = NULL;
+	GError *error_local = NULL;
+	GFile *file;
 	ZifReleasePrivate *priv = release->priv;
 
 	/* create directory path */
-	file = g_file_new_for_path (priv->repo_dir);
+	repo_dir = zif_config_get_string (priv->config,
+					  "upgrade_repo_dir",
+					  error);
+	if (repo_dir == NULL) {
+		ret = FALSE;
+		goto out;
+	}
+	file = g_file_new_for_path (repo_dir);
 	ret = g_file_make_directory_with_parents (file, NULL, &error_local);
 	if (!ret) {
 		g_set_error (error,
@@ -1103,7 +1219,7 @@ zif_release_get_package_data (ZifRelease *release, ZifReleaseUpgradeData *data, 
 	}
 
 	/* create the repodata */
-	cmdline = g_strdup_printf ("/usr/bin/createrepo %s", priv->repo_dir);
+	cmdline = g_strdup_printf ("/usr/bin/createrepo %s", repo_dir);
 	g_debug ("running command %s", cmdline);
 	ret = g_spawn_command_line_sync (cmdline, NULL, NULL, NULL, &error_local);
 	if (!ret) {
@@ -1132,6 +1248,7 @@ zif_release_get_package_data (ZifRelease *release, ZifReleaseUpgradeData *data, 
 			     ZIF_RELEASE_ERROR_NOT_SUPPORTED,
 			     "getting the package data is not supported yet");
 out:
+	g_free (repo_dir);
 	g_free (cmdline);
 	g_object_unref (file);
 	return ret;
@@ -1196,14 +1313,16 @@ gboolean
 zif_release_upgrade_version (ZifRelease *release, guint version, ZifReleaseUpgradeKind upgrade_kind, ZifState *state, GError **error)
 {
 	gboolean ret = FALSE;
-	ZifState *state_local;
-	GFile *boot_file = NULL;
-	GError *error_local = NULL;
-	ZifReleasePrivate *priv;
-	ZifReleaseUpgradeData *data = NULL;
-	ZifMd *md_mirrorlist = NULL;
+	gchar *boot_dir = NULL;
+	gchar *cache_dir = NULL;
 	gchar *installmirrorlist_filename = NULL;
 	gchar *mtab_entry = NULL;
+	GError *error_local = NULL;
+	GFile *boot_file = NULL;
+	ZifMd *md_mirrorlist = NULL;
+	ZifReleasePrivate *priv;
+	ZifReleaseUpgradeData *data = NULL;
+	ZifState *state_local;
 
 	g_return_val_if_fail (ZIF_IS_RELEASE (release), FALSE);
 	g_return_val_if_fail (zif_state_valid (state), FALSE);
@@ -1217,20 +1336,19 @@ zif_release_upgrade_version (ZifRelease *release, guint version, ZifReleaseUpgra
 	data->version = version;
 	data->upgrade_kind = upgrade_kind;
 
-	/* nothing set */
-	if (priv->boot_dir == NULL) {
-		g_set_error_literal (error,
-				     ZIF_RELEASE_ERROR,
-				     ZIF_RELEASE_ERROR_SETUP_INVALID,
-				     "no boot dir has been set; use zif_release_set_boot_dir()");
-		goto out;
-	}
 
 	/* ensure boot directory exists */
-	boot_file = g_file_new_for_path (priv->boot_dir);
+	boot_dir = zif_config_get_string (priv->config,
+					  "upgrade_boot_dir",
+					  error);
+	if (boot_dir == NULL) {
+		ret = FALSE;
+		goto out;
+	}
+	boot_file = g_file_new_for_path (boot_dir);
 	ret = g_file_query_exists (boot_file, NULL);
 	if (!ret) {
-		g_debug ("%s does not exist, creating", priv->boot_dir);
+		g_debug ("%s does not exist, creating", boot_dir);
 		ret = g_file_make_directory_with_parents (boot_file, NULL, &error_local);
 		if (!ret) {
 			g_set_error (error,
@@ -1291,7 +1409,7 @@ zif_release_upgrade_version (ZifRelease *release, guint version, ZifReleaseUpgra
 		goto out;
 
 	/* check size */
-	ret = zif_release_check_filesystem_size (priv->boot_dir, 26*1024*1024, error);
+	ret = zif_release_check_filesystem_size (boot_dir, 26*1024*1024, error);
 	if (!ret)
 		goto out;
 
@@ -1338,7 +1456,14 @@ zif_release_upgrade_version (ZifRelease *release, guint version, ZifReleaseUpgra
 
 	/* get installmirrorlist */
 	state_local = zif_state_get_child (state);
-	installmirrorlist_filename = g_build_filename (priv->cache_dir, "installmirrorlist", NULL);
+	cache_dir = zif_config_get_string (priv->config,
+					   "upgrade_cache_dir",
+					   error);
+	if (cache_dir == NULL) {
+		ret = FALSE;
+		goto out;
+	}
+	installmirrorlist_filename = g_build_filename (cache_dir, "installmirrorlist", NULL);
 	ret = zif_download_file (priv->download,
 				 zif_upgrade_get_install_mirrorlist (data->upgrade),
 				 installmirrorlist_filename, state_local, &error_local);
@@ -1471,6 +1596,8 @@ zif_release_upgrade_version (ZifRelease *release, guint version, ZifReleaseUpgra
 	ret = TRUE;
 out:
 	zif_download_location_clear (priv->download);
+	g_free (boot_dir);
+	g_free (cache_dir);
 	g_free (installmirrorlist_filename);
 	g_free (mtab_entry);
 	if (data != NULL) {
@@ -1488,86 +1615,6 @@ out:
 	if (boot_file != NULL)
 		g_object_unref (boot_file);
 	return ret;
-}
-
-/**
- * zif_release_set_cache_dir:
- * @release: the #ZifRelease object
- * @cache_dir: the system wide release location, e.g. "/var/cache/PackageKit"
- *
- * Sets the location to use as the local file cache for the release info.
- *
- * Since: 0.1.3
- **/
-void
-zif_release_set_cache_dir (ZifRelease *release, const gchar *cache_dir)
-{
-	g_return_if_fail (ZIF_IS_RELEASE (release));
-	g_return_if_fail (cache_dir != NULL);
-	g_return_if_fail (!release->priv->loaded);
-
-	g_free (release->priv->cache_dir);
-	release->priv->cache_dir = g_strdup (cache_dir);
-}
-
-/**
- * zif_release_set_boot_dir:
- * @release: the #ZifRelease object
- * @boot_dir: the system boot directory, e.g. "/boot/upgrade"
- *
- * Sets the location to use as the boot directory.
- *
- * Since: 0.1.3
- **/
-void
-zif_release_set_boot_dir (ZifRelease *release, const gchar *boot_dir)
-{
-	g_return_if_fail (ZIF_IS_RELEASE (release));
-	g_return_if_fail (boot_dir != NULL);
-	g_return_if_fail (!release->priv->loaded);
-
-	g_free (release->priv->boot_dir);
-	release->priv->boot_dir = g_strdup (boot_dir);
-}
-
-/**
- * zif_release_set_repo_dir:
- * @release: the #ZifRelease object
- * @repo_dir: the repo directory, e.g. "/var/cache/yum/preupgrade"
- *
- * Sets the location to use as the downloaded package repo.
- *
- * Since: 0.1.3
- **/
-void
-zif_release_set_repo_dir (ZifRelease *release, const gchar *repo_dir)
-{
-	g_return_if_fail (ZIF_IS_RELEASE (release));
-	g_return_if_fail (repo_dir != NULL);
-	g_return_if_fail (!release->priv->loaded);
-
-	g_free (release->priv->repo_dir);
-	release->priv->repo_dir = g_strdup (repo_dir);
-}
-
-/**
- * zif_release_set_uri:
- * @release: the #ZifRelease object
- * @uri: the remote URI, e.g. "http://people.freedesktop.org/~hughsient/fedora/preupgrade/releases.txt"
- *
- * Sets the URI to use as the release information file.
- *
- * Since: 0.1.3
- **/
-void
-zif_release_set_uri (ZifRelease *release, const gchar *uri)
-{
-	g_return_if_fail (ZIF_IS_RELEASE (release));
-	g_return_if_fail (uri != NULL);
-	g_return_if_fail (!release->priv->loaded);
-
-	g_free (release->priv->uri);
-	release->priv->uri = g_strdup (uri);
 }
 
 /**
@@ -1596,10 +1643,6 @@ zif_release_finalize (GObject *object)
 	g_object_unref (release->priv->monitor);
 	g_object_unref (release->priv->download);
 	g_object_unref (release->priv->config);
-	g_free (release->priv->cache_dir);
-	g_free (release->priv->boot_dir);
-	g_free (release->priv->repo_dir);
-	g_free (release->priv->uri);
 
 	G_OBJECT_CLASS (zif_release_parent_class)->finalize (object);
 }

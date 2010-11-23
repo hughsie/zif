@@ -78,19 +78,10 @@ typedef enum {
 GQuark		 zif_release_error_quark		(void);
 GType		 zif_release_get_type			(void);
 ZifRelease	*zif_release_new			(void);
-void		 zif_release_set_cache_dir		(ZifRelease	*release,
-							 const gchar	*cache_dir);
-void		 zif_release_set_boot_dir		(ZifRelease	*release,
-							 const gchar	*boot_dir);
-void		 zif_release_set_repo_dir		(ZifRelease	*release,
-							 const gchar	*boot_dir);
-void		 zif_release_set_uri			(ZifRelease	*release,
-							 const gchar	*uri);
 GPtrArray	*zif_release_get_upgrades		(ZifRelease	*release,
 							 ZifState	*state,
 							 GError		**error);
 GPtrArray	*zif_release_get_upgrades_new		(ZifRelease	*release,
-							 guint		 version,
 							 ZifState	*state,
 							 GError		**error);
 ZifUpgrade	*zif_release_get_upgrade_for_version	(ZifRelease	*release,

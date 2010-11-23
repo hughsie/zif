@@ -292,7 +292,6 @@ typedef struct {
 	GPtrArray		*cmd_array;
 	ZifConfig		*config;
 	ZifProgressBar		*progressbar;
-	ZifRelease		*release;
 	ZifState		*state;
 } ZifCmdPrivate;
 
@@ -1418,14 +1417,14 @@ zif_cmd_get_upgrades (ZifCmdPrivate *priv, gchar **values, GError **error)
 	gboolean ret = FALSE;
 	GPtrArray *array = NULL;
 	guint i;
-	guint version;
+	ZifRelease *release = NULL;
 	ZifUpgrade *upgrade;
 
 	/* TRANSLATORS: getting details of any distro upgrades */
 	zif_progress_bar_start (priv->progressbar, _("Getting upgrades"));
 
-	version = zif_config_get_uint (priv->config, "releasever", NULL);
-	array = zif_release_get_upgrades_new (priv->release, version, priv->state, error);
+	release = zif_release_new ();
+	array = zif_release_get_upgrades_new (release, priv->state, error);
 	if (array == NULL) {
 		ret = FALSE;
 		goto out;
@@ -1448,6 +1447,8 @@ zif_cmd_get_upgrades (ZifCmdPrivate *priv, gchar **values, GError **error)
 	/* success */
 	ret = TRUE;
 out:
+	if (release != NULL)
+		g_object_unref (release);
 	if (array != NULL)
 		g_ptr_array_unref (array);
 	return ret;
@@ -3254,6 +3255,7 @@ zif_cmd_upgrade (ZifCmdPrivate *priv, gchar **values, GError **error)
 	gboolean ret = FALSE;
 	gchar **distro_id_split = NULL;
 	guint version;
+	ZifRelease *release = NULL;
 
 	/* check we have a value */
 	if (values == NULL || values[0] == NULL) {
@@ -3290,7 +3292,8 @@ zif_cmd_upgrade (ZifCmdPrivate *priv, gchar **values, GError **error)
 	}
 
 	/* do the upgrade */
-	ret = zif_release_upgrade_version (priv->release, version,
+	release = zif_release_new ();
+	ret = zif_release_upgrade_version (release, version,
 					   ZIF_RELEASE_UPGRADE_KIND_DEFAULT,
 					   priv->state, error);
 	if (!ret)
@@ -3303,6 +3306,8 @@ zif_cmd_upgrade (ZifCmdPrivate *priv, gchar **values, GError **error)
 	zif_progress_bar_end (priv->progressbar);
 
 out:
+	if (release != NULL)
+		g_object_unref (release);
 	g_strfreev (distro_id_split);
 	return ret;
 }
@@ -4125,13 +4130,6 @@ main (int argc, char *argv[])
 	if (!ret)
 		goto out;
 
-	/* ZifRelease */
-	priv->release = zif_release_new ();
-	zif_release_set_boot_dir (priv->release, "/boot/upgrade");
-	zif_release_set_cache_dir (priv->release, "/var/cache/PackageKit");
-	zif_release_set_repo_dir (priv->release, "/var/cache/yum/preupgrade");
-	zif_release_set_uri (priv->release, "http://mirrors.fedoraproject.org/releases.txt");
-
 	/* ZifState */
 	priv->state = zif_state_new ();
 	zif_state_set_enable_profile (priv->state, profile);
@@ -4431,6 +4429,16 @@ main (int argc, char *argv[])
 				/* TRANSLATORS: error message */
 				message = _("Unhandled package error");
 			}
+		} else if (error->domain == ZIF_CONFIG_ERROR) {
+			switch (error->code) {
+			case ZIF_CONFIG_ERROR_FAILED:
+				/* TRANSLATORS: error message */
+				message = _("Settings operation failed");
+				break;
+			default:
+				/* TRANSLATORS: error message */
+				message = _("Unhandled config error");
+			}
 		} else if (error->domain == ZIF_MD_ERROR) {
 			switch (error->code) {
 			case ZIF_MD_ERROR_FAILED:
@@ -4493,8 +4501,6 @@ out:
 		g_object_unref (priv->progressbar);
 		if (priv->config != NULL)
 			g_object_unref (priv->config);
-		if (priv->release != NULL)
-			g_object_unref (priv->release);
 		if (priv->state != NULL)
 			g_object_unref (priv->state);
 		if (priv->cmd_array != NULL)
