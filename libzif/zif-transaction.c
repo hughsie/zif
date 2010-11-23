@@ -435,14 +435,20 @@ zif_transaction_get_package_id_descriptions (GPtrArray *array)
 	if (array == NULL || array->len == 0)
 		return g_strdup ("none");
 
-	/* make string list */
+	/* make string list, with a maximum of 10 items */
 	string = g_string_new ("");
-	for (i=0; i<array->len; i++) {
+	for (i=0; i<array->len && i < 10; i++) {
 		package = g_ptr_array_index (array, i);
 		g_string_append_printf (string, "%s,",
 					zif_package_get_id (package));
 	}
 	g_string_set_size (string, string->len - 1);
+
+	/* add how many we didn't add */
+	if (array->len > 10) {
+		g_string_append_printf (string, " and %i more!",
+					array->len - 10);
+	}
 	return g_string_free (string, FALSE);
 }
 
