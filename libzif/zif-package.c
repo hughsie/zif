@@ -508,19 +508,21 @@ zif_package_provides (ZifPackage *package,
 		goto out;
 	}
 
+	/* set to unfound */
+	*satisfies = NULL;
+
 	/* find what we're looking for */
 	for (i=0; i<provides->len; i++) {
 		depend_tmp = g_ptr_array_index (provides, i);
 		ret = zif_depend_satisfies (depend_tmp, depend);
 		if (ret) {
 			*satisfies = g_object_ref (depend_tmp);
-			goto out;
+			break;
 		}
 	}
 
-	/* success, but did not find */
+	/* success either way */
 	ret = TRUE;
-	*satisfies = NULL;
 
 	/* insert into cache */
 	g_hash_table_insert (package->priv->provides_hash,
@@ -611,33 +613,23 @@ zif_package_requires (ZifPackage *package,
 		goto out;
 	}
 
+	/* set to unfound */
+	*satisfies = NULL;
+
 	/* find what we're looking for */
-	if (0) {
-		g_debug ("got %i requires for %s",
-			 requires->len,
-			 zif_package_get_id (package));
-		for (i=0; i<requires->len; i++) {
-			depend_tmp = g_ptr_array_index (requires, i);
-			g_debug ("%i.\t%s",
-				 i+1,
-				 zif_depend_get_description (depend_tmp));
-		}
-	}
 	for (i=0; i<requires->len; i++) {
 		depend_tmp = g_ptr_array_index (requires, i);
 		if (zif_depend_satisfies (depend_tmp, depend)) {
 			g_debug ("%s satisfied by %s",
 				 zif_depend_get_description (depend_tmp),
 				 zif_package_get_id (package));
-			ret = TRUE;
 			*satisfies = g_object_ref (depend_tmp);
-			goto out;
+			break;
 		}
 	}
 
-	/* success, but did not find */
+	/* success either way */
 	ret = TRUE;
-	*satisfies = NULL;
 
 	/* insert into cache */
 	g_hash_table_insert (package->priv->requires_hash,
@@ -726,19 +718,21 @@ zif_package_conflicts (ZifPackage *package,
 		goto out;
 	}
 
+	/* set to unfound */
+	*satisfies = NULL;
+
 	/* find what we're looking for */
 	for (i=0; i<conflicts->len; i++) {
 		depend_tmp = g_ptr_array_index (conflicts, i);
 		ret = zif_depend_satisfies (depend_tmp, depend);
 		if (ret) {
 			*satisfies = g_object_ref (depend_tmp);
-			goto out;
+			break;
 		}
 	}
 
-	/* success, but did not find */
+	/* success either way */
 	ret = TRUE;
-	*satisfies = NULL;
 
 	/* insert into cache */
 	g_hash_table_insert (package->priv->conflicts_hash,
@@ -827,19 +821,21 @@ zif_package_obsoletes (ZifPackage *package,
 		goto out;
 	}
 
+	/* set to unfound */
+	*satisfies = NULL;
+
 	/* find what we're looking for */
 	for (i=0; i<obsoletes->len; i++) {
 		depend_tmp = g_ptr_array_index (obsoletes, i);
 		ret = zif_depend_satisfies (depend_tmp, depend);
 		if (ret) {
 			*satisfies = g_object_ref (depend_tmp);
-			goto out;
+			break;
 		}
 	}
 
-	/* success, but did not find */
+	/* success either way */
 	ret = TRUE;
-	*satisfies = NULL;
 
 	/* insert into cache */
 	g_hash_table_insert (package->priv->obsoletes_hash,

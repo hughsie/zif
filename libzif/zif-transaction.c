@@ -975,7 +975,7 @@ zif_transaction_get_package_requires_from_store (ZifStore *store,
 		item = zif_transaction_get_item_from_hash (already_marked_to_remove,
 							   package);
 		if (item != NULL) {
-			if (1) {
+			if (0) {
 				g_debug ("not getting requires for %s, as already in remove array",
 					 zif_package_get_id (package));
 			}
