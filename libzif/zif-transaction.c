@@ -148,6 +148,8 @@ zif_transaction_reason_to_string (ZifTransactionReason reason)
 		return "remove-for-update";
 	if (reason == ZIF_TRANSACTION_REASON_INSTALL_FOR_UPDATE)
 		return "install-for-update";
+	if (reason == ZIF_TRANSACTION_REASON_UPDATE_FOR_CONFLICT)
+		return "update-for-conflict";
 	if (reason == ZIF_TRANSACTION_REASON_REMOVE_FOR_DEP)
 		return "remove-for-dep";
 	g_warning ("cannot convert reason %i to string", reason);
@@ -577,8 +579,12 @@ zif_transaction_add_update_internal (ZifTransaction *transaction,
 					    related_packages,
 					    reason);
 	if (!ret) {
-		/* an already added update is not a failure condition */
-		ret = TRUE;
+		ret = FALSE;
+		g_set_error (error,
+			     ZIF_TRANSACTION_ERROR,
+			     ZIF_TRANSACTION_ERROR_NOTHING_TO_DO,
+			     "package %s is already in the update array",
+			     zif_package_get_id (package));
 		goto out;
 	}
 
@@ -1578,10 +1584,18 @@ zif_transaction_resolve_remove_require (ZifTransactionResolve *data,
 								   package,
 								   related_packages,
 								   item->reason,
-								   error);
-			if (!ret)
-				goto out;
-
+								   &error_local);
+			if (!ret) {
+				/* ignore this error */
+				if (error_local->domain == ZIF_TRANSACTION_ERROR &&
+				    error_local->code == ZIF_TRANSACTION_ERROR_NOTHING_TO_DO) {
+					ret = TRUE;
+					g_clear_error (&error_local);
+				} else {
+					g_propagate_error (error, error_local);
+					goto out;
+				}
+			}
 		} else {
 			/* remove the package */
 			ret = zif_transaction_add_remove_internal (data->transaction,
@@ -2038,6 +2052,7 @@ zif_transaction_resolve_conflicts_item (ZifTransactionResolve *data,
 	ZifPackage *conflicting;
 	ZifDepend *depend;
 	GPtrArray *results_tmp;
+	GPtrArray *related_packages = NULL;
 	GPtrArray *post_resolve_package_array = NULL;
 	GError *error_local = NULL;
 
@@ -2129,25 +2144,48 @@ zif_transaction_resolve_conflicts_item (ZifTransactionResolve *data,
 
 		/* we conflict with something */
 		if (results_tmp->len > 0) {
-			ret = FALSE;
+
+			/* is there an update available for conflicting? */
 			conflicting = zif_package_array_get_newest (results_tmp, NULL);
-			g_set_error (error,
-				     ZIF_TRANSACTION_ERROR,
-				     ZIF_TRANSACTION_ERROR_CONFLICTING,
-				     "%s conflicts with %s",
-				     zif_package_get_id (item->package),
-				     zif_package_get_id (conflicting));
+			related_packages = zif_object_array_new ();
+			zif_object_array_add (related_packages, item->package);
+			zif_object_array_add (related_packages, conflicting);
+			ret = zif_transaction_add_update_internal (data->transaction,
+								   conflicting,
+								   related_packages,
+								   ZIF_TRANSACTION_REASON_UPDATE_FOR_CONFLICT,
+								   &error_local);
+			if (!ret) {
+				g_set_error (error,
+					     ZIF_TRANSACTION_ERROR,
+					     ZIF_TRANSACTION_ERROR_CONFLICTING,
+					     "%s conflicts with %s: %s",
+					     zif_package_get_id (item->package),
+					     zif_package_get_id (conflicting),
+					     error_local->message);
+				g_error_free (error_local);
+				/* fall through, with ret = FALSE */
+			} else {
+				/* new things to process */
+				data->unresolved_dependencies = TRUE;
+			}
 			g_object_unref (conflicting);
-			g_ptr_array_unref (results_tmp);
-			goto out;
 		}
+
+		/* free results */
 		g_ptr_array_unref (results_tmp);
+
+		/* breakout */
+		if (!ret)
+			break;
 	}
 out:
 	if (post_resolve_package_array != NULL)
 		g_ptr_array_unref (post_resolve_package_array);
 	if (provides != NULL)
 		g_ptr_array_unref (provides);
+	if (related_packages != NULL)
+		g_ptr_array_unref (related_packages);
 	if (conflicts != NULL)
 		g_ptr_array_unref (conflicts);
 	return ret;
