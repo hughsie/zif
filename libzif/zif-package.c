@@ -82,6 +82,10 @@ struct _ZifPackagePrivate
 
 G_DEFINE_TYPE (ZifPackage, zif_package, G_TYPE_OBJECT)
 
+static gboolean
+zif_package_ensure_data (ZifPackage *package, ZifPackageEnsureType type,
+			 ZifState *state, GError **error);
+
 /**
  * zif_package_error_quark:
  *
@@ -451,7 +455,6 @@ zif_package_provides (ZifPackage *package,
 		      GError **error)
 {
 	gboolean ret = TRUE;
-	GError *error_local = NULL;
 	GPtrArray *provides = NULL;
 	GPtrArray *files = NULL;
 	guint i;
@@ -464,18 +467,13 @@ zif_package_provides (ZifPackage *package,
 	g_return_val_if_fail (state != NULL, FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
-	/* get the list of provides */
-	provides = zif_package_get_provides (package, state, &error_local);
-	if (provides == NULL) {
-		ret = FALSE;
-		g_set_error (error,
-			     ZIF_PACKAGE_ERROR,
-			     ZIF_PACKAGE_ERROR_FAILED,
-			     "failed to get provides for %s: %s",
-			     zif_package_get_id (package),
-			     error_local->message);
-		g_error_free (error_local);
-		goto out;
+	/* this is quicker than just getting an array we don't use */
+	if (!package->priv->provides_set) {
+		provides = zif_package_get_provides (package, state, error);
+		if (provides == NULL) {
+			ret = FALSE;
+			goto out;
+		}
 	}
 
 	/* this is a file depend, but we know there are none so don't
@@ -523,6 +521,15 @@ zif_package_provides (ZifPackage *package,
 
 	/* set to unfound */
 	*satisfies = NULL;
+
+	/* get the list of provides, actually this time */
+	if (provides == NULL) {
+		provides = zif_package_get_provides (package, state, error);
+		if (provides == NULL) {
+			ret = FALSE;
+			goto out;
+		}
+	}
 
 	/* find what we're looking for */
 	for (i=0; i<provides->len; i++) {
