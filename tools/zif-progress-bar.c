@@ -171,7 +171,8 @@ zif_progress_bar_set_action (ZifProgressBar *progress_bar, const gchar *action)
 
 	/* no console */
 	if (!progress_bar->priv->on_console) {
-		g_print ("Action: %s\n", action);
+		if (action != NULL)
+			g_print ("Action: %s\n", action);
 		return;
 	}
 
