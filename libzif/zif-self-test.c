@@ -2858,6 +2858,7 @@ main (int argc, char **argv)
 	g_log_set_fatal_mask (NULL, G_LOG_LEVEL_ERROR | G_LOG_LEVEL_CRITICAL);
 
 	/* tests go here */
+	g_test_add_func ("/zif/store-remote", zif_store_remote_func);
 	g_test_add_func ("/zif/changeset", zif_changeset_func);
 	g_test_add_func ("/zif/config", zif_config_func);
 	g_test_add_func ("/zif/depend", zif_depend_func);
@@ -2887,7 +2888,6 @@ main (int argc, char **argv)
 	g_test_add_func ("/zif/state", zif_state_func);
 	g_test_add_func ("/zif/store-local", zif_store_local_func);
 	g_test_add_func ("/zif/store-meta", zif_store_meta_func);
-	g_test_add_func ("/zif/store-remote", zif_store_remote_func);
 	g_test_add_func ("/zif/string", zif_string_func);
 	g_test_add_func ("/zif/transaction", zif_transaction_func);
 	g_test_add_func ("/zif/update-info", zif_update_info_func);
