@@ -30,13 +30,18 @@
 
 G_BEGIN_DECLS
 
-typedef struct ZifString ZifString;
+/* public structure, other parts are private */
+typedef struct {
+	gchar		*value;
+	/* other stuff */
+} ZifString;
+
+#define zif_string_get_value(string)		(string->value)
 
 ZifString	*zif_string_new			(const gchar	*value);
 ZifString	*zif_string_new_value		(gchar		*value);
 ZifString	*zif_string_ref			(ZifString	*string);
 ZifString	*zif_string_unref		(ZifString	*string);
-const gchar	*zif_string_get_value		(ZifString	*string);
 
 G_END_DECLS
 

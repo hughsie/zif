@@ -37,10 +37,10 @@
 #include "zif-string.h"
 
 /* private structure */
-struct ZifString {
+typedef struct {
 	gchar		*value;
 	guint		 count;
-};
+} ZifStringInternal;
 
 /**
  * zif_string_new:
@@ -55,11 +55,11 @@ struct ZifString {
 ZifString *
 zif_string_new (const gchar *value)
 {
-	ZifString *string;
-	string = g_new0 (ZifString, 1);
+	ZifStringInternal *string;
+	string = g_new0 (ZifStringInternal, 1);
 	string->count = 1;
 	string->value = g_strdup (value);
-	return string;
+	return (ZifString *) string;
 }
 
 /**
@@ -76,29 +76,11 @@ zif_string_new (const gchar *value)
 ZifString *
 zif_string_new_value (gchar *value)
 {
-	ZifString *string;
-	string = g_new0 (ZifString, 1);
+	ZifStringInternal *string;
+	string = g_new0 (ZifStringInternal, 1);
 	string->count = 1;
 	string->value = value;
-	return string;
-}
-
-/**
- * zif_string_get_value:
- * @string: the #ZifString object
- *
- * Returns the string stored in the #ZifString.
- * This value is only valid while the #ZifString's reference count > 1.
- *
- * Return value: string value
- *
- * Since: 0.1.0
- **/
-const gchar *
-zif_string_get_value (ZifString *string)
-{
-	g_return_val_if_fail (string != NULL, NULL);
-	return string->value;
+	return (ZifString *) string;
 }
 
 /**
@@ -114,8 +96,9 @@ zif_string_get_value (ZifString *string)
 ZifString *
 zif_string_ref (ZifString *string)
 {
-	g_return_val_if_fail (string != NULL, NULL);
-	string->count++;
+	ZifStringInternal *internal = (ZifStringInternal *) string;
+	g_return_val_if_fail (internal != NULL, NULL);
+	internal->count++;
 	return string;
 }
 
@@ -133,13 +116,14 @@ zif_string_ref (ZifString *string)
 ZifString *
 zif_string_unref (ZifString *string)
 {
-	g_return_val_if_fail (string != NULL, NULL);
-	string->count--;
-	if (string->count == 0) {
-		g_free (string->value);
-		g_free (string);
-		string = NULL;
+	ZifStringInternal *internal = (ZifStringInternal *) string;
+	g_return_val_if_fail (internal != NULL, NULL);
+	internal->count--;
+	if (internal->count == 0) {
+		g_free (internal->value);
+		g_free (internal);
+		internal = NULL;
 	}
-	return string;
+	return (ZifString *) internal;
 }
 
