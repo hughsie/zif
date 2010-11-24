@@ -40,6 +40,7 @@ typedef struct {
 
 ZifString	*zif_string_new			(const gchar	*value);
 ZifString	*zif_string_new_value		(gchar		*value);
+ZifString	*zif_string_new_static		(const gchar	*value);
 ZifString	*zif_string_ref			(ZifString	*string);
 ZifString	*zif_string_unref		(ZifString	*string);
 

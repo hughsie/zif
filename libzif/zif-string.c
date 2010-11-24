@@ -40,6 +40,7 @@
 typedef struct {
 	gchar		*value;
 	guint		 count;
+	gboolean	 is_static;
 } ZifStringInternal;
 
 /**
@@ -84,6 +85,29 @@ zif_string_new_value (gchar *value)
 }
 
 /**
+ * zif_string_new_static:
+ * @value: string to use
+ *
+ * Creates a new referenced counted string, using the static memory.
+ * You MUST not free the static string that backs this object. Use this
+ * function with care.
+ *
+ * Return value: New allocated object
+ *
+ * Since: 0.1.3
+ **/
+ZifString *
+zif_string_new_static (const gchar *value)
+{
+	ZifStringInternal *string;
+	string = g_new0 (ZifStringInternal, 1);
+	string->count = 1;
+	string->value = (gchar*) value;
+	string->is_static = TRUE;
+	return (ZifString *) string;
+}
+
+/**
  * zif_string_ref:
  * @string: the #ZifString object
  *
@@ -120,7 +144,8 @@ zif_string_unref (ZifString *string)
 	g_return_val_if_fail (internal != NULL, NULL);
 	internal->count--;
 	if (internal->count == 0) {
-		g_free (internal->value);
+		if (!internal->is_static)
+			g_free (internal->value);
 		g_free (internal);
 		internal = NULL;
 	}
