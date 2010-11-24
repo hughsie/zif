@@ -424,15 +424,6 @@ zif_store_remote_download (ZifStoreRemote *store, const gchar *filename, const g
 		goto out;
 	}
 
-	/* check we got something */
-	if (zif_download_location_get_size (store->priv->download) == 0) {
-		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED_TO_DOWNLOAD,
-			     "no locations for %s, so can't download anything! [meta:%s, mirror:%s]",
-			     store->priv->id, store->priv->metalink, store->priv->mirrorlist);
-		ret = FALSE;
-		goto out;
-	}
-
 repomd_confirm:
 
 	/* setup state */
@@ -467,7 +458,9 @@ repomd_confirm:
 
 	/* we need at least one baseurl */
 	if (zif_download_location_get_size (store->priv->download) == 0) {
-		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+		g_set_error (error,
+			     ZIF_STORE_ERROR,
+			     ZIF_STORE_ERROR_FAILED_TO_DOWNLOAD,
 			     "no locations for %s", store->priv->id);
 		ret = FALSE;
 		goto out;
@@ -1224,7 +1217,7 @@ zif_store_remote_refresh_md (ZifStoreRemote *remote, ZifMd *md, gboolean force, 
 		goto out;
 
 	/* get filename */
-	filename = zif_md_get_location (md);
+	filename = zif_md_get_filename (md);
 	if (filename == NULL) {
 		g_debug ("no filename set for %s",
 			   zif_md_kind_to_text (zif_md_get_kind (md)));
@@ -1255,6 +1248,7 @@ zif_store_remote_refresh_md (ZifStoreRemote *remote, ZifMd *md, gboolean force, 
 
 	/* download new file */
 	state_local = zif_state_get_child (state);
+	filename = zif_md_get_location (md);
 	ret = zif_store_remote_download (remote, filename, remote->priv->directory, state_local, &error_local);
 	if (!ret) {
 		g_set_error (error, error_local->domain, error_local->code,

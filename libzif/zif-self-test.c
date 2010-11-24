@@ -2673,6 +2673,12 @@ zif_store_remote_func (void)
 	ret = g_file_test ("../data/tests/corrupt-repomd/packages/moo.rpm", G_FILE_TEST_EXISTS);
 	g_assert (!ret);
 
+	/* refresh on an empty repo */
+	zif_state_reset (state);
+	ret = zif_store_refresh (ZIF_STORE (store), TRUE, state, &error);
+	g_assert_no_error (error);
+	g_assert (array != NULL);
+
 	g_object_unref (download);
 	g_object_unref (store);
 	g_object_unref (config);
