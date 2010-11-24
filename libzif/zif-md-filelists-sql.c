@@ -191,7 +191,7 @@ zif_md_filelists_sql_sqlite_get_files_cb (void *data, gint argc, gchar **argv, g
 	}
 
 	/* add complete path */
-	g_ptr_array_add (*array, g_strdup (g_build_filename (*dirname, *filename, NULL)));
+	g_ptr_array_add (*array, g_build_filename (*dirname, *filename, NULL));
 	return 0;
 }
 
@@ -206,7 +206,6 @@ zif_md_filelists_sql_get_files (ZifMd *md, ZifPackage *package,
 	gint rc;
 	gboolean ret;
 	const gchar *pkgid;
-	gchar *pkgkey = NULL;
 	GError *error_local = NULL;
 	gchar *error_msg = NULL;
 	GPtrArray *array = NULL;
@@ -228,26 +227,12 @@ zif_md_filelists_sql_get_files (ZifMd *md, ZifPackage *package,
 
 	/* get pkgkey from pkgid */
 	pkgid = zif_package_remote_get_pkgid (ZIF_PACKAGE_REMOTE (package));
-	statement = g_strdup_printf ("SELECT pkgKey FROM packages WHERE pkgId = '%s' LIMIT 1", pkgid);
-	rc = sqlite3_exec (md_filelists_sql->priv->db, statement, zif_md_filelists_sql_sqlite_get_id_cb, &pkgkey, &error_msg);
-	g_free (statement);
-	if (rc != SQLITE_OK) {
-		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_BAD_SQL,
-			     "SQL error (failed to get packages): %s", error_msg);
-		sqlite3_free (error_msg);
-		goto out;
-	}
-
-	/* failed */
-	if (pkgkey == NULL) {
-		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_BAD_SQL,
-			     "failed to get pkgkey for %s", pkgid);
-		goto out;
-	}
 
 	/* get files for pkgkey */
 	files = g_ptr_array_new_with_free_func (g_free);
-	statement = g_strdup_printf ("SELECT dirname, filenames FROM filelist WHERE pkgKey = '%s'", pkgkey);
+	statement = g_strdup_printf ("SELECT dirname, filenames FROM packages p, filelist f WHERE "
+				     "p.pkgKey = f.pkgKey AND "
+				     "p.pkgId = '%s' LIMIT 1", pkgid);
 	rc = sqlite3_exec (md_filelists_sql->priv->db, statement, zif_md_filelists_sql_sqlite_get_files_cb, &files, &error_msg);
 	g_free (statement);
 	if (rc != SQLITE_OK) {

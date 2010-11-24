@@ -4539,6 +4539,7 @@ out:
 		if (priv->cmd_array != NULL)
 			g_ptr_array_unref (priv->cmd_array);
 		g_option_context_free (priv->context);
+		g_free (priv);
 	}
 	if (lock != NULL) {
 		GError *error_local = NULL;
