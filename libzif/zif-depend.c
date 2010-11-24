@@ -92,9 +92,11 @@ gboolean
 zif_depend_satisfies (ZifDepend *got, ZifDepend *need)
 {
 	gboolean ret = FALSE;
+	ZifDependFlag flag_got = got->priv->flag;
+	ZifDependFlag flag_need = need->priv->flag;
 
-	g_return_val_if_fail (got->priv->flag != ZIF_DEPEND_FLAG_UNKNOWN, FALSE);
-	g_return_val_if_fail (need->priv->flag != ZIF_DEPEND_FLAG_UNKNOWN, FALSE);
+	g_return_val_if_fail (flag_got != ZIF_DEPEND_FLAG_UNKNOWN, FALSE);
+	g_return_val_if_fail (flag_need != ZIF_DEPEND_FLAG_UNKNOWN, FALSE);
 
 	/* check the first character rather than setting up the SSE2
 	 * version of strcmp which is slow to tear down */
@@ -106,73 +108,68 @@ zif_depend_satisfies (ZifDepend *got, ZifDepend *need)
 	if (!ret)
 		goto out;
 
-	/* 'Requires: hal' - not any particular version */
-	if (need->priv->flag == ZIF_DEPEND_FLAG_ANY) {
-		ret = TRUE;
-		goto out;
-	}
-
-	/* 'Obsoletes: hal' - not any particular version */
-	if (got->priv->flag == ZIF_DEPEND_FLAG_ANY) {
+	/* 'Requires: hal' or 'Obsoletes: hal' - not any particular version */
+	if (flag_need == ZIF_DEPEND_FLAG_ANY ||
+	    flag_got == ZIF_DEPEND_FLAG_ANY) {
 		ret = TRUE;
 		goto out;
 	}
 
 	/* 'Requires: hal = 0.5.8' - both equal */
-	if (got->priv->flag == ZIF_DEPEND_FLAG_EQUAL &&
-	    need->priv->flag == ZIF_DEPEND_FLAG_EQUAL) {
+	if (flag_got == ZIF_DEPEND_FLAG_EQUAL &&
+	    flag_need == ZIF_DEPEND_FLAG_EQUAL) {
 		ret = (zif_compare_evr (got->priv->version, need->priv->version) == 0);
 		goto out;
 	}
 
 	/* 'Requires: hal > 0.5.7' - greater */
-	if (need->priv->flag == ZIF_DEPEND_FLAG_GREATER) {
+	if (flag_need == ZIF_DEPEND_FLAG_GREATER) {
 		ret = (zif_compare_evr (got->priv->version, need->priv->version) > 0);
 		goto out;
 	}
 
 	/* 'Requires: hal < 0.5.7' - less */
-	if (need->priv->flag == ZIF_DEPEND_FLAG_LESS) {
+	if (flag_need == ZIF_DEPEND_FLAG_LESS) {
 		ret = (zif_compare_evr (got->priv->version, need->priv->version) < 0);
 		goto out;
 	}
 
 	/* 'Requires: hal >= 0.5.7' - greater */
-	if (need->priv->flag == (ZIF_DEPEND_FLAG_GREATER | ZIF_DEPEND_FLAG_EQUAL)) {
+	if (flag_need == (ZIF_DEPEND_FLAG_GREATER | ZIF_DEPEND_FLAG_EQUAL)) {
 		ret = (zif_compare_evr (got->priv->version, need->priv->version) >= 0);
 		goto out;
 	}
 
 	/* 'Requires: hal <= 0.5.7' - less */
-	if (need->priv->flag == (ZIF_DEPEND_FLAG_LESS | ZIF_DEPEND_FLAG_EQUAL)) {
+	if (flag_need == (ZIF_DEPEND_FLAG_LESS | ZIF_DEPEND_FLAG_EQUAL)) {
 		ret = (zif_compare_evr (got->priv->version, need->priv->version) <= 0);
 		goto out;
 	}
 
 	/* got: bash >= 0.2.0, need: bash = 0.3.0' - only valid when versions are equal */
-	if (got->priv->flag == (ZIF_DEPEND_FLAG_GREATER | ZIF_DEPEND_FLAG_EQUAL) &&
-	    need->priv->flag == ZIF_DEPEND_FLAG_EQUAL) {
+	if (flag_got == (ZIF_DEPEND_FLAG_GREATER | ZIF_DEPEND_FLAG_EQUAL) &&
+	    flag_need == ZIF_DEPEND_FLAG_EQUAL) {
 		ret = (zif_compare_evr (got->priv->version, need->priv->version) <= 0);
 		goto out;
 	}
 
 	/* got: bash >= 0.2.0, need: bash = 0.3.0' - only valid when versions are equal */
-	if (got->priv->flag == (ZIF_DEPEND_FLAG_LESS | ZIF_DEPEND_FLAG_EQUAL) &&
-	    need->priv->flag == ZIF_DEPEND_FLAG_EQUAL) {
+	if (flag_got == (ZIF_DEPEND_FLAG_LESS | ZIF_DEPEND_FLAG_EQUAL) &&
+	    flag_need == ZIF_DEPEND_FLAG_EQUAL) {
 		ret = (zif_compare_evr (got->priv->version, need->priv->version) >= 0);
 		goto out;
 	}
 
 	/* got: bash < 0.2.0, need: bash = 0.3.0' - never valid */
-	if (got->priv->flag == ZIF_DEPEND_FLAG_LESS &&
-	    need->priv->flag == ZIF_DEPEND_FLAG_EQUAL) {
+	if (flag_got == ZIF_DEPEND_FLAG_LESS &&
+	    flag_need == ZIF_DEPEND_FLAG_EQUAL) {
 		ret = FALSE;
 		goto out;
 	}
 
 	/* got: bash > 0.2.0, need: bash = 0.3.0' - never valid */
-	if (got->priv->flag == ZIF_DEPEND_FLAG_GREATER &&
-	    need->priv->flag == ZIF_DEPEND_FLAG_EQUAL) {
+	if (flag_got == ZIF_DEPEND_FLAG_GREATER &&
+	    flag_need == ZIF_DEPEND_FLAG_EQUAL) {
 		ret = FALSE;
 		goto out;
 	}
@@ -180,8 +177,8 @@ zif_depend_satisfies (ZifDepend *got, ZifDepend *need)
 	/* not sure */
 	ret = FALSE;
 	g_warning ("not sure how to compare %s and %s for %s:%s",
-		   zif_depend_flag_to_string (got->priv->flag),
-		   zif_depend_flag_to_string (need->priv->flag),
+		   zif_depend_flag_to_string (flag_got),
+		   zif_depend_flag_to_string (flag_need),
 		   zif_depend_get_description (got),
 		   zif_depend_get_description (need));
 out:

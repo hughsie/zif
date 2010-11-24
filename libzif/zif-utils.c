@@ -227,8 +227,8 @@ gint
 zif_compare_evr (const gchar *a, const gchar *b)
 {
 	gint val = 0;
-	gchar *ad = NULL;
-	gchar *bd = NULL;
+	gchar ad[128]; /* 128 bytes should be enough for anybody, heh */
+	gchar bd[128];
 	const gchar *ae, *av, *ar;
 	const gchar *be, *bv, *br;
 
@@ -247,8 +247,8 @@ zif_compare_evr (const gchar *a, const gchar *b)
 	}
 
 	/* copy */
-	ad = g_strdup (a);
-	bd = g_strdup (b);
+	g_strlcpy (ad, a, 128);
+	g_strlcpy (bd, b, 128);
 
 	/* split */
 	zif_package_convert_evr (ad, &ae, &av, &ar);
@@ -275,10 +275,7 @@ zif_compare_evr (const gchar *a, const gchar *b)
 	/* compare release */
 	if (ar != NULL && br != NULL)
 		val = rpmvercmp (ar, br);
-
 out:
-	g_free (ad);
-	g_free (bd);
 	return val;
 }
 

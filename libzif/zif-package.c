@@ -455,8 +455,6 @@ zif_package_provides (ZifPackage *package,
 		      GError **error)
 {
 	gboolean ret = TRUE;
-	GPtrArray *provides = NULL;
-	GPtrArray *files = NULL;
 	guint i;
 	ZifDepend *depend_tmp;
 	const gchar *depend_id;
@@ -469,11 +467,20 @@ zif_package_provides (ZifPackage *package,
 
 	/* this is quicker than just getting an array we don't use */
 	if (!package->priv->provides_set) {
-		provides = zif_package_get_provides (package, state, error);
-		if (provides == NULL) {
-			ret = FALSE;
+		ret = zif_package_ensure_data (package,
+					       ZIF_PACKAGE_ENSURE_TYPE_PROVIDES,
+					       state,
+					       error);
+		if (!ret)
 			goto out;
-		}
+	}
+	if (package->priv->files == NULL) {
+		ret = zif_package_ensure_data (package,
+					       ZIF_PACKAGE_ENSURE_TYPE_FILES,
+					       state,
+					       error);
+		if (!ret)
+			goto out;
 	}
 
 	/* this is a file depend, but we know there are none so don't
@@ -522,18 +529,9 @@ zif_package_provides (ZifPackage *package,
 	/* set to unfound */
 	*satisfies = NULL;
 
-	/* get the list of provides, actually this time */
-	if (provides == NULL) {
-		provides = zif_package_get_provides (package, state, error);
-		if (provides == NULL) {
-			ret = FALSE;
-			goto out;
-		}
-	}
-
 	/* find what we're looking for */
-	for (i=0; i<provides->len; i++) {
-		depend_tmp = g_ptr_array_index (provides, i);
+	for (i=0; i<package->priv->provides->len; i++) {
+		depend_tmp = g_ptr_array_index (package->priv->provides, i);
 		ret = zif_depend_satisfies (depend_tmp, depend);
 		if (ret) {
 			*satisfies = g_object_ref (depend_tmp);
@@ -549,10 +547,6 @@ zif_package_provides (ZifPackage *package,
 			     g_strdup (depend_id),
 			     *satisfies);
 out:
-	if (provides != NULL)
-		g_ptr_array_unref (provides);
-	if (files != NULL)
-		g_ptr_array_unref (files);
 	return ret;
 }
 
@@ -579,24 +573,18 @@ zif_package_requires (ZifPackage *package,
 		      GError **error)
 {
 	gboolean ret = TRUE;
-	GError *error_local = NULL;
-	GPtrArray *requires = NULL;
 	guint i;
 	ZifDepend *depend_tmp;
 	const gchar *depend_id;
 
-	/* get the list of requires */
-	requires = zif_package_get_requires (package, state, &error_local);
-	if (requires == NULL) {
-		ret = FALSE;
-		g_set_error (error,
-			     ZIF_PACKAGE_ERROR,
-			     ZIF_PACKAGE_ERROR_FAILED,
-			     "failed to get requires for %s: %s",
-			     zif_package_get_id (package),
-			     error_local->message);
-		g_error_free (error_local);
-		goto out;
+	/* this is quicker than just getting an array we don't use */
+	if (package->priv->requires == NULL) {
+		ret = zif_package_ensure_data (package,
+					       ZIF_PACKAGE_ENSURE_TYPE_REQUIRES,
+					       state,
+					       error);
+		if (!ret)
+			goto out;
 	}
 
 	/* this is a file depend, but we know there are none so don't
@@ -646,8 +634,8 @@ zif_package_requires (ZifPackage *package,
 	*satisfies = NULL;
 
 	/* find what we're looking for */
-	for (i=0; i<requires->len; i++) {
-		depend_tmp = g_ptr_array_index (requires, i);
+	for (i=0; i<package->priv->requires->len; i++) {
+		depend_tmp = g_ptr_array_index (package->priv->requires, i);
 		if (zif_depend_satisfies (depend_tmp, depend)) {
 			g_debug ("%s satisfied by %s",
 				 zif_depend_get_description (depend_tmp),
@@ -665,8 +653,6 @@ zif_package_requires (ZifPackage *package,
 			     g_strdup (depend_id),
 			     *satisfies);
 out:
-	if (requires != NULL)
-		g_ptr_array_unref (requires);
 	return ret;
 }
 
@@ -693,24 +679,18 @@ zif_package_conflicts (ZifPackage *package,
 		       GError **error)
 {
 	gboolean ret = TRUE;
-	GError *error_local = NULL;
-	GPtrArray *conflicts = NULL;
 	guint i;
 	ZifDepend *depend_tmp;
 	const gchar *depend_id;
 
-	/* get the list of conflicts */
-	conflicts = zif_package_get_conflicts (package, state, &error_local);
-	if (conflicts == NULL) {
-		ret = FALSE;
-		g_set_error (error,
-			     ZIF_PACKAGE_ERROR,
-			     ZIF_PACKAGE_ERROR_FAILED,
-			     "failed to get conflicts for %s: %s",
-			     zif_package_get_id (package),
-			     error_local->message);
-		g_error_free (error_local);
-		goto out;
+	/* this is quicker than just getting an array we don't use */
+	if (package->priv->conflicts == NULL) {
+		ret = zif_package_ensure_data (package,
+					       ZIF_PACKAGE_ENSURE_TYPE_CONFLICTS,
+					       state,
+					       error);
+		if (!ret)
+			goto out;
 	}
 
 	/* this is a file depend, but we know there are none so don't
@@ -760,8 +740,8 @@ zif_package_conflicts (ZifPackage *package,
 	*satisfies = NULL;
 
 	/* find what we're looking for */
-	for (i=0; i<conflicts->len; i++) {
-		depend_tmp = g_ptr_array_index (conflicts, i);
+	for (i=0; i<package->priv->conflicts->len; i++) {
+		depend_tmp = g_ptr_array_index (package->priv->conflicts, i);
 		ret = zif_depend_satisfies (depend_tmp, depend);
 		if (ret) {
 			*satisfies = g_object_ref (depend_tmp);
@@ -777,8 +757,6 @@ zif_package_conflicts (ZifPackage *package,
 			     g_strdup (depend_id),
 			     *satisfies);
 out:
-	if (conflicts != NULL)
-		g_ptr_array_unref (conflicts);
 	return ret;
 }
 
@@ -805,24 +783,18 @@ zif_package_obsoletes (ZifPackage *package,
 		       GError **error)
 {
 	gboolean ret = TRUE;
-	GError *error_local = NULL;
-	GPtrArray *obsoletes = NULL;
 	guint i;
 	ZifDepend *depend_tmp;
 	const gchar *depend_id;
 
-	/* get the list of obsoletes */
-	obsoletes = zif_package_get_obsoletes (package, state, &error_local);
-	if (obsoletes == NULL) {
-		ret = FALSE;
-		g_set_error (error,
-			     ZIF_PACKAGE_ERROR,
-			     ZIF_PACKAGE_ERROR_FAILED,
-			     "failed to get obsoletes for %s: %s",
-			     zif_package_get_id (package),
-			     error_local->message);
-		g_error_free (error_local);
-		goto out;
+	/* this is quicker than just getting an array we don't use */
+	if (package->priv->obsoletes == NULL) {
+		ret = zif_package_ensure_data (package,
+					       ZIF_PACKAGE_ENSURE_TYPE_OBSOLETES,
+					       state,
+					       error);
+		if (!ret)
+			goto out;
 	}
 
 	/* this is a file depend, but we know there are none so don't
@@ -872,8 +844,8 @@ zif_package_obsoletes (ZifPackage *package,
 	*satisfies = NULL;
 
 	/* find what we're looking for */
-	for (i=0; i<obsoletes->len; i++) {
-		depend_tmp = g_ptr_array_index (obsoletes, i);
+	for (i=0; i<package->priv->obsoletes->len; i++) {
+		depend_tmp = g_ptr_array_index (package->priv->obsoletes, i);
 		ret = zif_depend_satisfies (depend_tmp, depend);
 		if (ret) {
 			*satisfies = g_object_ref (depend_tmp);
@@ -889,8 +861,6 @@ zif_package_obsoletes (ZifPackage *package,
 			     g_strdup (depend_id),
 			     *satisfies);
 out:
-	if (obsoletes != NULL)
-		g_ptr_array_unref (obsoletes);
 	return ret;
 }
 
