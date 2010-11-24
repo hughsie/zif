@@ -425,6 +425,203 @@ out:
 }
 
 /**
+ * zif_md_load_get_repomd_and_download:
+ **/
+static gboolean
+zif_md_load_get_repomd_and_download (ZifMd *md, ZifState *state, GError **error)
+{
+	gboolean compressed_check = FALSE;
+	gboolean ret;
+	gchar *dirname = NULL;
+	GError *error_local = NULL;
+	ZifState *state_local;
+
+	/* set steps */
+	ret = zif_state_set_steps (state,
+				   error,
+				   30, /* download new repomd */
+				   20, /* load the new repomd */
+				   20, /* download new compressed repo file */
+				   30, /* check compressed file against new repomd */
+				   -1);
+	if (!ret)
+		goto out;
+
+	/* if not online, then this is fatal */
+	ret = zif_config_get_boolean (md->priv->config, "network", NULL);
+	if (!ret) {
+		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED_AS_OFFLINE,
+			     "failed to check %s checksum for %s and offline",
+			     zif_md_kind_to_text (md->priv->kind), md->priv->id);
+		goto out;
+	}
+
+	/* reget repomd in case it's changed */
+	g_debug ("regetting repomd as checksum was invalid");
+	state_local = zif_state_get_child (state);
+	ret = zif_store_remote_download_repomd (md->priv->remote, state_local, &error_local);
+	if (!ret) {
+		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED_DOWNLOAD,
+			     "failed to download repomd after failing checksum: %s",
+			     error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* reload new data */
+	state_local = zif_state_get_child (state);
+	ret = zif_store_load (ZIF_STORE (md->priv->remote), state_local, &error_local);
+	if (!ret) {
+		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED_DOWNLOAD,
+			     "failed to load repomd after downloading new copy: %s",
+			     error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* delete file if it exists */
+	zif_md_delete_file (md->priv->filename);
+
+	/* download file */
+	state_local = zif_state_get_child (state);
+	dirname = g_path_get_dirname (md->priv->filename);
+	ret = zif_store_remote_download (md->priv->remote, md->priv->location, dirname, state_local, &error_local);
+	if (!ret) {
+		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED_DOWNLOAD,
+			     "failed to download missing compressed file: %s",
+			     error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* check newly downloaded compressed file */
+	state_local = zif_state_get_child (state);
+	ret = zif_md_file_check (md, FALSE, &compressed_check,
+				 state_local, error);
+	if (!ret)
+		goto out;
+	if (!compressed_check) {
+		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED,
+			     "failed checksum on downloaded file");
+		goto out;
+	}
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+out:
+	g_free (dirname);
+	return ret;
+}
+
+/**
+ * zif_md_load_check_and_get_compressed:
+ **/
+static gboolean
+zif_md_load_check_and_get_compressed (ZifMd *md, ZifState *state, GError **error)
+{
+	gboolean compressed_check = FALSE;
+	gboolean ret;
+	gboolean uncompressed_check = FALSE;
+	GError *error_local = NULL;
+	ZifState *state_local;
+
+	/* set steps */
+	ret = zif_state_set_steps (state,
+				   error,
+				   10, /* check compressed */
+				   60, /* get new compressed */
+				   10, /* decompress compressed */
+				   20, /* check uncompressed */
+				   -1);
+	if (!ret)
+		goto out;
+
+	/* check compressed file */
+	state_local = zif_state_get_child (state);
+	ret = zif_md_file_check (md, FALSE, &compressed_check,
+				 state_local, &error_local);
+	if (!ret)
+		goto out;
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* failed checksum, likely the repomd is out of date too */
+	if (!compressed_check) {
+		state_local = zif_state_get_child (state);
+		ret = zif_md_load_get_repomd_and_download (md, state_local, error);
+		if (!ret)
+			goto out;
+	}
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* delete uncompressed file if it exists */
+	zif_md_delete_file (md->priv->filename_uncompressed);
+
+	/* decompress file */
+	g_debug ("decompressing file");
+	state_local = zif_state_get_child (state);
+	ret = zif_file_decompress (md->priv->filename,
+				   md->priv->filename_uncompressed,
+				   state_local, &error_local);
+	if (!ret) {
+		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED,
+			     "failed to decompress: %s", error_local->message);
+		goto out;
+	}
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* check newly uncompressed file */
+	state_local = zif_state_get_child (state);
+	ret = zif_md_file_check (md, TRUE, &uncompressed_check,
+				 state_local, error);
+	if (!ret)
+		goto out;
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* not valid, fatal */
+	if (!uncompressed_check) {
+		ret = FALSE;
+		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED,
+			     "failed checksum on decompressed file");
+		goto out;
+	}
+out:
+	return ret;
+}
+
+/**
  * zif_md_load:
  * @md: the #ZifMd object
  * @state: a #ZifState to use for progress reporting
@@ -440,12 +637,9 @@ gboolean
 zif_md_load (ZifMd *md, ZifState *state, GError **error)
 {
 	gboolean ret;
-	gboolean uncompressed_check;
-	gchar *dirname = NULL;
-	GError *error_local = NULL;
+	gboolean uncompressed_check = FALSE;
 	ZifMdClass *klass = ZIF_MD_GET_CLASS (md);
 	ZifState *state_local;
-	ZifState *state_repair;
 
 	g_return_val_if_fail (ZIF_IS_MD (md), FALSE);
 	g_return_val_if_fail (zif_state_valid (state), FALSE);
@@ -461,14 +655,11 @@ zif_md_load (ZifMd *md, ZifState *state, GError **error)
 		return FALSE;
 	}
 
-	/* set steps: FIXME this needs splitting out to be able to do this properly */
+	/* set steps */
 	ret = zif_state_set_steps (state,
 				   error,
 				   20, /* check uncompressed */
-				   10, /* check compressed */
-				   20, /* get new compressed */
-				   10, /* decompress compressed */
-				   20, /* check compressed */
+				   60, /* get if not valid */
 				   20, /* klass->load */
 				   -1);
 	if (!ret)
@@ -476,189 +667,25 @@ zif_md_load (ZifMd *md, ZifState *state, GError **error)
 
 	/* optimise: if uncompressed file is okay, then don't even check the compressed file */
 	state_local = zif_state_get_child (state);
-	uncompressed_check = zif_md_file_check (md, TRUE, state_local, &error_local);
-	if (uncompressed_check) {
-		ret = zif_state_done (state, error);
-		if (!ret)
-			goto out;
-		ret = zif_state_done (state, error);
-		if (!ret)
-			goto out;
-		ret = zif_state_done (state, error);
-		if (!ret)
-			goto out;
-		ret = zif_state_done (state, error);
-		if (!ret)
-			goto out;
-		goto skip_compressed_check;
-	}
+	ret = zif_md_file_check (md, TRUE, &uncompressed_check,
+				 state_local, error);
+	if (!ret)
+		goto out;
 
-	/* display any warning */
-	g_debug ("failed checksum for uncompressed: %s", error_local->message);
-	g_clear_error (&error_local);
-	zif_state_reset (state_local);
-
-	/* this section done */
+	/* done */
 	ret = zif_state_done (state, error);
 	if (!ret)
 		goto out;
 
-	/* check compressed file */
-	state_local = zif_state_get_child (state);
-	ret = zif_md_file_check (md, FALSE, state_local, &error_local);
-	if (!ret) {
-
-		/* this one really is fatal */
-		if (g_strstr_len (error_local->message, -1, "no filename") != NULL) {
-			g_propagate_error (error, error_local);
-			goto out;
-		}
-
-		g_debug ("failed checksum for compressed: %s", error_local->message);
-		g_clear_error (&error_local);
-
-		/* repair this, as we want to continue */
-		ret = zif_state_finished (state_local, error);
-		if (!ret)
-			goto out;
-
-		/* this section done */
-		ret = zif_state_done (state, error);
-		if (!ret)
-			goto out;
-
-		/* set steps */
+	/* check the compressed file, and if needed, download a new one */
+	if (!uncompressed_check) {
 		state_local = zif_state_get_child (state);
-		ret = zif_state_set_steps (state_local,
-					   error,
-					   30, /* download new repomd */
-					   20, /* load the new repomd */
-					   20, /* download new compressed repo file */
-					   30, /* check compressed file against new repomd */
-					   -1);
-		if (!ret)
-			goto out;
-
-		/* if not online, then this is fatal */
-		ret = zif_config_get_boolean (md->priv->config, "network", NULL);
-		if (!ret) {
-			g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED_AS_OFFLINE,
-				     "failed to check %s checksum for %s and offline",
-				     zif_md_kind_to_text (md->priv->kind), md->priv->id);
-			goto out;
-		}
-
-		/* reget repomd in case it's changed */
-		g_debug ("regetting repomd as checksum was invalid");
-		state_repair = zif_state_get_child (state_local);
-		ret = zif_store_remote_download_repomd (md->priv->remote, state_repair, &error_local);
-		if (!ret) {
-			g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED_DOWNLOAD,
-				     "failed to download repomd after failing checksum: %s", error_local->message);
-			g_error_free (error_local);
-			goto out;
-		}
-
-		/* this section done */
-		ret = zif_state_done (state_local, error);
-		if (!ret)
-			goto out;
-
-		/* reload new data */
-		state_repair = zif_state_get_child (state_local);
-		ret = zif_store_load (ZIF_STORE (md->priv->remote), state_repair, &error_local);
-		if (!ret) {
-			g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED_DOWNLOAD,
-				     "failed to load repomd after downloading new copy: %s", error_local->message);
-			g_error_free (error_local);
-			goto out;
-		}
-
-		/* this section done */
-		ret = zif_state_done (state_local, error);
-		if (!ret)
-			goto out;
-
-		/* delete file if it exists */
-		zif_md_delete_file (md->priv->filename);
-
-		/* download file */
-		state_repair = zif_state_get_child (state_local);
-		dirname = g_path_get_dirname (md->priv->filename);
-		ret = zif_store_remote_download (md->priv->remote, md->priv->location, dirname, state_repair, &error_local);
-		if (!ret) {
-			g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED_DOWNLOAD,
-				     "failed to download missing compressed file: %s", error_local->message);
-			g_error_free (error_local);
-			goto out;
-		}
-
-		/* this section done */
-		ret = zif_state_done (state_local, error);
-		if (!ret)
-			goto out;
-
-		/* check newly downloaded compressed file */
-		state_repair = zif_state_get_child (state_local);
-		ret = zif_md_file_check (md, FALSE, state_repair, &error_local);
-		if (!ret) {
-			g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED,
-				     "failed checksum on downloaded file: %s", error_local->message);
-			goto out;
-		}
-
-		/* this section done */
-		ret = zif_state_done (state_local, error);
-		if (!ret)
-			goto out;
-
-		/* this section done */
-		ret = zif_state_done (state, error);
-		if (!ret)
-			goto out;
-	} else {
-		/* this section done */
-		ret = zif_state_done (state, error);
-		if (!ret)
-			goto out;
-
-		/* this section done */
-		ret = zif_state_done (state, error);
+		ret = zif_md_load_check_and_get_compressed (md, state_local, error);
 		if (!ret)
 			goto out;
 	}
 
-	/* delete uncompressed file if it exists */
-	zif_md_delete_file (md->priv->filename_uncompressed);
-
-	/* decompress file */
-	g_debug ("decompressing file");
-	state_local = zif_state_get_child (state);
-	ret = zif_file_decompress (md->priv->filename, md->priv->filename_uncompressed,
-				   state_local, &error_local);
-	if (!ret) {
-		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED,
-			     "failed to decompress: %s", error_local->message);
-		goto out;
-	}
-
-	/* this section done */
-	ret = zif_state_done (state, error);
-	if (!ret)
-		goto out;
-
-	/* check newly uncompressed file */
-	state_local = zif_state_get_child (state);
-	ret = zif_md_file_check (md, TRUE, state_local, &error_local);
-	if (!ret) {
-		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED,
-			     "failed checksum on decompressed file: %s", error_local->message);
-		goto out;
-	}
-
-skip_compressed_check:
-
-	/* this section done */
+	/* done */
 	ret = zif_state_done (state, error);
 	if (!ret)
 		goto out;
@@ -677,7 +704,6 @@ skip_compressed_check:
 	/* all okay */
 	md->priv->loaded = TRUE;
 out:
-	g_free (dirname);
 	return ret;
 }
 
@@ -1542,17 +1568,19 @@ zif_md_kind_to_text (ZifMdKind type)
  * zif_md_file_check:
  * @md: the #ZifMd object
  * @use_uncompressed: If we should check only the uncompresed version
+ * @valid: If the metadata is valid, i.e. the checksums are correct
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
  *
  * Check the metadata files to make sure they are valid.
  *
- * Return value: %TRUE for success, %FALSE for failure
+ * Return value: %TRUE if the MD file was read and checked.
  *
  * Since: 0.1.0
  **/
 gboolean
-zif_md_file_check (ZifMd *md, gboolean use_uncompressed, ZifState *state, GError **error)
+zif_md_file_check (ZifMd *md, gboolean use_uncompressed, gboolean *valid,
+		   ZifState *state, GError **error)
 {
 	gboolean ret = FALSE;
 	GFile *file = NULL;
@@ -1568,6 +1596,7 @@ zif_md_file_check (ZifMd *md, gboolean use_uncompressed, ZifState *state, GError
 
 	g_return_val_if_fail (ZIF_IS_MD (md), FALSE);
 	g_return_val_if_fail (zif_state_valid (state), FALSE);
+	g_return_val_if_fail (valid != NULL, FALSE);
 	g_return_val_if_fail (md->priv->id != NULL, FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
@@ -1585,6 +1614,7 @@ zif_md_file_check (ZifMd *md, gboolean use_uncompressed, ZifState *state, GError
 	    md->priv->kind == ZIF_MD_KIND_MIRRORLIST) {
 		g_debug ("skipping checksum check on %s",
 			 zif_md_kind_to_text (md->priv->kind));
+		*valid = TRUE;
 		ret = zif_state_finished (state, error);
 		goto out;
 	}
@@ -1608,10 +1638,14 @@ zif_md_file_check (ZifMd *md, gboolean use_uncompressed, ZifState *state, GError
 	cancellable = zif_state_get_cancellable (state);
 	file_info = g_file_query_info (file, G_FILE_ATTRIBUTE_TIME_MODIFIED, G_FILE_QUERY_INFO_NONE, cancellable, &error_local);
 	if (file_info == NULL) {
-		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED,
-			     "failed to get file information of %s: %s", filename, error_local->message);
+		/* this is not fatal, the checksum just fails as the file does not exist */
+		g_debug ("failed to get file information for %s: %s",
+			 filename, error_local->message);
 		g_error_free (error_local);
-		ret = FALSE;
+		ret = zif_state_finished (state, error);
+		if (!ret)
+			goto out;
+		*valid = FALSE;
 		goto out;
 	}
 
@@ -1622,8 +1656,12 @@ zif_md_file_check (ZifMd *md, gboolean use_uncompressed, ZifState *state, GError
 		   filename, age / (60 * 60), md->priv->max_age);
 	ret = (md->priv->max_age == 0 || age < md->priv->max_age);
 	if (!ret) {
-		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FILE_TOO_OLD,
-			     "data is too old: %s", filename);
+		/* this is not fatal, the file is too old */
+		g_debug ("data is too old: %s", filename);
+		ret = zif_state_finished (state, error);
+		if (!ret)
+			goto out;
+		*valid = FALSE;
 		goto out;
 	}
 
@@ -1663,10 +1701,10 @@ zif_md_file_check (ZifMd *md, gboolean use_uncompressed, ZifState *state, GError
 	checksum = g_compute_checksum_for_data (md->priv->checksum_type, (guchar*) data, length);
 
 	/* matches? */
-	ret = (g_strcmp0 (checksum, checksum_wanted) == 0);
-	if (!ret) {
-		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED,
-			     "checksum incorrect, wanted %s, got %s for %s", checksum_wanted, checksum, filename);
+	*valid = (g_strcmp0 (checksum, checksum_wanted) == 0);
+	if (!(*valid)) {
+		g_debug ("checksum incorrect, wanted %s, got %s for %s",
+			 checksum_wanted, checksum, filename);
 		goto out;
 	}
 	g_debug ("%s checksum correct (%s)", filename, checksum_wanted);

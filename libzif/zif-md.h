@@ -213,6 +213,7 @@ gboolean	 zif_md_clean				(ZifMd		*md,
 							 GError		**error);
 gboolean	 zif_md_file_check			(ZifMd		*md,
 							 gboolean	 use_uncompressed,
+							 gboolean	*valid,
 							 ZifState	*state,
 							 GError		**error);
 GPtrArray	*zif_md_search_file			(ZifMd		*md,

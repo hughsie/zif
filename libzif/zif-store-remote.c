@@ -112,6 +112,7 @@ struct _ZifStoreRemotePrivate
 G_DEFINE_TYPE (ZifStoreRemote, zif_store_remote, ZIF_TYPE_STORE)
 
 static gboolean zif_store_remote_load_metadata (ZifStoreRemote *store, ZifState *state, GError **error);
+static gboolean zif_store_remote_load (ZifStore *store, ZifState *state, GError **error);
 
 /**
  * zif_store_remote_checksum_type_from_text:
@@ -899,6 +900,7 @@ zif_store_remote_download_repomd (ZifStoreRemote *store, ZifState *state, GError
 {
 	gboolean ret;
 	GError *error_local = NULL;
+	ZifState *state_local;
 
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), FALSE);
@@ -913,17 +915,51 @@ zif_store_remote_download_repomd (ZifStoreRemote *store, ZifState *state, GError
 		goto out;
 	}
 
+	/* set steps */
+	if (store->priv->loaded) {
+		zif_state_set_number_steps (state, 1);
+	} else {
+		ret = zif_state_set_steps (state,
+					   error,
+					   20, /* load repo file */
+					   80, /* download */
+					   -1);
+		if (!ret)
+			goto out;
+	}
+
+	/* if not already loaded, load */
+	if (!store->priv->loaded) {
+		state_local = zif_state_get_child (state);
+		ret = zif_store_remote_load (ZIF_STORE (store), state_local, error);
+		if (!ret)
+			goto out;
+
+		/* done */
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
+	}
+
 	/* download new file */
 	store->priv->loaded_metadata = TRUE;
-	ret = zif_store_remote_download (store, "repodata/repomd.xml", store->priv->directory, state, &error_local);
+	state_local = zif_state_get_child (state);
+	ret = zif_store_remote_download (store, "repodata/repomd.xml",
+					 store->priv->directory,
+					 state_local,
+					 &error_local);
 	store->priv->loaded_metadata = FALSE;
-
 	if (!ret) {
 		g_set_error (error, error_local->domain, error_local->code,
 			     "failed to download missing repomd: %s", error_local->message);
 		g_error_free (error_local);
 		goto out;
 	}
+
+	/* done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 out:
 	return ret;
 }
@@ -1227,13 +1263,12 @@ zif_store_remote_refresh_md (ZifStoreRemote *remote, ZifMd *md, gboolean force, 
 
 	/* does current uncompressed file equal what repomd says it should be */
 	state_local = zif_state_get_child (state);
-	repo_verified = zif_md_file_check (md, TRUE, state_local, &error_local);
+	ret = zif_md_file_check (md, TRUE, &repo_verified,
+				 state_local, error);
+	if (!ret)
+		goto out;
 	if (!repo_verified) {
-		g_debug ("failed to verify md: %s, so will attempt update", error_local->message);
-		g_clear_error (&error_local);
-		ret = zif_state_finished (state_local, error);
-		if (!ret)
-			goto out;
+		g_debug ("failed to verify md, so will attempt update");
 	} else if (!force) {
 		g_debug ("%s is okay, and we're not forcing",
 			   zif_md_kind_to_text (zif_md_get_kind (md)));
