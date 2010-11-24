@@ -1590,6 +1590,49 @@ out:
 }
 
 /**
+ * zif_store_remote_remove_packages:
+ **/
+static gboolean
+zif_store_remote_remove_packages (ZifStoreRemote *remote, GError **error)
+{
+	gchar *packages_dir;
+	const gchar *filename;
+	gchar *package_filename;
+	GDir *dir;
+	GFile *file;
+	gboolean ret = TRUE;
+
+	/* open directory */
+	packages_dir = g_build_filename (remote->priv->directory,
+					 "packages", NULL);
+	dir = g_dir_open (packages_dir, 0, NULL);
+	if (dir == NULL)
+		goto out;
+
+	/* search directory */
+	do {
+		filename = g_dir_read_name (dir);
+		if (filename == NULL)
+			break;
+		if (!g_str_has_suffix (filename, ".rpm"))
+			continue;
+
+		/* now we're sure it's an rpm file, delete it */
+		package_filename = g_build_filename (packages_dir,
+						     filename, NULL);
+		file = g_file_new_for_path (package_filename);
+		ret = g_file_delete (file, NULL, error);
+		g_object_unref (file);
+		g_free (package_filename);
+	} while (ret);
+out:
+	if (dir != NULL)
+		g_dir_close (dir);
+	g_free (packages_dir);
+	return ret;
+}
+
+/**
  * zif_store_remote_clean:
  **/
 static gboolean
@@ -1713,6 +1756,11 @@ skip:
 			goto out;
 		}
 	}
+
+	/* remove packages */
+	ret = zif_store_remote_remove_packages (remote, error);
+	if (!ret)
+		goto out;
 
 	/* this section done */
 	ret = zif_state_done (state, error);

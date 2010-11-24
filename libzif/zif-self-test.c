@@ -2638,6 +2638,40 @@ zif_store_remote_func (void)
 	g_assert (array != NULL);
 	g_assert_cmpint (array->len, ==, 1);
 	g_ptr_array_unref (array);
+	g_object_unref (store);
+
+	/* start afresh */
+	ret = g_spawn_command_line_sync ("rm -rf ../data/tests/corrupt-repomd/*", NULL, NULL, NULL, &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	/* create packages */
+	ret = g_spawn_command_line_sync ("mkdir ../data/tests/corrupt-repomd/packages", NULL, NULL, NULL, &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	/* create dummy package */
+	ret = g_spawn_command_line_sync ("touch ../data/tests/corrupt-repomd/packages/moo.rpm", NULL, NULL, NULL, &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	/* try to clean a blank repo */
+	store = ZIF_STORE_REMOTE (zif_store_remote_new ());
+	zif_state_reset (state);
+	filename = zif_test_get_data_file ("corrupt-repomd.repo");
+	ret = zif_store_remote_set_from_file (store, filename, "corrupt-repomd", state, &error);
+	g_free (filename);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	zif_state_reset (state);
+	ret = zif_store_clean (ZIF_STORE (store), state, &error);
+	g_assert_no_error (error);
+	g_assert (array != NULL);
+
+	/* ensure packages are gone */
+	ret = g_file_test ("../data/tests/corrupt-repomd/packages/moo.rpm", G_FILE_TEST_EXISTS);
+	g_assert (!ret);
 
 	g_object_unref (download);
 	g_object_unref (store);
