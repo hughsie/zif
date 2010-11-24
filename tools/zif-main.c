@@ -292,6 +292,12 @@ zif_log_handler_cb (const gchar *log_domain, GLogLevelFlags log_level,
 	gchar str_time[255];
 	time_t the_time;
 
+	/* not a console */
+	if (isatty (fileno (stdout)) == 0) {
+		g_print ("%s\n", message);
+		return;
+	}
+
 	/* header always in green */
 	time (&the_time);
 	strftime (str_time, 254, "%H:%M:%S", localtime (&the_time));
@@ -4060,7 +4066,9 @@ main (int argc, char *argv[])
 	g_option_context_parse (priv->context, &argc, &argv, NULL);
 
 	priv->progressbar = zif_progress_bar_new ();
-	zif_progress_bar_set_on_console (priv->progressbar, !verbose);
+	zif_progress_bar_set_on_console (priv->progressbar,
+					 !verbose &&
+					 isatty (fileno (stdout)) == 1);
 	zif_progress_bar_set_padding (priv->progressbar, 30);
 	zif_progress_bar_set_size (priv->progressbar, 30);
 
