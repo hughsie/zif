@@ -239,6 +239,11 @@ zif_progress_bar_start (ZifProgressBar *progress_bar, const gchar *text)
 	zif_progress_bar_set_percentage (progress_bar, 0);
 	zif_progress_bar_set_detail (progress_bar, 0);
 	zif_progress_bar_set_action (progress_bar, text);
+
+	/* no console */
+	if (!progress_bar->priv->on_console)
+		return;
+
 	zif_progress_bar_redraw (progress_bar);
 }
 
