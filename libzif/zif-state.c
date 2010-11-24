@@ -374,7 +374,7 @@ zif_state_set_percentage (ZifState *state, guint percentage)
 
 	/* is it invalid */
 	if (percentage > 100) {
-		zif_state_print_parent_chain (state->priv->child, 0);
+		zif_state_print_parent_chain (state, 0);
 		g_warning ("percentage %i%% is invalid on %p!",
 			   percentage, state);
 		goto out;
@@ -382,7 +382,7 @@ zif_state_set_percentage (ZifState *state, guint percentage)
 
 	/* is it less */
 	if (percentage < state->priv->last_percentage) {
-		zif_state_print_parent_chain (state->priv->child, 0);
+		zif_state_print_parent_chain (state, 0);
 		g_warning ("percentage cannot go down from %i to %i on %p!",
 			   state->priv->last_percentage, percentage, state);
 		goto out;
