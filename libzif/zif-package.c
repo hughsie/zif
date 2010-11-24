@@ -1821,6 +1821,7 @@ zif_package_set_files (ZifPackage *package, GPtrArray *files)
 	const gchar *filename;
 	guint i;
 	ZifDepend *depend_tmp;
+	ZifString *string;
 
 	g_return_if_fail (ZIF_IS_PACKAGE (package));
 	g_return_if_fail (files != NULL);
@@ -1831,7 +1832,14 @@ zif_package_set_files (ZifPackage *package, GPtrArray *files)
 		filename = g_ptr_array_index (files, i);
 		depend_tmp = zif_depend_new ();
 		zif_depend_set_flag (depend_tmp, ZIF_DEPEND_FLAG_ANY);
-		zif_depend_set_name (depend_tmp, filename);
+
+		/* add this as a static string, as we know that the files
+		 * cannot be ripped from under us, and it'll save a few
+		 * thousand allocatons per package created */
+		string = zif_string_new_static (filename);
+		zif_depend_set_name_str (depend_tmp, string);
+		zif_string_unref (string);
+
 		g_hash_table_insert (package->priv->provides_any_hash,
 				     (gpointer) filename,
 				     depend_tmp);

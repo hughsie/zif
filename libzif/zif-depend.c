@@ -33,14 +33,15 @@
 
 #include "zif-depend.h"
 #include "zif-utils.h"
+#include "zif-string.h"
 
 #define ZIF_DEPEND_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_DEPEND, ZifDependPrivate))
 
 struct _ZifDependPrivate
 {
-	gchar			*name;
+	ZifString		*name;
 	ZifDependFlag		 flag;
-	gchar			*version;
+	ZifString		*version;
 	gchar			*description;
 	gboolean		 description_ok;
 };
@@ -74,7 +75,8 @@ zif_depend_compare (ZifDepend *a, ZifDepend *b)
 	g_return_val_if_fail (b != NULL, G_MAXINT);
 
 	/* fall back to comparing the evr */
-	return zif_compare_evr (a->priv->version, b->priv->version);
+	return zif_compare_evr (zif_depend_get_version (a),
+				zif_depend_get_version (b));
 }
 
 /**
@@ -92,21 +94,28 @@ gboolean
 zif_depend_satisfies (ZifDepend *got, ZifDepend *need)
 {
 	gboolean ret = FALSE;
-	ZifDependFlag flag_got = got->priv->flag;
-	ZifDependFlag flag_need = need->priv->flag;
-
-	g_return_val_if_fail (flag_got != ZIF_DEPEND_FLAG_UNKNOWN, FALSE);
-	g_return_val_if_fail (flag_need != ZIF_DEPEND_FLAG_UNKNOWN, FALSE);
+	ZifDependFlag flag_got;
+	ZifDependFlag flag_need;
+	const gchar *name_got = zif_string_get_value (got->priv->name);
+	const gchar *name_need = zif_string_get_value (need->priv->name);
+	const gchar *version_got;
+	const gchar *version_need;
 
 	/* check the first character rather than setting up the SSE2
 	 * version of strcmp which is slow to tear down */
-	if (got->priv->name[0] != need->priv->name[0])
+	if (name_got[0] != name_need[0])
 		goto out;
 
 	/* name does not match */
-	ret = (g_strcmp0 (got->priv->name, need->priv->name) == 0);
+	ret = (g_strcmp0 (name_got, name_need) == 0);
 	if (!ret)
 		goto out;
+
+	/* get cached values of the flags */
+	flag_got = got->priv->flag;
+	flag_need = need->priv->flag;
+	g_return_val_if_fail (flag_got != ZIF_DEPEND_FLAG_UNKNOWN, FALSE);
+	g_return_val_if_fail (flag_need != ZIF_DEPEND_FLAG_UNKNOWN, FALSE);
 
 	/* 'Requires: hal' or 'Obsoletes: hal' - not any particular version */
 	if (flag_need == ZIF_DEPEND_FLAG_ANY ||
@@ -115,48 +124,52 @@ zif_depend_satisfies (ZifDepend *got, ZifDepend *need)
 		goto out;
 	}
 
+	/* get cached values of the versions */
+	version_got = zif_depend_get_version (got);
+	version_need = zif_depend_get_version (need);
+
 	/* 'Requires: hal = 0.5.8' - both equal */
 	if (flag_got == ZIF_DEPEND_FLAG_EQUAL &&
 	    flag_need == ZIF_DEPEND_FLAG_EQUAL) {
-		ret = (zif_compare_evr (got->priv->version, need->priv->version) == 0);
+		ret = (zif_compare_evr (version_got, version_need) == 0);
 		goto out;
 	}
 
 	/* 'Requires: hal > 0.5.7' - greater */
 	if (flag_need == ZIF_DEPEND_FLAG_GREATER) {
-		ret = (zif_compare_evr (got->priv->version, need->priv->version) > 0);
+		ret = (zif_compare_evr (version_got, version_need) > 0);
 		goto out;
 	}
 
 	/* 'Requires: hal < 0.5.7' - less */
 	if (flag_need == ZIF_DEPEND_FLAG_LESS) {
-		ret = (zif_compare_evr (got->priv->version, need->priv->version) < 0);
+		ret = (zif_compare_evr (version_got, version_need) < 0);
 		goto out;
 	}
 
 	/* 'Requires: hal >= 0.5.7' - greater */
 	if (flag_need == (ZIF_DEPEND_FLAG_GREATER | ZIF_DEPEND_FLAG_EQUAL)) {
-		ret = (zif_compare_evr (got->priv->version, need->priv->version) >= 0);
+		ret = (zif_compare_evr (version_got, version_need) >= 0);
 		goto out;
 	}
 
 	/* 'Requires: hal <= 0.5.7' - less */
 	if (flag_need == (ZIF_DEPEND_FLAG_LESS | ZIF_DEPEND_FLAG_EQUAL)) {
-		ret = (zif_compare_evr (got->priv->version, need->priv->version) <= 0);
+		ret = (zif_compare_evr (version_got, version_need) <= 0);
 		goto out;
 	}
 
 	/* got: bash >= 0.2.0, need: bash = 0.3.0' - only valid when versions are equal */
 	if (flag_got == (ZIF_DEPEND_FLAG_GREATER | ZIF_DEPEND_FLAG_EQUAL) &&
 	    flag_need == ZIF_DEPEND_FLAG_EQUAL) {
-		ret = (zif_compare_evr (got->priv->version, need->priv->version) <= 0);
+		ret = (zif_compare_evr (version_got, version_need) <= 0);
 		goto out;
 	}
 
 	/* got: bash >= 0.2.0, need: bash = 0.3.0' - only valid when versions are equal */
 	if (flag_got == (ZIF_DEPEND_FLAG_LESS | ZIF_DEPEND_FLAG_EQUAL) &&
 	    flag_need == ZIF_DEPEND_FLAG_EQUAL) {
-		ret = (zif_compare_evr (got->priv->version, need->priv->version) >= 0);
+		ret = (zif_compare_evr (version_got, version_need) >= 0);
 		goto out;
 	}
 
@@ -231,11 +244,11 @@ zif_depend_to_string (ZifDepend *depend)
 {
 	g_return_val_if_fail (ZIF_IS_DEPEND (depend), NULL);
 	if (depend->priv->version == NULL)
-		return g_strdup (depend->priv->name);
+		return g_strdup (zif_string_get_value (depend->priv->name));
 	return g_strdup_printf ("%s %s %s",
-				depend->priv->name,
+				zif_string_get_value (depend->priv->name),
 				zif_depend_flag_to_string (depend->priv->flag),
-				depend->priv->version);
+				zif_string_get_value (depend->priv->version));
 }
 
 /**
@@ -259,9 +272,9 @@ zif_depend_get_description (ZifDepend *depend)
 	if (!depend->priv->description_ok) {
 		g_free (depend->priv->description);
 		depend->priv->description = g_strdup_printf ("[%s %s %s]",
-							     depend->priv->name,
+							     zif_string_get_value (depend->priv->name),
 							     zif_depend_flag_to_string (depend->priv->flag),
-							     depend->priv->version ? depend->priv->version : "");
+							     depend->priv->version ? zif_string_get_value (depend->priv->version) : "");
 		depend->priv->description_ok = TRUE;
 	}
 	return depend->priv->description;
@@ -299,7 +312,9 @@ const gchar *
 zif_depend_get_name (ZifDepend *depend)
 {
 	g_return_val_if_fail (depend != NULL, NULL);
-	return depend->priv->name;
+	if (depend->priv->name == NULL)
+		return NULL;
+	return zif_string_get_value (depend->priv->name);
 }
 
 /**
@@ -316,7 +331,9 @@ const gchar *
 zif_depend_get_version (ZifDepend *depend)
 {
 	g_return_val_if_fail (depend != NULL, NULL);
-	return depend->priv->version;
+	if (depend->priv->version == NULL)
+		return NULL;
+	return zif_string_get_value (depend->priv->version);
 }
 
 /**
@@ -353,7 +370,27 @@ zif_depend_set_name (ZifDepend *depend, const gchar *name)
 	g_return_if_fail (name != NULL);
 	g_return_if_fail (depend->priv->name == NULL);
 
-	depend->priv->name = g_strdup (name);
+	depend->priv->name = zif_string_new (name);
+	depend->priv->description_ok = FALSE;
+}
+
+/**
+ * zif_depend_set_name_str:
+ * @depend: the #ZifDepend object
+ * @name: the depend name
+ *
+ * Sets the depend name.
+ *
+ * Since: 0.1.3
+ **/
+void
+zif_depend_set_name_str (ZifDepend *depend, ZifString *name)
+{
+	g_return_if_fail (depend != NULL);
+	g_return_if_fail (name != NULL);
+	g_return_if_fail (depend->priv->name == NULL);
+
+	depend->priv->name = zif_string_ref (name);
 	depend->priv->description_ok = FALSE;
 }
 
@@ -373,7 +410,27 @@ zif_depend_set_version (ZifDepend *depend, const gchar *version)
 	g_return_if_fail (version != NULL);
 	g_return_if_fail (depend->priv->version == NULL);
 
-	depend->priv->version = g_strdup (version);
+	depend->priv->version = zif_string_new (version);
+	depend->priv->description_ok = FALSE;
+}
+
+/**
+ * zif_depend_set_version_str:
+ * @depend: the #ZifDepend object
+ * @version: the depend version
+ *
+ * Sets the depend version.
+ *
+ * Since: 0.1.3
+ **/
+void
+zif_depend_set_version_str (ZifDepend *depend, ZifString *version)
+{
+	g_return_if_fail (depend != NULL);
+	g_return_if_fail (version != NULL);
+	g_return_if_fail (depend->priv->version == NULL);
+
+	depend->priv->version = zif_string_ref (version);
 	depend->priv->description_ok = FALSE;
 }
 
@@ -472,10 +529,10 @@ zif_depend_get_property (GObject *object, guint prop_id, GValue *value, GParamSp
 		g_value_set_uint (value, priv->flag);
 		break;
 	case PROP_NAME:
-		g_value_set_string (value, priv->name);
+		g_value_set_string (value, zif_string_get_value (priv->name));
 		break;
 	case PROP_VERSION:
-		g_value_set_string (value, priv->version);
+		g_value_set_string (value, zif_string_get_value (priv->version));
 		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -503,8 +560,10 @@ zif_depend_finalize (GObject *object)
 	g_return_if_fail (ZIF_IS_DEPEND (object));
 	depend = ZIF_DEPEND (object);
 
-	g_free (depend->priv->name);
-	g_free (depend->priv->version);
+	if (depend->priv->name != NULL)
+		zif_string_unref (depend->priv->name);
+	if (depend->priv->version != NULL)
+		zif_string_unref (depend->priv->version);
 	g_free (depend->priv->description);
 
 	G_OBJECT_CLASS (zif_depend_parent_class)->finalize (object);
