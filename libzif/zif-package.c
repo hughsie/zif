@@ -544,7 +544,7 @@ zif_package_provides (ZifPackage *package,
 
 	/* insert into cache */
 	g_hash_table_insert (package->priv->provides_hash,
-			     g_strdup (depend_id),
+			     (gpointer) depend_id,
 			     *satisfies);
 out:
 	return ret;
@@ -650,7 +650,7 @@ zif_package_requires (ZifPackage *package,
 
 	/* insert into cache */
 	g_hash_table_insert (package->priv->requires_hash,
-			     g_strdup (depend_id),
+			     (gpointer) depend_id,
 			     *satisfies);
 out:
 	return ret;
@@ -754,7 +754,7 @@ zif_package_conflicts (ZifPackage *package,
 
 	/* insert into cache */
 	g_hash_table_insert (package->priv->conflicts_hash,
-			     g_strdup (depend_id),
+			     (gpointer) depend_id,
 			     *satisfies);
 out:
 	return ret;
@@ -858,7 +858,7 @@ zif_package_obsoletes (ZifPackage *package,
 
 	/* insert into cache */
 	g_hash_table_insert (package->priv->obsoletes_hash,
-			     g_strdup (depend_id),
+			     (gpointer) depend_id,
 			     *satisfies);
 out:
 	return ret;
@@ -1833,7 +1833,7 @@ zif_package_set_files (ZifPackage *package, GPtrArray *files)
 		zif_depend_set_flag (depend_tmp, ZIF_DEPEND_FLAG_ANY);
 		zif_depend_set_name (depend_tmp, filename);
 		g_hash_table_insert (package->priv->provides_any_hash,
-				     g_strdup (zif_depend_get_name (depend_tmp)),
+				     (gpointer) filename,
 				     depend_tmp);
 		g_ptr_array_add (package->priv->provides, g_object_ref (depend_tmp));
 		package->priv->any_file_provides = TRUE;
@@ -1854,6 +1854,7 @@ zif_package_set_files (ZifPackage *package, GPtrArray *files)
 void
 zif_package_set_requires (ZifPackage *package, GPtrArray *requires)
 {
+	const gchar *name_tmp;
 	guint i;
 	ZifDepend *depend_tmp;
 
@@ -1864,12 +1865,13 @@ zif_package_set_requires (ZifPackage *package, GPtrArray *requires)
 	/* add items to 'any' cache */
 	for (i=0; i<requires->len; i++) {
 		depend_tmp = g_ptr_array_index (requires, i);
+		name_tmp = zif_depend_get_name (depend_tmp);
 		g_hash_table_insert (package->priv->requires_any_hash,
-				     g_strdup (zif_depend_get_name (depend_tmp)),
+				     (gpointer) name_tmp,
 				     g_object_ref (depend_tmp));
 
 		/* this is a file depend */
-		if (zif_depend_get_name (depend_tmp)[0] == '/')
+		if (name_tmp[0] == '/')
 			package->priv->any_file_requires = TRUE;
 	}
 
@@ -1888,6 +1890,7 @@ zif_package_set_requires (ZifPackage *package, GPtrArray *requires)
 void
 zif_package_set_provides (ZifPackage *package, GPtrArray *provides)
 {
+	const gchar *name_tmp;
 	guint i;
 	ZifDepend *depend_tmp;
 
@@ -1901,12 +1904,13 @@ zif_package_set_provides (ZifPackage *package, GPtrArray *provides)
 	/* add items to 'any' cache */
 	for (i=0; i<provides->len; i++) {
 		depend_tmp = g_ptr_array_index (provides, i);
+		name_tmp = zif_depend_get_name (depend_tmp);
 		g_hash_table_insert (package->priv->provides_any_hash,
-				     g_strdup (zif_depend_get_name (depend_tmp)),
+				     (gpointer) name_tmp,
 				     g_object_ref (depend_tmp));
 
 		/* this is a file depend */
-		if (zif_depend_get_name (depend_tmp)[0] == '/')
+		if (name_tmp[0] == '/')
 			package->priv->any_file_provides = TRUE;
 	}
 
@@ -1929,6 +1933,7 @@ zif_package_set_provides (ZifPackage *package, GPtrArray *provides)
 void
 zif_package_set_obsoletes (ZifPackage *package, GPtrArray *obsoletes)
 {
+	const gchar *name_tmp;
 	guint i;
 	ZifDepend *depend_tmp;
 
@@ -1939,12 +1944,13 @@ zif_package_set_obsoletes (ZifPackage *package, GPtrArray *obsoletes)
 	/* add items to 'any' cache */
 	for (i=0; i<obsoletes->len; i++) {
 		depend_tmp = g_ptr_array_index (obsoletes, i);
+		name_tmp = zif_depend_get_name (depend_tmp);
 		g_hash_table_insert (package->priv->obsoletes_any_hash,
-				     g_strdup (zif_depend_get_name (depend_tmp)),
+				     (gpointer) name_tmp,
 				     g_object_ref (depend_tmp));
 
 		/* this is a file depend */
-		if (zif_depend_get_name (depend_tmp)[0] == '/')
+		if (name_tmp[0] == '/')
 			package->priv->any_file_obsoletes = TRUE;
 	}
 
@@ -1963,6 +1969,7 @@ zif_package_set_obsoletes (ZifPackage *package, GPtrArray *obsoletes)
 void
 zif_package_set_conflicts (ZifPackage *package, GPtrArray *conflicts)
 {
+	const gchar *name_tmp;
 	guint i;
 	ZifDepend *depend_tmp;
 
@@ -1973,12 +1980,13 @@ zif_package_set_conflicts (ZifPackage *package, GPtrArray *conflicts)
 	/* add items to 'any' cache */
 	for (i=0; i<conflicts->len; i++) {
 		depend_tmp = g_ptr_array_index (conflicts, i);
+		name_tmp = zif_depend_get_name (depend_tmp);
 		g_hash_table_insert (package->priv->conflicts_any_hash,
-				     g_strdup (zif_depend_get_name (depend_tmp)),
+				     (gpointer) name_tmp,
 				     g_object_ref (depend_tmp));
 
 		/* this is a file depend */
-		if (zif_depend_get_name (depend_tmp)[0] == '/')
+		if (name_tmp[0] == '/')
 			package->priv->any_file_conflicts = TRUE;
 	}
 
@@ -2062,36 +2070,39 @@ zif_package_init (ZifPackage *package)
 	/* this provides a O(1) lookup for the entire provide */
 	package->priv->requires_hash = g_hash_table_new_full (g_str_hash,
 							      g_str_equal,
-							      g_free,
+							      NULL,
 							      NULL);
 	package->priv->provides_hash = g_hash_table_new_full (g_str_hash,
 							      g_str_equal,
-							      g_free, NULL);
+							      NULL,
+							      NULL);
 	package->priv->obsoletes_hash = g_hash_table_new_full (g_str_hash,
 							      g_str_equal,
-							      g_free, NULL);
+							      NULL,
+							      NULL);
 	package->priv->conflicts_hash = g_hash_table_new_full (g_str_hash,
 							      g_str_equal,
-							      g_free, NULL);
+							      NULL,
+							      NULL);
 
 	/* this provides a O(1) lookup for the provide name, which
 	 * may seem odd, but it's required for the ZIF_DEPEND_FLAG_ANY
 	 * check, and 'any' happens 99.5% of the time in reality */
 	package->priv->requires_any_hash = g_hash_table_new_full (g_str_hash,
 							      g_str_equal,
-							      g_free,
+							      NULL,
 							      (GDestroyNotify) g_object_unref);
 	package->priv->provides_any_hash = g_hash_table_new_full (g_str_hash,
 							      g_str_equal,
-							      g_free,
+							      NULL,
 							      (GDestroyNotify) g_object_unref);
 	package->priv->obsoletes_any_hash = g_hash_table_new_full (g_str_hash,
 							      g_str_equal,
-							      g_free,
+							      NULL,
 							      (GDestroyNotify) g_object_unref);
 	package->priv->conflicts_any_hash = g_hash_table_new_full (g_str_hash,
 							      g_str_equal,
-							      g_free,
+							      NULL,
 							      (GDestroyNotify) g_object_unref);
 }
 
