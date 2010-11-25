@@ -3471,6 +3471,9 @@ out:
 static gboolean
 zif_transaction_delete_packages (ZifTransaction *transaction, ZifState *state, GError **error)
 {
+	gboolean in_repo_cache;
+	gchar *cachedir = NULL;
+	gchar *filename;
 	GFile *file;
 	guint i;
 	guint ret = TRUE;
@@ -3483,6 +3486,10 @@ zif_transaction_delete_packages (ZifTransaction *transaction, ZifState *state, G
 	if (priv->install->len == 0)
 		goto out;
 
+	/* get the cachedir so we only delete packages in the actual
+	 * cache, not local-install packages */
+	cachedir = zif_config_get_string (priv->config, "cachedir", NULL);
+
 	/* delete each downloaded file */
 	state_local = zif_state_get_child (state);
 	zif_state_set_number_steps (state_local, priv->install->len);
@@ -3494,9 +3501,18 @@ zif_transaction_delete_packages (ZifTransaction *transaction, ZifState *state, G
 		file = zif_package_get_cache_file (item->package,
 						   state_loop,
 						   error);
-		ret = g_file_delete (file, NULL, error);
-		if (!ret)
-			goto out;
+
+		/* we don't want to delete files not in the repo */
+		filename = g_file_get_path (file);
+		in_repo_cache = g_str_has_prefix (filename, cachedir);
+		g_free (filename);
+
+		/* delete the cache file */
+		if (in_repo_cache) {
+			ret = g_file_delete (file, NULL, error);
+			if (!ret)
+				goto out;
+		}
 
 		/* this part done */
 		ret = zif_state_done (state_local, error);
@@ -3504,6 +3520,7 @@ zif_transaction_delete_packages (ZifTransaction *transaction, ZifState *state, G
 			goto out;
 	}
 out:
+	g_free (cachedir);
 	return ret;
 }
 
