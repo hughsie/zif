@@ -2168,7 +2168,10 @@ zif_cmd_refresh_cache (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 	/* refresh all ZifRemoteStores */
 	state_local = zif_state_get_child (priv->state);
-	ret = zif_store_array_refresh (store_array, TRUE, state_local, error);
+	ret = zif_store_array_refresh (store_array,
+				       (values[0] != NULL),
+				       state_local,
+				       error);
 	if (!ret)
 		goto out;
 

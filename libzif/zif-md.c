@@ -1728,9 +1728,10 @@ zif_md_file_check (ZifMd *md, gboolean use_uncompressed, gboolean *valid,
 	if (!(*valid)) {
 		g_debug ("checksum incorrect, wanted %s, got %s for %s",
 			 checksum_wanted, checksum, filename);
-		goto out;
+	} else {
+		g_debug ("%s checksum correct (%s)",
+			 filename, checksum_wanted);
 	}
-	g_debug ("%s checksum correct (%s)", filename, checksum_wanted);
 
 	/* this section done */
 	ret = zif_state_done (state, error);
