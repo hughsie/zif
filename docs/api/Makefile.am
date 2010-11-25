@@ -60,15 +60,16 @@ expand_content_files=
 # signals and properties.
 INCLUDES =						\
 	$(GLIB_CFLAGS)					\
-	-I$(top_builddir)/libzif		\
-	-I$(top_srcdir)/libzif		\
+	-I$(top_builddir)/libzif			\
+	-I$(top_srcdir)/libzif				\
 	$(NULL)
 
 ZIF_LIBS = $(top_builddir)/libzif/libzif.la
 
 GTKDOC_LIBS =						\
 	$(GLIB_LIBS)					\
-	$(ZIF_LIBS)						\
+	$(ZIF_LIBS)					\
+	$(GPGME_LIBS)					\
 	$(NULL)
 
 # This includes the standard gtk-doc make rules, copied by gtkdocize.

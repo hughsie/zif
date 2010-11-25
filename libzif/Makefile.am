@@ -6,6 +6,7 @@ INCLUDES = \
 	$(BZLIB_CFLAGS)						\
 	$(SOUP_CFLAGS)						\
 	$(ARCHIVE_CFLAGS)					\
+	$(GPGME_CFLAGS)						\
 	-I$(top_srcdir)/libzif					\
 	-I$(top_builddir)/libzif				\
 	-I.							\
@@ -174,6 +175,7 @@ libzif_la_LIBADD =						\
 	$(RPM_LIBS)						\
 	$(SOUP_LIBS)						\
 	$(ARCHIVE_LIBS)						\
+	$(GPGME_LIBS)						\
 	$(NULL)
 
 libzif_la_LDFLAGS =						\

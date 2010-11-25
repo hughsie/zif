@@ -11,6 +11,7 @@ AC_CONFIG_SRCDIR(libzif)
 AM_INIT_AUTOMAKE(AC_PACKAGE_NAME, AC_PACKAGE_VERSION)
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
+AC_SYS_LARGEFILE
 
 ZIF_MAJOR_VERSION=zif_major_version
 ZIF_MINOR_VERSION=zif_minor_version
@@ -77,6 +78,28 @@ if test -d ".git"; then
 	default_strict=yes
 else
 	default_strict=no
+fi
+
+dnl ---------------------------------------------------------------------------
+dnl - Able to use gpgme functionality
+dnl ---------------------------------------------------------------------------
+AC_ARG_ENABLE(gpgme, AS_HELP_STRING([--enable-gpgme],[Build gpgme functionality]),
+	      build_gpgme=$enableval,build_gpgme=yes)
+if test x$build_gpgme = xyes; then
+	AC_MSG_CHECKING([for gpgme])
+	if ! test -x "/usr/bin/gpgme-config"; then
+		AC_MSG_ERROR([Cannot locate gpgme])
+	else
+		AC_MSG_RESULT([yes])
+		GPGME_CFLAGS="`\"/usr/bin/gpgme-config\" --cflags`"
+		GPGME_LIBS="`\"/usr/bin/gpgme-config\" --libs`"
+		AC_SUBST([GPGME_CFLAGS])
+		AC_SUBST([GPGME_LIBS])
+		AC_DEFINE(USE_GPGME, 1, [if we should use gpgme])
+	fi
+	build_gpgme=yes
+else
+	build_gpgme=no
 fi
 
 AC_ARG_ENABLE(strict, AS_HELP_STRING([--enable-strict],[Enable strict compilation options]), enable_strict=$enableval,
@@ -240,6 +263,7 @@ echo "
         compiler:                  ${CC}
         cflags:                    ${CFLAGS}
         cppflags:                  ${CPPFLAGS}
+        Building gpgme support:    ${build_gpgme}
         Building unit tests:       ${enable_tests}
 "
 

@@ -80,6 +80,9 @@ gboolean	 zif_package_convert_evr	(gchar		*evr,
 						 const gchar	**epoch,
 						 const gchar	**version,
 						 const gchar	**release);
+gboolean	 zif_utils_gpg_verify		(const gchar	*filename,
+						 const gchar	*filename_gpg,
+						 GError		**error);
 
 G_END_DECLS
 

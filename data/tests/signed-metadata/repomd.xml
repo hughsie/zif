@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<repomd xmlns="http://linux.duke.edu/metadata/repo">
+ <tags><repo>updates://ftp.opensuse.org/autobuild/openSUSE/11.2/update/i386</repo></tags>
+  <data type="suseinfo">
+    <location href="repodata/suseinfo.xml"/>
+    <checksum type="sha">5cfb3cb27bb783553434a0fc2ff0a82726f72cc2</checksum>
+    <timestamp>1290624451</timestamp>
+    <open-checksum type="sha">5cfb3cb27bb783553434a0fc2ff0a82726f72cc2</open-checksum>
+  </data>
+  <data type="other">
+    <location href="repodata/3b5139c09cfbb022fac6f476ec5c6174557dacd2-other.xml.gz"/>
+    <checksum type="sha">3b5139c09cfbb022fac6f476ec5c6174557dacd2</checksum>
+    <timestamp>1290624450</timestamp>
+    <open-checksum type="sha">4cc7d6b34dd8762e64bf757e8d422c4a49159b08</open-checksum>
+  </data>
+  <data type="susedata">
+    <location href="repodata/5117b122034d4ddff5b7a68d73cead4283c23906-susedata.xml.gz"/>
+    <checksum type="sha">5117b122034d4ddff5b7a68d73cead4283c23906</checksum>
+    <timestamp>1290624450</timestamp>
+    <open-checksum type="sha">29ea51cc72307563f102c4a217dfda12fc46666f</open-checksum>
+  </data>
+  <data type="updateinfo">
+    <location href="repodata/717d1b60b0879b38c87ea95a9c8b61a6beaed437-updateinfo.xml.gz"/>
+    <checksum type="sha">717d1b60b0879b38c87ea95a9c8b61a6beaed437</checksum>
+    <timestamp>1290624450</timestamp>
+    <open-checksum type="sha">33db6914dc91249557ea483d56f81280d830dc04</open-checksum>
+  </data>
+  <data type="filelists">
+    <location href="repodata/4478b6b428d2334e9bf09dbdbce26056c5e3a545-filelists.xml.gz"/>
+    <checksum type="sha">4478b6b428d2334e9bf09dbdbce26056c5e3a545</checksum>
+    <timestamp>1290624440</timestamp>
+    <open-checksum type="sha">d9cc003bdae421355c8d57eea48b1c6e056d8303</open-checksum>
+  </data>
+  <data type="deltainfo">
+    <location href="repodata/96774c7bb8019c2d24607eef7ae73c6c63793cc4-deltainfo.xml.gz"/>
+    <checksum type="sha">96774c7bb8019c2d24607eef7ae73c6c63793cc4</checksum>
+    <timestamp>1290624451</timestamp>
+    <open-checksum type="sha">a836da0853661af88c4cf7457c157d56c08f3314</open-checksum>
+  </data>
+  <data type="primary">
+    <location href="repodata/ccdf2bb5d33125ab43afa1a34e59a059969185b5-primary.xml.gz"/>
+    <checksum type="sha">ccdf2bb5d33125ab43afa1a34e59a059969185b5</checksum>
+    <timestamp>1290624437</timestamp>
+    <open-checksum type="sha">eac223f9429ecd0b720f39668d6293b97c92aab2</open-checksum>
+  </data>
+</repomd>

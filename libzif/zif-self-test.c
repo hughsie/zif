@@ -2759,6 +2759,7 @@ zif_utils_func (void)
 	const gchar *v;
 	const gchar *r;
 	gchar *filename;
+	gchar *filename_gpg;
 	GError *error = NULL;
 	ZifState *state;
 	const gchar *package_id_const = "totem;0.1.2;i386;fedora";
@@ -2869,6 +2870,18 @@ zif_utils_func (void)
 
 	g_timer_destroy (timer);
 	g_object_unref (state);
+
+	/* test GPGME functionality */
+	filename = zif_test_get_data_file ("signed-metadata/repomd.xml");
+	filename_gpg = zif_test_get_data_file ("signed-metadata/repomd.xml.asc");
+	g_assert (filename != NULL);
+	g_assert (filename_gpg != NULL);
+	ret = zif_utils_gpg_verify (filename, filename_gpg, &error);
+	g_assert_error (error, ZIF_UTILS_ERROR, ZIF_UTILS_ERROR_FAILED);
+	g_assert (!ret);
+	g_error_free (error);
+	g_free (filename);
+	g_free (filename_gpg);
 }
 
 int

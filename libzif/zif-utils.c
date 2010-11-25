@@ -38,8 +38,186 @@
 #include <bzlib.h>
 #include <zlib.h>
 
+#ifdef USE_GPGME
+#include <gpgme.h>
+#endif
+
 #include "zif-utils.h"
 #include "zif-package.h"
+
+#ifdef USE_GPGME
+/**
+ * zif_utils_gpg_check_signature:
+ **/
+static gboolean
+zif_utils_gpg_check_signature (gpgme_signature_t signature,
+			       GError **error)
+{
+	gboolean ret = FALSE;
+
+	/* look at the signature status */
+	switch (gpgme_err_code (signature->status)) {
+	case GPG_ERR_NO_ERROR:
+		ret = TRUE;
+		break;
+	case GPG_ERR_SIG_EXPIRED:
+	case GPG_ERR_KEY_EXPIRED:
+		g_set_error (error,
+			     ZIF_UTILS_ERROR,
+			     ZIF_UTILS_ERROR_FAILED,
+			     "valid signature '%s' has expired",
+			     signature->fpr);
+		break;
+	case GPG_ERR_CERT_REVOKED:
+		g_set_error (error,
+			     ZIF_UTILS_ERROR,
+			     ZIF_UTILS_ERROR_FAILED,
+			     "valid signature '%s' has been revoked",
+			     signature->fpr);
+		break;
+	case GPG_ERR_BAD_SIGNATURE:
+		g_set_error (error,
+			     ZIF_UTILS_ERROR,
+			     ZIF_UTILS_ERROR_FAILED,
+			     "'%s' is not a valid signature",
+			     signature->fpr);
+		break;
+	case GPG_ERR_NO_PUBKEY:
+		g_set_error (error,
+			     ZIF_UTILS_ERROR,
+			     ZIF_UTILS_ERROR_FAILED,
+			     "Could not check signature '%s' as no public key",
+			     signature->fpr);
+		break;
+	default:
+		g_set_error (error,
+			     ZIF_UTILS_ERROR,
+			     ZIF_UTILS_ERROR_FAILED,
+			     "gpgme failed to verify signature '%s'",
+			     signature->fpr);
+		break;
+	}
+	return ret;
+}
+#endif
+
+gboolean
+zif_utils_gpg_verify (const gchar *filename,
+		      const gchar *filename_gpg,
+		      GError **error)
+{
+#ifdef USE_GPGME
+	gboolean ret = FALSE;
+	gpgme_ctx_t ctx = NULL;
+	gpgme_data_t repomd_gpg = NULL;
+	gpgme_data_t repomd = NULL;
+	gpgme_error_t rc;
+	gpgme_signature_t s;
+	gpgme_verify_result_t result;
+
+	/* check version */
+	gpgme_check_version (NULL);
+
+	/* startup gpgme */
+	rc = gpg_err_init ();
+	if (rc != GPG_ERR_NO_ERROR) {
+		g_set_error (error,
+			     ZIF_UTILS_ERROR,
+			     ZIF_UTILS_ERROR_FAILED,
+			     "failed to startup GPG: %s",
+			     gpgme_strerror (rc));
+		goto out;
+	}
+
+	/* create a new GPG context */
+	rc = gpgme_new (&ctx);
+	if (rc != GPG_ERR_NO_ERROR) {
+		g_set_error (error,
+			     ZIF_UTILS_ERROR,
+			     ZIF_UTILS_ERROR_FAILED,
+			     "failed to create context: %s",
+			     gpgme_strerror (rc));
+		goto out;
+	}
+
+	/* set the protocol */
+	rc = gpgme_set_protocol (ctx, GPGME_PROTOCOL_OpenPGP);
+	if (rc != GPG_ERR_NO_ERROR) {
+		g_set_error (error,
+			     ZIF_UTILS_ERROR,
+			     ZIF_UTILS_ERROR_FAILED,
+			     "failed to set protocol: %s",
+			     gpgme_strerror (rc));
+		goto out;
+	}
+
+	/* enable armor mode */
+	gpgme_set_armor (ctx, TRUE);
+
+	/* load file */
+	rc = gpgme_data_new_from_file (&repomd, filename, 1);
+	if (rc != GPG_ERR_NO_ERROR) {
+		g_set_error (error,
+			     ZIF_UTILS_ERROR,
+			     ZIF_UTILS_ERROR_FAILED,
+			     "failed to load repomd: %s",
+			     gpgme_strerror (rc));
+		goto out;
+	}
+
+	/* load signature */
+	rc = gpgme_data_new_from_file (&repomd_gpg, filename_gpg, 1);
+	if (rc != GPG_ERR_NO_ERROR) {
+		g_set_error (error,
+			     ZIF_UTILS_ERROR,
+			     ZIF_UTILS_ERROR_FAILED,
+			     "failed to load repomd.asc: %s",
+			     gpgme_strerror (rc));
+		goto out;
+	}
+
+	/* verify the repodata.xml */
+	g_debug ("verifying %s with %s", filename, filename_gpg);
+	rc = gpgme_op_verify (ctx, repomd_gpg, repomd, NULL);
+	if (rc != GPG_ERR_NO_ERROR) {
+		g_set_error (error,
+			     ZIF_UTILS_ERROR,
+			     ZIF_UTILS_ERROR_FAILED,
+			     "failed to verify: %s",
+			     gpgme_strerror (rc));
+		goto out;
+	}
+
+	/* verify the result */
+	result = gpgme_op_verify_result (ctx);
+	if (result == NULL) {
+		g_set_error_literal (error,
+				     ZIF_UTILS_ERROR,
+				     ZIF_UTILS_ERROR_FAILED,
+				     "no result record from libgpgme");
+		goto out;
+	}
+
+	/* look at each signature */
+	for (s = result->signatures; s != NULL ; s = s->next ) {
+		ret = zif_utils_gpg_check_signature (s, error);
+		if (!ret)
+			goto out;
+	}
+
+	/* success */
+	ret = TRUE;
+out:
+	if (ctx != NULL)
+		gpgme_release (ctx);
+	gpgme_data_release (repomd_gpg);
+	gpgme_data_release (repomd);
+	return ret;
+#else
+	g_set_error_literal (error, 1, 0, "gpg not supported, cannot verify");
+	return TRUE;
+#endif
+}
 
 /**
  * zif_utils_error_quark:
@@ -333,7 +511,9 @@ zif_file_decompress_zlib (const gchar *in, const gchar *out, ZifState *state, GE
 	/* open file for reading */
 	f_in = gzopen (in, "rb");
 	if (f_in == NULL) {
-		g_set_error (error, ZIF_UTILS_ERROR, ZIF_UTILS_ERROR_FAILED_TO_READ,
+		g_set_error (error,
+			     ZIF_UTILS_ERROR,
+			     ZIF_UTILS_ERROR_FAILED_TO_READ,
 			     "cannot open %s for reading", in);
 		goto out;
 	}
