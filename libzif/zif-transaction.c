@@ -3712,23 +3712,25 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 		problems_filter += RPMPROB_FILTER_DISKSPACE;
 
 	/* run the test transaction */
-	zif_state_action_start (state, ZIF_STATE_ACTION_TEST_COMMIT, NULL);
-	commit->state = zif_state_get_child (state);
-	commit->step = ZIF_TRANSACTION_STEP_IGNORE;
-	rpmtsSetFlags (commit->ts, RPMTRANS_FLAG_TEST);
-	g_debug ("Running test transaction");
-	rc = rpmtsRun (commit->ts, NULL, problems_filter);
-	if (rc < 0) {
-		ret = FALSE;
-		g_set_error (error,
-			     ZIF_TRANSACTION_ERROR,
-			     ZIF_TRANSACTION_ERROR_FAILED,
-			     "Error %i running transaction", rc);
-		goto out;
-	}
-	if (rc > 0) {
-		ret = zif_transaction_set_error_for_problems (error, commit->ts);
-		goto out;
+	if (zif_config_get_boolean (priv->config, "rpm_check_debug", NULL)) {
+		zif_state_action_start (state, ZIF_STATE_ACTION_TEST_COMMIT, NULL);
+		commit->state = zif_state_get_child (state);
+		commit->step = ZIF_TRANSACTION_STEP_IGNORE;
+		rpmtsSetFlags (commit->ts, RPMTRANS_FLAG_TEST);
+		g_debug ("Running test transaction");
+		rc = rpmtsRun (commit->ts, NULL, problems_filter);
+		if (rc < 0) {
+			ret = FALSE;
+			g_set_error (error,
+				     ZIF_TRANSACTION_ERROR,
+				     ZIF_TRANSACTION_ERROR_FAILED,
+				     "Error %i running transaction", rc);
+			goto out;
+		}
+		if (rc > 0) {
+			ret = zif_transaction_set_error_for_problems (error, commit->ts);
+			goto out;
+		}
 	}
 
 	/* this section done */
