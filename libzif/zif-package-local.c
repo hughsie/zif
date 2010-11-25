@@ -53,6 +53,7 @@ struct _ZifPackageLocalPrivate
 {
 	Header			 header;
 	ZifGroups		*groups;
+	gchar			*key_id;
 };
 
 G_DEFINE_TYPE (ZifPackageLocal, zif_package_local, ZIF_TYPE_PACKAGE)
@@ -73,6 +74,35 @@ zif_get_header_string (Header header, rpmTag tag)
 	if (retval != 1)
 		goto out;
 	data = zif_string_new (rpmtdGetString (td));
+out:
+	rpmtdFreeData (td);
+	rpmtdFree (td);
+	return data;
+}
+
+/**
+ * zif_get_header_key_id:
+ **/
+static gchar *
+zif_get_header_key_id (Header header, rpmTag tag)
+{
+	gint retval;
+	char *format;
+	gchar *data = NULL;
+	rpmtd td;
+
+	td = rpmtdNew ();
+	retval = headerGet (header, tag, td, HEADERGET_MINMEM);
+	if (retval != 1)
+		goto out;
+
+	/* format the signature as a text id */
+	format = rpmtdFormat (td, RPMTD_FORMAT_PGPSIG, NULL);
+	if (format != NULL) {
+		/* copy this, so we can free with g_free() */
+		data = g_strdup (format);
+		free (format);
+	}
 out:
 	rpmtdFreeData (td);
 	rpmtdFree (td);
@@ -613,6 +643,43 @@ out:
 }
 
 /**
+ * zif_package_local_get_key_id:
+ * @pkg: the #ZifPackageLocal object
+ *
+ * Gets a signature key identifier for the package, e.g.
+ * "RSA/SHA256, Thu Sep 23 17:25:34 2010, Key ID 421caddb97a1071f"
+ *
+ * Return value: an ID for success, %NULL for failure
+ *
+ * Since: 0.1.3
+ **/
+const gchar *
+zif_package_local_get_key_id (ZifPackageLocal *pkg)
+{
+	g_return_val_if_fail (ZIF_IS_PACKAGE_LOCAL (pkg), FALSE);
+
+	/* cached copy */
+	if (pkg->priv->key_id != NULL)
+		goto out;
+
+	/* try RSA first */
+	pkg->priv->key_id = zif_get_header_key_id (pkg->priv->header,
+						   RPMTAG_RSAHEADER);
+	if (pkg->priv->key_id != NULL)
+		goto out;
+
+	/* try DSA second */
+	pkg->priv->key_id = zif_get_header_key_id (pkg->priv->header,
+						   RPMTAG_DSAHEADER);
+	if (pkg->priv->key_id != NULL)
+		goto out;
+
+	/* nothing, but this isn't an error */
+out:
+	return pkg->priv->key_id;
+}
+
+/**
  * zif_package_local_finalize:
  **/
 static void
@@ -624,6 +691,7 @@ zif_package_local_finalize (GObject *object)
 	g_return_if_fail (ZIF_IS_PACKAGE_LOCAL (object));
 	pkg = ZIF_PACKAGE_LOCAL (object);
 
+	g_free (pkg->priv->key_id);
 	g_object_unref (pkg->priv->groups);
 	if (pkg->priv->header != NULL)
 		headerUnlink (pkg->priv->header);
