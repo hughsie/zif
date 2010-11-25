@@ -265,7 +265,6 @@ zif_progress_bar_end (ZifProgressBar *progress_bar)
 	if (!progress_bar->priv->on_console)
 		return;
 
-	zif_progress_bar_redraw (progress_bar);
 	g_print ("\n");
 }
 
