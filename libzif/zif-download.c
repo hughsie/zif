@@ -232,7 +232,7 @@ zif_download_setup_session (ZifDownload *download, GError **error)
 	gboolean ret = FALSE;
 	SoupURI *proxy = NULL;
 	gchar *http_proxy = NULL;
-	guint connection_timeout;
+	guint timeout;
 
 	g_return_val_if_fail (ZIF_IS_DOWNLOAD (download), FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
@@ -240,9 +240,9 @@ zif_download_setup_session (ZifDownload *download, GError **error)
 	/* get the proxy from the config */
 
 	/* get default value from the config file */
-	connection_timeout = zif_config_get_uint (download->priv->config, "connection_timeout", NULL);
-	if (connection_timeout == G_MAXUINT)
-		connection_timeout = 5;
+	timeout = zif_config_get_uint (download->priv->config, "connection_timeout", NULL);
+	if (timeout == G_MAXUINT)
+		timeout = 5;
 
 	/* setup the session */
 	http_proxy = zif_config_get_string (download->priv->config, "http_proxy", NULL);
@@ -252,7 +252,7 @@ zif_download_setup_session (ZifDownload *download, GError **error)
 	}
 	download->priv->session = soup_session_sync_new_with_options (SOUP_SESSION_PROXY_URI, proxy,
 								      SOUP_SESSION_USER_AGENT, "zif",
-								      SOUP_SESSION_TIMEOUT, connection_timeout,
+								      SOUP_SESSION_TIMEOUT, timeout,
 								      NULL);
 	if (download->priv->session == NULL) {
 		g_set_error_literal (error, ZIF_DOWNLOAD_ERROR, ZIF_DOWNLOAD_ERROR_FAILED,
