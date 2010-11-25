@@ -435,6 +435,7 @@ zif_md_load_get_repomd_and_download (ZifMd *md, ZifState *state, GError **error)
 	gchar *dirname = NULL;
 	GError *error_local = NULL;
 	ZifState *state_local;
+	const gchar *location;
 
 	/* set steps */
 	ret = zif_state_set_steps (state,
@@ -492,12 +493,34 @@ zif_md_load_get_repomd_and_download (ZifMd *md, ZifState *state, GError **error)
 	/* delete file if it exists */
 	zif_md_delete_file (md->priv->filename);
 
+	/* This local copy is working around a suspected compiler bug
+	 * where md->priv->location is assumed to not change for the
+	 * entire scope of this function.
+	 *
+	 * Downloading a new repomd probably means different metadata
+	 * files, which also means a sure call to zif_md_set_location().
+	 *
+	 * Accessing the old (freed, and invalid) pointer at
+	 * md->priv->location will result in a possible crash, and a
+	 * 'Invalid read of size 1' in valgrind.
+	 *
+	 * By *forcing* the compiler to re-get location rather than use
+	 * the invalid register copy we ensure the new location is used.
+	 * Phew! */
+	location = zif_md_get_location (md);
+
 	/* download file */
 	state_local = zif_state_get_child (state);
 	dirname = g_path_get_dirname (md->priv->filename);
-	ret = zif_store_remote_download (md->priv->remote, md->priv->location, dirname, state_local, &error_local);
+	ret = zif_store_remote_download (md->priv->remote,
+					 location,
+					 dirname,
+					 state_local,
+					 &error_local);
 	if (!ret) {
-		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED_DOWNLOAD,
+		g_set_error (error,
+			     ZIF_MD_ERROR,
+			     ZIF_MD_ERROR_FAILED_DOWNLOAD,
 			     "failed to download missing compressed file: %s",
 			     error_local->message);
 		g_error_free (error_local);
