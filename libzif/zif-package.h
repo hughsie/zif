@@ -98,6 +98,7 @@ const gchar		*zif_package_get_name		(ZifPackage	*package);
 const gchar		*zif_package_get_version	(ZifPackage	*package);
 const gchar		*zif_package_get_arch		(ZifPackage	*package);
 const gchar		*zif_package_get_data		(ZifPackage	*package);
+gboolean		 zif_package_get_trusted	(ZifPackage	*package);
 const gchar		*zif_package_get_summary	(ZifPackage	*package,
 							 ZifState	*state,
 							 GError		**error);
@@ -173,6 +174,8 @@ gboolean		 zif_package_set_id		(ZifPackage	*package,
 							 G_GNUC_WARN_UNUSED_RESULT;
 void			 zif_package_set_installed	(ZifPackage	*package,
 							 gboolean	 installed);
+void			 zif_package_set_trusted	(ZifPackage	*package,
+							 gboolean	 trusted);
 void			 zif_package_set_summary	(ZifPackage	*package,
 							 ZifString	*summary);
 void			 zif_package_set_description	(ZifPackage	*package,

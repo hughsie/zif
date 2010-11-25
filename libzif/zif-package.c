@@ -78,6 +78,7 @@ struct _ZifPackagePrivate
 	gboolean		 any_file_obsoletes;
 	gboolean		 any_file_conflicts;
 	gboolean		 installed;
+	gboolean		 trusted;
 };
 
 G_DEFINE_TYPE (ZifPackage, zif_package, G_TYPE_OBJECT)
@@ -1598,6 +1599,41 @@ zif_package_set_installed (ZifPackage *package, gboolean installed)
 {
 	g_return_if_fail (ZIF_IS_PACKAGE (package));
 	package->priv->installed = installed;
+}
+
+/**
+ * zif_package_set_trusted:
+ * @package: the #ZifPackage object
+ * @trusted: If the package is trusted
+ *
+ * Sets the package trusted status. Packages that are trusted are
+ * usually signed by a trusted private key.
+ *
+ * Since: 0.1.3
+ **/
+void
+zif_package_set_trusted (ZifPackage *package, gboolean trusted)
+{
+	g_return_if_fail (ZIF_IS_PACKAGE (package));
+	package->priv->trusted = trusted;
+}
+
+/**
+ * zif_package_get_trusted:
+ * @package: the #ZifPackage object
+ *
+ * Gets the package trusted status. Packages that are trusted are
+ * usually signed by a trusted private key.
+ *
+ * Return value: %TRUE if the package is trusted.
+ *
+ * Since: 0.1.3
+ **/
+gboolean
+zif_package_get_trusted (ZifPackage *package)
+{
+	g_return_val_if_fail (ZIF_IS_PACKAGE (package), FALSE);
+	return package->priv->trusted;
 }
 
 /**
