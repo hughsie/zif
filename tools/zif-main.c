@@ -1768,7 +1768,7 @@ zif_transaction_run (ZifCmdPrivate *priv, ZifTransaction *transaction, ZifState 
 		g_print ("%s\n", _("There are untrusted packages:"));
 		zif_print_packages (install);
 	}
-	if (!assume_yes) {
+	if (untrusted && !assume_yes) {
 		if (!zif_cmd_prompt (_("Run transaction?"))) {
 			ret = FALSE;
 			/* TRANSLATORS: error message */

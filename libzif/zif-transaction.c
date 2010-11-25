@@ -87,6 +87,7 @@ struct _ZifTransactionPrivate
 	gboolean		 verbose;
 	gboolean		 auto_added_pubkeys;
 	ZifTransactionState	 state;
+	rpmts			 ts;
 };
 
 typedef struct {
@@ -2922,13 +2923,11 @@ gboolean
 zif_transaction_prepare (ZifTransaction *transaction, ZifState *state, GError **error)
 {
 	const gchar *cache_filename;
-	const gchar *prefix;
 	gboolean ret = FALSE;
 	GError *error_local = NULL;
 	GPtrArray *download = NULL;
 	guint i;
 	rpmKeyring keyring = NULL;
-	rpmts ts = NULL;
 	ZifPackage *package;
 	ZifState *state_local;
 	ZifState *state_loop;
@@ -3062,13 +3061,11 @@ skip:
 	if (ZIF_IS_STORE_META (priv->store_local))
 		goto skip_self_check;
 
-	/* now we can mark packages as trusted by looking up the public keys */
-	prefix = zif_store_local_get_prefix (ZIF_STORE_LOCAL (priv->store_local));
-	ts = rpmtsCreate ();
-	rpmtsSetRootDir (ts, prefix);
+	/* clear transaction */
+	rpmtsEmpty (transaction->priv->ts);
 
 	/* check each package */
-	keyring = rpmtsGetKeyring (ts, 1);
+	keyring = rpmtsGetKeyring (transaction->priv->ts, 1);
 	for (i=0; i<priv->install->len; i++) {
 		item = g_ptr_array_index (priv->install, i);
 		ret = zif_transaction_prepare_ensure_trusted (transaction,
@@ -3091,8 +3088,6 @@ skip_self_check:
 out:
 	if (keyring != NULL)
 		rpmKeyringFree (keyring);
-	if (ts != NULL)
-		rpmtsFree (ts);
 	if (download != NULL)
 		g_ptr_array_unref (download);
 	return ret;
@@ -3109,7 +3104,6 @@ typedef struct {
 	ZifTransaction		*transaction;
 	ZifState		*state;
 	ZifState		*child;
-	rpmts			 ts;
 	FD_t			 fd;
 	ZifTransactionStep	 step;
 } ZifTransactionCommit;
@@ -3322,7 +3316,7 @@ zif_transaction_ts_progress_cb (const void *arg,
  * zif_transaction_add_install_to_ts:
  **/
 static gboolean
-zif_transaction_add_install_to_ts (ZifTransactionCommit *commit,
+zif_transaction_add_install_to_ts (ZifTransaction *transaction,
 				   ZifPackage *package,
 				   ZifState *state,
 				   GError **error)
@@ -3342,19 +3336,53 @@ zif_transaction_add_install_to_ts (ZifTransactionCommit *commit,
 
 	/* open this */
 	fd = Fopen (cache_filename, "r.ufdio");
-	res = rpmReadPackageFile (commit->ts, fd, NULL, &hdr);
+	res = rpmReadPackageFile (transaction->priv->ts, fd, NULL, &hdr);
 	Fclose (fd);
-	if (res != RPMRC_OK) {
+	switch (res) {
+	case RPMRC_OK:
+		/* nothing */
+		break;
+	case RPMRC_NOTTRUSTED:
 		g_set_error (error,
 			     ZIF_TRANSACTION_ERROR,
 			     ZIF_TRANSACTION_ERROR_FAILED,
-			     "failed to open: %s [%i]",
-			     cache_filename, res);
-		goto out;
+			     "failed to verify key for %s",
+			     cache_filename);
+		break;
+	case RPMRC_NOKEY:
+		g_set_error (error,
+			     ZIF_TRANSACTION_ERROR,
+			     ZIF_TRANSACTION_ERROR_FAILED,
+			     "public key unavailable for %s",
+			     cache_filename);
+		break;
+	case RPMRC_NOTFOUND:
+		g_set_error (error,
+			     ZIF_TRANSACTION_ERROR,
+			     ZIF_TRANSACTION_ERROR_FAILED,
+			     "signature not found for %s",
+			     cache_filename);
+		break;
+	case RPMRC_FAIL:
+		g_set_error (error,
+			     ZIF_TRANSACTION_ERROR,
+			     ZIF_TRANSACTION_ERROR_FAILED,
+			     "signature does ot verify for %s",
+			     cache_filename);
+		break;
+	default:
+		g_set_error (error,
+			     ZIF_TRANSACTION_ERROR,
+			     ZIF_TRANSACTION_ERROR_FAILED,
+			     "failed to open (generic error): %s",
+			     cache_filename);
+		break;
 	}
+	if (res != RPMRC_OK)
+		goto out;
 
 	/* add to the transaction */
-	res = rpmtsAddInstallElement (commit->ts, hdr, (fnpyKey) cache_filename, 0, NULL);
+	res = rpmtsAddInstallElement (transaction->priv->ts, hdr, (fnpyKey) cache_filename, 0, NULL);
 	if (res != 0) {
 		g_set_error (error,
 			     ZIF_TRANSACTION_ERROR,
@@ -3647,10 +3675,11 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 
 	/* setup the transaction */
 	commit = g_new0 (ZifTransactionCommit, 1);
-	commit->ts = rpmtsCreate ();
 	commit->transaction = transaction;
-	rpmtsSetRootDir (commit->ts, prefix);
-	rpmtsSetNotifyCallback (commit->ts, zif_transaction_ts_progress_cb, commit);
+	rpmtsSetRootDir (transaction->priv->ts, prefix);
+	rpmtsSetNotifyCallback (transaction->priv->ts,
+				zif_transaction_ts_progress_cb,
+				commit);
 
 	/* add things to install */
 	state_local = zif_state_get_child (state);
@@ -3662,7 +3691,7 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 
 		/* add the install */
 		state_loop = zif_state_get_child (state_local);
-		ret = zif_transaction_add_install_to_ts (commit,
+		ret = zif_transaction_add_install_to_ts (transaction,
 							 item->package,
 							 state_loop,
 							 error);
@@ -3686,7 +3715,7 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 
 		/* remove it */
 		hdr = zif_package_local_get_header (ZIF_PACKAGE_LOCAL (item->package));
-		retval = rpmtsAddEraseElement (commit->ts, hdr, -1);
+		retval = rpmtsAddEraseElement (transaction->priv->ts, hdr, -1);
 		if (retval != 0) {
 			ret = FALSE;
 			g_set_error (error,
@@ -3704,8 +3733,8 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 		goto out;
 
 	/* no signature checking, we've handled that already */
-	flags = rpmtsSetVSFlags (commit->ts, _RPMVSF_NOSIGNATURES | _RPMVSF_NODIGESTS);
-	rpmtsSetVSFlags (commit->ts, flags);
+	flags = rpmtsSetVSFlags (transaction->priv->ts, _RPMVSF_NOSIGNATURES | _RPMVSF_NODIGESTS);
+	rpmtsSetVSFlags (transaction->priv->ts, flags);
 
 	/* filter diskspace */
 	if (!zif_config_get_boolean (priv->config, "diskspacecheck", NULL))
@@ -3716,9 +3745,9 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 		zif_state_action_start (state, ZIF_STATE_ACTION_TEST_COMMIT, NULL);
 		commit->state = zif_state_get_child (state);
 		commit->step = ZIF_TRANSACTION_STEP_IGNORE;
-		rpmtsSetFlags (commit->ts, RPMTRANS_FLAG_TEST);
+		rpmtsSetFlags (transaction->priv->ts, RPMTRANS_FLAG_TEST);
 		g_debug ("Running test transaction");
-		rc = rpmtsRun (commit->ts, NULL, problems_filter);
+		rc = rpmtsRun (transaction->priv->ts, NULL, problems_filter);
 		if (rc < 0) {
 			ret = FALSE;
 			g_set_error (error,
@@ -3728,7 +3757,7 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 			goto out;
 		}
 		if (rc > 0) {
-			ret = zif_transaction_set_error_for_problems (error, commit->ts);
+			ret = zif_transaction_set_error_for_problems (error, transaction->priv->ts);
 			goto out;
 		}
 	}
@@ -3741,9 +3770,9 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 	/* run the transaction, really this time */
 	commit->state = zif_state_get_child (state);
 	commit->step = ZIF_TRANSACTION_STEP_STARTED;
-	rpmtsSetFlags (commit->ts, RPMTRANS_FLAG_NONE);
+	rpmtsSetFlags (transaction->priv->ts, RPMTRANS_FLAG_NONE);
 	g_debug ("Running actual transaction");
-	rc = rpmtsRun (commit->ts, NULL, problems_filter);
+	rc = rpmtsRun (transaction->priv->ts, NULL, problems_filter);
 	if (rc < 0) {
 		ret = FALSE;
 		g_set_error (error,
@@ -3753,7 +3782,7 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 		goto out;
 	}
 	if (rc > 0) {
-		ret = zif_transaction_set_error_for_problems (error, commit->ts);
+		ret = zif_transaction_set_error_for_problems (error, transaction->priv->ts);
 		goto out;
 	}
 
@@ -3795,11 +3824,7 @@ out:
 	g_free (verbosity_string);
 	if (db != NULL)
 		rpmdbClose (db);
-	if (commit != NULL) {
-		if (commit->ts != NULL)
-			rpmtsFree (commit->ts);
-		g_free (commit);
-	}
+	g_free (commit);
 	return ret;
 }
 
@@ -3907,6 +3932,8 @@ zif_transaction_finalize (GObject *object)
 	g_return_if_fail (ZIF_IS_TRANSACTION (object));
 	transaction = ZIF_TRANSACTION (object);
 
+	if (transaction->priv->ts != NULL)
+		rpmtsFree (transaction->priv->ts);
 	g_object_unref (transaction->priv->config);
 	g_ptr_array_unref (transaction->priv->install);
 	g_ptr_array_unref (transaction->priv->update);
@@ -3942,6 +3969,7 @@ zif_transaction_init (ZifTransaction *transaction)
 	transaction->priv = ZIF_TRANSACTION_GET_PRIVATE (transaction);
 
 	transaction->priv->config = zif_config_new ();
+	transaction->priv->ts = rpmtsCreate ();
 
 	/* packages we want to install */
 	transaction->priv->install = g_ptr_array_new_with_free_func ((GDestroyNotify) zif_transaction_item_free);
