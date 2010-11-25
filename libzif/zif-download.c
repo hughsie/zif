@@ -41,6 +41,11 @@
 
 #define ZIF_DOWNLOAD_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_DOWNLOAD, ZifDownloadPrivate))
 
+typedef struct {
+	gchar			*uri;
+	guint			 retries;
+} ZifDownloadItem;
+
 /**
  * ZifDownloadPrivate:
  *
@@ -78,6 +83,16 @@ zif_download_error_quark (void)
 	if (!quark)
 		quark = g_quark_from_static_string ("zif_download_error");
 	return quark;
+}
+
+/**
+ * zif_download_item_free:
+ **/
+static void
+zif_download_item_free (ZifDownloadItem *item)
+{
+	g_free (item->uri);
+	g_free (item);
 }
 
 /**
@@ -427,12 +442,12 @@ static guint
 zif_download_location_array_get_index (GPtrArray *array, const gchar *uri)
 {
 	guint i;
-	const gchar *uri_tmp;
+	ZifDownloadItem *item;
 
 	/* find the uri */
 	for (i=0; i<array->len; i++) {
-		uri_tmp = g_ptr_array_index (array, i);
-		if (g_strcmp0 (uri_tmp, uri) == 0)
+		item = g_ptr_array_index (array, i);
+		if (g_strcmp0 (item->uri, uri) == 0)
 			return i;
 	}
 	return G_MAXUINT;
@@ -453,6 +468,8 @@ zif_download_location_array_get_index (GPtrArray *array, const gchar *uri)
 gboolean
 zif_download_location_add_uri (ZifDownload *download, const gchar *uri, GError **error)
 {
+	ZifDownloadItem *item;
+
 	g_return_val_if_fail (ZIF_IS_DOWNLOAD (download), FALSE);
 	g_return_val_if_fail (uri != NULL, FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
@@ -462,7 +479,9 @@ zif_download_location_add_uri (ZifDownload *download, const gchar *uri, GError *
 		goto out;
 
 	/* add to array */
-	g_ptr_array_add (download->priv->array, g_strdup (uri));
+	item = g_new0 (ZifDownloadItem, 1);
+	item->uri = g_strdup (uri);
+	g_ptr_array_add (download->priv->array, item);
 out:
 	return TRUE;
 }
@@ -470,7 +489,7 @@ out:
 /**
  * zif_download_location_add_array:
  * @download: the #ZifDownload object
- * @array: an array of URI string to add
+ * @array: an array of URI strings to add
  * @error: a #GError which is used on failure, or %NULL
  *
  * Adds an array of URIs to be used when using zif_download_location_full().
@@ -690,13 +709,14 @@ zif_download_location_full (ZifDownload *download, const gchar *location, const 
 			    ZifState *state, GError **error)
 {
 	gboolean ret = FALSE;
-	const gchar *uri;
-	gchar *uri_tmp;
-	gchar *failovermethod = NULL;
-	guint index;
-	GPtrArray *array = NULL;
-	GError *error_local = NULL;
 	gboolean set_error = FALSE;
+	gchar *failovermethod = NULL;
+	gchar *uri_tmp;
+	GError *error_local = NULL;
+	GPtrArray *array = NULL;
+	guint index;
+	guint retries;
+	ZifDownloadItem *item;
 	ZifDownloadPolicy policy = ZIF_DOWNLOAD_POLICY_RANDOM;
 
 	g_return_val_if_fail (ZIF_IS_DOWNLOAD (download), FALSE);
@@ -736,8 +756,8 @@ zif_download_location_full (ZifDownload *download, const gchar *location, const 
 		}
 
 		/* form the full URL */
-		uri = g_ptr_array_index (array, index);
-		uri_tmp = g_build_filename (uri, location, NULL);
+		item = g_ptr_array_index (array, index);
+		uri_tmp = g_build_filename (item->uri, location, NULL);
 
 		g_debug ("attempt to download %s", uri_tmp);
 		zif_state_reset (state);
@@ -751,10 +771,39 @@ zif_download_location_full (ZifDownload *download, const gchar *location, const 
 				set_error = TRUE;
 				break;
 			}
-			g_debug ("failed to download %s: %s, so removing", uri, error_local->message);
-			g_clear_error (&error_local);
-			/* remove it (error is NULL as we know it exists, we just used it) */
-			zif_download_location_remove_uri (download, uri, NULL);
+
+			/* increment the download count */
+			item->retries++;
+
+			/* too many retries */
+			retries = zif_config_get_uint (download->priv->config,
+						       "retries", error);
+			if (retries == G_MAXUINT) {
+				ret = FALSE;
+				goto out;
+			}
+			if (item->retries >= retries) {
+
+				/* just print and remove, not fatal */
+				g_debug ("failed to download %s after try %i: %s, so removing",
+					 item->uri,
+					 item->retries,
+					 error_local->message);
+				g_clear_error (&error_local);
+
+				/* remove it (error is NULL as we know it exists, we just used it) */
+				zif_download_location_remove_uri (download,
+								  item->uri,
+								  NULL);
+			} else {
+				/* just print, not fatal */
+				g_debug ("failed to download %s: %s, on retry %i/%i",
+					 item->uri,
+					 error_local->message,
+					 item->retries,
+					 retries);
+				g_clear_error (&error_local);
+			}
 		} else {
 			g_debug ("downloaded correct content %s into %s", uri_tmp, filename);
 		}
@@ -875,7 +924,7 @@ zif_download_init (ZifDownload *download)
 	download->priv->proxy = NULL;
 	download->priv->state = NULL;
 	download->priv->config = zif_config_new ();
-	download->priv->array = g_ptr_array_new_with_free_func (g_free);
+	download->priv->array = g_ptr_array_new_with_free_func ((GDestroyNotify) zif_download_item_free);
 }
 
 /**

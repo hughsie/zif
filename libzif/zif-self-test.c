@@ -648,6 +648,7 @@ zif_download_func (void)
 	ZifConfig *config;
 	GCancellable *cancellable;
 	gboolean ret;
+	gchar *filename;
 	GError *error = NULL;
 
 	download = zif_download_new ();
@@ -656,6 +657,13 @@ zif_download_func (void)
 	g_assert (state != NULL);
 	config = zif_config_new ();
 	g_assert (config != NULL);
+
+	/* get config file */
+	filename = zif_test_get_data_file ("zif.conf");
+	ret = zif_config_set_filename (config, filename, &error);
+	g_free (filename);
+	g_assert_no_error (error);
+	g_assert (ret);
 
 	/* add something sensible, but it won't resolve later on */
 	ret = zif_download_location_add_uri (download, "http://www.bbc.co.uk/pub/", &error);
