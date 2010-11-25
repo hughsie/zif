@@ -545,25 +545,6 @@ out:
 }
 
 /**
- * zif_package_local_rpmrc_to_string:
- **/
-static const gchar *
-zif_package_local_rpmrc_to_string (rpmRC rc)
-{
-	if (rc == RPMRC_OK)
-		return "Generic success";
-	if (rc == RPMRC_NOTFOUND)
-		return "Generic not found";
-	if (rc == RPMRC_FAIL)
-		return "Generic failure";
-	if (rc == RPMRC_NOTTRUSTED)
-		return "Signature is OK, but key is not trusted";
-	if (rc == RPMRC_NOKEY)
-		return "Public key is unavailable";
-	return "Unknown error";
-}
-
-/**
  * zif_package_local_set_from_filename:
  * @pkg: the #ZifPackageLocal object
  * @filename: the local filename
@@ -611,8 +592,12 @@ zif_package_local_set_from_filename (ZifPackageLocal *pkg, const gchar *filename
 	/* read in the file */
 	rc = rpmReadPackageFile (ts, fd, filename, &hdr);
 	if (rc != RPMRC_OK) {
-		g_set_error (error, ZIF_PACKAGE_ERROR, ZIF_PACKAGE_ERROR_FAILED,
-			     "failed to read %s: %s", filename, zif_package_local_rpmrc_to_string (rc));
+		/* we only return SHA1 and MD5 failures, as we're not
+		 * checking signatures at this stage */
+		g_set_error_literal (error,
+				     ZIF_PACKAGE_ERROR,
+				     ZIF_PACKAGE_ERROR_FAILED,
+				     "package could not be verified");
 		goto out;
 	}
 

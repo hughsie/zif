@@ -78,7 +78,7 @@ struct _ZifPackagePrivate
 	gboolean		 any_file_obsoletes;
 	gboolean		 any_file_conflicts;
 	gboolean		 installed;
-	gboolean		 trusted;
+	ZifPackageTrustKind	 trust_kind;
 };
 
 G_DEFINE_TYPE (ZifPackage, zif_package, G_TYPE_OBJECT)
@@ -1011,6 +1011,24 @@ zif_package_ensure_type_to_string (ZifPackageEnsureType type)
 }
 
 /**
+ * zif_package_trust_kind_to_string:
+ * @type: the #ZifPackageTrustKind enumerated value
+ *
+ * Gets the string representation of a #ZifPackageTrustKind
+ *
+ * Return value: The string
+ **/
+const gchar *
+zif_package_trust_kind_to_string (ZifPackageTrustKind trust_kind)
+{
+	if (trust_kind == ZIF_PACKAGE_TRUST_KIND_NONE)
+		return "none";
+	if (trust_kind == ZIF_PACKAGE_TRUST_KIND_PUBKEY)
+		return "pubkey";
+	return "unknown";
+}
+
+/**
  * zif_package_ensure_data:
  **/
 static gboolean
@@ -1297,7 +1315,6 @@ zif_package_get_cache_filename (ZifPackage *package, ZifState *state, GError **e
 
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
 	g_return_val_if_fail (package->priv->package_id_split != NULL, NULL);
-	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* not exists */
@@ -1602,38 +1619,39 @@ zif_package_set_installed (ZifPackage *package, gboolean installed)
 }
 
 /**
- * zif_package_set_trusted:
+ * zif_package_set_trust_kind:
  * @package: the #ZifPackage object
- * @trusted: If the package is trusted
+ * @trust_kind: The #ZifPackageTrustKind, e.g. %ZIF_PACKAGE_TRUST_KIND_PUBKEY
  *
- * Sets the package trusted status. Packages that are trusted are
+ * Sets the package trust status. Packages that are trusted are
  * usually signed by a trusted private key.
  *
  * Since: 0.1.3
  **/
 void
-zif_package_set_trusted (ZifPackage *package, gboolean trusted)
+zif_package_set_trust_kind (ZifPackage *package, ZifPackageTrustKind trust_kind)
 {
 	g_return_if_fail (ZIF_IS_PACKAGE (package));
-	package->priv->trusted = trusted;
+	package->priv->trust_kind = trust_kind;
 }
 
 /**
- * zif_package_get_trusted:
+ * zif_package_get_trust_kind:
  * @package: the #ZifPackage object
  *
  * Gets the package trusted status. Packages that are trusted are
  * usually signed by a trusted private key.
  *
- * Return value: %TRUE if the package is trusted.
+ * Return value: a #ZifPackageTrustKind enumerated type.
  *
  * Since: 0.1.3
  **/
-gboolean
-zif_package_get_trusted (ZifPackage *package)
+ZifPackageTrustKind
+zif_package_get_trust_kind (ZifPackage *package)
 {
-	g_return_val_if_fail (ZIF_IS_PACKAGE (package), FALSE);
-	return package->priv->trusted;
+	g_return_val_if_fail (ZIF_IS_PACKAGE (package),
+			      ZIF_PACKAGE_TRUST_KIND_UNKNOWN);
+	return package->priv->trust_kind;
 }
 
 /**

@@ -27,6 +27,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <glib/gstdio.h>
+#include <termios.h>
 
 #include "zif-progress-bar.h"
 
@@ -41,9 +42,11 @@ zif_print_package (ZifPackage *package, guint padding)
 {
 	const gchar *package_id;
 	const gchar *summary;
+	const gchar *trusted_str = "";
 	gchar *padding_str;
 	ZifState *state_tmp;
 	gchar **split;
+	ZifPackageTrustKind trust;
 
 	package_id = zif_package_get_id (package);
 	split = zif_package_id_split (package_id);
@@ -54,12 +57,20 @@ zif_print_package (ZifPackage *package, guint padding)
 	} else {
 		padding_str = g_strnfill (2, ' ');
 	}
-	g_print ("%s-%s.%s (%s)%s%s\n",
+	trust = zif_package_get_trust_kind (package);
+	if (trust == ZIF_PACKAGE_TRUST_KIND_PUBKEY) {
+		trusted_str = _("[⚐]");
+	} else if (trust == ZIF_PACKAGE_TRUST_KIND_NONE) {
+		trusted_str = _("[⚑]");
+	}
+	g_print ("%s-%s.%s (%s) %s%s%s\n",
 		 split[ZIF_PACKAGE_ID_NAME],
 		 split[ZIF_PACKAGE_ID_VERSION],
 		 split[ZIF_PACKAGE_ID_ARCH],
 		 split[ZIF_PACKAGE_ID_DATA],
-		 padding_str, summary);
+		 trusted_str,
+		 padding_str,
+		 summary);
 	g_free (padding_str);
 	g_strfreev (split);
 	g_object_unref (state_tmp);
@@ -1530,6 +1541,34 @@ zif_cmd_help (ZifCmdPrivate *priv, gchar **values, GError **error)
 }
 
 /**
+ * zif_cmd_getchar_unbuffered:
+ **/
+static gchar
+zif_cmd_getchar_unbuffered (void)
+{
+	gchar c = '\0';
+	struct termios org_opts, new_opts;
+	gint res = 0;
+
+	/* store old settings */
+	res = tcgetattr (STDIN_FILENO, &org_opts);
+	if (res != 0)
+		g_warning ("failed to set terminal");
+
+	/* set new terminal parms */
+	memcpy (&new_opts, &org_opts, sizeof(new_opts));
+	new_opts.c_lflag &= ~(ICANON | ECHO | ECHOE | ECHOK | ECHONL | ECHOPRT | ECHOKE | ICRNL);
+	tcsetattr (STDIN_FILENO, TCSANOW, &new_opts);
+	c = getc (stdin);
+
+	/* restore old settings */
+	res = tcsetattr (STDIN_FILENO, TCSANOW, &org_opts);
+	if (res != 0)
+		g_warning ("failed to set terminal");
+	return c;
+}
+
+/**
  * zif_cmd_prompt:
  **/
 static gboolean
@@ -1537,9 +1576,11 @@ zif_cmd_prompt (const gchar *title)
 {
 	gchar input;
 
-	g_print ("\n%s [y/N] ", title);
+	g_print ("%s [y/N] ", title);
 
-	input = getchar ();
+	fflush (stdin);
+	input = zif_cmd_getchar_unbuffered ();
+	g_print ("%c\n", input);
 	if (input == 'y' || input == 'Y')
 		return TRUE;
 	return FALSE;
@@ -1629,7 +1670,11 @@ zif_transaction_run (ZifCmdPrivate *priv, ZifTransaction *transaction, ZifState 
 {
 	gboolean assume_yes;
 	gboolean ret;
+	gboolean untrusted = FALSE;
+	GPtrArray *install = NULL;
 	GPtrArray *store_array_remote = NULL;
+	guint i;
+	ZifPackage *package_tmp;
 	ZifState *state_local;
 	ZifStore *store_local = NULL;
 
@@ -1673,13 +1718,23 @@ zif_transaction_run (ZifCmdPrivate *priv, ZifTransaction *transaction, ZifState 
 	zif_main_show_transaction (transaction);
 
 	/* confirm */
-	assume_yes = zif_config_get_boolean (priv->config, "assumeyes", NULL);
-	if (priv->assume_no ||
-            (!assume_yes && !zif_cmd_prompt (_("Run transaction?")))) {
+	if (priv->assume_no) {
 		ret = FALSE;
 		/* TRANSLATORS: error message */
-		g_set_error_literal (error, 1, 0, _("User declined action"));
+		g_set_error_literal (error, 1, 0, _("Automatically declined action"));
 		goto out;
+	}
+
+	/* ask the question */
+	assume_yes = zif_config_get_boolean (priv->config, "assumeyes", NULL);
+	if (!assume_yes) {
+		zif_progress_bar_end (priv->progressbar);
+		if (!zif_cmd_prompt (_("Run transaction?"))) {
+			ret = FALSE;
+			/* TRANSLATORS: error message */
+			g_set_error_literal (error, 1, 0, _("User declined action"));
+			goto out;
+		}
 	}
 
 	/* this section done */
@@ -1692,6 +1747,30 @@ zif_transaction_run (ZifCmdPrivate *priv, ZifTransaction *transaction, ZifState 
 	ret = zif_transaction_prepare (transaction, state_local, error);
 	if (!ret)
 		goto out;
+
+	/* confirm we want unsigned packages */
+	install = zif_transaction_get_install (transaction);
+	for (i=0; i<install->len; i++) {
+		package_tmp = g_ptr_array_index (install, i);
+		if (zif_package_get_trust_kind (package_tmp) != ZIF_PACKAGE_TRUST_KIND_PUBKEY) {
+			untrusted = TRUE;
+			break;
+		}
+	}
+	if (untrusted) {
+		/* TRANSLATORS: untrusted packages might be dangerous */
+		zif_progress_bar_end (priv->progressbar);
+		g_print ("%s\n", _("There are untrusted packages:"));
+		zif_print_packages (install);
+	}
+	if (!assume_yes) {
+		if (!zif_cmd_prompt (_("Run transaction?"))) {
+			ret = FALSE;
+			/* TRANSLATORS: error message */
+			g_set_error_literal (error, 1, 0, _("User declined action"));
+			goto out;
+		}
+	}
 
 	/* this section done */
 	ret = zif_state_done (state, error);
@@ -1713,6 +1792,8 @@ out:
 		g_object_unref (store_local);
 	if (store_array_remote != NULL)
 		g_ptr_array_unref (store_array_remote);
+	if (install != NULL)
+		g_ptr_array_unref (install);
 	return ret;
 }
 
@@ -4055,6 +4136,11 @@ main (int argc, char *argv[])
 			_("Assume no to all questions"), NULL },
 		{ NULL}
 	};
+
+	setlocale (LC_ALL, "");
+	bindtextdomain (GETTEXT_PACKAGE, PACKAGE_LOCALE_DIR);
+	bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
+	textdomain (GETTEXT_PACKAGE);
 
 	/* create helper object */
 	priv = g_new0 (ZifCmdPrivate, 1);

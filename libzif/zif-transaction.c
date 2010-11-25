@@ -55,6 +55,7 @@
 #include <rpm/rpmlog.h>
 #include <rpm/rpmps.h>
 #include <rpm/rpmts.h>
+#include <rpm/rpmkeyring.h>
 
 #include "zif-array.h"
 #include "zif-config.h"
@@ -67,6 +68,7 @@
 #include "zif-store-array.h"
 #include "zif-store.h"
 #include "zif-store-local.h"
+#include "zif-store-meta.h"
 #include "zif-transaction.h"
 
 #define ZIF_TRANSACTION_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_TRANSACTION, ZifTransactionPrivate))
@@ -83,6 +85,7 @@ struct _ZifTransactionPrivate
 	ZifConfig		*config;
 	GPtrArray		*stores_remote;
 	gboolean		 verbose;
+	gboolean		 auto_added_pubkeys;
 	ZifTransactionState	 state;
 };
 
@@ -2662,6 +2665,248 @@ out:
 }
 
 /**
+ * zif_transaction_add_public_key_to_rpmdb:
+ **/
+static gboolean
+zif_transaction_add_public_key_to_rpmdb (rpmKeyring keyring, const gchar *filename, GError **error)
+{
+	gboolean ret = TRUE;
+	gchar *data = NULL;
+	gint rc;
+	gsize len;
+	pgpArmor armor;
+	pgpDig dig = NULL;
+	rpmPubkey pubkey = NULL;
+	uint8_t *pkt = NULL;
+
+	/* ignore symlinks and directories */
+	if (!g_file_test (filename, G_FILE_TEST_IS_REGULAR))
+		goto out;
+	if (g_file_test (filename, G_FILE_TEST_IS_SYMLINK))
+		goto out;
+
+	/* get data */
+	ret = g_file_get_contents (filename, &data, &len, error);
+	if (!ret)
+		goto out;
+
+	/* rip off the ASCII armor and parse it */
+	armor = pgpParsePkts (data, &pkt, &len);
+	if (armor < 0) {
+		ret = FALSE;
+		g_set_error (error,
+			     ZIF_TRANSACTION_ERROR,
+			     ZIF_TRANSACTION_ERROR_FAILED,
+			     "failed to parse PKI file %s",
+			     filename);
+		goto out;
+	}
+
+	/* make sure it's something we can add to rpm */
+	if (armor != PGPARMOR_PUBKEY) {
+		ret = FALSE;
+		g_set_error (error,
+			     ZIF_TRANSACTION_ERROR,
+			     ZIF_TRANSACTION_ERROR_FAILED,
+			     "PKI file %s is not a publickey",
+			     filename);
+		goto out;
+	}
+
+	/* test each one */
+	pubkey = rpmPubkeyNew (pkt, len);
+	if (rc != 0) {
+		ret = FALSE;
+		g_set_error (error,
+			     ZIF_TRANSACTION_ERROR,
+			     ZIF_TRANSACTION_ERROR_FAILED,
+			     "failed to parse digest header for %s",
+			     filename);
+		goto out;
+	}
+
+	/* does the key exist in the keyring */
+	dig = rpmPubkeyDig (pubkey);
+	rc = rpmKeyringLookup (keyring, dig);
+	if (rc == RPMRC_OK) {
+		ret = TRUE;
+		g_debug ("%s is already present", filename);
+		goto out;
+	}
+
+	/* add to rpmdb automatically, without a prompt */
+	rc = rpmKeyringAddKey (keyring, pubkey);
+	if (rc != 0) {
+		ret = FALSE;
+		g_set_error (error,
+			     ZIF_TRANSACTION_ERROR,
+			     ZIF_TRANSACTION_ERROR_FAILED,
+			     "failed to add public key %s to rpmdb",
+			     filename);
+		goto out;
+	}
+
+	/* success */
+	g_debug ("added missing public key %s to rpmdb",
+		 filename);
+	ret = TRUE;
+out:
+	if (pkt != NULL)
+		free (pkt); /* yes, free() */
+	if (pubkey != NULL)
+		rpmPubkeyFree (pubkey);
+	if (dig != NULL)
+		pgpFreeDig (dig);
+	g_free (data);
+	return ret;
+}
+
+/**
+ * zif_transaction_add_public_keys_to_rpmdb:
+ **/
+static gboolean
+zif_transaction_add_public_keys_to_rpmdb (rpmKeyring keyring, GError **error)
+{
+	GDir *dir;
+	const gchar *filename;
+	gchar *path_tmp;
+	gboolean ret = TRUE;
+	const gchar *gpg_dir = "/etc/pki/rpm-gpg";
+
+	/* search all the public key files */
+	dir = g_dir_open (gpg_dir, 0, error);
+	if (dir == NULL) {
+		ret = FALSE;
+		goto out;
+	}
+	do {
+		filename = g_dir_read_name (dir);
+		if (filename == NULL)
+			break;
+		path_tmp = g_build_filename (gpg_dir, filename, NULL);
+		ret = zif_transaction_add_public_key_to_rpmdb (keyring,
+							       path_tmp,
+							       error);
+		g_free (path_tmp);
+	} while (ret);
+out:
+	if (dir != NULL)
+		g_dir_close (dir);
+	return ret;
+}
+
+/**
+ * zif_transaction_prepare_ensure_trusted:
+ **/
+static gboolean
+zif_transaction_prepare_ensure_trusted (ZifTransaction *transaction,
+					rpmKeyring keyring,
+					ZifPackage *package,
+					GError **error)
+{
+	const gchar *cache_filename;
+	gboolean ret = FALSE;
+	Header h;
+	int rc;
+	pgpDig dig = NULL;
+	rpmtd td;
+	ZifPackage *package_tmp = NULL;
+	ZifPackageTrustKind trust_kind = ZIF_PACKAGE_TRUST_KIND_NONE;
+
+	/* get the local file */
+	cache_filename = zif_package_get_cache_filename (package,
+							 NULL,
+							 error);
+	if (cache_filename == NULL)
+		goto out;
+
+	/* we need to turn a ZifPackageRemote into a ZifPackageLocal */
+	package_tmp = zif_package_local_new ();
+	ret = zif_package_local_set_from_filename (ZIF_PACKAGE_LOCAL (package_tmp),
+						   cache_filename,
+						   error);
+	if (!ret)
+		goto out;
+
+	/* get RSA key */
+	td = rpmtdNew ();
+	h = zif_package_local_get_header (ZIF_PACKAGE_LOCAL (package_tmp));
+	rc = headerGet (h,
+			RPMTAG_RSAHEADER,
+			td,
+			HEADERGET_MINMEM);
+	if (rc != 1) {
+		/* try to read DSA key as a fallback */
+		rc = headerGet (h,
+				RPMTAG_DSAHEADER,
+				td,
+				HEADERGET_MINMEM);
+	}
+
+	/* the package has no signing key */
+	if (rc != 1) {
+		ret = TRUE;
+		zif_package_set_trust_kind (package, trust_kind);
+		goto out;
+	}
+
+	/* make it into a digest */
+	dig = pgpNewDig ();
+	rc = pgpPrtPkts (td->data, td->count, dig, 0);
+	if (rc != 0) {
+		g_set_error (error,
+			     ZIF_TRANSACTION_ERROR,
+			     ZIF_TRANSACTION_ERROR_FAILED,
+			     "failed to parse digest header for %s",
+			     zif_package_get_id (package));
+		goto out;
+	}
+
+	/* does the key exist in the keyring */
+	rc = rpmKeyringLookup (keyring, dig);
+	if (rc == RPMRC_FAIL) {
+		g_set_error_literal (error,
+				     ZIF_TRANSACTION_ERROR,
+				     ZIF_TRANSACTION_ERROR_FAILED,
+				     "failed to lookup digest in keyring");
+		goto out;
+	}
+
+	/* autoimport installed public keys into the rpmdb */
+	if (rc == RPMRC_NOKEY &&
+	    !transaction->priv->auto_added_pubkeys) {
+
+		/* only do this once, even if it fails */
+		transaction->priv->auto_added_pubkeys = TRUE;
+		ret = zif_transaction_add_public_keys_to_rpmdb (keyring, error);
+		if (!ret)
+			goto out;
+
+		/* try again, as we might have the key now */
+		rc = rpmKeyringLookup (keyring, dig);
+	}
+
+	/* set trusted */
+	if (rc == RPMRC_OK)
+		trust_kind = ZIF_PACKAGE_TRUST_KIND_PUBKEY;
+	zif_package_set_trust_kind (package, trust_kind);
+	g_debug ("%s is trusted: %s\n",
+		 zif_package_get_id (package),
+		 zif_package_trust_kind_to_string (trust_kind));
+
+	/* success */
+	ret = TRUE;
+out:
+	if (package_tmp != NULL)
+		g_object_unref (package_tmp);
+	if (dig != NULL)
+		pgpFreeDig (dig);
+	rpmtdFreeData (td);
+	rpmtdFree (td);
+	return ret;
+}
+
+/**
  * zif_transaction_prepare:
  * @transaction: the #ZifTransaction object
  * @state: a #ZifState to use for progress reporting
@@ -2676,15 +2921,18 @@ out:
 gboolean
 zif_transaction_prepare (ZifTransaction *transaction, ZifState *state, GError **error)
 {
-	gboolean ret = FALSE;
-	guint i;
-	ZifTransactionItem *item;
-	ZifPackage *package;
-	GPtrArray *download = NULL;
-	GError *error_local = NULL;
-	ZifState *state_loop;
-	ZifState *state_local;
 	const gchar *cache_filename;
+	const gchar *prefix;
+	gboolean ret = FALSE;
+	GError *error_local = NULL;
+	GPtrArray *download = NULL;
+	guint i;
+	rpmKeyring keyring = NULL;
+	rpmts ts = NULL;
+	ZifPackage *package;
+	ZifState *state_local;
+	ZifState *state_loop;
+	ZifTransactionItem *item;
 	ZifTransactionPrivate *priv;
 
 	g_return_val_if_fail (ZIF_IS_TRANSACTION (transaction), FALSE);
@@ -2715,7 +2963,8 @@ zif_transaction_prepare (ZifTransaction *transaction, ZifState *state, GError **
 	ret = zif_state_set_steps (state,
 				   error,
 				   10, /* check downloads exist */
-				   90, /* download them */
+				   80, /* download them */
+				   10, /* mark as trusted / untrusted */
 				   -1);
 	if (!ret)
 		goto out;
@@ -2809,9 +3058,41 @@ skip:
 	if (!ret)
 		goto out;
 
+	/* set in make check */
+	if (ZIF_IS_STORE_META (priv->store_local))
+		goto skip_self_check;
+
+	/* now we can mark packages as trusted by looking up the public keys */
+	prefix = zif_store_local_get_prefix (ZIF_STORE_LOCAL (priv->store_local));
+	ts = rpmtsCreate ();
+	rpmtsSetRootDir (ts, prefix);
+
+	/* check each package */
+	keyring = rpmtsGetKeyring (ts, 1);
+	for (i=0; i<priv->install->len; i++) {
+		item = g_ptr_array_index (priv->install, i);
+		ret = zif_transaction_prepare_ensure_trusted (transaction,
+							      keyring,
+							      item->package,
+							      error);
+		if (!ret)
+			goto out;
+	}
+
+skip_self_check:
+
+	/* done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
 	/* success */
 	priv->state = ZIF_TRANSACTION_STATE_PREPARED;
 out:
+	if (keyring != NULL)
+		rpmKeyringFree (keyring);
+	if (ts != NULL)
+		rpmtsFree (ts);
 	if (download != NULL)
 		g_ptr_array_unref (download);
 	return ret;
@@ -2936,11 +3217,20 @@ zif_transaction_ts_progress_cb (const void *arg,
 
 	case RPMCALLBACK_UNINST_START:
 
+		/* invalid? */
+		if (filename == NULL) {
+			g_debug ("no filename set in uninst-start with total %i",
+				 (gint32) total);
+			break;
+		}
+
 		/* find item */
 		item = zif_transaction_get_item_from_cache_filename_suffix (commit->transaction->priv->remove,
 									    filename);
-		if (item == NULL)
+		if (item == NULL) {
+			g_warning ("cannot find %s", filename);
 			g_assert_not_reached ();
+		}
 
 		/* map to correct action code */
 		action = ZIF_STATE_ACTION_REMOVING;

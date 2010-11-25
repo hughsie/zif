@@ -66,6 +66,13 @@ typedef enum {
 	ZIF_PACKAGE_ENSURE_TYPE_LAST
 } ZifPackageEnsureType;
 
+typedef enum {
+	ZIF_PACKAGE_TRUST_KIND_UNKNOWN, /* must be first */
+	ZIF_PACKAGE_TRUST_KIND_NONE,
+	ZIF_PACKAGE_TRUST_KIND_PUBKEY,
+	ZIF_PACKAGE_TRUST_KIND_LAST
+} ZifPackageTrustKind;
+
 struct _ZifPackage
 {
 	GObject			 parent;
@@ -98,7 +105,7 @@ const gchar		*zif_package_get_name		(ZifPackage	*package);
 const gchar		*zif_package_get_version	(ZifPackage	*package);
 const gchar		*zif_package_get_arch		(ZifPackage	*package);
 const gchar		*zif_package_get_data		(ZifPackage	*package);
-gboolean		 zif_package_get_trusted	(ZifPackage	*package);
+ZifPackageTrustKind	 zif_package_get_trust_kind	(ZifPackage	*package);
 const gchar		*zif_package_get_summary	(ZifPackage	*package,
 							 ZifState	*state,
 							 GError		**error);
@@ -174,8 +181,8 @@ gboolean		 zif_package_set_id		(ZifPackage	*package,
 							 G_GNUC_WARN_UNUSED_RESULT;
 void			 zif_package_set_installed	(ZifPackage	*package,
 							 gboolean	 installed);
-void			 zif_package_set_trusted	(ZifPackage	*package,
-							 gboolean	 trusted);
+void			 zif_package_set_trust_kind	(ZifPackage	*package,
+							 ZifPackageTrustKind trusted);
 void			 zif_package_set_summary	(ZifPackage	*package,
 							 ZifString	*summary);
 void			 zif_package_set_description	(ZifPackage	*package,
@@ -218,6 +225,7 @@ gint			 zif_package_compare		(ZifPackage	*a,
 gboolean		 zif_package_is_compatible_arch	(ZifPackage	*a,
 							 ZifPackage	*b);
 const gchar		*zif_package_ensure_type_to_string (ZifPackageEnsureType type);
+const gchar		*zif_package_trust_kind_to_string (ZifPackageTrustKind trusted);
 
 G_END_DECLS
 
