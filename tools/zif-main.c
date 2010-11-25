@@ -192,6 +192,11 @@ zif_state_action_to_string_localized (ZifStateAction action)
 		 * for file conflicts */
 		return _("Preparing");
 	}
+	if (action == ZIF_STATE_ACTION_TEST_COMMIT) {
+		/* TRANSLATORS: checking the transaction for file
+		 * conflicts after packages have been downloaded*/
+		return _("Testing");
+	}
 	return zif_state_action_to_string (action);
 }
 

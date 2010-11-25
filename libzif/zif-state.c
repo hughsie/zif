@@ -641,6 +641,8 @@ zif_state_action_to_string (ZifStateAction action)
 		return "updating";
 	if (action == ZIF_STATE_ACTION_CLEANING)
 		return "cleaning";
+	if (action == ZIF_STATE_ACTION_TEST_COMMIT)
+		return "test-commit";
 	if (action == ZIF_STATE_ACTION_UNKNOWN)
 		return "unknown";
 	return NULL;
@@ -664,10 +666,8 @@ zif_state_child_percentage_changed_cb (ZifState *child, guint percentage, ZifSta
 	}
 
 	/* did we call done on a state that did not have a size set? */
-	if (state->priv->steps == 0) {
-		g_warning ("done on a state %p that did not have a size set!", state);
+	if (state->priv->steps == 0)
 		return;
-	}
 
 	/* always provide two levels of signals */
 	zif_state_set_subpercentage (state, percentage);

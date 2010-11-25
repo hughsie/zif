@@ -3101,7 +3101,8 @@ out:
 typedef enum {
 	ZIF_TRANSACTION_STEP_STARTED,
 	ZIF_TRANSACTION_STEP_PREPARING,
-	ZIF_TRANSACTION_STEP_WRITING
+	ZIF_TRANSACTION_STEP_WRITING,
+	ZIF_TRANSACTION_STEP_IGNORE
 } ZifTransactionStep;
 
 typedef struct {
@@ -3251,7 +3252,8 @@ zif_transaction_ts_progress_cb (const void *arg,
 	case RPMCALLBACK_UNINST_PROGRESS:
 
 		/* we're preparing the transaction */
-		if (commit->step == ZIF_TRANSACTION_STEP_PREPARING) {
+		if (commit->step == ZIF_TRANSACTION_STEP_PREPARING ||
+		    commit->step == ZIF_TRANSACTION_STEP_IGNORE) {
 			g_debug ("ignoring preparing %i / %i",
 				 (gint32) amount, (gint32) total);
 			break;
@@ -3274,6 +3276,9 @@ zif_transaction_ts_progress_cb (const void *arg,
 
 		/* we setup the state */
 		g_debug ("preparing transaction with %i items", (gint32) total);
+		if (commit->step == ZIF_TRANSACTION_STEP_IGNORE)
+			break;
+
 		zif_state_set_number_steps (commit->state, total);
 		commit->step = ZIF_TRANSACTION_STEP_PREPARING;
 		break;
@@ -3525,6 +3530,42 @@ out:
 }
 
 /**
+ * zif_transaction_set_error_for_problems:
+ **/
+static gboolean
+zif_transaction_set_error_for_problems (GError **error, rpmts ts)
+{
+	const gchar *msg;
+	GString *string;
+	rpmProblem prob;
+	rpmpsi psi;
+	rpmps probs = NULL;
+
+	/* get a list of problems */
+	probs = rpmtsProblems (ts);
+
+	/* parse problems */
+	string = g_string_new ("");
+	psi = rpmpsInitIterator (probs);
+	while (rpmpsNextIterator (psi) >= 0) {
+		prob = rpmpsGetProblem (psi);
+		msg = rpmProblemGetStr (prob);
+		g_string_append (string, msg);
+	}
+	rpmpsFreeIterator (psi);
+
+	/* set error */
+	g_set_error (error,
+		     ZIF_TRANSACTION_ERROR,
+		     ZIF_TRANSACTION_ERROR_FAILED,
+		     "Error running transaction: %s",
+		     string->str);
+	g_string_free (string, TRUE);
+	rpmpsFree (probs);
+	return FALSE;
+}
+
+/**
  * zif_transaction_commit:
  * @transaction: the #ZifTransaction object
  * @state: a #ZifState to use for progress reporting
@@ -3551,7 +3592,6 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 	Header hdr;
 	rpmdb db = NULL;
 	rpmprobFilterFlags problems_filter = 0;
-	rpmps probs = NULL;
 	ZifState *state_local;
 	ZifState *state_loop;
 	ZifTransactionCommit *commit = NULL;
@@ -3580,7 +3620,8 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 				   error,
 				   2, /* install */
 				   2, /* remove */
-				   91, /* commit */
+				   10, /* test-commit */
+				   81, /* commit */
 				   2, /* write log */
 				   3, /* delete files */
 				   -1);
@@ -3610,8 +3651,6 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 	commit->transaction = transaction;
 	rpmtsSetRootDir (commit->ts, prefix);
 	rpmtsSetNotifyCallback (commit->ts, zif_transaction_ts_progress_cb, commit);
-
-	flags = rpmtsSetVSFlags (commit->ts, _RPMVSF_NOSIGNATURES | _RPMVSF_NODIGESTS);
 
 	/* add things to install */
 	state_local = zif_state_get_child (state);
@@ -3664,17 +3703,23 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 	if (!ret)
 		goto out;
 
+	/* no signature checking, we've handled that already */
+	flags = rpmtsSetVSFlags (commit->ts, _RPMVSF_NOSIGNATURES | _RPMVSF_NODIGESTS);
 	rpmtsSetVSFlags (commit->ts, flags);
-	rpmtsSetFlags (commit->ts, RPMTRANS_FLAG_NONE);
-	commit->state = zif_state_get_child (state);
 
 	/* filter diskspace */
 	if (!zif_config_get_boolean (priv->config, "diskspacecheck", NULL))
 		problems_filter += RPMPROB_FILTER_DISKSPACE;
 
-	/* run the transaction */
-	rc = rpmtsRun (commit->ts, NULL, RPMPROB_FILTER_NONE);
+	/* run the test transaction */
+	zif_state_action_start (state, ZIF_STATE_ACTION_TEST_COMMIT, NULL);
+	commit->state = zif_state_get_child (state);
+	commit->step = ZIF_TRANSACTION_STEP_IGNORE;
+	rpmtsSetFlags (commit->ts, RPMTRANS_FLAG_TEST);
+	g_debug ("Running test transaction");
+	rc = rpmtsRun (commit->ts, NULL, problems_filter);
 	if (rc < 0) {
+		ret = FALSE;
 		g_set_error (error,
 			     ZIF_TRANSACTION_ERROR,
 			     ZIF_TRANSACTION_ERROR_FAILED,
@@ -3682,27 +3727,31 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 		goto out;
 	}
 	if (rc > 0) {
-		rpmpsi psi;
-		rpmProblem prob;
-		const gchar *msg;
+		ret = zif_transaction_set_error_for_problems (error, commit->ts);
+		goto out;
+	}
 
-		/* get a list of problems */
-		probs = rpmtsProblems (commit->ts);
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 
-		/* parse problems */
-		psi = rpmpsInitIterator (probs);
-		while (rpmpsNextIterator (psi) >= 0) {
-			prob = rpmpsGetProblem (psi);
-			msg = rpmProblemGetStr (prob);
-			g_warning ("problem: %s", msg);
-		}
-		rpmpsFreeIterator (psi);
-
+	/* run the transaction, really this time */
+	commit->state = zif_state_get_child (state);
+	commit->step = ZIF_TRANSACTION_STEP_STARTED;
+	rpmtsSetFlags (commit->ts, RPMTRANS_FLAG_NONE);
+	g_debug ("Running actual transaction");
+	rc = rpmtsRun (commit->ts, NULL, problems_filter);
+	if (rc < 0) {
 		ret = FALSE;
 		g_set_error (error,
 			     ZIF_TRANSACTION_ERROR,
 			     ZIF_TRANSACTION_ERROR_FAILED,
-			     "Error running transaction. check stdout");
+			     "Error %i running transaction", rc);
+		goto out;
+	}
+	if (rc > 0) {
+		ret = zif_transaction_set_error_for_problems (error, commit->ts);
 		goto out;
 	}
 
@@ -3742,8 +3791,6 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 	g_debug ("Done!");
 out:
 	g_free (verbosity_string);
-	if (probs != NULL)
-		rpmpsFree (probs);
 	if (db != NULL)
 		rpmdbClose (db);
 	if (commit != NULL) {
