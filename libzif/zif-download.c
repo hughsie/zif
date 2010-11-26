@@ -222,6 +222,50 @@ out:
 	return ret;
 }
 
+/**
+ * zif_download_get_proxy:
+ **/
+static gchar *
+zif_download_get_proxy (ZifDownload *download)
+{
+	gchar *http_proxy = NULL;
+	gchar *password = NULL;
+	gchar *proxy = NULL;
+	gchar *username = NULL;
+	GString *string;
+
+	/* whole string given */
+	http_proxy = zif_config_get_string (download->priv->config, "http_proxy", NULL);
+	if (http_proxy != NULL)
+		goto out;
+
+	/* have we specified any proxy at all? */
+	proxy = zif_config_get_string (download->priv->config, "proxy", NULL);
+	if (proxy == NULL || proxy[0] == '\0')
+		goto out;
+
+	/* these are optional */
+	username = zif_config_get_string (download->priv->config, "username", NULL);
+	password = zif_config_get_string (download->priv->config, "password", NULL);
+
+	/* join it all up */
+	string = g_string_new ("http://");
+	if (username != NULL && password != NULL)
+		g_string_append_printf (string, "%s:%s@", username, password);
+	else if (username != NULL && username[0] != '\0')
+		g_string_append_printf (string, "%s@", username);
+	else if (password != NULL && password[0] != '\0')
+		g_string_append_printf (string, ":%s@", password);
+	g_string_append (string, proxy);
+
+	/* return bare char data */
+	http_proxy = g_string_free (string, FALSE);
+out:
+	g_free (proxy);
+	g_free (username);
+	g_free (password);
+	return http_proxy;
+}
 
 /**
  * zif_download_setup_session:
@@ -237,19 +281,19 @@ zif_download_setup_session (ZifDownload *download, GError **error)
 	g_return_val_if_fail (ZIF_IS_DOWNLOAD (download), FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
-	/* get the proxy from the config */
-
 	/* get default value from the config file */
 	timeout = zif_config_get_uint (download->priv->config, "connection_timeout", NULL);
 	if (timeout == G_MAXUINT)
 		timeout = 5;
 
-	/* setup the session */
-	http_proxy = zif_config_get_string (download->priv->config, "http_proxy", NULL);
+	/* get the proxy from the config */
+	http_proxy = zif_download_get_proxy (download);
 	if (http_proxy != NULL) {
 		g_debug ("using proxy %s", http_proxy);
 		proxy = soup_uri_new (http_proxy);
 	}
+
+	/* setup the session */
 	download->priv->session = soup_session_sync_new_with_options (SOUP_SESSION_PROXY_URI, proxy,
 								      SOUP_SESSION_USER_AGENT, "zif",
 								      SOUP_SESSION_TIMEOUT, timeout,
