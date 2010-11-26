@@ -120,19 +120,20 @@ static gboolean
 zif_release_load (ZifRelease *release, ZifState *state, GError **error)
 {
 	gboolean ret = FALSE;
-	GError *error_local = NULL;
-	GKeyFile *key_file = NULL;
-	gchar **groups = NULL;
-	ZifUpgrade *upgrade;
-	guint i;
-	GFile *file = NULL;
-	guint64 cache_age, age;
 	gchar *cache_dir = NULL;
 	gchar *filename = NULL;
+	gchar **groups = NULL;
 	gchar *temp;
 	gchar *temp_expand;
 	gchar *uri = NULL;
+	GError *error_local = NULL;
+	GFile *cache_dir_file = NULL;
+	GFile *file = NULL;
+	GKeyFile *key_file = NULL;
+	guint64 cache_age, age;
+	guint i;
 	ZifReleasePrivate *priv = release->priv;
+	ZifUpgrade *upgrade;
 
 	/* nothing set */
 	cache_dir = zif_config_get_string (priv->config,
@@ -185,6 +186,19 @@ zif_release_load (ZifRelease *release, ZifState *state, GError **error)
 			ret = FALSE;
 			goto out;
 		}
+
+		/* make directory if it does not exist */
+		cache_dir_file = g_file_new_for_path (cache_dir);
+		ret = g_file_query_exists (cache_dir_file, NULL);
+		if (!ret) {
+			g_debug ("creating missing cache dir '%s'",
+				 cache_dir);
+			ret = g_file_make_directory_with_parents (cache_dir_file, NULL, error);
+			if (!ret)
+				goto out;
+		}
+
+		/* download file */
 		ret = zif_download_file (priv->download,
 					 uri,
 					 filename,
@@ -284,6 +298,8 @@ out:
 		g_key_file_free (key_file);
 	if (file != NULL)
 		g_object_unref (file);
+	if (cache_dir_file != NULL)
+		g_object_unref (cache_dir_file);
 	return ret;
 }
 
