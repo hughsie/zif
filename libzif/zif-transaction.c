@@ -3120,7 +3120,13 @@ skip:
 			state_loop = zif_state_get_child (state_local);
 			g_debug ("downloading %s",
 				 zif_package_get_id (package));
-			ret = zif_package_remote_download (ZIF_PACKAGE_REMOTE (package), NULL, state_loop, &error_local);
+			zif_state_action_start (state_local,
+						ZIF_STATE_ACTION_DOWNLOADING,
+						zif_package_get_id (package));
+			ret = zif_package_remote_download (ZIF_PACKAGE_REMOTE (package),
+							   NULL,
+							   state_loop,
+							   &error_local);
 			if (!ret) {
 				g_propagate_prefixed_error (error, error_local,
 							    "cannot download %s: ",
@@ -3663,7 +3669,8 @@ zif_transaction_set_error_for_problems (GError **error, rpmts ts)
 	while (rpmpsNextIterator (psi) >= 0) {
 		prob = rpmpsGetProblem (psi);
 		msg = rpmProblemGetStr (prob);
-		g_string_append (string, msg);
+		if (msg != NULL)
+			g_string_append (string, msg);
 	}
 	rpmpsFreeIterator (psi);
 
