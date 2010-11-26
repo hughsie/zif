@@ -95,6 +95,8 @@ typedef struct {
 	ZifTransaction		*transaction;
 	gboolean		 unresolved_dependencies;
 	ZifArray		*post_resolve_package_array;
+	guint			 resolve_count;
+	gboolean		 skip_broken;
 } ZifTransactionResolve;
 
 G_DEFINE_TYPE (ZifTransaction, zif_transaction, G_TYPE_OBJECT)
@@ -1260,8 +1262,6 @@ skip_resolve:
 
 		/* add to the planned local store */
 		zif_array_add (data->post_resolve_package_array, package_provide);
-
-		data->unresolved_dependencies = TRUE;
 		goto out;
 	}
 
@@ -1428,7 +1428,6 @@ skip_resolve:
 	}
 
 	/* item is good now all the requires exist in the set */
-	item->resolved = TRUE;
 	ret = TRUE;
 out:
 	if (!ret) {
@@ -1622,7 +1621,6 @@ zif_transaction_resolve_remove_require (ZifTransactionResolve *data,
 				zif_array_remove (data->post_resolve_package_array, package);
 			}
 		}
-		data->unresolved_dependencies = TRUE;
 	}
 out:
 	if (related_packages != NULL)
@@ -1674,7 +1672,6 @@ zif_transaction_resolve_remove_item (ZifTransactionResolve *data,
 		goto out;
 
 	/* item is good now all the provides exist in the set */
-	item->resolved = TRUE;
 	ret = TRUE;
 out:
 	if (provides != NULL)
@@ -1883,8 +1880,9 @@ zif_transaction_resolve_update_item (ZifTransactionResolve *data,
 
 		/* is already installed */
 		if (zif_transaction_get_item_from_hash (data->transaction->priv->install_hash,
-							package) != NULL)
-			goto success;
+							package) != NULL) {
+			goto out;
+		}
 
 		/* add the new package */
 		ret = zif_transaction_add_install_internal (data->transaction,
@@ -1899,7 +1897,7 @@ zif_transaction_resolve_update_item (ZifTransactionResolve *data,
 		zif_array_add (data->post_resolve_package_array, package);
 
 		/* ignore all the other update checks */
-		goto success;
+		goto out;
 	}
 
 skip:
@@ -1912,7 +1910,6 @@ skip:
 		/* this is a special error, just ignore the item */
 		if (error_local->code == ZIF_TRANSACTION_ERROR_NOTHING_TO_DO) {
 			g_error_free (error_local);
-			item->resolved = TRUE;
 			ret = TRUE;
 			goto out;
 		}
@@ -1975,14 +1972,6 @@ skip:
 
 	/* add to the planned local store */
 	zif_array_add (data->post_resolve_package_array, package);
-
-success:
-
-	/* new things to process */
-	data->unresolved_dependencies = TRUE;
-
-	/* mark as resolved, so we don't try to process this again */
-	item->resolved = TRUE;
 out:
 	if (depend_array != NULL)
 		g_ptr_array_unref (depend_array);
@@ -2173,10 +2162,8 @@ zif_transaction_resolve_conflicts_item (ZifTransactionResolve *data,
 					     error_local->message);
 				g_error_free (error_local);
 				/* fall through, with ret = FALSE */
-			} else {
-				/* new things to process */
-				data->unresolved_dependencies = TRUE;
 			}
+			data->unresolved_dependencies = TRUE;
 			g_object_unref (conflicting);
 		}
 
@@ -2396,6 +2383,204 @@ out:
 }
 
 /**
+ * zif_transaction_resolve_loop:
+ **/
+static gboolean
+zif_transaction_resolve_loop (ZifTransactionResolve *data, ZifState *state, GError **error)
+{
+	gboolean ret = FALSE;
+	GError *error_local = NULL;
+	guint i;
+	ZifTransactionItem *item;
+	ZifTransactionPrivate *priv = data->transaction->priv;
+
+	/* reset here */
+	data->resolve_count++;
+	data->unresolved_dependencies = FALSE;
+
+	/* for each package set to be installed */
+	g_debug ("starting INSTALL on loop %i", data->resolve_count);
+	for (i=0; i<priv->install->len; i++) {
+		item = g_ptr_array_index (priv->install, i);
+		if (item->resolved)
+			continue;
+		if (item->cancelled)
+			continue;
+
+		/* set action */
+		zif_state_action_start (state,
+					ZIF_STATE_ACTION_DEPSOLVING_INSTALL,
+					zif_package_get_id (item->package));
+
+		/* resolve this item */
+		ret = zif_transaction_resolve_install_item (data, item, &error_local);
+		if (!ret) {
+			g_assert (error_local != NULL);
+			/* special error code */
+			if (error_local->code == ZIF_TRANSACTION_ERROR_NOTHING_TO_DO) {
+				g_debug ("REMOVE %s as nothing to do",
+					 zif_package_get_id (item->package));
+				g_ptr_array_remove (priv->install, item);
+				data->unresolved_dependencies = TRUE;
+				g_clear_error (&error_local);
+				break;
+			}
+			if (data->skip_broken) {
+				g_debug ("ignoring error as we're skip-broken: %s",
+					 error_local->message);
+				zif_transaction_resolve_wind_back_failure (data->transaction, item);
+				g_clear_error (&error_local);
+				break;
+			}
+			g_propagate_error (error, error_local);
+			goto out;
+		}
+
+		/* this item is done */
+		item->resolved = TRUE;
+		data->unresolved_dependencies = TRUE;
+
+		/* set the approximate progress if possible */
+		zif_transaction_set_progress (data->transaction, state);
+		goto out;
+	}
+
+	/* for each package set to be updated */
+	g_debug ("starting UPDATE on loop %i", data->resolve_count);
+	for (i=0; i<priv->update->len; i++) {
+		item = g_ptr_array_index (priv->update, i);
+		if (item->resolved)
+			continue;
+		if (item->cancelled)
+			continue;
+
+		/* set action */
+		zif_state_action_start (state,
+					ZIF_STATE_ACTION_DEPSOLVING_UPDATE,
+					zif_package_get_id (item->package));
+
+		/* resolve this item */
+		ret = zif_transaction_resolve_update_item (data, item, &error_local);
+		if (!ret) {
+			g_assert (error_local != NULL);
+			/* special error code */
+			if (error_local->code == ZIF_TRANSACTION_ERROR_NOTHING_TO_DO) {
+				g_debug ("REMOVE %s as nothing to do",
+					 zif_package_get_id (item->package));
+				g_ptr_array_remove (priv->update, item);
+				data->unresolved_dependencies = TRUE;
+				g_clear_error (&error_local);
+				break;
+			}
+			if (data->skip_broken) {
+				g_debug ("ignoring error as we're skip-broken: %s",
+					 error_local->message);
+				zif_transaction_resolve_wind_back_failure (data->transaction, item);
+				g_ptr_array_remove (priv->update, item);
+				data->unresolved_dependencies = TRUE;
+				g_clear_error (&error_local);
+				break;
+			}
+			g_propagate_error (error, error_local);
+			goto out;
+		}
+
+		/* this item is done */
+		item->resolved = TRUE;
+		data->unresolved_dependencies = TRUE;
+
+		/* set the approximate progress if possible */
+		zif_transaction_set_progress (data->transaction, state);
+		goto out;
+	}
+
+	/* for each package set to be removed */
+	g_debug ("starting REMOVE on loop %i", data->resolve_count);
+	for (i=0; i<priv->remove->len; i++) {
+		item = g_ptr_array_index (priv->remove, i);
+		if (item->resolved)
+			continue;
+		if (item->cancelled)
+			continue;
+
+		/* set action */
+		zif_state_action_start (state,
+					ZIF_STATE_ACTION_DEPSOLVING_REMOVE,
+					zif_package_get_id (item->package));
+
+		/* resolve this item */
+		ret = zif_transaction_resolve_remove_item (data, item, &error_local);
+		if (!ret) {
+			g_assert (error_local != NULL);
+			/* special error code */
+			if (error_local->code == ZIF_TRANSACTION_ERROR_NOTHING_TO_DO) {
+				g_debug ("REMOVE %s as nothing to do",
+					 zif_package_get_id (item->package));
+				g_ptr_array_remove (priv->remove, item);
+				data->unresolved_dependencies = TRUE;
+				g_clear_error (&error_local);
+				break;
+			}
+			if (data->skip_broken) {
+				g_debug ("ignoring error as we're skip-broken: %s",
+					 error_local->message);
+				zif_transaction_resolve_wind_back_failure (data->transaction, item);
+				g_ptr_array_remove (priv->remove, item);
+				data->unresolved_dependencies = TRUE;
+				g_clear_error (&error_local);
+				break;
+			}
+			g_propagate_error (error, error_local);
+			goto out;
+		}
+
+		/* this item is done */
+		item->resolved = TRUE;
+		data->unresolved_dependencies = TRUE;
+
+		/* set the approximate progress if possible */
+		zif_transaction_set_progress (data->transaction, state);
+		goto out;
+	}
+
+	/* check conflicts */
+	g_debug ("starting CONFLICTS on loop %i", data->resolve_count);
+	for (i=0; i<priv->install->len; i++) {
+		item = g_ptr_array_index (priv->install, i);
+		if (item->cancelled)
+			continue;
+
+		/* set action */
+		zif_state_action_start (state,
+					ZIF_STATE_ACTION_DEPSOLVING_CONFLICTS,
+					zif_package_get_id (item->package));
+
+		/* check this item */
+		ret = zif_transaction_resolve_conflicts_item (data, item, &error_local);
+		if (!ret) {
+			if (data->skip_broken) {
+				g_debug ("ignoring error as we're skip-broken: %s",
+					 error_local->message);
+				g_ptr_array_remove (priv->install, item);
+				data->unresolved_dependencies = TRUE;
+				g_clear_error (&error_local);
+				break;
+			}
+			g_propagate_error (error, error_local);
+			goto out;
+		}
+	}
+
+	/* success */
+	ret = TRUE;
+out:
+	g_debug ("loop %i now resolved = %s",
+		 data->resolve_count,
+		 data->unresolved_dependencies ? "NO" : "YES");
+	return ret;
+}
+
+/**
  * zif_transaction_resolve:
  * @transaction: the #ZifTransaction object
  * @state: a #ZifState to use for progress reporting
@@ -2411,12 +2596,8 @@ gboolean
 zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **error)
 {
 	gboolean ret = FALSE;
-	gboolean skip_broken;
-	GError *error_local = NULL;
-	guint i;
 	guint items_success;
-	guint resolve_count = 0;
-	ZifTransactionItem *item;
+	gboolean background;
 	ZifTransactionPrivate *priv;
 	ZifTransactionResolve *data = NULL;
 
@@ -2434,11 +2615,6 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 		 priv->update->len,
 		 priv->remove->len);
 
-	/* get defaults */
-	skip_broken = zif_config_get_boolean (priv->config,
-					      "skip_broken",
-					      NULL);
-
 	/* whilst there are unresolved dependencies, keep trying */
 	data = g_new0 (ZifTransactionResolve, 1);
 	zif_state_set_number_steps (state, 1);
@@ -2449,7 +2625,16 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 	/* we can't do child progress in a sane way */
 	zif_state_set_report_progress (data->state, FALSE);
 	data->transaction = transaction;
-	data->unresolved_dependencies = TRUE;
+	data->unresolved_dependencies = FALSE;
+	data->resolve_count = 0;
+	data->skip_broken = zif_config_get_boolean (priv->config,
+						    "skip_broken",
+						    NULL);
+
+	/*in background mode, perform the depsolving more slowly */
+	background = zif_config_get_boolean (priv->config,
+					     "background",
+					     NULL);
 
 	/* create a new world view of the package database */
 	ret = zif_transaction_setup_post_resolve_package_array (data, error);
@@ -2457,176 +2642,13 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 		goto out;
 
 	/* loop until all resolved */
-	while (data->unresolved_dependencies) {
-
-back_to_install_phase:
-
-		/* reset here */
-		resolve_count++;
-		data->unresolved_dependencies = FALSE;
-
-		/* for each package set to be installed */
-		g_debug ("starting INSTALL on loop %i", resolve_count);
-		for (i=0; i<priv->install->len; i++) {
-			item = g_ptr_array_index (priv->install, i);
-			if (item->resolved)
-				continue;
-			if (item->cancelled)
-				continue;
-
-			/* set action */
-			zif_state_action_start (state,
-						ZIF_STATE_ACTION_DEPSOLVING_INSTALL,
-						zif_package_get_id (item->package));
-
-			/* resolve this item */
-			ret = zif_transaction_resolve_install_item (data, item, &error_local);
-			if (!ret) {
-				g_assert (error_local != NULL);
-				/* special error code */
-				if (error_local->code == ZIF_TRANSACTION_ERROR_NOTHING_TO_DO) {
-					g_debug ("REMOVE %s as nothing to do",
-						 zif_package_get_id (item->package));
-					g_ptr_array_remove (priv->install, item);
-					data->unresolved_dependencies = TRUE;
-					g_clear_error (&error_local);
-					break;
-				}
-				if (skip_broken) {
-					g_debug ("ignoring error as we're skip-broken: %s",
-						 error_local->message);
-					zif_transaction_resolve_wind_back_failure (transaction, item);
-					data->unresolved_dependencies = TRUE;
-					g_clear_error (&error_local);
-					break;
-				}
-				g_propagate_error (error, error_local);
-				goto out;
-			}
-
-			/* set the approximate progress if possible */
-			zif_transaction_set_progress (transaction, state);
-			goto back_to_install_phase;
-		}
-
-		/* for each package set to be updated */
-		g_debug ("starting UPDATE on loop %i", resolve_count);
-		for (i=0; i<priv->update->len; i++) {
-			item = g_ptr_array_index (priv->update, i);
-			if (item->resolved)
-				continue;
-			if (item->cancelled)
-				continue;
-
-			/* set action */
-			zif_state_action_start (state,
-						ZIF_STATE_ACTION_DEPSOLVING_UPDATE,
-						zif_package_get_id (item->package));
-
-			/* resolve this item */
-			ret = zif_transaction_resolve_update_item (data, item, &error_local);
-			if (!ret) {
-				g_assert (error_local != NULL);
-				/* special error code */
-				if (error_local->code == ZIF_TRANSACTION_ERROR_NOTHING_TO_DO) {
-					g_debug ("REMOVE %s as nothing to do",
-						 zif_package_get_id (item->package));
-					g_ptr_array_remove (priv->update, item);
-					data->unresolved_dependencies = TRUE;
-					g_clear_error (&error_local);
-					break;
-				}
-				if (skip_broken) {
-					g_debug ("ignoring error as we're skip-broken: %s",
-						 error_local->message);
-					zif_transaction_resolve_wind_back_failure (transaction, item);
-					g_ptr_array_remove (priv->update, item);
-					data->unresolved_dependencies = TRUE;
-					g_clear_error (&error_local);
-					break;
-				}
-				g_propagate_error (error, error_local);
-				goto out;
-			}
-
-			/* set the approximate progress if possible */
-			zif_transaction_set_progress (transaction, state);
-			goto back_to_install_phase;
-		}
-
-		/* for each package set to be removed */
-		g_debug ("starting REMOVE on loop %i", resolve_count);
-		for (i=0; i<priv->remove->len; i++) {
-			item = g_ptr_array_index (priv->remove, i);
-			if (item->resolved)
-				continue;
-			if (item->cancelled)
-				continue;
-
-			/* set action */
-			zif_state_action_start (state,
-						ZIF_STATE_ACTION_DEPSOLVING_REMOVE,
-						zif_package_get_id (item->package));
-
-			/* resolve this item */
-			ret = zif_transaction_resolve_remove_item (data, item, &error_local);
-			if (!ret) {
-				g_assert (error_local != NULL);
-				/* special error code */
-				if (error_local->code == ZIF_TRANSACTION_ERROR_NOTHING_TO_DO) {
-					g_debug ("REMOVE %s as nothing to do",
-						 zif_package_get_id (item->package));
-					g_ptr_array_remove (priv->remove, item);
-					data->unresolved_dependencies = TRUE;
-					g_clear_error (&error_local);
-					break;
-				}
-				if (skip_broken) {
-					g_debug ("ignoring error as we're skip-broken: %s",
-						 error_local->message);
-					zif_transaction_resolve_wind_back_failure (transaction, item);
-					g_ptr_array_remove (priv->remove, item);
-					data->unresolved_dependencies = TRUE;
-					g_clear_error (&error_local);
-					break;
-				}
-				g_propagate_error (error, error_local);
-				goto out;
-			}
-
-			/* set the approximate progress if possible */
-			zif_transaction_set_progress (transaction, state);
-			goto back_to_install_phase;
-		}
-
-		/* check conflicts */
-		g_debug ("starting CONFLICTS on loop %i", resolve_count);
-		for (i=0; i<priv->install->len; i++) {
-			item = g_ptr_array_index (priv->install, i);
-			if (item->cancelled)
-				continue;
-
-			/* set action */
-			zif_state_action_start (state,
-						ZIF_STATE_ACTION_DEPSOLVING_CONFLICTS,
-						zif_package_get_id (item->package));
-
-			/* check this item */
-			ret = zif_transaction_resolve_conflicts_item (data, item, &error_local);
-			if (!ret) {
-				if (skip_broken) {
-					g_debug ("ignoring error as we're skip-broken: %s",
-						 error_local->message);
-					g_ptr_array_remove (priv->install, item);
-					data->unresolved_dependencies = TRUE;
-					g_clear_error (&error_local);
-					break;
-				}
-				g_propagate_error (error, error_local);
-				goto out;
-			}
-		}
-	}
+	do {
+		ret = zif_transaction_resolve_loop (data, state, error);
+		if (!ret)
+			goto out;
+		if (background)
+			g_usleep (100000);
+	} while (data->unresolved_dependencies);
 
 	/* anything to do? */
 	items_success = zif_transaction_get_array_success (priv->install);
