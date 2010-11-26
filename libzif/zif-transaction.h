@@ -80,6 +80,7 @@ typedef enum {
 	ZIF_TRANSACTION_REASON_REMOVE_FOR_UPDATE,
 	ZIF_TRANSACTION_REASON_REMOVE_OBSOLETE,
 	ZIF_TRANSACTION_REASON_REMOVE_USER_ACTION,
+	ZIF_TRANSACTION_REASON_UPDATE_DEPEND,
 	ZIF_TRANSACTION_REASON_UPDATE_FOR_CONFLICT,
 	ZIF_TRANSACTION_REASON_UPDATE_USER_ACTION,
 	ZIF_TRANSACTION_REASON_LAST
@@ -99,6 +100,9 @@ GType		 zif_transaction_get_type		(void);
 
 ZifTransaction	*zif_transaction_new			(void);
 gboolean	 zif_transaction_add_install		(ZifTransaction	*transaction,
+							 ZifPackage	*package,
+							 GError		**error);
+gboolean	 zif_transaction_add_install_as_update	(ZifTransaction	*transaction,
 							 ZifPackage	*package,
 							 GError		**error);
 gboolean	 zif_transaction_add_update		(ZifTransaction	*transaction,

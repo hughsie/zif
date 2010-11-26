@@ -1635,6 +1635,14 @@ zif_transaction_reason_to_string_localized (ZifTransactionReason reason)
 		/* TRANSLATORS: this is the reason the action is to be taken */
 		str = _("Updating");
 		break;
+	case ZIF_TRANSACTION_REASON_UPDATE_FOR_CONFLICT:
+		/* TRANSLATORS: this is the reason the action is to be taken */
+		str = _("Updating for conflict");
+		break;
+	case ZIF_TRANSACTION_REASON_UPDATE_DEPEND:
+		/* TRANSLATORS: this is the reason the action is to be taken */
+		str = _("Updating for dependencies");
+		break;
 	default:
 		/* TRANSLATORS: this is the reason the action is to be taken */
 		str = _("Unknown reason");
@@ -1651,12 +1659,24 @@ zif_main_show_transaction (ZifTransaction *transaction)
 	guint i, j;
 	gchar *printable;
 	ZifPackage *package;
+	gint order[] = {
+		ZIF_TRANSACTION_REASON_INSTALL_USER_ACTION,
+		ZIF_TRANSACTION_REASON_INSTALL_FOR_UPDATE,
+		ZIF_TRANSACTION_REASON_INSTALL_DEPEND,
+		ZIF_TRANSACTION_REASON_UPDATE_USER_ACTION,
+		ZIF_TRANSACTION_REASON_UPDATE_DEPEND,
+		ZIF_TRANSACTION_REASON_UPDATE_FOR_CONFLICT,
+		ZIF_TRANSACTION_REASON_REMOVE_USER_ACTION,
+		ZIF_TRANSACTION_REASON_REMOVE_FOR_DEP,
+		ZIF_TRANSACTION_REASON_REMOVE_AS_ONLYN,
+		ZIF_TRANSACTION_REASON_REMOVE_OBSOLETE,
+		-1 };
 
 	g_print ("%s\n", _("Transaction summary:"));
-	for (i=0; i<ZIF_TRANSACTION_REASON_LAST; i++) {
-		array = zif_transaction_get_array_for_reason (transaction, i);
+	for (i=0; order[i] != -1; i++) {
+		array = zif_transaction_get_array_for_reason (transaction, order[i]);
 		if (array->len > 0)
-			g_print ("  %s:\n", zif_transaction_reason_to_string_localized (i));
+			g_print ("  %s:\n", zif_transaction_reason_to_string_localized (order[i]));
 		for (j=0; j<array->len; j++) {
 			package = g_ptr_array_index (array, j);
 			printable = zif_package_id_get_printable (zif_package_get_id (package));
@@ -3094,7 +3114,7 @@ zif_cmd_update_all (ZifCmdPrivate *priv, gchar **values, GError **error)
 	transaction = zif_transaction_new ();
 	for (i=0; i<array->len; i++) {
 		package = g_ptr_array_index (array, i);
-		ret = zif_transaction_add_install (transaction, package, error);
+		ret = zif_transaction_add_install_as_update (transaction, package, error);
 		if (!ret)
 			goto out;
 	}
