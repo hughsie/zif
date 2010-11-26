@@ -33,7 +33,6 @@
 
 G_BEGIN_DECLS
 
-GType		 zif_package_array_get_type		(void);
 GPtrArray	*zif_package_array_new			(void);
 ZifPackage	*zif_package_array_get_newest		(GPtrArray	*array,
 							 GError		**error);
