@@ -347,6 +347,70 @@ zif_package_id_from_nevra (const gchar *name, guint epoch, const gchar *version,
 }
 
 /**
+ * zif_package_id_from_nevra:
+ * @package_id: The package ID, e.g. "hal;1:1.01-3;i386;fedora"
+ * @name: The returned package name, e.g. "hal"
+ * @epoch: The returned package epoch, e.g. 1 or 0 for none.
+ * @version: The returned package version, e.g. "1.0.0"
+ * @release: The returned package release, e.g. "2"
+ * @arch: The returned package architecture, e.g. "i386"
+ *
+ * Parses a PackageId structure to a NEVRA.
+ *
+ * Return value: %TRUE if the string was parsed okay
+ *
+ * Since: 0.1.3
+ **/
+gboolean
+zif_package_id_to_nevra (const gchar *package_id,
+			 gchar **name, guint *epoch, gchar **version,
+			 gchar **release, gchar **arch)
+{
+	gboolean ret = FALSE;
+	gchar **split;
+	gchar *ver;
+	gchar *ver_start;
+	guint i;
+
+	/* split up into 4 usable sections */
+	split = zif_package_id_split (package_id);
+
+	/* nothing */
+	if (epoch != NULL)
+		*epoch = 0;
+
+	/* we could have "1-2" or "3:1-2" */
+	ver_start = ver = split[ZIF_PACKAGE_ID_VERSION];
+	for (i=0; ver[i] != '\0'; i++) {
+		if (ver[i] == ':') {
+			ver[i] = '\0';
+			ver_start = &ver[i+1];
+			if (epoch != NULL)
+				*epoch = atoi (ver);
+		}
+		if (ver[i] == '-') {
+			ver[i] = '\0';
+			if (version != NULL)
+				*version = g_strdup (ver_start);
+			if (release != NULL)
+				*release = g_strdup (&ver[i+1]);
+			ret = TRUE;
+		}
+	}
+	if (!ret)
+		goto out;
+
+	/* only do this when we know we've got the version */
+	if (name != NULL)
+		*name = g_strdup (split[ZIF_PACKAGE_ID_NAME]);
+	if (arch != NULL)
+		*arch = g_strdup (split[ZIF_PACKAGE_ID_ARCH]);
+out:
+	g_strfreev (split);
+	return ret;
+}
+
+/**
  * zif_package_convert_evr:
  * @evr: epoch, version, release
  * @epoch: the package epoch

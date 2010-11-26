@@ -749,23 +749,48 @@ zif_md_primary_sql_get_conflicts (ZifMd *md, ZifPackage *package,
 static GPtrArray *
 zif_md_primary_sql_find_package (ZifMd *md, const gchar *package_id, ZifState *state, GError **error)
 {
-	gchar *statement;
-	GPtrArray *array;
-	gchar **split;
+	gboolean ret;
+	gchar *arch = NULL;
+	gchar *name = NULL;
+	gchar *release = NULL;
+	gchar *statement = NULL;
+	gchar *version = NULL;
+	GPtrArray *array = NULL;
+	guint epoch;
+
 	ZifMdPrimarySql *md_primary_sql = ZIF_MD_PRIMARY_SQL (md);
 
 	g_return_val_if_fail (ZIF_IS_MD_PRIMARY_SQL (md), NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
-	/* search with predicate, TODO: search version (epoch+release) */
-	split = zif_package_id_split (package_id);
-	statement = g_strdup_printf (ZIF_MD_PRIMARY_SQL_HEADER " WHERE p.name = '%s' AND p.arch = '%s'",
-				     split[ZIF_PACKAGE_ID_NAME], split[ZIF_PACKAGE_ID_ARCH]);
-	array = zif_md_primary_sql_search (md_primary_sql, statement, state, error);
-	g_free (statement);
-	g_strfreev (split);
+	/* split up */
+	ret = zif_package_id_to_nevra (package_id,
+				       &name, &epoch, &version,
+				       &release, &arch);
+	if (!ret) {
+		g_set_error (error,
+			     ZIF_MD_ERROR,
+			     ZIF_MD_ERROR_FAILED,
+			     "invalid id: %s",
+			     package_id);
+		goto out;
+	}
 
+	/* search with predicate */
+	statement = g_strdup_printf (ZIF_MD_PRIMARY_SQL_HEADER " WHERE p.name = '%s'"
+				     " AND p.epoch = '%i'"
+				     " AND p.version = '%s'"
+				     " AND p.release = '%s'"
+				     " AND p.arch = '%s'",
+				     name, epoch, version, release, arch);
+	array = zif_md_primary_sql_search (md_primary_sql, statement, state, error);
+out:
+	g_free (statement);
+	g_free (name);
+	g_free (version);
+	g_free (release);
+	g_free (arch);
 	return array;
 }
 

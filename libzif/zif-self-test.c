@@ -2752,24 +2752,26 @@ zif_update_info_func (void)
 static void
 zif_utils_func (void)
 {
-	gchar *package_id;
+	const gchar *e;
+	const gchar *package_id_const = "totem;0.1.2;i386;fedora";
+	const gchar *r;
+	const gchar *v;
+	const guint iterations = 100000;
 	gboolean ret;
 	gchar *evr;
-	const gchar *e;
-	const gchar *v;
-	const gchar *r;
 	gchar *filename;
 	gchar *filename_gpg;
-	GError *error = NULL;
-	ZifState *state;
-	const gchar *package_id_const = "totem;0.1.2;i386;fedora";
-	guint i;
-	GTimer *timer;
-	gchar **split;
 	gchar *name;
-	const guint iterations = 100000;
-	gdouble time_split;
+	gchar *package_id;
+	gchar *sn, *sv, *sr, *sa;
+	gchar **split;
 	gdouble time_iter;
+	gdouble time_split;
+	GError *error = NULL;
+	GTimer *timer;
+	guint i;
+	guint se;
+	ZifState *state;
 
 	state = zif_state_new ();
 
@@ -2882,6 +2884,30 @@ zif_utils_func (void)
 	g_error_free (error);
 	g_free (filename);
 	g_free (filename_gpg);
+
+	/* verify with epoch */
+	ret = zif_package_id_to_nevra ("kernel;4:0.1-5.fc4;i386;fedora", &sn, &se, &sv, &sr, &sa);
+	g_assert (ret);
+	g_assert_cmpstr (sn, ==, "kernel");
+	g_assert_cmpint (se, ==, 4);
+	g_assert_cmpstr (sv, ==, "0.1");
+	g_assert_cmpstr (sr, ==, "5.fc4");
+	g_assert_cmpstr (sa, ==, "i386");
+	g_free (sn); g_free (sv); g_free (sr); g_free (sa);
+
+	/* verify without epoch */
+	ret = zif_package_id_to_nevra ("kernel;0.1-5.fc4;i386;fedora", &sn, &se, &sv, &sr, &sa);
+	g_assert (ret);
+	g_assert_cmpstr (sn, ==, "kernel");
+	g_assert_cmpint (se, ==, 0);
+	g_assert_cmpstr (sv, ==, "0.1");
+	g_assert_cmpstr (sr, ==, "5.fc4");
+	g_assert_cmpstr (sa, ==, "i386");
+	g_free (sn); g_free (sv); g_free (sr); g_free (sa);
+
+	/* verify with invalid version */
+	ret = zif_package_id_to_nevra ("kernel;0.1;i386;fedora", &sn, &se, &sv, &sr, &sa);
+	g_assert (!ret);
 }
 
 int

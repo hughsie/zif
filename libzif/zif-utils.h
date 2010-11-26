@@ -83,6 +83,12 @@ gboolean	 zif_package_convert_evr	(gchar		*evr,
 gboolean	 zif_utils_gpg_verify		(const gchar	*filename,
 						 const gchar	*filename_gpg,
 						 GError		**error);
+gboolean	 zif_package_id_to_nevra	(const gchar	 *package_id,
+						 gchar		**name,
+						 guint		*epoch,
+						 gchar		**version,
+						 gchar		**release,
+						 gchar		**arch);
 
 G_END_DECLS
 
