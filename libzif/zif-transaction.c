@@ -3924,7 +3924,10 @@ zif_transaction_set_store_local (ZifTransaction *transaction, ZifStore *store)
 {
 	g_return_if_fail (ZIF_IS_TRANSACTION (transaction));
 	g_return_if_fail (ZIF_IS_STORE (store));
-	g_return_if_fail (transaction->priv->store_local == NULL);
+
+	/* keep a local refcounted copy */
+	if (transaction->priv->store_local != NULL)
+		g_object_unref (transaction->priv->store_local);
 	transaction->priv->store_local = g_object_ref (store);
 }
 
@@ -3942,7 +3945,10 @@ zif_transaction_set_stores_remote (ZifTransaction *transaction, GPtrArray *store
 {
 	g_return_if_fail (ZIF_IS_TRANSACTION (transaction));
 	g_return_if_fail (stores != NULL);
-	g_return_if_fail (transaction->priv->stores_remote == NULL);
+
+	/* keep a local refcounted copy */
+	if (transaction->priv->stores_remote != NULL)
+		g_ptr_array_unref (transaction->priv->stores_remote);
 	transaction->priv->stores_remote = g_ptr_array_ref (stores);
 }
 
