@@ -1346,7 +1346,6 @@ zif_transaction_resolve_install_item (ZifTransactionResolve *data,
 	guint i;
 	ZifDepend *depend;
 	GPtrArray *array = NULL;
-	ZifPackage *package;
 	ZifPackage *package_oldest = NULL;
 	ZifTransactionItem *item_tmp;
 	guint installonlyn = 1;
@@ -1399,18 +1398,6 @@ zif_transaction_resolve_install_item (ZifTransactionResolve *data,
 	/* have we got more that that installed? */
 	if (array->len >= installonlyn) {
 
-		/* is it the same package? */
-		package = g_ptr_array_index (array, 0);
-		if (zif_package_compare (package, item->package) == 0) {
-			ret = FALSE;
-			g_set_error (error,
-				     ZIF_TRANSACTION_ERROR,
-				     ZIF_TRANSACTION_ERROR_NOTHING_TO_DO,
-				     "the package %s is already installed",
-				     zif_package_get_id (package));
-			goto out;
-		}
-
 		/* need to remove the oldest one */
 		package_oldest = zif_package_array_get_oldest (array, &error_local);
 		if (package_oldest == NULL) {
@@ -1419,6 +1406,17 @@ zif_transaction_resolve_install_item (ZifTransactionResolve *data,
 				     "failed to get oldest for package array: %s",
 				     error_local->message);
 			g_error_free (error_local);
+			goto out;
+		}
+
+		/* is it the same package? */
+		if (zif_package_compare (package_oldest, item->package) == 0) {
+			ret = FALSE;
+			g_set_error (error,
+				     ZIF_TRANSACTION_ERROR,
+				     ZIF_TRANSACTION_ERROR_NOTHING_TO_DO,
+				     "the package %s is already installed",
+				     zif_package_get_id (package_oldest));
 			goto out;
 		}
 
