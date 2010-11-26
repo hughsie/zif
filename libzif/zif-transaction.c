@@ -1185,6 +1185,8 @@ zif_transaction_resolve_install_depend (ZifTransactionResolve *data,
 	ZifPackage *package;
 	guint i;
 
+	g_return_val_if_fail (data->transaction->priv->stores_remote != NULL, FALSE);
+
 	/* already provided by something in the install set */
 	g_debug ("searching in install");
 	ret = zif_transaction_get_package_provide_from_array (data->transaction->priv->install,
@@ -1868,6 +1870,8 @@ zif_transaction_resolve_update_item (ZifTransactionResolve *data,
 	ZifDepend *depend;
 	ZifPackage *package = NULL;
 
+	g_return_val_if_fail (data->transaction->priv->stores_remote != NULL, FALSE);
+
 	/* does anything obsolete this package */
 	depend = zif_depend_new ();
 	zif_depend_set_name (depend, zif_package_get_name (item->package));
@@ -2472,8 +2476,9 @@ zif_transaction_resolve_loop (ZifTransactionResolve *data, ZifState *state, GErr
 			g_assert (error_local != NULL);
 			/* special error code */
 			if (error_local->code == ZIF_TRANSACTION_ERROR_NOTHING_TO_DO) {
-				g_debug ("REMOVE %s as nothing to do",
-					 zif_package_get_id (item->package));
+				g_debug ("REMOVE %s as nothing to do: %s",
+					 zif_package_get_id (item->package),
+					 error_local->message);
 				g_ptr_array_remove (priv->install, item);
 				data->unresolved_dependencies = TRUE;
 				g_clear_error (&error_local);
@@ -2519,8 +2524,9 @@ zif_transaction_resolve_loop (ZifTransactionResolve *data, ZifState *state, GErr
 			g_assert (error_local != NULL);
 			/* special error code */
 			if (error_local->code == ZIF_TRANSACTION_ERROR_NOTHING_TO_DO) {
-				g_debug ("REMOVE %s as nothing to do",
-					 zif_package_get_id (item->package));
+				g_debug ("REMOVE %s as nothing to do: %s",
+					 zif_package_get_id (item->package),
+					 error_local->message);
 				g_ptr_array_remove (priv->update, item);
 				data->unresolved_dependencies = TRUE;
 				g_clear_error (&error_local);
@@ -2658,7 +2664,6 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 	g_return_val_if_fail (ZIF_IS_TRANSACTION (transaction), FALSE);
 	g_return_val_if_fail (zif_state_valid (state), FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
-	g_return_val_if_fail (transaction->priv->stores_remote != NULL, FALSE);
 	g_return_val_if_fail (transaction->priv->store_local != NULL, FALSE);
 
 	/* get private */
