@@ -3065,15 +3065,17 @@ skip:
 	rpmtsEmpty (transaction->priv->ts);
 
 	/* check each package */
-	keyring = rpmtsGetKeyring (transaction->priv->ts, 1);
-	for (i=0; i<priv->install->len; i++) {
-		item = g_ptr_array_index (priv->install, i);
-		ret = zif_transaction_prepare_ensure_trusted (transaction,
-							      keyring,
-							      item->package,
-							      error);
-		if (!ret)
-			goto out;
+	if (zif_config_get_boolean (priv->config, "gpgcheck", NULL)) {
+		keyring = rpmtsGetKeyring (transaction->priv->ts, 1);
+		for (i=0; i<priv->install->len; i++) {
+			item = g_ptr_array_index (priv->install, i);
+			ret = zif_transaction_prepare_ensure_trusted (transaction,
+								      keyring,
+								      item->package,
+								      error);
+			if (!ret)
+				goto out;
+		}
 	}
 
 skip_self_check:
