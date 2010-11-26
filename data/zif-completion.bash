@@ -98,6 +98,7 @@ _zif ()
             --help
             --config
             --proxy
+            --background
             --age
             --skip-broken
             --assume-yes
@@ -108,6 +109,7 @@ _zif ()
             -o
             -h
             -c
+            -b
             -p
             -a
             -s

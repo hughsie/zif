@@ -4113,13 +4113,14 @@ out:
 int
 main (int argc, char *argv[])
 {
+	gboolean assume_no = FALSE;
+	gboolean assume_yes = FALSE;
+	gboolean background = FALSE;
 	gboolean offline = FALSE;
 	gboolean profile = FALSE;
 	gboolean ret;
 	gboolean skip_broken = FALSE;
 	gboolean verbose = FALSE;
-	gboolean assume_yes = FALSE;
-	gboolean assume_no = FALSE;
 	gchar *cmd_descriptions = NULL;
 	gchar *config_file = NULL;
 	gchar *excludes = NULL;
@@ -4141,6 +4142,8 @@ main (int argc, char *argv[])
 			_("Show extra debugging information"), NULL },
 		{ "profile", '\0', 0, G_OPTION_ARG_NONE, &profile,
 			_("Enable low level profiling of Zif"), NULL },
+		{ "background", 'b', 0, G_OPTION_ARG_NONE, &background,
+			_("Enable background mode to run using less CPU"), NULL },
 		{ "offline", 'o', 0, G_OPTION_ARG_NONE, &offline,
 			_("Work offline when possible"), NULL },
 		{ "config", 'c', 0, G_OPTION_ARG_STRING, &config_file,
@@ -4248,6 +4251,12 @@ main (int argc, char *argv[])
 	ret = zif_config_set_boolean (priv->config, "assumeyes", assume_yes, &error);
 	if (!ret) {
 		g_error ("failed to set assumeyes: %s", error->message);
+		g_error_free (error);
+		goto out;
+	}
+	ret = zif_config_set_boolean (priv->config, "background", background, &error);
+	if (!ret) {
+		g_error ("failed to set background: %s", error->message);
 		g_error_free (error);
 		goto out;
 	}
