@@ -32,9 +32,6 @@
 
 #include "zif-progress-bar.h"
 
-#define ZIF_MAIN_LOCKING_RETRIES	10
-#define ZIF_MAIN_LOCKING_DELAY		2 /* seconds */
-
 /**
  * zif_print_package:
  **/
@@ -4125,6 +4122,8 @@ main (int argc, char *argv[])
 	gint retval = 0;
 	guint age = 0;
 	guint i;
+	guint lock_delay;
+	guint lock_retries;
 	guint pid;
 	guint uid;
 	ZifCmdPrivate *priv;
@@ -4273,15 +4272,17 @@ main (int argc, char *argv[])
 
 	/* ZifLock */
 	lock = zif_lock_new ();
-	for (i=0; i<ZIF_MAIN_LOCKING_RETRIES; i++) {
+	lock_retries = zif_config_get_uint (priv->config, "lock_retries", NULL);
+	lock_delay = zif_config_get_uint (priv->config, "lock_delay", NULL);
+	for (i=0; i<lock_retries; i++) {
 		ret = zif_lock_set_locked (lock, &pid, &error);
 		if (ret)
 			break;
-		g_print ("Failed to lock on try %i of %i, already locked by PID %i (sleeping for %i seconds)\n",
-			 i+1, ZIF_MAIN_LOCKING_RETRIES, pid, ZIF_MAIN_LOCKING_DELAY);
+		g_print ("Failed to lock on try %i of %i, already locked by PID %i (sleeping for %ims)\n",
+			 i+1, lock_retries, pid, lock_delay);
 		g_debug ("failed to lock: %s", error->message);
 		g_clear_error (&error);
-		g_usleep (ZIF_MAIN_LOCKING_DELAY * G_USEC_PER_SEC);
+		g_usleep (lock_delay * 1000);
 	}
 
 	/* could not lock, even after retrying */
