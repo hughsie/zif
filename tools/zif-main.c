@@ -21,13 +21,14 @@
 
 #include "config.h"
 
-#include <glib.h>
 #include <glib/gi18n.h>
-#include <zif.h>
-#include <unistd.h>
-#include <sys/types.h>
 #include <glib/gstdio.h>
+#include <glib.h>
+#include <locale.h>
+#include <sys/types.h>
 #include <termios.h>
+#include <unistd.h>
+#include <zif.h>
 
 #include "zif-progress-bar.h"
 
@@ -960,7 +961,7 @@ zif_cmd_get_details (ZifCmdPrivate *priv, gchar **values, GError **error)
 	}
 
 	state_local = zif_state_get_child (priv->state);
-	zif_state_set_number_steps (priv->state, array->len + 1);
+	zif_state_set_number_steps (state_local, array->len + 1);
 
 	zif_progress_bar_end (priv->progressbar);
 
@@ -986,7 +987,7 @@ zif_cmd_get_details (ZifCmdPrivate *priv, gchar **values, GError **error)
 		g_print ("%s\t : %s\n", _("Description"), description);
 
 		/* this section done */
-		ret = zif_state_done (priv->state, error);
+		ret = zif_state_done (state_local, error);
 		if (!ret)
 			goto out;
 	}
@@ -1270,10 +1271,8 @@ zif_get_update_array (ZifCmdPrivate *priv, ZifState *state, GError **error)
 	state_local = zif_state_get_child (state);
 	store_local = zif_store_local_new ();
 	array = zif_store_get_packages (store_local, state_local, error);
-	if (array == NULL) {
-		ret = FALSE;
+	if (array == NULL)
 		goto out;
-	}
 
 	/* this section done */
 	ret = zif_state_done (state, error);
@@ -1296,10 +1295,8 @@ zif_get_update_array (ZifCmdPrivate *priv, ZifState *state, GError **error)
 	}
 	state_local = zif_state_get_child (state);
 	updates = zif_store_array_resolve (store_array, search, state_local, error);
-	if (updates == NULL) {
-		ret = FALSE;
+	if (updates == NULL)
 		goto out;
-	}
 
 	/* this section done */
 	ret = zif_state_done (state, error);
@@ -1368,9 +1365,6 @@ zif_get_update_array (ZifCmdPrivate *priv, ZifState *state, GError **error)
 	ret = zif_state_done (state, error);
 	if (!ret)
 		goto out;
-
-	/* success */
-	ret = TRUE;
 out:
 	g_strfreev (search);
 	if (store_local != NULL)

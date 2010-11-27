@@ -540,7 +540,6 @@ zif_md_primary_sql_what_depends (ZifMd *md, const gchar *table_name, GPtrArray *
 	/* execute the query */
 	rc = sqlite3_exec (md_primary_sql->priv->db, statement->str, zif_md_primary_sql_sqlite_create_package_cb, data, &error_msg);
 	if (rc != SQLITE_OK) {
-		ret = FALSE;
 		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_BAD_SQL,
 			     "SQL error: %s", error_msg);
 		sqlite3_free (error_msg);
@@ -548,9 +547,6 @@ zif_md_primary_sql_what_depends (ZifMd *md, const gchar *table_name, GPtrArray *
 	}
 
 	sqlite3_exec (md_primary_sql->priv->db, "END;", NULL, NULL, NULL);
-
-	/* success */
-	array = g_ptr_array_ref (data->packages);
 
 	/* this section done */
 	ret = zif_state_done (state, error);
@@ -560,33 +556,38 @@ zif_md_primary_sql_what_depends (ZifMd *md, const gchar *table_name, GPtrArray *
 	/* filter results */
 	state_local = zif_state_get_child (state);
 	if (g_strcmp0 (table_name, "provides") == 0) {
-		ret = zif_package_array_filter_provide (array,
+		ret = zif_package_array_filter_provide (data->packages,
 							depends,
 							state_local,
 							error);
 	} else if (g_strcmp0 (table_name, "requires") == 0) {
-		ret = zif_package_array_filter_require (array,
+		ret = zif_package_array_filter_require (data->packages,
 							depends,
 							state_local,
 							error);
 	} else if (g_strcmp0 (table_name, "obsoletes") == 0) {
-		ret = zif_package_array_filter_obsolete (array,
+		ret = zif_package_array_filter_obsolete (data->packages,
 							 depends,
 							 state_local,
 							 error);
 	} else if (g_strcmp0 (table_name, "conflicts") == 0) {
-		ret = zif_package_array_filter_conflict (array,
+		ret = zif_package_array_filter_conflict (data->packages,
 							 depends,
 							 state_local,
 							 error);
 	} else {
 		g_assert_not_reached ();
 	}
+	if (!ret)
+		goto out;
 
 	/* this section done */
 	ret = zif_state_done (state, error);
 	if (!ret)
 		goto out;
+
+	/* success */
+	array = g_ptr_array_ref (data->packages);
 out:
 	if (data != NULL) {
 		g_ptr_array_unref (data->packages);

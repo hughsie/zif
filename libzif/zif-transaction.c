@@ -942,7 +942,7 @@ zif_transaction_get_package_provide_from_store (ZifTransaction *transaction,
 
 	/* get provides */
 	state_local = zif_state_get_child (state);
-	array = zif_store_what_provides (store, depend_array, state, &error_local);
+	array = zif_store_what_provides (store, depend_array, state_local, &error_local);
 	if (array == NULL) {
 		/* ignore this error */
 		if (error_local->domain == ZIF_STORE_ERROR &&
@@ -2787,19 +2787,19 @@ zif_transaction_add_public_key_to_rpmdb (rpmKeyring keyring, const gchar *filena
 		g_set_error (error,
 			     ZIF_TRANSACTION_ERROR,
 			     ZIF_TRANSACTION_ERROR_FAILED,
-			     "PKI file %s is not a publickey",
+			     "PKI file %s is not a public key",
 			     filename);
 		goto out;
 	}
 
 	/* test each one */
 	pubkey = rpmPubkeyNew (pkt, len);
-	if (rc != 0) {
+	if (pubkey == NULL) {
 		ret = FALSE;
 		g_set_error (error,
 			     ZIF_TRANSACTION_ERROR,
 			     ZIF_TRANSACTION_ERROR_FAILED,
-			     "failed to parse digest header for %s",
+			     "failed to parse public key for %s",
 			     filename);
 		goto out;
 	}
@@ -2888,7 +2888,7 @@ zif_transaction_prepare_ensure_trusted (ZifTransaction *transaction,
 	Header h;
 	int rc;
 	pgpDig dig = NULL;
-	rpmtd td;
+	rpmtd td = NULL;
 	ZifPackage *package_tmp = NULL;
 	ZifPackageTrustKind trust_kind = ZIF_PACKAGE_TRUST_KIND_NONE;
 
@@ -2980,8 +2980,10 @@ out:
 		g_object_unref (package_tmp);
 	if (dig != NULL)
 		pgpFreeDig (dig);
-	rpmtdFreeData (td);
-	rpmtdFree (td);
+	if (td != NULL) {
+		rpmtdFreeData (td);
+		rpmtdFree (td);
+	}
 	return ret;
 }
 

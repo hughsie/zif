@@ -353,6 +353,8 @@ zif_manifest_add_package_to_transaction (ZifManifest *manifest,
 		ret = zif_transaction_add_remove (transaction, package, &error_local);
 	else if (action == ZIF_MANIFEST_ACTION_UPDATE)
 		ret = zif_transaction_add_update (transaction, package, &error_local);
+	else
+		g_assert_not_reached ();
 	if (!ret) {
 		g_set_error (error,
 			     ZIF_MANIFEST_ERROR,

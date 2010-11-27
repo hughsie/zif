@@ -1115,12 +1115,12 @@ zif_release_write_kickstart (ZifRelease *release, ZifReleaseUpgradeData *data, G
 	gboolean ret = FALSE;
 	gchar *boot_dir = NULL;
 	gchar *keymap = NULL;
-	gchar *ks_filename;
+	gchar *ks_filename = NULL;
 	gchar *lang = NULL;
 	gchar *repo_dir = NULL;
 	GError *error_local = NULL;
 	GFile *ks_file = NULL;
-	GString *string;
+	GString *string = NULL;
 	ZifReleasePrivate *priv = release->priv;
 
 	/* get bootdir */
@@ -1180,7 +1180,8 @@ out:
 	g_free (lang);
 	g_free (keymap);
 	g_object_unref (ks_file);
-	g_string_free (string, TRUE);
+	if (string != NULL)
+		g_string_free (string, TRUE);
 	g_free (ks_filename);
 	return ret;
 }
@@ -1195,7 +1196,7 @@ zif_release_get_package_data (ZifRelease *release, ZifReleaseUpgradeData *data, 
 	gchar *cmdline = NULL;
 	gchar *repo_dir = NULL;
 	GError *error_local = NULL;
-	GFile *file;
+	GFile *file = NULL;
 	ZifReleasePrivate *priv = release->priv;
 
 	/* create directory path */
@@ -1250,7 +1251,8 @@ zif_release_get_package_data (ZifRelease *release, ZifReleaseUpgradeData *data, 
 out:
 	g_free (repo_dir);
 	g_free (cmdline);
-	g_object_unref (file);
+	if (file != NULL)
+		g_object_unref (file);
 	return ret;
 }
 
