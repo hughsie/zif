@@ -20,6 +20,8 @@ BuildRequires: gtk-doc
 BuildRequires: bzip2-devel
 BuildRequires: zlib-devel
 BuildRequires: gpgme-devel
+BuildRequires: intltool
+BuildRequires: gettext
 
 %description
 Zif is a simple yum-compatible library that only provides read-only
