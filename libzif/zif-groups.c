@@ -159,7 +159,11 @@ zif_groups_load (ZifGroups *groups, GError **error)
 
 	/* no mapping file */
 	if (groups->priv->mapping_file == NULL) {
-		g_warning ("no mapping file, so cannot load group lists");
+		ret = FALSE;
+		g_set_error (error,
+			     ZIF_GROUPS_ERROR,
+			     ZIF_GROUPS_ERROR_FAILED,
+			     "no mapping file set, so cannot load group lists");
 		goto out;
 	}
 
