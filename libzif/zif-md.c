@@ -440,10 +440,10 @@ zif_md_load_get_repomd_and_download (ZifMd *md, ZifState *state, GError **error)
 	/* set steps */
 	ret = zif_state_set_steps (state,
 				   error,
-				   30, /* download new repomd */
-				   20, /* load the new repomd */
-				   20, /* download new compressed repo file */
-				   30, /* check compressed file against new repomd */
+				   5, /* download new repomd */
+				   2, /* load the new repomd */
+				   90, /* download new compressed repo file */
+				   3, /* check compressed file against new repomd */
 				   -1);
 	if (!ret)
 		goto out;
@@ -539,6 +539,7 @@ zif_md_load_get_repomd_and_download (ZifMd *md, ZifState *state, GError **error)
 	if (!ret)
 		goto out;
 	if (!compressed_check) {
+		ret = FALSE;
 		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED,
 			     "failed checksum on downloaded file");
 		goto out;
@@ -579,7 +580,7 @@ zif_md_load_check_and_get_compressed (ZifMd *md, ZifState *state, GError **error
 	/* check compressed file */
 	state_local = zif_state_get_child (state);
 	ret = zif_md_file_check (md, FALSE, &compressed_check,
-				 state_local, &error_local);
+				 state_local, error);
 	if (!ret)
 		goto out;
 

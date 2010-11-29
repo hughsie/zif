@@ -288,8 +288,8 @@ zif_md_filelists_sql_search_file (ZifMd *md, gchar **search,
 	if (md_filelists_sql->priv->loaded) {
 		ret = zif_state_set_steps (state,
 					   error,
-					   50, /* search */
-					   50, /* convert pkgkey */
+					   98, /* search */
+					   2, /* convert pkgkey */
 					   -1);
 	} else {
 		ret = zif_state_set_steps (state,

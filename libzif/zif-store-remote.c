@@ -433,8 +433,8 @@ repomd_confirm:
 	} else {
 		ret = zif_state_set_steps (state,
 					   error,
-					   80, /* load */
-					   20, /* download */
+					   10, /* load */
+					   90, /* download */
 					   -1);
 		if (!ret)
 			goto out;
@@ -2225,8 +2225,8 @@ zif_store_remote_search_category_resolve (ZifStore *store, const gchar *name, Zi
 	/* setup steps */
 	ret = zif_state_set_steps (state,
 				   error,
-				   50, /* resolve local */
-				   50, /* resolve remote */
+				   90, /* resolve local */
+				   10, /* resolve remote */
 				   -1);
 	if (!ret)
 		goto out;
@@ -2509,9 +2509,7 @@ zif_store_remote_search_group (ZifStore *store, gchar **search, ZifState *state,
 	 * the list of categories for each group, and then return results. */
 	array_tmp = zif_groups_get_cats_for_group (remote->priv->groups, search[0], error);
 	if (array_tmp == NULL) {
-		ret = zif_state_finished (state, error);
-		if (!ret)
-			goto out;
+		ret = FALSE;
 		goto out;
 	}
 
@@ -3189,8 +3187,8 @@ zif_store_remote_search_file (ZifStore *store, gchar **search, ZifState *state, 
 	if (remote->priv->loaded_metadata) {
 		ret = zif_state_set_steps (state,
 					   error,
-					   50, /* search file */
-					   50, /* get pkgids */
+					   98, /* search file */
+					   2, /* get pkgids */
 					   -1);
 	} else {
 		ret = zif_state_set_steps (state,
