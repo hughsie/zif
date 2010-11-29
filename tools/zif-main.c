@@ -1004,19 +1004,32 @@ out:
 	return ret;
 }
 
+/*
+ * zif_sort_indirect_strcmp_cb:
+ */
+static gint
+zif_sort_indirect_strcmp_cb (const gchar **file1, const gchar **file2)
+{
+	return g_strcmp0 (*file1, *file2);
+}
+
 /**
  * zif_cmd_get_files:
  **/
 static gboolean
 zif_cmd_get_files (ZifCmdPrivate *priv, gchar **values, GError **error)
 {
+	const gchar *filename;
 	gboolean ret = FALSE;
 	GPtrArray *array = NULL;
 	GPtrArray *files = NULL;
 	GPtrArray *store_array = NULL;
 	guint i;
+	guint j;
 	ZifPackage *package;
 	ZifState *state_local;
+	ZifState *state_tmp;
+	GString *string = NULL;
 
 	/* check we have a value */
 	if (values == NULL || values[0] == NULL) {
@@ -1031,9 +1044,10 @@ zif_cmd_get_files (ZifCmdPrivate *priv, gchar **values, GError **error)
 	/* setup state with the correct number of steps */
 	ret = zif_state_set_steps (priv->state,
 				   error,
-				   80,
-				   10,
-				   10,
+				   2, /* add local */
+				   2, /* add remote */
+				   50, /* resolve */
+				   46, /* get files */
 				   -1);
 	if (!ret)
 		goto out;
@@ -1074,27 +1088,65 @@ zif_cmd_get_files (ZifCmdPrivate *priv, gchar **values, GError **error)
 		goto out;
 
 	/* at least one result */
-	if (array->len > 0) {
-		package = g_ptr_array_index (array, 0);
-		state_local = zif_state_get_child (priv->state);
-		files = zif_package_get_files (package, state_local, error);
+	if (array->len == 0) {
+		/* TRANSLATORS: error message */
+		g_set_error (error, 1, 0, "%s %s",
+			     _("Failed to match any packages for :"),
+			     values[0]);
+		goto out;
+	}
+
+	/* get string */
+	string = g_string_new ("");
+	state_local = zif_state_get_child (priv->state);
+	zif_state_set_number_steps (state_local, array->len);
+	for (j=0; j<array->len; j++) {
+		package = g_ptr_array_index (array, j);
+		g_string_append_printf (string, "Package %s\n",
+					zif_package_get_id (package));
+		state_tmp = zif_state_get_child (state_local);
+		files = zif_package_get_files (package, state_tmp, error);
 		if (files == NULL) {
 			ret = FALSE;
 			goto out;
 		}
-		for (i=0; i<files->len; i++)
-			g_print ("%s\n", (const gchar *) g_ptr_array_index (files, i));
-		g_ptr_array_unref (files);
-	} else {
-		/* TRANSLATORS: error message */
-		g_set_error (error, 1, 0, "%s %s", _("Failed to match any packages for :"), values[0]);
+		if (files->len == 0) {
+			/* TRANSLATORS: printed when a package has no files */
+			g_string_append_printf (string, "%s\n",
+						_("Package contains no files"));
+		} else {
+			/* sort by name */
+			g_ptr_array_sort (files,
+					  (GCompareFunc) zif_sort_indirect_strcmp_cb);
+			for (i=0; i<files->len; i++) {
+				filename = g_ptr_array_index (files, i);
+				g_string_append_printf (string, " - %s\n",
+							filename);
+			}
+		}
+		g_string_append (string, "\n");
+
+		/* this section done */
+		ret = zif_state_done (state_local, error);
+		if (!ret)
+			goto out;
 	}
 
+	/* this section done */
+	ret = zif_state_done (priv->state, error);
+	if (!ret)
+		goto out;
+
 	zif_progress_bar_end (priv->progressbar);
+
+	/* print */
+	g_print ("%s", string->str);
 
 	/* success */
 	ret = TRUE;
 out:
+	if (string != NULL)
+		g_string_free (string, TRUE);
 	if (array != NULL)
 		g_ptr_array_unref (array);
 	if (store_array != NULL)
