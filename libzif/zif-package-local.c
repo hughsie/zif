@@ -304,7 +304,7 @@ zif_package_local_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, ZifSt
 	/* eigh? */
 	if (header == NULL) {
 		g_set_error (error, ZIF_PACKAGE_ERROR, ZIF_PACKAGE_ERROR_FAILED,
-			     "no header for %s", zif_package_get_id (pkg));
+			     "no header for %s", zif_package_get_printable (pkg));
 		goto out;
 	}
 

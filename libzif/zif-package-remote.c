@@ -213,7 +213,7 @@ zif_package_remote_ensure_cache_filename (ZifPackageRemote *pkg, ZifState *state
 			     ZIF_PACKAGE_ERROR,
 			     ZIF_PACKAGE_ERROR_FAILED,
 			     "failed to get local directory for %s",
-			     zif_package_get_id (ZIF_PACKAGE (pkg)));
+			     zif_package_get_printable (ZIF_PACKAGE (pkg)));
 		goto out;
 	}
 
@@ -271,7 +271,7 @@ zif_package_remote_download (ZifPackageRemote *pkg, const gchar *directory, ZifS
 				     ZIF_PACKAGE_ERROR,
 				     ZIF_PACKAGE_ERROR_FAILED,
 				     "failed to get local directory for %s",
-				     zif_package_get_id (ZIF_PACKAGE (pkg)));
+				     zif_package_get_printable (ZIF_PACKAGE (pkg)));
 			goto out;
 		}
 		directory_new = g_build_filename (directory, "packages", NULL);

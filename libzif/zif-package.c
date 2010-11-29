@@ -48,6 +48,7 @@ struct _ZifPackagePrivate
 {
 	gchar			**package_id_split;
 	gchar			*package_id;
+	gchar			*printable;
 	gchar			*cache_filename;
 	GFile			*cache_file;
 	ZifString		*summary;
@@ -880,6 +881,32 @@ zif_package_get_id (ZifPackage *package)
 {
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
 	return package->priv->package_id;
+}
+
+/**
+ * zif_package_get_printable:
+ * @package: the #ZifPackage object
+ *
+ * Gets a string that identifies the package, and is printable
+ *
+ * Return value: a nice string, e.g. "hal-0.5.4-2.fc13.i386 (fedora)"
+ *
+ * Since: 0.1.3
+ **/
+const gchar *
+zif_package_get_printable (ZifPackage *package)
+{
+	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
+
+	/* already got */
+	if (package->priv->printable != NULL)
+		goto out;
+
+	/* format */
+	package->priv->printable =
+		zif_package_id_get_printable (package->priv->package_id);
+out:
+	return package->priv->printable;
 }
 
 /**
@@ -2067,6 +2094,7 @@ zif_package_finalize (GObject *object)
 	g_return_if_fail (ZIF_IS_PACKAGE (object));
 	package = ZIF_PACKAGE (object);
 
+	g_free (package->priv->printable);
 	g_free (package->priv->cache_filename);
 	if (package->priv->cache_file != NULL)
 		g_object_unref (package->priv->cache_file);

@@ -332,7 +332,7 @@ zif_transaction_get_reason (ZifTransaction *transaction,
 		     ZIF_TRANSACTION_ERROR,
 		     ZIF_TRANSACTION_ERROR_FAILED,
 		     "could not find package %s",
-		     zif_package_get_id (package));
+		     zif_package_get_printable (package));
 	return ZIF_TRANSACTION_REASON_INVALID;
 }
 
@@ -633,7 +633,7 @@ zif_transaction_add_update_internal (ZifTransaction *transaction,
 			     ZIF_TRANSACTION_ERROR,
 			     ZIF_TRANSACTION_ERROR_NOTHING_TO_DO,
 			     "package %s is already in the update array",
-			     zif_package_get_id (package));
+			     zif_package_get_printable (package));
 		goto out;
 	}
 
@@ -1321,7 +1321,7 @@ skip_resolve:
 		     ZIF_TRANSACTION_ERROR_FAILED,
 		     "nothing provides %s which is required by %s",
 		     zif_depend_get_description (depend),
-		     zif_package_get_id (item->package));
+		     zif_package_get_printable (item->package));
 out:
 	if (already_installed != NULL)
 		g_ptr_array_unref (already_installed);
@@ -1418,7 +1418,7 @@ zif_transaction_resolve_install_item (ZifTransactionResolve *data,
 				     ZIF_TRANSACTION_ERROR,
 				     ZIF_TRANSACTION_ERROR_NOTHING_TO_DO,
 				     "the package %s is already installed",
-				     zif_package_get_id (package_oldest));
+				     zif_package_get_printable (package_oldest));
 			goto out;
 		}
 
@@ -1466,7 +1466,7 @@ skip_resolve:
 			     ZIF_TRANSACTION_ERROR,
 			     ZIF_TRANSACTION_ERROR_FAILED,
 			     "failed to get requires for %s: %s",
-			     zif_package_get_id (item->package),
+			     zif_package_get_printable (item->package),
 			     error_local->message);
 		g_error_free (error_local);
 		goto out;
@@ -1900,7 +1900,7 @@ zif_transaction_resolve_update_item (ZifTransactionResolve *data,
 			     ZIF_TRANSACTION_ERROR,
 			     ZIF_TRANSACTION_ERROR_FAILED,
 			     "failed to find %s in remote store: %s",
-			     zif_package_get_id (item->package),
+			     zif_package_get_printable (item->package),
 			     error_local->message);
 		g_error_free (error_local);
 		goto out;
@@ -1975,7 +1975,7 @@ skip:
 			     ZIF_TRANSACTION_ERROR,
 			     ZIF_TRANSACTION_ERROR_FAILED,
 			     "failed to find %s in remote store: %s",
-			     zif_package_get_id (item->package),
+			     zif_package_get_printable (item->package),
 			     error_local->message);
 		g_error_free (error_local);
 		goto out;
@@ -1988,7 +1988,7 @@ skip:
 			     ZIF_TRANSACTION_ERROR,
 			     ZIF_TRANSACTION_ERROR_NOTHING_TO_DO,
 			     "there is no update available for %s",
-			     zif_package_get_id (package));
+			     zif_package_get_printable (package));
 		goto out;
 	}
 
@@ -1999,8 +1999,8 @@ skip:
 			     ZIF_TRANSACTION_ERROR,
 			     ZIF_TRANSACTION_ERROR_NOTHING_TO_DO,
 			     "installed package %s is newer than package updated %s",
-			     zif_package_get_id (item->package),
-			     zif_package_get_id (package));
+			     zif_package_get_printable (item->package),
+			     zif_package_get_printable (package));
 		goto out;
 	}
 
@@ -2169,8 +2169,8 @@ zif_transaction_resolve_conflicts_item (ZifTransactionResolve *data,
 				     ZIF_TRANSACTION_ERROR,
 				     ZIF_TRANSACTION_ERROR_CONFLICTING,
 				     "%s conflicted by %s",
-				     zif_package_get_id (item->package),
-				     zif_package_get_id (conflicting));
+				     zif_package_get_printable (item->package),
+				     zif_package_get_printable (conflicting));
 			g_object_unref (conflicting);
 			goto out;
 		}
@@ -2215,8 +2215,8 @@ zif_transaction_resolve_conflicts_item (ZifTransactionResolve *data,
 					     ZIF_TRANSACTION_ERROR,
 					     ZIF_TRANSACTION_ERROR_CONFLICTING,
 					     "%s conflicts with %s: %s",
-					     zif_package_get_id (item->package),
-					     zif_package_get_id (conflicting),
+					     zif_package_get_printable (item->package),
+					     zif_package_get_printable (conflicting),
 					     error_local->message);
 				g_error_free (error_local);
 				/* fall through, with ret = FALSE */
@@ -2940,7 +2940,7 @@ zif_transaction_prepare_ensure_trusted (ZifTransaction *transaction,
 			     ZIF_TRANSACTION_ERROR,
 			     ZIF_TRANSACTION_ERROR_FAILED,
 			     "failed to parse digest header for %s",
-			     zif_package_get_id (package));
+			     zif_package_get_printable (package));
 		goto out;
 	}
 
@@ -3086,7 +3086,7 @@ zif_transaction_prepare (ZifTransaction *transaction, ZifState *state, GError **
 			ret = FALSE;
 			g_propagate_prefixed_error (error, error_local,
 						    "cannot check download %s: ",
-						    zif_package_get_id (item->package));
+						    zif_package_get_printable (item->package));
 			goto out;
 		}
 
@@ -3130,7 +3130,7 @@ skip:
 			if (!ret) {
 				g_propagate_prefixed_error (error, error_local,
 							    "cannot download %s: ",
-							    zif_package_get_id (package));
+							    zif_package_get_printable (package));
 				goto out;
 			}
 
@@ -3539,7 +3539,7 @@ zif_transaction_write_log (ZifTransaction *transaction, GError **error)
 		if (item->cancelled)
 			continue;
 		g_string_append_printf (data, "Zif: [install] %s (%s)\n",
-					zif_package_get_id (item->package),
+					zif_package_get_printable (item->package),
 					zif_transaction_reason_to_string (item->reason));
 	}
 	for (i=0; i<transaction->priv->remove->len; i++) {
@@ -3547,7 +3547,7 @@ zif_transaction_write_log (ZifTransaction *transaction, GError **error)
 		if (item->cancelled)
 			continue;
 		g_string_append_printf (data, "Zif: [remove] %s (%s)\n",
-					zif_package_get_id (item->package),
+					zif_package_get_printable (item->package),
 					zif_transaction_reason_to_string (item->reason));
 	}
 

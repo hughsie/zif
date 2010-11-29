@@ -95,7 +95,7 @@ zif_store_meta_add_package (ZifStoreMeta *store, ZifPackage *package, GError **e
 			     ZIF_STORE_ERROR,
 			     ZIF_STORE_ERROR_FAILED,
 			     "already added %s",
-			     zif_package_get_id (package));
+			     zif_package_get_printable (package));
 		goto out;
 	}
 
@@ -171,7 +171,7 @@ zif_store_meta_remove_package (ZifStoreMeta *store, ZifPackage *package, GError 
 			     ZIF_STORE_ERROR,
 			     ZIF_STORE_ERROR_FAILED,
 			     "package not found in array %s",
-			     zif_package_get_id (package));
+			     zif_package_get_printable (package));
 		goto out;
 	}
 
@@ -482,7 +482,7 @@ zif_store_meta_what_depends (ZifStore *store,
 				     ZIF_STORE_ERROR,
 				     ZIF_STORE_ERROR_FAILED,
 				     "failed to get provides/requires for %s: %s",
-				     zif_package_get_id (package),
+				     zif_package_get_printable (package),
 				     error_local->message);
 			g_error_free (error_local);
 			goto out;

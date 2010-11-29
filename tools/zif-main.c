@@ -38,20 +38,18 @@
 static void
 zif_print_package (ZifPackage *package, guint padding)
 {
-	const gchar *package_id;
+	const gchar *printable;
 	const gchar *summary;
 	const gchar *trusted_str = "";
 	gchar *padding_str;
 	ZifState *state_tmp;
-	gchar **split;
 	ZifPackageTrustKind trust;
 
-	package_id = zif_package_get_id (package);
-	split = zif_package_id_split (package_id);
+	printable = zif_package_get_printable (package);
 	state_tmp = zif_state_new ();
 	summary = zif_package_get_summary (package, state_tmp, NULL);
 	if (padding > 0) {
-		padding_str = g_strnfill (padding - strlen (package_id), ' ');
+		padding_str = g_strnfill (padding - strlen (printable), ' ');
 	} else {
 		padding_str = g_strnfill (2, ' ');
 	}
@@ -61,16 +59,12 @@ zif_print_package (ZifPackage *package, guint padding)
 	} else if (trust == ZIF_PACKAGE_TRUST_KIND_NONE) {
 		trusted_str = _("[⚑]");
 	}
-	g_print ("%s-%s.%s (%s) %s%s%s\n",
-		 split[ZIF_PACKAGE_ID_NAME],
-		 split[ZIF_PACKAGE_ID_VERSION],
-		 split[ZIF_PACKAGE_ID_ARCH],
-		 split[ZIF_PACKAGE_ID_DATA],
+	g_print ("%s %s%s%s\n",
+		 printable,
 		 trusted_str,
 		 padding_str,
 		 summary);
 	g_free (padding_str);
-	g_strfreev (split);
 	g_object_unref (state_tmp);
 }
 
@@ -82,14 +76,14 @@ zif_print_packages (GPtrArray *array)
 {
 	guint i, j;
 	guint max = 0;
-	const gchar *package_id;
+	const gchar *printable;
 	ZifPackage *package;
 
 	/* get the padding required */
 	for (i=0;i<array->len;i++) {
 		package = g_ptr_array_index (array, i);
-		package_id = zif_package_get_id (package);
-		j = strlen (package_id);
+		printable = zif_package_get_printable (package);
+		j = strlen (printable);
 		if (j > max)
 			max = j;
 	}
@@ -734,9 +728,7 @@ zif_cmd_get_depends (ZifCmdPrivate *priv, gchar **values, GError **error)
 	ZifDepend *require;
 	const gchar *require_str;
 	GPtrArray *provides = NULL;
-	const gchar *package_id;
 	guint i, j;
-	gchar **split;
 	GString *string = NULL;
 
 	/* check we have a value */
@@ -836,16 +828,10 @@ zif_cmd_get_depends (ZifCmdPrivate *priv, gchar **values, GError **error)
 	/* print all of them */
 	for (j=0;j<provides->len;j++) {
 		package = g_ptr_array_index (provides, j);
-		package_id = zif_package_get_id (package);
-		split = zif_package_id_split (package_id);
 		/* TRANSLATORS: this is a item prefix */
-		g_string_append_printf (string, "   %s %s-%s.%s (%s)\n",
+		g_string_append_printf (string, "   %s %s\n",
 					_("Provider:"),
-					split[ZIF_PACKAGE_ID_NAME],
-					split[ZIF_PACKAGE_ID_VERSION],
-					split[ZIF_PACKAGE_ID_ARCH],
-					split[ZIF_PACKAGE_ID_DATA]);
-		g_strfreev (split);
+					zif_package_get_printable (package));
 	}
 
 	/* this section done */
@@ -1103,7 +1089,7 @@ zif_cmd_get_files (ZifCmdPrivate *priv, gchar **values, GError **error)
 	for (j=0; j<array->len; j++) {
 		package = g_ptr_array_index (array, j);
 		g_string_append_printf (string, "Package %s\n",
-					zif_package_get_id (package));
+					zif_package_get_printable (package));
 		state_tmp = zif_state_get_child (state_local);
 		files = zif_package_get_files (package, state_tmp, error);
 		if (files == NULL) {
@@ -1700,7 +1686,6 @@ zif_main_show_transaction (ZifTransaction *transaction)
 {
 	GPtrArray *array;
 	guint i, j;
-	gchar *printable;
 	ZifPackage *package;
 	gint order[] = {
 		ZIF_TRANSACTION_REASON_INSTALL_USER_ACTION,
@@ -1722,9 +1707,9 @@ zif_main_show_transaction (ZifTransaction *transaction)
 			g_print ("  %s:\n", zif_transaction_reason_to_string_localized (order[i]));
 		for (j=0; j<array->len; j++) {
 			package = g_ptr_array_index (array, j);
-			printable = zif_package_id_get_printable (zif_package_get_id (package));
-			g_print ("  %i.\t%s\n", j+1, printable);
-			g_free (printable);
+			g_print ("  %i.\t%s\n",
+				 j+1,
+				 zif_package_get_printable (package));
 		}
 		g_ptr_array_unref (array);
 	}
@@ -3376,7 +3361,7 @@ zif_cmd_update_details (ZifCmdPrivate *priv, gchar **values, GError **error)
 		if (update == NULL) {
 			ret = FALSE;
 			g_set_error (error, 1, 0, "failed to get update detail for %s: %s",
-				 zif_package_get_id (package), error_local->message);
+				 zif_package_get_printable (package), error_local->message);
 			g_clear_error (&error_local);
 			goto out;
 		}

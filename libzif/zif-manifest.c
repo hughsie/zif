@@ -107,7 +107,7 @@ zif_manifest_add_package_to_store (ZifManifest *manifest,
 			     ZIF_MANIFEST_ERROR,
 			     ZIF_MANIFEST_ERROR_POST_INSTALL,
 			     "Failed to add package %s: %s",
-			     zif_package_get_id (package),
+			     zif_package_get_printable (package),
 			     error_local->message);
 		g_error_free (error_local);
 		goto out;
@@ -360,7 +360,7 @@ zif_manifest_add_package_to_transaction (ZifManifest *manifest,
 			     ZIF_MANIFEST_ERROR,
 			     ZIF_MANIFEST_ERROR_POST_INSTALL,
 			     "Failed to add package to transaction %s: %s",
-			     zif_package_get_id (package),
+			     zif_package_get_printable (package),
 			     error_local->message);
 		g_error_free (error_local);
 		goto out;
@@ -481,7 +481,7 @@ zif_manifest_check_post_installed (ZifManifest *manifest,
 		g_debug ("listing files in store");
 		for (i=0; i<array->len; i++) {
 			package = g_ptr_array_index (array, i);
-			g_debug ("%i.\t%s", i+1, zif_package_get_id (package));
+			g_debug ("%i.\t%s", i+1, zif_package_get_printable (package));
 		}
 		goto out;
 	}
