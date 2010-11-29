@@ -171,9 +171,10 @@ out:
 static gint
 zif_md_filelists_sql_sqlite_get_files_cb (void *data, gint argc, gchar **argv, gchar **col_name)
 {
-	gint i;
-	gchar **filename = NULL;
 	gchar **dirname = NULL;
+	gchar **filename = NULL;
+	gchar **split;
+	gint i;
 	GPtrArray **array = (GPtrArray **) data;
 
 	/* get pointers to the arguments */
@@ -190,8 +191,15 @@ zif_md_filelists_sql_sqlite_get_files_cb (void *data, gint argc, gchar **argv, g
 		return 0;
 	}
 
-	/* add complete path */
-	g_ptr_array_add (*array, g_build_filename (*dirname, *filename, NULL));
+	/* the repomd is encoded with a / to seporate files... urgh */
+	split = g_strsplit (*filename, "/", -1);
+	for (i=0; split[i] != NULL; i++) {
+		g_ptr_array_add (*array,
+				 g_build_filename (*dirname,
+						   split[i],
+						   NULL));
+	}
+	g_strfreev (split);
 	return 0;
 }
 
@@ -232,7 +240,7 @@ zif_md_filelists_sql_get_files (ZifMd *md, ZifPackage *package,
 	files = g_ptr_array_new_with_free_func (g_free);
 	statement = g_strdup_printf ("SELECT dirname, filenames FROM packages p, filelist f WHERE "
 				     "p.pkgKey = f.pkgKey AND "
-				     "p.pkgId = '%s' LIMIT 1", pkgid);
+				     "p.pkgId = '%s'", pkgid);
 	rc = sqlite3_exec (md_filelists_sql->priv->db, statement, zif_md_filelists_sql_sqlite_get_files_cb, &files, &error_msg);
 	g_free (statement);
 	if (rc != SQLITE_OK) {
