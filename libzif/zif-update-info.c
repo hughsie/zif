@@ -21,7 +21,7 @@
 
 /**
  * SECTION:zif-update-info
- * @short_description: Generic object to represent some information about an update.
+ * @short_description: Update information
  */
 
 #ifdef HAVE_CONFIG_H

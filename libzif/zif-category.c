@@ -21,7 +21,7 @@
 
 /**
  * SECTION:zif-category
- * @short_description: Category object
+ * @short_description: Category of packages
  *
  * This GObject represents a category in the group system.
  */

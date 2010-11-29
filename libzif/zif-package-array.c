@@ -20,8 +20,8 @@
  */
 
 /**
- * SECTION:zif-package-package_array
- * @short_description: A helper function to deal with arrays of packages
+ * SECTION:zif-package-array
+ * @short_description: Arrays of packages
  */
 
 #ifdef HAVE_CONFIG_H
@@ -325,7 +325,7 @@ zif_package_array_filter_smallest_name (GPtrArray *array)
 
 /**
  * zif_package_array_filter_provide:
- * @packages: array of %ZifPackage's
+ * @array: array of %ZifPackage's
  * @depends: an array of #ZifDepend's
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
@@ -389,7 +389,7 @@ out:
 
 /**
  * zif_package_array_filter_require:
- * @packages: array of %ZifPackage's
+ * @array: array of %ZifPackage's
  * @depends: an array of #ZifDepend's
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
@@ -453,7 +453,7 @@ out:
 
 /**
  * zif_package_array_filter_conflict:
- * @packages: array of %ZifPackage's
+ * @array: array of %ZifPackage's
  * @depends: an array of #ZifDepend's
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL
@@ -517,7 +517,7 @@ out:
 
 /**
  * zif_package_array_filter_obsolete:
- * @packages: array of %ZifPackage's
+ * @array: array of %ZifPackage's
  * @depends: an array of #ZifDepend's
  * @state: a #ZifState to use for progress reporting
  * @error: a #GError which is used on failure, or %NULL

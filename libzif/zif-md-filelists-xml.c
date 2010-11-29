@@ -21,7 +21,7 @@
 
 /**
  * SECTION:zif-md-filelists-xml
- * @short_description: FilelistsXml metadata functionality
+ * @short_description: FilelistsXml metadata
  *
  * Provide access to the filelists_xml repo metadata.
  * This object is a subclass of #ZifMd

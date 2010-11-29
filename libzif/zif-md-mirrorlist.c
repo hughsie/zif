@@ -21,7 +21,7 @@
 
 /**
  * SECTION:zif-md-mirrorlist
- * @short_description: Mirrorlist metadata functionality
+ * @short_description: Mirrorlist metadata
  *
  * Provide access to the mirrorlist repo metadata.
  * This object is a subclass of #ZifMd

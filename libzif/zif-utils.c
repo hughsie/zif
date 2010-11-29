@@ -21,7 +21,7 @@
 
 /**
  * SECTION:zif-utils
- * @short_description: Simple utility functions useful to zif
+ * @short_description: Simple utility functions
  *
  * Common, non-object functions are declared here.
  */
@@ -330,7 +330,12 @@ zif_package_id_build (const gchar *name, const gchar *version,
  * Since: 0.1.0
  **/
 gchar *
-zif_package_id_from_nevra (const gchar *name, guint epoch, const gchar *version, const gchar *release, const gchar *arch, const gchar *data)
+zif_package_id_from_nevra (const gchar *name,
+			   guint epoch,
+			   const gchar *version,
+			   const gchar *release,
+			   const gchar *arch,
+			   const gchar *data)
 {
 	gchar *version_compound;
 	gchar *package_id;

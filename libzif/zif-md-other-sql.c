@@ -21,7 +21,7 @@
 
 /**
  * SECTION:zif-md-other-sql
- * @short_description: Other metadata functionality
+ * @short_description: Other metadata
  *
  * Provide access to the other repo metadata.
  * This object is a subclass of #ZifMd

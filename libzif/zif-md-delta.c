@@ -21,7 +21,7 @@
 
 /**
  * SECTION:zif-md-delta
- * @short_description: Delta metadata functionality
+ * @short_description: Delta metadata
  *
  * Provide access to the delta repo metadata.
  * This object is a subclass of #ZifMd

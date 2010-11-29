@@ -21,7 +21,7 @@
 
 /**
  * SECTION:zif-legal
- * @short_description: A #ZifLegal object allows the user to check licenses
+ * @short_description: Check licenses
  *
  * #ZifLegal allows the user to see if a specific license string is free
  * according to the FSF.

@@ -21,9 +21,10 @@
 
 /**
  * SECTION:zif-package-meta
- * @short_description: Meta package object, populated from a spec file
+ * @short_description: Meta package
  *
- * This object is a subclass of #ZifPackage
+ * This object is a subclass of #ZifPackage. This type is usually
+ * populated from a spec file or a manifest.
  */
 
 #ifdef HAVE_CONFIG_H

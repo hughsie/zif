@@ -21,7 +21,7 @@
 
 /**
  * SECTION:zif-md-primary-xml
- * @short_description: PrimaryXml metadata functionality
+ * @short_description: PrimaryXml metadata
  *
  * Provide access to the primary_xml repo metadata.
  * This object is a subclass of #ZifMd

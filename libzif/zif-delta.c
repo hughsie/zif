@@ -21,7 +21,7 @@
 
 /**
  * SECTION:zif-delta
- * @short_sequence: Generic object to represent some information about a delta.
+ * @short_sequence: Package delta information
  */
 
 #ifdef HAVE_CONFIG_H

@@ -21,7 +21,7 @@
 
 /**
  * SECTION:zif-package-remote
- * @short_description: Remote package object
+ * @short_description: Remote package
  *
  * This object is a subclass of #ZifPackage
  */

@@ -21,7 +21,7 @@
 
 /**
  * SECTION:zif-string
- * @short_description: Create and manage reference counted strings
+ * @short_description: Reference counted strings
  *
  * To avoid frequent malloc/free, we use reference counted strings to
  * optimise many of the zif internals.

@@ -21,12 +21,9 @@
 
 /**
  * SECTION:zif-array
- * @short_description: A #ZifArray object allows the user to check licenses
+ * @short_description: Hashed array implementation
  *
- * #ZifArray allows the user to see if a specific license string is free
- * according to the FSF.
- * Before checking any strings, the backing array file has to be set with
- * zif_array_set_filename() and any checks prior to that will fail.
+ * A #ZifArray can be treated either as a hash table, or an array.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -51,7 +48,7 @@ G_DEFINE_TYPE (ZifArray, zif_array, G_TYPE_OBJECT)
 /**
  * zif_array_add:
  * @array: the #ZifArray object
- * @object: the object to store in the array
+ * @data: the object to store in the array
  *
  * Adds an object to the array.
  * The object is refcounted internally.
@@ -94,7 +91,7 @@ out:
 /**
  * zif_array_remove:
  * @array: the #ZifArray object
- * @object: the object to remove
+ * @data: the object to remove
  *
  * Removes an object from the array.
  *
@@ -171,7 +168,7 @@ out:
 /**
  * zif_array_lookup:
  * @array: the #ZifArray object
- * @object: the object to find
+ * @data: the object to find
  *
  * Looks up an object from the array.
  *

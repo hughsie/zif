@@ -21,7 +21,7 @@
 
 /**
  * SECTION:zif-monitor
- * @short_description: Generic object to monitor files for changes.
+ * @short_description: Monitor files for changes
  *
  * This object is a trivial multiplexted wrapper around GIO.
  */

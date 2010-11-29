@@ -21,7 +21,7 @@
 
 /**
  * SECTION:zif-repos
- * @short_description: A #ZifRepos object manages software sources
+ * @short_description: Manage software sources
  *
  * A #ZifRepos is an object that allows easy interfacing with remote
  * repositories.

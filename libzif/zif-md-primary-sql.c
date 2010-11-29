@@ -21,7 +21,7 @@
 
 /**
  * SECTION:zif-md-primary-sql
- * @short_description: Primary metadata functionality
+ * @short_description: Primary metadata
  *
  * Provide access to the primary repo metadata.
  * This object is a subclass of #ZifMd

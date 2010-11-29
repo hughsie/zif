@@ -21,7 +21,7 @@
 
 /**
  * SECTION:zif-array
- * @short_description: A helper #GPtrArray that stores refcounted #GObject's.
+ * @short_description: A array that stores refcounted #GObject's.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -53,7 +53,7 @@ zif_object_array_add (GPtrArray *array, gpointer object)
 /**
  * zif_object_array_add_array:
  * @array: the #GPtrArray object
- * @object: the object to store in the array
+ * @source: the object to store in the array
  *
  * Adds an object to the array.
  * The object is refcounted internally.

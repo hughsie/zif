@@ -21,7 +21,7 @@
       </author>
     </authorgroup>
     <copyright>
-      <year>2009</year>
+      <year>2010</year>
       <holder>Richard Hughes</holder>
     </copyright>
   </bookinfo>
@@ -30,10 +30,11 @@
     <title>ZIF Specification</title>
     <partintro>
       <para>
-        ZIF is a thin layer over rpm.
+        ZIF is a thin layer over librpm that interfaces with the Fedora
+        package metadata.
       </para>
       <para>
-        This part documents core features of ZIF.
+        This manual documents features of ZIF.
       </para>
     </partintro>
     <xi:include href="spec/zif-introduction.xml"/>
@@ -48,8 +49,8 @@
     </partintro>
     <xi:include href="xml/zif-category.xml"/>
     <xi:include href="xml/zif-changeset.xml"/>
-    <xi:include href="xml/zif-state.xml"/>
     <xi:include href="xml/zif-config.xml"/>
+    <xi:include href="xml/zif-depend.xml"/>
     <xi:include href="xml/zif-download.xml"/>
     <xi:include href="xml/zif-groups.xml"/>
     <xi:include href="xml/zif-legal.xml"/>
@@ -60,9 +61,6 @@
     <xi:include href="xml/zif-md-metalink.xml"/>
     <xi:include href="xml/zif-md-mirrorlist.xml"/>
     <xi:include href="xml/zif-md-other-sql.xml"/>
-<!--
-    <xi:include href="xml/zif-md-other-xml.xml"/>
-  -->
     <xi:include href="xml/zif-md-primary-sql.xml"/>
     <xi:include href="xml/zif-md-primary-xml.xml"/>
     <xi:include href="xml/zif-md-updateinfo.xml"/>
@@ -72,7 +70,7 @@
     <xi:include href="xml/zif-package-remote.xml"/>
     <xi:include href="xml/zif-package.xml"/>
     <xi:include href="xml/zif-repos.xml"/>
-    <xi:include href="xml/zif-store-array.xml"/>
+    <xi:include href="xml/zif-state.xml"/>
     <xi:include href="xml/zif-store-local.xml"/>
     <xi:include href="xml/zif-store-remote.xml"/>
     <xi:include href="xml/zif-store.xml"/>
@@ -87,10 +85,9 @@
         This part documents helper funtions in libzif.
       </para>
     </partintro>
-    <xi:include href="xml/zif-depend.xml"/>
+    <xi:include href="xml/zif-store-array.xml"/>
     <xi:include href="xml/zif-string.xml"/>
     <xi:include href="xml/zif-utils.xml"/>
-    <xi:include href="xml/zif-store-array.xml"/>
   </reference>
 
   <reference id="faq">

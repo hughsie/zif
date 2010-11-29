@@ -21,7 +21,7 @@
 
 /**
  * SECTION:zif-groups
- * @short_description: A #ZifGroups class handles category to group mapping
+ * @short_description: Category to group mapping
  *
  * In Zif, we have a few groups that are enumerated, and categories that are
  * not enumerated and are custom to the vendor. The mapping from categories

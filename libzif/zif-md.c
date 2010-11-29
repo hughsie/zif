@@ -21,7 +21,7 @@
 
 /**
  * SECTION:zif-md
- * @short_description: Metadata file common functionality
+ * @short_description: Metadata base class
  *
  * This provides an abstract metadata class.
  * It is implemented by #ZifMdFilelistsSql, #ZifMdFilelistsXml, #ZifMdPrimaryXml,

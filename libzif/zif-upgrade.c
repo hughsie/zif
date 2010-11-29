@@ -21,7 +21,7 @@
 
 /**
  * SECTION:zif-upgrade
- * @short_mirrorlist: Generic object to represent a distribution upgrade.
+ * @short_mirrorlist: Distribution upgrade data
  */
 
 #ifdef HAVE_CONFIG_H

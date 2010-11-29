@@ -21,7 +21,7 @@
 
 /**
  * SECTION:zif-store
- * @short_description: A store is an abstract collection of packages
+ * @short_description: Collection of packages
  *
  * #ZifStoreLocal, #ZifStoreRemote and #ZifStoreMeta all implement #ZifStore.
  */

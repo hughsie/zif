@@ -21,7 +21,7 @@
 
 /**
  * SECTION:zif-store-remote
- * @short_description: A remote store is a store that can operate on remote packages
+ * @short_description: Store for remote packages
  *
  * A #ZifStoreRemote is a subclassed #ZifStore and operates on remote objects.
  * A repository is another name for a #ZifStoreRemote.
@@ -1814,8 +1814,8 @@ out:
 }
 
 /**
- * zif_store_remote_set_id:
- * @state: a #ZifState to use for progress reporting
+ * zif_store_remote_get_local_directory:
+ * @store: the #ZifStoreRemote object
  *
  * Gets the directory used for this repo, e.g. /var/cache/yum/i386/fedora
  *

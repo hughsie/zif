@@ -21,7 +21,7 @@
 
 /**
  * SECTION:zif-config
- * @short_description: A #ZifConfig object manages system wide config options
+ * @short_description: System wide config options
  *
  * #ZifConfig allows settings to be read from a central config file. Some
  * values can be overridden in a running instance.

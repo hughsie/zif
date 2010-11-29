@@ -21,8 +21,10 @@
 
 /**
  * SECTION:zif-depend
- * @short_version: Generic object to represent some information about an
- * package encoded dependency.
+ * @short_description: A package dependency
+ *
+ * An object to represent some information about an
+ * encoded dependency.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -228,7 +230,7 @@ zif_depend_flag_to_string (ZifDependFlag flag)
 
 /**
  * zif_depend_to_string:
- * @flag: a valid #ZifDependFlag object
+ * @depend: a valid #ZifDepend object
  *
  * Returns a string representation of the #ZifDepend object.
  *
@@ -253,7 +255,7 @@ zif_depend_to_string (ZifDepend *depend)
 
 /**
  * zif_depend_get_description:
- * @flag: a valid #ZifDependFlag object
+ * @depend: a valid #ZifDepend object
  *
  * Returns a string representation of the #ZifDepend object.
  *

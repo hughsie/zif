@@ -184,7 +184,7 @@ gboolean		 zif_package_set_id		(ZifPackage	*package,
 void			 zif_package_set_installed	(ZifPackage	*package,
 							 gboolean	 installed);
 void			 zif_package_set_trust_kind	(ZifPackage	*package,
-							 ZifPackageTrustKind trusted);
+							 ZifPackageTrustKind trust_kind);
 void			 zif_package_set_summary	(ZifPackage	*package,
 							 ZifString	*summary);
 void			 zif_package_set_description	(ZifPackage	*package,
@@ -227,7 +227,7 @@ gint			 zif_package_compare		(ZifPackage	*a,
 gboolean		 zif_package_is_compatible_arch	(ZifPackage	*a,
 							 ZifPackage	*b);
 const gchar		*zif_package_ensure_type_to_string (ZifPackageEnsureType type);
-const gchar		*zif_package_trust_kind_to_string (ZifPackageTrustKind trusted);
+const gchar		*zif_package_trust_kind_to_string (ZifPackageTrustKind trust_kind);
 
 G_END_DECLS
 

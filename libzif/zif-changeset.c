@@ -21,7 +21,7 @@
 
 /**
  * SECTION:zif-changeset
- * @short_description: Generic object to represent some information about a changeset.
+ * @short_description: ChangeLog data entry
  */
 
 #ifdef HAVE_CONFIG_H

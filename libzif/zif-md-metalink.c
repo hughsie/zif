@@ -21,7 +21,7 @@
 
 /**
  * SECTION:zif-md-metalink
- * @short_description: Metalink metadata functionality
+ * @short_description: Metalink metadata
  *
  * Provide access to the metalink repo metadata.
  * This object is a subclass of #ZifMd

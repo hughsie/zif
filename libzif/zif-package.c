@@ -21,7 +21,7 @@
 
 /**
  * SECTION:zif-package
- * @short_description: Generic object to represent an installed or remote package.
+ * @short_description: An installed or remote package
  *
  * This object is subclassed by #ZifPackageLocal and #ZifPackageRemote.
  */
@@ -1039,7 +1039,7 @@ zif_package_ensure_type_to_string (ZifPackageEnsureType type)
 
 /**
  * zif_package_trust_kind_to_string:
- * @type: the #ZifPackageTrustKind enumerated value
+ * @trust_kind: the #ZifPackageTrustKind enumerated value
  *
  * Gets the string representation of a #ZifPackageTrustKind
  *

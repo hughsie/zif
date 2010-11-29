@@ -21,9 +21,10 @@
 
 /**
  * SECTION:zif-download
- * @short_description: Generic object to download packages.
+ * @short_description: Download packages
  *
- * This object is a trivial wrapper around libsoup.
+ * This object is a simple wrapper around libsoup that handles
+ * mirrorlists, timeouts and retries.
  */
 
 #ifdef HAVE_CONFIG_H

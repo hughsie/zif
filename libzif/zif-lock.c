@@ -21,7 +21,7 @@
 
 /**
  * SECTION:zif-lock
- * @short_description: Generic object to lock the package system.
+ * @short_description: Lock the package system
  *
  * This object works with the generic lock file.
  */

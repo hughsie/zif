@@ -21,7 +21,7 @@
 
 /**
  * SECTION:zif-md-filelists-sql
- * @short_description: File list metadata functionality
+ * @short_description: File list metadata
  *
  * Provide access to the file list metadata.
  * This object is a subclass of #ZifMd

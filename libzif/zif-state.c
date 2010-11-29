@@ -21,7 +21,7 @@
 
 /**
  * SECTION:zif-state
- * @short_description: A #ZifState object allows progress reporting
+ * @short_description: Progress reporting
  *
  * Objects can use zif_state_set_percentage() if the absolute percentage
  * is known. Percentages should always go up, not down.

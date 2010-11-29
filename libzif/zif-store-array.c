@@ -21,7 +21,7 @@
 
 /**
  * SECTION:zif-store-array
- * @short_description: A store-array is a container that holds one or more stores
+ * @short_description: Container for one or more stores
  *
  * A #GPtrArray is the container where #ZifStore's are kept. Global operations can
  * be done on the array and not the indervidual stores.

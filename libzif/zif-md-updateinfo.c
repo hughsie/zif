@@ -21,7 +21,7 @@
 
 /**
  * SECTION:zif-md-updateinfo
- * @short_description: Updateinfo metadata functionality
+ * @short_description: Updateinfo metadata
  *
  * Provide access to the updateinfo repo metadata.
  * This object is a subclass of #ZifMd

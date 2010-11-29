@@ -21,8 +21,7 @@
 
 /**
  * SECTION:zif-release
- * @short_description: A #ZifRelease object allows the user check for
- * distribution upgrades.
+ * @short_description: Check for distribution upgrades
  *
  * #ZifRelease allows the user to check for distribution upgrades and
  * upgrade to the newest release.

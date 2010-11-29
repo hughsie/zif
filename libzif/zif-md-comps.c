@@ -21,7 +21,7 @@
 
 /**
  * SECTION:zif-md-comps
- * @short_description: Comps metadata functionality
+ * @short_description: Comps metadata
  *
  * Provide access to the comps repo metadata.
  * This object is a subclass of #ZifMd

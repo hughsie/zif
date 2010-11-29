@@ -21,12 +21,9 @@
 
 /**
  * SECTION:zif-media
- * @short_description: A #ZifMedia object allows the user to check licenses
+ * @short_description: Media repository support
  *
- * #ZifMedia allows the user to see if a specific license string is free
- * according to the FSF.
- * Before checking any strings, the backing media file has to be set with
- * zif_media_set_filename() and any checks prior to that will fail.
+ * #ZifMedia allows Zif to use external media repositories.
  */
 
 #ifdef HAVE_CONFIG_H

@@ -21,7 +21,7 @@
 
 /**
  * SECTION:zif-store-local
- * @short_description: A local store is a store that can operate on installed packages
+ * @short_description: Store for installed packages
  *
  * A #ZifStoreLocal is a subclassed #ZifStore and operates on installed objects.
  */

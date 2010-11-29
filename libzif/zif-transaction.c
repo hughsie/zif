@@ -26,7 +26,7 @@
 
 /**
  * SECTION:zif-transaction
- * @short_description: A #ZifTransaction object represents a package action.
+ * @short_description: Package transactions
  *
  * #ZifTransaction allows the user to add install, update and remove actions
  * to be written to disk.
@@ -302,6 +302,7 @@ zif_transaction_get_item_from_array_by_related_package (GPtrArray *array,
  * zif_transaction_get_reason:
  * @transaction: the #ZifTransaction object
  * @package: the #ZifPackage object
+ * @error: a #GError which is used on failure, or %NULL
  *
  * Gets the reason why the package is in the install or remove array.
  *
@@ -911,7 +912,7 @@ out:
 /**
  * zif_transaction_get_package_provide_from_store:
  *
- * Returns a package that provides something.
+ * Gets a package that provides something.
  **/
 static gboolean
 zif_transaction_get_package_provide_from_store (ZifTransaction *transaction,
@@ -991,7 +992,7 @@ out:
 /**
  * zif_transaction_get_package_requires_from_store:
  *
- * Returns an array of packages that require something.
+ * Gets an array of packages that require something.
  **/
 static gboolean
 zif_transaction_get_package_requires_from_store (ZifStore *store,
@@ -1071,7 +1072,7 @@ out:
 /**
  * zif_transaction_get_packages_provides_from_store_array:
  *
- * Returns an array of packages that provide something.
+ * Gets an array of packages that provide something.
  **/
 static gboolean
 zif_transaction_get_packages_provides_from_store_array (ZifTransaction *transaction,
@@ -3983,7 +3984,6 @@ zif_transaction_set_verbose (ZifTransaction *transaction, gboolean verbose)
 /**
  * zif_transaction_get_state:
  * @transaction: the #ZifTransaction object
- * @package: the #ZifPackage object
  *
  * Gets the reason why the package is in the install or remove array.
  *

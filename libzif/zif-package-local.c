@@ -21,7 +21,7 @@
 
 /**
  * SECTION:zif-package-local
- * @short_description: Local package object
+ * @short_description: Local package
  *
  * This object is a subclass of #ZifPackage
  */
