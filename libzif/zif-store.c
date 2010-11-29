@@ -403,7 +403,7 @@ zif_store_what_requires (ZifStore *store, GPtrArray *depends, ZifState *state, G
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* no support */
-	if (klass->what_provides == NULL) {
+	if (klass->what_requires == NULL) {
 		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_NO_SUPPORT,
 				     "operation cannot be performed on this store");
 		return NULL;
