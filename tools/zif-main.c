@@ -3321,7 +3321,7 @@ zif_cmd_update_details (ZifCmdPrivate *priv, gchar **values, GError **error)
 	/* add local store */
 	store_array_local = zif_store_array_new ();
 	state_local = zif_state_get_child (priv->state);
-	ret = zif_store_array_add_remote (store_array_local, state_local, error);
+	ret = zif_store_array_add_remote_enabled (store_array_local, state_local, error);
 	if (!ret)
 		goto out;
 
@@ -3356,9 +3356,38 @@ zif_cmd_update_details (ZifCmdPrivate *priv, gchar **values, GError **error)
 	for (i=0; i<array->len; i++) {
 
 		package = g_ptr_array_index (array, i);
-		state_loop = zif_state_get_child (priv->state);
-		update = zif_package_remote_get_update_detail (ZIF_PACKAGE_REMOTE (package), state_loop, &error_local);
+		g_string_append_printf (string, "%s:\n",
+					zif_package_get_printable (package));
+
+		state_loop = zif_state_get_child (state_local);
+		update = zif_package_remote_get_update_detail (ZIF_PACKAGE_REMOTE (package),
+							       state_loop,
+							       &error_local);
 		if (update == NULL) {
+
+			/* are we trying to get updatinfo data from a
+			 * repo without any support? */
+			if (error_local->domain == ZIF_PACKAGE_ERROR &&
+			    error_local->code == ZIF_PACKAGE_ERROR_NO_SUPPORT) {
+				g_debug ("ignoring error: %s",
+					 error_local->message);
+				g_clear_error (&error_local);
+
+				/* these sections done */
+				ret = zif_state_finished (state_loop, error);
+				if (!ret)
+					goto out;
+				ret = zif_state_done (state_local, error);
+				if (!ret)
+					goto out;
+
+				/* TRANSLATORS: when a package has no update details */
+				g_string_append_printf (string, " - %s\n\n",
+							_("No update detail"));
+
+				/* carry on as if nothing had happened */
+				continue;
+			}
 			ret = FALSE;
 			g_set_error (error, 1, 0, "failed to get update detail for %s: %s",
 				 zif_package_get_printable (package), error_local->message);
@@ -3367,31 +3396,36 @@ zif_cmd_update_details (ZifCmdPrivate *priv, gchar **values, GError **error)
 		}
 
 		/* TRANSLATORS: these are headings for the update details */
-		g_print ("\t%s\t%s\n", _("kind"), zif_update_state_to_string (zif_update_get_kind (update)));
-		g_print ("\t%s\t%s\n", _("id"), zif_update_get_id (update));
-		g_print ("\t%s\t%s\n", _("title"), zif_update_get_title (update));
-		g_print ("\t%s\t%s\n", _("description"), zif_update_get_description (update));
-		g_print ("\t%s\t%s\n", _("issued"), zif_update_get_issued (update));
+		g_string_append_printf (string, "%s\t%s\n",
+					_("Kind:"), zif_update_kind_to_string (zif_update_get_kind (update)));
+		g_string_append_printf (string, "%s\t%s\n",
+					_("State:"), zif_update_state_to_string (zif_update_get_state (update)));
+		g_string_append_printf (string, "%s\t%s\n",
+					_("ID:"), zif_update_get_id (update));
+		g_string_append_printf (string, "%s\t%s\n",
+					_("Title:"), zif_update_get_title (update));
+		g_string_append_printf (string, "%s\t%s\n",
+					_("Description:"), zif_update_get_description (update));
+		g_string_append_printf (string, "%s\t%s\n",
+					_("Issued:"), zif_update_get_issued (update));
 		update_infos = zif_update_get_update_infos (update);
 		for (j=0; j<update_infos->len; j++) {
 			info = g_ptr_array_index (update_infos, j);
-			g_print ("\tupdateinfo[%i]:kind\t%s\n", j,
-				 zif_update_info_kind_to_string (zif_update_info_get_kind (info)));
-			g_print ("\tupdateinfo[%i]:title\t%s\n", j,
-				 zif_update_info_get_title (info));
-			g_print ("\tupdateinfo[%i]:url\t%s\n", j,
-				 zif_update_info_get_url (info));
+			g_string_append_printf (string, "%s\t%s\t%s\n",
+						zif_update_info_kind_to_string (zif_update_info_get_kind (info)),
+						zif_update_info_get_url (info),
+						zif_update_info_get_title (info));
 		}
 		changelog = zif_update_get_changelog (update);
 		for (j=0; j<changelog->len; j++) {
 			changeset = g_ptr_array_index (changelog, j);
-			g_print ("\tchangelog[%i]:author\t%s\n", j,
-				 zif_changeset_get_author (changeset));
-			g_print ("\tchangelog[%i]:version\t%s\n", j,
-				 zif_changeset_get_version (changeset));
-			g_print ("\tchangelog[%i]:description\t%s\n", j,
-				 zif_changeset_get_description (changeset));
+			g_string_append_printf (string, "%s - %s\n%s\n",
+						zif_changeset_get_author (changeset),
+						zif_changeset_get_version (changeset),
+						zif_changeset_get_description (changeset));
 		}
+
+		g_string_append (string, "\n");
 
 		/* this section done */
 		ret = zif_state_done (state_local, error);
@@ -3406,8 +3440,7 @@ zif_cmd_update_details (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 	zif_progress_bar_end (priv->progressbar);
 
-	/* TODO: print a formatted GString */
-	zif_print_packages (array);
+	/* print formatted string */
 	g_print ("%s", string->str);
 
 	/* success */

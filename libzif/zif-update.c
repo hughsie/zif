@@ -71,7 +71,7 @@ ZifUpdateState
 zif_update_state_from_string (const gchar *state)
 {
 	if (g_strcmp0 (state, "stable") == 0)
-		return ZIF_UPDATE_STATE_UNKNOWN;
+		return ZIF_UPDATE_STATE_STABLE;
 	if (g_strcmp0 (state, "testing") == 0)
 		return ZIF_UPDATE_STATE_TESTING;
 	g_warning ("unknown update state: %s", state);
@@ -106,6 +106,7 @@ zif_update_state_to_string (ZifUpdateState state)
 		return "stable";
 	if (state == ZIF_UPDATE_STATE_TESTING)
 		return "testing";
+	g_warning ("state %i unknown", state);
 	return NULL;
 }
 
@@ -123,6 +124,7 @@ zif_update_kind_to_string (ZifUpdateKind kind)
 		return "enhancement";
 	if (kind == ZIF_UPDATE_KIND_NEWPACKAGE)
 		return "newpackage";
+	g_warning ("kind %i unknown", kind);
 	return NULL;
 }
 
@@ -157,7 +159,7 @@ ZifUpdateKind
 zif_update_get_kind (ZifUpdate *update)
 {
 	g_return_val_if_fail (ZIF_IS_UPDATE (update), ZIF_UPDATE_KIND_UNKNOWN);
-	return update->priv->state;
+	return update->priv->kind;
 }
 
 /**

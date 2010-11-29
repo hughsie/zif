@@ -365,8 +365,20 @@ zif_package_remote_get_update_detail (ZifPackageRemote *package, ZifState *state
 						     zif_package_get_id (ZIF_PACKAGE (package)),
 						     state, &error_local);
 	if (update == NULL) {
-		g_set_error (error, ZIF_PACKAGE_ERROR, ZIF_PACKAGE_ERROR_FAILED,
-			     "cannot get update detail from store: %s", error_local->message);
+		if (error_local->domain == ZIF_STORE_ERROR &&
+		    error_local->code == ZIF_STORE_ERROR_NO_SUPPORT) {
+			g_set_error (error,
+				     ZIF_PACKAGE_ERROR,
+				     ZIF_PACKAGE_ERROR_NO_SUPPORT,
+				     "no support for getting update detail: %s",
+				     error_local->message);
+		} else {
+			g_set_error (error,
+				     ZIF_PACKAGE_ERROR,
+				     ZIF_PACKAGE_ERROR_FAILED,
+				     "cannot get update detail from store: %s",
+				     error_local->message);
+		}
 		g_error_free (error_local);
 		goto out;
 	}

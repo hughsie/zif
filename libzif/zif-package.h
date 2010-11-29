@@ -92,6 +92,7 @@ struct _ZifPackageClass
 
 typedef enum {
 	ZIF_PACKAGE_ERROR_FAILED,
+	ZIF_PACKAGE_ERROR_NO_SUPPORT,
 	ZIF_PACKAGE_ERROR_LAST
 } ZifPackageError;
 

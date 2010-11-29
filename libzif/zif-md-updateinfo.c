@@ -119,13 +119,13 @@ zif_md_updateinfo_parser_start_element (GMarkupParseContext *context, const gcha
 			}
 			updateinfo->priv->update_temp = zif_update_new ();
 
-			/* find the update type as a bonus */
+			/* find the update status and type as a bonus */
 			for (i=0; attribute_names[i] != NULL; i++) {
 				if (g_strcmp0 (attribute_names[i], "status") == 0) {
 					zif_update_set_state (updateinfo->priv->update_temp,
 							      zif_update_state_from_string (attribute_values[i]));
 				}
-				if (g_strcmp0 (element_name, "type") == 0) {
+				if (g_strcmp0 (attribute_names[i], "type") == 0) {
 					update_kind = zif_update_kind_from_string (attribute_values[i]);
 					if (update_kind == ZIF_UPDATE_KIND_UNKNOWN)
 						g_warning ("failed to match update kind from: %s", attribute_values[i]);
@@ -534,9 +534,9 @@ zif_md_updateinfo_get_detail (ZifMdUpdateinfo *md,
 	if (!md->priv->loaded) {
 		ret = zif_md_load (ZIF_MD (md), state, &error_local);
 		if (!ret) {
-			g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED_TO_LOAD,
-				     "failed to get load updateinfo: %s", error_local->message);
-			g_error_free (error_local);
+			g_propagate_prefixed_error (error,
+						    error_local,
+						    "failed to get load updateinfo: ");
 			goto out;
 		}
 	}
@@ -582,9 +582,9 @@ zif_md_updateinfo_get_detail_for_package (ZifMdUpdateinfo *md, const gchar *pack
 	if (!md->priv->loaded) {
 		ret = zif_md_load (ZIF_MD (md), state, &error_local);
 		if (!ret) {
-			g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED_TO_LOAD,
-				     "failed to get load updateinfo: %s", error_local->message);
-			g_error_free (error_local);
+			g_propagate_prefixed_error (error,
+						    error_local,
+						    "failed to get load updateinfo: ");
 			goto out;
 		}
 	}

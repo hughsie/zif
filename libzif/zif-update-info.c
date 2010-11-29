@@ -189,7 +189,7 @@ zif_update_info_kind_from_string (const gchar *type)
 {
 	if (g_strcmp0 (type, "cve") == 0)
 		return ZIF_UPDATE_INFO_KIND_CVE;
-	if (g_strcmp0 (type, "bz") == 0)
+	if (g_strcmp0 (type, "bugzilla") == 0)
 		return ZIF_UPDATE_INFO_KIND_BUGZILLA;
 	return ZIF_UPDATE_INFO_KIND_LAST;
 }

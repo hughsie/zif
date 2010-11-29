@@ -606,9 +606,23 @@ zif_store_remote_get_update_detail (ZifStoreRemote *store, const gchar *package_
 	array = zif_md_updateinfo_get_detail_for_package (ZIF_MD_UPDATEINFO (store->priv->md_updateinfo), package_id,
 							  state_local, &error_local);
 	if (array == NULL) {
-		/* lets try this again with fresh metadata */
-		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
-			     "failed to find any details in updateinfo (but referenced in primary): %s", error_local->message);
+		/* ignore the case where we try to get updatinfo on repos
+		 * such as fedora, which do not have updateinfo */
+		if (error_local->domain == ZIF_MD_ERROR &&
+		    error_local->code == ZIF_MD_ERROR_NO_SUPPORT) {
+			g_set_error (error,
+				     ZIF_STORE_ERROR,
+				     ZIF_STORE_ERROR_NO_SUPPORT,
+				     "repo %s does not support updatinfo: %s",
+				     zif_store_get_id (ZIF_STORE (store)),
+				     error_local->message);
+		} else {
+			g_set_error (error,
+				     ZIF_STORE_ERROR,
+				     ZIF_STORE_ERROR_FAILED,
+				     "failed to find any details in updateinfo (but in primary): %s",
+				     error_local->message);
+		}
 		g_error_free (error_local);
 		goto out;
 	}

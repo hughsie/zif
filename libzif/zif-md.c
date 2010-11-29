@@ -1651,8 +1651,12 @@ zif_md_file_check (ZifMd *md, gboolean use_uncompressed, gboolean *valid,
 
 	/* no checksum set */
 	if (filename == NULL) {
-		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED,
-			     "no filename for %s [%s]", md->priv->id, zif_md_kind_to_text (md->priv->kind));
+		g_set_error (error,
+			     ZIF_MD_ERROR,
+			     ZIF_MD_ERROR_NO_SUPPORT,
+			     "no filename for %s [%s]",
+			     md->priv->id,
+			     zif_md_kind_to_text (md->priv->kind));
 		ret = FALSE;
 		goto out;
 	}
