@@ -173,6 +173,8 @@ zif_update_info_kind_to_string (ZifUpdateInfoKind kind)
 		return "cve";
 	if (kind == ZIF_UPDATE_INFO_KIND_BUGZILLA)
 		return "bugzilla";
+	if (kind == ZIF_UPDATE_INFO_KIND_VENDOR)
+		return "vendor";
 	return "unknown";
 }
 
@@ -191,6 +193,8 @@ zif_update_info_kind_from_string (const gchar *type)
 		return ZIF_UPDATE_INFO_KIND_CVE;
 	if (g_strcmp0 (type, "bugzilla") == 0)
 		return ZIF_UPDATE_INFO_KIND_BUGZILLA;
+	if (g_strcmp0 (type, "vendor") == 0)
+		return ZIF_UPDATE_INFO_KIND_VENDOR;
 	return ZIF_UPDATE_INFO_KIND_LAST;
 }
 

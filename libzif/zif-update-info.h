@@ -46,6 +46,7 @@ typedef struct _ZifUpdateInfoClass	ZifUpdateInfoClass;
 typedef enum {
 	ZIF_UPDATE_INFO_KIND_CVE,
 	ZIF_UPDATE_INFO_KIND_BUGZILLA,
+	ZIF_UPDATE_INFO_KIND_VENDOR,
 	ZIF_UPDATE_INFO_KIND_LAST
 } ZifUpdateInfoKind;
 

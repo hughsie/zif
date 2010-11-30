@@ -44,6 +44,7 @@ struct _ZifUpdatePrivate
 	gchar			*title;
 	gchar			*description;
 	gchar			*issued;
+	gchar			*source;
 	gboolean		 reboot;
 	GPtrArray		*update_infos;
 	GPtrArray		*packages;
@@ -58,6 +59,7 @@ enum {
 	PROP_TITLE,
 	PROP_DESCRIPTION,
 	PROP_ISSUED,
+	PROP_SOURCE,
 	PROP_REBOOT,
 	PROP_LAST
 };
@@ -228,6 +230,23 @@ zif_update_get_issued (ZifUpdate *update)
 {
 	g_return_val_if_fail (ZIF_IS_UPDATE (update), NULL);
 	return update->priv->issued;
+}
+
+/**
+ * zif_update_get_source:
+ * @update: A #ZifUpdate
+ *
+ * Gets the source of the update, e.g. "<updates@fedoraproject.org>".
+ *
+ * Return value: A string value, or %NULL.
+ *
+ * Since: 0.1.3
+ **/
+const gchar *
+zif_update_get_source (ZifUpdate *update)
+{
+	g_return_val_if_fail (ZIF_IS_UPDATE (update), NULL);
+	return update->priv->source;
 }
 
 /**
@@ -410,6 +429,25 @@ zif_update_set_issued (ZifUpdate *update, const gchar *issued)
 }
 
 /**
+ * zif_update_set_source:
+ * @update: A #ZifUpdate
+ * @source: The update source email
+ *
+ * Sets the source of the updates, which is normally an email address.
+ *
+ * Since: 0.1.3
+ **/
+void
+zif_update_set_source (ZifUpdate *update, const gchar *source)
+{
+	g_return_if_fail (ZIF_IS_UPDATE (update));
+	g_return_if_fail (source != NULL);
+	g_return_if_fail (update->priv->source == NULL);
+
+	update->priv->source = g_strdup (source);
+}
+
+/**
  * zif_update_set_reboot:
  * @update: A #ZifUpdate
  * @reboot: if the update requires a reboot
@@ -526,6 +564,9 @@ zif_update_get_property (GObject *object, guint prop_id, GValue *value, GParamSp
 	case PROP_ISSUED:
 		g_value_set_string (value, priv->issued);
 		break;
+	case PROP_SOURCE:
+		g_value_set_string (value, priv->source);
+		break;
 	case PROP_REBOOT:
 		g_value_set_boolean (value, priv->reboot);
 		break;
@@ -559,6 +600,7 @@ zif_update_finalize (GObject *object)
 	g_free (update->priv->title);
 	g_free (update->priv->description);
 	g_free (update->priv->issued);
+	g_free (update->priv->source);
 	g_ptr_array_unref (update->priv->update_infos);
 	g_ptr_array_unref (update->priv->packages);
 	g_ptr_array_unref (update->priv->changelog);
@@ -639,6 +681,16 @@ zif_update_class_init (ZifUpdateClass *klass)
 	g_object_class_install_property (object_class, PROP_ISSUED, pspec);
 
 	/**
+	 * ZifUpdate:source:
+	 *
+	 * Since: 0.1.3
+	 */
+	pspec = g_param_spec_string ("source", NULL, NULL,
+				     NULL,
+				     G_PARAM_READABLE);
+	g_object_class_install_property (object_class, PROP_SOURCE, pspec);
+
+	/**
 	 * ZifUpdate:reboot:
 	 *
 	 * Since: 0.1.0
@@ -664,6 +716,7 @@ zif_update_init (ZifUpdate *update)
 	update->priv->title = NULL;
 	update->priv->description = NULL;
 	update->priv->issued = NULL;
+	update->priv->source = NULL;
 	update->priv->reboot = FALSE;
 	update->priv->update_infos = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	update->priv->packages = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);

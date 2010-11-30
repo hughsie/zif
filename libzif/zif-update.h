@@ -89,6 +89,7 @@ const gchar		*zif_update_get_id		(ZifUpdate		*update);
 const gchar		*zif_update_get_title		(ZifUpdate		*update);
 const gchar		*zif_update_get_description	(ZifUpdate		*update);
 const gchar		*zif_update_get_issued		(ZifUpdate		*update);
+const gchar		*zif_update_get_source		(ZifUpdate		*update);
 gboolean		 zif_update_get_reboot		(ZifUpdate		*update);
 GPtrArray		*zif_update_get_update_infos	(ZifUpdate		*update);
 GPtrArray		*zif_update_get_packages	(ZifUpdate		*update);
@@ -107,6 +108,8 @@ void			 zif_update_set_description	(ZifUpdate		*update,
 							 const gchar		*description);
 void			 zif_update_set_issued		(ZifUpdate		*update,
 							 const gchar		*issued);
+void			 zif_update_set_source		(ZifUpdate		*update,
+							 const gchar		*source);
 void			 zif_update_set_reboot		(ZifUpdate		*update,
 							 gboolean		 reboot);
 void			 zif_update_add_update_info	(ZifUpdate		*update,

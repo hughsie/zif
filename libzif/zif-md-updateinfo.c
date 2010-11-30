@@ -34,6 +34,7 @@
 #include <stdlib.h>
 #include <glib.h>
 
+#include "zif-config.h"
 #include "zif-md.h"
 #include "zif-md-updateinfo.h"
 #include "zif-update.h"
@@ -72,6 +73,7 @@ typedef enum {
 struct _ZifMdUpdateinfoPrivate
 {
 	gboolean			 loaded;
+	ZifConfig			*config;
 	GPtrArray			*array_updates;		/* stored as ZifUpdate */
 	/* for parser */
 	ZifMdUpdateinfoSection		 section;
@@ -124,12 +126,16 @@ zif_md_updateinfo_parser_start_element (GMarkupParseContext *context, const gcha
 				if (g_strcmp0 (attribute_names[i], "status") == 0) {
 					zif_update_set_state (updateinfo->priv->update_temp,
 							      zif_update_state_from_string (attribute_values[i]));
-				}
-				if (g_strcmp0 (attribute_names[i], "type") == 0) {
+				} else if (g_strcmp0 (attribute_names[i], "type") == 0) {
 					update_kind = zif_update_kind_from_string (attribute_values[i]);
 					if (update_kind == ZIF_UPDATE_KIND_UNKNOWN)
-						g_warning ("failed to match update kind from: %s", attribute_values[i]);
-					zif_update_set_kind (updateinfo->priv->update_temp, update_kind);
+						g_warning ("failed to match update kind from: %s",
+							   attribute_values[i]);
+					zif_update_set_kind (updateinfo->priv->update_temp,
+							     update_kind);
+				} else if (g_strcmp0 (attribute_names[i], "from") == 0) {
+					zif_update_set_source (updateinfo->priv->update_temp,
+							       attribute_values[i]);
 				}
 			}
 			goto out;
@@ -292,6 +298,44 @@ out:
 }
 
 /**
+ * zif_md_updateinfo_add_vendor_info:
+ **/
+static void
+zif_md_updateinfo_add_vendor_info (ZifMdUpdateinfo *md, ZifUpdate *update)
+{
+	const gchar *source;
+	gchar *url = NULL;
+	guint releasever;
+	ZifUpdateInfo *update_info = NULL;
+
+	/* only link Fedora updates to Bohdi */
+	source = zif_update_get_source (update);
+	if (g_strcmp0 (source, "updates@fedoraproject.org") != 0) {
+		g_debug ("no vendor info for update source %s", source);
+		goto out;
+	}
+
+	/* get the release version */
+	releasever = zif_config_get_uint (md->priv->config,
+					  "releasever", NULL);
+
+	/* construct a URL, ideally this would be in the metadata... */
+	url = g_strdup_printf ("https://admin.fedoraproject.org/updates/F%i/%s",
+			       releasever, zif_update_get_id (update));
+
+	/* add info to update */
+	update_info = zif_update_info_new ();
+	zif_update_info_set_kind (update_info, ZIF_UPDATE_INFO_KIND_VENDOR);
+	zif_update_info_set_title (update_info, zif_update_get_id (update));
+	zif_update_info_set_url (update_info, url);
+	zif_update_add_update_info (update, update_info);
+out:
+	if (update_info != NULL)
+		g_object_unref (update_info);
+	g_free (url);
+}
+
+/**
  * zif_md_updateinfo_parser_end_element:
  **/
 static void
@@ -316,6 +360,10 @@ zif_md_updateinfo_parser_end_element (GMarkupParseContext *context, const gchar 
 		/* end of update */
 		if (g_strcmp0 (element_name, "update") == 0) {
 			updateinfo->priv->section = ZIF_MD_UPDATEINFO_SECTION_UNKNOWN;
+
+			/* always add an implicit vendor URL */
+			zif_md_updateinfo_add_vendor_info (updateinfo,
+							   updateinfo->priv->update_temp);
 
 			/* add to array */
 			g_ptr_array_add (updateinfo->priv->array_updates, updateinfo->priv->update_temp);
@@ -637,6 +685,7 @@ zif_md_updateinfo_finalize (GObject *object)
 	g_return_if_fail (ZIF_IS_MD_UPDATEINFO (object));
 	md = ZIF_MD_UPDATEINFO (object);
 
+	g_object_unref (md->priv->config);
 	g_ptr_array_unref (md->priv->array_updates);
 
 	G_OBJECT_CLASS (zif_md_updateinfo_parent_class)->finalize (object);
@@ -665,6 +714,7 @@ static void
 zif_md_updateinfo_init (ZifMdUpdateinfo *md)
 {
 	md->priv = ZIF_MD_UPDATEINFO_GET_PRIVATE (md);
+	md->priv->config = zif_config_new ();
 	md->priv->loaded = FALSE;
 	md->priv->section = ZIF_MD_UPDATEINFO_SECTION_UNKNOWN;
 	md->priv->section_group = ZIF_MD_UPDATEINFO_SECTION_UPDATE_UNKNOWN;
