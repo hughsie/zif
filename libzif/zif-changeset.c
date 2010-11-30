@@ -182,7 +182,17 @@ zif_changeset_set_author (ZifChangeset *changeset, const gchar *author)
 
 	/* try to unmangle */
 	temp = g_string_new (author);
+	zif_changeset_strreplace (temp, " at ", "@");
+	zif_changeset_strreplace (temp, "[at]", "@");
+	zif_changeset_strreplace (temp, " AT ", "@");
 	zif_changeset_strreplace (temp, "[AT]", "@");
+	zif_changeset_strreplace (temp, " dot ", ".");
+	zif_changeset_strreplace (temp, "[dot]", ".");
+	zif_changeset_strreplace (temp, " DOT ", ".");
+	zif_changeset_strreplace (temp, "[DOT]", ".");
+	zif_changeset_strreplace (temp, " gmail com", "@gmail.com");
+	zif_changeset_strreplace (temp, " googlemail com", "@googlemail.com");
+	zif_changeset_strreplace (temp, " redhat com", "@redhat.com");
 
 	changeset->priv->author = g_string_free (temp, FALSE);
 }
