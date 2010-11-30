@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*-
  *
- * Copyright (C) 2009 Richard Hughes <richard@hughsie.com>
+ * Copyright (C) 2009-2010 Richard Hughes <richard@hughsie.com>
  *
  * Licensed under the GNU General Public License Version 2
  *
@@ -191,7 +191,7 @@ zif_md_filelists_sql_sqlite_get_files_cb (void *data, gint argc, gchar **argv, g
 		return 0;
 	}
 
-	/* the repomd is encoded with a / to seporate files... urgh */
+	/* the repomd is encoded with a / to separate files... urgh */
 	split = g_strsplit (*filename, "/", -1);
 	for (i=0; split[i] != NULL; i++) {
 		g_ptr_array_add (*array,
@@ -454,7 +454,7 @@ zif_md_filelists_sql_init (ZifMdFilelistsSql *md)
 /**
  * zif_md_filelists_sql_new:
  *
- * Return value: A new #ZifMdFilelistsSql class instance.
+ * Return value: A new #ZifMdFilelistsSql instance.
  *
  * Since: 0.1.0
  **/

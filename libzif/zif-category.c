@@ -64,11 +64,11 @@ G_DEFINE_TYPE (ZifCategory, zif_category, G_TYPE_OBJECT)
 
 /**
  * zif_category_get_parent_id:
- * @category: The %ZifCategory
+ * @category: A %ZifCategory
  *
  * Gets the parent category id.
  *
- * Return value: the string value, or %NULL for unset.
+ * Return value: A string value, or %NULL for unset.
  *
  * Since: 0.1.0
  **/
@@ -81,8 +81,8 @@ zif_category_get_parent_id (ZifCategory *category)
 
 /**
  * zif_category_set_parent_id:
- * @category: The %ZifCategory
- * @parent_id: the new value
+ * @category: A %ZifCategory
+ * @parent_id: A new value
  *
  * Sets the parent category id.
  *
@@ -98,11 +98,11 @@ zif_category_set_parent_id (ZifCategory *category, const gchar *parent_id)
 
 /**
  * zif_category_get_id:
- * @category: The %ZifCategory
+ * @category: A %ZifCategory
  *
  * Gets the id specific to this category.
  *
- * Return value: the string value, or %NULL for unset.
+ * Return value: A string value, or %NULL for unset.
  *
  * Since: 0.1.0
  **/
@@ -115,8 +115,8 @@ zif_category_get_id (ZifCategory *category)
 
 /**
  * zif_category_set_id:
- * @category: The %ZifCategory
- * @cat_id: the new value
+ * @category: A %ZifCategory
+ * @cat_id: A new value
  *
  * Sets the id specific to this category.
  *
@@ -132,11 +132,11 @@ zif_category_set_id (ZifCategory *category, const gchar *cat_id)
 
 /**
  * zif_category_get_name:
- * @category: The %ZifCategory
+ * @category: A %ZifCategory
  *
  * Gets the name.
  *
- * Return value: the string value, or %NULL for unset.
+ * Return value: A string value, or %NULL for unset.
  *
  * Since: 0.1.0
  **/
@@ -149,8 +149,8 @@ zif_category_get_name (ZifCategory *category)
 
 /**
  * zif_category_set_name:
- * @category: The %ZifCategory
- * @name: the new value
+ * @category: A %ZifCategory
+ * @name: A new value
  *
  * Sets the name.
  *
@@ -166,11 +166,11 @@ zif_category_set_name (ZifCategory *category, const gchar *name)
 
 /**
  * zif_category_get_summary:
- * @category: The %ZifCategory
+ * @category: A %ZifCategory
  *
  * Gets the summary.
  *
- * Return value: the string value, or %NULL for unset.
+ * Return value: A string value, or %NULL for unset.
  *
  * Since: 0.1.0
  **/
@@ -183,8 +183,8 @@ zif_category_get_summary (ZifCategory *category)
 
 /**
  * zif_category_set_summary:
- * @category: The %ZifCategory
- * @summary: the new value
+ * @category: A %ZifCategory
+ * @summary: A new value
  *
  * Sets the summary.
  *
@@ -200,11 +200,11 @@ zif_category_set_summary (ZifCategory *category, const gchar *summary)
 
 /**
  * zif_category_get_icon:
- * @category: The %ZifCategory
+ * @category: A %ZifCategory
  *
  * Gets the icon filename.
  *
- * Return value: the string value, or %NULL for unset.
+ * Return value: A string value, or %NULL for unset.
  *
  * Since: 0.1.0
  **/
@@ -217,8 +217,8 @@ zif_category_get_icon (ZifCategory *category)
 
 /**
  * zif_category_set_icon:
- * @category: The %ZifCategory
- * @icon: the new value
+ * @category: A %ZifCategory
+ * @icon: A new value
  *
  * Sets the icon filename.
  *
@@ -394,7 +394,7 @@ zif_category_finalize (GObject *object)
 /**
  * zif_category_new:
  *
- * Return value: a new ZifCategory object.
+ * Return value: A new ZifCategory object.
  *
  * Since: 0.5.4
  **/

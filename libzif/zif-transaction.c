@@ -112,7 +112,7 @@ typedef struct {
 /**
  * zif_transaction_error_quark:
  *
- * Return value: Our personal error quark.
+ * Return value: An error quark.
  *
  * Since: 0.1.3
  **/
@@ -127,7 +127,7 @@ zif_transaction_error_quark (void)
 
 /**
  * zif_transaction_reason_to_string:
- * @reason: the #ZifTransactionReason enum, e.g. %ZIF_TRANSACTION_REASON_INSTALL_USER_ACTION
+ * @reason: A reason, e.g. %ZIF_TRANSACTION_REASON_INSTALL_USER_ACTION
  *
  * Gets the string representation of the reason a package was added.
  *
@@ -166,7 +166,7 @@ zif_transaction_reason_to_string (ZifTransactionReason reason)
 
 /**
  * zif_transaction_state_to_string:
- * @state: the #ZifTransactionState enum, e.g. %ZIF_TRANSACTION_STATE_RESOLVED
+ * @state: A state, e.g. %ZIF_TRANSACTION_STATE_RESOLVED
  *
  * Gets the string representation of the transaction state.
  *
@@ -188,7 +188,6 @@ zif_transaction_state_to_string (ZifTransactionState state)
 	g_warning ("cannot convert state %i to string", state);
 	return NULL;
 }
-
 
 /**
  * zif_transaction_get_package_array:
@@ -213,11 +212,11 @@ zif_transaction_get_package_array (GPtrArray *array)
 
 /**
  * zif_transaction_get_install:
- * @transaction: the #ZifTransaction object
+ * @transaction: A #ZifTransaction
  *
  * Gets the list of packages to be installed.
  *
- * Return value: A #GPtrArray of #ZifPackages, free with g_ptr_array_unref()
+ * Return value: An array of #ZifPackages, free with g_ptr_array_unref()
  *
  * Since: 0.1.3
  **/
@@ -229,11 +228,11 @@ zif_transaction_get_install (ZifTransaction *transaction)
 
 /**
  * zif_transaction_get_remove:
- * @transaction: the #ZifTransaction object
+ * @transaction: A #ZifTransaction
  *
  * Gets the list of packages to be removed.
  *
- * Return value: A #GPtrArray of #ZifPackages, free with g_ptr_array_unref()
+ * Return value: An array of #ZifPackages, free with g_ptr_array_unref()
  *
  * Since: 0.1.3
  **/
@@ -300,13 +299,13 @@ zif_transaction_get_item_from_array_by_related_package (GPtrArray *array,
 
 /**
  * zif_transaction_get_reason:
- * @transaction: the #ZifTransaction object
- * @package: the #ZifPackage object
- * @error: a #GError which is used on failure, or %NULL
+ * @transaction: A #ZifTransaction
+ * @package: A #ZifPackage
+ * @error: A #GError, or %NULL
  *
  * Gets the reason why the package is in the install or remove array.
  *
- * Return value: A #ZifTransactionReason enumerated value, or %ZIF_TRANSACTION_REASON_INVALID for error.
+ * Return value: A reason, or %ZIF_TRANSACTION_REASON_INVALID for error.
  *
  * Since: 0.1.3
  **/
@@ -339,8 +338,8 @@ zif_transaction_get_reason (ZifTransaction *transaction,
 
 /**
  * zif_transaction_get_array_for_reason:
- * @transaction: the #ZifTransaction object
- * @reason: the #ZifTransactionReason enum, e.g. %ZIF_TRANSACTION_REASON_INVALID
+ * @transaction: A #ZifTransaction
+ * @reason: A reason, e.g. %ZIF_TRANSACTION_REASON_INVALID
  *
  * Gets a list of packages that are due to be processed for a specific reason.
  *
@@ -539,9 +538,9 @@ out:
 
 /**
  * zif_transaction_add_install:
- * @transaction: the #ZifTransaction object
- * @package: the #ZifPackage object to add
- * @error: a #GError which is used on failure, or %NULL
+ * @transaction: A #ZifTransaction
+ * @package: The #ZifPackage object to add
+ * @error: A #GError, or %NULL
  *
  * Adds a package to be installed to the transaction.
  *
@@ -571,9 +570,9 @@ zif_transaction_add_install (ZifTransaction *transaction,
 
 /**
  * zif_transaction_add_install_as_update:
- * @transaction: the #ZifTransaction object
- * @package: the #ZifPackage object to add
- * @error: a #GError which is used on failure, or %NULL
+ * @transaction: A #ZifTransaction
+ * @package: The #ZifPackage object to add
+ * @error: A #GError, or %NULL
  *
  * Adds an updated package to be installed to the transaction.
  * This function differs from zif_transaction_add_install() as it marks
@@ -651,9 +650,9 @@ out:
 
 /**
  * zif_transaction_add_update:
- * @transaction: the #ZifTransaction object
- * @package: the #ZifPackage object to add
- * @error: a #GError which is used on failure, or %NULL
+ * @transaction: A #ZifTransaction
+ * @package: The #ZifPackage object to add
+ * @error: A #GError, or %NULL
  *
  * Adds a package to be updated to the transaction.
  *
@@ -743,9 +742,9 @@ out:
 
 /**
  * zif_transaction_add_remove:
- * @transaction: the #ZifTransaction object
- * @package: the #ZifPackage object to add
- * @error: a #GError which is used on failure, or %NULL
+ * @transaction: A #ZifTransaction
+ * @package: The #ZifPackage object to add
+ * @error: A #GError, or %NULL
  *
  * Adds a package to be removed to the transaction.
  *
@@ -2643,9 +2642,9 @@ out:
 
 /**
  * zif_transaction_resolve:
- * @transaction: the #ZifTransaction object
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @transaction: A #ZifTransaction
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Resolves the transaction ensuring all dependancies are met.
  *
@@ -2993,9 +2992,9 @@ out:
 
 /**
  * zif_transaction_prepare:
- * @transaction: the #ZifTransaction object
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @transaction: A #ZifTransaction
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Prepares the transaction ensuring all packages are downloaded.
  *
@@ -3238,7 +3237,6 @@ out:
 	g_object_unref (state);
 	return item;
 }
-
 
 /**
  * zif_transaction_ts_progress_cb:
@@ -3688,9 +3686,9 @@ zif_transaction_set_error_for_problems (GError **error, rpmts ts)
 
 /**
  * zif_transaction_commit:
- * @transaction: the #ZifTransaction object
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @transaction: A #ZifTransaction
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Commits all the changes to disk.
  *
@@ -3923,8 +3921,8 @@ out:
 
 /**
  * zif_transaction_set_store_local:
- * @transaction: the #ZifTransaction object
- * @store: the #ZifStore to use for installed packages
+ * @transaction: A #ZifTransaction
+ * @store: A #ZifStore to use for installed packages
  *
  * Sets the local store for use in the transaction.
  *
@@ -3944,7 +3942,7 @@ zif_transaction_set_store_local (ZifTransaction *transaction, ZifStore *store)
 
 /**
  * zif_transaction_set_stores_remote:
- * @transaction: the #ZifTransaction object
+ * @transaction: A #ZifTransaction
  * @stores: an array of #ZifStore's to use for available packages
  *
  * Sets the remote store for use in the transaction.
@@ -3965,7 +3963,7 @@ zif_transaction_set_stores_remote (ZifTransaction *transaction, GPtrArray *store
 
 /**
  * zif_transaction_set_verbose:
- * @transaction: the #ZifTransaction object
+ * @transaction: A #ZifTransaction
  * @verbose: if an insane amount of debugging should be printed
  *
  * Sets the printing policy for the transaction. You only need to set
@@ -3980,14 +3978,13 @@ zif_transaction_set_verbose (ZifTransaction *transaction, gboolean verbose)
 	transaction->priv->verbose = verbose;
 }
 
-
 /**
  * zif_transaction_get_state:
- * @transaction: the #ZifTransaction object
+ * @transaction: A #ZifTransaction
  *
  * Gets the reason why the package is in the install or remove array.
  *
- * Return value: A #ZifTransactionState enumerated value, or %ZIF_TRANSACTION_STATE_INVALID for error.
+ * Return value: A state, or %ZIF_TRANSACTION_STATE_INVALID for error.
  *
  * Since: 0.1.3
  **/
@@ -4000,7 +3997,7 @@ zif_transaction_get_state (ZifTransaction *transaction)
 
 /**
  * zif_transaction_reset:
- * @transaction: the #ZifTransaction object
+ * @transaction: A #ZifTransaction
  *
  * Clears any pending or completed packages and returns the transaction
  * to the default state.
@@ -4085,7 +4082,7 @@ zif_transaction_init (ZifTransaction *transaction)
 /**
  * zif_transaction_new:
  *
- * Return value: A new #ZifTransaction class instance.
+ * Return value: A new #ZifTransaction instance.
  *
  * Since: 0.1.3
  **/

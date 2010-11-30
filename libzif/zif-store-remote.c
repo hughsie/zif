@@ -374,21 +374,19 @@ zif_store_remote_ensure_parent_dir_exists (const gchar *filename, GError **error
 	return TRUE;
 }
 
-
-
 /**
  * zif_store_remote_download:
- * @store: the #ZifStoreRemote object
- * @filename: the state filename to download, e.g. "Packages/hal-0.1.0.rpm"
- * @directory: the directory to put the downloaded file, e.g. "/var/cache/zif"
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @store: A #ZifStoreRemote
+ * @filename: Filename to download, e.g. "Packages/hal-0.1.0.rpm"
+ * @directory: Directory to put the downloaded file, e.g. "/var/cache/zif"
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Downloads a remote package to a local directory.
  * NOTE: if @filename is "Packages/hal-0.1.0.rpm" and @directory is "/var/cache/zif"
  * then the downloaded file will "/var/cache/zif/hal-0.1.0.rpm"
  *
- * Return value: %TRUE for success, %FALSE for failure
+ * Return value: %TRUE for success, %FALSE otherwise
  *
  * Since: 0.1.0
  **/
@@ -523,14 +521,14 @@ out:
 
 /**
  * zif_store_remote_get_update_detail:
- * @store: the #ZifStoreRemote object
- * @package_id: the package_id of the package to find
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @store: A #ZifStoreRemote
+ * @package_id: The package_id of the package to find
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Gets the update detail for a package.
  *
- * Return value: a %ZifUpdate, or %NULL for failure
+ * Return value: A %ZifUpdate, or %NULL for failure
  *
  * Since: 0.1.0
  **/
@@ -898,9 +896,9 @@ out:
 
 /**
  * zif_store_remote_download_repomd:
- * @store: the #ZifStoreRemote object
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @store: A #ZifStoreRemote
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Redownloads a new repomd file, which contains the links to all new
  * metadata with the new checksums.
@@ -1815,11 +1813,11 @@ out:
 
 /**
  * zif_store_remote_get_local_directory:
- * @store: the #ZifStoreRemote object
+ * @store: A #ZifStoreRemote
  *
  * Gets the directory used for this repo, e.g. /var/cache/yum/i386/fedora
  *
- * Return value: the directory the repo downloads cache file to
+ * Return value: The directory the repo downloads cache file to
  *
  * Since: 0.1.3
  **/
@@ -1832,8 +1830,8 @@ zif_store_remote_get_local_directory (ZifStoreRemote *store)
 
 /**
  * zif_store_remote_set_id:
- * @state: a #ZifState to use for progress reporting
- * @id: the repository id, e.g. "fedora"
+ * @state: A #ZifState to use for progress reporting
+ * @id: The repository id, e.g. "fedora"
  *
  * Sets the ID for the #ZifStoreRemote
  *
@@ -1864,7 +1862,7 @@ zif_store_remote_set_id (ZifStoreRemote *store, const gchar *id)
 
 /**
  * zif_store_remote_set_from_file:
- * @state: a #ZifState to use for progress reporting
+ * @state: A #ZifState to use for progress reporting
  *
  * Since: 0.1.0
  **/
@@ -1921,13 +1919,13 @@ out:
 
 /**
  * zif_store_remote_set_enabled:
- * @store: the #ZifStoreRemote object
+ * @store: A #ZifStoreRemote
  * @enabled: If the object should be enabled
- * @error: a #GError which is used on failure, or %NULL
+ * @error: A #GError, or %NULL
  *
  * Enable or disable a remote repository.
  *
- * Return value: %TRUE for success, %FALSE for failure
+ * Return value: %TRUE for success, %FALSE otherwise
  *
  * Since: 0.1.0
  **/
@@ -3295,9 +3293,9 @@ out:
 
 /**
  * zif_store_remote_is_devel:
- * @store: the #ZifStoreRemote object
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @store: A #ZifStoreRemote
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Finds out if the repository is a development repository.
  *
@@ -3352,7 +3350,7 @@ out:
 
 /**
  * zif_store_remote_get_id:
- * @store: the #ZifStoreRemote object
+ * @store: A #ZifStoreRemote
  *
  * Get the id of this repository.
  *
@@ -3368,9 +3366,9 @@ zif_store_remote_get_id (ZifStore *store)
 
 /**
  * zif_store_remote_get_name:
- * @store: the #ZifStoreRemote object
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @store: A #ZifStoreRemote
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Get the name of this repository.
  *
@@ -3413,9 +3411,9 @@ out:
 
 /**
  * zif_store_remote_get_enabled:
- * @store: the #ZifStoreRemote object
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @store: A #ZifStoreRemote
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Find out if this repository is enabled or not.
  *
@@ -3741,7 +3739,7 @@ out:
 /**
  * zif_store_remote_new:
  *
- * Return value: A new #ZifStoreRemote class instance.
+ * Return value: A new #ZifStoreRemote instance.
  *
  * Since: 0.1.0
  **/

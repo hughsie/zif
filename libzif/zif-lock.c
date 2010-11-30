@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*-
  *
- * Copyright (C) 2009 Richard Hughes <richard@hughsie.com>
+ * Copyright (C) 2009-2010 Richard Hughes <richard@hughsie.com>
  *
  * Licensed under the GNU General Public License Version 2
  *
@@ -59,7 +59,7 @@ G_DEFINE_TYPE (ZifLock, zif_lock, G_TYPE_OBJECT)
 /**
  * zif_lock_error_quark:
  *
- * Return value: Our personal error quark.
+ * Return value: An error quark.
  *
  * Since: 0.1.0
  **/
@@ -138,8 +138,8 @@ out:
 
 /**
  * zif_lock_is_locked:
- * @lock: the #ZifLock object
- * @pid: the PID of the process holding the lock, or %NULL
+ * @lock: A #ZifLock
+ * @pid: The PID of the process holding the lock, or %NULL
  *
  * Gets the lock state.
  *
@@ -209,9 +209,9 @@ zif_lock_get_cmdline_for_pid (guint pid)
 }
 /**
  * zif_lock_set_locked:
- * @lock: the #ZifLock object
- * @pid: the PID of the process holding the lock, or %NULL
- * @error: a #GError which is used on failure, or %NULL
+ * @lock: A #ZifLock
+ * @pid: A PID of the process holding the lock, or %NULL
+ * @error: A #GError, or %NULL
  *
  * Tries to lock the packaging system.
  *
@@ -279,12 +279,12 @@ out:
 
 /**
  * zif_lock_set_unlocked:
- * @lock: the #ZifLock object
- * @error: a #GError which is used on failure, or %NULL
+ * @lock: A #ZifLock
+ * @error: A #GError, or %NULL
  *
  * Unlocks the packaging system.
  *
- * Return value: %TRUE for success, %FALSE for failure
+ * Return value: %TRUE for success, %FALSE otherwise
  *
  * Since: 0.1.0
  **/
@@ -400,7 +400,7 @@ zif_lock_init (ZifLock *lock)
 /**
  * zif_lock_new:
  *
- * Return value: A new lock class instance.
+ * Return value: A new lock instance.
  *
  * Since: 0.1.0
  **/

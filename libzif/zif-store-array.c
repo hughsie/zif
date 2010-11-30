@@ -97,12 +97,12 @@ zif_role_to_string (ZifRole role)
 
 /**
  * zif_store_array_add_store:
- * @store_array: the #GPtrArray of #ZifStores
- * @store: the #ZifStore to add
+ * @store_array: An array of #ZifStores
+ * @store: A #ZifStore to add
  *
  * Add a single #ZifStore to the #GPtrArray.
  *
- * Return value: %TRUE for success, %FALSE for failure
+ * Return value: %TRUE for success, %FALSE otherwise
  *
  * Since: 0.1.0
  **/
@@ -117,12 +117,12 @@ zif_store_array_add_store (GPtrArray *store_array, ZifStore *store)
 
 /**
  * zif_store_array_add_stores:
- * @store_array: the #GPtrArray of #ZifStores
- * @stores: the array of #ZifStore's to add
+ * @store_array: An array of #ZifStores
+ * @stores: An a rray of #ZifStore's to add
  *
  * Add an array of #ZifStore's to the #GPtrArray.
  *
- * Return value: %TRUE for success, %FALSE for failure
+ * Return value: %TRUE for success, %FALSE otherwise
  *
  * Since: 0.1.0
  **/
@@ -146,13 +146,13 @@ zif_store_array_add_stores (GPtrArray *store_array, GPtrArray *stores)
 
 /**
  * zif_store_array_add_local:
- * @store_array: the #GPtrArray of #ZifStores
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @store_array: An array of #ZifStores
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Convenience function to add local store to the #GPtrArray.
  *
- * Return value: %TRUE for success, %FALSE for failure
+ * Return value: %TRUE for success, %FALSE otherwise
  *
  * Since: 0.1.0
  **/
@@ -172,13 +172,13 @@ zif_store_array_add_local (GPtrArray *store_array, ZifState *state, GError **err
 
 /**
  * zif_store_array_add_remote:
- * @store_array: the #GPtrArray of #ZifStores
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @store_array: An array of #ZifStores
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Convenience function to add remote stores to the #GPtrArray.
  *
- * Return value: %TRUE for success, %FALSE for failure
+ * Return value: %TRUE for success, %FALSE otherwise
  *
  * Since: 0.1.0
  **/
@@ -215,13 +215,13 @@ out:
 
 /**
  * zif_store_array_add_remote_enabled:
- * @store_array: the #GPtrArray of #ZifStores
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @store_array: An array of #ZifStores
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Convenience function to add enabled remote stores to the #GPtrArray.
  *
- * Return value: %TRUE for success, %FALSE for failure
+ * Return value: %TRUE for success, %FALSE otherwise
  *
  * Since: 0.1.0
  **/
@@ -360,10 +360,10 @@ out:
 
 /**
  * zif_store_array_find_package:
- * @store_array: the #GPtrArray of #ZifStores
- * @package_id: the PackageId which defines the package
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @store_array: An array of #ZifStores
+ * @package_id: A PackageId which defines the package
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Find a single package in the #GPtrArray.
  *
@@ -439,13 +439,13 @@ out:
 
 /**
  * zif_store_array_clean:
- * @store_array: the #GPtrArray of #ZifStores
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @store_array: An array of #ZifStores
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Cleans the #ZifStoreRemote objects by deleting cache.
  *
- * Return value: %TRUE for success, %FALSE for failure
+ * Return value: %TRUE for success, %FALSE otherwise
  *
  * Since: 0.1.0
  **/
@@ -504,14 +504,14 @@ out:
 
 /**
  * zif_store_array_refresh:
- * @store_array: the #GPtrArray of #ZifStores
+ * @store_array: An array of #ZifStores
  * @force: if the data should be re-downloaded if it's still valid
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
- * Refreshs the #ZifStoreRemote objects by downloading new data
+ * Refreshes the #ZifStoreRemote objects by downloading new data
  *
- * Return value: %TRUE for success, %FALSE for failure
+ * Return value: %TRUE for success, %FALSE otherwise
  *
  * Since: 0.1.0
  **/
@@ -570,14 +570,14 @@ out:
 
 /**
  * zif_store_array_resolve:
- * @store_array: the #GPtrArray of #ZifStores
- * @search: the search term, e.g. "gnome-power-manager"
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @store_array: An array of #ZifStores
+ * @search: The search terms, e.g. "gnome-power-manager"
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Finds packages matching the package name exactly.
  *
- * Return value: an array of #ZifPackage's
+ * Return value: An array of #ZifPackage's
  *
  * Since: 0.1.0
  **/
@@ -593,14 +593,14 @@ zif_store_array_resolve (GPtrArray *store_array, gchar **search,
 
 /**
  * zif_store_array_search_name:
- * @store_array: the #GPtrArray of #ZifStores
- * @search: the search term, e.g. "power"
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @store_array: An array of #ZifStores
+ * @search: The search terms, e.g. "power"
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Find packages that match the package name in some part.
  *
- * Return value: an array of #ZifPackage's
+ * Return value: An array of #ZifPackage's
  *
  * Since: 0.1.0
  **/
@@ -616,14 +616,14 @@ zif_store_array_search_name (GPtrArray *store_array, gchar **search,
 
 /**
  * zif_store_array_search_details:
- * @store_array: the #GPtrArray of #ZifStores
- * @search: the search term, e.g. "trouble"
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @store_array: An array of #ZifStores
+ * @search: The search terms, e.g. "trouble"
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Find packages that match some detail about the package.
  *
- * Return value: an array of #ZifPackage's
+ * Return value: An array of #ZifPackage's
  *
  * Since: 0.1.0
  **/
@@ -639,14 +639,14 @@ zif_store_array_search_details (GPtrArray *store_array, gchar **search,
 
 /**
  * zif_store_array_search_group:
- * @store_array: the #GPtrArray of #ZifStores
- * @group_enum: the group enumerated value, e.g. "games"
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @store_array: An array of #ZifStores
+ * @group_enum: The group enumerated values, e.g. "games"
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Find packages that belong in a specific group.
  *
- * Return value: an array of #ZifPackage's
+ * Return value: An array of #ZifPackage's
  *
  * Since: 0.1.0
  **/
@@ -662,14 +662,14 @@ zif_store_array_search_group (GPtrArray *store_array, gchar **group_enum,
 
 /**
  * zif_store_array_search_category:
- * @store_array: the #GPtrArray of #ZifStores
- * @group_id: the group id, e.g. "gnome-system-tools"
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @store_array: An array of #ZifStores
+ * @group_id: A group id, e.g. "gnome-system-tools"
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Find packages that belong in a specific category.
  *
- * Return value: an array of #ZifPackage's
+ * Return value: An array of #ZifPackage's
  *
  * Since: 0.1.0
  **/
@@ -716,14 +716,14 @@ out:
 
 /**
  * zif_store_array_search_file:
- * @store_array: the #GPtrArray of #ZifStores
- * @search: the search term, e.g. "/usr/bin/gnome-power-manager"
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @store_array: An array of #ZifStores
+ * @search: The search terms, e.g. "/usr/bin/gnome-power-manager"
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Find packages that provide the specified file.
  *
- * Return value: an array of #ZifPackage's
+ * Return value: An array of #ZifPackage's
  *
  * Since: 0.1.0
  **/
@@ -739,13 +739,13 @@ zif_store_array_search_file (GPtrArray *store_array, gchar **search,
 
 /**
  * zif_store_array_get_packages:
- * @store_array: the #GPtrArray of #ZifStores
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @store_array: An array of #ZifStores
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Return all packages in the #GPtrArray's.
  *
- * Return value: an array of #ZifPackage's
+ * Return value: An array of #ZifPackage's
  *
  * Since: 0.1.0
  **/
@@ -761,14 +761,14 @@ zif_store_array_get_packages (GPtrArray *store_array,
 
 /**
  * zif_store_array_what_provides:
- * @store_array: the #GPtrArray of #ZifStores
+ * @store_array: An array of #ZifStores
  * @depends: A #ZifDepend to search for
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Find packages that provide a specific string.
  *
- * Return value: an array of #ZifPackage's
+ * Return value: An array of #ZifPackage's
  *
  * Since: 0.1.3
  **/
@@ -784,14 +784,14 @@ zif_store_array_what_provides (GPtrArray *store_array, GPtrArray *depends,
 
 /**
  * zif_store_array_what_requires:
- * @store_array: the #GPtrArray of #ZifStores
+ * @store_array: An array of #ZifStores
  * @depends: A #ZifDepend to search for
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Find packages that require a specific string.
  *
- * Return value: an array of #ZifPackage's
+ * Return value: An array of #ZifPackage's
  *
  * Since: 0.1.3
  **/
@@ -807,14 +807,14 @@ zif_store_array_what_requires (GPtrArray *store_array, GPtrArray *depends,
 
 /**
  * zif_store_array_what_obsoletes:
- * @store_array: the #GPtrArray of #ZifStores
+ * @store_array: An array of #ZifStores
  * @depends: A #ZifDepend to search for
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Find packages that conflict with a specific string.
  *
- * Return value: an array of #ZifPackage's
+ * Return value: An array of #ZifPackage's
  *
  * Since: 0.1.3
  **/
@@ -831,14 +831,14 @@ zif_store_array_what_obsoletes (GPtrArray *store_array, GPtrArray *depends,
 
 /**
  * zif_store_array_what_conflicts:
- * @store_array: the #GPtrArray of #ZifStores
+ * @store_array: An array of #ZifStores
  * @depends: A #ZifDepend to search for
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Find packages that conflict with a specific string.
  *
- * Return value: an array of #ZifPackage's
+ * Return value: An array of #ZifPackage's
  *
  * Since: 0.1.3
  **/
@@ -855,13 +855,13 @@ zif_store_array_what_conflicts (GPtrArray *store_array, GPtrArray *depends,
 
 /**
  * zif_store_array_get_categories:
- * @store_array: the #GPtrArray of #ZifStores
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @store_array: An array of #ZifStores
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Return a list of custom categories from all repos.
  *
- * Return value: an array of #ZifCategory's
+ * Return value: An array of #ZifCategory's
  *
  * Since: 0.1.0
  **/
@@ -920,7 +920,7 @@ out:
 /**
  * zif_store_array_new:
  *
- * Return value: A new #GPtrArray class instance.
+ * Return value: A new #GPtrArray instance.
  *
  * Since: 0.1.0
  **/

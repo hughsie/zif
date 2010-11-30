@@ -55,11 +55,11 @@ G_DEFINE_TYPE (ZifUpdateInfo, zif_update_info, G_TYPE_OBJECT)
 
 /**
  * zif_update_info_get_kind:
- * @update_info: the #ZifUpdateInfo object
+ * @update_info: A #ZifUpdateInfo
  *
  * Gets the update info kind.
  *
- * Return value: the kind of update info, e.g. %ZIF_UPDATE_INFO_KIND_CVE.
+ * Return value: The kind of update info, e.g. %ZIF_UPDATE_INFO_KIND_CVE.
  *
  * Since: 0.1.0
  **/
@@ -72,7 +72,7 @@ zif_update_info_get_kind (ZifUpdateInfo *update_info)
 
 /**
  * zif_update_info_get_url:
- * @update_info: the #ZifUpdateInfo object
+ * @update_info: A #ZifUpdateInfo
  *
  * Gets the URL for this update.
  *
@@ -89,7 +89,7 @@ zif_update_info_get_url (ZifUpdateInfo *update_info)
 
 /**
  * zif_update_info_get_title:
- * @update_info: the #ZifUpdateInfo object
+ * @update_info: A #ZifUpdateInfo
  *
  * Gets the title for this update.
  *
@@ -106,10 +106,10 @@ zif_update_info_get_title (ZifUpdateInfo *update_info)
 
 /**
  * zif_update_info_set_kind:
- * @update_info: the #ZifUpdateInfo object
- * @kind: the kind of update info, e.g. %ZIF_UPDATE_INFO_KIND_BUGZILLA
+ * @update_info: A #ZifUpdateInfo
+ * @kind: A kind of update info, e.g. %ZIF_UPDATE_INFO_KIND_BUGZILLA
  *
- * Sets the update_info kind status.
+ * Sets the update info kind.
  *
  * Since: 0.1.0
  **/
@@ -122,8 +122,8 @@ zif_update_info_set_kind (ZifUpdateInfo *update_info, ZifUpdateInfoKind kind)
 
 /**
  * zif_update_info_set_url:
- * @update_info: the #ZifUpdateInfo object
- * @url: the update info URL
+ * @update_info: A #ZifUpdateInfo
+ * @url: The update info URL
  *
  * Sets the update info URL.
  *
@@ -141,8 +141,8 @@ zif_update_info_set_url (ZifUpdateInfo *update_info, const gchar *url)
 
 /**
  * zif_update_info_set_title:
- * @update_info: the #ZifUpdateInfo object
- * @title: the update info title
+ * @update_info: A #ZifUpdateInfo
+ * @title: The update info title
  *
  * Sets the update info title.
  *
@@ -160,11 +160,11 @@ zif_update_info_set_title (ZifUpdateInfo *update_info, const gchar *title)
 
 /**
  * zif_update_info_kind_to_string:
- * @type: the #ZifUpdateInfoKind enumerated value
+ * @type: A #ZifUpdateInfoKind enumerated value
  *
- * Gets the string representation of a #ZifUpdateInfoKind
+ * Gets the string representation of a #ZifUpdateInfoKind.
  *
- * Return value: The #ZifUpdateInfoKind represented as a string
+ * Return value: A string
  **/
 const gchar *
 zif_update_info_kind_to_string (ZifUpdateInfoKind kind)
@@ -178,11 +178,11 @@ zif_update_info_kind_to_string (ZifUpdateInfoKind kind)
 
 /**
  * zif_update_info_kind_from_string:
- * @type: the #ZifUpdateInfoKind enumerated value
+ * @type: A #ZifUpdateInfoKind enumerated value
  *
- * Gets the string representation of a #ZifUpdateInfoKind
+ * Gets the string representation of a #ZifUpdateInfoKind.
  *
- * Return value: The #ZifUpdateInfoKind represented as a string
+ * Return value: A string
  **/
 ZifUpdateInfoKind
 zif_update_info_kind_from_string (const gchar *type)
@@ -304,7 +304,7 @@ zif_update_info_init (ZifUpdateInfo *update_info)
 /**
  * zif_update_info_new:
  *
- * Return value: A new #ZifUpdateInfo class instance.
+ * Return value: A new #ZifUpdateInfo instance.
  *
  * Since: 0.1.0
  **/

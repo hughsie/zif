@@ -26,7 +26,7 @@ have an existing "fat" solution that is shoehorned into working with PackageKit,
 you design a top-down solution. This means that you essentially design a library
 for the sole use of PackageKit, and only code the parts that PackageKit will use.
 The fact that PackageKit doesn't support plugins means you can leave out a chunk
-of code from this new mythical library.
+of code from this new library.
 
 As we're only designing the library to be used by one thing, we can optimize
 things in the right places. We can do all operations with the assumption that
@@ -46,11 +46,11 @@ genericness means we loose all the top-down way of thinking.
 
 So, in the Christmas holidays of 2008, and since in a few evenings of spare time
 since then, I wrote Zif. Zif is designed to work on Fedora, and only Fedora.
-It's not designed to be run by the end user, it's only designed to be run as part
-of a program using libzif.
+It's not really designed to be run by the end user, it's only designed to be
+run as part of a program using libzif.
 
-PackageKit has a zif compatible backend, and it seems to work basically as well
-as the native code ever did. It's certainly not feature complete, but of the methods
+PackageKit has a zif backend, and it seems to work basically as well as the
+native yum code ever did. It's certainly not finished, but of the methods
 that I have written, all of them are faster than yum, and all of them are a lot
 kinder to the user. Zif is designed to only do what the user wants, and not do
 lots of cleverness in the background. To solve the difficult desktop problems
@@ -67,6 +67,7 @@ Zif features:
 • Remote, virtual, installed and local packages handled as abstract objects
 • Local, virtual and remote sources handled using an abstract sack
 • Self test program (602 tests with 49 test transactions)
+• Checking of signed packages, and auto-importing of keyrings
 
 Zif is compatible with rpm, yum and the Fedora infrastructure, specifically:
 • Shares the yum lock
@@ -76,15 +77,14 @@ Zif is compatible with rpm, yum and the Fedora infrastructure, specifically:
 • Reads standard yum repo files
 • Reads a subset of comps for distro-specific groups
 • Uses metalink/mirrorlist repository handling
-• Still uses yum.conf main config file
+• Still uses yum.conf main config file as a fallback
 • Uses the PackageKit categories->group mapping file
+• Fast depsolving, using the same algorithms as yum
 
-What doesn't work:
-• Depsolving (it works, but it's really slow)
-• Checking of signed repodata
+What doesn't work (yet):
+• Checking of signed repodata (code is in place, but waiting for Fedora)
 • YumDB of storing where packages come from
-• Installing updates using deltas
-• Key handling and GPG callbacks
+• Installing updates using deltas (need to implement in ZifTransaction)
 • Some old style yum metadata (ZifMdOtherXml)
 
 Comparisons:
@@ -102,6 +102,3 @@ Comparisons:
 • Zif can work offline and skip repos if they do not exist
 • Zif has no user or developer community
 • Zif compiles on FreeBSD and for Windows
-
-If this zif experiment goes well then Fedora might start installing Zif
-by default. Until then it's just a library born out of curiosity.

@@ -130,11 +130,11 @@ zif_update_kind_to_string (ZifUpdateKind kind)
 
 /**
  * zif_update_get_state:
- * @update: the #ZifUpdate object
+ * @update: A #ZifUpdate
  *
  * Gets the update state.
  *
- * Return value: the state of update, e.g. %PK_UPDATE_STATE_ENUM_STABLE.
+ * Return value: The state of update, e.g. %PK_UPDATE_STATE_ENUM_STABLE.
  *
  * Since: 0.1.0
  **/
@@ -147,11 +147,11 @@ zif_update_get_state (ZifUpdate *update)
 
 /**
  * zif_update_get_kind:
- * @update: the #ZifUpdate object
+ * @update: A #ZifUpdate
  *
  * Gets the update kind.
  *
- * Return value: the state of update, e.g. %PK_INFO_ENUM_SECURITY.
+ * Return value: The state of update, e.g. %PK_INFO_ENUM_SECURITY.
  *
  * Since: 0.1.0
  **/
@@ -164,7 +164,7 @@ zif_update_get_kind (ZifUpdate *update)
 
 /**
  * zif_update_get_id:
- * @update: the #ZifUpdate object
+ * @update: A #ZifUpdate
  *
  * Gets the ID for this update.
  *
@@ -181,7 +181,7 @@ zif_update_get_id (ZifUpdate *update)
 
 /**
  * zif_update_get_title:
- * @update: the #ZifUpdate object
+ * @update: A #ZifUpdate
  *
  * Gets the title for this update.
  *
@@ -198,7 +198,7 @@ zif_update_get_title (ZifUpdate *update)
 
 /**
  * zif_update_get_description:
- * @update: the #ZifUpdate object
+ * @update: A #ZifUpdate
  *
  * Gets the description for this update.
  *
@@ -215,7 +215,7 @@ zif_update_get_description (ZifUpdate *update)
 
 /**
  * zif_update_get_issued:
- * @update: the #ZifUpdate object
+ * @update: A #ZifUpdate
  *
  * Gets the time this update was issued.
  *
@@ -232,7 +232,7 @@ zif_update_get_issued (ZifUpdate *update)
 
 /**
  * zif_update_get_reboot:
- * @update: the #ZifUpdate object
+ * @update: A #ZifUpdate
  *
  * Gets if the update requires a reboot.
  *
@@ -249,11 +249,12 @@ zif_update_get_reboot (ZifUpdate *update)
 
 /**
  * zif_update_get_update_infos:
- * @update: the #ZifUpdate object
+ * @update: A #ZifUpdate
  *
  * Gets the update info for this update.
  *
- * Return value: A refcounted #GPtrArray of #ZifUpdateInfo, or %NULL. Free with g_ptr_array_unref().
+ * Return value: A refcounted #GPtrArray of #ZifUpdateInfo, or %NULL.
+ * Free with g_ptr_array_unref().
  *
  * Since: 0.1.0
  **/
@@ -266,11 +267,12 @@ zif_update_get_update_infos (ZifUpdate *update)
 
 /**
  * zif_update_get_packages:
- * @update: the #ZifUpdate object
+ * @update: A #ZifUpdate
  *
  * Gets the packages for this update.
  *
- * Return value: A refcounted #GPtrArray of #ZifPackage, or %NULL. Free with g_ptr_array_unref().
+ * Return value: A refcounted #GPtrArray of #ZifPackage, or %NULL.
+ * Free with g_ptr_array_unref().
  *
  * Since: 0.1.0
  **/
@@ -283,11 +285,12 @@ zif_update_get_packages (ZifUpdate *update)
 
 /**
  * zif_update_get_changelog:
- * @update: the #ZifUpdate object
+ * @update: A #ZifUpdate
  *
  * Gets the changelog for this update.
  *
- * Return value: A refcounted #GPtrArray of #ZifChangeset's, or %NULL. Free with g_ptr_array_unref().
+ * Return value: A refcounted #GPtrArray of #ZifChangeset's, or %NULL.
+ * Free with g_ptr_array_unref().
  *
  * Since: 0.1.0
  **/
@@ -300,7 +303,7 @@ zif_update_get_changelog (ZifUpdate *update)
 
 /**
  * zif_update_set_state:
- * @update: the #ZifUpdate object
+ * @update: A #ZifUpdate
  * @state: If the update is state
  *
  * Sets the update state status.
@@ -316,8 +319,8 @@ zif_update_set_state (ZifUpdate *update, ZifUpdateState state)
 
 /**
  * zif_update_set_kind:
- * @update: the #ZifUpdate object
- * @kind: the update kind, e.g. %PK_INFO_ENUM_SECURITY.
+ * @update: A #ZifUpdate
+ * @kind: The update kind, e.g. %PK_INFO_ENUM_SECURITY.
  *
  * Sets the kind of update.
  *
@@ -332,8 +335,8 @@ zif_update_set_kind (ZifUpdate *update, ZifUpdateKind kind)
 
 /**
  * zif_update_set_id:
- * @update: the #ZifUpdate object
- * @id: the update ID
+ * @update: A #ZifUpdate
+ * @id: The update ID
  *
  * Sets the update ID.
  *
@@ -351,8 +354,8 @@ zif_update_set_id (ZifUpdate *update, const gchar *id)
 
 /**
  * zif_update_set_title:
- * @update: the #ZifUpdate object
- * @title: the update title
+ * @update: A #ZifUpdate
+ * @title: The update title
  *
  * Sets the update title.
  *
@@ -370,8 +373,8 @@ zif_update_set_title (ZifUpdate *update, const gchar *title)
 
 /**
  * zif_update_set_description:
- * @update: the #ZifUpdate object
- * @description: the update description
+ * @update: A #ZifUpdate
+ * @description: The update description
  *
  * Sets the update description.
  *
@@ -389,8 +392,8 @@ zif_update_set_description (ZifUpdate *update, const gchar *description)
 
 /**
  * zif_update_set_issued:
- * @update: the #ZifUpdate object
- * @issued: the update issued time
+ * @update: A #ZifUpdate
+ * @issued: The update issued time
  *
  * Sets the time the update was issued.
  *
@@ -408,7 +411,7 @@ zif_update_set_issued (ZifUpdate *update, const gchar *issued)
 
 /**
  * zif_update_set_reboot:
- * @update: the #ZifUpdate object
+ * @update: A #ZifUpdate
  * @reboot: if the update requires a reboot
  *
  * Sets the update reboot status
@@ -425,8 +428,8 @@ zif_update_set_reboot (ZifUpdate *update, gboolean reboot)
 
 /**
  * zif_update_add_update_info:
- * @update: the #ZifUpdate object
- * @update_info: the #ZifUpdateInfo
+ * @update: A #ZifUpdate
+ * @update_info: A #ZifUpdateInfo
  *
  * Adds some update info to the update.
  *
@@ -442,8 +445,8 @@ zif_update_add_update_info (ZifUpdate *update, ZifUpdateInfo *update_info)
 
 /**
  * zif_update_add_package:
- * @update: the #ZifUpdate object
- * @package: the #ZifPackage
+ * @update: A #ZifUpdate
+ * @package: A #ZifPackage
  *
  * Adds some update info to the update.
  *
@@ -459,8 +462,8 @@ zif_update_add_package (ZifUpdate *update, ZifPackage *package)
 
 /**
  * zif_update_add_changeset:
- * @update: the #ZifUpdate object
- * @changeset: the #ZifChangeset
+ * @update: A #ZifUpdate
+ * @changeset: A #ZifChangeset
  *
  * Adds a changeset to the update.
  *
@@ -670,7 +673,7 @@ zif_update_init (ZifUpdate *update)
 /**
  * zif_update_new:
  *
- * Return value: A new #ZifUpdate class instance.
+ * Return value: A new #ZifUpdate instance.
  *
  * Since: 0.1.0
  **/

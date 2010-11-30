@@ -508,9 +508,9 @@ out:
 
 /**
  * zif_md_updateinfo_get_detail:
- * @md: the #ZifMdUpdateinfo object
- * @state: the %ZifState object
- * @error: a #GError which is used on failure, or %NULL
+ * @md: A #ZifMdUpdateinfo
+ * @state: A %ZifState
+ * @error: A #GError, or %NULL
  *
  * Gets all the available update data.
  *
@@ -548,10 +548,10 @@ out:
 
 /**
  * zif_md_updateinfo_get_detail_for_package:
- * @md: the #ZifMdUpdateinfo object
- * @package_id: the group to search for
- * @state: the %ZifState object
- * @error: a #GError which is used on failure, or %NULL
+ * @md: A #ZifMdUpdateinfo
+ * @package_id: The package ID to use
+ * @state: A %ZifState
+ * @error: A #GError, or %NULL
  *
  * Gets the list of update details for the package_id.
  *
@@ -678,7 +678,7 @@ zif_md_updateinfo_init (ZifMdUpdateinfo *md)
 /**
  * zif_md_updateinfo_new:
  *
- * Return value: A new #ZifMdUpdateinfo class instance.
+ * Return value: A new #ZifMdUpdateinfo instance.
  *
  * Since: 0.1.0
  **/

@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*-
  *
- * Copyright (C) 2009 Richard Hughes <richard@hughsie.com>
+ * Copyright (C) 2009-2010 Richard Hughes <richard@hughsie.com>
  *
  * Licensed under the GNU General Public License Version 2
  *
@@ -49,7 +49,7 @@ typedef struct {
  *
  * Creates a new referenced counted string
  *
- * Return value: New allocated object
+ * Return value: New allocated string
  *
  * Since: 0.1.0
  **/
@@ -70,7 +70,7 @@ zif_string_new (const gchar *value)
  * Creates a new referenced counted string, using the allocated memory.
  * Do not free this string as it is now owned by the #ZifString.
  *
- * Return value: New allocated object
+ * Return value: New allocated string
  *
  * Since: 0.1.0
  **/
@@ -92,7 +92,7 @@ zif_string_new_value (gchar *value)
  * You MUST not free the static string that backs this object. Use this
  * function with care.
  *
- * Return value: New allocated object
+ * Return value: New allocated string
  *
  * Since: 0.1.3
  **/
@@ -109,11 +109,11 @@ zif_string_new_static (const gchar *value)
 
 /**
  * zif_string_ref:
- * @string: the #ZifString object
+ * @string: A #ZifString
  *
  * Increases the reference count on the object.
  *
- * Return value: the #ZifString object
+ * Return value: A #ZifString
  *
  * Since: 0.1.0
  **/
@@ -128,12 +128,12 @@ zif_string_ref (ZifString *string)
 
 /**
  * zif_string_unref:
- * @string: the #ZifString object
+ * @string: A #ZifString
  *
  * Decreses the reference count on the object, and frees the value if
  * it calls to zero.
  *
- * Return value: the #ZifString object
+ * Return value: A #ZifString
  *
  * Since: 0.1.0
  **/

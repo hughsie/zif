@@ -59,7 +59,7 @@ G_DEFINE_TYPE (ZifDelta, zif_delta, G_TYPE_OBJECT)
 
 /**
  * zif_delta_get_id:
- * @delta: the #ZifDelta object
+ * @delta: A #ZifDelta
  *
  * Gets the id for this delta.
  *
@@ -76,11 +76,11 @@ zif_delta_get_id (ZifDelta *delta)
 
 /**
  * zif_delta_get_size:
- * @delta: the #ZifDelta object
+ * @delta: A #ZifDelta
  *
  * Gets the size and size of the upsize.
  *
- * Return value: the size of the upsize, or 0 for unset.
+ * Return value: The size of the upsize, or 0 for unset.
  *
  * Since: 0.1.0
  **/
@@ -93,7 +93,7 @@ zif_delta_get_size (ZifDelta *delta)
 
 /**
  * zif_delta_get_filename:
- * @delta: the #ZifDelta object
+ * @delta: A #ZifDelta
  *
  * Gets the filename for this delta.
  *
@@ -110,7 +110,7 @@ zif_delta_get_filename (ZifDelta *delta)
 
 /**
  * zif_delta_get_sequence:
- * @delta: the #ZifDelta object
+ * @delta: A #ZifDelta
  *
  * Gets the sequence for this delta.
  *
@@ -127,11 +127,11 @@ zif_delta_get_sequence (ZifDelta *delta)
 
 /**
  * zif_delta_get_checksum:
- * @delta: the #ZifDelta object
+ * @delta: A #ZifDelta
  *
  * Gets the size this delta was checksum.
  *
- * Return value: A string value, or %NULL.
+ * Return value: The string value, or %NULL.
  *
  * Since: 0.1.0
  **/
@@ -144,10 +144,10 @@ zif_delta_get_checksum (ZifDelta *delta)
 
 /**
  * zif_delta_set_id:
- * @delta: the #ZifDelta object
- * @id: the delta id
+ * @delta: A #ZifDelta
+ * @id: A delta identifier
  *
- * Sets the delta id.
+ * Sets the delta identifier.
  *
  * Since: 0.1.0
  **/
@@ -163,7 +163,7 @@ zif_delta_set_id (ZifDelta *delta, const gchar *id)
 
 /**
  * zif_delta_set_size:
- * @delta: the #ZifDelta object
+ * @delta: A #ZifDelta
  * @size: The size of the delta
  *
  * Sets the delta size status.
@@ -179,8 +179,8 @@ zif_delta_set_size (ZifDelta *delta, guint64 size)
 
 /**
  * zif_delta_set_filename:
- * @delta: the #ZifDelta object
- * @filename: the delta filename
+ * @delta: A #ZifDelta
+ * @filename: The delta filename
  *
  * Sets the delta filename.
  *
@@ -198,8 +198,8 @@ zif_delta_set_filename (ZifDelta *delta, const gchar *filename)
 
 /**
  * zif_delta_set_sequence:
- * @delta: the #ZifDelta object
- * @sequence: the delta sequence
+ * @delta: A #ZifDelta
+ * @sequence: The delta sequence
  *
  * Sets the delta sequence.
  *
@@ -217,8 +217,8 @@ zif_delta_set_sequence (ZifDelta *delta, const gchar *sequence)
 
 /**
  * zif_delta_set_checksum:
- * @delta: the #ZifDelta object
- * @checksum: the delta checksum size
+ * @delta: A #ZifDelta
+ * @checksum: The delta checksum size
  *
  * Sets the size the delta was checksum.
  *
@@ -375,7 +375,7 @@ zif_delta_init (ZifDelta *delta)
 /**
  * zif_delta_new:
  *
- * Return value: A new #ZifDelta class instance.
+ * Return value: A new #ZifDelta instance.
  *
  * Since: 0.1.0
  **/

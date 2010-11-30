@@ -11,7 +11,6 @@
     <title>Why create a yum clone?</title>
     <para>
       ZIF is much simpler than yum, and is written in C.
-      It only supports read only operations, unlike yum which can modify.
     </para>
 
   </sect1>

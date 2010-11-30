@@ -72,7 +72,7 @@ G_DEFINE_TYPE (ZifRelease, zif_release, G_TYPE_OBJECT)
 /**
  * zif_release_error_quark:
  *
- * Return value: Our personal error quark.
+ * Return value: An error quark.
  *
  * Since: 0.1.3
  **/
@@ -304,13 +304,13 @@ out:
 
 /**
  * zif_release_get_upgrades:
- * @release: the #ZifRelease object
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @release: A #ZifRelease
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Gets all the upgrades, older and newer.
  *
- * Return value: A #GPtrArray of #ZifUpgrade's, free with g_ptr_array_unref()
+ * Return value: An array of #ZifUpgrade's, free with g_ptr_array_unref()
  *
  * Since: 0.1.3
  **/
@@ -339,13 +339,13 @@ out:
 
 /**
  * zif_release_get_upgrades_new:
- * @release: the #ZifRelease object
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @release: A #ZifRelease
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Gets all the upgrades older than the one currently installed.
  *
- * Return value: A #GPtrArray of #ZifUpgrade's, free with g_ptr_array_unref()
+ * Return value: An array of #ZifUpgrade's, free with g_ptr_array_unref()
  *
  * Since: 0.1.3
  **/
@@ -388,10 +388,10 @@ out:
 
 /**
  * zif_release_get_upgrade_for_version:
- * @release: the #ZifRelease object
- * @version: a distribution version, e.g. 15
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @release: A #ZifRelease
+ * @version: The distribution version, e.g. 15
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Gets a specific upgrade object for the given version.
  *
@@ -1313,12 +1313,12 @@ out:
 
 /**
  * zif_release_upgrade_version:
- * @release: the #ZifRelease object
- * @version: a distribution version, e.g. 15
- * @upgrade_kind: a #ZifReleaseUpgradeKind, e.g. %ZIF_RELEASE_UPGRADE_KIND_MINIMAL
+ * @release: A #ZifRelease
+ * @version: A distribution version, e.g. 15
+ * @upgrade_kind: The kind of upgrade to perform, e.g. %ZIF_RELEASE_UPGRADE_KIND_MINIMAL
  * 		  would only download the kernel and initrd, not the stage2 or the packages.
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Upgrade the distribution to a given version.
  *
@@ -1352,7 +1352,6 @@ zif_release_upgrade_version (ZifRelease *release, guint version, ZifReleaseUpgra
 	data = g_new0 (ZifReleaseUpgradeData, 1);
 	data->version = version;
 	data->upgrade_kind = upgrade_kind;
-
 
 	/* ensure boot directory exists */
 	boot_dir = zif_config_get_string (priv->config,
@@ -1694,7 +1693,7 @@ zif_release_init (ZifRelease *release)
 /**
  * zif_release_new:
  *
- * Return value: A new #ZifRelease class instance.
+ * Return value: A new #ZifRelease instance.
  *
  * Since: 0.1.3
  **/

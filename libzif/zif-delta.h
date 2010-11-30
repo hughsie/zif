@@ -33,7 +33,7 @@ G_BEGIN_DECLS
 
 #define ZIF_TYPE_DELTA		(zif_delta_get_type ())
 #define ZIF_DELTA(o)		(G_TYPE_CHECK_INSTANCE_CAST ((o), ZIF_TYPE_DELTA, ZifDelta))
-#define ZIF_DELTA_CLASS(k)		(G_TYPE_CHECK_CLASS_CAST((k), ZIF_TYPE_DELTA, ZifDeltaClass))
+#define ZIF_DELTA_CLASS(k)	(G_TYPE_CHECK_CLASS_CAST((k), ZIF_TYPE_DELTA, ZifDeltaClass))
 #define ZIF_IS_DELTA(o)		(G_TYPE_CHECK_INSTANCE_TYPE ((o), ZIF_TYPE_DELTA))
 #define ZIF_IS_DELTA_CLASS(k)	(G_TYPE_CHECK_CLASS_TYPE ((k), ZIF_TYPE_DELTA))
 #define ZIF_DELTA_GET_CLASS(o)	(G_TYPE_INSTANCE_GET_CLASS ((o), ZIF_TYPE_DELTA, ZifDeltaClass))
@@ -64,7 +64,7 @@ const gchar		*zif_delta_get_filename		(ZifDelta		*delta);
 const gchar		*zif_delta_get_sequence		(ZifDelta		*delta);
 const gchar		*zif_delta_get_checksum		(ZifDelta		*delta);
 
-/* internal setters: TODO, in seporate -internal header file */
+/* internal setters: TODO, in separate -internal header file */
 void			 zif_delta_set_id		(ZifDelta		*delta,
 							 const gchar		*id);
 void			 zif_delta_set_size		(ZifDelta		*delta,

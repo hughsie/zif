@@ -70,16 +70,16 @@ static gpointer zif_store_local_object = NULL;
 
 /**
  * zif_store_local_set_prefix:
- * @store: the #ZifStoreLocal object
- * @prefix: the install root, e.g. "/", or NULL to use the default
- * @error: a #GError which is used on failure, or %NULL
+ * @store: A #ZifStoreLocal
+ * @prefix: The install root, e.g. "/", or NULL to use the default
+ * @error: A #GError, or %NULL
  *
  * Sets the prefix to use for the install root.
  *
  * Using @prefix set to %NULL to use the value from the config file
  * has been supported since 0.1.3. Earlier versions will assert.
  *
- * Return value: %TRUE for success, %FALSE for failure
+ * Return value: %TRUE for success, %FALSE otherwise
  *
  * Since: 0.1.0
  **/
@@ -152,7 +152,7 @@ out:
 
 /**
  * zif_store_local_get_prefix:
- * @store: the #ZifStoreLocal object
+ * @store: A #ZifStoreLocal
  *
  * Gets the prefix to use for the install root.
  *
@@ -1361,7 +1361,7 @@ zif_store_local_init (ZifStoreLocal *store)
 /**
  * zif_store_local_new:
  *
- * Return value: A new #ZifStoreLocal class instance.
+ * Return value: A new #ZifStoreLocal instance.
  *
  * Since: 0.1.0
  **/

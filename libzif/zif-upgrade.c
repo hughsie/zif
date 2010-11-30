@@ -63,12 +63,12 @@ G_DEFINE_TYPE (ZifUpgrade, zif_upgrade, G_TYPE_OBJECT)
 
 /**
  * zif_upgrade_get_enabled:
- * @upgrade: the #ZifUpgrade object
+ * @upgrade: A #ZifUpgrade
  *
  * Gets if the upgrade is enabled.
  * A disabled upgrade may not be upgradable to.
  *
- * Return value: the enabled of upgrade, e.g. %PK_UPGRADE_ENABLED_ENUM_STABLE.
+ * Return value: If the update is enabled.
  *
  * Since: 0.1.3
  **/
@@ -81,11 +81,11 @@ zif_upgrade_get_enabled (ZifUpgrade *upgrade)
 
 /**
  * zif_upgrade_get_version:
- * @upgrade: the #ZifUpgrade object
+ * @upgrade: A #ZifUpgrade
  *
  * Gets the upgrade version.
  *
- * Return value: the version of the upgrade, or 0 for unset.
+ * Return value: The version of the upgrade, or 0 for unset.
  *
  * Since: 0.1.3
  **/
@@ -98,7 +98,7 @@ zif_upgrade_get_version (ZifUpgrade *upgrade)
 
 /**
  * zif_upgrade_get_id:
- * @upgrade: the #ZifUpgrade object
+ * @upgrade: A #ZifUpgrade
  *
  * Gets the ID for this upgrade.
  *
@@ -115,7 +115,7 @@ zif_upgrade_get_id (ZifUpgrade *upgrade)
 
 /**
  * zif_upgrade_get_baseurl:
- * @upgrade: the #ZifUpgrade object
+ * @upgrade: A #ZifUpgrade
  *
  * Gets the baseurl for this upgrade.
  *
@@ -132,7 +132,7 @@ zif_upgrade_get_baseurl (ZifUpgrade *upgrade)
 
 /**
  * zif_upgrade_get_mirrorlist:
- * @upgrade: the #ZifUpgrade object
+ * @upgrade: A #ZifUpgrade
  *
  * Gets the mirrorlist for this upgrade.
  *
@@ -149,7 +149,7 @@ zif_upgrade_get_mirrorlist (ZifUpgrade *upgrade)
 
 /**
  * zif_upgrade_get_install_mirrorlist:
- * @upgrade: the #ZifUpgrade object
+ * @upgrade: A #ZifUpgrade
  *
  * Gets the install mirrorlist.
  *
@@ -166,7 +166,7 @@ zif_upgrade_get_install_mirrorlist (ZifUpgrade *upgrade)
 
 /**
  * zif_upgrade_get_stable:
- * @upgrade: the #ZifUpgrade object
+ * @upgrade: A #ZifUpgrade
  *
  * Gets if the upgrade is a stable.
  *
@@ -183,7 +183,7 @@ zif_upgrade_get_stable (ZifUpgrade *upgrade)
 
 /**
  * zif_upgrade_set_enabled:
- * @upgrade: the #ZifUpgrade object
+ * @upgrade: A #ZifUpgrade
  * @enabled: If the upgrade is enabled
  *
  * Sets the upgrade enabled status.
@@ -199,8 +199,8 @@ zif_upgrade_set_enabled (ZifUpgrade *upgrade, gboolean enabled)
 
 /**
  * zif_upgrade_set_version:
- * @upgrade: the #ZifUpgrade object
- * @version: the upgrade version, e.g. 15
+ * @upgrade: A #ZifUpgrade
+ * @version: A upgrade version, e.g. 15
  *
  * Sets the version of upgrade.
  *
@@ -215,8 +215,8 @@ zif_upgrade_set_version (ZifUpgrade *upgrade, guint version)
 
 /**
  * zif_upgrade_set_id:
- * @upgrade: the #ZifUpgrade object
- * @id: the upgrade ID
+ * @upgrade: A #ZifUpgrade
+ * @id: The upgrade ID
  *
  * Sets the upgrade ID.
  *
@@ -234,8 +234,8 @@ zif_upgrade_set_id (ZifUpgrade *upgrade, const gchar *id)
 
 /**
  * zif_upgrade_set_baseurl:
- * @upgrade: the #ZifUpgrade object
- * @baseurl: the upgrade baseurl
+ * @upgrade: A #ZifUpgrade
+ * @baseurl: The upgrade baseurl
  *
  * Sets the upgrade baseurl.
  *
@@ -253,8 +253,8 @@ zif_upgrade_set_baseurl (ZifUpgrade *upgrade, const gchar *baseurl)
 
 /**
  * zif_upgrade_set_mirrorlist:
- * @upgrade: the #ZifUpgrade object
- * @mirrorlist: the upgrade mirrorlist
+ * @upgrade: A #ZifUpgrade
+ * @mirrorlist: The upgrade mirrorlist
  *
  * Sets the upgrade mirrorlist.
  *
@@ -272,10 +272,10 @@ zif_upgrade_set_mirrorlist (ZifUpgrade *upgrade, const gchar *mirrorlist)
 
 /**
  * zif_upgrade_set_install_mirrorlist:
- * @upgrade: the #ZifUpgrade object
- * @install_mirrorlist: the upgrade install_mirrorlist time
+ * @upgrade: A #ZifUpgrade
+ * @install_mirrorlist: The upgrade install_mirrorlist
  *
- * Sets the time the upgrade install mirrorlist.
+ * Sets the upgrade install mirrorlist.
  *
  * Since: 0.1.3
  **/
@@ -291,8 +291,8 @@ zif_upgrade_set_install_mirrorlist (ZifUpgrade *upgrade, const gchar *install_mi
 
 /**
  * zif_upgrade_set_stable:
- * @upgrade: the #ZifUpgrade object
- * @stable: if the upgrade is stable
+ * @upgrade: A #ZifUpgrade
+ * @stable: If the upgrade is stable
  *
  * Sets if the upgrade is stable and suitable for end users.
  *
@@ -467,7 +467,7 @@ zif_upgrade_init (ZifUpgrade *upgrade)
 /**
  * zif_upgrade_new:
  *
- * Return value: A new #ZifUpgrade class instance.
+ * Return value: A new #ZifUpgrade instance.
  *
  * Since: 0.1.3
  **/

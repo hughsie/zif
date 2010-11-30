@@ -222,7 +222,7 @@ out:
 /**
  * zif_utils_error_quark:
  *
- * Return value: Our personal error quark.
+ * Return value: An error quark.
  *
  * Since: 0.1.0
  **/
@@ -260,7 +260,7 @@ zif_init (void)
 
 /**
  * zif_boolean_from_text:
- * @text: the input text
+ * @text: The input text
  *
  * Convert a text boolean into it's enumerated boolean state
  *
@@ -281,7 +281,7 @@ zif_boolean_from_text (const gchar *text)
 
 /**
  * zif_list_print_array:
- * @array: The string array to print
+ * @array: An array of #ZifPackage's to print
  *
  * Print an array of strings to %STDOUT.
  *
@@ -325,7 +325,7 @@ zif_package_id_build (const gchar *name, const gchar *version,
  *
  * Formats a PackageId structure from a NEVRA.
  *
- * Return value: The PackageId value, or %NULL if invalid
+ * Return value: A PackageId value, or %NULL if invalid
  *
  * Since: 0.1.0
  **/
@@ -418,9 +418,9 @@ out:
 /**
  * zif_package_convert_evr:
  * @evr: epoch, version, release
- * @epoch: the package epoch
- * @version: the package version
- * @release: the package release
+ * @epoch: The package epoch
+ * @version: The package version
+ * @release: The package release
  *
  * Modifies evr, so pass in copy
  *
@@ -461,8 +461,8 @@ zif_package_convert_evr (gchar *evr, const gchar **epoch, const gchar **version,
 
 /**
  * zif_compare_evr:
- * @a: the first version string, or %NULL
- * @b: the second version string, or %NULL
+ * @a: The first version string, or %NULL
+ * @b: The second version string, or %NULL
  *
  * Compare two [epoch:]version[-release] strings
  *
@@ -528,8 +528,8 @@ out:
 
 /**
  * zif_arch_is_native:
- * @a: the first arch string
- * @b: the second arch string
+ * @a: The first arch string
+ * @b: The second arch string
  *
  * Compare two architectures to see if they are native, so for instance
  * i386 is native on a i686 system, but x64 isn't.
@@ -730,10 +730,10 @@ out:
 
 /**
  * zif_file_decompress:
- * @in: the filename to unpack
- * @out: the file to create
- * @state: a #ZifState to use for progress reporting
- * @error: a valid %GError
+ * @in: A filename to unpack
+ * @out: The file to create
+ * @state: A #ZifState to use for progress reporting
+ * @error: A %GError
  *
  * Decompress files into a directory
  *
@@ -775,9 +775,9 @@ out:
 
 /**
  * zif_file_untar:
- * @filename: the filename to unpack
- * @directory: the directory to unpack into
- * @error: a valid %GError
+ * @filename: A filename to unpack
+ * @directory: The directory to unpack into
+ * @error: A %GError
  *
  * Untar files into a directory
  *
@@ -866,11 +866,11 @@ out:
 
 /**
  * zif_file_get_uncompressed_name:
- * @filename: the filename, e.g. /lib/dave.tar.gz
+ * @filename: A filename, e.g. "/lib/dave.tar.gz"
  *
- * Finds the uncompressed filename.
+ * Finds the uncompressed filename for a compressed file.
  *
- * Return value: the uncompressed file name, e.g. /lib/dave.tar, use g_free() to free.
+ * Return value: The uncompressed file name, e.g. /lib/dave.tar, use g_free() to free.
  *
  * Since: 0.1.0
  **/
@@ -896,7 +896,7 @@ zif_file_get_uncompressed_name (const gchar *filename)
 
 /**
  * zif_file_is_compressed_name:
- * @filename: the filename, e.g. /lib/dave.tar.gz
+ * @filename: A filename, e.g. /lib/dave.tar.gz
  *
  * Finds out if the filename is compressed
  *
@@ -919,12 +919,12 @@ zif_file_is_compressed_name (const gchar *filename)
 
 /**
  * zif_package_id_split:
- * @package_id: the ; delimited PackageID to split
+ * @package_id: The ';' delimited PackageID to split
  *
  * Splits a PackageID into the correct number of parts, checking the correct
  * number of delimiters are present.
  *
- * Return value: a GStrv or %NULL if invalid, use g_strfreev() to free
+ * Return value: A #GStrv or %NULL if invalid, use g_strfreev() to free
  *
  * Since: 0.1.0
  **/
@@ -951,13 +951,13 @@ out:
 
 /**
  * zif_package_id_get_name:
- * @package_id: the ; delimited PackageID to split
+ * @package_id: The ';' delimited PackageID to split
  *
  * Gets the package name for a PackageID. This is 9x faster than using
  * zif_package_id_split() where you only need the %ZIF_PACKAGE_ID_NAME
  * component.
  *
- * Return value: a string or %NULL if invalid, use g_free() to free
+ * Return value: A string or %NULL if invalid, use g_free() to free
  *
  * Since: 0.1.1
  **/
@@ -984,11 +984,11 @@ out:
 
 /**
  * zif_package_id_get_printable:
- * @package_id: the PackageID to format
+ * @package_id: A PackageID to format
  *
  * Formats the package ID in a way that is suitable to show the user.
  *
- * Return value: a string or %NULL if invalid, use g_free() to free
+ * Return value: A string or %NULL if invalid, use g_free() to free
  *
  * Since: 0.1.3
  **/
@@ -1014,7 +1014,7 @@ out:
 
 /**
  * zif_package_id_check:
- * @package_id: the PackageID to check
+ * @package_id: A PackageID to check
  *
  * Return value: %TRUE if the PackageID was well formed.
  *
@@ -1049,11 +1049,11 @@ zif_package_id_check (const gchar *package_id)
 
 /**
  * zif_time_string_to_seconds:
- * @value: the yum time string, e.g. "7h"
+ * @value: A yum time string, e.g. "7h"
  *
  * Converts a yum time string into the number of seconds.
  *
- * Return value: the number of seconds, or zero for failure to parse.
+ * Return value: A number of seconds, or zero for failure to parse.
  *
  * Since: 0.1.0
  **/

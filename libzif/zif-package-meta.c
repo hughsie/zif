@@ -244,12 +244,12 @@ out:
 
 /**
  * zif_package_meta_set_from_data:
- * @pkg: the #ZifPackageMeta object
- * @data: the spec file data
+ * @pkg: A #ZifPackageMeta
+ * @data: The spec file data
  *
  * Sets a meta package object from a some string data.
  *
- * Return value: %TRUE for success, %FALSE for failure
+ * Return value: %TRUE for success, %FALSE otherwise
  *
  * Since: 0.1.3
  **/
@@ -272,13 +272,13 @@ zif_package_meta_set_from_data (ZifPackageMeta *pkg, gchar **data)
 
 /**
  * zif_package_meta_set_from_filename:
- * @pkg: the #ZifPackageMeta object
- * @filename: the meta filename
- * @error: a #GError which is used on failure, or %NULL
+ * @pkg: A #ZifPackageMeta
+ * @filename: The meta filename
+ * @error: A #GError, or %NULL
  *
  * Sets a meta package object from a meta file.
  *
- * Return value: %TRUE for success, %FALSE for failure
+ * Return value: %TRUE for success, %FALSE otherwise
  *
  * Since: 0.1.3
  **/
@@ -392,7 +392,7 @@ zif_package_meta_init (ZifPackageMeta *pkg)
 /**
  * zif_package_meta_new:
  *
- * Return value: A new #ZifPackageMeta class instance.
+ * Return value: A new #ZifPackageMeta instance.
  *
  * Since: 0.1.3
  **/

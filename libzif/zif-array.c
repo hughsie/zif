@@ -21,7 +21,7 @@
 
 /**
  * SECTION:zif-array
- * @short_description: Hashed array implementation
+ * @short_description: Hashed array Implimentation
  *
  * A #ZifArray can be treated either as a hash table, or an array.
  */
@@ -47,8 +47,8 @@ G_DEFINE_TYPE (ZifArray, zif_array, G_TYPE_OBJECT)
 
 /**
  * zif_array_add:
- * @array: the #ZifArray object
- * @data: the object to store in the array
+ * @array: A #ZifArray
+ * @data: The object to store in the array
  *
  * Adds an object to the array.
  * The object is refcounted internally.
@@ -90,8 +90,8 @@ out:
 
 /**
  * zif_array_remove:
- * @array: the #ZifArray object
- * @data: the object to remove
+ * @array: A #ZifArray
+ * @data: The object to remove
  *
  * Removes an object from the array.
  *
@@ -130,8 +130,8 @@ out:
 
 /**
  * zif_array_remove_with_key:
- * @array: the #ZifArray object
- * @key: the object key to remove
+ * @array: A #ZifArray
+ * @key: The object key to remove
  *
  * Removes an object from the array.
  *
@@ -167,12 +167,12 @@ out:
 
 /**
  * zif_array_lookup:
- * @array: the #ZifArray object
- * @data: the object to find
+ * @array: A #ZifArray
+ * @data: The object to find
  *
  * Looks up an object from the array.
  *
- * Return value: The object, which is *not* ref'd.
+ * Return value: An object, which is *not* ref'd.
  *
  * Since: 0.1.3
  **/
@@ -190,12 +190,12 @@ zif_array_lookup (ZifArray *array, gpointer data)
 
 /**
  * zif_array_lookup_with_key:
- * @array: the #ZifArray object
- * @key: the object key to find
+ * @array: A #ZifArray
+ * @key: The object key to find
  *
  * Looks up an object from the array.
  *
- * Return value: The object, which is *not* ref'd.
+ * Return value: An object, which is *not* ref'd.
  *
  * Since: 0.1.3
  **/
@@ -210,12 +210,12 @@ zif_array_lookup_with_key (ZifArray *array, const gchar *key)
 
 /**
  * zif_array_index:
- * @array: the #ZifArray object
- * @index: the array index
+ * @array: A #ZifArray
+ * @index: The array index
  *
  * Gets an object from the array.
  *
- * Return value: The object, which is *not* ref'd.
+ * Return value: An object, which is *not* ref'd.
  *
  * Since: 0.1.3
  **/
@@ -229,7 +229,7 @@ zif_array_index (ZifArray *array, guint index)
 
 /**
  * zif_array_get_array:
- * @array: the #ZifArray object
+ * @array: A #ZifArray
  *
  * Gets the object array
  *
@@ -246,8 +246,8 @@ zif_array_get_array (ZifArray *array)
 
 /**
  * zif_array_set_mapping_func:
- * @array: the #ZifArray object
- * @mapping_func: the mapping function from GObject to const string.
+ * @array: A #ZifArray
+ * @mapping_func: A mapping function from GObject to const string.
  *
  * Sets the mapping function.
  *
@@ -301,7 +301,7 @@ zif_array_init (ZifArray *array)
 /**
  * zif_array_new:
  *
- * Return value: A new #ZifArray class instance.
+ * Return value: A new #ZifArray instance.
  *
  * Since: 0.1.3
  **/

@@ -464,11 +464,11 @@ out:
 
 /**
  * zif_md_delta_search_for_package:
- * @md: the #ZifMdDelta object
- * @package_id_update: the package-id that is available as an update
- * @package_id_installed: the package-id that is installed
- * @state: the %ZifState object
- * @error: a #GError which is used on failure, or %NULL
+ * @md: A #ZifMdDelta
+ * @package_id_update: A package-id that is available as an update
+ * @package_id_installed: A package-id that is installed
+ * @state: A %ZifState
+ * @error: A #GError, or %NULL
  *
  * Gets the delta details for the package_id.
  *
@@ -567,7 +567,7 @@ zif_md_delta_init (ZifMdDelta *md)
 /**
  * zif_md_delta_new:
  *
- * Return value: A new #ZifMdDelta class instance.
+ * Return value: A new #ZifMdDelta instance.
  *
  * Since: 0.1.0
  **/

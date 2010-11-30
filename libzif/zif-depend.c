@@ -60,8 +60,8 @@ G_DEFINE_TYPE (ZifDepend, zif_depend, G_TYPE_OBJECT)
 
 /**
  * zif_depend_compare:
- * @a: the #ZifDepend
- * @b: the #ZifDepend to compare
+ * @a: A #ZifDepend
+ * @b: A #ZifDepend to compare
  *
  * Compares one dependancy against another.
  * This is basically a zif_compare_evr() on the versions.
@@ -83,12 +83,12 @@ zif_depend_compare (ZifDepend *a, ZifDepend *b)
 
 /**
  * zif_depend_satisfies:
- * @got: the #ZifDepend we've got
- * @need: the #ZifDepend we need
+ * @got: The #ZifDepend we've got
+ * @need: The #ZifDepend we need
  *
  * Returns if the dependency will be satisfied with what we've got.
  *
- * Return value: %TRUE if okay
+ * Return value: %TRUE if okay, %FALSE otherwise
  *
  * Since: 0.1.3
  **/
@@ -202,7 +202,7 @@ out:
 
 /**
  * zif_depend_flag_to_string:
- * @flag: the #ZifDependFlag
+ * @flag: A #ZifDependFlag
  *
  * Returns a string representation of the #ZifDependFlag.
  *
@@ -230,7 +230,7 @@ zif_depend_flag_to_string (ZifDependFlag flag)
 
 /**
  * zif_depend_to_string:
- * @depend: a valid #ZifDepend object
+ * @depend: A #ZifDepend
  *
  * Returns a string representation of the #ZifDepend object.
  *
@@ -255,7 +255,7 @@ zif_depend_to_string (ZifDepend *depend)
 
 /**
  * zif_depend_get_description:
- * @depend: a valid #ZifDepend object
+ * @depend: A #ZifDepend
  *
  * Returns a string representation of the #ZifDepend object.
  *
@@ -282,14 +282,13 @@ zif_depend_get_description (ZifDepend *depend)
 	return depend->priv->description;
 }
 
-
 /**
  * zif_depend_get_flag:
- * @depend: the #ZifDepend object
+ * @depend: A #ZifDepend
  *
  * Gets the depend flag.
  *
- * Return value: the flag of depend, e.g. %ZIF_DEPEND_FLAG_LESS.
+ * Return value: A flag of depend, e.g. %ZIF_DEPEND_FLAG_LESS.
  *
  * Since: 0.1.3
  **/
@@ -302,7 +301,7 @@ zif_depend_get_flag (ZifDepend *depend)
 
 /**
  * zif_depend_get_name:
- * @depend: the #ZifDepend object
+ * @depend: A #ZifDepend
  *
  * Gets the name for this depend.
  *
@@ -321,7 +320,7 @@ zif_depend_get_name (ZifDepend *depend)
 
 /**
  * zif_depend_get_version:
- * @depend: the #ZifDepend object
+ * @depend: A #ZifDepend
  *
  * Gets the version for this depend.
  *
@@ -340,7 +339,7 @@ zif_depend_get_version (ZifDepend *depend)
 
 /**
  * zif_depend_set_flag:
- * @depend: the #ZifDepend object
+ * @depend: A #ZifDepend
  * @flag: If the depend is flag
  *
  * Sets the depend flag status.
@@ -358,8 +357,8 @@ zif_depend_set_flag (ZifDepend *depend, ZifDependFlag flag)
 
 /**
  * zif_depend_set_name:
- * @depend: the #ZifDepend object
- * @name: the depend name
+ * @depend: A #ZifDepend
+ * @name: The depend name
  *
  * Sets the depend name.
  *
@@ -378,8 +377,8 @@ zif_depend_set_name (ZifDepend *depend, const gchar *name)
 
 /**
  * zif_depend_set_name_str:
- * @depend: the #ZifDepend object
- * @name: the depend name
+ * @depend: A #ZifDepend
+ * @name: The depend name
  *
  * Sets the depend name.
  *
@@ -398,8 +397,8 @@ zif_depend_set_name_str (ZifDepend *depend, ZifString *name)
 
 /**
  * zif_depend_set_version:
- * @depend: the #ZifDepend object
- * @version: the depend version
+ * @depend: A #ZifDepend
+ * @version: The depend version
  *
  * Sets the depend version.
  *
@@ -418,8 +417,8 @@ zif_depend_set_version (ZifDepend *depend, const gchar *version)
 
 /**
  * zif_depend_set_version_str:
- * @depend: the #ZifDepend object
- * @version: the depend version
+ * @depend: A #ZifDepend
+ * @version: The depend version
  *
  * Sets the depend version.
  *
@@ -462,9 +461,9 @@ zif_depend_string_to_flag (const gchar *value)
 
 /**
  * zif_depend_parse_description:
- * @depend: the #ZifDepend object
- * @value: the depend string, e.g. "obsolete-package < 1.0.0"
- * @error: a #GError which is used on failure, or %NULL
+ * @depend: A #ZifDepend
+ * @value: Depend string, e.g. "obsolete-package < 1.0.0"
+ * @error: A #GError, or %NULL
  *
  * Parses a depend string and sets internal state.
  *
@@ -629,7 +628,7 @@ zif_depend_init (ZifDepend *depend)
 /**
  * zif_depend_new:
  *
- * Return value: A new #ZifDepend class instance.
+ * Return value: A new #ZifDepend instance.
  *
  * Since: 0.1.3
  **/

@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*-
  *
- * Copyright (C) 2008 Richard Hughes <richard@hughsie.com>
+ * Copyright (C) 2008-2010 Richard Hughes <richard@hughsie.com>
  *
  * Licensed under the GNU General Public License Version 2
  *
@@ -60,7 +60,7 @@ static gpointer zif_repos_object = NULL;
 /**
  * zif_repos_error_quark:
  *
- * Return value: Our personal error quark.
+ * Return value: An error quark.
  *
  * Since: 0.1.0
  **/
@@ -75,16 +75,16 @@ zif_repos_error_quark (void)
 
 /**
  * zif_repos_set_repos_dir:
- * @repos: the #ZifRepos object
- * @repos_dir: the directory, e.g. "/etc/yum.repos.d", or NULL to use the default
- * @error: a #GError which is used on failure, or %NULL
+ * @repos: A #ZifRepos
+ * @repos_dir: A directory, e.g. "/etc/yum.repos.d", or NULL to use the default
+ * @error: A #GError, or %NULL
  *
  * Set the repository directory.
  *
  * Using @repos_dir set to %NULL to use the value from the config file
  * has been supported since 0.1.3. Earlier versions will assert.
  *
- * Return value: %TRUE for success, %FALSE for failure
+ * Return value: %TRUE for success, %FALSE otherwise
  *
  * Since: 0.1.0
  **/
@@ -211,13 +211,13 @@ zif_repos_sort_store_cb (ZifStore **store1, ZifStore **store2)
 
 /**
  * zif_repos_load:
- * @repos: the #ZifRepos object
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @repos: A #ZifRepos
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Load the repository, and parse it's config file.
  *
- * Return value: %TRUE for success, %FALSE for failure
+ * Return value: %TRUE for success, %FALSE otherwise
  *
  * Since: 0.1.0
  **/
@@ -393,13 +393,13 @@ out:
 
 /**
  * zif_repos_get_stores:
- * @repos: the #ZifRepos object
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @repos: A #ZifRepos
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Gets the enabled and disabled remote stores.
  *
- * Return value: a list of #ZifStore's
+ * Return value: A list of #ZifStore's
  *
  * Since: 0.1.0
  **/
@@ -433,13 +433,13 @@ out:
 
 /**
  * zif_repos_get_stores_enabled:
- * @repos: the #ZifRepos object
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @repos: A #ZifRepos
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Gets the enabled remote stores.
  *
- * Return value: a list of #ZifStore's
+ * Return value: A list of #ZifStore's
  *
  * Since: 0.1.0
  **/
@@ -473,10 +473,10 @@ out:
 
 /**
  * zif_repos_get_store:
- * @repos: the #ZifRepos object
- * @id: the repository id, e.g. "fedora"
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @repos: A #ZifRepos
+ * @id: A repository id, e.g. "fedora"
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Gets the store matching the ID.
  *
@@ -604,7 +604,7 @@ zif_repos_init (ZifRepos *repos)
 /**
  * zif_repos_new:
  *
- * Return value: A new #ZifRepos class instance.
+ * Return value: A new #ZifRepos instance.
  *
  * Since: 0.1.0
  **/

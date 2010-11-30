@@ -125,11 +125,11 @@ zif_state_action_to_string_localized (ZifStateAction action)
 		return _("Checking");
 	}
 	if (action == ZIF_STATE_ACTION_DOWNLOADING) {
-		/* TRANSLATORS: a file is currently downloading */
+		/* TRANSLATORS: A file is currently downloading */
 		return _("Downloading");
 	}
 	if (action == ZIF_STATE_ACTION_LOADING_REPOS) {
-		/* TRANSLATORS: a repository file is being read, and
+		/* TRANSLATORS: A repository file is being read, and
 		 * the packages created internally */
 		return _("Loading repository");
 	}
@@ -733,7 +733,7 @@ zif_cmd_get_depends (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 	/* check we have a value */
 	if (values == NULL || values[0] == NULL) {
-		/* TRANSLATORS: error message: the user did not specify
+		/* TRANSLATORS: error message: A user did not specify
 		 * a required value */
 		g_set_error_literal (error, 1, 0,
 				     _("Specify a package name"));
@@ -918,7 +918,7 @@ zif_cmd_get_details (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 	/* check we have a value */
 	if (values == NULL || values[0] == NULL) {
-		/* TRANSLATORS: error message: the user did not specify
+		/* TRANSLATORS: error message: A user did not specify
 		 * a required value */
 		g_set_error_literal (error, 1, 0,
 				     _("Specify a package name"));
@@ -1538,7 +1538,7 @@ zif_cmd_get_config_value (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 	/* check we have a value */
 	if (values == NULL || values[0] == NULL) {
-		/* TRANSLATORS: the user didn't specify a required value */
+		/* TRANSLATORS: A user didn't specify a required value */
 		g_set_error_literal (error, 1, 0, _("Specify a config key"));
 		goto out;
 	}
@@ -1869,7 +1869,7 @@ zif_cmd_install (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 	/* check we have a value */
 	if (values == NULL || values[0] == NULL) {
-		/* TRANSLATORS: error message: the user did not specify
+		/* TRANSLATORS: error message: A user did not specify
 		 * a required value */
 		g_set_error_literal (error, 1, 0,
 				     _("Specify a package name"));
@@ -2339,7 +2339,7 @@ zif_cmd_remove (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 	/* check we have a value */
 	if (values == NULL || values[0] == NULL) {
-		/* TRANSLATORS: error message: the user did not specify
+		/* TRANSLATORS: error message: A user did not specify
 		 * a required value */
 		g_set_error_literal (error, 1, 0,
 				     _("Specify a package name"));
@@ -2662,7 +2662,7 @@ zif_cmd_resolve (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 	/* check we have a value */
 	if (values == NULL || values[0] == NULL) {
-		/* TRANSLATORS: error message: the user did not specify
+		/* TRANSLATORS: error message: A user did not specify
 		 * a required value */
 		g_set_error_literal (error, 1, 0,
 				     _("Specify a package name"));
@@ -2739,7 +2739,7 @@ zif_cmd_search_category (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 	/* check we have a value */
 	if (values == NULL || values[0] == NULL) {
-		/* TRANSLATORS: error message: the user did not specify
+		/* TRANSLATORS: error message: A user did not specify
 		 * a required value */
 		g_set_error_literal (error, 1, 0,
 				     _("Specify a category"));
@@ -3096,7 +3096,6 @@ out:
 		g_ptr_array_unref (array);
 	return ret;
 }
-
 
 /**
  * zif_cmd_update_all:

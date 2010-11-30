@@ -78,7 +78,7 @@ G_DEFINE_TYPE (ZifMd, zif_md, G_TYPE_OBJECT)
 /**
  * zif_md_error_quark:
  *
- * Return value: Our personal error quark.
+ * Return value: An error quark.
  *
  * Since: 0.1.0
  **/
@@ -93,7 +93,7 @@ zif_md_error_quark (void)
 
 /**
  * zif_md_get_is_loaded:
- * @md: the #ZifMd object
+ * @md: A #ZifMd
  *
  * Gets if the metadata has already been loaded.
  *
@@ -110,11 +110,11 @@ zif_md_get_is_loaded (ZifMd *md)
 
 /**
  * zif_md_get_id:
- * @md: the #ZifMd object
+ * @md: A #ZifMd
  *
  * Gets the md identifier, usually the repo name.
  *
- * Return value: the repo id.
+ * Return value: The repo identifier.
  *
  * Since: 0.1.0
  **/
@@ -127,11 +127,11 @@ zif_md_get_id (ZifMd *md)
 
 /**
  * zif_md_get_filename:
- * @md: the #ZifMd object
+ * @md: A #ZifMd
  *
  * Gets the compressed filename of the repo.
  *
- * Return value: the filename
+ * Return value: The filename, e.g. "/var/cache/dave.xml.bz2"
  *
  * Since: 0.1.0
  **/
@@ -144,11 +144,11 @@ zif_md_get_filename (ZifMd *md)
 
 /**
  * zif_md_get_location:
- * @md: the #ZifMd object
+ * @md: A #ZifMd
  *
  * Gets the location of the repo.
  *
- * Return value: the location
+ * Return value: The location
  *
  * Since: 0.1.0
  **/
@@ -161,11 +161,11 @@ zif_md_get_location (ZifMd *md)
 
 /**
  * zif_md_get_kind:
- * @md: the #ZifMd object
+ * @md: A #ZifMd
  *
  * Gets the type of the repo.
  *
- * Return value: the type
+ * Return value: The type
  *
  * Since: 0.1.0
  **/
@@ -178,11 +178,11 @@ zif_md_get_kind (ZifMd *md)
 
 /**
  * zif_md_get_filename_uncompressed:
- * @md: the #ZifMd object
+ * @md: A #ZifMd
  *
  * Gets the uncompressed filename of the repo.
  *
- * Return value: the filename
+ * Return value: The uncompressed filename, e.g. "/var/cache/dave.xml"
  *
  * Since: 0.1.0
  **/
@@ -195,8 +195,8 @@ zif_md_get_filename_uncompressed (ZifMd *md)
 
 /**
  * zif_md_set_filename:
- * @md: the #ZifMd object
- * @filename: the base filename, e.g. "master.xml.bz2"
+ * @md: A #ZifMd
+ * @filename: The base filename, e.g. "master.xml.bz2"
  *
  * Sets the filename of the compressed file.
  *
@@ -223,8 +223,8 @@ zif_md_set_filename (ZifMd *md, const gchar *filename)
 
 /**
  * zif_md_set_max_age:
- * @md: the #ZifMd object
- * @max_age: the maximum permitted value of the metadata, or 0
+ * @md: A #ZifMd
+ * @max_age: The maximum permitted value of the metadata, or 0
  *
  * Sets the maximum age of the metadata file. Any files older than this will
  * be deleted and re-downloaded.
@@ -240,8 +240,8 @@ zif_md_set_max_age (ZifMd *md, guint64 max_age)
 
 /**
  * zif_md_set_timestamp:
- * @md: the #ZifMd object
- * @timestamp: the timestamp value
+ * @md: A #ZifMd
+ * @timestamp: The timestamp value
  *
  * Sets the timestamp of the compressed file.
  *
@@ -259,8 +259,8 @@ zif_md_set_timestamp (ZifMd *md, guint timestamp)
 
 /**
  * zif_md_set_location:
- * @md: the #ZifMd object
- * @location: the location
+ * @md: A #ZifMd
+ * @location: The location
  *
  * Sets the location of the compressed file, e.g. "repodata/35d817e-primary.sqlite.bz2"
  *
@@ -283,8 +283,8 @@ zif_md_set_location (ZifMd *md, const gchar *location)
 
 /**
  * zif_md_set_checksum:
- * @md: the #ZifMd object
- * @checksum: the checksum value
+ * @md: A #ZifMd
+ * @checksum: The checksum value
  *
  * Sets the checksum of the compressed file.
  *
@@ -303,8 +303,8 @@ zif_md_set_checksum (ZifMd *md, const gchar *checksum)
 
 /**
  * zif_md_set_checksum_uncompressed:
- * @md: the #ZifMd object
- * @checksum_uncompressed: the uncompressed checksum value
+ * @md: A #ZifMd
+ * @checksum_uncompressed: The uncompressed checksum value
  *
  * Sets the checksum of the uncompressed file.
  *
@@ -323,8 +323,8 @@ zif_md_set_checksum_uncompressed (ZifMd *md, const gchar *checksum_uncompressed)
 
 /**
  * zif_md_set_checksum_type:
- * @md: the #ZifMd object
- * @checksum_type: the checksum type
+ * @md: A #ZifMd
+ * @checksum_type: The checksum type
  *
  * Sets the checksum_type of the files.
  *
@@ -341,8 +341,8 @@ zif_md_set_checksum_type (ZifMd *md, GChecksumType checksum_type)
 
 /**
  * zif_md_set_id:
- * @md: the #ZifMd object
- * @id: the repository id, e.g. "fedora"
+ * @md: A #ZifMd
+ * @id: The repository id, e.g. "fedora"
  *
  * Sets the repository ID for this metadata.
  *
@@ -364,8 +364,8 @@ zif_md_set_id (ZifMd *md, const gchar *id)
 
 /**
  * zif_md_set_store_remote:
- * @md: the #ZifMd object
- * @remote: the #ZifStoreRemote that created this metadata object
+ * @md: A #ZifMd
+ * @remote: The #ZifStoreRemote that created this metadata
  *
  * Sets the remote store for this metadata.
  *
@@ -383,7 +383,7 @@ zif_md_set_store_remote (ZifMd *md, ZifStoreRemote *remote)
 
 /**
  * zif_md_get_store_remote:
- * @md: the #ZifMd object
+ * @md: A #ZifMd
  *
  * Gets the remote store for this metadata.
  *
@@ -647,13 +647,13 @@ out:
 
 /**
  * zif_md_load:
- * @md: the #ZifMd object
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @md: A #ZifMd
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Load the metadata store.
  *
- * Return value: %TRUE for success, %FALSE for failure
+ * Return value: %TRUE for success, %FALSE otherwise
  *
  * Since: 0.1.0
  **/
@@ -733,13 +733,13 @@ out:
 
 /**
  * zif_md_unload:
- * @md: the #ZifMd object
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @md: A #ZifMd
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Unload the metadata store.
  *
- * Return value: %TRUE for success, %FALSE for failure
+ * Return value: %TRUE for success, %FALSE otherwise
  *
  * Since: 0.1.0
  **/
@@ -767,14 +767,14 @@ zif_md_unload (ZifMd *md, ZifState *state, GError **error)
 
 /**
  * zif_md_resolve:
- * @md: the #ZifMd object
- * @search: the search term, e.g. "gnome-power-manager"
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @md: A #ZifMd
+ * @search: Search term, e.g. "gnome-power-manager"
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Finds all remote packages that match the name exactly.
  *
- * Return value: an array of #ZifPackageRemote's
+ * Return value: An array of #ZifPackageRemote's
  *
  * Since: 0.1.0
  **/
@@ -806,15 +806,15 @@ out:
 
 /**
  * zif_md_search_file:
- * @md: the #ZifMd object
- * @search: the search term, e.g. "/usr/bin/powertop"
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @md: A #ZifMd
+ * @search: Search term, e.g. "/usr/bin/powertop"
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Gets a list of all packages that contain the file.
  * Results are pkgId's descriptors, i.e. 64 bit hashes as test.
  *
- * Return value: a string list of pkgId's
+ * Return value: A string list of pkgId's
  *
  * Since: 0.1.0
  **/
@@ -846,14 +846,14 @@ out:
 
 /**
  * zif_md_search_name:
- * @md: the #ZifMd object
- * @search: the search term, e.g. "power"
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @md: A #ZifMd
+ * @search: Search term, e.g. "power"
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Finds all packages that match the name.
  *
- * Return value: an array of #ZifPackageRemote's
+ * Return value: An array of #ZifPackageRemote's
  *
  * Since: 0.1.0
  **/
@@ -885,14 +885,14 @@ out:
 
 /**
  * zif_md_search_details:
- * @md: the #ZifMd object
- * @search: the search term, e.g. "advanced"
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @md: A #ZifMd
+ * @search: Search term, e.g. "advanced"
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Finds all packages that match the name or description.
  *
- * Return value: an array of #ZifPackageRemote's
+ * Return value: An array of #ZifPackageRemote's
  *
  * Since: 0.1.0
  **/
@@ -924,14 +924,14 @@ out:
 
 /**
  * zif_md_search_group:
- * @md: the #ZifMd object
- * @search: the search term, e.g. "games/console"
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @md: A #ZifMd
+ * @search: Search term, e.g. "games/console"
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Finds all packages that match the group.
  *
- * Return value: an array of #ZifPackageRemote's
+ * Return value: An array of #ZifPackageRemote's
  *
  * Since: 0.1.0
  **/
@@ -963,14 +963,14 @@ out:
 
 /**
  * zif_md_search_pkgid:
- * @md: the #ZifMd object
- * @search: the search term as a 64 bit hash
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @md: A #ZifMd
+ * @search: A search term as a 64 bit hash
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Finds all packages that match the given pkgId.
  *
- * Return value: an array of #ZifPackageRemote's
+ * Return value: An array of #ZifPackageRemote's
  *
  * Since: 0.1.0
  **/
@@ -1002,14 +1002,14 @@ out:
 
 /**
  * zif_md_what_provides:
- * @md: the #ZifMd object
+ * @md: A #ZifMd
  * @depends: an array of #ZifDepend's provide
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Finds all packages that match the given provide.
  *
- * Return value: an array of #ZifPackageRemote's
+ * Return value: An array of #ZifPackageRemote's
  *
  * Since: 0.1.3
  **/
@@ -1041,17 +1041,16 @@ out:
 	return array;
 }
 
-
 /**
  * zif_md_what_requires:
- * @md: the #ZifMd object
+ * @md: A #ZifMd
  * @depends: an array of #ZifDepend's provide
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Finds all packages that match the given provide.
  *
- * Return value: an array of #ZifPackageRemote's
+ * Return value: An array of #ZifPackageRemote's
  *
  * Since: 0.1.3
  **/
@@ -1085,14 +1084,14 @@ out:
 
 /**
  * zif_md_what_obsoletes:
- * @md: the #ZifMd object
+ * @md: A #ZifMd
  * @depends: an array of #ZifDepend's obsolete
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Finds all packages that obsolete the given provide.
  *
- * Return value: an array of #ZifPackageRemote's
+ * Return value: An array of #ZifPackageRemote's
  *
  * Since: 0.1.3
  **/
@@ -1126,14 +1125,14 @@ out:
 
 /**
  * zif_md_what_conflicts:
- * @md: the #ZifMd object
+ * @md: A #ZifMd
  * @depends: an array of #ZifDepend's conflict
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Finds all packages that conflict with the given depends.
  *
- * Return value: an array of #ZifPackageRemote's
+ * Return value: An array of #ZifPackageRemote's
  *
  * Since: 0.1.3
  **/
@@ -1167,14 +1166,14 @@ out:
 
 /**
  * zif_md_find_package:
- * @md: the #ZifMd object
- * @package_id: the PackageId to match
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @md: A #ZifMd
+ * @package_id: A PackageId to match
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Finds all packages that match PackageId.
  *
- * Return value: an array of #ZifPackageRemote's
+ * Return value: An array of #ZifPackageRemote's
  *
  * Since: 0.1.0
  **/
@@ -1206,14 +1205,14 @@ out:
 
 /**
  * zif_md_get_changelog:
- * @md: the #ZifMd object
- * @pkgid: the internal pkgid to match
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @md: A #ZifMd
+ * @pkgid: A internal pkgid to match
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Gets the changelog data for a specific package
  *
- * Return value: an array of #ZifChangeset's
+ * Return value: An array of #ZifChangeset's
  *
  * Since: 0.1.0
  **/
@@ -1245,10 +1244,10 @@ out:
 
 /**
  * zif_md_get_files:
- * @md: the #ZifMd object
- * @package: the %ZifPackage
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @md: A #ZifMd
+ * @package: A %ZifPackage
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Gets the file list for a specific package.
  *
@@ -1284,14 +1283,14 @@ out:
 
 /**
  * zif_md_get_provides:
- * @md: the #ZifMd object
- * @package: the %ZifPackage
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @md: A #ZifMd
+ * @package: A %ZifPackage
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Gets the provides for a specific package.
  *
- * Return value: an array of #ZifDepend's, free with g_ptr_array_unref()
+ * Return value: An array of #ZifDepend's, free with g_ptr_array_unref()
  *
  * Since: 0.1.3
  **/
@@ -1323,14 +1322,14 @@ out:
 
 /**
  * zif_md_get_requires:
- * @md: the #ZifMd object
- * @package: the %ZifPackage
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @md: A #ZifMd
+ * @package: A %ZifPackage
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Gets the requires for a specific package.
  *
- * Return value: an array of #ZifDepend's, free with g_ptr_array_unref()
+ * Return value: An array of #ZifDepend's, free with g_ptr_array_unref()
  *
  * Since: 0.1.3
  **/
@@ -1362,14 +1361,14 @@ out:
 
 /**
  * zif_md_get_obsoletes:
- * @md: the #ZifMd object
- * @package: the %ZifPackage
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @md: A #ZifMd
+ * @package: A %ZifPackage
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Gets the obsoletes for a specific package.
  *
- * Return value: an array of #ZifDepend's, free with g_ptr_array_unref()
+ * Return value: An array of #ZifDepend's, free with g_ptr_array_unref()
  *
  * Since: 0.1.3
  **/
@@ -1401,14 +1400,14 @@ out:
 
 /**
  * zif_md_get_conflicts:
- * @md: the #ZifMd object
- * @package: the %ZifPackage
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @md: A #ZifMd
+ * @package: A %ZifPackage
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Gets the conflicts for a specific package.
  *
- * Return value: an array of #ZifDepend's, free with g_ptr_array_unref()
+ * Return value: An array of #ZifDepend's, free with g_ptr_array_unref()
  *
  * Since: 0.1.3
  **/
@@ -1440,13 +1439,13 @@ out:
 
 /**
  * zif_md_get_packages:
- * @md: the #ZifMd object
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @md: A #ZifMd
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Returns all packages in the repo.
  *
- * Return value: an array of #ZifPackageRemote's
+ * Return value: An array of #ZifPackageRemote's
  *
  * Since: 0.1.0
  **/
@@ -1478,12 +1477,12 @@ out:
 
 /**
  * zif_md_clean:
- * @md: the #ZifMd object
- * @error: a #GError which is used on failure, or %NULL
+ * @md: A #ZifMd
+ * @error: A #GError, or %NULL
  *
  * Clean the metadata store.
  *
- * Return value: %TRUE for success, %FALSE for failure
+ * Return value: %TRUE for success, %FALSE otherwise
  *
  * Since: 0.1.0
  **/
@@ -1590,11 +1589,11 @@ zif_md_kind_to_text (ZifMdKind type)
 
 /**
  * zif_md_file_check:
- * @md: the #ZifMd object
+ * @md: A #ZifMd
  * @use_uncompressed: If we should check only the uncompresed version
  * @valid: If the metadata is valid, i.e. the checksums are correct
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Check the metadata files to make sure they are valid.
  *
@@ -1895,7 +1894,7 @@ zif_md_init (ZifMd *md)
 /**
  * zif_md_new:
  *
- * Return value: A new #ZifMd class instance.
+ * Return value: A new #ZifMd instance.
  *
  * Since: 0.1.0
  **/

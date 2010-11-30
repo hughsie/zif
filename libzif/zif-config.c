@@ -67,7 +67,7 @@ static gpointer zif_config_object = NULL;
 /**
  * zif_config_error_quark:
  *
- * Return value: Our personal error quark.
+ * Return value: An error quark.
  *
  * Since: 0.1.0
  **/
@@ -82,9 +82,9 @@ zif_config_error_quark (void)
 
 /**
  * zif_config_unset:
- * @config: the #ZifConfig object
- * @key: the key name to unset, e.g. "cachedir"
- * @error: a #GError which is used on failure, or %NULL
+ * @config: A #ZifConfig
+ * @key: A key name to unset, e.g. "cachedir"
+ * @error: A #GError, or %NULL
  *
  * Unsets an overriden value back to the default.
  *
@@ -116,13 +116,13 @@ out:
 
 /**
  * zif_config_get_string:
- * @config: the #ZifConfig object
- * @key: the key name to retrieve, e.g. "cachedir"
- * @error: a #GError which is used on failure, or %NULL
+ * @config: A #ZifConfig
+ * @key: A key name to retrieve, e.g. "cachedir"
+ * @error: A #GError, or %NULL
  *
  * Gets a string value from a local setting, falling back to the config file.
  *
- * Return value: the allocated value, or %NULL
+ * Return value: An allocated value, or %NULL
  *
  * Since: 0.1.0
  **/
@@ -174,9 +174,9 @@ out:
 
 /**
  * zif_config_get_boolean:
- * @config: the #ZifConfig object
- * @key: the key name to retrieve, e.g. "keepcache"
- * @error: a #GError which is used on failure, or %NULL
+ * @config: A #ZifConfig
+ * @key: A key name to retrieve, e.g. "keepcache"
+ * @error: A #GError, or %NULL
  *
  * Gets a boolean value from a local setting, falling back to the config file.
  *
@@ -209,9 +209,9 @@ out:
 
 /**
  * zif_config_get_strv:
- * @config: the #ZifConfig object
- * @key: the key name to retrieve, e.g. "keepcache"
- * @error: a #GError which is used on failure, or %NULL
+ * @config: A #ZifConfig
+ * @key: A key name to retrieve, e.g. "keepcache"
+ * @error: A #GError, or %NULL
  *
  * Gets a string array value from a local setting, falling back to the config file.
  *
@@ -243,13 +243,13 @@ out:
 
 /**
  * zif_config_get_uint:
- * @config: the #ZifConfig object
- * @key: the key name to retrieve, e.g. "keepcache"
- * @error: a #GError which is used on failure, or %NULL
+ * @config: A #ZifConfig
+ * @key: A key name to retrieve, e.g. "keepcache"
+ * @error: A #GError, or %NULL
  *
  * Gets a unsigned integer value from a local setting, falling back to the config file.
  *
- * Return value: the data value, or %G_MAXUINT for error
+ * Return value: Data value, or %G_MAXUINT for error
  *
  * Since: 0.1.0
  **/
@@ -284,13 +284,13 @@ out:
 
 /**
  * zif_config_get_time:
- * @config: the #ZifConfig object
- * @key: the key name to retrieve, e.g. "metadata_expire"
- * @error: a #GError which is used on failure, or %NULL
+ * @config: A #ZifConfig
+ * @key: A key name to retrieve, e.g. "metadata_expire"
+ * @error: A #GError, or %NULL
  *
  * Gets a time value from a local setting, falling back to the config file.
  *
- * Return value: the data value, or 0 for an error
+ * Return value: Data value, or 0 for an error
  *
  * Since: 0.1.0
  **/
@@ -340,9 +340,9 @@ zif_config_strreplace (GString *string, const gchar *find, const gchar *replace)
 
 /**
  * zif_config_expand_substitutions:
- * @config: the #ZifConfig object
- * @text: string to scan, e.g. "http://fedora/$releasever/$basearch/moo.rpm"
- * @error: a #GError which is used on failure, or %NULL
+ * @config: A #ZifConfig
+ * @text: The string to scan, e.g. "http://fedora/$releasever/$basearch/moo.rpm"
+ * @error: A #GError, or %NULL
  *
  * Replaces substitutions in text with the actual values of the running system.
  *
@@ -388,11 +388,11 @@ out:
 
 /**
  * zif_config_get_basearch_array:
- * @config: the #ZifConfig object
+ * @config: A #ZifConfig
  *
  * Gets the list of architectures that packages are native on for this machine.
  *
- * Return value: A array of strings, do not free, e.g. [ "i386", "i486", "noarch" ]
+ * Return value: An a rray of strings, do not free, e.g. [ "i386", "i486", "noarch" ]
  *
  * Since: 0.1.0
  **/
@@ -421,16 +421,16 @@ zif_config_get_release_filename (ZifConfig *config)
 
 /**
  * zif_config_set_filename:
- * @config: the #ZifConfig object
- * @filename: the system wide config file, e.g. "/etc/zif/zif.conf", or %NULL to use the default.
- * @error: a #GError which is used on failure, or %NULL
+ * @config: A #ZifConfig
+ * @filename: A system wide config file, e.g. "/etc/zif/zif.conf", or %NULL to use the default.
+ * @error: A #GError, or %NULL
  *
  * Sets the filename to use as the system wide config file.
  *
  * Using @filename set to %NULL to use the default value
  * has been supported since 0.1.3. Earlier versions will assert.
  *
- * Return value: %TRUE for success, %FALSE for failure
+ * Return value: %TRUE for success, %FALSE otherwise
  *
  * Since: 0.1.0
  **/
@@ -564,7 +564,6 @@ zif_config_set_filename (ZifConfig *config, const gchar *filename, GError **erro
 		goto out;
 	}
 
-
 	/* get override file */
 	filename_override = g_key_file_get_string (config->priv->file_default,
 						   "main",
@@ -631,12 +630,12 @@ out:
 
 /**
  * zif_config_reset_default:
- * @config: the #ZifConfig object
- * @error: a #GError which is used on failure, or %NULL
+ * @config: A #ZifConfig
+ * @error: A #GError, or %NULL
  *
  * Removes any local settings previously set.
  *
- * Return value: %TRUE for success, %FALSE for failure
+ * Return value: %TRUE for success, %FALSE otherwise
  *
  * Since: 0.1.0
  **/
@@ -651,16 +650,16 @@ zif_config_reset_default (ZifConfig *config, GError **error)
 
 /**
  * zif_config_set_local:
- * @config: the #ZifConfig object
- * @key: the key name to save, e.g. "keepcache"
- * @value: the key data to save, e.g. "always"
- * @error: a #GError which is used on failure, or %NULL
+ * @config: A #ZifConfig
+ * @key: Key name to save, e.g. "keepcache"
+ * @value: Key data to save, e.g. "always"
+ * @error: A #GError, or %NULL
  *
  * Sets a local value which is used in preference to the config value.
  * This is deprecated. Use zif_config_set_string(), zif_config_set_uint()
  * and zif_config_set_boolean() instead.
  *
- * Return value: %TRUE for success, %FALSE for failure
+ * Return value: %TRUE for success, %FALSE otherwise
  *
  * Since: 0.1.0
  **/
@@ -673,14 +672,14 @@ zif_config_set_local (ZifConfig *config, const gchar *key, const gchar *value, G
 
 /**
  * zif_config_set_string:
- * @config: the #ZifConfig object
- * @key: the key name to save, e.g. "keepcache"
- * @value: the key data to save, e.g. "always"
- * @error: a #GError which is used on failure, or %NULL
+ * @config: A #ZifConfig
+ * @key: Key name to save, e.g. "keepcache"
+ * @value: Key data to save, e.g. "always"
+ * @error: A #GError, or %NULL
  *
  * Sets a local value which is used in preference to the config value.
  *
- * Return value: %TRUE for success, %FALSE for failure
+ * Return value: %TRUE for success, %FALSE otherwise
  *
  * Since: 0.1.2
  **/
@@ -724,15 +723,15 @@ zif_config_set_default (ZifConfig *config, const gchar *key, const gchar *value)
 
 /**
  * zif_config_set_boolean:
- * @config: the #ZifConfig object
- * @key: the key name to save, e.g. "keepcache"
- * @value: the key data, e.g. %TRUE
- * @error: a #GError which is used on failure, or %NULL
+ * @config: A #ZifConfig
+ * @key: Key name to save, e.g. "keepcache"
+ * @value: Key data, e.g. %TRUE
+ * @error: A #GError, or %NULL
  *
  * Sets a local value which is used in preference to the config value.
  * %TRUE is saved as "true" and %FALSE is saved as "false"
  *
- * Return value: %TRUE for success, %FALSE for failure
+ * Return value: %TRUE for success, %FALSE otherwise
  *
  * Since: 0.1.2
  **/
@@ -744,14 +743,14 @@ zif_config_set_boolean (ZifConfig *config, const gchar *key, gboolean value, GEr
 
 /**
  * zif_config_set_uint:
- * @config: the #ZifConfig object
- * @key: the key name to save, e.g. "keepcache"
- * @value: the key data, e.g. %TRUE
- * @error: a #GError which is used on failure, or %NULL
+ * @config: A #ZifConfig
+ * @key: Key name to save, e.g. "keepcache"
+ * @value: Key data, e.g. %TRUE
+ * @error: A #GError, or %NULL
  *
  * Sets a local value which is used in preference to the config value.
  *
- * Return value: %TRUE for success, %FALSE for failure
+ * Return value: %TRUE for success, %FALSE otherwise
  *
  * Since: 0.1.2
  **/
@@ -847,7 +846,7 @@ zif_config_init (ZifConfig *config)
 /**
  * zif_config_new:
  *
- * Return value: A new #ZifConfig class instance.
+ * Return value: A new #ZifConfig instance.
  *
  * Since: 0.1.0
  **/

@@ -74,7 +74,7 @@ G_DEFINE_TYPE (ZifManifest, zif_manifest, G_TYPE_OBJECT)
 /**
  * zif_manifest_error_quark:
  *
- * Return value: Our personal error quark.
+ * Return value: An error quark.
  *
  * Since: 0.1.3
  **/
@@ -86,7 +86,6 @@ zif_manifest_error_quark (void)
 		quark = g_quark_from_static_string ("zif_manifest_error");
 	return quark;
 }
-
 
 /**
  * zif_manifest_add_package_to_store:
@@ -169,7 +168,6 @@ out:
 	g_object_ref (package);
 	return ret;
 }
-
 
 /**
  * zif_manifest_add_package_id_with_data_to_store:
@@ -526,13 +524,13 @@ out:
 
 /**
  * zif_manifest_check:
- * @manifest: the #ZifManifest object
- * @filename: the maifest file to use
- * @error: a #GError which is used on failure, or %NULL
+ * @manifest: A #ZifManifest
+ * @filename: A maifest file to use
+ * @error: A #GError, or %NULL
  *
  * Resolves and checks a transaction.
  *
- * Return value: %TRUE for success, %FALSE for failure
+ * Return value: %TRUE for success, %FALSE otherwise
  *
  * Since: 0.1.3
  **/
@@ -885,7 +883,7 @@ zif_manifest_init (ZifManifest *manifest)
 /**
  * zif_manifest_new:
  *
- * Return value: A new manifest class instance.
+ * Return value: A new manifest instance.
  *
  * Since: 0.1.3
  **/

@@ -73,7 +73,7 @@ G_DEFINE_TYPE (ZifDownload, zif_download, G_TYPE_OBJECT)
 /**
  * zif_download_error_quark:
  *
- * Return value: Our personal error quark.
+ * Return value: An error quark.
  *
  * Since: 0.1.0
  **/
@@ -314,11 +314,11 @@ out:
 
 /**
  * zif_download_file:
- * @download: the #ZifDownload object
- * @uri: the full remote URI
- * @filename: the local filename to save to
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @download: A #ZifDownload
+ * @uri: A full remote URI
+ * @filename: A local filename to save to
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Downloads a file either from a remote site, or copying the file
  * from the local filesystem.
@@ -326,7 +326,7 @@ out:
  * This function will return with an error if the downloaded file
  * has zero size.
  *
- * Return value: %TRUE for success, %FALSE for failure
+ * Return value: %TRUE for success, %FALSE otherwise
  *
  * Since: 0.1.0
  **/
@@ -455,16 +455,16 @@ out:
 
 /**
  * zif_download_set_proxy:
- * @download: the #ZifDownload object
- * @http_proxy: the HTTP proxy, e.g. "http://10.0.0.1:8080"
- * @error: a #GError which is used on failure, or %NULL
+ * @download: A #ZifDownload
+ * @http_proxy: HTTP proxy, e.g. "http://10.0.0.1:8080"
+ * @error: A #GError, or %NULL
  *
  * Sets the proxy used for downloading files.
  *
  * Do not use this method any more. Instead use:
  * zif_config_set_string(config, "http_proxy", "value", error)
  *
- * Return value: %TRUE for success, %FALSE for failure
+ * Return value: %TRUE for success, %FALSE otherwise
  *
  * Since: 0.1.0
  **/
@@ -500,13 +500,13 @@ zif_download_location_array_get_index (GPtrArray *array, const gchar *uri)
 
 /**
  * zif_download_location_add_uri:
- * @download: the #ZifDownload object
- * @uri: the full mirror URI, e.g. http://dave.com/pub/
- * @error: a #GError which is used on failure, or %NULL
+ * @download: A #ZifDownload
+ * @uri: Full mirror URI, e.g. "http://dave.com/pub/"
+ * @error: A #GError, or %NULL
  *
  * Adds a URI to be used when using zif_download_location_full().
  *
- * Return value: %TRUE for success, %FALSE for failure
+ * Return value: %TRUE for success, %FALSE otherwise
  *
  * Since: 0.1.3
  **/
@@ -533,13 +533,13 @@ out:
 
 /**
  * zif_download_location_add_array:
- * @download: the #ZifDownload object
- * @array: an array of URI strings to add
- * @error: a #GError which is used on failure, or %NULL
+ * @download: A #ZifDownload
+ * @array: Array of URI strings to add
+ * @error: A #GError, or %NULL
  *
  * Adds an array of URIs to be used when using zif_download_location_full().
  *
- * Return value: %TRUE for success, %FALSE for failure
+ * Return value: %TRUE for success, %FALSE otherwise
  *
  * Since: 0.1.3
  **/
@@ -567,14 +567,14 @@ out:
 
 /**
  * zif_download_location_add_md:
- * @download: the #ZifDownload object
- * @md: A valid #ZifMd object
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @download: A #ZifDownload
+ * @md: A #ZifMd
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Adds an metadata source to be used when using zif_download_location_full().
  *
- * Return value: %TRUE for success, %FALSE for failure
+ * Return value: %TRUE for success, %FALSE otherwise
  *
  * Since: 0.1.3
  **/
@@ -620,13 +620,13 @@ out:
 
 /**
  * zif_download_location_remove_uri:
- * @download: the #ZifDownload object
- * @uri: The full URI to remove
- * @error: a #GError which is used on failure, or %NULL
+ * @download: A #ZifDownload
+ * @uri: URI to remove
+ * @error: A #GError, or %NULL
  *
  * Removes a URI from the pool used to download files.
  *
- * Return value: %TRUE for success, %FALSE for failure
+ * Return value: %TRUE for success, %FALSE otherwise
  *
  * Since: 0.1.3
  **/
@@ -731,20 +731,20 @@ out:
 
 /**
  * zif_download_location_full:
- * @download: the #ZifDownload object
- * @location: the location to add on to the end of the pool URIs
- * @filename: the local filename to save to
- * @size: the expected size in bytes, or 0
- * @content_type: the expected content type of the file, or %NULL
- * @checksum_type: the checksum type, e.g. %G_CHECKSUM_SHA256, or 0
- * @checksum: the expected checksum of the file, or %NULL
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @download: A #ZifDownload
+ * @location: Location to add on to the end of the pool URIs
+ * @filename: Local filename to save to
+ * @size: Expected size in bytes, or 0
+ * @content_type: Expected content type of the file, or %NULL
+ * @checksum_type: Checksum type, e.g. %G_CHECKSUM_SHA256, or 0
+ * @checksum: Expected checksum of the file, or %NULL
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Downloads a file using a pool of download servers, and then verifying
  * it against what we are expecting.
  *
- * Return value: %TRUE for success, %FALSE for failure
+ * Return value: %TRUE for success, %FALSE otherwise
  *
  * Since: 0.1.3
  **/
@@ -871,15 +871,15 @@ out:
 
 /**
  * zif_download_location:
- * @download: the #ZifDownload object
- * @location: the location to add on to the end of the pool URIs
- * @filename: the local filename to save to
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @download: A #ZifDownload
+ * @location: Location to add on to the end of the pool URIs
+ * @filename: Local filename to save to
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Downloads a file using a pool of download servers.
  *
- * Return value: %TRUE for success, %FALSE for failure
+ * Return value: %TRUE for success, %FALSE otherwise
  *
  * Since: 0.1.3
  **/
@@ -892,11 +892,11 @@ zif_download_location (ZifDownload *download, const gchar *location, const gchar
 
 /**
  * zif_download_location_get_size:
- * @download: the #ZifDownload object
+ * @download: A #ZifDownload
  *
  * Gets the number of active mirrors we can use.
  *
- * Return value: the number or active URIs
+ * Return value: A number or active URIs
  *
  * Since: 0.1.3
  **/
@@ -909,7 +909,7 @@ zif_download_location_get_size (ZifDownload *download)
 
 /**
  * zif_download_location_clear:
- * @download: the #ZifDownload object
+ * @download: A #ZifDownload
  *
  * Clears the list of active mirrors.
  *
@@ -975,7 +975,7 @@ zif_download_init (ZifDownload *download)
 /**
  * zif_download_new:
  *
- * Return value: A new download class instance.
+ * Return value: A new download instance.
  *
  * Since: 0.1.0
  **/

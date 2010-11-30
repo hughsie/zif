@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*-
  *
- * Copyright (C) 2008 Richard Hughes <richard@hughsie.com>
+ * Copyright (C) 2008-2010 Richard Hughes <richard@hughsie.com>
  *
  * Licensed under the GNU General Public License Version 2
  *
@@ -63,7 +63,7 @@ G_DEFINE_TYPE (ZifMonitor, zif_monitor, G_TYPE_OBJECT)
 /**
  * zif_monitor_error_quark:
  *
- * Return value: Our personal error quark.
+ * Return value: An error quark.
  *
  * Since: 0.1.0
  **/
@@ -91,14 +91,14 @@ zif_monitor_file_monitor_cb (GFileMonitor *file_monitor, GFile *file, GFile *oth
 
 /**
  * zif_monitor_add_watch:
- * @monitor: the #ZifMonitor object
- * @filename: the full filename to watch
- * @error: a #GError which is used on failure, or %NULL
+ * @monitor: A #ZifMonitor
+ * @filename: The full filename to watch
+ * @error: A #GError, or %NULL
  *
  * Sets up a watch on the file, and reports the 'changed' signal when the
  * file is changed.
  *
- * Return value: %TRUE for success, %FALSE for failure
+ * Return value: %TRUE for success, %FALSE otherwise
  *
  * Since: 0.1.0
  **/
@@ -183,7 +183,7 @@ zif_monitor_init (ZifMonitor *monitor)
 /**
  * zif_monitor_new:
  *
- * Return value: A new #ZifMonitor class instance.
+ * Return value: A new #ZifMonitor instance.
  *
  * Since: 0.1.0
  **/

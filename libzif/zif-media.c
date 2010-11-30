@@ -109,8 +109,8 @@ out:
 
 /**
  * zif_media_get_root_from_id:
- * @media: the #ZifMedia object
- * @media_id: the media id to find, e.g. "133123.1232133"
+ * @media: A #ZifMedia
+ * @media_id: The media id to find, e.g. "133123.1232133"
  *
  * Finds the media root for a given media id.
  *
@@ -178,7 +178,7 @@ zif_media_init (ZifMedia *media)
 /**
  * zif_media_new:
  *
- * Return value: A new #ZifMedia class instance.
+ * Return value: A new #ZifMedia instance.
  *
  * Since: 0.1.0
  **/

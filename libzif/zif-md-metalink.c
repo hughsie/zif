@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*-
  *
- * Copyright (C) 2009 Richard Hughes <richard@hughsie.com>
+ * Copyright (C) 2009-2010 Richard Hughes <richard@hughsie.com>
  *
  * Licensed under the GNU General Public License Version 2
  *
@@ -257,14 +257,14 @@ out:
 
 /**
  * zif_md_metalink_get_uris:
- * @md: the #ZifMdMetalink object
- * @threshold: the threshold in percent
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @md: A #ZifMdMetalink
+ * @threshold: A threshold in percent
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Finds all mirrors we should use.
  *
- * Return value: the URIs as an array of strings, use g_ptr_array_unref() when done.
+ * Return value: The URIs as an array of strings. The returned array should be freed with g_ptr_array_unref() when no longer needed.
  *
  * Since: 0.1.0
  **/
@@ -384,7 +384,7 @@ zif_md_metalink_init (ZifMdMetalink *md)
 /**
  * zif_md_metalink_new:
  *
- * Return value: A new #ZifMdMetalink class instance.
+ * Return value: A new #ZifMdMetalink instance.
  *
  * Since: 0.1.0
  **/

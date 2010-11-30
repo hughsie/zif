@@ -41,7 +41,7 @@ G_DEFINE_TYPE (ZifStore, zif_store, G_TYPE_OBJECT)
 /**
  * zif_store_error_quark:
  *
- * Return value: Our personal error quark.
+ * Return value: An error quark.
  *
  * Since: 0.1.0
  **/
@@ -56,13 +56,13 @@ zif_store_error_quark (void)
 
 /**
  * zif_store_load:
- * @store: the #ZifStore object
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @store: A #ZifStore
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Loads the #ZifStore object.
  *
- * Return value: %TRUE for success, %FALSE for failure
+ * Return value: %TRUE for success, %FALSE otherwise
  *
  * Since: 0.1.0
  **/
@@ -87,13 +87,13 @@ zif_store_load (ZifStore *store, ZifState *state, GError **error)
 
 /**
  * zif_store_clean:
- * @store: the #ZifStore object
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @store: A #ZifStore
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Cleans the #ZifStore objects by deleting cache.
  *
- * Return value: %TRUE for success, %FALSE for failure
+ * Return value: %TRUE for success, %FALSE otherwise
  *
  * Since: 0.1.0
  **/
@@ -118,14 +118,14 @@ zif_store_clean (ZifStore *store, ZifState *state, GError **error)
 
 /**
  * zif_store_refresh:
- * @store: the #ZifStore object
- * @force: if the data should be re-downloaded if it's still valid
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @store: A #ZifStore
+ * @force: If the data should be re-downloaded if it's still valid
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * refresh the #ZifStore objects by downloading new data if required.
  *
- * Return value: %TRUE for success, %FALSE for failure
+ * Return value: %TRUE for success, %FALSE otherwise
  *
  * Since: 0.1.0
  **/
@@ -150,14 +150,14 @@ zif_store_refresh (ZifStore *store, gboolean force, ZifState *state, GError **er
 
 /**
  * zif_store_search_name:
- * @store: the #ZifStore object
- * @search: the search term, e.g. "power"
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @store: A #ZifStore
+ * @search: A search term, e.g. "power"
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Find packages that match the package name in some part.
  *
- * Return value: an array of #ZifPackage's
+ * Return value: An array of #ZifPackage's
  *
  * Since: 0.1.0
  **/
@@ -183,14 +183,14 @@ zif_store_search_name (ZifStore *store, gchar **search, ZifState *state, GError 
 
 /**
  * zif_store_search_category:
- * @store: the #ZifStore object
- * @search: the search term, e.g. "gnome/games"
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @store: A #ZifStore
+ * @search: A search term, e.g. "gnome/games"
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Return packages in a specific category.
  *
- * Return value: an array of #ZifPackage's
+ * Return value: An array of #ZifPackage's
  *
  * Since: 0.1.0
  **/
@@ -216,14 +216,14 @@ zif_store_search_category (ZifStore *store, gchar **search, ZifState *state, GEr
 
 /**
  * zif_store_search_details:
- * @store: the #ZifStore object
- * @search: the search term, e.g. "trouble"
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @store: A #ZifStore
+ * @search: A search term, e.g. "trouble"
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Find packages that match some detail about the package.
  *
- * Return value: an array of #ZifPackage's
+ * Return value: An array of #ZifPackage's
  *
  * Since: 0.1.0
  **/
@@ -249,14 +249,14 @@ zif_store_search_details (ZifStore *store, gchar **search, ZifState *state, GErr
 
 /**
  * zif_store_search_group:
- * @store: the #ZifStore object
- * @search: the search term, e.g. "games"
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @store: A #ZifStore
+ * @search: A search term, e.g. "games"
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Find packages that belong in a specific group.
  *
- * Return value: an array of #ZifPackage's
+ * Return value: An array of #ZifPackage's
  *
  * Since: 0.1.0
  **/
@@ -282,14 +282,14 @@ zif_store_search_group (ZifStore *store, gchar **search, ZifState *state, GError
 
 /**
  * zif_store_search_file:
- * @store: the #ZifStore object
- * @search: the search term, e.g. "/usr/bin/gnome-power-manager"
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @store: A #ZifStore
+ * @search: A search term, e.g. "/usr/bin/gnome-power-manager"
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Find packages that provide the specified file.
  *
- * Return value: an array of #ZifPackage's
+ * Return value: An array of #ZifPackage's
  *
  * Since: 0.1.0
  **/
@@ -315,14 +315,14 @@ zif_store_search_file (ZifStore *store, gchar **search, ZifState *state, GError 
 
 /**
  * zif_store_resolve:
- * @store: the #ZifStore object
- * @search: the search term, e.g. "gnome-power-manager"
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @store: A #ZifStore
+ * @search: A search term, e.g. "gnome-power-manager"
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Finds packages matching the package name exactly.
  *
- * Return value: an array of #ZifPackage's
+ * Return value: An array of #ZifPackage's
  *
  * Since: 0.1.0
  **/
@@ -348,14 +348,14 @@ zif_store_resolve (ZifStore *store, gchar **search, ZifState *state, GError **er
 
 /**
  * zif_store_what_provides:
- * @store: the #ZifStore object
+ * @store: A #ZifStore
  * @depends: An array of #ZifDepend's to search for
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Find packages that provide a specific string.
  *
- * Return value: an array of #ZifPackage's
+ * Return value: An array of #ZifPackage's
  *
  * Since: 0.1.3
  **/
@@ -381,14 +381,14 @@ zif_store_what_provides (ZifStore *store, GPtrArray *depends, ZifState *state, G
 
 /**
  * zif_store_what_requires:
- * @store: the #ZifStore object
+ * @store: A #ZifStore
  * @depends: An array of #ZifDepend's to search for
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Find packages that provide a specific string.
  *
- * Return value: an array of #ZifPackage's
+ * Return value: An array of #ZifPackage's
  *
  * Since: 0.1.3
  **/
@@ -414,14 +414,14 @@ zif_store_what_requires (ZifStore *store, GPtrArray *depends, ZifState *state, G
 
 /**
  * zif_store_what_obsoletes:
- * @store: the #ZifStore object
+ * @store: A #ZifStore
  * @depends: An array of #ZifDepend's to search for
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Find packages that obsolete a specific string.
  *
- * Return value: an array of #ZifPackage's
+ * Return value: An array of #ZifPackage's
  *
  * Since: 0.1.3
  **/
@@ -447,14 +447,14 @@ zif_store_what_obsoletes (ZifStore *store, GPtrArray *depends, ZifState *state, 
 
 /**
  * zif_store_what_conflicts:
- * @store: the #ZifStore object
+ * @store: A #ZifStore
  * @depends: An array of #ZifDepend's to search for
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Find packages that conflict a specific string.
  *
- * Return value: an array of #ZifPackage's
+ * Return value: An array of #ZifPackage's
  *
  * Since: 0.1.3
  **/
@@ -480,13 +480,13 @@ zif_store_what_conflicts (ZifStore *store, GPtrArray *depends, ZifState *state, 
 
 /**
  * zif_store_get_packages:
- * @store: the #ZifStore object
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @store: A #ZifStore
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Return all packages in the #ZifStore's.
  *
- * Return value: an array of #ZifPackage's
+ * Return value: An array of #ZifPackage's
  *
  * Since: 0.1.0
  **/
@@ -511,14 +511,14 @@ zif_store_get_packages (ZifStore *store, ZifState *state, GError **error)
 
 /**
  * zif_store_find_package:
- * @store: the #ZifStore object
- * @package_id: the package ID which defines the package
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @store: A #ZifStore
+ * @package_id: A package ID which defines the package
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Find a single package in the #ZifStore.
  *
- * Return value: A single #ZifPackage or %NULL
+ * Return value: A single #ZifPackage or %NULL. Use g_object_unref when done().
  *
  * Since: 0.1.0
  **/
@@ -544,13 +544,13 @@ zif_store_find_package (ZifStore *store, const gchar *package_id, ZifState *stat
 
 /**
  * zif_store_get_categories:
- * @store: the #ZifStore object
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @store: A #ZifStore
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Return a list of custom categories.
  *
- * Return value: an array of #ZifCategory's
+ * Return value: An array of #ZifCategory's, free with g_ptr_array_unref() when done.
  *
  * Since: 0.1.0
  **/
@@ -575,7 +575,7 @@ zif_store_get_categories (ZifStore *store, ZifState *state, GError **error)
 
 /**
  * zif_store_get_id:
- * @store: the #ZifStore object
+ * @store: A #ZifStore
  *
  * Gets the id for the object.
  *
@@ -599,7 +599,7 @@ zif_store_get_id (ZifStore *store)
 
 /**
  * zif_store_print:
- * @store: the #ZifStore object
+ * @store: A #ZifStore
  *
  * Prints all the objects in the store.
  *
@@ -652,7 +652,7 @@ zif_store_init (ZifStore *store)
 /**
  * zif_store_new:
  *
- * Return value: A new #ZifStore class instance.
+ * Return value: A new #ZifStore instance.
  *
  * Since: 0.1.0
  **/

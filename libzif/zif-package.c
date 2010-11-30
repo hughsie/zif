@@ -91,7 +91,7 @@ zif_package_ensure_data (ZifPackage *package, ZifPackageEnsureType type,
 /**
  * zif_package_error_quark:
  *
- * Return value: Our personal error quark.
+ * Return value: An error quark.
  *
  * Since: 0.1.0
  **/
@@ -106,8 +106,8 @@ zif_package_error_quark (void)
 
 /**
  * zif_package_compare:
- * @a: the first package to compare
- * @b: the second package to compare
+ * @a: The first package to compare
+ * @b: The second package to compare
  *
  * Compares one package versions against each other.
  *
@@ -152,11 +152,10 @@ out:
 	return val;
 }
 
-
 /**
  * zif_package_is_compatible_arch:
- * @a: the first package to compare
- * @b: the second package to compare
+ * @a: The first package to compare
+ * @b: The second package to compare
  *
  * Finds if the package architectures are compatible.
  * In this sense, i386 is compatible with i586, but not x86_64
@@ -182,7 +181,7 @@ zif_package_is_compatible_arch (ZifPackage *a, ZifPackage *b)
 
 /**
  * zif_package_print:
- * @package: the #ZifPackage object
+ * @package: A #ZifPackage
  *
  * Prints details about a package to %STDOUT.
  *
@@ -255,7 +254,7 @@ zif_package_print (ZifPackage *package)
 
 /**
  * zif_package_is_devel:
- * @package: the #ZifPackage object
+ * @package: A #ZifPackage
  *
  * Finds out if a package is a development package.
  *
@@ -282,7 +281,7 @@ zif_package_is_devel (ZifPackage *package)
 
 /**
  * zif_package_is_gui:
- * @package: the #ZifPackage object
+ * @package: A #ZifPackage
  *
  * Finds out if a package is a GUI package.
  *
@@ -325,7 +324,7 @@ out:
 
 /**
  * zif_package_is_installed:
- * @package: the #ZifPackage object
+ * @package: A #ZifPackage
  *
  * Finds out if a package is installed.
  *
@@ -343,7 +342,7 @@ zif_package_is_installed (ZifPackage *package)
 
 /**
  * zif_package_is_native:
- * @package: the #ZifPackage object
+ * @package: A #ZifPackage
  *
  * Finds out if a package is the native architecture for the system.
  *
@@ -379,7 +378,7 @@ zif_package_is_native (ZifPackage *package)
 
 /**
  * zif_package_is_free:
- * @package: the #ZifPackage object
+ * @package: A #ZifPackage
  *
  * Check the string license_text for free licenses, indicated by
  * their short names as documented at
@@ -436,11 +435,11 @@ out:
 
 /**
  * zif_package_provides:
- * @package: the #ZifPackage object
- * @depend: the dependency to try and satisfy
- * @satisfies: the matched dependency, free with g_object_unref() if not %NULL
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @package: A #ZifPackage
+ * @depend: The dependency to try and satisfy
+ * @satisfies: A matched dependency, free with g_object_unref() if not %NULL
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Gets the package dependency that satisfies the supplied dependency.
  *
@@ -554,11 +553,11 @@ out:
 
 /**
  * zif_package_requires:
- * @package: the #ZifPackage object
- * @depend: the dependency to try and satisfy
- * @satisfies: the matched dependency, free with g_object_unref() if not %NULL
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @package: A #ZifPackage
+ * @depend: The dependency to try and satisfy
+ * @satisfies: The matched dependency, free with g_object_unref() if not %NULL
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Gets the package dependency that satisfies the supplied dependency.
  *
@@ -660,11 +659,11 @@ out:
 
 /**
  * zif_package_conflicts:
- * @package: the #ZifPackage object
- * @depend: the dependency to try and satisfy
- * @satisfies: the matched dependency, free with g_object_unref() if not %NULL
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @package: A #ZifPackage
+ * @depend: The dependency to try and satisfy
+ * @satisfies: A matched dependency, free with g_object_unref() if not %NULL
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Gets the package dependency that satisfies the supplied dependency.
  *
@@ -764,11 +763,11 @@ out:
 
 /**
  * zif_package_obsoletes:
- * @package: the #ZifPackage object
- * @depend: the dependency to try and satisfy
- * @satisfies: the matched dependency, free with g_object_unref() if not %NULL
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @package: A #ZifPackage
+ * @depend: The dependency to try and satisfy
+ * @satisfies: A matched dependency, free with g_object_unref() if not %NULL
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Gets the package dependency that satisfies the supplied dependency.
  *
@@ -819,7 +818,8 @@ zif_package_obsoletes (ZifPackage *package,
 			/* object is in the cache */
 			*satisfies = g_object_ref (depend_tmp);
 		} else {
-			/* object is not in the cache, but we already added all entries */
+			/* object is not in the cache, but we already
+			 * added all entries */
 			ret = TRUE;
 			*satisfies = NULL;
 		}
@@ -868,11 +868,11 @@ out:
 
 /**
  * zif_package_get_id:
- * @package: the #ZifPackage object
+ * @package: A #ZifPackage
  *
  * Gets the id uniquely identifying the package in all repos.
  *
- * Return value: the PackageId representing the package.
+ * Return value: A PackageId representing the package.
  *
  * Since: 0.1.0
  **/
@@ -885,11 +885,11 @@ zif_package_get_id (ZifPackage *package)
 
 /**
  * zif_package_get_printable:
- * @package: the #ZifPackage object
+ * @package: A #ZifPackage
  *
  * Gets a string that identifies the package, and is printable
  *
- * Return value: a nice string, e.g. "hal-0.5.4-2.fc13.i386 (fedora)"
+ * Return value: A nice string, e.g. "hal-0.5.4-2.fc13.i386 (fedora)"
  *
  * Since: 0.1.3
  **/
@@ -911,11 +911,11 @@ out:
 
 /**
  * zif_package_get_name:
- * @package: the #ZifPackage object
+ * @package: A #ZifPackage
  *
  * Gets the package name.
  *
- * Return value: the package name.
+ * Return value: The package name.
  *
  * Since: 0.1.0
  **/
@@ -929,11 +929,11 @@ zif_package_get_name (ZifPackage *package)
 
 /**
  * zif_package_get_version:
- * @package: the #ZifPackage object
+ * @package: A #ZifPackage
  *
  * Gets the package version.
  *
- * Return value: the package version, e.g. "0.1.2".
+ * Return value: The package version, e.g. "0.1.2".
  *
  * Since: 0.1.1
  **/
@@ -947,11 +947,11 @@ zif_package_get_version (ZifPackage *package)
 
 /**
  * zif_package_get_arch:
- * @package: the #ZifPackage object
+ * @package: A #ZifPackage
  *
  * Gets the package architecture, e.g. "i386".
  *
- * Return value: the package architecture.
+ * Return value: The package architecture.
  *
  * Since: 0.1.1
  **/
@@ -965,11 +965,11 @@ zif_package_get_arch (ZifPackage *package)
 
 /**
  * zif_package_get_data:
- * @package: the #ZifPackage object
+ * @package: A #ZifPackage
  *
  * Gets the package source data, e.g. "fedora".
  *
- * Return value: the package data.
+ * Return value: The package data.
  *
  * Since: 0.1.1
  **/
@@ -983,11 +983,11 @@ zif_package_get_data (ZifPackage *package)
 
 /**
  * zif_package_get_package_id:
- * @package: the #ZifPackage object
+ * @package: A #ZifPackage
  *
  * Gets the id (as text) uniquely identifying the package in all repos.
  *
- * Return value: The package-id representing the package.
+ * Return value: A package-id representing the package.
  *
  * Since: 0.1.0
  **/
@@ -1001,11 +1001,13 @@ zif_package_get_package_id (ZifPackage *package)
 
 /**
  * zif_package_ensure_type_to_string:
- * @type: the #ZifPackageEnsureType enumerated value
+ * @type: A #ZifPackageEnsureType enumerated value
  *
  * Gets the string representation of a #ZifPackageEnsureType
  *
- * Return value: The #ZifPackageEnsureType represented as a string
+ * Return value: A string
+ *
+ * Since: 0.1.3
  **/
 const gchar *
 zif_package_ensure_type_to_string (ZifPackageEnsureType type)
@@ -1039,11 +1041,13 @@ zif_package_ensure_type_to_string (ZifPackageEnsureType type)
 
 /**
  * zif_package_trust_kind_to_string:
- * @trust_kind: the #ZifPackageTrustKind enumerated value
+ * @trust_kind: A #ZifPackageTrustKind enumerated value
  *
  * Gets the string representation of a #ZifPackageTrustKind
  *
- * Return value: The string
+ * Return value: A string
+ *
+ * Since: 0.1.3
  **/
 const gchar *
 zif_package_trust_kind_to_string (ZifPackageTrustKind trust_kind)
@@ -1085,13 +1089,13 @@ out:
 
 /**
  * zif_package_get_summary:
- * @package: the #ZifPackage object
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @package: A #ZifPackage
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Gets the package summary.
  *
- * Return value: the const string or %NULL
+ * Return value: A string or %NULL
  *
  * Since: 0.1.0
  **/
@@ -1107,7 +1111,10 @@ zif_package_get_summary (ZifPackage *package, ZifState *state, GError **error)
 
 	/* not exists */
 	if (package->priv->summary == NULL) {
-		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_SUMMARY, state, error);
+		ret = zif_package_ensure_data (package,
+					       ZIF_PACKAGE_ENSURE_TYPE_SUMMARY,
+					       state,
+					       error);
 		if (!ret)
 			return NULL;
 	}
@@ -1118,13 +1125,13 @@ zif_package_get_summary (ZifPackage *package, ZifState *state, GError **error)
 
 /**
  * zif_package_get_description:
- * @package: the #ZifPackage object
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @package: A #ZifPackage
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Gets the package description.
  *
- * Return value: the const string or %NULL
+ * Return value: A string or %NULL
  *
  * Since: 0.1.0
  **/
@@ -1140,7 +1147,10 @@ zif_package_get_description (ZifPackage *package, ZifState *state, GError **erro
 
 	/* not exists */
 	if (package->priv->description == NULL) {
-		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_DESCRIPTION, state, error);
+		ret = zif_package_ensure_data (package,
+					       ZIF_PACKAGE_ENSURE_TYPE_DESCRIPTION,
+					       state,
+					       error);
 		if (!ret)
 			return NULL;
 	}
@@ -1151,13 +1161,13 @@ zif_package_get_description (ZifPackage *package, ZifState *state, GError **erro
 
 /**
  * zif_package_get_license:
- * @package: the #ZifPackage object
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @package: A #ZifPackage
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Gets the package licence.
  *
- * Return value: the const string or %NULL
+ * Return value: A string or %NULL
  *
  * Since: 0.1.0
  **/
@@ -1173,7 +1183,10 @@ zif_package_get_license (ZifPackage *package, ZifState *state, GError **error)
 
 	/* not exists */
 	if (package->priv->license == NULL) {
-		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_LICENCE, state, error);
+		ret = zif_package_ensure_data (package,
+					       ZIF_PACKAGE_ENSURE_TYPE_LICENCE,
+					       state,
+					       error);
 		if (!ret)
 			return NULL;
 	}
@@ -1184,13 +1197,13 @@ zif_package_get_license (ZifPackage *package, ZifState *state, GError **error)
 
 /**
  * zif_package_get_url:
- * @package: the #ZifPackage object
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @package: A #ZifPackage
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Gets the homepage URL for the package.
  *
- * Return value: the const string or %NULL
+ * Return value: A string or %NULL
  *
  * Since: 0.1.0
  **/
@@ -1206,7 +1219,10 @@ zif_package_get_url (ZifPackage *package, ZifState *state, GError **error)
 
 	/* not exists */
 	if (package->priv->url == NULL) {
-		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_URL, state, error);
+		ret = zif_package_ensure_data (package,
+					       ZIF_PACKAGE_ENSURE_TYPE_URL,
+					       state,
+					       error);
 		if (!ret)
 			return NULL;
 	}
@@ -1217,13 +1233,13 @@ zif_package_get_url (ZifPackage *package, ZifState *state, GError **error)
 
 /**
  * zif_package_get_filename:
- * @package: the #ZifPackage object
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @package: A #ZifPackage
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Gets the remote filename for the package, e.g. Packages/net-snmp-5.4.2-3.fc10.i386.rpm
  *
- * Return value: the const string or %NULL
+ * Return value: A string or %NULL
  *
  * Since: 0.1.0
  **/
@@ -1237,7 +1253,9 @@ zif_package_get_filename (ZifPackage *package, ZifState *state, GError **error)
 
 	/* doesn't make much sense */
 	if (package->priv->installed) {
-		g_set_error_literal (error, ZIF_PACKAGE_ERROR, ZIF_PACKAGE_ERROR_FAILED,
+		g_set_error_literal (error,
+				     ZIF_PACKAGE_ERROR,
+				     ZIF_PACKAGE_ERROR_FAILED,
 				     "cannot get remote filename for installed package");
 		return NULL;
 	}
@@ -1245,7 +1263,8 @@ zif_package_get_filename (ZifPackage *package, ZifState *state, GError **error)
 	/* not exists */
 	if (package->priv->location_href == NULL) {
 		g_set_error (error, ZIF_PACKAGE_ERROR, ZIF_PACKAGE_ERROR_FAILED,
-			     "no data for %s", package->priv->package_id_split[ZIF_PACKAGE_ID_NAME]);
+			     "no data for %s",
+			     package->priv->package_id_split[ZIF_PACKAGE_ID_NAME]);
 		return NULL;
 	}
 
@@ -1255,13 +1274,13 @@ zif_package_get_filename (ZifPackage *package, ZifState *state, GError **error)
 
 /**
  * zif_package_get_category:
- * @package: the #ZifPackage object
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @package: A #ZifPackage
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Gets the category the packag is in.
  *
- * Return value: the const string or %NULL
+ * Return value: A string or %NULL
  *
  * Since: 0.1.0
  **/
@@ -1277,7 +1296,10 @@ zif_package_get_category (ZifPackage *package, ZifState *state, GError **error)
 
 	/* not exists */
 	if (package->priv->category == NULL) {
-		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_CATEGORY, state, error);
+		ret = zif_package_ensure_data (package,
+					       ZIF_PACKAGE_ENSURE_TYPE_CATEGORY,
+					       state,
+					       error);
 		if (!ret)
 			return NULL;
 	}
@@ -1288,13 +1310,13 @@ zif_package_get_category (ZifPackage *package, ZifState *state, GError **error)
 
 /**
  * zif_package_get_group:
- * @package: the #ZifPackage object
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @package: A #ZifPackage
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Gets the package group.
  *
- * Return value: the group name string
+ * Return value: A group name string
  *
  * Since: 0.1.0
  **/
@@ -1310,7 +1332,10 @@ zif_package_get_group (ZifPackage *package, ZifState *state, GError **error)
 
 	/* not exists */
 	if (package->priv->group == NULL) {
-		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_GROUP, state, error);
+		ret = zif_package_ensure_data (package,
+					       ZIF_PACKAGE_ENSURE_TYPE_GROUP,
+					       state,
+					       error);
 		if (!ret)
 			return NULL;
 	}
@@ -1319,10 +1344,10 @@ zif_package_get_group (ZifPackage *package, ZifState *state, GError **error)
 }
 
 /**
- * zif_package_get_filename:
- * @package: the #ZifPackage object
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * zif_package_get_cache_filename:
+ * @package: A #ZifPackage
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Gets the filename used to create this package when using
  * zif_package_local_set_from_filename() for a local package or the
@@ -1359,9 +1384,9 @@ zif_package_get_cache_filename (ZifPackage *package, ZifState *state, GError **e
 
 /**
  * zif_package_get_cache_file:
- * @package: the #ZifPackage object
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @package: A #ZifPackage
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Gets the #GFile used to create this package when using
  * zif_package_local_set_from_filename() for a local package or the
@@ -1396,15 +1421,15 @@ zif_package_get_cache_file (ZifPackage *package, ZifState *state, GError **error
 
 /**
  * zif_package_get_size:
- * @package: the #ZifPackage object
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @package: A #ZifPackage
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Gets the size of the package.
- * This is the installed size for installed packages, and the download size for
- * remote packages.
+ * This is the installed size for installed packages, and the download
+ * size for remote packages.
  *
- * Return value: the package size, or 0 for failure
+ * Return value: The package size, or 0 for failure
  *
  * Since: 0.1.0
  **/
@@ -1419,7 +1444,10 @@ zif_package_get_size (ZifPackage *package, ZifState *state, GError **error)
 	g_return_val_if_fail (error == NULL || *error == NULL, 0);
 
 	if (package->priv->size == 0) {
-		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_SIZE, state, error);
+		ret = zif_package_ensure_data (package,
+					       ZIF_PACKAGE_ENSURE_TYPE_SIZE,
+					       state,
+					       error);
 		if (!ret)
 			return 0;
 	}
@@ -1429,13 +1457,14 @@ zif_package_get_size (ZifPackage *package, ZifState *state, GError **error)
 
 /**
  * zif_package_get_files:
- * @package: the #ZifPackage object
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @package: A #ZifPackage
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Gets the file list for the package.
  *
- * Return value: the reference counted #GPtrArray, use g_ptr_array_unref() when done
+ * Return value: An array of strings. The returned array should be
+ * freed with g_ptr_array_unref() when no longer needed.
  *
  * Since: 0.1.0
  **/
@@ -1450,7 +1479,10 @@ zif_package_get_files (ZifPackage *package, ZifState *state, GError **error)
 
 	/* not exists */
 	if (package->priv->files == NULL) {
-		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_FILES, state, error);
+		ret = zif_package_ensure_data (package,
+					       ZIF_PACKAGE_ENSURE_TYPE_FILES,
+					       state,
+					       error);
 		if (!ret)
 			return NULL;
 	}
@@ -1461,13 +1493,14 @@ zif_package_get_files (ZifPackage *package, ZifState *state, GError **error)
 
 /**
  * zif_package_get_requires:
- * @package: the #ZifPackage object
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @package: A #ZifPackage
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Gets all the package requires.
  *
- * Return value: an array of ZifDepend's, use g_ptr_array_unref() when done
+ * Return value: an array of ZifDepend's. The returned array should be
+ * freed with g_ptr_array_unref() when no longer needed.
  *
  * Since: 0.1.0
  **/
@@ -1483,7 +1516,10 @@ zif_package_get_requires (ZifPackage *package, ZifState *state, GError **error)
 
 	/* not exists */
 	if (package->priv->requires == NULL) {
-		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_REQUIRES, state, error);
+		ret = zif_package_ensure_data (package,
+					       ZIF_PACKAGE_ENSURE_TYPE_REQUIRES,
+					       state,
+					       error);
 		if (!ret)
 			return NULL;
 	}
@@ -1494,13 +1530,14 @@ zif_package_get_requires (ZifPackage *package, ZifState *state, GError **error)
 
 /**
  * zif_package_get_provides:
- * @package: the #ZifPackage object
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @package: A #ZifPackage
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Get all the package provides.
  *
- * Return value: an array of ZifDepend's, use g_ptr_array_unref() when done
+ * Return value: an array of ZifDepend's. The returned array should be
+ * freed with g_ptr_array_unref() when no longer needed.
  *
  * Since: 0.1.0
  **/
@@ -1516,12 +1553,18 @@ zif_package_get_provides (ZifPackage *package, ZifState *state, GError **error)
 
 	/* not exists */
 	if (!package->priv->provides_set) {
-		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_PROVIDES, state, error);
+		ret = zif_package_ensure_data (package,
+					       ZIF_PACKAGE_ENSURE_TYPE_PROVIDES,
+					       state,
+					       error);
 		if (!ret)
 			return NULL;
 	}
 	if (package->priv->files == NULL) {
-		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_FILES, state, error);
+		ret = zif_package_ensure_data (package,
+					       ZIF_PACKAGE_ENSURE_TYPE_FILES,
+					       state,
+					       error);
 		if (!ret)
 			return NULL;
 	}
@@ -1532,13 +1575,13 @@ zif_package_get_provides (ZifPackage *package, ZifState *state, GError **error)
 
 /**
  * zif_package_get_obsoletes:
- * @package: the #ZifPackage object
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @package: A #ZifPackage
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Get all the package obsoletes.
  *
- * Return value: an array of ZifDepend's, use g_ptr_array_unref() when done
+ * Return value: an array of ZifDepend's. The returned array should be freed with g_ptr_array_unref() when no longer needed.
  *
  * Since: 0.1.3
  **/
@@ -1554,7 +1597,10 @@ zif_package_get_obsoletes (ZifPackage *package, ZifState *state, GError **error)
 
 	/* not exists */
 	if (package->priv->obsoletes == NULL) {
-		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_OBSOLETES, state, error);
+		ret = zif_package_ensure_data (package,
+					       ZIF_PACKAGE_ENSURE_TYPE_OBSOLETES,
+					       state,
+					       error);
 		if (!ret)
 			return NULL;
 	}
@@ -1565,13 +1611,14 @@ zif_package_get_obsoletes (ZifPackage *package, ZifState *state, GError **error)
 
 /**
  * zif_package_get_conflicts:
- * @package: the #ZifPackage object
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @package: A #ZifPackage
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Get all the package conflicts.
  *
- * Return value: the reference counted #GPtrArray, use g_ptr_array_unref() when done
+ * Return value: A reference counted #GPtrArray. The returned array
+ * should be freed with g_ptr_array_unref() when no longer needed.
  *
  * Since: 0.1.3
  **/
@@ -1587,7 +1634,10 @@ zif_package_get_conflicts (ZifPackage *package, ZifState *state, GError **error)
 
 	/* not exists */
 	if (package->priv->conflicts == NULL) {
-		ret = zif_package_ensure_data (package, ZIF_PACKAGE_ENSURE_TYPE_CONFLICTS, state, error);
+		ret = zif_package_ensure_data (package,
+					       ZIF_PACKAGE_ENSURE_TYPE_CONFLICTS,
+					       state,
+					       error);
 		if (!ret)
 			return NULL;
 	}
@@ -1598,8 +1648,8 @@ zif_package_get_conflicts (ZifPackage *package, ZifState *state, GError **error)
 
 /**
  * zif_package_set_time_file:
- * @package: the #ZifPackage object
- * @time_file: the unix time the file was created
+ * @package: A #ZifPackage
+ * @time_file: The unix time the file was created
  *
  * Sets the UNIX time the file was created.
  *
@@ -1614,11 +1664,11 @@ zif_package_set_time_file (ZifPackage *package, guint64 time_file)
 
 /**
  * zif_package_get_time_file:
- * @package: the #ZifPackage object
+ * @package: A #ZifPackage
  *
  * Get the time the file was created.
  *
- * Return value: the UNIX time, or 0 for unknown.
+ * Return value: The UNIX time, or 0 for unknown.
  *
  * Since: 0.1.2
  **/
@@ -1631,7 +1681,7 @@ zif_package_get_time_file (ZifPackage *package)
 
 /**
  * zif_package_set_installed:
- * @package: the #ZifPackage object
+ * @package: A #ZifPackage
  * @installed: If the package is installed
  *
  * Sets the package installed status.
@@ -1647,8 +1697,8 @@ zif_package_set_installed (ZifPackage *package, gboolean installed)
 
 /**
  * zif_package_set_trust_kind:
- * @package: the #ZifPackage object
- * @trust_kind: The #ZifPackageTrustKind, e.g. %ZIF_PACKAGE_TRUST_KIND_PUBKEY
+ * @package: A #ZifPackage
+ * @trust_kind: A #ZifPackageTrustKind, e.g. %ZIF_PACKAGE_TRUST_KIND_PUBKEY
  *
  * Sets the package trust status. Packages that are trusted are
  * usually signed by a trusted private key.
@@ -1664,12 +1714,12 @@ zif_package_set_trust_kind (ZifPackage *package, ZifPackageTrustKind trust_kind)
 
 /**
  * zif_package_get_trust_kind:
- * @package: the #ZifPackage object
+ * @package: A #ZifPackage
  *
  * Gets the package trusted status. Packages that are trusted are
  * usually signed by a trusted private key.
  *
- * Return value: a #ZifPackageTrustKind enumerated type.
+ * Return value: The #ZifPackageTrustKind enumerated type.
  *
  * Since: 0.1.3
  **/
@@ -1683,12 +1733,12 @@ zif_package_get_trust_kind (ZifPackage *package)
 
 /**
  * zif_package_set_id:
- * @package: the #ZifPackage object
- * @package_id: A PackageId defining the object
+ * @package: A #ZifPackage
+ * @package_id: A PackageId defining the
  *
  * Sets the unique id for the package.
  *
- * Return value: %TRUE for success, %FALSE for failure
+ * Return value: %TRUE for success, %FALSE otherwise
  *
  * Since: 0.1.0
  **/
@@ -1712,8 +1762,8 @@ zif_package_set_id (ZifPackage *package, const gchar *package_id, GError **error
 
 /**
  * zif_package_set_summary:
- * @package: the #ZifPackage object
- * @summary: the package summary
+ * @package: A #ZifPackage
+ * @summary: The package summary
  *
  * Sets the package summary.
  *
@@ -1731,8 +1781,8 @@ zif_package_set_summary (ZifPackage *package, ZifString *summary)
 
 /**
  * zif_package_set_description:
- * @package: the #ZifPackage object
- * @description: the package description
+ * @package: A #ZifPackage
+ * @description: The package description
  *
  * Sets the package description.
  *
@@ -1750,8 +1800,8 @@ zif_package_set_description (ZifPackage *package, ZifString *description)
 
 /**
  * zif_package_set_license:
- * @package: the #ZifPackage object
- * @license: license
+ * @package: A #ZifPackage
+ * @license: The package license
  *
  * Sets the package license.
  *
@@ -1769,7 +1819,7 @@ zif_package_set_license (ZifPackage *package, ZifString *license)
 
 /**
  * zif_package_set_url:
- * @package: the #ZifPackage object
+ * @package: A #ZifPackage
  * @url: The package homepage URL
  *
  * Sets the project homepage URL.
@@ -1788,8 +1838,8 @@ zif_package_set_url (ZifPackage *package, ZifString *url)
 
 /**
  * zif_package_set_location_href:
- * @package: the #ZifPackage object
- * @location_href: the remote download filename
+ * @package: A #ZifPackage
+ * @location_href: The remote download filename
  *
  * Sets the remote download location.
  *
@@ -1807,7 +1857,7 @@ zif_package_set_location_href (ZifPackage *package, ZifString *location_href)
 
 /**
  * zif_package_set_category:
- * @package: the #ZifPackage object
+ * @package: A #ZifPackage
  * @category: category
  *
  * Sets the package category.
@@ -1826,8 +1876,8 @@ zif_package_set_category (ZifPackage *package, ZifString *category)
 
 /**
  * zif_package_set_group:
- * @package: the #ZifPackage object
- * @group: the package group
+ * @package: A #ZifPackage
+ * @group: The package group
  *
  * Sets the package group.
  *
@@ -1845,8 +1895,8 @@ zif_package_set_group (ZifPackage *package, ZifString *group)
 
 /**
  * zif_package_set_cache_filename:
- * @package: the #ZifPackage object
- * @cache_filename: the cache filename
+ * @package: A #ZifPackage
+ * @cache_filename: The cache filename
  *
  * Sets the cache filename, which is the full location of the local
  * package file on the filesystem.
@@ -1870,8 +1920,8 @@ zif_package_set_cache_filename (ZifPackage *package, const gchar *cache_filename
 
 /**
  * zif_package_set_size:
- * @package: the #ZifPackage object
- * @size: the package size in bytes
+ * @package: A #ZifPackage
+ * @size: The package size in bytes
  *
  * Sets the package size in bytes.
  *
@@ -1889,7 +1939,7 @@ zif_package_set_size (ZifPackage *package, guint64 size)
 
 /**
  * zif_package_set_files:
- * @package: the #ZifPackage object
+ * @package: A #ZifPackage
  * @files: an array of strings.
  *
  * Sets the package file list.
@@ -1924,7 +1974,8 @@ zif_package_set_files (ZifPackage *package, GPtrArray *files)
 		g_hash_table_insert (package->priv->provides_any_hash,
 				     (gpointer) filename,
 				     depend_tmp);
-		g_ptr_array_add (package->priv->provides, g_object_ref (depend_tmp));
+		g_ptr_array_add (package->priv->provides,
+				 g_object_ref (depend_tmp));
 		package->priv->any_file_provides = TRUE;
 	}
 
@@ -1933,8 +1984,8 @@ zif_package_set_files (ZifPackage *package, GPtrArray *files)
 
 /**
  * zif_package_set_requires:
- * @package: the #ZifPackage object
- * @requires: the package requires
+ * @package: A #ZifPackage
+ * @requires: The package requires
  *
  * Sets the package requires.
  *
@@ -1969,8 +2020,8 @@ zif_package_set_requires (ZifPackage *package, GPtrArray *requires)
 
 /**
  * zif_package_set_provides:
- * @package: the #ZifPackage object
- * @provides: the package provides
+ * @package: A #ZifPackage
+ * @provides: The package provides
  *
  * Sets the package provides
  *
@@ -2006,14 +2057,15 @@ zif_package_set_provides (ZifPackage *package, GPtrArray *provides)
 	/* add to the array, not replace */
 	for (i=0; i<provides->len; i++) {
 		depend_tmp = g_ptr_array_index (provides, i);
-		g_ptr_array_add (package->priv->provides, g_object_ref (depend_tmp));
+		g_ptr_array_add (package->priv->provides,
+				 g_object_ref (depend_tmp));
 	}
 }
 
 /**
  * zif_package_set_obsoletes:
- * @package: the #ZifPackage object
- * @obsoletes: the package obsoletes
+ * @package: A #ZifPackage
+ * @obsoletes: The package obsoletes
  *
  * Sets the package obsoletes.
  *
@@ -2048,8 +2100,8 @@ zif_package_set_obsoletes (ZifPackage *package, GPtrArray *obsoletes)
 
 /**
  * zif_package_set_conflicts:
- * @package: the #ZifPackage object
- * @conflicts: the package conflicts
+ * @package: A #ZifPackage
+ * @conflicts: The package conflicts
  *
  * Sets the package conflicts.
  *
@@ -2199,7 +2251,7 @@ zif_package_init (ZifPackage *package)
 /**
  * zif_package_new:
  *
- * Return value: A new #ZifPackage class instance.
+ * Return value: A new #ZifPackage instance.
  *
  * Since: 0.1.0
  **/

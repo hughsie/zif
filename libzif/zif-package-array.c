@@ -49,12 +49,14 @@ zif_package_array_new (void)
 
 /**
  * zif_package_array_get_newest:
- * @array: array of %ZifPackage's
- * @error: a #GError which is used on failure, or %NULL
+ * @array: Array of %ZifPackage's
+ * @error: A #GError, or %NULL
  *
  * Returns the newest package from a list.
  *
- * Return value: a single %ZifPackage, or %NULL in the case of an error. Use g_object_unref() when done.
+ * Return value: A single %ZifPackage, or %NULL in the case of an error.
+ * The returned object should be freed with g_object_unref() when no
+ * longer needed.
  *
  * Since: 0.1.0
  **/
@@ -92,15 +94,16 @@ out:
 	return package;
 }
 
-
 /**
  * zif_package_array_get_oldest:
- * @array: array of %ZifPackage's
- * @error: a #GError which is used on failure, or %NULL
+ * @array: Array of %ZifPackage's
+ * @error: A #GError, or %NULL
  *
  * Returns the oldest package from a list.
  *
- * Return value: a single %ZifPackage, or %NULL in the case of an error. Use g_object_unref() when done.
+ * Return value: A single %ZifPackage, or %NULL in the case of an error.
+ * The returned object should be freed with g_object_unref() when no
+ * longer needed.
  *
  * Since: 0.1.3
  **/
@@ -196,7 +199,7 @@ zif_package_array_filter_newest (GPtrArray *packages)
 
 /**
  * zif_package_array_filter_best_arch:
- * @array: array of %ZifPackage's
+ * @array: Array of %ZifPackage's
  *
  * Filters the array so that only the best version of a package remains.
  *
@@ -248,7 +251,7 @@ zif_package_array_filter_best_arch (GPtrArray *array)
 
 /**
  * zif_package_array_filter_arch:
- * @array: array of %ZifPackage's
+ * @array: Array of %ZifPackage's
  * @arch: architecture string, e.g. "i486"
  *
  * Filters the array so that only the matching arch of a package remains.
@@ -280,7 +283,7 @@ zif_package_array_filter_arch (GPtrArray *array, const gchar *arch)
 
 /**
  * zif_package_array_filter_smallest_name:
- * @array: array of %ZifPackage's
+ * @array: Array of %ZifPackage's
  *
  * Filters the array so that only the smallest name of a package remains.
  *
@@ -325,10 +328,10 @@ zif_package_array_filter_smallest_name (GPtrArray *array)
 
 /**
  * zif_package_array_filter_provide:
- * @array: array of %ZifPackage's
+ * @array: Array of %ZifPackage's
  * @depends: an array of #ZifDepend's
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Filters the list by the dependency satisfiability.
  *
@@ -389,10 +392,10 @@ out:
 
 /**
  * zif_package_array_filter_require:
- * @array: array of %ZifPackage's
+ * @array: Array of %ZifPackage's
  * @depends: an array of #ZifDepend's
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Filters the list by the dependency satisfiability.
  *
@@ -453,10 +456,10 @@ out:
 
 /**
  * zif_package_array_filter_conflict:
- * @array: array of %ZifPackage's
+ * @array: Array of %ZifPackage's
  * @depends: an array of #ZifDepend's
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Filters the list by the dependency satisfiability.
  *
@@ -517,10 +520,10 @@ out:
 
 /**
  * zif_package_array_filter_obsolete:
- * @array: array of %ZifPackage's
+ * @array: Array of %ZifPackage's
  * @depends: an array of #ZifDepend's
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Filters the list by the dependency satisfiability.
  *
@@ -673,12 +676,12 @@ out:
 
 /**
  * zif_package_array_provide:
- * @array: array of %ZifPackage's
- * @depend: the dependency to try and satisfy
- * @best_depend: the best matched dependency, free with g_object_unref() if not %NULL
- * @results: the matched dependencies, free with g_ptr_array_unref() if not %NULL
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @array: Array of %ZifPackage's
+ * @depend: A dependency to try and satisfy
+ * @best_depend: The best matched dependency, free with g_object_unref() if not %NULL
+ * @results: A matched dependencies, free with g_ptr_array_unref() if not %NULL
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Gets the package dependencies that satisfy the supplied dependency.
  *
@@ -706,12 +709,12 @@ zif_package_array_provide (GPtrArray *array,
 
 /**
  * zif_package_array_require:
- * @array: array of %ZifPackage's
- * @depend: the dependency to try and satisfy
- * @best_depend: the best matched dependency, free with g_object_unref() if not %NULL
- * @results: the matched dependencies, free with g_ptr_array_unref() if not %NULL
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @array: Array of %ZifPackage's
+ * @depend: A dependency to try and satisfy
+ * @best_depend: The best matched dependency, free with g_object_unref() if not %NULL
+ * @results: A matched dependencies, free with g_ptr_array_unref() if not %NULL
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Gets the package dependencies that satisfy the supplied dependency.
  *
@@ -739,12 +742,12 @@ zif_package_array_require (GPtrArray *array,
 
 /**
  * zif_package_array_conflict:
- * @array: array of %ZifPackage's
- * @depend: the dependency to try and satisfy
- * @best_depend: the best matched dependency, free with g_object_unref() if not %NULL
- * @results: the matched dependencies, free with g_ptr_array_unref() if not %NULL
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @array: Array of %ZifPackage's
+ * @depend: A dependency to try and satisfy
+ * @best_depend: The best matched dependency, free with g_object_unref() if not %NULL
+ * @results: A matched dependencies, free with g_ptr_array_unref() if not %NULL
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Gets the package dependencies that satisfy the supplied dependency.
  *
@@ -772,12 +775,12 @@ zif_package_array_conflict (GPtrArray *array,
 
 /**
  * zif_package_array_obsolete:
- * @array: array of %ZifPackage's
- * @depend: the dependency to try and satisfy
- * @best_depend: the best matched dependency, free with g_object_unref() if not %NULL
- * @results: the matched dependencies, free with g_ptr_array_unref() if not %NULL
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @array: Array of %ZifPackage's
+ * @depend: A dependency to try and satisfy
+ * @best_depend: The best matched dependency, free with g_object_unref() if not %NULL
+ * @results: A matched dependencies, free with g_ptr_array_unref() if not %NULL
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Gets the package dependencies that satisfy the supplied dependency.
  *

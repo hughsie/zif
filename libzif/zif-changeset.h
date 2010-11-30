@@ -65,7 +65,7 @@ const gchar		*zif_changeset_get_author	(ZifChangeset		*changeset);
 const gchar		*zif_changeset_get_description	(ZifChangeset		*changeset);
 const gchar		*zif_changeset_get_version	(ZifChangeset		*changeset);
 
-/* internal setters: TODO, in seporate -internal header file */
+/* internal setters: TODO, in separate -internal header file */
 void			 zif_changeset_set_date		(ZifChangeset		*changeset,
 							 guint64		 date);
 void			 zif_changeset_set_author	(ZifChangeset		*changeset,

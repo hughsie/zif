@@ -280,7 +280,10 @@ zif_package_local_get_depends_from_name_flags_version (GPtrArray *names, GPtrArr
  * zif_package_local_ensure_data:
  */
 static gboolean
-zif_package_local_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, ZifState *state, GError **error)
+zif_package_local_ensure_data (ZifPackage *pkg,
+			       ZifPackageEnsureType type,
+			       ZifState *state,
+			       GError **error)
 {
 	GPtrArray *files;
 	GPtrArray *dirnames;
@@ -303,8 +306,11 @@ zif_package_local_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, ZifSt
 
 	/* eigh? */
 	if (header == NULL) {
-		g_set_error (error, ZIF_PACKAGE_ERROR, ZIF_PACKAGE_ERROR_FAILED,
-			     "no header for %s", zif_package_get_printable (pkg));
+		g_set_error (error,
+			     ZIF_PACKAGE_ERROR,
+			     ZIF_PACKAGE_ERROR_FAILED,
+			     "no header for %s",
+			     zif_package_get_printable (pkg));
 		goto out;
 	}
 
@@ -320,12 +326,16 @@ zif_package_local_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, ZifSt
 			fileindex = zif_get_header_uint32_index (header, RPMTAG_DIRINDEXES, basenames->len);
 			if (basenames->len != fileindex->len) {
 				g_set_error_literal (error, ZIF_PACKAGE_ERROR, ZIF_PACKAGE_ERROR_FAILED,
-						     "internal error, basenames length is not the same as index length, possibly corrupt db?");
+						     "internal error, basenames length is not the same as index length, "
+						     "possibly corrupt db?");
 				goto out;
 			}
 			if (fileindex->len > fileindex->len) {
-				g_set_error_literal (error, ZIF_PACKAGE_ERROR, ZIF_PACKAGE_ERROR_FAILED,
-						     "internal error, fileindex length is bigger than index length, possibly corrupt db?");
+				g_set_error_literal (error,
+						     ZIF_PACKAGE_ERROR,
+						     ZIF_PACKAGE_ERROR_FAILED,
+						     "internal error, fileindex length is bigger than index length, "
+						     "possibly corrupt db?");
 				goto out;
 			}
 
@@ -372,7 +382,8 @@ zif_package_local_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, ZifSt
 		/* description */
 		tmp = zif_get_header_string (header, RPMTAG_DESCRIPTION);
 		if (tmp == NULL) {
-			g_warning ("no description for %s", zif_package_get_id (pkg));
+			g_warning ("no description for %s",
+				   zif_package_get_id (pkg));
 			tmp = zif_string_new ("");
 		}
 		zif_package_set_description (pkg, tmp);
@@ -492,11 +503,11 @@ out:
 
 /**
  * zif_package_local_get_header:
- * @pkg: the #ZifPackageLocal object
+ * @pkg: A #ZifPackageLocal
  *
  * Gets the RPM header object for the package.
  *
- * Return value: a rpm Header structure, or %NULL if unset
+ * Return value: The rpm Header structure, or %NULL if unset
  *
  * Since: 0.1.0
  **/
@@ -509,13 +520,13 @@ zif_package_local_get_header (ZifPackageLocal *pkg)
 
 /**
  * zif_package_local_set_from_header:
- * @pkg: the #ZifPackageLocal object
- * @header: a rpm Header structure
- * @error: a #GError which is used on failure, or %NULL
+ * @pkg: A #ZifPackageLocal
+ * @header: A rpm Header structure
+ * @error: A #GError, or %NULL
  *
  * Sets the local package from an RPM header object.
  *
- * Return value: %TRUE for success, %FALSE for failure
+ * Return value: %TRUE for success, %FALSE otherwise
  *
  * Since: 0.1.0
  **/
@@ -546,13 +557,13 @@ out:
 
 /**
  * zif_package_local_set_from_filename:
- * @pkg: the #ZifPackageLocal object
- * @filename: the local filename
- * @error: a #GError which is used on failure, or %NULL
+ * @pkg: A #ZifPackageLocal
+ * @filename: A filename
+ * @error: A #GError, or %NULL
  *
  * Sets a local package object from a local file.
  *
- * Return value: %TRUE for success, %FALSE for failure
+ * Return value: %TRUE for success, %FALSE otherwise
  *
  * Since: 0.1.0
  **/
@@ -629,7 +640,7 @@ out:
 
 /**
  * zif_package_local_get_key_id:
- * @pkg: the #ZifPackageLocal object
+ * @pkg: A #ZifPackageLocal
  *
  * Gets a signature key identifier for the package, e.g.
  * "RSA/SHA256, Thu Sep 23 17:25:34 2010, Key ID 421caddb97a1071f"
@@ -713,7 +724,7 @@ zif_package_local_init (ZifPackageLocal *pkg)
 /**
  * zif_package_local_new:
  *
- * Return value: A new #ZifPackageLocal class instance.
+ * Return value: A new #ZifPackageLocal instance.
  *
  * Since: 0.1.0
  **/

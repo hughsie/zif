@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*-
  *
- * Copyright (C) 2008 Richard Hughes <richard@hughsie.com>
+ * Copyright (C) 2008-2010 Richard Hughes <richard@hughsie.com>
  *
  * Licensed under the GNU General Public License Version 2
  *
@@ -58,16 +58,16 @@ G_DEFINE_TYPE (ZifPackageRemote, zif_package_remote, ZIF_TYPE_PACKAGE)
 
 /**
  * zif_package_remote_set_from_repo:
- * @pkg: the #ZifPackageRemote object
+ * @pkg: A #ZifPackageRemote
  * @length: length of data and type arrays
- * @type: data type array
- * @data: data value array
- * @repo_id: the repository id
- * @error: a #GError which is used on failure, or %NULL
+ * @type: The data type array
+ * @data: The data value array
+ * @repo_id: The repository id
+ * @error: A #GError, or %NULL
  *
  * Sets details on a remote package from repo data derived from the metadata xml.
  *
- * Return value: %TRUE for success, %FALSE for failure
+ * Return value: %TRUE for success, %FALSE otherwise
  *
  * Since: 0.1.0
  **/
@@ -155,11 +155,11 @@ out:
 
 /**
  * zif_package_remote_get_pkgid:
- * @pkg: the #ZifPackageRemote object
+ * @pkg: A #ZifPackageRemote
  *
  * Gets the pkgid used internally to track the package item.
  *
- * Return value: the pkgid hash.
+ * Return value: The pkgid hash.
  *
  * Since: 0.1.0
  **/
@@ -172,8 +172,8 @@ zif_package_remote_get_pkgid (ZifPackageRemote *pkg)
 
 /**
  * zif_package_remote_set_pkgid:
- * @pkg: the #ZifPackageRemote object
- * @pkgid: the pkgid hash.
+ * @pkg: A #ZifPackageRemote
+ * @pkgid: The pkgid hash.
  *
  * Sets the pkgid used internally to track the package item.
  *
@@ -229,14 +229,14 @@ out:
 
 /**
  * zif_package_remote_download:
- * @pkg: the #ZifPackageRemote object
- * @directory: the local directory to save to, or %NULL to use the package cache
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @pkg: A #ZifPackageRemote
+ * @directory: A local directory to save to, or %NULL to use the package cache
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Downloads a package.
  *
- * Return value: %TRUE for success, %FALSE for failure
+ * Return value: %TRUE for success, %FALSE otherwise
  *
  * Since: 0.1.3
  **/
@@ -319,8 +319,8 @@ out:
 
 /**
  * zif_package_remote_set_store_remote:
- * @pkg: the #ZifPackageRemote object
- * @store: the #ZifStoreRemote that created this package
+ * @pkg: A #ZifPackageRemote
+ * @store: A #ZifStoreRemote that created this package
  *
  * Sets the store used to create this package, which we may need of we ever
  * need to ensure() data at runtime.
@@ -336,16 +336,15 @@ zif_package_remote_set_store_remote (ZifPackageRemote *pkg, ZifStoreRemote *stor
 	pkg->priv->store_remote = g_object_ref (store);
 }
 
-
 /**
  * zif_package_remote_get_update_detail:
- * @package: the #ZifPackageRemote object
- * @state: a #ZifState to use for progress reporting
- * @error: a #GError which is used on failure, or %NULL
+ * @package: A #ZifPackageRemote
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
  *
  * Gets the update detail for a package.
  *
- * Return value: a %ZifUpdate, or %NULL for failure
+ * Return value: A %ZifUpdate, or %NULL for failure
  *
  * Since: 0.1.3
  **/
@@ -533,7 +532,7 @@ zif_package_remote_init (ZifPackageRemote *pkg)
 /**
  * zif_package_remote_new:
  *
- * Return value: A new #ZifPackageRemote class instance.
+ * Return value: A new #ZifPackageRemote instance.
  *
  * Since: 0.1.0
  **/

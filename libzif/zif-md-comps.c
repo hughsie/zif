@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*-
  *
- * Copyright (C) 2009 Richard Hughes <richard@hughsie.com>
+ * Copyright (C) 2009-2010 Richard Hughes <richard@hughsie.com>
  *
  * Licensed under the GNU General Public License Version 2
  *
@@ -496,9 +496,9 @@ out:
 
 /**
  * zif_md_comps_get_categories:
- * @md: the #ZifMdComps object
- * @state: the %ZifState object
- * @error: a #GError which is used on failure, or %NULL
+ * @md: A #ZifMdComps
+ * @state: A %ZifState
+ * @error: A #GError, or %NULL
  *
  * Gets the available list of categories.
  *
@@ -577,10 +577,10 @@ zif_md_comps_get_category_for_group (ZifMdComps *md, const gchar *group_id)
 
 /**
  * zif_md_comps_get_groups_for_category:
- * @md: the #ZifMdComps object
- * @category_id: the category to search for
- * @state: the %ZifState object
- * @error: a #GError which is used on failure, or %NULL
+ * @md: A #ZifMdComps
+ * @category_id: The category to search for
+ * @state: A %ZifState
+ * @error: A #GError, or %NULL
  *
  * Gets the list of groups for a specific category.
  *
@@ -653,10 +653,10 @@ out:
 
 /**
  * zif_md_comps_get_packages_for_group:
- * @md: the #ZifMdComps object
- * @group_id: the group to search for
- * @state: the %ZifState object
- * @error: a #GError which is used on failure, or %NULL
+ * @md: A #ZifMdComps
+ * @group_id: The group to search for
+ * @state: A %ZifState
+ * @error: A #GError, or %NULL
  *
  * Gets the package names for a group.
  *
@@ -781,7 +781,7 @@ zif_md_comps_init (ZifMdComps *md)
 /**
  * zif_md_comps_new:
  *
- * Return value: A new #ZifMdComps class instance.
+ * Return value: A new #ZifMdComps instance.
  *
  * Since: 0.1.0
  **/

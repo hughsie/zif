@@ -57,11 +57,11 @@ G_DEFINE_TYPE (ZifChangeset, zif_changeset, G_TYPE_OBJECT)
 
 /**
  * zif_changeset_get_date:
- * @changeset: the #ZifChangeset object
+ * @changeset: A #ZifChangeset
  *
  * Gets the date and date of the update.
  *
- * Return value: the date of the update, or 0 for unset.
+ * Return value: The date of the update, or 0 for unset.
  *
  * Since: 0.1.0
  **/
@@ -74,7 +74,7 @@ zif_changeset_get_date (ZifChangeset *changeset)
 
 /**
  * zif_changeset_get_author:
- * @changeset: the #ZifChangeset object
+ * @changeset: A #ZifChangeset
  *
  * Gets the author for this changeset.
  *
@@ -91,7 +91,7 @@ zif_changeset_get_author (ZifChangeset *changeset)
 
 /**
  * zif_changeset_get_description:
- * @changeset: the #ZifChangeset object
+ * @changeset: A #ZifChangeset
  *
  * Gets the description for this changeset.
  *
@@ -108,7 +108,7 @@ zif_changeset_get_description (ZifChangeset *changeset)
 
 /**
  * zif_changeset_get_version:
- * @changeset: the #ZifChangeset object
+ * @changeset: A #ZifChangeset
  *
  * Gets the date this changeset was version.
  *
@@ -125,7 +125,7 @@ zif_changeset_get_version (ZifChangeset *changeset)
 
 /**
  * zif_changeset_set_date:
- * @changeset: the #ZifChangeset object
+ * @changeset: A #ZifChangeset
  * @date: The date of the changeset
  *
  * Sets the changeset date status.
@@ -163,8 +163,8 @@ zif_changeset_strreplace (GString *string, const gchar *find, const gchar *repla
 
 /**
  * zif_changeset_set_author:
- * @changeset: the #ZifChangeset object
- * @author: the changeset author
+ * @changeset: A #ZifChangeset
+ * @author: The changeset author
  *
  * Sets the changeset author. Some anti-mangling expansions are
  * performed, e.g. '[AT]' is replaced with '@'.
@@ -189,8 +189,8 @@ zif_changeset_set_author (ZifChangeset *changeset, const gchar *author)
 
 /**
  * zif_changeset_set_description:
- * @changeset: the #ZifChangeset object
- * @description: the changeset description
+ * @changeset: A #ZifChangeset
+ * @description: The changeset description
  *
  * Sets the changeset description.
  *
@@ -208,8 +208,8 @@ zif_changeset_set_description (ZifChangeset *changeset, const gchar *description
 
 /**
  * zif_changeset_set_version:
- * @changeset: the #ZifChangeset object
- * @version: the changeset version date
+ * @changeset: A #ZifChangeset
+ * @version: The changeset version date
  *
  * Sets the date the changeset was version.
  *
@@ -227,9 +227,9 @@ zif_changeset_set_version (ZifChangeset *changeset, const gchar *version)
 
 /**
  * zif_changeset_parse_header:
- * @changeset: the #ZifChangeset object
- * @header: the package header, e.g "Ania Hughes &lt;ahughes&amp;redhat.com&gt; - 2.29.91-1.fc13"
- * @error: a #GError which is used on failure, or %NULL
+ * @changeset: A #ZifChangeset
+ * @header: The package header, e.g "Ania Hughes &lt;ahughes&amp;redhat.com&gt; - 2.29.91-1.fc13"
+ * @error: A #GError, or %NULL
  *
  * Sets the author and version from the package header.
  *
@@ -415,7 +415,7 @@ zif_changeset_init (ZifChangeset *changeset)
 /**
  * zif_changeset_new:
  *
- * Return value: A new #ZifChangeset class instance.
+ * Return value: A new #ZifChangeset instance.
  *
  * Since: 0.1.0
  **/

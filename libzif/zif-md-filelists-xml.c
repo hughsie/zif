@@ -564,7 +564,7 @@ zif_md_filelists_xml_init (ZifMdFilelistsXml *md)
 /**
  * zif_md_filelists_xml_new:
  *
- * Return value: A new #ZifMdFilelistsXml class instance.
+ * Return value: A new #ZifMdFilelistsXml instance.
  *
  * Since: 0.1.0
  **/

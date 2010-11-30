@@ -55,7 +55,7 @@ static gpointer zif_legal_object = NULL;
 /**
  * zif_legal_error_quark:
  *
- * Return value: Our personal error quark.
+ * Return value: An error quark.
  *
  * Since: 0.1.0
  **/
@@ -134,10 +134,10 @@ zif_legal_is_free_part (ZifLegal *legal, const gchar *string)
 
 /**
  * zif_legal_is_free:
- * @legal: the #ZifLegal object
- * @string: the legal string to check, e.g. ""Zend and wxWidgets""
- * @is_free: if the string is a valid free legal
- * @error: a #GError which is used on failure, or %NULL
+ * @legal: A #ZifLegal
+ * @string: String to check, e.g. "Zend and wxWidgets"
+ * @is_free: If the string is a can be considered free
+ * @error: A #GError, or %NULL
  *
  * Finds out if the package is classified as free software.
  *
@@ -220,10 +220,10 @@ out:
 
 /**
  * zif_legal_set_filename:
- * @legal: the #ZifLegal object
- * @filename: the system wide legal file, e.g. "/etc/yum.conf"
+ * @legal: A #ZifLegal
+ * @filename: The system wide licences file, e.g. "/usr/share/zif/licences.txt"
  *
- * Sets the filename to use as the system wide legal file.
+ * Sets the filename to use as the system wide licences file.
  *
  * Since: 0.1.0
  **/
@@ -297,7 +297,7 @@ zif_legal_init (ZifLegal *legal)
 /**
  * zif_legal_new:
  *
- * Return value: A new #ZifLegal class instance.
+ * Return value: A new #ZifLegal instance.
  *
  * Since: 0.1.0
  **/

@@ -36,12 +36,11 @@
  * The child can be reused for each section, and chains can be deep.
  *
  * To get a child object, you should use zif_state_get_child() and then
- * use the result in any sub-process. You should ensure that the child object
+ * use the result in any sub-process. You should ensure that the child
  * is not re-used without calling zif_state_done().
  *
  * There are a few nice touches in this module, so that if a module only has
  * one progress step, the child progress is used for updates.
- *
  *
  * <example>
  *   <title>Using a #ZifState.</title>
@@ -49,27 +48,27 @@
  * static void
  * _do_something (ZifState *state)
  * {
- *	ZifState *state_local;
+ *    ZifState *state_local;
  *
- *	// setup correct number of steps
- *	zif_state_set_number_steps (state, 2);
+ *    // setup correct number of steps
+ *    zif_state_set_number_steps (state, 2);
  *
- *	// we can't cancel this function
- *	zif_state_set_allow_cancel (state, FALSE);
+ *    // we can't cancel this function
+ *    zif_state_set_allow_cancel (state, FALSE);
  *
- *	// run a sub function
- *	state_local = zif_state_get_child (state);
- *	_do_something_else1 (state_local);
+ *    // run a sub function
+ *    state_local = zif_state_get_child (state);
+ *    _do_something_else1 (state_local);
  *
- *	// this section done
- *	zif_state_done (state);
+ *    // this section done
+ *    zif_state_done (state);
  *
- *	// run another sub function
- *	state_local = zif_state_get_child (state);
- *	_do_something_else2 (state_local);
+ *    // run another sub function
+ *    state_local = zif_state_get_child (state);
+ *    _do_something_else2 (state_local);
  *
- *	// this section done (all complete)
- *	zif_state_done (state);
+ *    // this section done (all complete)
+ *    zif_state_done (state);
  * }
  *   </programlisting>
  * </example>
@@ -131,7 +130,7 @@ G_DEFINE_TYPE (ZifState, zif_state, G_TYPE_OBJECT)
 /**
  * zif_state_error_quark:
  *
- * Return value: Our personal error quark.
+ * Return value: An error quark.
  *
  * Since: 0.1.0
  **/
@@ -146,7 +145,7 @@ zif_state_error_quark (void)
 
 /**
  * zif_state_set_report_progress:
- * @state: the #ZifState object
+ * @state: A #ZifState
  * @report_progress: if we care about percentage status
  *
  * This disables progress tracking for ZifState. This is generally a bad
@@ -168,7 +167,7 @@ zif_state_set_report_progress (ZifState *state, gboolean report_progress)
 
 /**
  * zif_state_set_enable_profile:
- * @state: the #ZifState object
+ * @state: A #ZifState
  * @enable_profile: if profiling should be enabled
  *
  * This enables profiling of ZifState. This may be useful in development,
@@ -185,9 +184,9 @@ zif_state_set_enable_profile (ZifState *state, gboolean enable_profile)
 
 /**
  * zif_state_set_error_handler:
- * @state: the #ZifState object
- * @error_handler_cb: a #ZifStateErrorHandlerCb which returns %FALSE if the error is fatal
- * @user_data: the user_data to be passed to the #ZifStateErrorHandlerCb
+ * @state: A #ZifState
+ * @error_handler_cb: A #ZifStateErrorHandlerCb which returns %FALSE if the error is fatal
+ * @user_data: A user_data to be passed to the #ZifStateErrorHandlerCb
  *
  * Since: 0.1.0
  **/
@@ -204,8 +203,8 @@ zif_state_set_error_handler (ZifState *state, ZifStateErrorHandlerCb error_handl
 
 /**
  * zif_state_error_handler:
- * @state: the #ZifState object
- * @error: a #GError
+ * @state: A #ZifState
+ * @error: A #GError
  *
  * Return value: %FALSE if the error is fatal, %TRUE otherwise
  *
@@ -231,12 +230,6 @@ out:
 
 /**
  * zif_state_discrete_to_percent:
- * @discrete: The discrete level
- * @steps: The number of discrete steps
- *
- * We have to be carefull when converting from discrete->%.
- *
- * Return value: The percentage for this discrete value.
  **/
 static gfloat
 zif_state_discrete_to_percent (guint discrete, guint steps)
@@ -265,11 +258,11 @@ zif_state_print_parent_chain (ZifState *state, guint level)
 
 /**
  * zif_state_get_cancellable:
- * @state: the #ZifState object
+ * @state: A #ZifState
  *
  * Gets the #GCancellable for this operation
  *
- * Return value: the #GCancellable or %NULL
+ * Return value: The #GCancellable or %NULL
  *
  * Since: 0.1.0
  **/
@@ -284,8 +277,8 @@ zif_state_get_cancellable (ZifState *state)
 
 /**
  * zif_state_set_cancellable:
- * @state: the #ZifState object
- * @cancellable: a #GCancellable which is used to cancel tasks, or %NULL
+ * @state: A #ZifState
+ * @cancellable: The #GCancellable which is used to cancel tasks, or %NULL
  *
  * Sets the #GCancellable object to use. You normally don't have to call this
  * function as a cancellable is created for you at when you request it.
@@ -304,7 +297,7 @@ zif_state_set_cancellable (ZifState *state, GCancellable *cancellable)
 
 /**
  * zif_state_get_allow_cancel:
- * @state: the #ZifState object
+ * @state: A #ZifState
  *
  * Gets if the sub-task (or one of it's sub-sub-tasks) is cancellable
  *
@@ -321,7 +314,7 @@ zif_state_get_allow_cancel (ZifState *state)
 
 /**
  * zif_state_set_allow_cancel:
- * @state: the #ZifState object
+ * @state: A #ZifState
  * @allow_cancel: If this sub-task can be cancelled
  *
  * Set is this sub task can be cancelled safely.
@@ -347,13 +340,13 @@ zif_state_set_allow_cancel (ZifState *state, gboolean allow_cancel)
 
 /**
  * zif_state_set_percentage:
- * @state: the #ZifState object
- * @percentage: A manual percentage value between 0% and 100%
+ * @state: A #ZifState
+ * @percentage: Percentage value between 0% and 100%
  *
  * Set a percentage manually.
  * NOTE: this must be above what was previously set, or it will be rejected.
  *
- * Return value: %TRUE if the signal was propagated, %FALSE for failure
+ * Return value: %TRUE if the signal was propagated, %FALSE otherwise
  *
  * Since: 0.1.0
  **/
@@ -418,7 +411,7 @@ out:
 
 /**
  * zif_state_valid:
- * @state: the #ZifState object
+ * @state: A #ZifState
  *
  * Returns if the %ZifState is a valid object and ready for use.
  * This is very useful in self-testing situations like:
@@ -451,11 +444,11 @@ zif_state_valid (ZifState *state)
 
 /**
  * zif_state_get_percentage:
- * @state: the #ZifState object
+ * @state: A #ZifState
  *
  * Get the percentage state.
  *
- * Return value: A percentage value, or G_MAXUINT for error
+ * Return value: The percentage value, or %G_MAXUINT for error
  *
  * Since: 0.1.0
  **/
@@ -483,8 +476,8 @@ out:
 
 /**
  * zif_state_action_start:
- * @state: the #ZifState object
- * @action: A %ZifStateAction, e.g. %ZIF_STATE_ACTION_DECOMPRESSING
+ * @state: A #ZifState
+ * @action: An action, e.g. %ZIF_STATE_ACTION_DECOMPRESSING
  * @action_hint: A hint on what the action is doing, e.g. "/var/cache/yum/i386/15/koji/primary.sqlite"
  *
  * Sets the action which is being performed. This is emitted up the chain
@@ -496,7 +489,7 @@ out:
  * It is allowed to call zif_state_action_start() more than once for a
  * given %ZifState instance.
  *
- * Return value: %TRUE if the signal was propagated, %FALSE for failure
+ * Return value: %TRUE if the signal was propagated, %FALSE otherwise
  *
  * Since: 0.1.2
  **/
@@ -535,12 +528,12 @@ zif_state_action_start (ZifState *state, ZifStateAction action, const gchar *act
 
 /**
  * zif_state_action_stop:
- * @state: the #ZifState object
+ * @state: A #ZifState
  *
  * Returns the ZifState to it's previous value.
  * It is not expected you will ever need to use this funtion.
  *
- * Return value: %TRUE if the signal was propagated, %FALSE for failure
+ * Return value: %TRUE if the signal was propagated, %FALSE otherwise
  *
  * Since: 0.1.2
  **/
@@ -570,11 +563,11 @@ zif_state_action_stop (ZifState *state)
 
 /**
  * zif_state_get_action_hint:
- * @state: the #ZifState object
+ * @state: A #ZifState
  *
  * Gets the action hint, which may be useful to the users.
  *
- * Return value: The action hint, e.g. "/var/cache/yum/i386/15/koji/primary.sqlite"
+ * Return value: An a ction hint, e.g. "/var/cache/yum/i386/15/koji/primary.sqlite"
  *
  * Since: 0.1.2
  **/
@@ -587,11 +580,11 @@ zif_state_get_action_hint (ZifState *state)
 
 /**
  * zif_state_get_action:
- * @state: the #ZifState object
+ * @state: A #ZifState
  *
  * Gets the last set action value.
  *
- * Return value: A %ZifStateAction, e.g. %ZIF_STATE_ACTION_DECOMPRESSING
+ * Return value: An action, e.g. %ZIF_STATE_ACTION_DECOMPRESSING
  *
  * Since: 0.1.2
  **/
@@ -604,11 +597,11 @@ zif_state_get_action (ZifState *state)
 
 /**
  * zif_state_action_to_string:
- * @action: a %ZifStateAction value
+ * @action: A %ZifStateAction value
  *
  * Converts the %ZifStateAction to a string.
  *
- * Return value: a const string, or %NULL for unknown.
+ * Return value: A string, or %NULL for unknown.
  *
  * Since: 0.1.2
  **/
@@ -753,11 +746,11 @@ zif_state_child_action_changed_cb (ZifState *child, ZifStateAction action, const
 
 /**
  * zif_state_reset:
- * @state: the #ZifState object
+ * @state: A #ZifState
  *
  * Resets the #ZifState object to unset
  *
- * Return value: %TRUE for success, %FALSE for failure
+ * Return value: %TRUE for success, %FALSE otherwise
  *
  * Since: 0.1.0
  **/
@@ -827,12 +820,12 @@ zif_state_set_global_share (ZifState *state, gdouble global_share)
 
 /**
  * zif_state_get_child:
- * @state: the #ZifState object
+ * @state: A #ZifState
  *
  * Monitor a child state and proxy back up to the parent state.
- * Yo udo not have to g_object_unref() this value.
+ * You should not g_object_unref() this object, it is owned by the parent.
  *
- * Return value: a new %ZifState or %NULL for failure
+ * Return value: A new %ZifState or %NULL for failure
  *
  * Since: 0.1.0
  **/
@@ -893,13 +886,13 @@ out:
 
 /**
  * zif_state_set_number_steps_real:
- * @state: the #ZifState object
+ * @state: A #ZifState
  * @steps: The number of sub-tasks in this transaction
  *
  * Sets the number of sub-tasks, i.e. how many times the zif_state_done()
  * function will be called in the loop.
  *
- * Return value: %TRUE for success, %FALSE for failure
+ * Return value: %TRUE for success, %FALSE otherwise
  *
  * Since: 0.1.0
  **/
@@ -950,12 +943,16 @@ out:
 
 /**
  * zif_state_set_steps_real:
- * @value: the step weighting
+ * @state: A #ZifState
+ * @error: A #GError, or %NULL
+ * @strloc: the code location
+ * @value: A step weighting variable argument array
  *
  * This sets the step weighting, which you will want to do if one action
  * will take a bigger chunk of time than another.
  *
  * All the values must add up to 100, and the list must end with -1.
+ * Do not use this funtion directly, instead use the zif_state_set_steps() macro.
  *
  * Return value: %TRUE for success
  *
@@ -1073,12 +1070,12 @@ zif_state_show_profile (ZifState *state)
 
 /**
  * zif_state_done_real:
- * @state: the #ZifState object
+ * @state: A #ZifState
  * @error: A #GError or %NULL
  *
  * Called when the current sub-task has finished.
  *
- * Return value: %TRUE for success, %FALSE for failure
+ * Return value: %TRUE for success, %FALSE otherwise
  *
  * Since: 0.1.0
  **/
@@ -1183,12 +1180,12 @@ out:
 
 /**
  * zif_state_finished_real:
- * @state: the #ZifState object
+ * @state: A #ZifState
  * @error: A #GError or %NULL
  *
  * Called when the current sub-task wants to finish early and still complete.
  *
- * Return value: %TRUE for success, %FALSE for failure
+ * Return value: %TRUE for success, %FALSE otherwise
  *
  * Since: 0.1.0
  **/
@@ -1325,7 +1322,7 @@ zif_state_init (ZifState *state)
 /**
  * zif_state_new:
  *
- * Return value: A new #ZifState class instance.
+ * Return value: A new #ZifState instance.
  *
  * Since: 0.1.0
  **/

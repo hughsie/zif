@@ -26,7 +26,7 @@
  *
  * The primary purpose of #ZifStoreMeta is to be a general basket to
  * put #ZifPackages in, without actually getting the packages from any
- * remote or local source. It can be thought of as an in-memory sack.
+ * remote or local source. It can be thought of as an in-memory store.
  *
  * A #ZifStoreMeta is a subclassed #ZifStore and operates on packages.
  */
@@ -67,13 +67,13 @@ G_DEFINE_TYPE (ZifStoreMeta, zif_store_meta, ZIF_TYPE_STORE)
 
 /**
  * zif_store_meta_add_package:
- * @store: the #ZifStoreMeta object
- * @package: a #ZifPackage object
- * @error: a #GError which is used on failure, or %NULL
+ * @store: A #ZifStoreMeta
+ * @package: A #ZifPackage
+ * @error: A #GError, or %NULL
  *
  * Adds a package to the virtual store.
  *
- * Return value: %TRUE for success, %FALSE for failure
+ * Return value: %TRUE for success, %FALSE otherwise
  *
  * Since: 0.1.3
  **/
@@ -110,13 +110,13 @@ out:
 
 /**
  * zif_store_meta_add_packages:
- * @store: the #ZifStoreMeta object
- * @array: an array of #ZifPackage's
- * @error: a #GError which is used on failure, or %NULL
+ * @store: A #ZifStoreMeta
+ * @array: Array of #ZifPackage's
+ * @error: A #GError, or %NULL
  *
  * Adds an array of packages to the virtual store.
  *
- * Return value: %TRUE for success, %FALSE for failure
+ * Return value: %TRUE for success, %FALSE otherwise
  *
  * Since: 0.1.3
  **/
@@ -143,13 +143,13 @@ zif_store_meta_add_packages (ZifStoreMeta *store, GPtrArray *array, GError **err
 
 /**
  * zif_store_meta_remove_package:
- * @store: the #ZifStoreMeta object
- * @package: a #ZifPackage object
- * @error: a #GError which is used on failure, or %NULL
+ * @store: A #ZifStoreMeta
+ * @package: A #ZifPackage
+ * @error: A #GError, or %NULL
  *
  * Removes a package from the virtual store.
  *
- * Return value: %TRUE for success, %FALSE for failure
+ * Return value: %TRUE for success, %FALSE otherwise
  *
  * Since: 0.1.3
  **/
@@ -186,13 +186,13 @@ out:
 
 /**
  * zif_store_meta_remove_packages:
- * @store: the #ZifStoreMeta object
- * @array: an array of #ZifPackage's
- * @error: a #GError which is used on failure, or %NULL
+ * @store: A #ZifStoreMeta
+ * @array: Array of #ZifPackage's
+ * @error: A #GError, or %NULL
  *
  * Removes an array of packages from the virtual store.
  *
- * Return value: %TRUE for success, %FALSE for failure
+ * Return value: %TRUE for success, %FALSE otherwise
  *
  * Since: 0.1.3
  **/
@@ -219,7 +219,7 @@ zif_store_meta_remove_packages (ZifStoreMeta *store, GPtrArray *array, GError **
 
 /**
  * zif_store_meta_set_is_local:
- * @store: the #ZifStoreMeta object
+ * @store: A #ZifStoreMeta
  * @is_local: %TRUE if this is a local repo
  *
  * This function changes no results, it just changes the repository
@@ -513,7 +513,6 @@ out:
 	return array;
 }
 
-
 /**
  * zif_store_meta_what_provides:
  **/
@@ -629,7 +628,7 @@ zif_store_meta_init (ZifStoreMeta *store)
 /**
  * zif_store_meta_new:
  *
- * Return value: A new #ZifStoreMeta class instance.
+ * Return value: A new #ZifStoreMeta instance.
  *
  * Since: 0.1.3
  **/

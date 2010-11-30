@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*-
  *
- * Copyright (C) 2008 Richard Hughes <richard@hughsie.com>
+ * Copyright (C) 2008-2010 Richard Hughes <richard@hughsie.com>
  *
  * Licensed under the GNU General Public License Version 2
  *
@@ -68,7 +68,7 @@ static gpointer zif_groups_object = NULL;
 /**
  * zif_groups_error_quark:
  *
- * Return value: Our personal error quark.
+ * Return value: An error quark.
  *
  * Since: 0.1.0
  **/
@@ -83,13 +83,13 @@ zif_groups_error_quark (void)
 
 /**
  * zif_groups_set_mapping_file:
- * @groups: the #ZifGroups object
- * @mapping_file: mapping file from categories to groups
- * @error: a #GError which is used on failure, or %NULL
+ * @groups: A #ZifGroups
+ * @mapping_file: Mapping filename from categories to groups
+ * @error: A #GError, or %NULL
  *
  * This sets up the file that is used to map categories to group enums.
  *
- * Return value: %TRUE for success, %FALSE for failure
+ * Return value: %TRUE for success, %FALSE otherwise
  *
  * Since: 0.1.0
  **/
@@ -129,12 +129,12 @@ out:
 
 /**
  * zif_groups_load:
- * @groups: the #ZifGroups object
- * @error: a #GError which is used on failure, or %NULL
+ * @groups: A #ZifGroups
+ * @error: A #GError, or %NULL
  *
  * Loads the mapping file from disk into memory.
  *
- * Return value: %TRUE for success, %FALSE for failure
+ * Return value: %TRUE for success, %FALSE otherwise
  *
  * Since: 0.1.0
  **/
@@ -207,12 +207,13 @@ out:
 
 /**
  * zif_groups_get_groups:
- * @groups: the #ZifGroups object
- * @error: a #GError which is used on failure, or %NULL
+ * @groups: A #ZifGroups
+ * @error: A #GError, or %NULL
  *
  * Gets the groups supported by the packaging system.
  *
- * Return value: A #GPtrArray of the string groups that are supported, free with g_ptr_array_unref()
+ * Return value: An array of the string groups that are supported, free
+ * with g_ptr_array_unref() when done.
  *
  * Since: 0.1.0
  **/
@@ -241,12 +242,13 @@ out:
 
 /**
  * zif_groups_get_categories:
- * @groups: the #ZifGroups object
- * @error: a #GError which is used on failure, or %NULL
+ * @groups: A #ZifGroups
+ * @error: A #GError, or %NULL
  *
  * Gets the categories supported by the packaging system.
  *
- * Return value: category list as an array of strings, free with g_ptr_array_unref()
+ * Return value: category list as an array of strings, free
+ * with g_ptr_array_unref() when done.
  *
  * Since: 0.1.0
  **/
@@ -282,13 +284,14 @@ out:
 
 /**
  * zif_groups_get_cats_for_group:
- * @groups: the #ZifGroups object
- * @group_enum: the group enumeration, e.g. "education"
- * @error: a #GError which is used on failure, or %NULL
+ * @groups: A #ZifGroups
+ * @group_enum: A group enumeration, e.g. "education"
+ * @error: A #GError, or %NULL
  *
  * Gets all the categories that map to to this group enumeration.
  *
- * Return value: category list as an array of strings, free with g_ptr_array_unref()
+ * Return value: category list as an array of strings, free
+ * with g_ptr_array_unref() when done.
  *
  * Since: 0.1.1
  **/
@@ -340,13 +343,13 @@ out:
 
 /**
  * zif_groups_get_group_for_cat:
- * @groups: the #ZifGroups object
- * @cat: the category name, e.g. "games/action"
- * @error: a #GError which is used on failure, or %NULL
+ * @groups: A #ZifGroups
+ * @cat: Category name, e.g. "games/action"
+ * @error: A #GError, or %NULL
  *
  * Returns the group enumerated type for the category.
  *
- * Return value: the specific group name or %NULL
+ * Return value: A specific group name or %NULL
  *
  * Since: 0.1.0
  **/
@@ -449,7 +452,7 @@ zif_groups_init (ZifGroups *groups)
 /**
  * zif_groups_new:
  *
- * Return value: A new #ZifGroups class instance.
+ * Return value: A new #ZifGroups instance.
  *
  * Since: 0.1.0
  **/
