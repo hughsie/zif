@@ -140,22 +140,51 @@ zif_changeset_set_date (ZifChangeset *changeset, guint64 date)
 }
 
 /**
+ * zif_changeset_strreplace:
+ **/
+static gboolean
+zif_changeset_strreplace (GString *string, const gchar *find, const gchar *replace)
+{
+	gchar **array;
+	gchar *value;
+
+	/* common case, not found */
+	if (g_strstr_len (string->str, -1, find) == NULL)
+		return FALSE;
+
+	/* split apart and rejoin with new delimiter */
+	array = g_strsplit (string->str, find, 0);
+	value = g_strjoinv (replace, array);
+	g_strfreev (array);
+	g_string_assign (string, value);
+	g_free (value);
+	return TRUE;
+}
+
+/**
  * zif_changeset_set_author:
  * @changeset: the #ZifChangeset object
  * @author: the changeset author
  *
- * Sets the changeset author.
+ * Sets the changeset author. Some anti-mangling expansions are
+ * performed, e.g. '[AT]' is replaced with '@'.
  *
  * Since: 0.1.0
  **/
 void
 zif_changeset_set_author (ZifChangeset *changeset, const gchar *author)
 {
+	GString *temp;
+
 	g_return_if_fail (ZIF_IS_CHANGESET (changeset));
 	g_return_if_fail (author != NULL);
 	g_return_if_fail (changeset->priv->author == NULL);
 
-	changeset->priv->author = g_strdup (author);
+	/* try to unmangle */
+	temp = g_string_new (author);
+	zif_changeset_strreplace (temp, "[AT]", "@");
+
+	changeset->priv->author = g_string_free (temp, FALSE);
 }
 
 /**
