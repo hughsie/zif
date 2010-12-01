@@ -520,6 +520,140 @@ out:
 }
 
 /**
+ * zif_store_remote_add_changelog:
+ **/
+static gboolean
+zif_store_remote_add_changelog (ZifStoreRemote *store, ZifUpdate *update,
+				ZifPackageRemote *package_remote,
+				ZifState *state, GError **error)
+{
+	const gchar *pkgid;
+	const gchar *version;
+	gboolean ret = TRUE;
+	gchar **split_installed = NULL;
+	gchar *to_array[] = { NULL, NULL };
+	GError *error_local = NULL;
+	GPtrArray *array_installed = NULL;
+	GPtrArray *changelog = NULL;
+	GPtrArray *existing_changelog;
+	guint i;
+	ZifChangeset *changeset;
+	ZifPackage *package_installed = NULL;
+	ZifState *state_local;
+	ZifStore *store_local = NULL;
+
+	/* check we've not added this before */
+	existing_changelog = zif_update_get_changelog (update);
+	if (existing_changelog->len > 0)
+		goto out;
+
+	/* setup state */
+	ret = zif_state_set_steps (state,
+				   error,
+				   30, /* get changelog */
+				   60, /* resolve */
+				   10, /* add changeset */
+				   -1);
+	if (!ret)
+		goto out;
+
+	/* get pkgid */
+	pkgid = zif_package_remote_get_pkgid (package_remote);
+
+	/* get changelog and add to ZifUpdate */
+	state_local = zif_state_get_child (state);
+	changelog = zif_md_get_changelog (ZIF_MD (store->priv->md_other_sql),
+					  pkgid, state_local, &error_local);
+	if (changelog == NULL) {
+		ret = FALSE;
+		g_set_error (error,
+			     ZIF_STORE_ERROR,
+			     ZIF_STORE_ERROR_FAILED,
+			     "failed to get changelog: %s",
+			     error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* get the newest installed package with this name */
+	state_local = zif_state_get_child (state);
+	store_local = zif_store_local_new ();
+	to_array[0] = (gchar *) zif_package_get_name (ZIF_PACKAGE (package_remote));
+	array_installed = zif_store_resolve (store_local, to_array,
+					     state_local, &error_local);
+	if (array_installed == NULL) {
+		ret = FALSE;
+		g_set_error (error,
+			     ZIF_STORE_ERROR,
+			     ZIF_STORE_ERROR_FAILED,
+			     "failed to resolve installed package for update: %s",
+			     error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* something found, so get newest */
+	if (array_installed->len != 0) {
+		package_installed = zif_package_array_get_newest (array_installed,
+								  &error_local);
+		if (package_installed == NULL) {
+			ret = FALSE;
+			g_set_error (error,
+				     ZIF_STORE_ERROR,
+				     ZIF_STORE_ERROR_FAILED,
+				     "failed to get newest for %s: %s",
+				     zif_package_get_printable (ZIF_PACKAGE (package_remote)),
+				     error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+		split_installed = zif_package_id_split (zif_package_get_package_id (package_installed));
+	}
+
+	/* add the changesets (the changelog) to the update */
+	for (i=0; i<changelog->len; i++) {
+		changeset = g_ptr_array_index (changelog, i);
+		zif_update_add_changeset (update, changeset);
+
+		/* abort when the changeset is older than what we have installed */
+		if (split_installed != NULL) {
+			version = zif_changeset_get_version (changeset);
+			if (version != NULL &&
+			    zif_compare_evr (split_installed[ZIF_PACKAGE_ID_VERSION],
+					     version) >= 0)
+				break;
+		}
+	}
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+out:
+	g_strfreev (split_installed);
+	if (package_installed != NULL)
+		g_object_unref (package_installed);
+	if (array_installed != NULL)
+		g_ptr_array_unref (array_installed);
+	if (store_local != NULL)
+		g_object_unref (store_local);
+	if (changelog != NULL)
+		g_ptr_array_unref (changelog);
+	g_ptr_array_unref (existing_changelog);
+	return ret;
+}
+
+/**
  * zif_store_remote_get_update_detail:
  * @store: A #ZifStoreRemote
  * @package_id: The package_id of the package to find
@@ -536,24 +670,15 @@ ZifUpdate *
 zif_store_remote_get_update_detail (ZifStoreRemote *store, const gchar *package_id,
 				    ZifState *state, GError **error)
 {
-	const gchar *pkgid;
 	gboolean ret;
-	guint i;
 	GError *error_local = NULL;
 	GPtrArray *array = NULL;
-	GPtrArray *array_installed = NULL;
-	GPtrArray *changelog = NULL;
 	GPtrArray *packages = NULL;
-	ZifChangeset *changeset;
-	ZifState *state_local;
 	ZifMd *md;
-	ZifPackage *package_installed = NULL;
+	ZifPackageRemote *package_remote;
+	ZifState *state_local;
+	ZifUpdate *update_tmp = NULL;
 	ZifUpdate *update = NULL;
-	gchar *split_name = NULL;
-	gchar **split_installed = NULL;
-	ZifStore *store_local = NULL;
-	const gchar *version;
-	gchar *to_array[] = { NULL, NULL };
 
 	g_return_val_if_fail (zif_state_valid (state), FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
@@ -562,21 +687,17 @@ zif_store_remote_get_update_detail (ZifStoreRemote *store, const gchar *package_
 	if (store->priv->loaded_metadata) {
 		ret = zif_state_set_steps (state,
 					   error,
-					   20, /* get detail for package */
+					   30, /* get detail for package */
 					   20, /* find package */
-					   20, /* get changelog */
-					   20, /* resolve */
-					   20, /* add changeset */
+					   50, /* add changeset */
 					   -1);
 	} else {
 		ret = zif_state_set_steps (state,
 					   error,
-					   75, /* load metadata */
-					   5, /* get detail for package */
-					   5, /* find package */
-					   5, /* get changelog */
-					   5, /* resolve */
-					   5, /* add changeset */
+					   50, /* load metadata */
+					   10, /* get detail for package */
+					   10, /* find package */
+					   30, /* add changeset */
 					   -1);
 	}
 	if (!ret)
@@ -626,8 +747,11 @@ zif_store_remote_get_update_detail (ZifStoreRemote *store, const gchar *package_
 	}
 	if (array->len != 1) {
 		/* FIXME: is this valid? */
-		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
-			     "invalid number of update entries: %i", array->len);
+		g_set_error (error,
+			     ZIF_STORE_ERROR,
+			     ZIF_STORE_ERROR_FAILED,
+			     "invalid number of update entries: %i",
+			     array->len);
 		goto out;
 	}
 
@@ -648,7 +772,8 @@ zif_store_remote_get_update_detail (ZifStoreRemote *store, const gchar *package_
 		g_error_free (error_local);
 		goto out;
 	}
-	/* FIXME: non-fatal? */
+
+	/* fatal */
 	if (packages->len == 0) {
 		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 			     "cannot find package in primary repo: %s", package_id);
@@ -660,88 +785,30 @@ zif_store_remote_get_update_detail (ZifStoreRemote *store, const gchar *package_
 	if (!ret)
 		goto out;
 
-	/* get pkgid */
-	pkgid = zif_package_remote_get_pkgid (ZIF_PACKAGE_REMOTE (g_ptr_array_index (packages, 0)));
-
-	/* get changelog and add to ZifUpdate */
+	/* add the changelog data */
+	update_tmp = g_ptr_array_index (array, 0);
+	package_remote = ZIF_PACKAGE_REMOTE (g_ptr_array_index (packages, 0));
 	state_local = zif_state_get_child (state);
-	changelog = zif_md_get_changelog (ZIF_MD (store->priv->md_other_sql), pkgid, state_local, &error_local);
-	if (changelog == NULL) {
-		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
-			     "failed to get changelog: %s", error_local->message);
-		g_error_free (error_local);
+	ret = zif_store_remote_add_changelog (store,
+					      update_tmp,
+					      package_remote,
+					      state_local,
+					      error);
+	if (!ret)
 		goto out;
-	}
 
 	/* this section done */
 	ret = zif_state_done (state, error);
 	if (!ret)
 		goto out;
 
-	/* get the newest installed package with this name */
-	state_local = zif_state_get_child (state);
-	split_name = zif_package_id_get_name (package_id);
-	store_local = zif_store_local_new ();
-	to_array[0] = split_name;
-	array_installed = zif_store_resolve (store_local, to_array, state_local, &error_local);
-	if (array_installed == NULL) {
-		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
-			     "failed to resolve installed package for update: %s", error_local->message);
-		g_error_free (error_local);
-		goto out;
-	}
-
-	/* this section done */
-	ret = zif_state_done (state, error);
-	if (!ret)
-		goto out;
-
-	/* something found, so get newest */
-	if (array_installed->len != 0) {
-		package_installed = zif_package_array_get_newest (array_installed, &error_local);
-		if (package_installed == NULL) {
-			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
-				     "failed to get newest for %s: %s", package_id, error_local->message);
-			g_error_free (error_local);
-			goto out;
-		}
-		split_installed = zif_package_id_split (zif_package_get_package_id (package_installed));
-	}
-
-	/* add the changesets (the changelog) to the update */
-	update = g_object_ref (g_ptr_array_index (array, 0));
-	for (i=0; i<changelog->len; i++) {
-		changeset = g_ptr_array_index (changelog, i);
-		zif_update_add_changeset (update, changeset);
-
-		/* abort when the changeset is older than what we have installed */
-		if (split_installed != NULL) {
-			version = zif_changeset_get_version (changeset);
-			if (version != NULL &&
-			    zif_compare_evr (split_installed[ZIF_PACKAGE_ID_VERSION], version) >= 0)
-				break;
-		}
-	}
-
-	/* this section done */
-	ret = zif_state_done (state, error);
-	if (!ret)
-		goto out;
+	/* success */
+	update = g_object_ref (update_tmp);
 out:
-	g_free (split_name);
-	g_strfreev (split_installed);
-	if (changelog != NULL)
-		g_ptr_array_unref (changelog);
 	if (array != NULL)
 		g_ptr_array_unref (array);
-	if (array_installed != NULL)
-		g_ptr_array_unref (array_installed);
 	if (packages != NULL)
 		g_ptr_array_unref (packages);
-	if (package_installed != NULL)
-		g_object_unref (package_installed);
-	if (store_local != NULL)
-		g_object_unref (store_local);
 	return update;
 }
 
