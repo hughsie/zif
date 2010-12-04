@@ -352,18 +352,41 @@ zif_cmd_item_free (ZifCmdItem *item)
 	g_free (item);
 }
 
+/*
+ * zif_sort_command_name_cb:
+ */
+static gint
+zif_sort_command_name_cb (ZifCmdItem **item1, ZifCmdItem **item2)
+{
+	return g_strcmp0 ((*item1)->name, (*item2)->name);
+}
+
 /**
  * zif_cmd_add:
  **/
 static void
 zif_cmd_add (GPtrArray *array, const gchar *name, const gchar *description, ZifCmdPrivateCb callback)
 {
+	gchar **names;
+	guint i;
 	ZifCmdItem *item;
-	item = g_new0 (ZifCmdItem, 1);
-	item->name = g_strdup (name);
-	item->description = g_strdup (description);
-	item->callback = callback;
-	g_ptr_array_add (array, item);
+
+	/* add each one */
+	names = g_strsplit (name, ",", -1);
+	for (i=0; names[i] != NULL; i++) {
+		item = g_new0 (ZifCmdItem, 1);
+		item->name = g_strdup (names[i]);
+		if (i == 0) {
+			item->description = g_strdup (description);
+		} else {
+			/* TRANSLATORS: this is a command alias */
+			item->description = g_strdup_printf ("Alias to %s",
+							     names[0]);
+		}
+		item->callback = callback;
+		g_ptr_array_add (array, item);
+	}
+	g_strfreev (names);
 }
 
 /**
@@ -4397,12 +4420,12 @@ main (int argc, char *argv[])
 		     _("Returns the list of categories"),
 		     zif_cmd_get_categories);
 	zif_cmd_add (priv->cmd_array,
-		     "get-depends",
+		     "get-depends,deplist",
 		     /* TRANSLATORS: command description */
 		     _("List a package's dependencies"),
 		     zif_cmd_get_depends);
 	zif_cmd_add (priv->cmd_array,
-		     "get-details",
+		     "get-details,info",
 		     /* TRANSLATORS: command description */
 		     _("Display details about a package or group of packages"),
 		     zif_cmd_get_details);
@@ -4417,12 +4440,12 @@ main (int argc, char *argv[])
 		     _("Get the groups the system supports"),
 		     zif_cmd_get_groups);
 	zif_cmd_add (priv->cmd_array,
-		     "get-packages",
+		     "get-packages,list",
 		     /* TRANSLATORS: command description */
 		     _("List all packages"),
 		     zif_cmd_get_packages);
 	zif_cmd_add (priv->cmd_array,
-		     "get-updates",
+		     "get-updates,check-update",
 		     /* TRANSLATORS: command description */
 		     _("Check for available package updates"),
 		     zif_cmd_get_updates);
@@ -4447,7 +4470,7 @@ main (int argc, char *argv[])
 		     _("Install a package"),
 		     zif_cmd_install);
 	zif_cmd_add (priv->cmd_array,
-		     "local-install",
+		     "local-install,localinstall",
 		     /* TRANSLATORS: command description */
 		     _("Install a local package"),
 		     zif_cmd_local_install);
@@ -4467,7 +4490,7 @@ main (int argc, char *argv[])
 		     _("Generate the metadata cache"),
 		     zif_cmd_refresh_cache);
 	zif_cmd_add (priv->cmd_array,
-		     "remove",
+		     "remove,erase",
 		     /* TRANSLATORS: command description */
 		     _("Remove a package"),
 		     zif_cmd_remove);
@@ -4482,7 +4505,7 @@ main (int argc, char *argv[])
 		     _("Enable a specific software repository"),
 		     zif_cmd_repo_enable);
 	zif_cmd_add (priv->cmd_array,
-		     "repo-list",
+		     "repo-list,repolist",
 		     /* TRANSLATORS: command description */
 		     _("Display the configured software repositories"),
 		     zif_cmd_repo_list);
@@ -4497,7 +4520,7 @@ main (int argc, char *argv[])
 		     _("Search package details for the given category"),
 		     zif_cmd_search_category);
 	zif_cmd_add (priv->cmd_array,
-		     "search-details",
+		     "search-details,search",
 		     /* TRANSLATORS: command description */
 		     _("Search package details for the given string"),
 		     zif_cmd_search_details);
@@ -4522,7 +4545,7 @@ main (int argc, char *argv[])
 		     _("Run an interactive shell"),
 		     zif_cmd_shell);
 	zif_cmd_add (priv->cmd_array,
-		     "update",
+		     "update,upgrade",
 		     /* TRANSLATORS: command description */
 		     _("Update a package to the newest available version"),
 		     zif_cmd_update);
@@ -4532,7 +4555,7 @@ main (int argc, char *argv[])
 		     _("Display details about an update"),
 		     zif_cmd_update_details);
 	zif_cmd_add (priv->cmd_array,
-		     "upgrade",
+		     "upgrade-distro",
 		     /* TRANSLATORS: command description */
 		     _("Upgrade the operating system to a newer version"),
 		     zif_cmd_upgrade);
@@ -4547,15 +4570,19 @@ main (int argc, char *argv[])
 		     _("Find what package obsoletes the given value"),
 		     zif_cmd_what_obsoletes);
 	zif_cmd_add (priv->cmd_array,
-		     "what-provides",
+		     "what-provides,provides",
 		     /* TRANSLATORS: command description */
 		     _("Find what package provides the given value"),
 		     zif_cmd_what_provides);
 	zif_cmd_add (priv->cmd_array,
-		     "what-requires",
+		     "what-requires,resolvedep",
 		     /* TRANSLATORS: command description */
 		     _("Find what package requires the given value"),
 		     zif_cmd_what_requires);
+
+	/* sort by command name */
+	g_ptr_array_sort (priv->cmd_array,
+			  (GCompareFunc) zif_sort_command_name_cb);
 
 	/* get a list of the commands */
 	cmd_descriptions = zif_cmd_get_descriptions (priv->cmd_array);
