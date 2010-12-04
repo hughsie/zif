@@ -4191,6 +4191,84 @@ out:
 }
 
 /**
+ * zif_cmd_check:
+ **/
+static gboolean
+zif_cmd_check (ZifCmdPrivate *priv, gchar **values, GError **error)
+{
+	gboolean ret;
+	GPtrArray *array = NULL;
+	guint i;
+	ZifPackage *package;
+	ZifState *state_local;
+	ZifTransaction *transaction = NULL;
+	ZifStore *store_local = NULL;
+
+	/* TRANSLATORS: used when the install database is being checked */
+	zif_progress_bar_start (priv->progressbar, _("Checking installed database"));
+
+	/* setup state */
+	ret = zif_state_set_steps (priv->state,
+				   error,
+				   10, /* get installed array */
+				   5, /* add packages */
+				   85, /* resolve */
+				   -1);
+	if (!ret)
+		goto out;
+
+	/* get installed array */
+	store_local = zif_store_local_new ();
+	state_local = zif_state_get_child (priv->state);
+	array = zif_store_get_packages (store_local, state_local, error);
+	if (array == NULL) {
+		ret = FALSE;
+		goto out;
+	}
+
+	/* this section done */
+	ret = zif_state_done (priv->state, error);
+	if (!ret)
+		goto out;
+
+	/* update these packages */
+	transaction = zif_transaction_new ();
+	zif_transaction_set_store_local (transaction, store_local);
+	for (i=0; i<array->len; i++) {
+		package = g_ptr_array_index (array, i);
+		ret = zif_transaction_add_install (transaction, package, error);
+		if (!ret)
+			goto out;
+	}
+
+	/* this section done */
+	ret = zif_state_done (priv->state, error);
+	if (!ret)
+		goto out;
+
+	/* run what we've got */
+	state_local = zif_state_get_child (priv->state);
+	ret = zif_transaction_resolve (transaction, state_local, error);
+	if (!ret)
+		goto out;
+
+	/* this section done */
+	ret = zif_state_done (priv->state, error);
+	if (!ret)
+		goto out;
+
+	zif_progress_bar_end (priv->progressbar);
+out:
+	if (store_local != NULL)
+		g_object_unref (store_local);
+	if (transaction != NULL)
+		g_object_unref (transaction);
+	if (array != NULL)
+		g_ptr_array_unref (array);
+	return ret;
+}
+
+/**
  * main:
  **/
 int
@@ -4579,6 +4657,11 @@ main (int argc, char *argv[])
 		     /* TRANSLATORS: command description */
 		     _("Find what package requires the given value"),
 		     zif_cmd_what_requires);
+	zif_cmd_add (priv->cmd_array,
+		     "check",
+		     /* TRANSLATORS: command description */
+		     _("Check for problems in the installed database"),
+		     zif_cmd_check);
 
 	/* sort by command name */
 	g_ptr_array_sort (priv->cmd_array,
