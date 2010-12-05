@@ -364,7 +364,7 @@ zif_changeset_func (void)
 	changeset = zif_changeset_new ();
 	ret = zif_changeset_parse_header (changeset, "Milan Crha <mcrha at redhat.com> 2.29.91-1.fc13", NULL);
 	g_assert (ret);
-	g_assert_cmpstr (zif_changeset_get_author (changeset), ==, "Milan Crha <mcrha at redhat.com>");
+	g_assert_cmpstr (zif_changeset_get_author (changeset), ==, "Milan Crha <mcrha@redhat.com>");
 	g_assert_cmpstr (zif_changeset_get_version (changeset), ==, "2.29.91-1.fc13");
 
 	g_object_unref (changeset);
@@ -612,7 +612,6 @@ zif_depend_func (void)
 }
 
 static guint _updates = 0;
-static GMainLoop *_loop = NULL;
 
 static void
 zif_download_progress_changed (ZifDownload *download, guint value, gpointer data)
@@ -625,19 +624,7 @@ zif_download_cancel_cb (GCancellable *cancellable)
 {
 	g_debug ("sending cancel");
 	g_cancellable_cancel (cancellable);
-	g_main_loop_quit (_loop);
 	return FALSE;
-}
-
-static gpointer
-zif_download_cancel_thread_cb (GCancellable *cancellable)
-{
-	g_debug ("thread running");
-	g_timeout_add (50, (GSourceFunc) zif_download_cancel_cb, cancellable);
-	_loop = g_main_loop_new (NULL, FALSE);
-	g_main_loop_run (_loop);
-	g_main_loop_unref (_loop);
-	return NULL;
 }
 
 static void
@@ -717,9 +704,6 @@ zif_download_func (void)
 	g_assert (!ret);
 	g_clear_error (&error);
 
-//FIXME
-goto out;
-
 	g_signal_connect (state, "percentage-changed", G_CALLBACK (zif_download_progress_changed), NULL);
 	cancellable = zif_state_get_cancellable (state);
 
@@ -733,13 +717,13 @@ goto out;
 	g_assert_cmpint (_updates, >, 5);
 
 	/* setup cancel */
-	g_thread_create ((GThreadFunc) zif_download_cancel_thread_cb, cancellable, FALSE, NULL);
+	g_timeout_add (50, (GSourceFunc) zif_download_cancel_cb, cancellable);
 
 	zif_state_reset (state);
 	ret = zif_download_file (download, "http://people.freedesktop.org/~hughsient/temp/Screenshot.png",
 				 "/tmp/Screenshot.png", state, &error);
 	g_assert (!ret);
-out:
+
 	g_object_unref (download);
 	g_object_unref (config);
 	g_object_unref (state);
@@ -1833,6 +1817,8 @@ zif_state_func (void)
 	for (i=0; i<ZIF_STATE_ACTION_UNKNOWN ;i++)
 		g_assert (zif_state_action_to_string (i) != NULL);
 
+	_updates = 0;
+
 	state = zif_state_new ();
 	g_assert (state != NULL);
 	g_signal_connect (state, "percentage-changed", G_CALLBACK (zif_state_test_percentage_changed_cb), NULL);
@@ -1848,7 +1834,7 @@ zif_state_func (void)
 
 	zif_state_set_allow_cancel (state, FALSE);
 	g_assert (!zif_state_get_allow_cancel (state));
-	g_assert ((_allow_cancel_updates == 1));
+	g_assert_cmpint (_allow_cancel_updates, ==, 1);
 
 	/* stop never started */
 	g_assert (!zif_state_action_stop (state));
@@ -1868,9 +1854,9 @@ zif_state_func (void)
 	ret = zif_state_done (state, NULL);
 	g_assert (ret);
 
-	g_assert ((_updates == 1));
+	g_assert_cmpint (_updates, ==, 1);
 
-	g_assert ((_last_percent == 20));
+	g_assert_cmpint (_last_percent, ==, 20);
 
 	ret = zif_state_done (state, NULL);
 	ret = zif_state_done (state, NULL);
