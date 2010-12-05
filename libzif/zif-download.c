@@ -315,7 +315,7 @@ zif_download_setup_session (ZifDownload *download, GError **error)
 
 	/* get default value from the config file */
 	timeout = zif_config_get_uint (download->priv->config,
-				       "connection_timeout", NULL);
+				       "timeout", NULL);
 	if (timeout == G_MAXUINT)
 		timeout = 5;
 
