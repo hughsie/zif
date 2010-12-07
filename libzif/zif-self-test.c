@@ -1833,6 +1833,8 @@ zif_state_func (void)
 	for (i=0; i<ZIF_STATE_ACTION_UNKNOWN ;i++)
 		g_assert (zif_state_action_to_string (i) != NULL);
 
+	_updates = 0;
+
 	state = zif_state_new ();
 	g_assert (state != NULL);
 	g_signal_connect (state, "percentage-changed", G_CALLBACK (zif_state_test_percentage_changed_cb), NULL);
@@ -1848,7 +1850,7 @@ zif_state_func (void)
 
 	zif_state_set_allow_cancel (state, FALSE);
 	g_assert (!zif_state_get_allow_cancel (state));
-	g_assert ((_allow_cancel_updates == 1));
+	g_assert_cmpint (_allow_cancel_updates, ==, 1);
 
 	/* stop never started */
 	g_assert (!zif_state_action_stop (state));
@@ -1868,9 +1870,9 @@ zif_state_func (void)
 	ret = zif_state_done (state, NULL);
 	g_assert (ret);
 
-	g_assert ((_updates == 1));
+	g_assert_cmpint (_updates, ==, 1);
 
-	g_assert ((_last_percent == 20));
+	g_assert_cmpint (_last_percent, ==, 20);
 
 	ret = zif_state_done (state, NULL);
 	ret = zif_state_done (state, NULL);
