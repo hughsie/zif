@@ -364,7 +364,7 @@ zif_changeset_func (void)
 	changeset = zif_changeset_new ();
 	ret = zif_changeset_parse_header (changeset, "Milan Crha <mcrha at redhat.com> 2.29.91-1.fc13", NULL);
 	g_assert (ret);
-	g_assert_cmpstr (zif_changeset_get_author (changeset), ==, "Milan Crha <mcrha at redhat.com>");
+	g_assert_cmpstr (zif_changeset_get_author (changeset), ==, "Milan Crha <mcrha@redhat.com>");
 	g_assert_cmpstr (zif_changeset_get_version (changeset), ==, "2.29.91-1.fc13");
 
 	g_object_unref (changeset);
