@@ -87,6 +87,30 @@ struct _ZifMdUpdateinfoPrivate
 G_DEFINE_TYPE (ZifMdUpdateinfo, zif_md_updateinfo, ZIF_TYPE_MD)
 
 /**
+ * zif_md_updateinfo_fix_iso8601:
+ *
+ * '2010-12-07 16:26' -> '2010-12-07T16:26Z'
+ **/
+static gchar *
+zif_md_updateinfo_fix_iso8601 (const gchar *iso8601)
+{
+	gchar **split;
+	gchar *fixed = NULL;
+
+	/* split */
+	split = g_strsplit (iso8601, " ", -1);
+	if (g_strv_length (split) != 2) {
+		g_warning ("failed to parse %s", iso8601);
+		goto out;
+	}
+
+	/* repair */
+	fixed = g_strdup_printf ("%sT%sZ", split[0], split[1]);
+out:
+	return fixed;
+}
+
+/**
  * zif_md_updateinfo_parser_start_element:
  **/
 static void
@@ -96,6 +120,7 @@ zif_md_updateinfo_parser_start_element (GMarkupParseContext *context, const gcha
 {
 	guint i;
 	GError *error_local = NULL;
+	gchar *iso8601;
 	gchar *package_id = NULL;
 	ZifUpdateKind update_kind;
 	ZifMdUpdateinfo *updateinfo = user_data;
@@ -174,7 +199,9 @@ zif_md_updateinfo_parser_start_element (GMarkupParseContext *context, const gcha
 				/* find the issued date */
 				for (i=0; attribute_names[i] != NULL; i++) {
 					if (g_strcmp0 (attribute_names[i], "date") == 0) {
-						zif_update_set_issued (updateinfo->priv->update_temp, attribute_values[i]);
+						iso8601 = zif_md_updateinfo_fix_iso8601 (attribute_values[i]);
+						zif_update_set_issued (updateinfo->priv->update_temp, iso8601);
+						g_free (iso8601);
 					}
 				}
 				goto out;
