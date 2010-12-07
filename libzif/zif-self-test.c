@@ -717,13 +717,9 @@ zif_download_func (void)
 	g_assert (!ret);
 	g_clear_error (&error);
 
-//FIXME
-goto out;
-
 	g_signal_connect (state, "percentage-changed", G_CALLBACK (zif_download_progress_changed), NULL);
-	cancellable = zif_state_get_cancellable (state);
-
-	g_cancellable_cancel (cancellable);
+	cancellable = g_cancellable_new ();
+	zif_state_set_cancellable (state, cancellable);
 
 	zif_state_reset (state);
 	ret = zif_download_file (download, "http://people.freedesktop.org/~hughsient/temp/Screenshot.png",
@@ -739,7 +735,8 @@ goto out;
 	ret = zif_download_file (download, "http://people.freedesktop.org/~hughsient/temp/Screenshot.png",
 				 "/tmp/Screenshot.png", state, &error);
 	g_assert (!ret);
-out:
+
+	g_object_unref (cancellable);
 	g_object_unref (download);
 	g_object_unref (config);
 	g_object_unref (state);

@@ -106,6 +106,18 @@ zif_download_file_got_chunk_cb (SoupMessage *msg, SoupBuffer *chunk, ZifDownload
 	goffset header_size;
 	goffset body_length;
 	gboolean ret;
+	GCancellable *cancellable;
+
+	/* cancelled? */
+	cancellable = zif_state_get_cancellable (download->priv->state);
+	g_assert (cancellable != NULL);
+	if (g_cancellable_is_cancelled (cancellable)) {
+		g_debug ("cancelling download on %p", cancellable);
+		soup_session_cancel_message (download->priv->session,
+					     msg,
+					     SOUP_STATUS_CANCELLED);
+		goto out;
+	}
 
 	/* get data */
 	body_length = msg->response_body->length;
@@ -134,8 +146,6 @@ static void
 zif_download_file_finished_cb (SoupMessage *msg, ZifDownload *download)
 {
 	g_debug ("done!");
-	g_object_unref (download->priv->msg);
-	download->priv->msg = NULL;
 }
 
 /**
@@ -144,17 +154,7 @@ zif_download_file_finished_cb (SoupMessage *msg, ZifDownload *download)
 static void
 zif_download_cancelled_cb (GCancellable *cancellable, ZifDownload *download)
 {
-	g_return_if_fail (ZIF_IS_DOWNLOAD (download));
-
-	/* check we have a download */
-	if (download->priv->msg == NULL) {
-		g_debug ("nothing to cancel");
-		return;
-	}
-
-	/* cancel */
-	g_debug ("cancelling download");
-	soup_session_cancel_message (download->priv->session, download->priv->msg, SOUP_STATUS_CANCELLED);
+	g_debug ("will cancel download in next chunk");
 }
 
 /**
@@ -368,9 +368,11 @@ zif_download_file (ZifDownload *download, const gchar *uri, const gchar *filenam
 
 	/* set up cancel */
 	cancellable = zif_state_get_cancellable (state);
-	if (cancellable != NULL) {
-		g_cancellable_reset (cancellable);
-		cancellable_id = g_cancellable_connect (cancellable, G_CALLBACK (zif_download_cancelled_cb), download, NULL);
+	if (0 && cancellable != NULL) {
+		cancellable_id = g_cancellable_connect (cancellable,
+							G_CALLBACK (zif_download_cancelled_cb),
+							download,
+							NULL);
 	}
 
 	base_uri = soup_uri_new (uri);
@@ -407,7 +409,14 @@ zif_download_file (ZifDownload *download, const gchar *uri, const gchar *filenam
 	soup_session_send_message (download->priv->session, msg);
 
 	/* find length */
-	if (!SOUP_STATUS_IS_SUCCESSFUL (msg->status_code)) {
+	if (msg->status_code == SOUP_STATUS_CANCELLED) {
+		ret = FALSE;
+		g_set_error_literal (error,
+				     ZIF_STATE_ERROR,
+				     ZIF_STATE_ERROR_CANCELLED,
+				     soup_status_get_phrase (msg->status_code));
+		goto out;
+	} else if (!SOUP_STATUS_IS_SUCCESSFUL (msg->status_code)) {
 		ret = FALSE;
 		g_set_error (error, ZIF_DOWNLOAD_ERROR, ZIF_DOWNLOAD_ERROR_FAILED,
 			     "failed to get valid response for %s: %s", uri, soup_status_get_phrase (msg->status_code));
@@ -442,9 +451,15 @@ zif_download_file (ZifDownload *download, const gchar *uri, const gchar *filenam
 out:
 	if (cancellable_id != 0)
 		g_cancellable_disconnect (cancellable, cancellable_id);
+
+	/* TODO: method local */
 	if (download->priv->state != NULL)
 		g_object_unref (download->priv->state);
 	download->priv->state = NULL;
+	if (download->priv->msg != NULL)
+		g_object_unref (download->priv->msg);
+	download->priv->msg = NULL;
+
 	if (base_uri != NULL)
 		soup_uri_free (base_uri);
 	if (msg != NULL)
@@ -812,7 +827,14 @@ zif_download_location_full (ZifDownload *download, const gchar *location, const 
 						  state, &error_local);
 		if (!ret) {
 			/* some errors really are fatal */
-			if (error_local->code == ZIF_DOWNLOAD_ERROR_PERMISSION_DENIED) {
+			if (error_local->domain == ZIF_DOWNLOAD_ERROR &&
+			    error_local->code == ZIF_DOWNLOAD_ERROR_PERMISSION_DENIED) {
+				g_propagate_error (error, error_local);
+				set_error = TRUE;
+				break;
+			}
+			if (error_local->domain == ZIF_STATE_ERROR &&
+			    error_local->code == ZIF_STATE_ERROR_CANCELLED) {
 				g_propagate_error (error, error_local);
 				set_error = TRUE;
 				break;

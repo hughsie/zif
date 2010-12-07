@@ -270,8 +270,6 @@ GCancellable *
 zif_state_get_cancellable (ZifState *state)
 {
 	g_return_val_if_fail (ZIF_IS_STATE (state), NULL);
-	if (state->priv->cancellable == NULL)
-		state->priv->cancellable = g_cancellable_new ();
 	return state->priv->cancellable;
 }
 
@@ -280,9 +278,7 @@ zif_state_get_cancellable (ZifState *state)
  * @state: A #ZifState
  * @cancellable: The #GCancellable which is used to cancel tasks, or %NULL
  *
- * Sets the #GCancellable object to use. You normally don't have to call this
- * function as a cancellable is created for you at when you request it.
- * It's also safe to call this function more that once if you need to.
+ * Sets the #GCancellable object to use.
  *
  * Since: 0.1.0
  **/
@@ -290,8 +286,7 @@ void
 zif_state_set_cancellable (ZifState *state, GCancellable *cancellable)
 {
 	g_return_if_fail (ZIF_IS_STATE (state));
-	if (state->priv->cancellable != NULL)
-		g_object_unref (state->priv->cancellable);
+	g_return_if_fail (state->priv->cancellable == NULL);
 	state->priv->cancellable = g_object_ref (cancellable);
 }
 
@@ -870,6 +865,10 @@ zif_state_get_child (ZifState *state)
 
 	/* set the global share on the new child */
 	zif_state_set_global_share (child, state->priv->global_share);
+
+	/* set cancellable */
+	if (state->priv->cancellable != NULL)
+		zif_state_set_cancellable (child, state->priv->cancellable);
 
 	/* set the error handler if one exists on the child */
 	if (state->priv->error_handler_cb != NULL) {
