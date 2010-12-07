@@ -2587,10 +2587,8 @@ zif_store_remote_search_group (ZifStore *store, gchar **search, ZifState *state,
 	 * by *rpm* group, which isn't what we want -- instead we need to get
 	 * the list of categories for each group, and then return results. */
 	array_tmp = zif_groups_get_cats_for_group (remote->priv->groups, search[0], error);
-	if (array_tmp == NULL) {
-		ret = FALSE;
+	if (array_tmp == NULL)
 		goto out;
-	}
 
 	/* no results for this group enum is not fatal */
 	if (array_tmp->len == 0) {
