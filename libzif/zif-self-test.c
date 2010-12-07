@@ -694,14 +694,14 @@ zif_download_func (void)
 	/* download using the pool of uris (only the second will work) */
 	zif_config_set_string (config, "failovermethod", "ordered", NULL);
 	ret = zif_download_location_full (download,
-				      "releases.txt",
-				      "/tmp/releases.txt",
-				      502, /* size in bytes */
-				      "text/plain", /* content type */
-				      G_CHECKSUM_SHA256,
-				      "be576a7f62009169d9d10ad4d959d36db82411d18346c0ca543693c015ef8b46",
-				      state,
-				      &error);
+					  "releases.txt",
+					  "/tmp/releases.txt",
+					  502, /* size in bytes */
+					  "text/plain", /* content type */
+					  G_CHECKSUM_SHA256,
+					  "be576a7f62009169d9d10ad4d959d36db82411d18346c0ca543693c015ef8b46",
+					  state,
+					  &error);
 	g_assert_no_error (error);
 	g_assert (ret);
 

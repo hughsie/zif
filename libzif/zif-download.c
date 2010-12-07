@@ -54,13 +54,18 @@ typedef struct {
  **/
 struct _ZifDownloadPrivate
 {
-	gchar			*proxy;
-	SoupSession		*session;
-	SoupMessage		*msg;
-	ZifState		*state;
-	ZifConfig		*config;
 	GPtrArray		*array;
+	SoupSession		*session;
+	ZifConfig		*config;
 };
+
+typedef struct {
+	gchar			*uri;
+	guint			 last_percentage;
+	SoupMessage		*msg;
+	ZifDownload		*download;
+	ZifState		*state;
+} ZifDownloadFlight;
 
 typedef enum {
 	ZIF_DOWNLOAD_POLICY_LINEAR,
@@ -100,7 +105,8 @@ zif_download_item_free (ZifDownloadItem *item)
  * zif_download_file_got_chunk_cb:
  **/
 static void
-zif_download_file_got_chunk_cb (SoupMessage *msg, SoupBuffer *chunk, ZifDownload *download)
+zif_download_file_got_chunk_cb (SoupMessage *msg, SoupBuffer *chunk,
+				ZifDownloadFlight *flight)
 {
 	guint percentage;
 	goffset header_size;
@@ -109,11 +115,10 @@ zif_download_file_got_chunk_cb (SoupMessage *msg, SoupBuffer *chunk, ZifDownload
 	GCancellable *cancellable;
 
 	/* cancelled? */
-	cancellable = zif_state_get_cancellable (download->priv->state);
-	g_assert (cancellable != NULL);
+	cancellable = zif_state_get_cancellable (flight->state);
 	if (g_cancellable_is_cancelled (cancellable)) {
 		g_debug ("cancelling download on %p", cancellable);
-		soup_session_cancel_message (download->priv->session,
+		soup_session_cancel_message (flight->download->priv->session,
 					     msg,
 					     SOUP_STATUS_CANCELLED);
 		goto out;
@@ -129,11 +134,17 @@ zif_download_file_got_chunk_cb (SoupMessage *msg, SoupBuffer *chunk, ZifDownload
 
 	/* calulate percentage */
 	percentage = (100 * body_length) / header_size;
-	ret = zif_state_set_percentage (download->priv->state, percentage);
+	ret = zif_state_set_percentage (flight->state, percentage);
 	if (ret) {
 		/* only print if it's significant */
-		g_debug ("download: %i%% (%" G_GOFFSET_FORMAT ", %" G_GOFFSET_FORMAT ") - %p, %p",
-			 percentage, body_length, header_size, msg, download);
+		g_debug ("download: %i%% (%" G_GOFFSET_FORMAT ", %" G_GOFFSET_FORMAT ")",
+			 percentage, body_length, header_size);
+	}
+
+	/* only print whole percentage points */
+	if (percentage != flight->last_percentage) {
+		g_debug ("%s at %i%%", flight->uri, percentage);
+		flight->last_percentage = percentage;
 	}
 out:
 	return;
@@ -143,18 +154,9 @@ out:
  * zif_download_file_finished_cb:
  **/
 static void
-zif_download_file_finished_cb (SoupMessage *msg, ZifDownload *download)
+zif_download_file_finished_cb (SoupMessage *msg, ZifDownloadFlight *flight)
 {
-	g_debug ("done!");
-}
-
-/**
- * zif_download_cancelled_cb:
- **/
-static void
-zif_download_cancelled_cb (GCancellable *cancellable, ZifDownload *download)
-{
-	g_debug ("will cancel download in next chunk");
+	g_debug ("%s done!", flight->uri);
 }
 
 /**
@@ -336,18 +338,15 @@ zif_download_file (ZifDownload *download, const gchar *uri, const gchar *filenam
 {
 	gboolean ret = FALSE;
 	SoupURI *base_uri = NULL;
-	SoupMessage *msg = NULL;
 	GFile *file = NULL;
 	GError *error_local = NULL;
-	gulong cancellable_id = 0;
-	GCancellable *cancellable;
+	ZifDownloadFlight *flight = NULL;
 	ZifDownloadError download_error = ZIF_DOWNLOAD_ERROR_FAILED;
 
 	g_return_val_if_fail (ZIF_IS_DOWNLOAD (download), FALSE);
 	g_return_val_if_fail (zif_state_valid (state), FALSE);
 	g_return_val_if_fail (uri != NULL, FALSE);
 	g_return_val_if_fail (filename != NULL, FALSE);
-	g_return_val_if_fail (download->priv->msg == NULL, FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
 	/* local file */
@@ -364,69 +363,72 @@ zif_download_file (ZifDownload *download, const gchar *uri, const gchar *filenam
 	}
 
 	/* save an instance of the state object */
-	download->priv->state = g_object_ref (state);
-
-	/* set up cancel */
-	cancellable = zif_state_get_cancellable (state);
-	if (0 && cancellable != NULL) {
-		cancellable_id = g_cancellable_connect (cancellable,
-							G_CALLBACK (zif_download_cancelled_cb),
-							download,
-							NULL);
-	}
+	flight = g_new0 (ZifDownloadFlight, 1);
+	flight->state = g_object_ref (state);
+	flight->download = g_object_ref (download);
+	flight->uri = g_path_get_basename (uri);
 
 	base_uri = soup_uri_new (uri);
 	if (base_uri == NULL) {
 		ret = FALSE;
-		g_set_error (error, ZIF_DOWNLOAD_ERROR, ZIF_DOWNLOAD_ERROR_FAILED,
-			     "could not parse uri: %s", uri);
+		g_set_error (error,
+			     ZIF_DOWNLOAD_ERROR,
+			     ZIF_DOWNLOAD_ERROR_FAILED,
+			     "could not parse uri: %s",
+			     uri);
 		goto out;
 	}
 
 	/* GET package */
-	msg = soup_message_new_from_uri (SOUP_METHOD_GET, base_uri);
-	if (msg == NULL) {
+	flight->msg = soup_message_new_from_uri (SOUP_METHOD_GET, base_uri);
+	if (flight->msg == NULL) {
 		ret = FALSE;
-		g_set_error_literal (error, ZIF_DOWNLOAD_ERROR, ZIF_DOWNLOAD_ERROR_FAILED,
+		g_set_error_literal (error,
+				     ZIF_DOWNLOAD_ERROR,
+				     ZIF_DOWNLOAD_ERROR_FAILED,
 				     "could not setup message");
 		goto out;
 	}
 
 	/* we want progress updates */
-	g_signal_connect (msg, "got-chunk", G_CALLBACK (zif_download_file_got_chunk_cb), download);
-	g_signal_connect (msg, "finished", G_CALLBACK (zif_download_file_finished_cb), download);
-
-	/* we need this for cancelling */
-	download->priv->msg = g_object_ref (msg);
-
-	/* request */
-//	soup_message_set_flags (msg, SOUP_MESSAGE_NO_REDIRECT);
+	g_signal_connect (flight->msg, "got-chunk",
+			  G_CALLBACK (zif_download_file_got_chunk_cb),
+			  flight);
+	g_signal_connect (flight->msg, "finished",
+			  G_CALLBACK (zif_download_file_finished_cb),
+			  flight);
 
 	/* set action */
 	zif_state_action_start (state, ZIF_STATE_ACTION_DOWNLOADING, filename);
 
 	/* send sync */
-	soup_session_send_message (download->priv->session, msg);
+	soup_session_send_message (download->priv->session, flight->msg);
 
 	/* find length */
-	if (msg->status_code == SOUP_STATUS_CANCELLED) {
+	if (flight->msg->status_code == SOUP_STATUS_CANCELLED) {
 		ret = FALSE;
 		g_set_error_literal (error,
 				     ZIF_STATE_ERROR,
 				     ZIF_STATE_ERROR_CANCELLED,
-				     soup_status_get_phrase (msg->status_code));
+				     soup_status_get_phrase (flight->msg->status_code));
 		goto out;
-	} else if (!SOUP_STATUS_IS_SUCCESSFUL (msg->status_code)) {
+	} else if (!SOUP_STATUS_IS_SUCCESSFUL (flight->msg->status_code)) {
 		ret = FALSE;
-		g_set_error (error, ZIF_DOWNLOAD_ERROR, ZIF_DOWNLOAD_ERROR_FAILED,
-			     "failed to get valid response for %s: %s", uri, soup_status_get_phrase (msg->status_code));
+		g_set_error (error,
+			     ZIF_DOWNLOAD_ERROR,
+			     ZIF_DOWNLOAD_ERROR_FAILED,
+			     "failed to get valid response for %s: %s",
+			     uri,
+			     soup_status_get_phrase (flight->msg->status_code));
 		goto out;
 	}
 
 	/* empty file */
-	if (msg->response_body->length == 0) {
+	if (flight->msg->response_body->length == 0) {
 		ret = FALSE;
-		g_set_error_literal (error, ZIF_DOWNLOAD_ERROR, ZIF_DOWNLOAD_ERROR_FAILED,
+		g_set_error_literal (error,
+				     ZIF_DOWNLOAD_ERROR,
+				     ZIF_DOWNLOAD_ERROR_FAILED,
 				     "remote file has zero size");
 		goto out;
 	}
@@ -434,8 +436,8 @@ zif_download_file (ZifDownload *download, const gchar *uri, const gchar *filenam
 	/* write file */
 	file = g_file_new_for_path (filename);
 	ret = g_file_replace_contents (file,
-				       msg->response_body->data,
-				       msg->response_body->length,
+				       flight->msg->response_body->data,
+				       flight->msg->response_body->length,
 				       NULL, FALSE,
 				       G_FILE_CREATE_NONE,
 				       NULL, NULL, &error_local);
@@ -449,21 +451,17 @@ zif_download_file (ZifDownload *download, const gchar *uri, const gchar *filenam
 		goto out;
 	}
 out:
-	if (cancellable_id != 0)
-		g_cancellable_disconnect (cancellable, cancellable_id);
-
-	/* TODO: method local */
-	if (download->priv->state != NULL)
-		g_object_unref (download->priv->state);
-	download->priv->state = NULL;
-	if (download->priv->msg != NULL)
-		g_object_unref (download->priv->msg);
-	download->priv->msg = NULL;
+	if (flight != NULL) {
+		g_object_unref (flight->state);
+		g_object_unref (flight->download);
+		if (flight->msg != NULL)
+			g_object_unref (flight->msg);
+		g_free (flight->uri);
+		g_free (flight);
+	}
 
 	if (base_uri != NULL)
 		soup_uri_free (base_uri);
-	if (msg != NULL)
-		g_object_unref (msg);
 	if (file != NULL)
 		g_object_unref (file);
 	return ret;
@@ -957,9 +955,6 @@ zif_download_finalize (GObject *object)
 	g_return_if_fail (ZIF_IS_DOWNLOAD (object));
 	download = ZIF_DOWNLOAD (object);
 
-	g_free (download->priv->proxy);
-	if (download->priv->msg != NULL)
-		g_object_unref (download->priv->msg);
 	if (download->priv->session != NULL)
 		g_object_unref (download->priv->session);
 	g_object_unref (download->priv->config);
@@ -987,10 +982,7 @@ static void
 zif_download_init (ZifDownload *download)
 {
 	download->priv = ZIF_DOWNLOAD_GET_PRIVATE (download);
-	download->priv->msg = NULL;
 	download->priv->session = NULL;
-	download->priv->proxy = NULL;
-	download->priv->state = NULL;
 	download->priv->config = zif_config_new ();
 	download->priv->array = g_ptr_array_new_with_free_func ((GDestroyNotify) zif_download_item_free);
 }
