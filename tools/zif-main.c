@@ -4777,6 +4777,24 @@ main (int argc, char *argv[])
 				/* TRANSLATORS: error message */
 				message = _("Unhandled config error");
 			}
+		} else if (error->domain == ZIF_DOWNLOAD_ERROR) {
+			switch (error->code) {
+			case ZIF_DOWNLOAD_ERROR_FAILED:
+				/* TRANSLATORS: error message */
+				message = _("Download failed");
+				break;
+			case ZIF_DOWNLOAD_ERROR_PERMISSION_DENIED:
+				/* TRANSLATORS: error message */
+				message = _("Download failed as permission denied");
+				break;
+			case ZIF_DOWNLOAD_ERROR_CANCELLED:
+				/* TRANSLATORS: error message */
+				message = _("Download was cancelled");
+				break;
+			default:
+				/* TRANSLATORS: error message */
+				message = _("Unhandled download error");
+			}
 		} else if (error->domain == ZIF_MD_ERROR) {
 			switch (error->code) {
 			case ZIF_MD_ERROR_FAILED:
