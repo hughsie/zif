@@ -26,6 +26,7 @@
 
 #include <zif-category.h>
 #include <zif-config.h>
+#include <zif-db.h>
 #include <zif-depend.h>
 #include <zif-download.h>
 #include <zif-groups.h>

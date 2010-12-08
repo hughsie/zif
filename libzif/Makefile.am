@@ -32,6 +32,7 @@ libzif_include_HEADERS =					\
 	zif-category.h						\
 	zif-changeset.h						\
 	zif-config.h						\
+	zif-db.h						\
 	zif-depend.h						\
 	zif-download.h						\
 	zif-groups.h						\
@@ -70,6 +71,8 @@ libzif_la_SOURCES =						\
 	zif-changeset.h						\
 	zif-config.c						\
 	zif-config.h						\
+	zif-db.c						\
+	zif-db.h						\
 	zif-delta.c						\
 	zif-delta.h						\
 	zif-depend.c						\

@@ -451,6 +451,52 @@ zif_config_func (void)
 }
 
 static void
+zif_db_func (void)
+{
+	ZifDb *db;
+	ZifPackage *package;
+	gboolean ret;
+	GError *error = NULL;
+	gchar *data;
+
+	db = zif_db_new ();
+
+	/* set the root */
+	ret = zif_db_set_root (db, "/tmp", &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	/* create a dummy package */
+	package = zif_package_remote_new ();
+	ret = zif_package_set_id (package, "PackageKit;0.1.2-14.fc13;i386;fedora", &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	/* dummy set */
+	zif_package_remote_set_pkgid (ZIF_PACKAGE_REMOTE (package),
+				      "8acc1b3457e3a5115ca2ad40cf0b3c121d2ab82d");
+
+	/* write to the database */
+	ret = zif_db_set_string (db, package, "from_repo", "fedora", &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	/* check it exists */
+	ret = g_file_test ("/tmp/P/8acc1b3457e3a5115ca2ad40cf0b3c121d2ab82d-PackageKit-0.1.2-14.fc13-i386/from_repo",
+			   G_FILE_TEST_EXISTS);
+	g_assert (ret);
+
+	/* read value */
+	data = zif_db_get_string (db, package, "from_repo", &error);
+	g_assert_no_error (error);
+	g_assert_cmpstr (data, ==, "fedora");
+
+	g_free (data);
+	g_object_unref (package);
+	g_object_unref (db);
+}
+
+static void
 zif_depend_func (void)
 {
 	ZifDepend *depend;
@@ -2924,6 +2970,7 @@ main (int argc, char **argv)
 	/* tests go here */
 	g_test_add_func ("/zif/changeset", zif_changeset_func);
 	g_test_add_func ("/zif/config", zif_config_func);
+	g_test_add_func ("/zif/db", zif_db_func);
 	g_test_add_func ("/zif/depend", zif_depend_func);
 	g_test_add_func ("/zif/download", zif_download_func);
 	g_test_add_func ("/zif/groups", zif_groups_func);
