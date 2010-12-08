@@ -234,7 +234,7 @@ zif_md_filelists_sql_get_files (ZifMd *md, ZifPackage *package,
 	}
 
 	/* get pkgkey from pkgid */
-	pkgid = zif_package_remote_get_pkgid (ZIF_PACKAGE_REMOTE (package));
+	pkgid = zif_package_get_pkgid (package);
 
 	/* get files for pkgkey */
 	files = g_ptr_array_new_with_free_func (g_free);

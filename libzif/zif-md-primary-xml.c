@@ -405,7 +405,8 @@ zif_md_primary_xml_parser_text (GMarkupParseContext *context, const gchar *text,
 			goto out;
 		}
 		if (primary_xml->priv->section_package == ZIF_MD_PRIMARY_XML_SECTION_PACKAGE_CHECKSUM) {
-			zif_package_remote_set_pkgid (ZIF_PACKAGE_REMOTE (primary_xml->priv->package_temp), text);
+			string = zif_string_new (text);
+			zif_package_set_pkgid (primary_xml->priv->package_temp, string);
 			goto out;
 		}
 		g_warning ("not saving: %s", text);
@@ -713,7 +714,7 @@ zif_md_primary_xml_search_pkgid_cb (ZifPackage *package, gpointer user_data)
 	guint i;
 	const gchar *pkgid;
 	gchar **search = (gchar **) user_data;
-	pkgid = zif_package_remote_get_pkgid (ZIF_PACKAGE_REMOTE (package));
+	pkgid = zif_package_get_pkgid (package);
 	for (i=0; search[i] != NULL; i++) {
 		if (g_strcmp0 (pkgid, search[i]) == 0)
 			return TRUE;

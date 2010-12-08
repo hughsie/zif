@@ -155,7 +155,7 @@ zif_db_get_dir_for_package (ZifDb *db, ZifPackage *package)
 	dir = g_strdup_printf ("%s/%c/%s-%s-%s-%s",
 			       db->priv->root,
 			       zif_package_get_name (package)[0],
-			       zif_package_remote_get_pkgid (ZIF_PACKAGE_REMOTE (package)),
+			       zif_package_get_pkgid (package),
 			       zif_package_get_name (package),
 			       zif_package_get_version (package),
 			       zif_package_get_arch (package));
@@ -184,7 +184,7 @@ zif_db_get_string (ZifDb *db, ZifPackage *package, const gchar *key, GError **er
 	gchar *value = NULL;
 
 	g_return_val_if_fail (ZIF_IS_DB (db), NULL);
-	g_return_val_if_fail (ZIF_IS_PACKAGE_REMOTE (package), FALSE);
+	g_return_val_if_fail (ZIF_IS_PACKAGE (package), FALSE);
 	g_return_val_if_fail (key != NULL, NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
@@ -244,7 +244,7 @@ zif_db_set_string (ZifDb *db, ZifPackage *package, const gchar *key, const gchar
 	gchar *index_file = NULL;
 
 	g_return_val_if_fail (ZIF_IS_DB (db), FALSE);
-	g_return_val_if_fail (ZIF_IS_PACKAGE_REMOTE (package), FALSE);
+	g_return_val_if_fail (ZIF_IS_PACKAGE (package), FALSE);
 	g_return_val_if_fail (key != NULL, FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 

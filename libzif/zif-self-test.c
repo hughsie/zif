@@ -453,11 +453,12 @@ zif_config_func (void)
 static void
 zif_db_func (void)
 {
+	gboolean ret;
+	gchar *data;
+	GError *error = NULL;
 	ZifDb *db;
 	ZifPackage *package;
-	gboolean ret;
-	GError *error = NULL;
-	gchar *data;
+	ZifString *string;
 
 	db = zif_db_new ();
 
@@ -473,8 +474,9 @@ zif_db_func (void)
 	g_assert (ret);
 
 	/* dummy set */
-	zif_package_remote_set_pkgid (ZIF_PACKAGE_REMOTE (package),
-				      "8acc1b3457e3a5115ca2ad40cf0b3c121d2ab82d");
+	string = zif_string_new ("8acc1b3457e3a5115ca2ad40cf0b3c121d2ab82d");
+	zif_package_set_pkgid (package, string);
+	zif_string_unref (string);
 
 	/* write to the database */
 	ret = zif_db_set_string (db, package, "from_repo", "fedora", &error);

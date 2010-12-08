@@ -95,6 +95,7 @@ zif_md_filelists_xml_parser_start_element (GMarkupParseContext *context, const g
 					gpointer user_data, GError **error)
 {
 	guint i;
+	ZifString *tmp;
 	ZifMdFilelistsXml *filelists_xml = user_data;
 
 	g_return_if_fail (ZIF_IS_MD_FILELISTS_XML (filelists_xml));
@@ -123,8 +124,10 @@ zif_md_filelists_xml_parser_start_element (GMarkupParseContext *context, const g
 				filelists_xml->priv->array_temp = g_ptr_array_new_with_free_func (g_free);
 				for (i=0; attribute_names[i] != NULL; i++) {
 					if (g_strcmp0 (attribute_names[i], "pkgid") == 0) {
-						zif_package_remote_set_pkgid (ZIF_PACKAGE_REMOTE (filelists_xml->priv->package_temp),
-									      attribute_values[i]);
+						tmp = zif_string_new (attribute_values[i]);
+						zif_package_set_pkgid (filelists_xml->priv->package_temp,
+								       tmp);
+						zif_string_unref (tmp);
 					}
 				}
 				goto out;
@@ -382,11 +385,11 @@ zif_md_filelists_xml_get_files (ZifMd *md, ZifPackage *package,
 	zif_state_set_number_steps (state_local, md_filelists->priv->array->len);
 
 	/* search array */
-	pkgid = zif_package_remote_get_pkgid (ZIF_PACKAGE_REMOTE (package));
+	pkgid = zif_package_get_pkgid (package);
 	packages = md_filelists->priv->array;
 	for (i=0; i<packages->len; i++) {
 		package_tmp = g_ptr_array_index (packages, i);
-		pkgid_tmp = zif_package_remote_get_pkgid (ZIF_PACKAGE_REMOTE (package_tmp));
+		pkgid_tmp = zif_package_get_pkgid (package_tmp);
 		if (g_strcmp0 (pkgid, pkgid_tmp) == 0) {
 			state_loop = zif_state_get_child (state_local);
 			array = zif_package_get_files (package_tmp, state_loop, NULL);
@@ -480,7 +483,7 @@ zif_md_filelists_xml_search_file (ZifMd *md, gchar **search,
 	packages = md_filelists->priv->array;
 	for (i=0; i<packages->len; i++) {
 		package = g_ptr_array_index (packages, i);
-		pkgid = zif_package_remote_get_pkgid (ZIF_PACKAGE_REMOTE (package));
+		pkgid = zif_package_get_pkgid (package);
 		state_loop = zif_state_get_child (state_local);
 		files = zif_package_get_files (package, state_loop, NULL);
 		for (k=0; k<files->len; k++) {

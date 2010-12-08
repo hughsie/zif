@@ -129,6 +129,7 @@ const gchar		*zif_package_get_category	(ZifPackage	*package,
 const gchar		*zif_package_get_group		(ZifPackage	*package,
 							 ZifState	*state,
 							 GError		**error);
+const gchar		*zif_package_get_pkgid		(ZifPackage	*package);
 const gchar		*zif_package_get_cache_filename	(ZifPackage	*package,
 							 ZifState	*state,
 							 GError		**error);
@@ -199,6 +200,8 @@ void			 zif_package_set_category	(ZifPackage	*package,
 							 ZifString	*category);
 void			 zif_package_set_group		(ZifPackage	*package,
 							 ZifString	*group);
+void			 zif_package_set_pkgid		(ZifPackage	*package,
+							 ZifString	*pkgid);
 void			 zif_package_set_cache_filename	(ZifPackage	*package,
 							 const gchar	*cache_filename);
 void			 zif_package_set_size		(ZifPackage	*package,

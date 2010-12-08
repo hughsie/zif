@@ -296,6 +296,7 @@ zif_package_meta_set_from_filename (ZifPackageMeta *pkg, const gchar *filename, 
 	gchar *arch = NULL;
 	gchar *package_id = NULL;
 	guint epoch = 0;
+	ZifString *pkgid = NULL;
 
 	g_return_val_if_fail (ZIF_IS_PACKAGE_META (pkg), FALSE);
 	g_return_val_if_fail (filename != NULL, FALSE);
@@ -331,11 +332,17 @@ zif_package_meta_set_from_filename (ZifPackageMeta *pkg, const gchar *filename, 
 						arch,
 						"meta");
 
+	/* save pkgid */
+	pkgid = zif_string_new (filename);
+	zif_package_set_pkgid (ZIF_PACKAGE (pkg), pkgid);
+
 	/* save id */
 	ret = zif_package_set_id (ZIF_PACKAGE (pkg), package_id, error);
 	if (!ret)
 		goto out;
 out:
+	if (pkgid != NULL)
+		zif_string_unref (pkgid);
 	g_strfreev (lines);
 	g_free (data);
 	g_free (package_id);

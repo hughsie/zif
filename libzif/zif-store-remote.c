@@ -558,7 +558,7 @@ zif_store_remote_add_changelog (ZifStoreRemote *store, ZifUpdate *update,
 		goto out;
 
 	/* get pkgid */
-	pkgid = zif_package_remote_get_pkgid (package_remote);
+	pkgid = zif_package_get_pkgid (ZIF_PACKAGE (package_remote));
 
 	/* get changelog and add to ZifUpdate */
 	state_local = zif_state_get_child (state);

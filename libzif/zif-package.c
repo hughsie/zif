@@ -58,6 +58,7 @@ struct _ZifPackagePrivate
 	ZifString		*category;
 	ZifString		*location_href;
 	ZifString		*group;
+	ZifString		*pkgid;
 	guint64			 size;
 	guint64			 time_file;
 	GPtrArray		*files;
@@ -203,6 +204,7 @@ zif_package_print (ZifPackage *package)
 	g_print ("description=%s\n", zif_string_get_value (package->priv->description));
 	g_print ("license=%s\n", zif_string_get_value (package->priv->license));
 	g_print ("group=%s\n", zif_string_get_value (package->priv->group));
+	g_print ("pkgid=%s\n", zif_string_get_value (package->priv->pkgid));
 	g_print ("category=%s\n", zif_string_get_value (package->priv->category));
 	if (package->priv->url != NULL)
 		g_print ("url=%s\n", zif_string_get_value (package->priv->url));
@@ -1344,6 +1346,27 @@ zif_package_get_group (ZifPackage *package, ZifState *state, GError **error)
 }
 
 /**
+ * zif_package_get_pkgid:
+ * @package: A #ZifPackage
+ *
+ * Gets the package pkgid, which is normally the SHA1 hash of the header.
+ * Every package has a pkgid, either virtual, local or remote.
+ * This function cannot fail.
+ *
+ * Return value: A SHA1 string
+ *
+ * Since: 0.1.3
+ **/
+const gchar *
+zif_package_get_pkgid (ZifPackage *package)
+{
+	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
+	g_return_val_if_fail (package->priv->pkgid != NULL, NULL);
+
+	return zif_string_get_value (package->priv->pkgid);
+}
+
+/**
  * zif_package_get_cache_filename:
  * @package: A #ZifPackage
  * @state: A #ZifState to use for progress reporting
@@ -1894,6 +1917,25 @@ zif_package_set_group (ZifPackage *package, ZifString *group)
 }
 
 /**
+ * zif_package_set_pkgid:
+ * @package: A #ZifPackage
+ * @pkgid: The package pkgid
+ *
+ * Sets the package pkgid, which is usually the SHA1 hash of the header.
+ *
+ * Since: 0.1.3
+ **/
+void
+zif_package_set_pkgid (ZifPackage *package, ZifString *pkgid)
+{
+	g_return_if_fail (ZIF_IS_PACKAGE (package));
+	g_return_if_fail (pkgid != NULL);
+	g_return_if_fail (package->priv->pkgid == NULL);
+
+	package->priv->pkgid = zif_string_ref (pkgid);
+}
+
+/**
  * zif_package_set_cache_filename:
  * @package: A #ZifPackage
  * @cache_filename: The cache filename
@@ -2162,6 +2204,10 @@ zif_package_finalize (GObject *object)
 		zif_string_unref (package->priv->url);
 	if (package->priv->category != NULL)
 		zif_string_unref (package->priv->category);
+	if (package->priv->group != NULL)
+		zif_string_unref (package->priv->group);
+	if (package->priv->pkgid != NULL)
+		zif_string_unref (package->priv->pkgid);
 	if (package->priv->location_href != NULL)
 		zif_string_unref (package->priv->location_href);
 	if (package->priv->files != NULL)
