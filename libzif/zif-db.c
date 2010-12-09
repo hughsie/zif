@@ -190,11 +190,9 @@ zif_db_get_string (ZifDb *db, ZifPackage *package, const gchar *key, GError **er
 
 	/* not loaded yet */
 	if (db->priv->root == NULL) {
-		g_set_error_literal (error,
-				     ZIF_DB_ERROR,
-				     ZIF_DB_ERROR_FAILED,
-				     "db not loaded");
-		goto out;
+		ret = zif_db_set_root (db, NULL, error);
+		if (!ret)
+			goto out;
 	}
 
 	/* get file contents */
@@ -250,9 +248,9 @@ zif_db_set_string (ZifDb *db, ZifPackage *package, const gchar *key, const gchar
 
 	/* not loaded yet */
 	if (db->priv->root == NULL) {
-		g_set_error_literal (error, ZIF_DB_ERROR, ZIF_DB_ERROR_FAILED,
-				     "db not loaded");
-		goto out;
+		ret = zif_db_set_root (db, NULL, error);
+		if (!ret)
+			goto out;
 	}
 
 	/* create the index directory */
@@ -268,6 +266,131 @@ zif_db_set_string (ZifDb *db, ZifPackage *package, const gchar *key, const gchar
 	if (!ret)
 		goto out;
 out:
+	g_free (index_dir);
+	return ret;
+}
+
+/**
+ * zif_db_remove:
+ * @db: A #ZifDb
+ * @package: A package to use as a reference
+ * @key: Key name to delete, e.g. "reason"
+ * @error: A #GError, or %NULL
+ *
+ * Removes a data value from the yumdb 'database' for a given package.
+ *
+ * Return value: %TRUE for success, %FALSE otherwise
+ *
+ * Since: 0.1.3
+ **/
+gboolean
+zif_db_remove (ZifDb *db, ZifPackage *package,
+	       const gchar *key, GError **error)
+{
+	gboolean ret = TRUE;
+	gchar *index_dir = NULL;
+	gchar *index_file = NULL;
+	GFile *file = NULL;
+
+	g_return_val_if_fail (ZIF_IS_DB (db), FALSE);
+	g_return_val_if_fail (ZIF_IS_PACKAGE (package), FALSE);
+	g_return_val_if_fail (key != NULL, FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+	/* not loaded yet */
+	if (db->priv->root == NULL) {
+		ret = zif_db_set_root (db, NULL, error);
+		if (!ret)
+			goto out;
+	}
+
+	/* create the index directory */
+	index_dir = zif_db_get_dir_for_package (db, package);
+
+	/* delete the value */
+	g_debug ("deleting %s from %s", key, index_dir);
+	index_file = g_build_filename (index_dir, key, NULL);
+	file = g_file_new_for_path (index_file);
+	ret = g_file_delete (file, NULL, error);
+	if (!ret)
+		goto out;
+out:
+	if (file != NULL)
+		g_object_unref (file);
+	g_free (index_dir);
+	return ret;
+}
+
+/**
+ * zif_db_remove_all:
+ * @db: A #ZifDb
+ * @package: A package to use as a reference
+ * @error: A #GError, or %NULL
+ *
+ * Removes a all data value from the yumdb 'database' for a given package.
+ *
+ * Return value: %TRUE for success, %FALSE otherwise
+ *
+ * Since: 0.1.3
+ **/
+gboolean
+zif_db_remove_all (ZifDb *db, ZifPackage *package, GError **error)
+{
+	gboolean ret = TRUE;
+	gchar *index_dir = NULL;
+	gchar *index_file = NULL;
+	GFile *file_tmp;
+	GFile *file_directory = NULL;
+	GDir *dir = NULL;
+	const gchar *filename;
+
+	g_return_val_if_fail (ZIF_IS_DB (db), FALSE);
+	g_return_val_if_fail (ZIF_IS_PACKAGE (package), FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+	/* not loaded yet */
+	if (db->priv->root == NULL) {
+		ret = zif_db_set_root (db, NULL, error);
+		if (!ret)
+			goto out;
+	}
+
+	/* get the folder */
+	index_dir = zif_db_get_dir_for_package (db, package);
+	ret = g_file_test (index_dir, G_FILE_TEST_IS_DIR);
+	if (!ret) {
+		g_debug ("Nothing to delete in %s", index_dir);
+		ret = TRUE;
+		goto out;
+	}
+
+	/* open */
+	dir = g_dir_open (index_dir, 0, error);
+	if (dir == NULL)
+		goto out;
+
+	/* delete each one */
+	filename = g_dir_read_name (dir);
+	while (filename != NULL) {
+		index_file = g_build_filename (index_dir, filename, NULL);
+		file_tmp = g_file_new_for_path (index_file);
+
+		/* delete, ignoring error */
+		g_debug ("deleting %s from %s", filename, index_dir);
+		g_file_delete (file_tmp, NULL, NULL);
+		g_object_unref (file_tmp);
+		g_free (index_file);
+		filename = g_dir_read_name (dir);
+	}
+
+	/* now delete the directory */
+	file_directory = g_file_new_for_path (index_dir);
+	ret = g_file_delete (file_directory, NULL, error);
+	if (!ret)
+		goto out;
+out:
+	if (file_directory != NULL)
+		g_object_unref (file_directory);
 	g_free (index_dir);
 	return ret;
 }

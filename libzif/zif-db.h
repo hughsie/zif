@@ -79,6 +79,13 @@ gboolean	 zif_db_set_string		(ZifDb		*db,
 						 const gchar	*key,
 						 const gchar	*value,
 						 GError		**error);
+gboolean	 zif_db_remove			(ZifDb		*db,
+						 ZifPackage	*package,
+						 const gchar	*key,
+						 GError		**error);
+gboolean	 zif_db_remove_all		(ZifDb		*db,
+						 ZifPackage	*package,
+						 GError		**error);
 
 G_END_DECLS
 
