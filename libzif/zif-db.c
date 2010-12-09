@@ -44,8 +44,9 @@
 
 #include <glib.h>
 
-#include "zif-db.h"
 #include "zif-config.h"
+#include "zif-db.h"
+#include "zif-object-array.h"
 #include "zif-package-remote.h"
 
 #define ZIF_DB_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_DB, ZifDbPrivate))
@@ -268,6 +269,182 @@ zif_db_set_string (ZifDb *db, ZifPackage *package, const gchar *key, const gchar
 out:
 	g_free (index_dir);
 	return ret;
+}
+
+/**
+ * zif_db_get_packages_for_filename:
+ **/
+static gboolean
+zif_db_get_packages_for_filename (ZifDb *db,
+				  GPtrArray *array,
+				  const gchar *filename,
+				  GError **error)
+{
+	gboolean ret = TRUE;
+	gchar *package_id = NULL;
+	gchar **split = NULL;
+	GString *name = NULL;
+	GString *version = NULL;
+	guint i;
+	guint len;
+	ZifPackage *package = NULL;
+	ZifString *pkgid = NULL;
+
+	/* cut up using a metric. I wish this was a database... */
+	split = g_strsplit (filename, "-", -1);
+	len = g_strv_length (split);
+	if (len < 3)
+		goto out;
+
+	/* join up name */
+	name = g_string_new ("");
+	for (i=1; i<len-3; i++)
+		g_string_append_printf (name, "%s-", split[i]);
+	g_string_set_size (name, name->len - 1);
+
+	/* join up version */
+	version = g_string_new ("");
+	for (i=len-3; i<len-1; i++)
+		g_string_append_printf (version, "%s-", split[i]);
+	g_string_set_size (version, version->len - 1);
+
+	/* create package-id */
+	package_id = g_strdup_printf ("%s;%s;%s;%s",
+				      name->str,
+				      version->str,
+				      split[len-1],
+				      "installed");
+
+	/* assign package-id */
+	package = zif_package_new ();
+	ret = zif_package_set_id (package, package_id, error);
+	if (!ret)
+		goto out;
+
+	/* set pkgid */
+	pkgid = zif_string_new (split[0]);
+	zif_package_set_pkgid (package, pkgid);
+	zif_object_array_add (array, package);
+out:
+	g_strfreev (split);
+	g_free (package_id);
+	if (package != NULL)
+		g_object_unref (package);
+	if (name != NULL)
+		g_string_free (name, TRUE);
+	if (version != NULL)
+		g_string_free (version, TRUE);
+	if (pkgid != NULL)
+		zif_string_unref (pkgid);
+	return ret;
+}
+
+/**
+ * zif_db_get_packages_for_index:
+ **/
+static gboolean
+zif_db_get_packages_for_index (ZifDb *db,
+			       GPtrArray *array,
+			       const gchar *path,
+			       GError **error)
+{
+	const gchar *filename;
+	gboolean ret = TRUE;
+	GDir *dir = NULL;
+
+	/* search directory */
+	dir = g_dir_open (path, 0, error);
+	if (dir == NULL) {
+		ret = FALSE;
+		goto out;
+	}
+
+	/* get the initial index */
+	filename = g_dir_read_name (dir);
+	while (filename != NULL) {
+		ret = zif_db_get_packages_for_filename (db,
+							array,
+							filename,
+							error);
+		if (!ret)
+			goto out;
+		filename = g_dir_read_name (dir);
+	}
+out:
+	if (dir != NULL)
+		g_dir_close (dir);
+	return ret;
+}
+
+/**
+ * zif_db_get_packages:
+ * @db: A #ZifDb
+ * @error: A #GError, or %NULL
+ *
+ * Gets all the packages in the yumdb 'database'.
+ *
+ * Return value: An array of #ZifPackage's
+ *
+ * Since: 0.1.3
+ **/
+GPtrArray *
+zif_db_get_packages (ZifDb *db, GError **error)
+{
+	const gchar *filename;
+	gboolean ret;
+	gchar *path;
+	GDir *dir = NULL;
+	GPtrArray *array = NULL;
+	GPtrArray *array_tmp = NULL;
+
+	g_return_val_if_fail (ZIF_IS_DB (db), NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+	/* not loaded yet */
+	if (db->priv->root == NULL) {
+		ret = zif_db_set_root (db, NULL, error);
+		if (!ret)
+			goto out;
+	}
+
+	/* search directory */
+	dir = g_dir_open (db->priv->root, 0, error);
+	if (dir == NULL) {
+		ret = FALSE;
+		goto out;
+	}
+
+	/* create an output array */
+	array_tmp = zif_object_array_new ();
+
+	/* get the initial index */
+	filename = g_dir_read_name (dir);
+	while (filename != NULL) {
+		path = g_build_filename (db->priv->root,
+					 filename,
+					 NULL);
+		if (g_file_test (path, G_FILE_TEST_IS_DIR)) {
+			ret = zif_db_get_packages_for_index (db,
+							     array_tmp,
+							     path,
+							     error);
+			g_free (path);
+			if (!ret)
+				goto out;
+		} else {
+			g_free (path);
+		}
+		filename = g_dir_read_name (dir);
+	}
+
+	/* success */
+	array = g_ptr_array_ref (array_tmp);
+out:
+	if (array_tmp != NULL)
+		g_ptr_array_unref (array_tmp);
+	if (dir != NULL)
+		g_dir_close (dir);
+	return array;
 }
 
 /**

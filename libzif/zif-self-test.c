@@ -455,7 +455,9 @@ zif_db_func (void)
 {
 	gboolean ret;
 	gchar *data;
+	gchar *filename;
 	GError *error = NULL;
+	GPtrArray *array;
 	ZifDb *db;
 	ZifPackage *package;
 	ZifString *string;
@@ -492,9 +494,25 @@ zif_db_func (void)
 	data = zif_db_get_string (db, package, "from_repo", &error);
 	g_assert_no_error (error);
 	g_assert_cmpstr (data, ==, "fedora");
-
 	g_free (data);
 	g_object_unref (package);
+
+	g_object_unref (db);
+	db = zif_db_new ();
+
+	/* set the root */
+	filename = zif_test_get_data_file ("yumdb");
+	ret = zif_db_set_root (db, filename, &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+	g_free (filename);
+
+	array = zif_db_get_packages (db, &error);
+	g_assert_no_error (error);
+	g_assert (array != NULL);
+	g_assert_cmpint (array->len, ==, 9);
+	g_ptr_array_unref (array);
+
 	g_object_unref (db);
 }
 
