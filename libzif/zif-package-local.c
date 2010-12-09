@@ -508,7 +508,7 @@ zif_package_local_set_from_header (ZifPackageLocal *pkg,
 	const gchar *origin = NULL;
 	const gchar *release = NULL;
 	const gchar *version = NULL;
-	gboolean ret;
+	gboolean ret = FALSE;
 	gchar *from_repo = NULL;
 	gchar *origin_encoded = NULL;
 	gchar *package_id = NULL;
@@ -546,6 +546,14 @@ zif_package_local_set_from_header (ZifPackageLocal *pkg,
 
 	/* set the pkgid */
 	pkgid = zif_get_header_string (header, RPMTAG_SHA1HEADER);
+	if (pkgid == NULL) {
+		g_set_error (error,
+			     ZIF_PACKAGE_ERROR,
+			     ZIF_PACKAGE_ERROR_NO_SUPPORT,
+			     "no pkgid for %s-%s-%s",
+			     name, version, release);
+		goto out;
+	}
 	zif_package_set_pkgid (ZIF_PACKAGE (pkg), pkgid);
 
 	/* if we got a value, then dereference it */
@@ -554,7 +562,7 @@ zif_package_local_set_from_header (ZifPackageLocal *pkg,
 
 	/* origin may be blank if the user is using yumdb rather than librpm */
 	if (origin != NULL) {
-		g_error ("simple case, origin set as %s", origin);
+		g_debug ("simple case, origin set as %s", origin);
 		package_id = zif_package_id_from_nevra (name,
 							epoch,
 							version,

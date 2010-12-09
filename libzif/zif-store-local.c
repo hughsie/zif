@@ -262,13 +262,21 @@ zif_store_local_load (ZifStore *store, ZifState *state, GError **error)
 							 flags,
 							 &error_local);
 		if (!ret) {
-			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
-				     "failed to set from header: %s", error_local->message);
-			g_error_free (error_local);
-			g_object_unref (package);
-			goto out;
+			/* we ignore this one */
+			if (error_local->domain == ZIF_PACKAGE_ERROR &&
+			    error_local->code == ZIF_PACKAGE_ERROR_NO_SUPPORT) {
+				g_clear_error (&error_local);
+				g_object_unref (package);
+			} else {
+				g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+					     "failed to set from header: %s", error_local->message);
+				g_error_free (error_local);
+				g_object_unref (package);
+				goto out;
+			}
+		} else {
+			g_ptr_array_add (local->priv->packages, package);
 		}
-		g_ptr_array_add (local->priv->packages, package);
 	} while (TRUE);
 
 	/* this section done */
