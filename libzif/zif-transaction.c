@@ -59,6 +59,7 @@
 
 #include "zif-array.h"
 #include "zif-config.h"
+#include "zif-db.h"
 #include "zif-depend.h"
 #include "zif-object-array.h"
 #include "zif-package-array.h"
@@ -83,6 +84,7 @@ struct _ZifTransactionPrivate
 	GHashTable		*remove_hash;
 	ZifStore		*store_local;
 	ZifConfig		*config;
+	ZifDb			*db;
 	GPtrArray		*stores_remote;
 	gboolean		 verbose;
 	gboolean		 auto_added_pubkeys;
@@ -3589,6 +3591,171 @@ out:
 }
 
 /**
+ * zif_transaction_write_yumdb_install_item:
+ **/
+static gboolean
+zif_transaction_write_yumdb_install_item (ZifTransaction *transaction,
+					  ZifTransactionItem *item,
+					  ZifState *state,
+					  GError **error)
+{
+	const gchar *reason;
+	gchar *releasever = NULL;
+	gboolean ret;
+	ZifState *state_local;
+
+	/* set steps */
+	zif_state_set_number_steps (state, 4);
+
+	/* set the repo this came from */
+	state_local = zif_state_get_child (state);
+	ret = zif_db_set_string (transaction->priv->db,
+				 item->package,
+				 "from_repo",
+				 zif_package_get_data (item->package),
+				 error);
+	if (!ret)
+		goto out;
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* zif only runs as uid 0 */
+	state_local = zif_state_get_child (state);
+	ret = zif_db_set_string (transaction->priv->db,
+				 item->package,
+				 "installed_by",
+				 "0", //TODO: don't hardcode
+				 error);
+	if (!ret)
+		goto out;
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* set the correct reason */
+	if (item->reason == ZIF_TRANSACTION_REASON_UPDATE_USER_ACTION ||
+	    item->reason == ZIF_TRANSACTION_REASON_INSTALL_USER_ACTION ||
+	    item->reason == ZIF_TRANSACTION_REASON_REMOVE_USER_ACTION) {
+		reason = "user";
+	} else {
+		reason = "dep";
+	}
+	state_local = zif_state_get_child (state);
+	ret = zif_db_set_string (transaction->priv->db,
+				 item->package,
+				 "reason",
+				 reason,
+				 error);
+	if (!ret)
+		goto out;
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* set the correct release */
+	releasever = zif_config_get_string (transaction->priv->config,
+					    "releasever",
+					     NULL);
+	state_local = zif_state_get_child (state);
+	ret = zif_db_set_string (transaction->priv->db,
+				 item->package,
+				 "releasever",
+				 releasever,
+				 error);
+	if (!ret)
+		goto out;
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+out:
+	g_free (releasever);
+	return ret;
+}
+
+/**
+ * zif_transaction_write_yumdb:
+ **/
+static gboolean
+zif_transaction_write_yumdb (ZifTransaction *transaction,
+			     ZifState *state,
+			     GError **error)
+{
+	gboolean ret;
+	guint i;
+	ZifTransactionItem *item;
+	ZifState *state_local;
+	ZifState *state_loop;
+
+	ret = zif_state_set_steps (state,
+				   error,
+				   50, /* remove */
+				   50, /* add */
+				   -1);
+	if (!ret)
+		goto out;
+
+	/* remove all the old entries */
+	state_local = zif_state_get_child (state);
+	if (transaction->priv->remove->len > 0)
+		zif_state_set_number_steps (state_local,
+					    transaction->priv->remove->len);
+	for (i=0; i<transaction->priv->remove->len; i++) {
+		item = g_ptr_array_index (transaction->priv->remove, i);
+		if (item->cancelled)
+			continue;
+		ret = zif_db_remove_all (transaction->priv->db,
+					 item->package,
+					 error);
+		if (!ret)
+			goto out;
+		ret = zif_state_done (state_local, error);
+		if (!ret)
+			goto out;
+	}
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* add all the new entries */
+	if (transaction->priv->install->len > 0)
+		zif_state_set_number_steps (state_local,
+					    transaction->priv->install->len);
+	for (i=0; i<transaction->priv->install->len; i++) {
+		item = g_ptr_array_index (transaction->priv->install, i);
+		if (item->cancelled)
+			continue;
+		state_loop = zif_state_get_child (state_local);
+		ret = zif_transaction_write_yumdb_install_item (transaction,
+								item,
+								state_loop,
+								error);
+		if (!ret)
+			goto out;
+		ret = zif_state_done (state_local, error);
+		if (!ret)
+			goto out;
+	}
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+out:
+	return ret;
+}
+
+/**
  * zif_transaction_delete_packages:
  **/
 static gboolean
@@ -3741,7 +3908,8 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 				   2, /* remove */
 				   10, /* test-commit */
 				   81, /* commit */
-				   2, /* write log */
+				   1, /* write log */
+				   1, /* write yumdb */
 				   3, /* delete files */
 				   -1);
 	if (!ret)
@@ -3892,6 +4060,17 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 	if (!ret)
 		goto out;
 
+	/* append to the yumdb */
+	state_local = zif_state_get_child (state);
+	ret = zif_transaction_write_yumdb (transaction, state_local, error);
+	if (!ret)
+		goto out;
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
 	/* remove the files we downloaded */
 	keep_cache = zif_config_get_boolean (priv->config, "keepcache", NULL);
 	if (!keep_cache) {
@@ -4029,6 +4208,7 @@ zif_transaction_finalize (GObject *object)
 
 	if (transaction->priv->ts != NULL)
 		rpmtsFree (transaction->priv->ts);
+	g_object_unref (transaction->priv->db);
 	g_object_unref (transaction->priv->config);
 	g_ptr_array_unref (transaction->priv->install);
 	g_ptr_array_unref (transaction->priv->update);
@@ -4064,6 +4244,7 @@ zif_transaction_init (ZifTransaction *transaction)
 	transaction->priv = ZIF_TRANSACTION_GET_PRIVATE (transaction);
 
 	transaction->priv->config = zif_config_new ();
+	transaction->priv->db = zif_db_new ();
 	transaction->priv->ts = rpmtsCreate ();
 
 	/* packages we want to install */
