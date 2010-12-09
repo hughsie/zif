@@ -35,6 +35,7 @@
 #include <rpm/rpmdb.h>
 #include <rpm/rpmts.h>
 
+#include "zif-db.h"
 #include "zif-utils.h"
 #include "zif-package.h"
 #include "zif-package-local.h"
@@ -53,6 +54,7 @@ struct _ZifPackageLocalPrivate
 {
 	Header			 header;
 	ZifGroups		*groups;
+	ZifDb			*db;
 	gchar			*key_id;
 };
 
@@ -184,42 +186,6 @@ out:
 	rpmtdFreeData (td);
 	rpmtdFree (td);
 	return array;
-}
-
-/**
- * zif_package_local_id_from_header:
- **/
-static gchar *
-zif_package_local_id_from_header (Header header)
-{
-	gchar *package_id;
-	const gchar *name = NULL;
-	guint epoch = 0;
-	guint *epoch_p = NULL;
-	const gchar *version = NULL;
-	const gchar *release = NULL;
-	const gchar *arch = NULL;
-	struct rpmtd_s value;
-
-	/* get NEVRA */
-	if (headerGet(header, RPMTAG_NAME, &value, HEADERGET_DEFAULT))
-		name = rpmtdGetString (&value);
-	if (headerGet(header, RPMTAG_EPOCH, &value, HEADERGET_DEFAULT))
-		epoch_p = rpmtdGetUint32 (&value);
-	if (headerGet(header, RPMTAG_VERSION, &value, HEADERGET_DEFAULT))
-		version = rpmtdGetString (&value);
-	if (headerGet(header, RPMTAG_RELEASE, &value, HEADERGET_DEFAULT))
-		release = rpmtdGetString (&value);
-	if (headerGet(header, RPMTAG_ARCH, &value, HEADERGET_DEFAULT))
-		arch = rpmtdGetString (&value);
-
-	/* if we got a value, then dereference it */
-	if (epoch_p != NULL)
-		epoch = *epoch_p;
-
-	/* with or without epoch */
-	package_id = zif_package_id_from_nevra (name, epoch, version, release, arch, "installed");
-	return package_id;
 }
 
 /**
@@ -522,19 +488,38 @@ zif_package_local_get_header (ZifPackageLocal *pkg)
  * zif_package_local_set_from_header:
  * @pkg: A #ZifPackageLocal
  * @header: A rpm Header structure
+ * @flags: a bitfield indicating if we should lookup and fix the package-id data
  * @error: A #GError, or %NULL
  *
  * Sets the local package from an RPM header object.
  *
  * Return value: %TRUE for success, %FALSE otherwise
  *
- * Since: 0.1.0
+ * Since: 0.1.3
  **/
 gboolean
-zif_package_local_set_from_header (ZifPackageLocal *pkg, Header header, GError **error)
+zif_package_local_set_from_header (ZifPackageLocal *pkg,
+				   Header header,
+				   ZifPackageLocalFlags flags,
+				   GError **error)
 {
-	gchar *package_id = NULL;
+	const gchar *arch = NULL;
+	const gchar *name = NULL;
+	const gchar *origin = NULL;
+	const gchar *release = NULL;
+	const gchar *version = NULL;
 	gboolean ret;
+	gchar *from_repo = NULL;
+	gchar *origin_encoded = NULL;
+	gchar *package_id = NULL;
+	gchar *package_id_tmp = NULL;
+	GError *error_local = NULL;
+	gint rc;
+	guint epoch = 0;
+	guint *epoch_p = NULL;
+	struct rpmtd_s value;
+	ZifPackage *package_tmp = NULL;
+	ZifString *pkgid = NULL;
 
 	g_return_val_if_fail (ZIF_IS_PACKAGE_LOCAL (pkg), FALSE);
 	g_return_val_if_fail (header != NULL, FALSE);
@@ -545,13 +530,119 @@ zif_package_local_set_from_header (ZifPackageLocal *pkg, Header header, GError *
 	/* save header so we can read when required */
 	pkg->priv->header = headerLink (header);
 
-	/* id */
-	package_id = zif_package_local_id_from_header (header);
+	/* get NEVRA */
+	if (headerGet(header, RPMTAG_NAME, &value, HEADERGET_DEFAULT))
+		name = rpmtdGetString (&value);
+	if (headerGet(header, RPMTAG_EPOCH, &value, HEADERGET_DEFAULT))
+		epoch_p = rpmtdGetUint32 (&value);
+	if (headerGet(header, RPMTAG_VERSION, &value, HEADERGET_DEFAULT))
+		version = rpmtdGetString (&value);
+	if (headerGet(header, RPMTAG_RELEASE, &value, HEADERGET_DEFAULT))
+		release = rpmtdGetString (&value);
+	if (headerGet(header, RPMTAG_ARCH, &value, HEADERGET_DEFAULT))
+		arch = rpmtdGetString (&value);
+	if (headerGet(header, RPMTAG_PACKAGEORIGIN, &value, HEADERGET_DEFAULT))
+		origin = rpmtdGetString (&value);
+
+	/* set the pkgid */
+	pkgid = zif_get_header_string (header, RPMTAG_SHA1HEADER);
+	zif_package_set_pkgid (ZIF_PACKAGE (pkg), pkgid);
+
+	/* if we got a value, then dereference it */
+	if (epoch_p != NULL)
+		epoch = *epoch_p;
+
+	/* origin may be blank if the user is using yumdb rather than librpm */
+	if (origin != NULL) {
+		g_error ("simple case, origin set as %s", origin);
+		package_id = zif_package_id_from_nevra (name,
+							epoch,
+							version,
+							release,
+							arch,
+							origin);
+
+	} else if ((flags & ZIF_PACKAGE_LOCAL_FLAG_LOOKUP) > 0) {
+
+		/* create a dummy package we can use with ZifDb */
+		package_tmp = zif_package_new ();
+		zif_package_set_pkgid (package_tmp, pkgid);
+		package_id_tmp = zif_package_id_from_nevra (name,
+							epoch,
+							version,
+							release,
+							arch,
+							"installed");
+
+		/* set id on temp package */
+		ret = zif_package_set_id (package_tmp, package_id_tmp, error);
+		if (!ret)
+			goto out;
+
+		/* fix up rpmdb entry */
+		from_repo = zif_db_get_string (pkg->priv->db,
+					       package_tmp,
+					       "from_repo",
+					       &error_local);
+		if (from_repo == NULL) {
+			g_debug ("no origin for %s and failed to get from db: %s",
+				 package_id_tmp,
+				 error_local->message);
+			g_error_free (error_local);
+			package_id = g_strdup (package_id_tmp);
+		} else {
+			origin_encoded = g_strdup_printf ("installed:%s",
+							  from_repo);
+			package_id = zif_package_id_from_nevra (name,
+								epoch,
+								version,
+								release,
+								arch,
+								origin_encoded);
+		}
+
+		/* fix? */
+		if (from_repo != NULL &&
+		    (flags & ZIF_PACKAGE_LOCAL_FLAG_REPAIR) > 0) {
+			g_debug ("repairing %s with origin '%s'",
+				 zif_package_get_printable (package_tmp),
+				 from_repo);
+			rc = headerPutString (header,
+					      RPMTAG_PACKAGEORIGIN,
+					      from_repo);
+			if (0 && rc != 1) {
+				ret = FALSE;
+				g_set_error (error,
+					     ZIF_PACKAGE_ERROR,
+					     ZIF_PACKAGE_ERROR_FAILED,
+					     "failed to repair %s",
+					     zif_package_get_printable (package_tmp));
+				goto out;
+			}
+		}
+	} else {
+		package_id = zif_package_id_from_nevra (name,
+							epoch,
+							version,
+							release,
+							arch,
+							"installed");
+		g_debug ("no origin for %s, and no look up", package_id);
+	}
+
+	/* set id */
 	ret = zif_package_set_id (ZIF_PACKAGE (pkg), package_id, error);
 	if (!ret)
 		goto out;
 out:
+	if (pkgid != NULL)
+		zif_string_unref (pkgid);
+	if (package_tmp != NULL)
+		g_object_unref (package_tmp);
+	g_free (origin_encoded);
+	g_free (from_repo);
 	g_free (package_id);
+	g_free (package_id_tmp);
 	return ret;
 }
 
@@ -616,7 +707,10 @@ zif_package_local_set_from_filename (ZifPackageLocal *pkg, const gchar *filename
 	headerConvert (hdr, HEADERCONV_RETROFIT_V3);
 
 	/* set from header */
-	ret = zif_package_local_set_from_header (pkg, hdr, &error_local);
+	ret = zif_package_local_set_from_header (pkg,
+						 hdr,
+						 ZIF_PACKAGE_LOCAL_FLAG_NOTHING,
+						 &error_local);
 	if (!ret) {
 		g_set_error (error, ZIF_PACKAGE_ERROR, ZIF_PACKAGE_ERROR_FAILED,
 			     "failed to set from header: %s", error_local->message);
@@ -689,6 +783,7 @@ zif_package_local_finalize (GObject *object)
 
 	g_free (pkg->priv->key_id);
 	g_object_unref (pkg->priv->groups);
+	g_object_unref (pkg->priv->db);
 	if (pkg->priv->header != NULL)
 		headerUnlink (pkg->priv->header);
 
@@ -718,6 +813,7 @@ zif_package_local_init (ZifPackageLocal *pkg)
 {
 	pkg->priv = ZIF_PACKAGE_LOCAL_GET_PRIVATE (pkg);
 	pkg->priv->groups = zif_groups_new ();
+	pkg->priv->db = zif_db_new ();
 	pkg->priv->header = NULL;
 }
 

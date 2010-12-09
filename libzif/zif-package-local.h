@@ -56,10 +56,18 @@ struct _ZifPackageLocalClass
 	ZifPackageClass		 parent_class;
 };
 
+typedef enum {
+	ZIF_PACKAGE_LOCAL_FLAG_NOTHING = 0,	/* fastest */
+	ZIF_PACKAGE_LOCAL_FLAG_LOOKUP = 1,	/* use yumdb for package_id data */
+	ZIF_PACKAGE_LOCAL_FLAG_REPAIR = 2,	/* use yumdb, and repair package header */
+	ZIF_PACKAGE_LOCAL_FLAG_LAST
+} ZifPackageLocalFlags;
+
 GType			 zif_package_local_get_type		(void);
 ZifPackage		*zif_package_local_new			(void);
 gboolean		 zif_package_local_set_from_header	(ZifPackageLocal *pkg,
 								 Header		 header,
+								 ZifPackageLocalFlags flags,
 								 GError		**error)
 								 G_GNUC_WARN_UNUSED_RESULT;
 gboolean		 zif_package_local_set_from_filename	(ZifPackageLocal *pkg,

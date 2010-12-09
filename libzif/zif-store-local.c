@@ -173,13 +173,14 @@ zif_store_local_get_prefix (ZifStoreLocal *store)
 static gboolean
 zif_store_local_load (ZifStore *store, ZifState *state, GError **error)
 {
-	gint retval;
 	gboolean ret = TRUE;
-	rpmdbMatchIterator mi = NULL;
-	Header header;
-	ZifPackage *package;
-	rpmdb db = NULL;
 	GError *error_local = NULL;
+	gint retval;
+	Header header;
+	rpmdb db = NULL;
+	rpmdbMatchIterator mi = NULL;
+	ZifPackageLocalFlags flags = 0;
+	ZifPackage *package;
 	ZifStoreLocal *local = ZIF_STORE_LOCAL (store);
 
 	g_return_val_if_fail (ZIF_IS_STORE_LOCAL (store), FALSE);
@@ -229,7 +230,7 @@ zif_store_local_load (ZifStore *store, ZifState *state, GError **error)
 			goto out;
 	}
 
-	retval = rpmdbOpen (local->priv->prefix, &db, O_RDONLY, 0777);
+	retval = rpmdbOpen (local->priv->prefix, &db, O_RDWR, 0777);
 	if (retval != 0) {
 		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 				     "failed to open rpmdb");
@@ -243,6 +244,10 @@ zif_store_local_load (ZifStore *store, ZifState *state, GError **error)
 		goto out;
 	zif_state_set_allow_cancel (state, FALSE);
 
+	/* lookup in yumdb, and speed up for the future */
+	flags += ZIF_PACKAGE_LOCAL_FLAG_LOOKUP;
+//	flags += ZIF_PACKAGE_LOCAL_FLAG_REPAIR;
+
 	/* get list */
 	mi = rpmdbInitIterator (db, RPMDBI_PACKAGES, NULL, 0);
 	if (mi == NULL)
@@ -252,7 +257,10 @@ zif_store_local_load (ZifStore *store, ZifState *state, GError **error)
 		if (header == NULL)
 			break;
 		package = zif_package_local_new ();
-		ret = zif_package_local_set_from_header (ZIF_PACKAGE_LOCAL (package), header, &error_local);
+		ret = zif_package_local_set_from_header (ZIF_PACKAGE_LOCAL (package),
+							 header,
+							 flags,
+							 &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 				     "failed to set from header: %s", error_local->message);
