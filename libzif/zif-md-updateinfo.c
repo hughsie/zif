@@ -107,6 +107,7 @@ zif_md_updateinfo_fix_iso8601 (const gchar *iso8601)
 	/* repair */
 	fixed = g_strdup_printf ("%sT%sZ", split[0], split[1]);
 out:
+	g_strfreev (split);
 	return fixed;
 }
 

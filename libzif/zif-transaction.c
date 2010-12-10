@@ -3602,13 +3602,11 @@ zif_transaction_write_yumdb_install_item (ZifTransaction *transaction,
 	const gchar *reason;
 	gchar *releasever = NULL;
 	gboolean ret;
-	ZifState *state_local;
 
 	/* set steps */
 	zif_state_set_number_steps (state, 4);
 
 	/* set the repo this came from */
-	state_local = zif_state_get_child (state);
 	ret = zif_db_set_string (transaction->priv->db,
 				 item->package,
 				 "from_repo",
@@ -3623,7 +3621,6 @@ zif_transaction_write_yumdb_install_item (ZifTransaction *transaction,
 		goto out;
 
 	/* zif only runs as uid 0 */
-	state_local = zif_state_get_child (state);
 	ret = zif_db_set_string (transaction->priv->db,
 				 item->package,
 				 "installed_by",
@@ -3645,7 +3642,6 @@ zif_transaction_write_yumdb_install_item (ZifTransaction *transaction,
 	} else {
 		reason = "dep";
 	}
-	state_local = zif_state_get_child (state);
 	ret = zif_db_set_string (transaction->priv->db,
 				 item->package,
 				 "reason",
@@ -3663,7 +3659,6 @@ zif_transaction_write_yumdb_install_item (ZifTransaction *transaction,
 	releasever = zif_config_get_string (transaction->priv->config,
 					    "releasever",
 					     NULL);
-	state_local = zif_state_get_child (state);
 	ret = zif_db_set_string (transaction->priv->db,
 				 item->package,
 				 "releasever",

@@ -618,7 +618,7 @@ zif_package_local_set_from_header (ZifPackageLocal *pkg,
 			rc = headerPutString (header,
 					      RPMTAG_PACKAGEORIGIN,
 					      from_repo);
-			if (0 && rc != 1) {
+			if (rc != 1) {
 				ret = FALSE;
 				g_set_error (error,
 					     ZIF_PACKAGE_ERROR,

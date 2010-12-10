@@ -258,10 +258,8 @@ zif_db_get_keys (ZifDb *db, ZifPackage *package, GError **error)
 
 	/* search directory */
 	dir = g_dir_open (index_dir, 0, error);
-	if (dir == NULL) {
-		ret = FALSE;
+	if (dir == NULL)
 		goto out;
-	}
 
 	/* return the keys */
 	array = g_ptr_array_new_with_free_func (g_free);
@@ -324,6 +322,7 @@ zif_db_set_string (ZifDb *db, ZifPackage *package, const gchar *key, const gchar
 		goto out;
 out:
 	g_free (index_dir);
+	g_free (index_file);
 	return ret;
 }
 
@@ -465,10 +464,8 @@ zif_db_get_packages (ZifDb *db, GError **error)
 
 	/* search directory */
 	dir = g_dir_open (db->priv->root, 0, error);
-	if (dir == NULL) {
-		ret = FALSE;
+	if (dir == NULL)
 		goto out;
-	}
 
 	/* create an output array */
 	array_tmp = zif_object_array_new ();
