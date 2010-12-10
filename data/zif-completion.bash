@@ -22,6 +22,7 @@
 
 __zif_commandlist="
     clean
+    check
     download
     find-package
     get-categories
@@ -55,6 +56,10 @@ __zif_commandlist="
     what-conflicts
     what-obsoletes
     what-provides
+    db-set
+    db-get
+    db-list
+    db-remove
     "
 
 __zifcomp ()

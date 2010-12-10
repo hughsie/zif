@@ -80,10 +80,10 @@ Zif is compatible with rpm, yum and the Fedora infrastructure, specifically:
 • Still uses yum.conf main config file as a fallback
 • Uses the PackageKit categories->group mapping file
 • Fast depsolving, using the same algorithms as yum
+• Reading and writing of the YumDB for storing where packages come from
 
 What doesn't work (yet):
 • Checking of signed repodata (code is in place, but waiting for Fedora)
-• YumDB of storing where packages come from
 • Installing updates using deltas (need to implement in ZifTransaction)
 • Some old style yum metadata (ZifMdOtherXml)
 

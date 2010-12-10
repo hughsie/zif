@@ -495,6 +495,13 @@ zif_db_func (void)
 	g_assert_no_error (error);
 	g_assert_cmpstr (data, ==, "fedora");
 	g_free (data);
+
+	/* get keys */
+	array = zif_db_get_keys (db, package, &error);
+	g_assert_no_error (error);
+	g_assert (array != NULL);
+	g_assert_cmpint (array->len, ==, 1);
+	g_ptr_array_unref (array);
 	g_object_unref (package);
 
 	g_object_unref (db);

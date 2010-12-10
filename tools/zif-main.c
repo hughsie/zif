@@ -4327,6 +4327,9 @@ zif_cmd_db_set (ZifCmdPrivate *priv, gchar **values, GError **error)
 	if (!ret)
 		goto out;
 
+	/* print */
+	zif_progress_bar_end (priv->progressbar);
+	g_print ("%s  = %s\n", values[1], values[2]);
 out:
 	if (array != NULL)
 		g_ptr_array_unref (array);
@@ -4414,7 +4417,174 @@ out:
 static gboolean
 zif_cmd_db_remove (ZifCmdPrivate *priv, gchar **values, GError **error)
 {
-	return TRUE;
+	gboolean ret = FALSE;
+	GPtrArray *array = NULL;
+	guint i;
+	ZifDb *db = NULL;
+	ZifPackage *package;
+
+	/* enough arguments */
+	if (g_strv_length (values) != 2) {
+		g_set_error_literal (error,
+				     1, 0,
+				     /* TRANSLATORS: error code */
+				     "Invalid argument, need '<package> <key>'");
+		goto out;
+	}
+
+	/* TRANSLATORS: used when the install database is being set */
+	zif_progress_bar_start (priv->progressbar, _("Deleting key"));
+
+	/* get package */
+	db = zif_db_new ();
+	array = zif_db_get_packages (db, error);
+	if (array == NULL)
+		goto out;
+
+	/* find something */
+	for (i=0; i<array->len; i++) {
+		package = g_ptr_array_index (array, i);
+		if (g_strcmp0 (values[0],
+			       zif_package_get_name (package)) == 0) {
+			ret = TRUE;
+			break;
+		}
+	}
+
+	/* failed */
+	if (!ret) {
+		g_set_error (error,
+			     1, 0,
+			     /* TRANSLATORS: error code */
+			     "Cannot find installed package '%s' in database",
+			     values[0]);
+		goto out;
+	}
+
+	/* set the value */
+	ret = zif_db_remove (db,
+			     package,
+			     values[1],
+			     error);
+	if (!ret)
+		goto out;
+
+	/* print */
+	zif_progress_bar_end (priv->progressbar);
+
+	/* TRANSLATORS: this is when the database key is deleted, e.g.
+	 * "from_repo deleted"); */
+	g_print ("%s %s\n", values[1], _("deleted"));
+out:
+	if (array != NULL)
+		g_ptr_array_unref (array);
+	if (db != NULL)
+		g_object_unref (db);
+	return ret;
+}
+
+/**
+ * zif_cmd_db_list:
+ **/
+static gboolean
+zif_cmd_db_list (ZifCmdPrivate *priv, gchar **values, GError **error)
+{
+	const gchar *key;
+	gboolean ret = FALSE;
+	gchar *value;
+	GPtrArray *array = NULL;
+	GPtrArray *keys = NULL;
+	guint i;
+	guint j;
+	guint max = 0;
+	ZifDb *db = NULL;
+	ZifPackage *package;
+
+	/* enough arguments */
+	if (g_strv_length (values) != 1) {
+		g_set_error_literal (error,
+				     1, 0,
+				     /* TRANSLATORS: error code */
+				     "Invalid argument, need '<package>'");
+		goto out;
+	}
+
+	/* TRANSLATORS: used when the install database is listed */
+	zif_progress_bar_start (priv->progressbar, _("Listing keys"));
+
+	/* get package */
+	db = zif_db_new ();
+	array = zif_db_get_packages (db, error);
+	if (array == NULL)
+		goto out;
+
+	/* find something */
+	for (i=0; i<array->len; i++) {
+		package = g_ptr_array_index (array, i);
+		if (g_strcmp0 (values[0],
+			       zif_package_get_name (package)) == 0) {
+			ret = TRUE;
+			break;
+		}
+	}
+
+	/* failed */
+	if (!ret) {
+		g_set_error (error,
+			     1, 0,
+			     /* TRANSLATORS: error code */
+			     "Cannot find installed package '%s' in database",
+			     values[0]);
+		goto out;
+	}
+
+	/* set the value */
+	keys = zif_db_get_keys (db,
+				package,
+				error);
+	if (keys == NULL) {
+		ret = FALSE;
+		goto out;
+	}
+
+	/* get the padding required */
+	for (i=0;i<keys->len;i++) {
+		key = g_ptr_array_index (keys, i);
+		j = strlen (key);
+		if (j > max)
+			max = j;
+	}
+
+	/* print */
+	zif_progress_bar_end (priv->progressbar);
+	for (i=0; i<keys->len; i++) {
+		key = g_ptr_array_index (keys, i);
+
+		/* set the value */
+		value = zif_db_get_string (db,
+					   package,
+					   key,
+					   error);
+		if (value == NULL) {
+			ret = FALSE;
+			goto out;
+		}
+
+		/* print */
+		g_print ("%s", key);
+		for (j=0; j<max - strlen (key); j++)
+			g_print (" ");
+		g_print (" = %s\n", value);
+		g_free (value);
+	}
+out:
+	if (array != NULL)
+		g_ptr_array_unref (array);
+	if (keys != NULL)
+		g_ptr_array_unref (keys);
+	if (db != NULL)
+		g_object_unref (db);
+	return ret;
 }
 
 /**
@@ -4819,13 +4989,18 @@ main (int argc, char *argv[])
 	zif_cmd_add (priv->cmd_array,
 		     "db-set",
 		     /* TRANSLATORS: command description */
-		     _("Set a value in the package database"),
+		     _("Set a value in the installed package database"),
 		     zif_cmd_db_set);
 	zif_cmd_add (priv->cmd_array,
 		     "db-remove",
 		     /* TRANSLATORS: command description */
-		     _("Remove a value from the package database"),
+		     _("Remove a value from the installed package database"),
 		     zif_cmd_db_remove);
+	zif_cmd_add (priv->cmd_array,
+		     "db-list",
+		     /* TRANSLATORS: command description */
+		     _("List values from the installed package database"),
+		     zif_cmd_db_list);
 
 	/* sort by command name */
 	g_ptr_array_sort (priv->cmd_array,

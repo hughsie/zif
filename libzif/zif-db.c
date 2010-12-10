@@ -222,6 +222,62 @@ out:
 }
 
 /**
+ * zif_db_get_keys:
+ * @db: A #ZifDb
+ * @package: A package to use as a reference
+ * @error: A #GError, or %NULL
+ *
+ * Gets all the keys for a given package.
+ *
+ * Return value: An allocated value, or %NULL
+ *
+ * Since: 0.1.3
+ **/
+GPtrArray *
+zif_db_get_keys (ZifDb *db, ZifPackage *package, GError **error)
+{
+	const gchar *filename;
+	gboolean ret;
+	gchar *index_dir = NULL;
+	GDir *dir = NULL;
+	GPtrArray *array = NULL;
+
+	g_return_val_if_fail (ZIF_IS_DB (db), NULL);
+	g_return_val_if_fail (ZIF_IS_PACKAGE (package), FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+	/* not loaded yet */
+	if (db->priv->root == NULL) {
+		ret = zif_db_set_root (db, NULL, error);
+		if (!ret)
+			goto out;
+	}
+
+	/* get file contents */
+	index_dir = zif_db_get_dir_for_package (db, package);
+
+	/* search directory */
+	dir = g_dir_open (index_dir, 0, error);
+	if (dir == NULL) {
+		ret = FALSE;
+		goto out;
+	}
+
+	/* return the keys */
+	array = g_ptr_array_new_with_free_func (g_free);
+	filename = g_dir_read_name (dir);
+	while (filename != NULL) {
+		g_ptr_array_add (array, g_strdup (filename));
+		filename = g_dir_read_name (dir);
+	}
+out:
+	if (dir != NULL)
+		g_dir_close (dir);
+	g_free (index_dir);
+	return array;
+}
+
+/**
  * zif_db_set_string:
  * @db: A #ZifDb
  * @package: A package to use as a reference

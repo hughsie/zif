@@ -74,6 +74,9 @@ gchar		*zif_db_get_string		(ZifDb		*db,
 						 ZifPackage	*package,
 						 const gchar	*key,
 						 GError		**error);
+GPtrArray	*zif_db_get_keys		(ZifDb		*db,
+						 ZifPackage	*package,
+						 GError		**error);
 gboolean	 zif_db_set_string		(ZifDb		*db,
 						 ZifPackage	*package,
 						 const gchar	*key,
