@@ -303,6 +303,26 @@ zif_package_remote_set_store_remote (ZifPackageRemote *pkg, ZifStoreRemote *stor
 }
 
 /**
+ * zif_package_remote_get_store_remote:
+ * @pkg: A #ZifPackageRemote
+ *
+ * Gets the store used to create this package.
+ *
+ * Return value: A refcounted %ZifStoreRemote, or %NULL for failure.
+ * Use g_object_unref() when done.
+ *
+ * Since: 0.1.3
+ **/
+ZifStoreRemote *
+zif_package_remote_get_store_remote (ZifPackageRemote *pkg)
+{
+	g_return_val_if_fail (ZIF_IS_PACKAGE_REMOTE (pkg), NULL);
+	if (pkg->priv->store_remote == NULL)
+		return NULL;
+	return g_object_ref (pkg->priv->store_remote);
+}
+
+/**
  * zif_package_remote_get_update_detail:
  * @package: A #ZifPackageRemote
  * @state: A #ZifState to use for progress reporting
