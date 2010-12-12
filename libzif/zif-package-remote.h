@@ -28,6 +28,7 @@
 
 #include <glib-object.h>
 
+#include "zif-delta.h"
 #include "zif-package.h"
 #include "zif-store-remote.h"
 
@@ -75,6 +76,9 @@ gboolean		 zif_package_remote_download		(ZifPackageRemote *pkg,
 								 ZifState	*state,
 								 GError		**error);
 ZifUpdate		*zif_package_remote_get_update_detail	(ZifPackageRemote *package,
+								 ZifState	*state,
+								 GError		**error);
+ZifDelta		*zif_package_remote_get_delta		(ZifPackageRemote *package,
 								 ZifState	*state,
 								 GError		**error);
 

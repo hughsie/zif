@@ -365,6 +365,65 @@ zif_package_remote_get_installed (ZifPackageRemote *pkg)
 }
 
 /**
+ * zif_package_remote_get_delta:
+ * @package: A #ZifPackageRemote
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
+ *
+ * Gets the update detail for a package if it exists.
+ *
+ * Return value: A %ZifUpdate, or %NULL for failure
+ *
+ * Since: 0.1.3
+ **/
+ZifDelta *
+zif_package_remote_get_delta (ZifPackageRemote *package, ZifState *state, GError **error)
+{
+	ZifDelta *delta = NULL;
+	GError *error_local = NULL;
+
+	/* not assigned */
+	if (package->priv->store_remote == NULL) {
+		g_set_error (error,
+			     ZIF_PACKAGE_ERROR,
+			     ZIF_PACKAGE_ERROR_FAILED,
+			     "remote source not set %s",
+			     zif_package_get_printable (ZIF_PACKAGE (package)));
+		goto out;
+	}
+
+	/* not resolved */
+	if (package->priv->installed == NULL) {
+		g_set_error (error,
+			     ZIF_PACKAGE_ERROR,
+			     ZIF_PACKAGE_ERROR_FAILED,
+			     "no installed package %s, try using pk_transaction_resolve()",
+			     zif_package_get_printable (ZIF_PACKAGE (package)));
+		goto out;
+	}
+
+	/* find */
+	delta = zif_store_remote_find_delta (package->priv->store_remote,
+					     ZIF_PACKAGE (package),
+					     package->priv->installed,
+					     state,
+					     &error_local);
+	if (delta == NULL) {
+		g_set_error (error,
+			     ZIF_PACKAGE_ERROR,
+			     ZIF_PACKAGE_ERROR_FAILED,
+			     "no delta for %s -> %s : %s",
+			     zif_package_get_printable (package->priv->installed),
+			     zif_package_get_printable (ZIF_PACKAGE (package)),
+			     error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+out:
+	return delta;
+}
+
+/**
  * zif_package_remote_get_update_detail:
  * @package: A #ZifPackageRemote
  * @state: A #ZifState to use for progress reporting
