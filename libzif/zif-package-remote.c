@@ -35,6 +35,7 @@
 #include <stdlib.h>
 
 #include "zif-utils.h"
+#include "zif-package-local.h"
 #include "zif-package-remote.h"
 #include "zif-groups.h"
 #include "zif-string.h"
@@ -51,6 +52,7 @@ struct _ZifPackageRemotePrivate
 {
 	ZifGroups		*groups;
 	ZifStoreRemote		*store_remote;
+	ZifPackage		*installed;
 };
 
 G_DEFINE_TYPE (ZifPackageRemote, zif_package_remote, ZIF_TYPE_PACKAGE)
@@ -323,6 +325,46 @@ zif_package_remote_get_store_remote (ZifPackageRemote *pkg)
 }
 
 /**
+ * zif_package_remote_set_installed:
+ * @pkg: A #ZifPackageRemote
+ * @installed: A #ZifPackage that created this package
+ *
+ * Sets the installed package this package updates.
+ *
+ * Since: 0.1.3
+ **/
+void
+zif_package_remote_set_installed (ZifPackageRemote *pkg, ZifPackage *installed)
+{
+	g_return_if_fail (ZIF_IS_PACKAGE_REMOTE (pkg));
+	g_return_if_fail (ZIF_IS_PACKAGE_LOCAL (installed));
+
+	if (pkg->priv->installed != NULL)
+		g_object_unref (pkg->priv->installed);
+	pkg->priv->installed = g_object_ref (installed);
+}
+
+/**
+ * zif_package_remote_get_installed:
+ * @pkg: A #ZifPackageRemote
+ *
+ * Gets the installed package this package updates.
+ *
+ * Return value: A refcounted %ZifPackage, or %NULL for failure.
+ * Use g_object_unref() when done.
+ *
+ * Since: 0.1.3
+ **/
+ZifPackage *
+zif_package_remote_get_installed (ZifPackageRemote *pkg)
+{
+	g_return_val_if_fail (ZIF_IS_PACKAGE_REMOTE (pkg), NULL);
+	if (pkg->priv->installed == NULL)
+		return NULL;
+	return g_object_ref (pkg->priv->installed);
+}
+
+/**
  * zif_package_remote_get_update_detail:
  * @package: A #ZifPackageRemote
  * @state: A #ZifState to use for progress reporting
@@ -485,6 +527,8 @@ zif_package_remote_finalize (GObject *object)
 	g_object_unref (pkg->priv->groups);
 	if (pkg->priv->store_remote != NULL)
 		g_object_unref (pkg->priv->store_remote);
+	if (pkg->priv->installed != NULL)
+		g_object_unref (pkg->priv->installed);
 
 	G_OBJECT_CLASS (zif_package_remote_parent_class)->finalize (object);
 }
@@ -509,7 +553,6 @@ static void
 zif_package_remote_init (ZifPackageRemote *pkg)
 {
 	pkg->priv = ZIF_PACKAGE_REMOTE_GET_PRIVATE (pkg);
-	pkg->priv->store_remote = NULL;
 	pkg->priv->groups = zif_groups_new ();
 }
 

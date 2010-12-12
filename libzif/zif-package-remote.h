@@ -67,6 +67,9 @@ gboolean		 zif_package_remote_set_from_repo	(ZifPackageRemote *pkg,
 void			 zif_package_remote_set_store_remote	(ZifPackageRemote *pkg,
 								 ZifStoreRemote	*store);
 ZifStoreRemote		*zif_package_remote_get_store_remote	(ZifPackageRemote *pkg);
+void			 zif_package_remote_set_installed	(ZifPackageRemote *pkg,
+								 ZifPackage	*installed);
+ZifPackage		*zif_package_remote_get_installed	(ZifPackageRemote *pkg);
 gboolean		 zif_package_remote_download		(ZifPackageRemote *pkg,
 								 const gchar	*directory,
 								 ZifState	*state,

@@ -2006,6 +2006,12 @@ skip:
 		goto out;
 	}
 
+	/* set the installed package */
+	if (ZIF_IS_PACKAGE_REMOTE (package)) {
+		zif_package_remote_set_installed (ZIF_PACKAGE_REMOTE (package),
+						  item->package);
+	}
+
 	/* add this package */
 	g_ptr_array_add (related_packages, g_object_ref (package));
 
