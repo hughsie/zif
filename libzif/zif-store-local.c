@@ -1039,6 +1039,19 @@ zif_store_local_what_provides (ZifStore *store, GPtrArray *depends, ZifState *st
 }
 
 /**
+ * zif_store_local_what_requires:
+ **/
+static GPtrArray *
+zif_store_local_what_requires (ZifStore *store, GPtrArray *depends, ZifState *state, GError **error)
+{
+	return zif_store_local_what_depends (store,
+					     ZIF_PACKAGE_ENSURE_TYPE_REQUIRES,
+					     depends,
+					     state,
+					     error);
+}
+
+/**
  * zif_store_local_what_obsoletes:
  **/
 static GPtrArray *
@@ -1345,6 +1358,7 @@ zif_store_local_class_init (ZifStoreLocalClass *klass)
 	store_class->search_file = zif_store_local_search_file;
 	store_class->resolve = zif_store_local_resolve;
 	store_class->what_provides = zif_store_local_what_provides;
+	store_class->what_requires = zif_store_local_what_requires;
 	store_class->what_obsoletes = zif_store_local_what_obsoletes;
 	store_class->what_conflicts = zif_store_local_what_conflicts;
 	store_class->get_packages = zif_store_local_get_packages;
