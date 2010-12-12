@@ -28,6 +28,7 @@
 
 #include <glib-object.h>
 
+#include "zif-delta.h"
 #include "zif-store.h"
 #include "zif-package.h"
 #include "zif-update.h"
@@ -113,6 +114,11 @@ gboolean	 zif_store_remote_check			(ZifStoreRemote		*store,
 void		 zif_store_remote_set_id		(ZifStoreRemote		*store,
 							 const gchar		*id);
 const gchar	*zif_store_remote_get_local_directory	(ZifStoreRemote		*store);
+ZifDelta	*zif_store_remote_find_delta	 	(ZifStoreRemote		*store,
+							 ZifPackage		*update,
+							 ZifPackage		*installed,
+							 ZifState		*state,
+							 GError			**error);
 
 G_END_DECLS
 

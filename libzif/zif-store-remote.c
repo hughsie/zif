@@ -42,6 +42,7 @@
 #include "zif-groups.h"
 #include "zif-lock.h"
 #include "zif-md-comps.h"
+#include "zif-md-delta.h"
 #include "zif-md-filelists-sql.h"
 #include "zif-md-filelists-xml.h"
 #include "zif-md-metalink.h"
@@ -97,6 +98,7 @@ struct _ZifStoreRemotePrivate
 	ZifMd			*md_mirrorlist;
 	ZifMd			*md_comps;
 	ZifMd			*md_updateinfo;
+	ZifMd			*md_delta;
 	ZifConfig		*config;
 	ZifDownload		*download;
 	ZifMonitor		*monitor;
@@ -198,6 +200,8 @@ zif_store_remote_get_md_from_type (ZifStoreRemote *store, ZifMdKind type)
 		return store->priv->md_metalink;
 	if (type == ZIF_MD_KIND_MIRRORLIST)
 		return store->priv->md_mirrorlist;
+	if (type == ZIF_MD_KIND_PRESTODELTA)
+		return store->priv->md_delta;
 	return NULL;
 }
 
@@ -372,6 +376,51 @@ zif_store_remote_ensure_parent_dir_exists (const gchar *filename, GError **error
 	}
 	g_free (dirname);
 	return TRUE;
+}
+
+/**
+ * zif_store_remote_find_delta:
+ * @store: A #ZifStoreRemote
+ * @update: New package to update to
+ * @installed: Package that is currently installed
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
+ *
+ * Find a update delta between to packages. This might allow Zif to download
+ * much less data, at the expense of the amount of CPU taken during the
+ * update when the delta package is rebuilt.
+ *
+ * Return value: A delta object or %NULL. Free with g_object_unref() when done.
+ *
+ * Since: 0.1.3
+ **/
+ZifDelta *
+zif_store_remote_find_delta (ZifStoreRemote *store,
+			     ZifPackage *update,
+			     ZifPackage *installed,
+			     ZifState *state,
+			     GError **error)
+{
+	ZifDelta *delta = NULL;
+
+	/* nothing */
+	if (store->priv->md_delta == NULL) {
+		g_set_error (error,
+			     ZIF_STORE_ERROR,
+			     ZIF_STORE_ERROR_NO_SUPPORT,
+			     "repo %s does not have prestodata",
+			     zif_store_get_id (ZIF_STORE (store)));
+		goto out;
+	}
+
+	/* get delta if it exists */
+	delta = zif_md_delta_search_for_package (ZIF_MD_DELTA (store->priv->md_delta),
+						 zif_package_get_id (update),
+						 zif_package_get_id (installed),
+						 state,
+						 error);
+out:
+	return delta;
 }
 
 /**
@@ -3687,6 +3736,7 @@ zif_store_remote_finalize (GObject *object)
 	g_object_unref (store->priv->md_updateinfo);
 	g_object_unref (store->priv->md_metalink);
 	g_object_unref (store->priv->md_mirrorlist);
+	g_object_unref (store->priv->md_delta);
 	g_object_unref (store->priv->config);
 	g_object_unref (store->priv->monitor);
 	g_object_unref (store->priv->lock);
@@ -3767,6 +3817,7 @@ zif_store_remote_init (ZifStoreRemote *store)
 	store->priv->md_mirrorlist = zif_md_mirrorlist_new ();
 	store->priv->md_comps = zif_md_comps_new ();
 	store->priv->md_updateinfo = zif_md_updateinfo_new ();
+	store->priv->md_delta = zif_md_delta_new ();
 	store->priv->parser_type = ZIF_MD_KIND_UNKNOWN;
 	store->priv->parser_section = ZIF_STORE_REMOTE_PARSER_SECTION_UNKNOWN;
 	g_signal_connect (store->priv->monitor, "changed", G_CALLBACK (zif_store_remote_file_monitor_cb), store);
