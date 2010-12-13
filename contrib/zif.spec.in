@@ -54,11 +54,13 @@ make install DESTDIR=$RPM_BUILD_ROOT
 
 rm -f $RPM_BUILD_ROOT%{_libdir}/libzif*.la
 
+%find_lang Zif
+
 %post -p /sbin/ldconfig
 
 %postun -p /sbin/ldconfig
 
-%files
+%files -f Zif.lang
 %defattr(-,root,root,-)
 %doc README AUTHORS NEWS COPYING
 %{_bindir}/zif
