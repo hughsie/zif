@@ -33,6 +33,7 @@ libzif_include_HEADERS =					\
 	zif-changeset.h						\
 	zif-config.h						\
 	zif-db.h						\
+	zif-delta.h						\
 	zif-depend.h						\
 	zif-download.h						\
 	zif-groups.h						\

@@ -28,6 +28,7 @@
 #include <zif-config.h>
 #include <zif-db.h>
 #include <zif-depend.h>
+#include <zif-delta.h>
 #include <zif-download.h>
 #include <zif-groups.h>
 #include <zif-lock.h>
