@@ -34,6 +34,7 @@ Summary: GLib Libraries and headers for zif
 Requires: %{name} = %{version}-%{release}
 Requires: bzip2-devel
 Requires: zlib-devel
+Requires: gpgme-devel
 
 %description devel
 GLib headers and libraries for zif.
