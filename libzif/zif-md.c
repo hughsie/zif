@@ -1632,16 +1632,6 @@ zif_md_file_check (ZifMd *md, gboolean use_uncompressed, gboolean *valid,
 	if (!ret)
 		goto out;
 
-	/* metalink has no checksum... */
-	if (md->priv->kind == ZIF_MD_KIND_METALINK ||
-	    md->priv->kind == ZIF_MD_KIND_MIRRORLIST) {
-		g_debug ("skipping checksum check on %s",
-			 zif_md_kind_to_text (md->priv->kind));
-		*valid = TRUE;
-		ret = zif_state_finished (state, error);
-		goto out;
-	}
-
 	/* get correct filename */
 	if (use_uncompressed)
 		filename = md->priv->filename_uncompressed;
@@ -1714,6 +1704,45 @@ zif_md_file_check (ZifMd *md, gboolean use_uncompressed, gboolean *valid,
 		checksum_wanted = md->priv->checksum_uncompressed;
 	else
 		checksum_wanted = md->priv->checksum;
+
+
+	/* metalink has no checksum... */
+	if (md->priv->kind == ZIF_MD_KIND_METALINK) {
+
+		/* is this a valid xml file */
+		ret = g_strstr_len (data, length, "<metalink") != NULL;
+		if (!ret) {
+			g_set_error_literal (error,
+					     ZIF_MD_ERROR,
+					     ZIF_MD_ERROR_FAILED_TO_LOAD,
+					     "metalink file was not well formed");
+			goto out;
+		}
+
+		g_debug ("skipping checksum check on metalink");
+		*valid = TRUE;
+		ret = zif_state_finished (state, error);
+		goto out;
+	}
+
+	/* mirrorlist has no checksum... */
+	if (md->priv->kind == ZIF_MD_KIND_MIRRORLIST) {
+
+		/* is this a valid mirror file */
+		ret = g_strstr_len (data, length, "repo = ") != NULL;
+		if (!ret) {
+			g_set_error_literal (error,
+					     ZIF_MD_ERROR,
+					     ZIF_MD_ERROR_FAILED_TO_LOAD,
+					     "metalink file was not well formed");
+			goto out;
+		}
+
+		g_debug ("skipping checksum check on mirrorlist");
+		*valid = TRUE;
+		ret = zif_state_finished (state, error);
+		goto out;
+	}
 
 	/* no checksum set */
 	if (checksum_wanted == NULL) {
