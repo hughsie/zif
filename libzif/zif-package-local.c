@@ -729,7 +729,7 @@ out:
 	if (ts != NULL)
 		rpmtsFree (ts);
 	if (hdr != NULL)
-		headerUnlink (hdr);
+		headerFree (hdr);
 	if (fd != NULL)
 		Fclose (fd);
 	return ret;
@@ -788,7 +788,7 @@ zif_package_local_finalize (GObject *object)
 	g_object_unref (pkg->priv->groups);
 	g_object_unref (pkg->priv->db);
 	if (pkg->priv->header != NULL)
-		headerUnlink (pkg->priv->header);
+		headerFree (pkg->priv->header);
 
 	G_OBJECT_CLASS (zif_package_local_parent_class)->finalize (object);
 }
