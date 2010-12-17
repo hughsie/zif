@@ -211,11 +211,6 @@ zif_package_local_get_depends_from_name_flags_version (GPtrArray *names, GPtrArr
 		if ((rpmflags & RPMSENSE_RPMLIB) > 0)
 			continue;
 
-		/* only used internally */
-		if ((rpmflags & RPMSENSE_PROVIDES) > 0 ||
-		    (rpmflags & RPMSENSE_CONFLICTS) > 0)
-			continue;
-
 		/* convert to enums */
 		flag = ZIF_DEPEND_FLAG_UNKNOWN;
 		if ((rpmflags & RPMSENSE_LESS) > 0) {
