@@ -3510,6 +3510,8 @@ zif_transaction_rpm_verbosity_string_to_value (const gchar *value)
 		return RPMLOG_WARNING;
 	if (g_strcmp0 (value, "debug") == 0)
 		return RPMLOG_DEBUG;
+	if (g_strcmp0 (value, "info") == 0)
+		return RPMLOG_INFO;
 	return RPMLOG_EMERG;
 }
 
