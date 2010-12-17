@@ -3882,7 +3882,6 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 	gint verbosity;
 	guint i;
 	Header hdr;
-	rpmdb db = NULL;
 	rpmprobFilterFlags problems_filter = 0;
 	ZifState *state_local;
 	ZifState *state_loop;
@@ -3927,20 +3926,10 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 	verbosity = zif_transaction_rpm_verbosity_string_to_value (verbosity_string);
 	rpmSetVerbosity (verbosity);
 
-	/* we can't get this from ZifStoreLocal, as when the db is changed,
-	 * it is marked dirty and unloaded */
-	prefix = zif_store_local_get_prefix (ZIF_STORE_LOCAL (priv->store_local));
-	retval = rpmdbOpen (prefix, &db, O_RDWR, 0777);
-	if (retval != 0) {
-		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
-				     "failed to open rpmdb");
-		ret = FALSE;
-		goto out;
-	}
-
 	/* setup the transaction */
 	commit = g_new0 (ZifTransactionCommit, 1);
 	commit->transaction = transaction;
+	prefix = zif_store_local_get_prefix (ZIF_STORE_LOCAL (priv->store_local));
 	rpmtsSetRootDir (transaction->priv->ts, prefix);
 	rpmtsSetNotifyCallback (transaction->priv->ts,
 				zif_transaction_ts_progress_cb,
@@ -4112,8 +4101,6 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 	g_debug ("Done!");
 out:
 	g_free (verbosity_string);
-	if (db != NULL)
-		rpmdbClose (db);
 	Fclose (commit->scriptlet_fd);
 	g_free (commit);
 	return ret;

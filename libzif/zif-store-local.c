@@ -36,6 +36,7 @@
 #include <glib.h>
 #include <rpm/rpmlib.h>
 #include <rpm/rpmdb.h>
+#include <rpm/rpmts.h>
 #include <fcntl.h>
 
 #include "zif-config.h"
@@ -175,9 +176,8 @@ zif_store_local_load (ZifStore *store, ZifState *state, GError **error)
 {
 	gboolean ret = TRUE;
 	GError *error_local = NULL;
-	gint retval;
 	Header header;
-	rpmdb db = NULL;
+	rpmts ts = NULL;
 	rpmdbMatchIterator mi = NULL;
 	ZifPackageLocalFlags flags = 0;
 	ZifPackage *package;
@@ -203,14 +203,12 @@ zif_store_local_load (ZifStore *store, ZifState *state, GError **error)
 		ret = zif_state_set_steps (state,
 					   error,
 					   10, /* set prefix */
-					   10, /* open db */
-					   80, /* add packages */
+					   90, /* add packages */
 					   -1);
 	} else {
 		ret = zif_state_set_steps (state,
 					   error,
-					   20, /* open db */
-					   80, /* add packages */
+					   100, /* add packages */
 					   -1);
 	}
 	if (!ret)
@@ -230,18 +228,6 @@ zif_store_local_load (ZifStore *store, ZifState *state, GError **error)
 			goto out;
 	}
 
-	retval = rpmdbOpen (local->priv->prefix, &db, O_RDWR, 0777);
-	if (retval != 0) {
-		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
-				     "failed to open rpmdb");
-		ret = FALSE;
-		goto out;
-	}
-
-	/* this section done */
-	ret = zif_state_done (state, error);
-	if (!ret)
-		goto out;
 	zif_state_set_allow_cancel (state, FALSE);
 
 	/* lookup in yumdb, and speed up for the future */
@@ -249,7 +235,8 @@ zif_store_local_load (ZifStore *store, ZifState *state, GError **error)
 //	flags += ZIF_PACKAGE_LOCAL_FLAG_REPAIR;
 
 	/* get list */
-	mi = rpmdbInitIterator (db, RPMDBI_PACKAGES, NULL, 0);
+	ts = rpmtsCreate();
+	mi = rpmtsInitIterator (ts, RPMDBI_PACKAGES, NULL, 0);
 	if (mi == NULL)
 		g_warning ("failed to get iterator");
 	do {
@@ -289,10 +276,8 @@ zif_store_local_load (ZifStore *store, ZifState *state, GError **error)
 out:
 	if (mi != NULL)
 		rpmdbFreeIterator (mi);
-	if (db != NULL) {
-		rpmdbClose (db);
-		rpmdbUnlink (db, NULL);
-	}
+	if (ts != NULL)
+		rpmtsFree(ts);
 	return ret;
 }
 
