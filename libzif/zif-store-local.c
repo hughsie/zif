@@ -287,12 +287,12 @@ zif_store_local_load (ZifStore *store, ZifState *state, GError **error)
 	/* okay */
 	local->priv->loaded = TRUE;
 out:
+	if (mi != NULL)
+		rpmdbFreeIterator (mi);
 	if (db != NULL) {
 		rpmdbClose (db);
 		rpmdbUnlink (db, NULL);
 	}
-	if (mi != NULL)
-		rpmdbFreeIterator (mi);
 	return ret;
 }
 
