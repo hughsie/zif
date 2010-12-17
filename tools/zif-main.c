@@ -1744,6 +1744,7 @@ zif_main_show_transaction (ZifTransaction *transaction)
 static gboolean
 zif_transaction_run (ZifCmdPrivate *priv, ZifTransaction *transaction, ZifState *state, GError **error)
 {
+	const gchar *script_output;
 	gboolean assume_yes;
 	gboolean ret;
 	gboolean untrusted = FALSE;
@@ -1858,6 +1859,15 @@ zif_transaction_run (ZifCmdPrivate *priv, ZifTransaction *transaction, ZifState 
 	ret = zif_transaction_commit (transaction, state_local, error);
 	if (!ret)
 		goto out;
+
+	/* get the output of the transaction, if any */
+	script_output = zif_transaction_get_script_output (transaction);
+	if (script_output != NULL) {
+		/* TRANSLATORS: this is the stdout and stderr output
+		 * from the transaction, that may indicate something
+		 * went horribly wrong */
+		g_print ("%s %s\n", _("Transaction error:"), script_output);
+	}
 
 	/* this section done */
 	ret = zif_state_done (state, error);

@@ -48,6 +48,7 @@
 
 #include <string.h>
 #include <glib.h>
+#include <glib/gstdio.h>
 #include <fcntl.h>
 
 #include <rpm/rpmdb.h>
@@ -90,6 +91,7 @@ struct _ZifTransactionPrivate
 	gboolean		 auto_added_pubkeys;
 	ZifTransactionState	 state;
 	rpmts			 ts;
+	gchar			*script_stdout;
 };
 
 typedef struct {
@@ -3204,6 +3206,7 @@ typedef struct {
 	ZifState		*state;
 	ZifState		*child;
 	FD_t			 fd;
+	FD_t			 scriptlet_fd;
 	ZifTransactionStep	 step;
 } ZifTransactionCommit;
 
@@ -3943,6 +3946,11 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 				zif_transaction_ts_progress_cb,
 				commit);
 
+	/* capture scriptlet output */
+	commit->scriptlet_fd = Fopen ("/tmp/scriptlet.log", "w.ufdio");
+	rpmtsSetScriptFd (transaction->priv->ts,
+			  commit->scriptlet_fd);
+
 	/* add things to install */
 	state_local = zif_state_get_child (state);
 	if (priv->install->len > 0)
@@ -4090,6 +4098,15 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 	if (!ret)
 		goto out;
 
+	/* copy the scriptlet data out */
+	ret = g_file_get_contents ("/tmp/scriptlet.log",
+				   &priv->script_stdout,
+				   NULL,
+				   error);
+	if (!ret)
+		goto out;
+	g_unlink ("/tmp/scriptlet.log");
+
 	/* success */
 	priv->state = ZIF_TRANSACTION_STATE_COMMITTED;
 	g_debug ("Done!");
@@ -4097,6 +4114,7 @@ out:
 	g_free (verbosity_string);
 	if (db != NULL)
 		rpmdbClose (db);
+	Fclose (commit->scriptlet_fd);
 	g_free (commit);
 	return ret;
 }
@@ -4161,6 +4179,27 @@ zif_transaction_set_verbose (ZifTransaction *transaction, gboolean verbose)
 }
 
 /**
+ * zif_transaction_get_script_output:
+ * @transaction: A #ZifTransaction
+ *
+ * Gets any script output from the past rpm transaction. This is
+ * automatically cleared when zif_transaction_reset() is used.
+ *
+ * Return value: The scriptlet string output, or %NULL
+ *
+ * Since: 0.1.4
+ **/
+const gchar *
+zif_transaction_get_script_output (ZifTransaction *transaction)
+{
+	g_return_val_if_fail (ZIF_IS_TRANSACTION (transaction), NULL);
+	if (transaction->priv->script_stdout == NULL ||
+	    transaction->priv->script_stdout[0] == '\0')
+		return NULL;
+	return transaction->priv->script_stdout;
+}
+
+/**
  * zif_transaction_get_state:
  * @transaction: A #ZifTransaction
  *
@@ -4197,6 +4236,8 @@ zif_transaction_reset (ZifTransaction *transaction)
 	g_hash_table_remove_all (transaction->priv->update_hash);
 	g_hash_table_remove_all (transaction->priv->remove_hash);
 	transaction->priv->state = ZIF_TRANSACTION_STATE_CLEAN;
+	g_free (transaction->priv->script_stdout);
+	transaction->priv->script_stdout = NULL;
 }
 
 /**
@@ -4223,6 +4264,7 @@ zif_transaction_finalize (GObject *object)
 		g_object_unref (transaction->priv->store_local);
 	if (transaction->priv->stores_remote != NULL)
 		g_ptr_array_unref (transaction->priv->stores_remote);
+	g_free (transaction->priv->script_stdout);
 
 	G_OBJECT_CLASS (zif_transaction_parent_class)->finalize (object);
 }

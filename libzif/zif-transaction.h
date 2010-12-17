@@ -130,6 +130,7 @@ void		 zif_transaction_reset			(ZifTransaction	*transaction);
 GPtrArray	*zif_transaction_get_install		(ZifTransaction	*transaction);
 GPtrArray	*zif_transaction_get_remove		(ZifTransaction	*transaction);
 const gchar	*zif_transaction_reason_to_string	(ZifTransactionReason reason);
+const gchar	*zif_transaction_get_script_output	(ZifTransaction *transaction);
 ZifTransactionReason	zif_transaction_get_reason	(ZifTransaction	*transaction,
 							 ZifPackage	*package,
 							 GError		**error);
