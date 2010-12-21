@@ -3991,6 +3991,9 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 	if (!ret)
 		goto out;
 
+	/* generate ordering for the transaction */
+	rpmtsOrder (transaction->priv->ts);
+
 	/* no signature checking, we've handled that already */
 	flags = rpmtsSetVSFlags (transaction->priv->ts, _RPMVSF_NOSIGNATURES | _RPMVSF_NODIGESTS);
 	rpmtsSetVSFlags (transaction->priv->ts, flags);
