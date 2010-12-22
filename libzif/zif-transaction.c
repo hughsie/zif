@@ -3994,22 +3994,15 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 	/* generate ordering for the transaction */
 	rpmtsOrder (transaction->priv->ts);
 
-	/* no signature checking, we've handled that already */
-	flags = rpmtsSetVSFlags (transaction->priv->ts, _RPMVSF_NOSIGNATURES | _RPMVSF_NODIGESTS);
-	rpmtsSetVSFlags (transaction->priv->ts, flags);
-
-	/* filter diskspace */
-	if (!zif_config_get_boolean (priv->config, "diskspacecheck", NULL))
-		problems_filter += RPMPROB_FILTER_DISKSPACE;
-
 	/* run the test transaction */
 	if (zif_config_get_boolean (priv->config, "rpm_check_debug", NULL)) {
-		zif_state_action_start (state, ZIF_STATE_ACTION_TEST_COMMIT, NULL);
+		g_debug ("running test transaction");
+		zif_state_action_start (state,
+					ZIF_STATE_ACTION_TEST_COMMIT,
+					NULL);
 		commit->state = zif_state_get_child (state);
 		commit->step = ZIF_TRANSACTION_STEP_IGNORE;
-		rpmtsSetFlags (transaction->priv->ts, RPMTRANS_FLAG_TEST);
-		g_debug ("Running test transaction");
-		rc = rpmtsRun (transaction->priv->ts, NULL, problems_filter);
+		rc = rpmtsCheck (transaction->priv->ts);
 		if (rc < 0) {
 			ret = FALSE;
 			g_set_error (error,
@@ -4019,7 +4012,8 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 			goto out;
 		}
 		if (rc > 0) {
-			ret = zif_transaction_set_error_for_problems (error, transaction->priv->ts);
+			ret = zif_transaction_set_error_for_problems (error,
+								      transaction->priv->ts);
 			goto out;
 		}
 	}
@@ -4029,10 +4023,19 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 	if (!ret)
 		goto out;
 
-	/* run the transaction, really this time */
+	/* no signature checking, we've handled that already */
+	flags = rpmtsSetVSFlags (transaction->priv->ts,
+				 _RPMVSF_NOSIGNATURES | _RPMVSF_NODIGESTS);
+	rpmtsSetVSFlags (transaction->priv->ts, flags);
+
+	/* filter diskspace */
+	if (!zif_config_get_boolean (priv->config, "diskspacecheck", NULL))
+		problems_filter += RPMPROB_FILTER_DISKSPACE;
+
+	/* run the transaction */
 	commit->state = zif_state_get_child (state);
 	commit->step = ZIF_TRANSACTION_STEP_STARTED;
-	rpmtsSetFlags (transaction->priv->ts, RPMTRANS_FLAG_NONE);
+	rpmtsSetFlags (transaction->priv->ts, RPMTRANS_FLAG_TEST);
 	g_debug ("Running actual transaction");
 	rc = rpmtsRun (transaction->priv->ts, NULL, problems_filter);
 	if (rc < 0) {
