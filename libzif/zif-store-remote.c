@@ -76,7 +76,7 @@ struct _ZifStoreRemotePrivate
 {
 	gchar			*id;			/* fedora */
 	gchar			*name;			/* Fedora $arch */
-	gchar			*name_expanded;		/* Fedora 1386 */
+	gchar			*name_expanded;		/* Fedora i386 */
 	gchar			*directory;		/* /var/cache/yum/fedora */
 	gchar			*repomd_filename;	/* /var/cache/yum/fedora/repomd.xml */
 	gchar			*mirrorlist;
@@ -286,7 +286,18 @@ zif_store_remote_parser_start_element (GMarkupParseContext *context, const gchar
 		for (i=0; attribute_names[i] != NULL; i++) {
 			if (g_strcmp0 (attribute_names[i], "href") == 0) {
 				zif_md_set_location (md, attribute_values[i]);
-				break;
+				continue;
+			}
+			if (g_strcmp0 (attribute_names[i], "xml:base") == 0) {
+				/* I know this seems insane, but sometimes
+				 * the base repo isn't where the repo file
+				 * is so we have to be sure and add the
+				 * xml:base as well. A spec might be nice,
+				 * but alas. */
+				zif_download_location_add_uri (store->priv->download,
+							       attribute_values[i],
+							       NULL);
+				continue;
 			}
 		}
 		store->priv->parser_section = ZIF_STORE_REMOTE_PARSER_SECTION_UNKNOWN;
@@ -1256,7 +1267,8 @@ zif_store_remote_load_metadata_try (ZifStoreRemote *store, ZifState *state, GErr
 	/* messed up repo file */
 	if (!primary_okay) {
 		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
-			     "failed to get primary metadata location for %s", store->priv->id);
+			     "failed to get primary metadata location for %s",
+			     store->priv->id);
 		ret = FALSE;
 		goto out;
 	}
