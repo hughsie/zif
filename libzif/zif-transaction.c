@@ -4107,8 +4107,10 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 	g_debug ("Done!");
 out:
 	g_free (verbosity_string);
-	Fclose (commit->scriptlet_fd);
-	g_free (commit);
+	if (commit != NULL) {
+		Fclose (commit->scriptlet_fd);
+		g_free (commit);
+	}
 	return ret;
 }
 
