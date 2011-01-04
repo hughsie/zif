@@ -3821,19 +3821,22 @@ out:
 }
 
 /**
- * zif_transaction_set_error_for_problems:
+ * zif_transaction_look_for_problems:
  **/
 static gboolean
-zif_transaction_set_error_for_problems (GError **error, rpmts ts)
+zif_transaction_look_for_problems (ZifTransaction *transaction, GError **error)
 {
 	const gchar *msg;
-	GString *string;
+	gboolean ret = TRUE;
+	GString *string = NULL;
 	rpmProblem prob;
 	rpmpsi psi;
 	rpmps probs = NULL;
 
 	/* get a list of problems */
-	probs = rpmtsProblems (ts);
+	probs = rpmtsProblems (transaction->priv->ts);
+	if (rpmpsNumProblems (probs) == 0)
+		goto out;
 
 	/* parse problems */
 	string = g_string_new ("");
@@ -3847,14 +3850,17 @@ zif_transaction_set_error_for_problems (GError **error, rpmts ts)
 	rpmpsFreeIterator (psi);
 
 	/* set error */
+	ret = FALSE;
 	g_set_error (error,
 		     ZIF_TRANSACTION_ERROR,
 		     ZIF_TRANSACTION_ERROR_FAILED,
 		     "Error running transaction: %s",
 		     string->str);
-	g_string_free (string, TRUE);
+out:
+	if (string != NULL)
+		g_string_free (string, TRUE);
 	rpmpsFree (probs);
-	return FALSE;
+	return ret;
 }
 
 /**
@@ -4002,20 +4008,12 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 					NULL);
 		commit->state = zif_state_get_child (state);
 		commit->step = ZIF_TRANSACTION_STEP_IGNORE;
-		rc = rpmtsCheck (transaction->priv->ts);
-		if (rc < 0) {
-			ret = FALSE;
-			g_set_error (error,
-				     ZIF_TRANSACTION_ERROR,
-				     ZIF_TRANSACTION_ERROR_FAILED,
-				     "Error %i running transaction", rc);
+		/* the output value of rpmtsCheck is not meaningful */
+		rpmtsCheck (transaction->priv->ts);
+		ret = zif_transaction_look_for_problems (transaction,
+							 error);
+		if (!ret)
 			goto out;
-		}
-		if (rc > 0) {
-			ret = zif_transaction_set_error_for_problems (error,
-								      transaction->priv->ts);
-			goto out;
-		}
 	}
 
 	/* this section done */
@@ -4047,8 +4045,10 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 		goto out;
 	}
 	if (rc > 0) {
-		ret = zif_transaction_set_error_for_problems (error, transaction->priv->ts);
-		goto out;
+		ret = zif_transaction_look_for_problems (transaction,
+							 error);
+		if (!ret)
+			goto out;
 	}
 
 	/* hmm, nothing was done... */
