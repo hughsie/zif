@@ -4051,6 +4051,18 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 		goto out;
 	}
 
+	/* hmm, nothing was done... */
+	if (commit->step != ZIF_TRANSACTION_STEP_WRITING) {
+		ret = FALSE;
+		g_set_error (error,
+			     ZIF_TRANSACTION_ERROR,
+			     ZIF_TRANSACTION_ERROR_FAILED,
+			     "Transaction did not go to writing phase, "
+			     "but returned no error (%i)",
+			     commit->step);
+		goto out;
+	}
+
 	/* this section done */
 	ret = zif_state_done (state, error);
 	if (!ret)
