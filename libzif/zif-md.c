@@ -1727,17 +1727,6 @@ zif_md_file_check (ZifMd *md, gboolean use_uncompressed, gboolean *valid,
 
 	/* mirrorlist has no checksum... */
 	if (md->priv->kind == ZIF_MD_KIND_MIRRORLIST) {
-
-		/* is this a valid mirror file */
-		ret = g_strstr_len (data, length, "repo = ") != NULL;
-		if (!ret) {
-			g_set_error_literal (error,
-					     ZIF_MD_ERROR,
-					     ZIF_MD_ERROR_FAILED_TO_LOAD,
-					     "metalink file was not well formed");
-			goto out;
-		}
-
 		g_debug ("skipping checksum check on mirrorlist");
 		*valid = TRUE;
 		ret = zif_state_finished (state, error);
