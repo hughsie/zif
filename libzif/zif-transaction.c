@@ -4035,7 +4035,7 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 	/* run the transaction */
 	commit->state = zif_state_get_child (state);
 	commit->step = ZIF_TRANSACTION_STEP_STARTED;
-	rpmtsSetFlags (transaction->priv->ts, RPMTRANS_FLAG_TEST);
+	rpmtsSetFlags (transaction->priv->ts, RPMTRANS_FLAG_NONE);
 	g_debug ("Running actual transaction");
 	rc = rpmtsRun (transaction->priv->ts, NULL, problems_filter);
 	if (rc < 0) {
