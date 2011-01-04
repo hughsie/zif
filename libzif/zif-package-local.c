@@ -511,8 +511,6 @@ zif_package_local_set_from_header (ZifPackageLocal *pkg,
 	GError *error_local = NULL;
 	gint rc;
 	guint epoch = 0;
-	guint *epoch_p = NULL;
-	struct rpmtd_s value;
 	ZifPackage *package_tmp = NULL;
 	ZifString *pkgid = NULL;
 
@@ -526,18 +524,13 @@ zif_package_local_set_from_header (ZifPackageLocal *pkg,
 	pkg->priv->header = headerLink (header);
 
 	/* get NEVRA */
-	if (headerGet(header, RPMTAG_NAME, &value, HEADERGET_DEFAULT))
-		name = rpmtdGetString (&value);
-	if (headerGet(header, RPMTAG_EPOCH, &value, HEADERGET_DEFAULT))
-		epoch_p = rpmtdGetUint32 (&value);
-	if (headerGet(header, RPMTAG_VERSION, &value, HEADERGET_DEFAULT))
-		version = rpmtdGetString (&value);
-	if (headerGet(header, RPMTAG_RELEASE, &value, HEADERGET_DEFAULT))
-		release = rpmtdGetString (&value);
-	if (headerGet(header, RPMTAG_ARCH, &value, HEADERGET_DEFAULT))
-		arch = rpmtdGetString (&value);
-	if (headerGet(header, RPMTAG_PACKAGEORIGIN, &value, HEADERGET_DEFAULT))
-		origin = rpmtdGetString (&value);
+	name = headerGetString(header, RPMTAG_NAME);
+	epoch = headerGetNumber(header, RPMTAG_EPOCH);
+	version = headerGetString(header, RPMTAG_VERSION);
+	release = headerGetString(header, RPMTAG_RELEASE);
+	arch = headerGetString(header, RPMTAG_ARCH);
+	/* XXX this never contains anything in practise */
+	origin = headerGetString(header, RPMTAG_PACKAGEORIGIN);
 
 	/* set the pkgid */
 	pkgid = zif_get_header_string (header, RPMTAG_SHA1HEADER);
@@ -550,10 +543,6 @@ zif_package_local_set_from_header (ZifPackageLocal *pkg,
 		goto out;
 	}
 	zif_package_set_pkgid (ZIF_PACKAGE (pkg), pkgid);
-
-	/* if we got a value, then dereference it */
-	if (epoch_p != NULL)
-		epoch = *epoch_p;
 
 	/* origin may be blank if the user is using yumdb rather than librpm */
 	if (origin != NULL) {
