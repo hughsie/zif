@@ -3852,11 +3852,22 @@ zif_transaction_look_for_problems (ZifTransaction *transaction, GError **error)
 
 	/* set error */
 	ret = FALSE;
-	g_set_error (error,
-		     ZIF_TRANSACTION_ERROR,
-		     ZIF_TRANSACTION_ERROR_FAILED,
-		     "Error running transaction: %s",
-		     string->str);
+
+	/* we failed, and got a reason to report */
+	if (string->len > 0) {
+		g_set_error (error,
+			     ZIF_TRANSACTION_ERROR,
+			     ZIF_TRANSACTION_ERROR_FAILED,
+			     "Error running transaction: %s",
+			     string->str);
+		goto out;
+	}
+
+	/* we failed, and got no reason why */
+	g_set_error_literal (error,
+			     ZIF_TRANSACTION_ERROR,
+			     ZIF_TRANSACTION_ERROR_FAILED,
+			     "Error running transaction and no problems were reported!");
 out:
 	if (string != NULL)
 		g_string_free (string, TRUE);
