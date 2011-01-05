@@ -3880,6 +3880,7 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 {
 	const gchar *prefix;
 	gboolean keep_cache;
+	gboolean yumdb_allow_write;
 	gboolean ret = FALSE;
 	gchar *verbosity_string = NULL;
 	gint flags;
@@ -4079,10 +4080,19 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 		goto out;
 
 	/* append to the yumdb */
-	state_local = zif_state_get_child (state);
-	ret = zif_transaction_write_yumdb (transaction, state_local, error);
-	if (!ret)
-		goto out;
+	yumdb_allow_write = zif_config_get_boolean (priv->config,
+						    "yumdb_allow_write",
+						    NULL);
+	if (yumdb_allow_write) {
+		state_local = zif_state_get_child (state);
+		ret = zif_transaction_write_yumdb (transaction,
+						   state_local,
+						   error);
+		if (!ret)
+			goto out;
+	} else {
+		g_debug ("Not writing to the yumdb");
+	}
 
 	/* this section done */
 	ret = zif_state_done (state, error);
