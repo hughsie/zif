@@ -175,6 +175,7 @@ static gboolean
 zif_store_local_load (ZifStore *store, ZifState *state, GError **error)
 {
 	gboolean ret = TRUE;
+	gboolean yumdb_allow_read;
 	GError *error_local = NULL;
 	Header header;
 	rpmts ts = NULL;
@@ -230,8 +231,18 @@ zif_store_local_load (ZifStore *store, ZifState *state, GError **error)
 
 	zif_state_set_allow_cancel (state, FALSE);
 
-	/* lookup in yumdb, and speed up for the future */
-	flags += ZIF_PACKAGE_LOCAL_FLAG_LOOKUP;
+	/* lookup in yumdb */
+	yumdb_allow_read = zif_config_get_boolean (local->priv->config,
+						   "yumdb_allow_read",
+						   NULL);
+	if (yumdb_allow_read) {
+		g_debug ("using yumdb origin lookup");
+		flags += ZIF_PACKAGE_LOCAL_FLAG_LOOKUP;
+	} else {
+		g_debug ("not using yumdb lookup as disabled");
+	}
+
+	/* speed up for the future */
 //	flags += ZIF_PACKAGE_LOCAL_FLAG_REPAIR;
 
 	/* get list */
