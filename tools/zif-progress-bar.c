@@ -149,7 +149,8 @@ zif_progress_bar_set_detail (ZifProgressBar *progress_bar, const gchar *detail)
 
 	/* no console */
 	if (!progress_bar->priv->on_console) {
-		g_print ("Detail: %s\n", detail);
+		if (detail != NULL)
+			g_print ("Detail: %s\n", detail);
 		return;
 	}
 
