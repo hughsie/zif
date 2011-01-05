@@ -3317,6 +3317,7 @@ zif_transaction_ts_progress_cb (const void *arg,
 		if (filename == NULL) {
 			g_debug ("no filename set in uninst-start with total %i",
 				 (gint32) total);
+			commit->step = ZIF_TRANSACTION_STEP_WRITING;
 			break;
 		}
 
