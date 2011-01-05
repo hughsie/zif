@@ -953,6 +953,7 @@ zif_transaction_get_package_provide_from_store (ZifTransaction *transaction,
 		    error_local->code == ZIF_STORE_ERROR_ARRAY_IS_EMPTY) {
 			g_error_free (error_local);
 		} else {
+			ret = FALSE;
 			g_propagate_error (error, error_local);
 			goto out;
 		}
