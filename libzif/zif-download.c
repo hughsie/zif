@@ -124,6 +124,13 @@ zif_download_file_got_chunk_cb (SoupMessage *msg, SoupBuffer *chunk,
 		goto out;
 	}
 
+	/* if it's returning "Found" or an error, ignore the percentage */
+	if (msg->status_code != SOUP_STATUS_OK) {
+		g_debug ("ignoring status code %i (%s)",
+			 msg->status_code, msg->reason_phrase);
+		goto out;
+	}
+
 	/* get data */
 	body_length = msg->response_body->length;
 	header_size = soup_message_headers_get_content_length (msg->response_headers);
