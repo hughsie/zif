@@ -789,21 +789,33 @@ zif_store_remote_get_update_detail (ZifStoreRemote *store, const gchar *package_
 		 * such as fedora, which do not have updateinfo */
 		if (error_local->domain == ZIF_MD_ERROR &&
 		    error_local->code == ZIF_MD_ERROR_NO_SUPPORT) {
-			g_set_error (error,
-				     ZIF_STORE_ERROR,
-				     ZIF_STORE_ERROR_NO_SUPPORT,
-				     "repo %s does not support updatinfo: %s",
-				     zif_store_get_id (ZIF_STORE (store)),
-				     error_local->message);
+
+			/* generate some dummy update object so we can
+			 * still store the changelog */
+			g_debug ("repo %s does not support updateinfo: %s, "
+				 "faking it for changelog fallback",
+				 zif_store_get_id (ZIF_STORE (store)),
+				 error_local->message);
+			g_clear_error (&error_local);
+			array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
+			update_tmp = zif_update_new ();
+			zif_update_set_title (update_tmp, "Generic fallback update detail");
+			g_ptr_array_add (array, update_tmp);
+
+			/* manually finish the abandoned state */
+			ret = zif_state_finished (state_local, error);
+			if (!ret)
+				goto out;
+
 		} else {
 			g_set_error (error,
 				     ZIF_STORE_ERROR,
 				     ZIF_STORE_ERROR_FAILED,
 				     "failed to find any details in updateinfo (but in primary): %s",
 				     error_local->message);
+			g_error_free (error_local);
+			goto out;
 		}
-		g_error_free (error_local);
-		goto out;
 	}
 	if (array->len != 1) {
 		/* FIXME: is this valid? */

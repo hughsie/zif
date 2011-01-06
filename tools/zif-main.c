@@ -3455,18 +3455,30 @@ zif_cmd_update_details (ZifCmdPrivate *priv, gchar **values, GError **error)
 		}
 
 		/* TRANSLATORS: these are headings for the update details */
-		g_string_append_printf (string, "%s\t%s\n",
-					_("Kind:"), zif_update_kind_to_string (zif_update_get_kind (update)));
-		g_string_append_printf (string, "%s\t%s\n",
-					_("State:"), zif_update_state_to_string (zif_update_get_state (update)));
-		g_string_append_printf (string, "%s\t%s\n",
-					_("ID:"), zif_update_get_id (update));
-		g_string_append_printf (string, "%s\t%s\n",
-					_("Title:"), zif_update_get_title (update));
-		g_string_append_printf (string, "%s\t%s\n",
-					_("Description:"), zif_update_get_description (update));
-		g_string_append_printf (string, "%s\t%s\n",
-					_("Issued:"), zif_update_get_issued (update));
+		if (zif_update_get_kind (update) != ZIF_UPDATE_KIND_UNKNOWN) {
+			g_string_append_printf (string, "%s\t%s\n",
+						_("Kind:"), zif_update_kind_to_string (zif_update_get_kind (update)));
+		}
+		if (zif_update_get_state (update) != ZIF_UPDATE_STATE_UNKNOWN) {
+			g_string_append_printf (string, "%s\t%s\n",
+						_("State:"), zif_update_state_to_string (zif_update_get_state (update)));
+		}
+		if (zif_update_get_id (update) != NULL) {
+			g_string_append_printf (string, "%s\t%s\n",
+						_("ID:"), zif_update_get_id (update));
+		}
+		if (zif_update_get_title (update) != NULL) {
+			g_string_append_printf (string, "%s\t%s\n",
+						_("Title:"), zif_update_get_title (update));
+		}
+		if (zif_update_get_description (update) != NULL) {
+			g_string_append_printf (string, "%s\t%s\n",
+						_("Description:"), zif_update_get_description (update));
+		}
+		if (zif_update_get_issued (update) != NULL) {
+			g_string_append_printf (string, "%s\t%s\n",
+						_("Issued:"), zif_update_get_issued (update));
+		}
 		update_infos = zif_update_get_update_infos (update);
 		for (j=0; j<update_infos->len; j++) {
 			info = g_ptr_array_index (update_infos, j);
