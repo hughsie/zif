@@ -1669,8 +1669,9 @@ zif_md_file_check (ZifMd *md, gboolean use_uncompressed, gboolean *valid,
 	/* check age */
 	modified = g_file_info_get_attribute_uint64 (file_info, G_FILE_ATTRIBUTE_TIME_MODIFIED);
 	age = time (NULL) - modified;
-	g_debug ("age of %s is %" G_GUINT64_FORMAT " hours (max-age=%" G_GUINT64_FORMAT " seconds)",
-		   filename, age / (60 * 60), md->priv->max_age);
+	g_debug ("age of %s is %" G_GUINT64_FORMAT
+		 " hours (max-age is %" G_GUINT64_FORMAT " hours)",
+		   filename, age / (60 * 60), md->priv->max_age / (60 * 60));
 	ret = (md->priv->max_age == 0 || age < md->priv->max_age);
 	if (!ret) {
 		/* this is not fatal, the file is too old */
