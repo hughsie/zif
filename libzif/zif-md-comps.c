@@ -303,6 +303,18 @@ zif_md_comps_parser_end_element (GMarkupParseContext *context, const gchar *elem
 		comps->priv->category_data_temp = NULL;
 		goto out;
 	}
+
+	/* in group */
+	if (comps->priv->section == ZIF_MD_COMPS_SECTION_GROUP) {
+		if (comps->priv->section_group == ZIF_MD_COMPS_SECTION_GROUP_ID ||
+		    comps->priv->section_group == ZIF_MD_COMPS_SECTION_GROUP_NAME ||
+		    comps->priv->section_group == ZIF_MD_COMPS_SECTION_GROUP_DESCRIPTION ||
+		    comps->priv->section_group == ZIF_MD_COMPS_SECTION_GROUP_VISIBLE ||
+		    comps->priv->section_group == ZIF_MD_COMPS_SECTION_GROUP_PACKAGE) {
+			comps->priv->section_group = ZIF_MD_COMPS_SECTION_GROUP_UNKNOWN;
+			goto out;
+		}
+	}
 out:
 	return;
 }
