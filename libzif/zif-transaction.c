@@ -3552,7 +3552,9 @@ zif_transaction_write_log (ZifTransaction *transaction, GError **error)
 		item = g_ptr_array_index (transaction->priv->install, i);
 		if (item->cancelled)
 			continue;
-		g_string_append_printf (data, "Zif: [install] %s (%s)\n",
+		if (!g_str_has_suffix (filename, "zif.log"))
+			g_string_append (data, "Zif: ");
+		g_string_append_printf (data, "[install] %s (%s)\n",
 					zif_package_get_printable (item->package),
 					zif_transaction_reason_to_string (item->reason));
 	}
@@ -3560,7 +3562,9 @@ zif_transaction_write_log (ZifTransaction *transaction, GError **error)
 		item = g_ptr_array_index (transaction->priv->remove, i);
 		if (item->cancelled)
 			continue;
-		g_string_append_printf (data, "Zif: [remove] %s (%s)\n",
+		if (!g_str_has_suffix (filename, "zif.log"))
+			g_string_append (data, "Zif: ");
+		g_string_append_printf (data, "[remove] %s (%s)\n",
 					zif_package_get_printable (item->package),
 					zif_transaction_reason_to_string (item->reason));
 	}
