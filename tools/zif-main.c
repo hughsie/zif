@@ -659,10 +659,15 @@ out:
 static gboolean
 zif_cmd_get_categories (ZifCmdPrivate *priv, gchar **values, GError **error)
 {
+	const gchar *cat_id;
+	const gchar *parent_id;
 	gboolean ret = FALSE;
 	GPtrArray *array = NULL;
 	GPtrArray *store_array = NULL;
 	guint i;
+	guint j;
+	guint len;
+	guint len_max = 0;
 	ZifCategory *obj;
 	ZifState *state_local;
 
@@ -705,25 +710,43 @@ zif_cmd_get_categories (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 	zif_progress_bar_end (priv->progressbar);
 
+	/* get padding */
+	for (i=0; i<array->len; i++) {
+		obj = g_ptr_array_index (array, i);
+		parent_id = zif_category_get_parent_id (obj);
+		cat_id = zif_category_get_id (obj);
+		if (parent_id != NULL)
+			len = strlen (parent_id) + strlen (cat_id) + 1;
+		else
+			len = strlen (cat_id);
+		if (len > len_max)
+			len_max = len;
+	}
+
 	/* dump to console */
 	for (i=0; i<array->len; i++) {
-		gchar *parent_id;
-		gchar *cat_id;
-		gchar *name;
-		gchar *summary;
 		obj = g_ptr_array_index (array, i);
-		g_object_get (obj,
-			      "parent-id", &parent_id,
-			      "cat-id", &cat_id,
-			      "name", &name,
-			      "summary", &summary,
-			      NULL);
-		g_print ("parent_id='%s', cat_id='%s', name='%s', summary='%s'\n",
-			 parent_id, cat_id, name, summary);
-		g_free (parent_id);
-		g_free (cat_id);
-		g_free (name);
-		g_free (summary);
+		parent_id = zif_category_get_parent_id (obj);
+		cat_id = zif_category_get_id (obj);
+		if (parent_id != NULL)
+			len = strlen (parent_id) + strlen (cat_id) + 1;
+		else
+			len = strlen (cat_id);
+		if (parent_id != NULL) {
+			g_print ("%s/%s",
+				 parent_id, cat_id);
+		} else {
+			g_print ("%s", cat_id);
+		}
+		for (j=len; j<len_max + 1; j++)
+			g_print (" ");
+		g_print ("%s",
+			 zif_category_get_name (obj));
+		if (zif_category_get_summary (obj) != NULL) {
+			g_print (" (%s)",
+				 zif_category_get_summary (obj));
+		}
+		g_print ("\n");
 	}
 
 	/* success */
