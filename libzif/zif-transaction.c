@@ -3528,6 +3528,7 @@ zif_transaction_write_log (ZifTransaction *transaction, GError **error)
 {
 	gboolean ret = FALSE;
 	gchar *filename = NULL;
+	GError *error_local = NULL;
 	GFile *file = NULL;
 	GFileIOStream *stream = NULL;
 	GOutputStream *output = NULL;
@@ -3541,10 +3542,46 @@ zif_transaction_write_log (ZifTransaction *transaction, GError **error)
 	if (filename == NULL)
 		goto out;
 	file = g_file_new_for_path (filename);
-	g_debug ("writing to file: %s", filename);
-	stream = g_file_open_readwrite (file, NULL, error);
-	if (stream == NULL)
-		goto out;
+	ret = g_file_query_exists (file, NULL);
+	if (ret) {
+		g_debug ("writing to existing file: %s", filename);
+		stream = g_file_open_readwrite (file, NULL, error);
+		if (stream == NULL) {
+			ret = FALSE;
+			goto out;
+		}
+		output = g_io_stream_get_output_stream (G_IO_STREAM (stream));
+		if (output == NULL) {
+			ret = FALSE;
+			g_set_error (error,
+				     ZIF_TRANSACTION_ERROR,
+				     ZIF_TRANSACTION_ERROR_FAILED,
+				     "cannot get output stream for %s",
+				     filename);
+			goto out;
+		}
+		ret = g_seekable_seek (G_SEEKABLE (output),
+				       0, G_SEEK_END,
+				       NULL, error);
+		if (!ret)
+			goto out;
+	} else {
+		g_debug ("writing to new log file: %s", filename);
+		output = G_OUTPUT_STREAM (g_file_create (file,
+							 G_FILE_CREATE_PRIVATE,
+							 NULL,
+							 &error_local));
+		if (output == NULL) {
+			ret = FALSE;
+			g_set_error (error,
+				     ZIF_TRANSACTION_ERROR,
+				     ZIF_TRANSACTION_ERROR_FAILED,
+				     "cannot get create output stream for %s: %s",
+				     filename, error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+	}
 
 	/* format data */
 	data = g_string_new ("");
@@ -3571,20 +3608,6 @@ zif_transaction_write_log (ZifTransaction *transaction, GError **error)
 
 	/* write data */
 	g_debug ("writing %s", data->str);
-	output = g_io_stream_get_output_stream (G_IO_STREAM (stream));
-	if (output == NULL) {
-		g_set_error (error,
-			     ZIF_TRANSACTION_ERROR,
-			     ZIF_TRANSACTION_ERROR_FAILED,
-			     "cannot get output stream for %s",
-			     filename);
-		goto out;
-	}
-	ret = g_seekable_seek (G_SEEKABLE (output),
-			       0, G_SEEK_END,
-			       NULL, error);
-	if (!ret)
-		goto out;
 	ret = g_output_stream_write_all (output,
 					 data->str,
 					 data->len,
