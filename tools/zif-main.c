@@ -1530,14 +1530,18 @@ zif_cmd_get_upgrades (ZifCmdPrivate *priv, gchar **values, GError **error)
 	zif_progress_bar_end (priv->progressbar);
 
 	/* print the results */
-	g_print ("%s\n", _("Distribution upgrades available:"));
-	for (i=0; i<array->len; i++) {
-		upgrade = g_ptr_array_index (array, i);
-		if (!zif_upgrade_get_enabled (upgrade))
-			continue;
-		g_print ("%s\t[%s]\n",
-			 zif_upgrade_get_id (upgrade),
-			 zif_upgrade_get_stable (upgrade) ? _("stable") : _("unstable"));
+	if (array->len == 0) {
+		g_print ("%s\n", _("No distribution upgrades are available."));
+	} else {
+		g_print ("%s\n", _("Distribution upgrades available:"));
+		for (i=0; i<array->len; i++) {
+			upgrade = g_ptr_array_index (array, i);
+			if (!zif_upgrade_get_enabled (upgrade))
+				continue;
+			g_print ("%s\t[%s]\n",
+				 zif_upgrade_get_id (upgrade),
+				 zif_upgrade_get_stable (upgrade) ? _("stable") : _("unstable"));
+		}
 	}
 
 	/* success */
