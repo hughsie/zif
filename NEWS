@@ -1,3 +1,54 @@
+Version 0.1.4
+~~~~~~~~~~~~~
+Released: 2011-01-07
+
+Notes:
+ - Lots of nice bugfixes in this release.
+ - Zif does now not read or write files owned by yum at the request of
+   the yum developers. This means Zif can now stand on it's own, and
+   does not require yum to to installed on the target system.
+
+Translations:
+ - Add Arabic translation (karim)
+ - Add French translation (mathdabomb)
+ - Add Malay translation (farizluqman)
+ - Add Spanish (Chile) translation (rahermosillac)
+ - Update Czech translation (fri)
+
+New Features:
+ - Add yumdb_allow_write to control yumdb access (Richard Hughes)
+ - Construct our own problem description from the rpmProblem object (Richard Hughes)
+
+Bugfixes:
+ - Always get the ChangeLog data even if there is no updateinfo data (Richard Hughes)
+ - Always set the transaction progress to writing in remove (Richard Hughes)
+ - A mirrorlist does not have to have a 'repo' header, so do not fail bare files (Richard Hughes)
+ - Correctly identify comps groups with no descriptions (Richard Hughes)
+ - Do not parse yum.conf by default on request of the yum developers (Richard Hughes)
+ - Do not read data from the yumdb by default (Richard Hughes)
+ - Do not use deprecated low level methods such as rpmdbOpen() (Richard Hughes)
+ - Ensure we create the log file if it doesn't already exist (Richard Hughes)
+ - Ensure we set a prefix if one is set when we load the rpmdb (Richard Hughes)
+ - Fix up the initrd and stage2 content types when using rawhide (Richard Hughes)
+ - Free the interator before closing the database in ZifStoreLocal (Richard Hughes)
+ - Generate ordering for transactions (Panu Matilainen)
+ - If for whatever reason the percentage goes backwards, only print one warning (Richard Hughes)
+ - Ignore redirects when downloading files (Richard Hughes)
+ - Install zif-delta.h as we're using it in public headers now (Richard Hughes)
+ - Parse the 'info' rpm verbosity string correctly (Richard Hughes)
+ - Print the output of 'zif get-categories' in a nicer way (Richard Hughes)
+ - Return an error when the rpm transaction didn't ever get to the writing phase (Richard Hughes)
+ - RPMSENSE_PROVIDES and RPMSENSE_CONFLICTS dont exist in headers anymore (Panu Matilainen)
+ - Show the scriptlet standard out and error on the command line (Richard Hughes)
+ - Try to detect invalid mirrorlist and metalink files (Richard Hughes)
+ - Use a canonicalized path in the self test code to appease librpm (Richard Hughes)
+ - Use headerFree() instead of headerUnlink() (Panu Matilainen)
+ - Use headerGetFoo() helpers to save a bit of manual work (Panu Matilainen)
+ - Use our own lock file by default, not /var/run/yum.pid (Richard Hughes)
+ - Use rpmtsCheck() before running the transaction (Richard Hughes)
+ - Use xml:base when looking for sources for packages to deal with koji (Richard Hughes)
+ - We can't trust the return value of rpmtsCheck (Panu Matilainen, Richard Hughes)
+
 Version 0.1.3
 ~~~~~~~~~~~~~
 Released: 2010-12-13
