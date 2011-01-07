@@ -1,6 +1,6 @@
 %define alphatag                #ALPHATAG#
 
-Summary:   Simple wrapper for rpm
+Summary:   Simple wrapper for rpm and the Fedora package metadata
 Name:      zif
 Version:   #VERSION#
 Release:   0.#BUILD#%{?alphatag}%{?dist}
@@ -24,7 +24,7 @@ BuildRequires: intltool
 BuildRequires: gettext
 
 %description
-Zif is a simple yum-compatible library that only provides read-only
+Zif is a simple yum-compatible library that provides read-write
 access to the rpm database and the Fedora metadata for PackageKit.
 
 Zif is not designed as a replacement to yum, nor to be used by end users.
