@@ -5175,6 +5175,10 @@ main (int argc, char *argv[])
 				/* TRANSLATORS: error message */
 				message = _("Download failed as permission denied");
 				break;
+			case ZIF_DOWNLOAD_ERROR_NO_SPACE:
+				/* TRANSLATORS: error message */
+				message = _("No space left on device");
+				break;
 			case ZIF_DOWNLOAD_ERROR_CANCELLED:
 				/* TRANSLATORS: error message */
 				message = _("Download was cancelled");

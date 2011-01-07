@@ -452,6 +452,8 @@ zif_download_file (ZifDownload *download, const gchar *uri, const gchar *filenam
 		/* some errors are special */
 		if (error_local->code == G_IO_ERROR_PERMISSION_DENIED)
 			download_error = ZIF_DOWNLOAD_ERROR_PERMISSION_DENIED;
+		else if (error_local->code == G_IO_ERROR_NO_SPACE)
+			download_error = ZIF_DOWNLOAD_ERROR_NO_SPACE;
 		g_set_error (error, ZIF_DOWNLOAD_ERROR, download_error,
 			     "failed to write file: %s",  error_local->message);
 		g_error_free (error_local);
@@ -834,6 +836,12 @@ zif_download_location_full (ZifDownload *download, const gchar *location, const 
 			/* some errors really are fatal */
 			if (error_local->domain == ZIF_DOWNLOAD_ERROR &&
 			    error_local->code == ZIF_DOWNLOAD_ERROR_PERMISSION_DENIED) {
+				g_propagate_error (error, error_local);
+				set_error = TRUE;
+				break;
+			}
+			if (error_local->domain == ZIF_DOWNLOAD_ERROR &&
+			    error_local->code == ZIF_DOWNLOAD_ERROR_NO_SPACE) {
 				g_propagate_error (error, error_local);
 				set_error = TRUE;
 				break;
