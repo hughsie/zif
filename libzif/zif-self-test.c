@@ -780,7 +780,7 @@ zif_download_func (void)
 					  "releases.txt",
 					  "/tmp/releases.txt",
 					  397, /* size in bytes */
-					  "text/plain", /* content type */
+					  "text/plain,application/x-gzip", /* content type */
 					  G_CHECKSUM_SHA256,
 					  "c69baf7ef17843d9205e9553fbe037eff9502d91299068594c4c28e225827c6f",
 					  state,

@@ -937,10 +937,9 @@ zif_release_get_initrd (ZifRelease *release, ZifReleaseUpgradeData *data, ZifSta
 
 	/* download initrd */
 	if (!ret) {
-		/* not "application/x-gzip" ? */
 		ret = zif_download_location_full (priv->download, initrd,
 						  filename,
-						  0, "application/x-extension-img",
+						  0, "application/x-gzip,application/x-extension-img",
 						  G_CHECKSUM_SHA256, checksum+7,
 						  state, &error_local);
 		if (!ret) {
@@ -1006,10 +1005,9 @@ zif_release_get_stage2 (ZifRelease *release, ZifReleaseUpgradeData *data, ZifSta
 
 	/* download stage2 */
 	if (!ret) {
-		/* not "application/octet-stream" ? */
 		ret = zif_download_location_full (priv->download, stage2,
 						  filename,
-						  0,  "application/x-extension-img",
+						  0,  "application/x-extension-img,application/octet-stream",
 						  G_CHECKSUM_SHA256, checksum+7,
 						  state, &error_local);
 		if (!ret) {

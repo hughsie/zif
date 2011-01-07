@@ -167,18 +167,26 @@ zif_download_file_finished_cb (SoupMessage *msg, ZifDownloadFlight *flight)
 }
 
 /**
- * zif_download_check_content_type:
+ * zif_download_check_content_types:
  **/
 static gboolean
-zif_download_check_content_type (GFile *file, const gchar *content_type_expected, GError **error)
+zif_download_check_content_types (GFile *file,
+				  const gchar *content_types_expected,
+				  GError **error)
 {
-	GFileInfo *info;
-	gboolean ret = FALSE;
 	const gchar *content_type;
+	gboolean ret = FALSE;
+	gchar **expected = NULL;
 	GError *error_local = NULL;
+	GFileInfo *info;
+	guint i;
 
 	/* get content type */
-	info = g_file_query_info (file, G_FILE_ATTRIBUTE_STANDARD_CONTENT_TYPE, 0, NULL, &error_local);
+	info = g_file_query_info (file,
+				  G_FILE_ATTRIBUTE_STANDARD_CONTENT_TYPE,
+				  0,
+				  NULL,
+				  &error_local);
 	if (info == NULL) {
 		g_set_error (error,
 			     ZIF_DOWNLOAD_ERROR,
@@ -190,17 +198,24 @@ zif_download_check_content_type (GFile *file, const gchar *content_type_expected
 	}
 
 	/* check it's what we expect */
-	content_type = g_file_info_get_attribute_string (info, G_FILE_ATTRIBUTE_STANDARD_CONTENT_TYPE);
-	ret = g_strcmp0 (content_type, content_type_expected) == 0;
+	content_type = g_file_info_get_attribute_string (info,
+							 G_FILE_ATTRIBUTE_STANDARD_CONTENT_TYPE);
+	expected = g_strsplit (content_types_expected, ",", -1);
+	for (i=0; expected[i] != NULL; i++) {
+		ret = g_strcmp0 (content_type, expected[i]) == 0;
+		if (ret)
+			break;
+	}
 	if (!ret) {
 		g_set_error (error,
 			     ZIF_DOWNLOAD_ERROR,
 			     ZIF_DOWNLOAD_ERROR_FAILED,
 			     "content type incorrect: got %s but expected %s",
-			     content_type, content_type_expected);
+			     content_type, content_types_expected);
 		goto out;
 	}
 out:
+	g_strfreev (expected);
 	if (info != NULL)
 		g_object_unref (info);
 	return ret;
@@ -341,7 +356,11 @@ out:
  * Since: 0.1.0
  **/
 gboolean
-zif_download_file (ZifDownload *download, const gchar *uri, const gchar *filename, ZifState *state, GError **error)
+zif_download_file (ZifDownload *download,
+		   const gchar *uri,
+		   const gchar *filename,
+		   ZifState *state,
+		   GError **error)
 {
 	gboolean ret = FALSE;
 	SoupURI *base_uri = NULL;
@@ -682,7 +701,7 @@ zif_download_location_remove_uri (ZifDownload *download, const gchar *uri, GErro
  **/
 static gboolean
 zif_download_location_full_try (ZifDownload *download, const gchar *uri, const gchar *filename,
-				guint64 size, const gchar *content_type,
+				guint64 size, const gchar *content_types,
 				GChecksumType checksum_type, const gchar *checksum,
 				ZifState *state, GError **error)
 {
@@ -721,8 +740,10 @@ zif_download_location_full_try (ZifDownload *download, const gchar *uri, const g
 	}
 
 	/* check content type is what we expect */
-	if (content_type != NULL) {
-		ret = zif_download_check_content_type (file, content_type, error);
+	if (content_types != NULL) {
+		ret = zif_download_check_content_types (file,
+							content_types,
+							error);
 		if (!ret)
 			goto out;
 	}
@@ -758,7 +779,7 @@ out:
  * @location: Location to add on to the end of the pool URIs
  * @filename: Local filename to save to
  * @size: Expected size in bytes, or 0
- * @content_type: Expected content type of the file, or %NULL
+ * @content_types: Comma delimited expected content types of the file, or %NULL
  * @checksum_type: Checksum type, e.g. %G_CHECKSUM_SHA256, or 0
  * @checksum: Expected checksum of the file, or %NULL
  * @state: A #ZifState to use for progress reporting
@@ -772,9 +793,15 @@ out:
  * Since: 0.1.3
  **/
 gboolean
-zif_download_location_full (ZifDownload *download, const gchar *location, const gchar *filename,
-			    guint64 size, const gchar *content_type, GChecksumType checksum_type, const gchar *checksum,
-			    ZifState *state, GError **error)
+zif_download_location_full (ZifDownload *download,
+			    const gchar *location,
+			    const gchar *filename,
+			    guint64 size,
+			    const gchar *content_types,
+			    GChecksumType checksum_type,
+			    const gchar *checksum,
+			    ZifState *state,
+			    GError **error)
 {
 	gboolean ret = FALSE;
 	gboolean set_error = FALSE;
@@ -830,7 +857,7 @@ zif_download_location_full (ZifDownload *download, const gchar *location, const 
 		g_debug ("attempt to download %s", uri_tmp);
 		zif_state_reset (state);
 		ret = zif_download_location_full_try (download, uri_tmp, filename,
-						  size, content_type, checksum_type, checksum,
+						  size, content_types, checksum_type, checksum,
 						  state, &error_local);
 		if (!ret) {
 			/* some errors really are fatal */
