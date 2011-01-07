@@ -3536,11 +3536,34 @@ zif_cmd_upgrade (ZifCmdPrivate *priv, gchar **values, GError **error)
 	gchar **distro_id_split = NULL;
 	guint version;
 	ZifRelease *release = NULL;
+	ZifReleaseUpgradeKind upgrade_kind = ZIF_RELEASE_UPGRADE_KIND_LAST;
 
 	/* check we have a value */
 	if (values == NULL || values[0] == NULL) {
 		/* TRANSLATORS: error message, missing value */
-		g_set_error (error, 1, 0, "%s 'fedora-9'\n", _("Specify a distro name, e.g."));
+		g_set_error (error, 1, 0,
+			     "%s 'fedora-9'\n",
+			     _("Specify a distro name, e.g."));
+		goto out;
+	}
+	if (values[1] == NULL) {
+		/* TRANSLATORS: error message, missing value */
+		g_set_error (error, 1, 0,
+			     "%s 'minimal', 'default' or 'complete'\n",
+			     _("Specify a update type, e.g."));
+		goto out;
+	}
+	if (g_strcmp0 (values[1], "minimal") == 0)
+		upgrade_kind = ZIF_RELEASE_UPGRADE_KIND_MINIMAL;
+	else if (g_strcmp0 (values[1], "default") == 0)
+		upgrade_kind = ZIF_RELEASE_UPGRADE_KIND_DEFAULT;
+	else if (g_strcmp0 (values[1], "complete") == 0)
+		upgrade_kind = ZIF_RELEASE_UPGRADE_KIND_COMPLETE;
+	if (upgrade_kind == ZIF_RELEASE_UPGRADE_KIND_LAST) {
+		/* TRANSLATORS: error message, missing value */
+		g_set_error (error, 1, 0,
+			     "%s minimal,default,complete\n",
+			     _("Invalid update type, only these types are supported:"));
 		goto out;
 	}
 
@@ -3574,8 +3597,9 @@ zif_cmd_upgrade (ZifCmdPrivate *priv, gchar **values, GError **error)
 	/* do the upgrade */
 	release = zif_release_new ();
 	ret = zif_release_upgrade_version (release, version,
-					   ZIF_RELEASE_UPGRADE_KIND_DEFAULT,
-					   priv->state, error);
+					   upgrade_kind,
+					   priv->state,
+					   error);
 	if (!ret)
 		goto out;
 
