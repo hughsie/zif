@@ -315,7 +315,9 @@ out:
  * Since: 0.1.3
  **/
 GPtrArray *
-zif_release_get_upgrades (ZifRelease *release, ZifState *state, GError **error)
+zif_release_get_upgrades (ZifRelease *release,
+			  ZifState *state,
+			  GError **error)
 {
 	GPtrArray *array = NULL;
 	gboolean ret;
@@ -350,7 +352,9 @@ out:
  * Since: 0.1.3
  **/
 GPtrArray *
-zif_release_get_upgrades_new (ZifRelease *release, ZifState *state, GError **error)
+zif_release_get_upgrades_new (ZifRelease *release,
+			      ZifState *state,
+			      GError **error)
 {
 	gboolean ret;
 	GPtrArray *array = NULL;
@@ -400,7 +404,10 @@ out:
  * Since: 0.1.3
  **/
 ZifUpgrade *
-zif_release_get_upgrade_for_version (ZifRelease *release, guint version, ZifState *state, GError **error)
+zif_release_get_upgrade_for_version (ZifRelease *release,
+				     guint version,
+				     ZifState *state,
+				     GError **error)
 {
 	guint i;
 	gboolean ret;
@@ -440,7 +447,9 @@ out:
  * zif_release_remove_kernel:
  **/
 static gboolean
-zif_release_remove_kernel (ZifRelease *release, ZifReleaseUpgradeData *data, GError **error)
+zif_release_remove_kernel (ZifRelease *release,
+			   ZifReleaseUpgradeData *data,
+			   GError **error)
 {
 	gboolean ret;
 	gchar *boot_dir = NULL;
@@ -456,9 +465,13 @@ zif_release_remove_kernel (ZifRelease *release, ZifReleaseUpgradeData *data, GEr
 		ret = FALSE;
 		goto out;
 	}
-	cmdline = g_strdup_printf ("/sbin/grubby --remove-kernel=%s/vmlinuz", boot_dir);
+	cmdline = g_strdup_printf ("/sbin/grubby "
+				   "--config-file=/boot/grub/grub.conf "
+				   "--remove-kernel=%s/vmlinuz",
+				   boot_dir);
 	if (!g_str_has_prefix (boot_dir, "/boot")) {
-		g_debug ("not running grubby as not installing root, would have run '%s'", cmdline);
+		g_debug ("not running grubby as not installing root, would have run '%s'",
+			 cmdline);
 		ret = TRUE;
 		goto out;
 	}
@@ -484,7 +497,9 @@ out:
  * zif_release_add_kernel:
  **/
 static gboolean
-zif_release_add_kernel (ZifRelease *release, ZifReleaseUpgradeData *data, GError **error)
+zif_release_add_kernel (ZifRelease *release,
+			ZifReleaseUpgradeData *data,
+			GError **error)
 {
 	gboolean ret;
 	gchar *arch = NULL;
@@ -508,13 +523,15 @@ zif_release_add_kernel (ZifRelease *release, ZifReleaseUpgradeData *data, GError
 	/* write kickstart info */
 	args = g_string_new ("preupgrade ");
 	g_string_append_printf (args,
-			        "ks=hd:UUID=%s:/upgrade/ks.cfg ", data->uuid_boot);
+			        "ks=hd:UUID=%s:/upgrade/ks.cfg ",
+			        data->uuid_boot);
 
 	/* kernel arguments */
 	if (data->upgrade_kind == ZIF_RELEASE_UPGRADE_KIND_DEFAULT ||
 	    data->upgrade_kind == ZIF_RELEASE_UPGRADE_KIND_COMPLETE) {
 		g_string_append_printf (args,
-					"stage2=hd:UUID=%s:/upgrade/install.img ", data->uuid_boot);
+					"stage2=hd:UUID=%s:/upgrade/install.img ",
+					data->uuid_boot);
 	}
 	if (data->upgrade_kind == ZIF_RELEASE_UPGRADE_KIND_COMPLETE) {
 		repo_dir = zif_config_get_string (priv->config,
@@ -540,6 +557,8 @@ zif_release_add_kernel (ZifRelease *release, ZifReleaseUpgradeData *data, GError
 
 	/* do for i386 and ppc */
 	cmdline = g_string_new ("/sbin/grubby ");
+	g_string_append (cmdline,
+			 "--config-file=/boot/grub/grub.conf ");
 	g_string_append_printf (cmdline,
 			        "--add-kernel=%s/vmlinuz ", boot_dir);
 	g_string_append_printf (cmdline,
@@ -551,7 +570,8 @@ zif_release_add_kernel (ZifRelease *release, ZifReleaseUpgradeData *data, GError
 
 	/* we're not running as root */
 	if (!g_str_has_prefix (boot_dir, "/boot")) {
-		g_debug ("not running grubby as not installing root, would have run '%s'", cmdline->str);
+		g_debug ("not running grubby as not installing root, would have run '%s'",
+			 cmdline->str);
 		ret = TRUE;
 		goto out;
 	}
@@ -620,11 +640,15 @@ zif_release_make_kernel_default_once (ZifRelease *release, GError **error)
 	 *
 	 * ...but this won't work in C and is a bodge.
 	 * Ideally we want to add --once to the list of grubby commands. */
-	cmdline = g_strdup_printf ("/sbin/grubby --set-default=%s/vmlinuz", boot_dir);
+	cmdline = g_strdup_printf ("/sbin/grubby "
+				   "--config-file=/boot/grub/grub.conf "
+				   "--set-default=%s/vmlinuz",
+				   boot_dir);
 
 	/* we're not running as root */
 	if (!g_str_has_prefix (boot_dir, "/boot")) {
-		g_debug ("not running grub as not installing root, would have run '%s'", cmdline);
+		g_debug ("not running grub as not installing root, would have run '%s'",
+			 cmdline);
 		goto out;
 	}
 	g_debug ("running command %s", cmdline);
@@ -648,7 +672,9 @@ out:
  * zif_release_check_filesystem_size:
  **/
 static gboolean
-zif_release_check_filesystem_size (const gchar *location, guint64 required_size, GError **error)
+zif_release_check_filesystem_size (const gchar *location,
+				   guint64 required_size,
+				   GError **error)
 {
 	GFile *file;
 	GFileInfo *info;
@@ -692,7 +718,10 @@ out:
  * pk_release_checksum_matches_file:
  **/
 static gboolean
-pk_release_checksum_matches_file (const gchar *filename, const gchar *sha256, ZifState *state, GError **error)
+pk_release_checksum_matches_file (const gchar *filename,
+				  const gchar *sha256,
+				  ZifState *state,
+				  GError **error)
 {
 	gboolean ret;
 	gchar *data = NULL;
@@ -727,7 +756,10 @@ out:
  * zif_release_get_treeinfo:
  **/
 static gboolean
-zif_release_get_treeinfo (ZifRelease *release, ZifReleaseUpgradeData *data, ZifState *state, GError **error)
+zif_release_get_treeinfo (ZifRelease *release,
+			  ZifReleaseUpgradeData *data,
+			  ZifState *state,
+			  GError **error)
 {
 	gboolean ret;
 	gchar *basearch = NULL;
@@ -778,7 +810,10 @@ zif_release_get_treeinfo (ZifRelease *release, ZifReleaseUpgradeData *data, ZifS
 
 	/* parse the treeinfo file */
 	data->key_file_treeinfo = g_key_file_new ();
-	ret = g_key_file_load_from_file (data->key_file_treeinfo, treeinfo_filename, 0, &error_local);
+	ret = g_key_file_load_from_file (data->key_file_treeinfo,
+					 treeinfo_filename,
+					 0,
+					 &error_local);
 	if (!ret) {
 		g_set_error (error,
 			     ZIF_RELEASE_ERROR,
@@ -827,7 +862,10 @@ out:
  * zif_release_get_kernel:
  **/
 static gboolean
-zif_release_get_kernel (ZifRelease *release, ZifReleaseUpgradeData *data, ZifState *state, GError **error)
+zif_release_get_kernel (ZifRelease *release,
+			ZifReleaseUpgradeData *data,
+			ZifState *state,
+			GError **error)
 {
 	gboolean ret = FALSE;
 	gchar *boot_dir = NULL;
@@ -838,7 +876,10 @@ zif_release_get_kernel (ZifRelease *release, ZifReleaseUpgradeData *data, ZifSta
 	ZifReleasePrivate *priv = release->priv;
 
 	/* get data */
-	kernel = g_key_file_get_string (data->key_file_treeinfo, data->images_section, "kernel", NULL);
+	kernel = g_key_file_get_string (data->key_file_treeinfo,
+					data->images_section,
+					"kernel",
+					NULL);
 	if (kernel == NULL) {
 		g_set_error_literal (error,
 				     ZIF_RELEASE_ERROR,
@@ -846,7 +887,10 @@ zif_release_get_kernel (ZifRelease *release, ZifReleaseUpgradeData *data, ZifSta
 				     "failed to get kernel section");
 		goto out;
 	}
-	checksum = g_key_file_get_string (data->key_file_treeinfo, "checksums", kernel, NULL);
+	checksum = g_key_file_get_string (data->key_file_treeinfo,
+					  "checksums",
+					  kernel,
+					  NULL);
 
 	/* check the checksum matches */
 	boot_dir = zif_config_get_string (priv->config,
@@ -895,7 +939,10 @@ out:
  * zif_release_get_initrd:
  **/
 static gboolean
-zif_release_get_initrd (ZifRelease *release, ZifReleaseUpgradeData *data, ZifState *state, GError **error)
+zif_release_get_initrd (ZifRelease *release,
+			ZifReleaseUpgradeData *data,
+			ZifState *state,
+			GError **error)
 {
 	gboolean ret = FALSE;
 	gchar *boot_dir = NULL;
@@ -906,7 +953,10 @@ zif_release_get_initrd (ZifRelease *release, ZifReleaseUpgradeData *data, ZifSta
 	ZifReleasePrivate *priv = release->priv;
 
 	/* get data */
-	initrd = g_key_file_get_string (data->key_file_treeinfo, data->images_section, "initrd", NULL);
+	initrd = g_key_file_get_string (data->key_file_treeinfo,
+					data->images_section,
+					"initrd",
+					NULL);
 	if (initrd == NULL) {
 		g_set_error_literal (error,
 				     ZIF_RELEASE_ERROR,
@@ -914,7 +964,10 @@ zif_release_get_initrd (ZifRelease *release, ZifReleaseUpgradeData *data, ZifSta
 				     "failed to get initrd section");
 		goto out;
 	}
-	checksum = g_key_file_get_string (data->key_file_treeinfo, "checksums", initrd, NULL);
+	checksum = g_key_file_get_string (data->key_file_treeinfo,
+					  "checksums",
+					  initrd,
+					  NULL);
 
 	/* check the checksum matches */
 	boot_dir = zif_config_get_string (priv->config,
@@ -963,7 +1016,10 @@ out:
  * zif_release_get_stage2:
  **/
 static gboolean
-zif_release_get_stage2 (ZifRelease *release, ZifReleaseUpgradeData *data, ZifState *state, GError **error)
+zif_release_get_stage2 (ZifRelease *release,
+			ZifReleaseUpgradeData *data,
+			ZifState *state,
+			GError **error)
 {
 	gboolean ret = FALSE;
 	gchar *boot_dir = NULL;
@@ -1031,7 +1087,8 @@ out:
  * zif_release_get_keyfile_value:
  **/
 static gchar *
-zif_release_get_keyfile_value (const gchar *filename, const gchar *key)
+zif_release_get_keyfile_value (const gchar *filename,
+			       const gchar *key)
 {
 	GFile *file;
 	gchar *data = NULL;
