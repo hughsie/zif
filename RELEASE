@@ -2,10 +2,10 @@ zif Release Notes
 
 1. Write NEWS entries for zif in the same format as usual.
 
-git shortlog zif_0_1_3.. | grep -i -v trivial | grep -v Merge > NEWS.new
+git shortlog zif_0_1_4.. | grep -i -v trivial | grep -v Merge > NEWS.new
 
 --------------------------------------------------------------------------------
-Version 0.1.4
+Version 0.1.5
 ~~~~~~~~~~~~~
 Released: 2011-xx-xx
 
@@ -27,8 +27,8 @@ cd po && make Zif.pot
 
 4. Commit changes in zif git:
 
-git commit -a -m "Release version 0.1.4"
-git tag -s -f -m "Release 0.1.4" zif_0_1_4
+git commit -a -m "Release version 0.1.5"
+git tag -s -f -m "Release 0.1.5" zif_0_1_5
 <gpg password>
 git push --tags
 git push
@@ -50,7 +50,7 @@ tx push --source
 9. Send an email to packagekit@lists.freedesktop.org
 
 =================================================
-Subject: Zif 0.1.3 released!
+Subject: Zif 0.1.5 released!
 
 Zif is a simple yum-compatible library that only provides read-write
 access to the rpm database and the Fedora metadata for PackageKit.
