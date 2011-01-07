@@ -2850,6 +2850,8 @@ zif_store_remote_get_packages (ZifStore *store, ZifState *state, GError **error)
 		goto out;
 	state_local = zif_state_get_child (state);
 	array = zif_md_get_packages (primary, state_local, error);
+	if (array == NULL)
+		goto out;
 
 	/* this section done */
 	ret = zif_state_done (state, error);
