@@ -41,7 +41,7 @@ Then, you want to refresh any caches and databases kept by PackageKit.
 To do this, type (as the normal user):
 
 ---
-pkcon refresh-cache
+pkcon refresh
 ---
 
 Then, just use the normal graphical tools provided by your distribution
