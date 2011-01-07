@@ -619,7 +619,6 @@ zif_package_local_set_from_header (ZifPackageLocal *pkg,
 							release,
 							arch,
 							"installed");
-		g_debug ("no origin for %s, and no look up", package_id);
 	}
 
 	/* set id */
