@@ -4057,7 +4057,16 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 	commit = g_new0 (ZifTransactionCommit, 1);
 	commit->transaction = transaction;
 	prefix = zif_store_local_get_prefix (ZIF_STORE_LOCAL (priv->store_local));
-	rpmtsSetRootDir (transaction->priv->ts, prefix);
+	rc = rpmtsSetRootDir (transaction->priv->ts, prefix);
+	if (rc < 0) {
+		ret = FALSE;
+		g_set_error (error,
+			     ZIF_TRANSACTION_ERROR,
+			     ZIF_TRANSACTION_ERROR_FAILED,
+			     "failed to set root (%s)",
+			     prefix);
+		goto out;
+	}
 	rpmtsSetNotifyCallback (transaction->priv->ts,
 				zif_transaction_ts_progress_cb,
 				commit);

@@ -113,6 +113,17 @@ zif_store_local_set_prefix (ZifStoreLocal *store, const gchar *prefix, GError **
 		prefix_real = g_strdup (prefix);
 	}
 
+	/* check prefix is canonical */
+	ret = g_str_has_prefix (prefix_real, "/");
+	if (!ret) {
+		g_set_error (error,
+			     ZIF_STORE_ERROR,
+			     ZIF_STORE_ERROR_FAILED,
+			     "prefix %s not canonical (leading slash)",
+			     prefix_real);
+		goto out;
+	}
+
 	/* check file exists */
 	ret = g_file_test (prefix_real, G_FILE_TEST_IS_DIR);
 	if (!ret) {
@@ -177,9 +188,10 @@ zif_store_local_load (ZifStore *store, ZifState *state, GError **error)
 	gboolean ret = TRUE;
 	gboolean yumdb_allow_read;
 	GError *error_local = NULL;
+	gint rc;
 	Header header;
-	rpmts ts = NULL;
 	rpmdbMatchIterator mi = NULL;
+	rpmts ts = NULL;
 	ZifPackageLocalFlags flags = 0;
 	ZifPackage *package;
 	ZifStoreLocal *local = ZIF_STORE_LOCAL (store);
@@ -246,7 +258,18 @@ zif_store_local_load (ZifStore *store, ZifState *state, GError **error)
 //	flags += ZIF_PACKAGE_LOCAL_FLAG_REPAIR;
 
 	/* get list */
-	ts = rpmtsCreate();
+	ts = rpmtsCreate ();
+	rc = rpmtsSetRootDir (ts, local->priv->prefix);
+	if (rc < 0) {
+		ret = FALSE;
+		g_set_error (error,
+			     ZIF_STORE_ERROR,
+			     ZIF_STORE_ERROR_FAILED,
+			     "failed to set root (%s)",
+			     local->priv->prefix);
+		goto out;
+	}
+	g_debug ("using rpmdb at %s", local->priv->prefix);
 	mi = rpmtsInitIterator (ts, RPMDBI_PACKAGES, NULL, 0);
 	if (mi == NULL)
 		g_warning ("failed to get iterator");
