@@ -78,21 +78,30 @@ zif_test_get_data_file (const gchar *filename)
 {
 	gboolean ret;
 	gchar *full;
+	char full_tmp[PATH_MAX];
 
 	/* check to see if we are being run in the build root */
 	full = g_build_filename ("..", "data", "tests", filename, NULL);
 	ret = g_file_test (full, G_FILE_TEST_EXISTS);
 	if (ret)
-		return full;
+		goto out;
 	g_free (full);
 
 	/* check to see if we are being run in make check */
 	full = g_build_filename ("..", "..", "data", "tests", filename, NULL);
 	ret = g_file_test (full, G_FILE_TEST_EXISTS);
 	if (ret)
-		return full;
+		goto out;
 	g_free (full);
-	return NULL;
+	full = NULL;
+out:
+	/* canonicalize path */
+	if (full != NULL && !g_str_has_prefix (full, "/")) {
+		realpath (full, full_tmp);
+		g_free (full);
+		full = g_strdup (full_tmp);
+	}
+	return full;
 }
 
 static void
@@ -130,6 +139,7 @@ zif_release_func (void)
 
 	/* ensure file is not present */
 	g_unlink ("/tmp/releases.txt");
+	g_unlink ("/tmp/.treeinfo");
 
 	/* get upgrades */
 	array = zif_release_get_upgrades (release, state, &error);
@@ -769,10 +779,10 @@ zif_download_func (void)
 	ret = zif_download_location_full (download,
 					  "releases.txt",
 					  "/tmp/releases.txt",
-					  502, /* size in bytes */
+					  397, /* size in bytes */
 					  "text/plain", /* content type */
 					  G_CHECKSUM_SHA256,
-					  "be576a7f62009169d9d10ad4d959d36db82411d18346c0ca543693c015ef8b46",
+					  "c69baf7ef17843d9205e9553fbe037eff9502d91299068594c4c28e225827c6f",
 					  state,
 					  &error);
 	g_assert_no_error (error);
