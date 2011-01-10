@@ -88,31 +88,33 @@
 
 struct _ZifStatePrivate
 {
-	guint			 steps;
-	guint			*step_data;
+	gboolean		 allow_cancel;
+	gboolean		 allow_cancel_changed_state;
+	gboolean		 allow_cancel_child;
+	gboolean		 enable_profile;
+	gboolean		 report_progress;
+	GCancellable		*cancellable;
+	gchar			*action_hint;
+	gchar			*id;
+	gdouble			 global_share;
 	gdouble			*step_profile;
+	gpointer		 error_handler_user_data;
+	GTimer			*timer;
+	guint64			 speed;
+	guint64			*speed_data;
 	guint			 current;
 	guint			 last_percentage;
-	ZifState		*child;
-	ZifState		*parent;
+	guint			*step_data;
+	guint			 steps;
+	gulong			 action_child_id;
+	gulong			 allow_cancel_child_id;
 	gulong			 percentage_child_id;
 	gulong			 subpercentage_child_id;
-	gulong			 allow_cancel_child_id;
-	gulong			 action_child_id;
-	gchar			*id;
-	gboolean		 allow_cancel_changed_state;
-	gboolean		 allow_cancel;
-	gboolean		 allow_cancel_child;
-	GCancellable		*cancellable;
-	GTimer			*timer;
-	ZifStateErrorHandlerCb	 error_handler_cb;
-	gpointer		 error_handler_user_data;
-	gboolean		 enable_profile;
-	gdouble			 global_share;
 	ZifStateAction		 action;
-	gchar			*action_hint;
 	ZifStateAction		 last_action;
-	gboolean		 report_progress;
+	ZifState		*child;
+	ZifStateErrorHandlerCb	 error_handler_cb;
+	ZifState		*parent;
 };
 
 enum {
@@ -123,9 +125,17 @@ enum {
 	SIGNAL_LAST
 };
 
+enum {
+	PROP_0,
+	PROP_SPEED,
+	PROP_LAST
+};
+
 static guint signals [SIGNAL_LAST] = { 0 };
 
 G_DEFINE_TYPE (ZifState, zif_state, G_TYPE_OBJECT)
+
+#define ZIF_STATE_SPEED_SMOOTHING_ITEMS		5
 
 /**
  * zif_state_error_quark:
@@ -331,6 +341,60 @@ zif_state_set_allow_cancel (ZifState *state, gboolean allow_cancel)
 	/* just emit if both this and child is okay */
 	g_signal_emit (state, signals [SIGNAL_ALLOW_CANCEL_CHANGED], 0,
 		       state->priv->allow_cancel && state->priv->allow_cancel_child);
+}
+
+/**
+ * zif_state_get_speed:
+ * @state: A #ZifState
+ *
+ * Gets the transaction speed in bytes per second.
+ *
+ * Return value: speed, or 0 for unknown.
+ *
+ * Since: 0.1.5
+ **/
+guint64
+zif_state_get_speed (ZifState *state)
+{
+	g_return_val_if_fail (ZIF_IS_STATE (state), 0);
+	return state->priv->speed;
+}
+
+/**
+ * zif_state_set_speed:
+ * @state: A #ZifState
+ * @speed: The transaction speed.
+ *
+ * Sets the download or install transaction speed in bytes per second.
+ *
+ * Since: 0.1.5
+ **/
+void
+zif_state_set_speed (ZifState *state, guint64 speed)
+{
+	guint i;
+	guint64 sum = 0;
+	guint sum_cnt = 0;
+	g_return_if_fail (ZIF_IS_STATE (state));
+
+	/* move the data down one entry */
+	for (i=ZIF_STATE_SPEED_SMOOTHING_ITEMS-1; i > 0; i--)
+		state->priv->speed_data[i] = state->priv->speed_data[i-1];
+	state->priv->speed_data[0] = speed;
+
+	/* get the average */
+	for (i=0; i < ZIF_STATE_SPEED_SMOOTHING_ITEMS; i++) {
+		if (state->priv->speed_data[i] > 0) {
+			sum += state->priv->speed_data[i];
+			sum_cnt++;
+		}
+	}
+	if (sum_cnt > 0)
+		sum /= sum_cnt;
+
+	g_debug ("speed = %" G_GUINT64_FORMAT " kb/sec", sum / 1024);
+	state->priv->speed = sum;
+	g_object_notify (G_OBJECT (state), "speed");
 }
 
 /**
@@ -1243,8 +1307,54 @@ zif_state_finalize (GObject *object)
 	if (state->priv->cancellable != NULL)
 		g_object_unref (state->priv->cancellable);
 	g_timer_destroy (state->priv->timer);
+	g_free (state->priv->speed_data);
 
 	G_OBJECT_CLASS (zif_state_parent_class)->finalize (object);
+}
+
+
+/**
+ * zif_state_get_property:
+ **/
+static void
+zif_state_get_property (GObject *object,
+			guint prop_id,
+			GValue *value,
+			GParamSpec *pspec)
+{
+	ZifState *state = ZIF_STATE (object);
+	ZifStatePrivate *priv = state->priv;
+
+	switch (prop_id) {
+	case PROP_SPEED:
+		g_value_set_uint64 (value, priv->speed);
+		break;
+	default:
+		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+		break;
+	}
+}
+
+/**
+ * zif_state_set_property:
+ **/
+static void
+zif_state_set_property (GObject *object,
+			guint prop_id,
+			const GValue *value,
+			GParamSpec *pspec)
+{
+	ZifState *state = ZIF_STATE (object);
+	ZifStatePrivate *priv = state->priv;
+
+	switch (prop_id) {
+	case PROP_SPEED:
+		priv->speed = g_value_get_uint64 (value);
+		break;
+	default:
+		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+		break;
+	}
 }
 
 /**
@@ -1253,8 +1363,21 @@ zif_state_finalize (GObject *object)
 static void
 zif_state_class_init (ZifStateClass *klass)
 {
+	GParamSpec *pspec;
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 	object_class->finalize = zif_state_finalize;
+	object_class->get_property = zif_state_get_property;
+	object_class->set_property = zif_state_set_property;
+
+	/**
+	 * ZifState:speed:
+	 *
+	 * Since: 0.1.5
+	 */
+	pspec = g_param_spec_uint64 ("speed", NULL, NULL,
+				     0, G_MAXUINT64, 0,
+				     G_PARAM_READABLE);
+	g_object_class_install_property (object_class, PROP_SPEED, pspec);
 
 	signals [SIGNAL_PERCENTAGE_CHANGED] =
 		g_signal_new ("percentage-changed",
@@ -1315,6 +1438,7 @@ zif_state_init (ZifState *state)
 	state->priv->last_action = ZIF_STATE_ACTION_UNKNOWN;
 	state->priv->timer = g_timer_new ();
 	state->priv->report_progress = TRUE;
+	state->priv->speed_data = g_new0 (guint64, ZIF_STATE_SPEED_SMOOTHING_ITEMS);
 }
 
 /**

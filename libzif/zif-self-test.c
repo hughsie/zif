@@ -2254,6 +2254,23 @@ zif_state_func (void)
 	g_assert_cmpint (zif_state_get_percentage (state), ==, 0);
 
 	g_object_unref (state);
+
+	/* speed averaging test */
+	state = zif_state_new ();
+	g_assert_cmpint (zif_state_get_speed (state), ==, 0);
+	zif_state_set_speed (state, 100);
+	g_assert_cmpint (zif_state_get_speed (state), ==, 100);
+	zif_state_set_speed (state, 200);
+	g_assert_cmpint (zif_state_get_speed (state), ==, 150);
+	zif_state_set_speed (state, 300);
+	g_assert_cmpint (zif_state_get_speed (state), ==, 200);
+	zif_state_set_speed (state, 400);
+	g_assert_cmpint (zif_state_get_speed (state), ==, 250);
+	zif_state_set_speed (state, 500);
+	g_assert_cmpint (zif_state_get_speed (state), ==, 300);
+	zif_state_set_speed (state, 600);
+	g_assert_cmpint (zif_state_get_speed (state), ==, 400);
+	g_object_unref (state);
 }
 
 static void
@@ -3041,7 +3058,6 @@ main (int argc, char **argv)
 	g_test_add_func ("/zif/update-info", zif_update_info_func);
 	g_test_add_func ("/zif/update", zif_update_func);
 	g_test_add_func ("/zif/utils", zif_utils_func);
-
 	return g_test_run ();
 }
 

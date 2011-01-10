@@ -146,6 +146,9 @@ void		 zif_state_set_cancellable		(ZifState		*state,
 gboolean	 zif_state_get_allow_cancel		(ZifState		*state);
 void		 zif_state_set_allow_cancel		(ZifState		*state,
 							 gboolean		 allow_cancel);
+guint64		 zif_state_get_speed			(ZifState		*state);
+void		 zif_state_set_speed			(ZifState		*state,
+							 guint64		 speed);
 
 /* error handling */
 void		 zif_state_set_error_handler		(ZifState		*state,
