@@ -232,6 +232,19 @@ out:
 	g_free (pretty_hint);
 }
 
+
+/**
+ * zif_state_speed_changed_cb:
+ **/
+static void
+zif_state_speed_changed_cb (ZifState *state,
+			    GParamSpec *pspec,
+			    ZifProgressBar *progressbar)
+{
+	zif_progress_bar_set_speed (progressbar,
+				    zif_state_get_speed (state));
+}
+
 static ZifState *_state = NULL;
 
 /**
@@ -4862,6 +4875,9 @@ main (int argc, char *argv[])
 			  priv->progressbar);
 	g_signal_connect (priv->state, "action-changed",
 			  G_CALLBACK (zif_state_action_changed_cb),
+			  priv->progressbar);
+	g_signal_connect (priv->state, "notify::speed",
+			  G_CALLBACK (zif_state_speed_changed_cb),
 			  priv->progressbar);
 
 	/* for the signal handler */

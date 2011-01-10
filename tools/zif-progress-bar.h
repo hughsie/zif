@@ -60,6 +60,8 @@ void		 zif_progress_bar_set_detail		(ZifProgressBar	*progress_bar,
 							 const gchar	*action);
 void		 zif_progress_bar_set_allow_cancel	(ZifProgressBar	*progress_bar,
 							 gboolean	 allow_cancel);
+void		 zif_progress_bar_set_speed		(ZifProgressBar	*progress_bar,
+							 guint64	 speed);
 void		 zif_progress_bar_set_on_console	(ZifProgressBar	*progress_bar,
 							 gboolean	 on_console);
 

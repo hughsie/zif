@@ -142,11 +142,6 @@ zif_download_file_got_chunk_cb (SoupMessage *msg, SoupBuffer *chunk,
 	if (header_size < body_length)
 		goto out;
 
-	/* work out speed */
-	speed = (body_length - flight->last_body_length) /
-			g_timer_elapsed (flight->timer, NULL);
-	zif_state_set_speed (flight->state, speed);
-
 	/* calulate percentage */
 	percentage = (100 * body_length) / header_size;
 	ret = zif_state_set_percentage (flight->state, percentage);
@@ -160,11 +155,16 @@ zif_download_file_got_chunk_cb (SoupMessage *msg, SoupBuffer *chunk,
 	if (percentage != flight->last_percentage) {
 		g_debug ("%s at %i%%", flight->uri, percentage);
 		flight->last_percentage = percentage;
-	}
 
-	/* save for speed */
-	flight->last_body_length = body_length;
-	g_timer_reset (flight->timer);
+		/* work out speed */
+		speed = (body_length - flight->last_body_length) /
+				g_timer_elapsed (flight->timer, NULL);
+		zif_state_set_speed (flight->state, speed);
+
+		/* save for next time */
+		flight->last_body_length = body_length;
+		g_timer_reset (flight->timer);
+	}
 out:
 	return;
 }

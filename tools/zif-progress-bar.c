@@ -28,15 +28,16 @@
 
 struct ZifProgressBarPrivate
 {
-	guint			 size;
-	guint			 percentage;
-	guint			 padding;
-	guint			 last_strlen_detail;
 	gboolean		 allow_cancel;
 	gboolean		 on_console;
+	gboolean		 started;
 	gchar			*action;
 	gchar			*detail;
-	gboolean		 started;
+	guint64			 speed;
+	guint			 last_strlen_detail;
+	guint			 padding;
+	guint			 percentage;
+	guint			 size;
 };
 
 #define ZIF_PROGRESS_BAR_PERCENTAGE_INVALID	101
@@ -51,6 +52,7 @@ zif_progress_bar_redraw (ZifProgressBar *progress_bar)
 {
 	guint section;
 	guint i;
+	gchar *speed_tmp = NULL;
 	ZifProgressBarPrivate *priv = progress_bar->priv;
 
 	/* save cursor */
@@ -88,6 +90,15 @@ zif_progress_bar_redraw (ZifProgressBar *progress_bar)
 	} else {
 		section = 0;
 	}
+
+	/* print speed */
+	if (priv->speed != 0) {
+		speed_tmp = g_format_size_for_display (priv->speed);
+		g_print (" [%s/sec]", speed_tmp);
+		section += strlen (speed_tmp) + 6;
+		g_free (speed_tmp);
+	}
+
 	for (i=section; i<priv->last_strlen_detail; i++)
 		g_print (" ");
 	priv->last_strlen_detail = section + 1;
@@ -221,6 +232,29 @@ zif_progress_bar_set_allow_cancel (ZifProgressBar *progress_bar, gboolean allow_
 	/* no console */
 	if (!progress_bar->priv->on_console) {
 		g_print ("Allow cancel: %s\n", allow_cancel ? "TRUE" : "FALSE");
+		return;
+	}
+
+	/* redraw */
+	zif_progress_bar_redraw (progress_bar);
+}
+
+/**
+ * zif_progress_bar_set_speed:
+ **/
+void
+zif_progress_bar_set_speed (ZifProgressBar *progress_bar, guint64 speed)
+{
+	g_return_if_fail (ZIF_IS_PROGRESS_BAR (progress_bar));
+
+	/* check for old value */
+	if (progress_bar->priv->speed == speed)
+		return;
+	progress_bar->priv->speed = speed;
+
+	/* no console */
+	if (!progress_bar->priv->on_console) {
+		g_print ("Speed: %" G_GUINT64_FORMAT " bytes/sec\n", speed);
 		return;
 	}
 
