@@ -107,6 +107,7 @@ struct _ZifStatePrivate
 	guint			*step_data;
 	guint			 steps;
 	gulong			 action_child_id;
+	gulong			 notify_speed_child_id;
 	gulong			 allow_cancel_child_id;
 	gulong			 percentage_child_id;
 	gulong			 subpercentage_child_id;
@@ -361,6 +362,18 @@ zif_state_get_speed (ZifState *state)
 }
 
 /**
+ * zif_state_set_speed_internal:
+ **/
+static void
+zif_state_set_speed_internal (ZifState *state, guint64 speed)
+{
+	if (state->priv->speed == speed)
+		return;
+	state->priv->speed = speed;
+	g_object_notify (G_OBJECT (state), "speed");
+}
+
+/**
  * zif_state_set_speed:
  * @state: A #ZifState
  * @speed: The transaction speed.
@@ -393,8 +406,7 @@ zif_state_set_speed (ZifState *state, guint64 speed)
 		sum /= sum_cnt;
 
 	g_debug ("speed = %" G_GUINT64_FORMAT " kb/sec", sum / 1024);
-	state->priv->speed = sum;
-	g_object_notify (G_OBJECT (state), "speed");
+	zif_state_set_speed_internal (state, sum);
 }
 
 /**
@@ -450,6 +462,10 @@ zif_state_set_percentage (ZifState *state, guint percentage)
 		g_debug ("done, so cancelling action %s", zif_state_action_to_string (state->priv->action));
 		zif_state_action_stop (state);
 	}
+
+	/* speed no longer valid */
+	if (percentage == 100)
+		zif_state_set_speed_internal (state, 0);
 
 	/* save */
 	state->priv->last_percentage = percentage;
@@ -840,16 +856,24 @@ zif_state_reset (ZifState *state)
 		state->priv->percentage_child_id = 0;
 	}
 	if (state->priv->subpercentage_child_id != 0) {
-		g_signal_handler_disconnect (state->priv->child, state->priv->subpercentage_child_id);
+		g_signal_handler_disconnect (state->priv->child,
+					     state->priv->subpercentage_child_id);
 		state->priv->subpercentage_child_id = 0;
 	}
 	if (state->priv->allow_cancel_child_id != 0) {
-		g_signal_handler_disconnect (state->priv->child, state->priv->allow_cancel_child_id);
+		g_signal_handler_disconnect (state->priv->child,
+					     state->priv->allow_cancel_child_id);
 		state->priv->allow_cancel_child_id = 0;
 	}
 	if (state->priv->action_child_id != 0) {
-		g_signal_handler_disconnect (state->priv->child, state->priv->action_child_id);
+		g_signal_handler_disconnect (state->priv->child,
+					     state->priv->action_child_id);
 		state->priv->action_child_id = 0;
+	}
+	if (state->priv->notify_speed_child_id != 0) {
+		g_signal_handler_disconnect (state->priv->child,
+					     state->priv->notify_speed_child_id);
+		state->priv->notify_speed_child_id = 0;
 	}
 
 	/* unref child */
@@ -874,6 +898,18 @@ static void
 zif_state_set_global_share (ZifState *state, gdouble global_share)
 {
 	state->priv->global_share = global_share;
+}
+
+/**
+ * zif_state_child_notify_speed_cb:
+ **/
+static void
+zif_state_child_notify_speed_cb (ZifState *child,
+				 GParamSpec *pspec,
+				 ZifState *state)
+{
+	zif_state_set_speed_internal (state,
+				      zif_state_get_speed (child));
 }
 
 /**
@@ -902,10 +938,16 @@ zif_state_get_child (ZifState *state)
 
 	/* already set child */
 	if (state->priv->child != NULL) {
-		g_signal_handler_disconnect (state->priv->child, state->priv->percentage_child_id);
-		g_signal_handler_disconnect (state->priv->child, state->priv->subpercentage_child_id);
-		g_signal_handler_disconnect (state->priv->child, state->priv->allow_cancel_child_id);
-		g_signal_handler_disconnect (state->priv->child, state->priv->action_child_id);
+		g_signal_handler_disconnect (state->priv->child,
+					     state->priv->percentage_child_id);
+		g_signal_handler_disconnect (state->priv->child,
+					     state->priv->subpercentage_child_id);
+		g_signal_handler_disconnect (state->priv->child,
+					     state->priv->allow_cancel_child_id);
+		g_signal_handler_disconnect (state->priv->child,
+					     state->priv->action_child_id);
+		g_signal_handler_disconnect (state->priv->child,
+					     state->priv->notify_speed_child_id);
 		g_object_unref (state->priv->child);
 	}
 
@@ -914,13 +956,25 @@ zif_state_get_child (ZifState *state)
 	state->priv->child = g_object_ref (child);
 	state->priv->child->priv->parent = g_object_ref (state);
 	state->priv->percentage_child_id =
-		g_signal_connect (child, "percentage-changed", G_CALLBACK (zif_state_child_percentage_changed_cb), state);
+		g_signal_connect (child, "percentage-changed",
+				  G_CALLBACK (zif_state_child_percentage_changed_cb),
+				  state);
 	state->priv->subpercentage_child_id =
-		g_signal_connect (child, "subpercentage-changed", G_CALLBACK (zif_state_child_subpercentage_changed_cb), state);
+		g_signal_connect (child, "subpercentage-changed",
+				  G_CALLBACK (zif_state_child_subpercentage_changed_cb),
+				  state);
 	state->priv->allow_cancel_child_id =
-		g_signal_connect (child, "allow-cancel-changed", G_CALLBACK (zif_state_child_allow_cancel_changed_cb), state);
+		g_signal_connect (child, "allow-cancel-changed",
+				  G_CALLBACK (zif_state_child_allow_cancel_changed_cb),
+				  state);
 	state->priv->action_child_id =
-		g_signal_connect (child, "action-changed", G_CALLBACK (zif_state_child_action_changed_cb), state);
+		g_signal_connect (child, "action-changed",
+				  G_CALLBACK (zif_state_child_action_changed_cb),
+				  state);
+	state->priv->notify_speed_child_id =
+		g_signal_connect (child, "notify::speed",
+				  G_CALLBACK (zif_state_child_notify_speed_cb),
+				  state);
 
 	/* reset child */
 	child->priv->current = 0;
@@ -1417,22 +1471,8 @@ static void
 zif_state_init (ZifState *state)
 {
 	state->priv = ZIF_STATE_GET_PRIVATE (state);
-	state->priv->id = NULL;
-	state->priv->child = NULL;
-	state->priv->parent = NULL;
-	state->priv->cancellable = NULL;
 	state->priv->allow_cancel = TRUE;
 	state->priv->allow_cancel_child = TRUE;
-	state->priv->allow_cancel_changed_state = FALSE;
-	state->priv->error_handler_cb = NULL;
-	state->priv->error_handler_user_data = NULL;
-	state->priv->steps = 0;
-	state->priv->current = 0;
-	state->priv->last_percentage = 0;
-	state->priv->percentage_child_id = 0;
-	state->priv->subpercentage_child_id = 0;
-	state->priv->allow_cancel_child_id = 0;
-	state->priv->action_child_id = 0;
 	state->priv->global_share = 1.0f;
 	state->priv->action = ZIF_STATE_ACTION_UNKNOWN;
 	state->priv->last_action = ZIF_STATE_ACTION_UNKNOWN;
