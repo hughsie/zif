@@ -951,6 +951,7 @@ zif_transaction_get_package_provide_from_store (ZifTransaction *transaction,
 		/* ignore this error */
 		if (error_local->domain == ZIF_STORE_ERROR &&
 		    error_local->code == ZIF_STORE_ERROR_ARRAY_IS_EMPTY) {
+			g_debug ("no packages in installed database");
 			g_error_free (error_local);
 		} else {
 			ret = FALSE;
@@ -3209,6 +3210,8 @@ typedef struct {
 	FD_t			 fd;
 	FD_t			 scriptlet_fd;
 	ZifTransactionStep	 step;
+	GTimer			*timer;
+	guint			 last_progress;
 } ZifTransactionCommit;
 
 /**
@@ -3263,6 +3266,7 @@ zif_transaction_ts_progress_cb (const void *arg,
 	const char *filename = (const char *) key;
 	gboolean ret;
 	GError *error_local = NULL;
+	guint speed;
 	void *rc = NULL;
 	ZifStateAction action;
 	ZifTransactionItem *item;
@@ -3355,6 +3359,13 @@ zif_transaction_ts_progress_cb (const void *arg,
 				 (gint32) amount, (gint32) total);
 			break;
 		}
+
+		/* work out speed */
+		speed = (amount - commit->last_progress) /
+				g_timer_elapsed (commit->timer, NULL);
+		zif_state_set_speed (commit->state, speed);
+		commit->last_progress = amount;
+		g_timer_reset (commit->timer);
 
 		/* progress */
 		g_debug ("progress %i/%i", (gint32) amount, (gint32) total);
@@ -4056,6 +4067,7 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 	/* setup the transaction */
 	commit = g_new0 (ZifTransactionCommit, 1);
 	commit->transaction = transaction;
+	commit->timer = g_timer_new ();
 	prefix = zif_store_local_get_prefix (ZIF_STORE_LOCAL (priv->store_local));
 	rc = rpmtsSetRootDir (transaction->priv->ts, prefix);
 	if (rc < 0) {
@@ -4260,6 +4272,7 @@ out:
 	g_free (verbosity_string);
 	if (commit != NULL) {
 		Fclose (commit->scriptlet_fd);
+		g_timer_destroy (commit->timer);
 		g_free (commit);
 	}
 	return ret;
