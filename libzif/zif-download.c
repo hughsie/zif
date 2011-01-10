@@ -61,7 +61,9 @@ struct _ZifDownloadPrivate
 
 typedef struct {
 	gchar			*uri;
+	GTimer			*timer;
 	guint			 last_percentage;
+	goffset			 last_body_length;
 	SoupMessage		*msg;
 	ZifDownload		*download;
 	ZifState		*state;
@@ -113,6 +115,7 @@ zif_download_file_got_chunk_cb (SoupMessage *msg, SoupBuffer *chunk,
 	goffset body_length;
 	gboolean ret;
 	GCancellable *cancellable;
+	guint64 speed;
 
 	/* cancelled? */
 	cancellable = zif_state_get_cancellable (flight->state);
@@ -139,6 +142,11 @@ zif_download_file_got_chunk_cb (SoupMessage *msg, SoupBuffer *chunk,
 	if (header_size < body_length)
 		goto out;
 
+	/* work out speed */
+	speed = (body_length - flight->last_body_length) /
+			g_timer_elapsed (flight->timer, NULL);
+	zif_state_set_speed (flight->state, speed);
+
 	/* calulate percentage */
 	percentage = (100 * body_length) / header_size;
 	ret = zif_state_set_percentage (flight->state, percentage);
@@ -153,6 +161,10 @@ zif_download_file_got_chunk_cb (SoupMessage *msg, SoupBuffer *chunk,
 		g_debug ("%s at %i%%", flight->uri, percentage);
 		flight->last_percentage = percentage;
 	}
+
+	/* save for speed */
+	flight->last_body_length = body_length;
+	g_timer_reset (flight->timer);
 out:
 	return;
 }
@@ -393,6 +405,7 @@ zif_download_file (ZifDownload *download,
 	flight->state = g_object_ref (state);
 	flight->download = g_object_ref (download);
 	flight->uri = g_path_get_basename (uri);
+	flight->timer = g_timer_new ();
 
 	base_uri = soup_uri_new (uri);
 	if (base_uri == NULL) {
@@ -480,6 +493,7 @@ zif_download_file (ZifDownload *download,
 	}
 out:
 	if (flight != NULL) {
+		g_timer_destroy (flight->timer);
 		g_object_unref (flight->state);
 		g_object_unref (flight->download);
 		if (flight->msg != NULL)
