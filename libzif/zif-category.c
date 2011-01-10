@@ -313,8 +313,8 @@ zif_category_class_init (ZifCategoryClass *klass)
 
 	/**
 	 * ZifCategory:parent-id:
+	 * Since: 0.1.0
 	 *
-	 * Since: 0.5.4
 	 */
 	pspec = g_param_spec_string ("parent-id", NULL, NULL,
 				     NULL,
@@ -324,7 +324,7 @@ zif_category_class_init (ZifCategoryClass *klass)
 	/**
 	 * ZifCategory:cat-id:
 	 *
-	 * Since: 0.5.4
+	 * Since: 0.1.0
 	 */
 	pspec = g_param_spec_string ("cat-id", NULL, NULL,
 				     NULL,
@@ -334,7 +334,7 @@ zif_category_class_init (ZifCategoryClass *klass)
 	/**
 	 * ZifCategory:name:
 	 *
-	 * Since: 0.5.4
+	 * Since: 0.1.0
 	 */
 	pspec = g_param_spec_string ("name", NULL, NULL,
 				     NULL,
@@ -344,7 +344,7 @@ zif_category_class_init (ZifCategoryClass *klass)
 	/**
 	 * ZifCategory:summary:
 	 *
-	 * Since: 0.5.4
+	 * Since: 0.1.0
 	 */
 	pspec = g_param_spec_string ("summary", NULL, NULL,
 				     NULL,
@@ -354,7 +354,7 @@ zif_category_class_init (ZifCategoryClass *klass)
 	/**
 	 * ZifCategory:icon:
 	 *
-	 * Since: 0.5.4
+	 * Since: 0.1.0
 	 */
 	pspec = g_param_spec_string ("icon", NULL, NULL,
 				     NULL,
@@ -396,7 +396,7 @@ zif_category_finalize (GObject *object)
  *
  * Return value: A new ZifCategory object.
  *
- * Since: 0.5.4
+ * Since: 0.1.0
  **/
 ZifCategory *
 zif_category_new (void)
