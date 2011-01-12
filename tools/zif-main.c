@@ -1510,6 +1510,10 @@ zif_cmd_get_updates (ZifCmdPrivate *priv, gchar **values, GError **error)
 			goto out;
 	}
 
+	/* are we running super verbose? */
+	zif_transaction_set_verbose (transaction,
+				     g_getenv ("ZIF_DEPSOLVE_DEBUG") != NULL);
+
 	/* this section done */
 	ret = zif_state_done (priv->state, error);
 	if (!ret)
@@ -2043,6 +2047,10 @@ zif_cmd_install (ZifCmdPrivate *priv, gchar **values, GError **error)
 		}
 	}
 
+	/* are we running super verbose? */
+	zif_transaction_set_verbose (transaction,
+				     g_getenv ("ZIF_DEPSOLVE_DEBUG") != NULL);
+
 	/* run what we've got */
 	state_local = zif_state_get_child (priv->state);
 	ret = zif_transaction_run (priv, transaction, state_local, error);
@@ -2128,6 +2136,10 @@ zif_cmd_local_install (ZifCmdPrivate *priv, gchar **values, GError **error)
 		if (!ret)
 			goto out;
 	}
+
+	/* are we running super verbose? */
+	zif_transaction_set_verbose (transaction,
+				     g_getenv ("ZIF_DEPSOLVE_DEBUG") != NULL);
 
 	/* this section done */
 	ret = zif_state_done (priv->state, error);
@@ -2471,6 +2483,10 @@ zif_cmd_remove (ZifCmdPrivate *priv, gchar **values, GError **error)
 		if (!ret)
 			goto out;
 	}
+
+	/* are we running super verbose? */
+	zif_transaction_set_verbose (transaction,
+				     g_getenv ("ZIF_DEPSOLVE_DEBUG") != NULL);
 
 	/* run what we've got */
 	state_local = zif_state_get_child (priv->state);
@@ -3219,6 +3235,10 @@ zif_cmd_update_all (ZifCmdPrivate *priv, gchar **values, GError **error)
 			goto out;
 	}
 
+	/* are we running super verbose? */
+	zif_transaction_set_verbose (transaction,
+				     g_getenv ("ZIF_DEPSOLVE_DEBUG") != NULL);
+
 	/* this section done */
 	ret = zif_state_done (priv->state, error);
 	if (!ret)
@@ -3320,6 +3340,10 @@ zif_cmd_update (ZifCmdPrivate *priv, gchar **values, GError **error)
 		if (!ret)
 			goto out;
 	}
+
+	/* are we running super verbose? */
+	zif_transaction_set_verbose (transaction,
+				     g_getenv ("ZIF_DEPSOLVE_DEBUG") != NULL);
 
 	/* run what we've got */
 	state_local = zif_state_get_child (priv->state);
@@ -4072,6 +4096,10 @@ zif_cmd_shell (ZifCmdPrivate *priv, gchar **values, GError **error)
 	zif_transaction_set_store_local (transaction, store_local);
 	zif_transaction_set_stores_remote (transaction, stores_remote);
 
+	/* are we running super verbose? */
+	zif_transaction_set_verbose (transaction,
+				     g_getenv ("ZIF_DEPSOLVE_DEBUG") != NULL);
+
 	g_print ("\n");
 	g_print (_("Welcome to the shell. Type '%s' to finish."), "exit");
 	do {
@@ -4326,6 +4354,10 @@ zif_cmd_check (ZifCmdPrivate *priv, gchar **values, GError **error)
 		if (!ret)
 			goto out;
 	}
+
+	/* are we running super verbose? */
+	zif_transaction_set_verbose (transaction,
+				     g_getenv ("ZIF_DEPSOLVE_DEBUG") != NULL);
 
 	/* this section done */
 	ret = zif_state_done (priv->state, error);
