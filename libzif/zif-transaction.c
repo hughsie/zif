@@ -1518,58 +1518,85 @@ zif_transaction_resolve_remove_require (ZifTransactionResolve *data,
 					GPtrArray *depend_array,
 					GError **error)
 {
+	gboolean other_provides;
 	gboolean ret = TRUE;
-	guint i, j;
+	GError *error_local = NULL;
+	GPtrArray *array_temp;
+	GPtrArray *depend_array_filtered = NULL;
+	GPtrArray *local_provides = NULL;
 	GPtrArray *package_requires = NULL;
 	GPtrArray *related_packages = NULL;
+	guint i, j;
+	ZifDepend *depend_tmp;
+	ZifDepend *satisfies;
 	ZifPackage *package;
 	ZifPackage *package_in_install;
-	ZifDepend *satisfies;
-	ZifDepend *depend_tmp;
-	GError *error_local = NULL;
-	GPtrArray *local_provides = NULL;
 
 	/* does anything *else* provide the depend that's installed? */
-	zif_state_reset (data->state);
-	local_provides = zif_store_what_provides (data->transaction->priv->store_local,
-						  depend_array,
-						  data->state,
-						  &error_local);
-	if (local_provides == NULL) {
-		ret = FALSE;
-		depend_tmp = g_ptr_array_index (depend_array, 0);
-		g_set_error (error,
-			     ZIF_TRANSACTION_ERROR,
-			     ZIF_TRANSACTION_ERROR_FAILED,
-			     "Failed to get local provide for %s (and %i others): %s",
-			     zif_depend_get_description (depend_tmp),
-			     depend_array->len - 1,
-			     error_local->message);
-		goto out;
+	array_temp = g_ptr_array_new ();
+	depend_array_filtered = zif_object_array_new ();
+	for (i=0; i<depend_array->len; i++) {
+		depend_tmp = g_ptr_array_index (depend_array, i);
+
+		g_ptr_array_set_size (array_temp, 0);
+		g_ptr_array_add (array_temp, depend_tmp);
+
+		zif_state_reset (data->state);
+		local_provides = zif_store_what_provides (data->transaction->priv->store_local,
+							  array_temp,
+							  data->state,
+							  &error_local);
+		if (local_provides == NULL) {
+			ret = FALSE;
+			g_set_error (error,
+				     ZIF_TRANSACTION_ERROR,
+				     ZIF_TRANSACTION_ERROR_FAILED,
+				     "Failed to get local provide for %s: %s",
+				     zif_depend_get_description (depend_tmp),
+				     error_local->message);
+			goto out;
+		}
+
+		/* is the thing that provides this compatible? */
+		other_provides = FALSE;
+		for (j=0; j<local_provides->len; j++) {
+			package = g_ptr_array_index (local_provides, j);
+			if (zif_package_compare (package, item->package) == 0)
+				continue;
+			if (!zif_package_is_compatible_arch (package, item->package))
+				continue;
+			if (data->transaction->priv->verbose) {
+				g_debug ("%s provided by %s",
+					 zif_depend_get_description (depend_tmp),
+					 zif_package_get_id (package));
+			}
+			other_provides = TRUE;
+		}
+		if (!other_provides) {
+			zif_object_array_add (depend_array_filtered, depend_tmp);
+			if (data->transaction->priv->verbose) {
+				g_debug ("%s not provided by anything else",
+					 zif_depend_get_description (depend_tmp));
+			}
+		}
+		g_ptr_array_unref (local_provides);
 	}
 
-	/* find out if anything arch-compatible (that isn't the package itself)
-	 * provides the dep */
-	for (i=0; i<local_provides->len; i++) {
-		package = g_ptr_array_index (local_provides, i);
-		if (zif_package_compare (package, item->package) == 0)
-			continue;
-		if (!zif_package_is_compatible_arch (package, item->package))
-			continue;
-		g_debug ("got local provide from %s, so no need to remove",
-			 zif_package_get_id (package));
+	/* everything is provided for by something else */
+	if (depend_array_filtered->len == 0) {
+		ret = TRUE;
 		goto out;
 	}
 
 	/* find if anything in the local store requires this package */
-	depend_tmp = g_ptr_array_index (depend_array, 0);
+	depend_tmp = g_ptr_array_index (depend_array_filtered, 0);
 	if (data->transaction->priv->verbose) {
 		g_debug ("find anything installed that requires %s provided by %s",
 			 zif_depend_get_description (depend_tmp),
 			 zif_package_get_id (item->package));
 	}
 	ret = zif_transaction_get_package_requires_from_store (data->transaction->priv->store_local,
-							       depend_array,
+							       depend_array_filtered,
 							       data->transaction->priv->remove_hash,
 							       &package_requires,
 							       data->state, error);
@@ -1608,11 +1635,11 @@ zif_transaction_resolve_remove_require (ZifTransactionResolve *data,
 			continue;
 
 		/* process each depend */
-		for (j=0; j<depend_array->len; j++) {
+		for (j=0; j<depend_array_filtered->len; j++) {
 
 			/* is the thing that the package requires provided by something in install
 			 * NOTE: we need to get the actual depend of the package, not the thing passed to us */
-			depend_tmp = g_ptr_array_index (depend_array, j);
+			depend_tmp = g_ptr_array_index (depend_array_filtered, j);
 			ret = zif_package_requires (package, depend_tmp, &satisfies, data->state, error);
 			if (!ret)
 				goto out;
@@ -1687,8 +1714,10 @@ zif_transaction_resolve_remove_require (ZifTransactionResolve *data,
 out:
 	if (related_packages != NULL)
 		g_ptr_array_unref (related_packages);
-	if (local_provides != NULL)
-		g_ptr_array_unref (local_provides);
+	if (depend_array_filtered != NULL)
+		g_ptr_array_unref (depend_array_filtered);
+	if (array_temp != NULL)
+		g_ptr_array_unref (array_temp);
 	if (package_requires != NULL)
 		g_ptr_array_unref (package_requires);
 	return ret;
