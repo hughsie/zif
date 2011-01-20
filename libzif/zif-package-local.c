@@ -687,10 +687,11 @@ zif_package_local_set_from_filename (ZifPackageLocal *pkg, const gchar *filename
 	if (rc != RPMRC_OK) {
 		/* we only return SHA1 and MD5 failures, as we're not
 		 * checking signatures at this stage */
-		g_set_error_literal (error,
-				     ZIF_PACKAGE_ERROR,
-				     ZIF_PACKAGE_ERROR_FAILED,
-				     "package could not be verified");
+		g_set_error (error,
+			     ZIF_PACKAGE_ERROR,
+			     ZIF_PACKAGE_ERROR_FAILED,
+			     "%s could not be verified",
+			     filename);
 		goto out;
 	}
 
