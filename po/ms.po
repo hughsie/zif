@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Zif\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2010-12-13 11:10+0000\n"
-"PO-Revision-Date: 2010-12-13 11:44+0000\n"
+"POT-Creation-Date: 2011-01-07 11:31+0000\n"
+"PO-Revision-Date: 2011-01-24 15:52+0000\n"
 "Last-Translator: farizluqman <2fzweb@gmail.com>\n"
 "Language-Team: Malay <osstt@googlegroups.com>\n"
 "MIME-Version: 1.0\n"
@@ -79,21 +79,21 @@ msgstr "Memeriksa konflik"
 #. TRANSLATORS: installing a package to the local system
 #. TRANSLATORS: this is the reason the action is to be taken
 #. TRANSLATORS: performing action
-#: ../tools/zif-main.c:166 ../tools/zif-main.c:1664 ../tools/zif-main.c:1903
+#: ../tools/zif-main.c:166 ../tools/zif-main.c:1691 ../tools/zif-main.c:1940
 msgid "Installing"
 msgstr "Memasang"
 
 #. TRANSLATORS: removing (deleting) a package
 #. TRANSLATORS: this is the reason the action is to be taken
 #. TRANSLATORS: performing action
-#: ../tools/zif-main.c:170 ../tools/zif-main.c:1684 ../tools/zif-main.c:2373
+#: ../tools/zif-main.c:170 ../tools/zif-main.c:1711 ../tools/zif-main.c:2410
 msgid "Removing"
 msgstr "Memadam"
 
 #. TRANSLATORS: updating an old version to a new version
 #. TRANSLATORS: this is the reason the action is to be taken
 #. TRANSLATORS: updating several packages
-#: ../tools/zif-main.c:174 ../tools/zif-main.c:1688 ../tools/zif-main.c:3219
+#: ../tools/zif-main.c:174 ../tools/zif-main.c:1715 ../tools/zif-main.c:3256
 msgid "Updating"
 msgstr "Mengemaskini"
 
@@ -129,848 +129,858 @@ msgid "Finding package"
 msgstr "Mencari pakej"
 
 #. TRANSLATORS: getting the hierarchical groups from the server
-#: ../tools/zif-main.c:670
+#: ../tools/zif-main.c:675
 msgid "Getting categories"
 msgstr "Mendapatkan kategori"
 
 #. TRANSLATORS: error message: user needs to specify a value
-#: ../tools/zif-main.c:762 ../tools/zif-main.c:947 ../tools/zif-main.c:1046
-#: ../tools/zif-main.c:1898 ../tools/zif-main.c:2368 ../tools/zif-main.c:2691
+#: ../tools/zif-main.c:785 ../tools/zif-main.c:970 ../tools/zif-main.c:1069
+#: ../tools/zif-main.c:1935 ../tools/zif-main.c:2405 ../tools/zif-main.c:2728
 #, c-format
 msgid "Specify a package name"
 msgstr "Nyatakan nama pakej"
 
 #. TRANSLATORS: getting the list pf package dependencies for a package
-#: ../tools/zif-main.c:767
+#: ../tools/zif-main.c:790
 msgid "Getting depends"
 msgstr "Mendapatkan kebergantungan"
 
 #. TRANSLATORS: this is a item prefix
-#: ../tools/zif-main.c:840
+#: ../tools/zif-main.c:863
 msgid "Dependency:"
 msgstr "Kebergantungan:"
 
-#: ../tools/zif-main.c:856
+#: ../tools/zif-main.c:879
 msgid "Provider:"
 msgstr "Pembekal:"
 
 #. TRANSLATORS: getting the details (summary, size, etc) of a package
-#: ../tools/zif-main.c:907
+#: ../tools/zif-main.c:930
 msgid "Getting details"
 msgstr "Mendapatkan maklumat-maklumat"
 
-#: ../tools/zif-main.c:965
+#: ../tools/zif-main.c:988
 msgid "No package was found"
 msgstr "Tiada pakej dijumpai"
 
 #. TRANSLATORS: these are headers for the package data
-#: ../tools/zif-main.c:985
+#: ../tools/zif-main.c:1008
 msgid "Name"
 msgstr "Nama"
 
-#: ../tools/zif-main.c:986
+#: ../tools/zif-main.c:1009
 msgid "Version"
 msgstr "Versi"
 
-#: ../tools/zif-main.c:987
+#: ../tools/zif-main.c:1010
 msgid "Arch"
 msgstr "Lengkung"
 
-#: ../tools/zif-main.c:988
+#: ../tools/zif-main.c:1011
 msgid "Size"
 msgstr "Saiz"
 
-#: ../tools/zif-main.c:989
+#: ../tools/zif-main.c:1012
 msgid "Repo"
 msgstr "Repo"
 
-#: ../tools/zif-main.c:990
+#: ../tools/zif-main.c:1013
 msgid "Summary"
 msgstr "Reviu"
 
-#: ../tools/zif-main.c:991
+#: ../tools/zif-main.c:1014
 msgid "URL"
 msgstr "URL"
 
-#: ../tools/zif-main.c:992
+#: ../tools/zif-main.c:1015
 msgid "License"
 msgstr "Lesen"
 
-#: ../tools/zif-main.c:993
+#: ../tools/zif-main.c:1016
 msgid "Description"
 msgstr "Penerangan"
 
 #. TRANSLATORS: getting file lists for a package
-#: ../tools/zif-main.c:1051
+#: ../tools/zif-main.c:1074
 msgid "Getting files"
 msgstr "Mendapatkan fail"
 
-#: ../tools/zif-main.c:1103
+#: ../tools/zif-main.c:1126
 msgid "Failed to match any packages for :"
 msgstr "Gagal untuk menyesuaikan pakej untuk:"
 
-#: ../tools/zif-main.c:1125
+#: ../tools/zif-main.c:1148
 msgid "Package contains no files"
 msgstr ""
 
 #. TRANSLATORS: getting all the packages
-#: ../tools/zif-main.c:1221
+#: ../tools/zif-main.c:1244
 msgid "Getting packages"
 msgstr "Mendapatkan pakej"
 
 #. TRANSLATORS: getting the list of packages that can be updated
-#: ../tools/zif-main.c:1454
+#: ../tools/zif-main.c:1477
 msgid "Getting updates"
 msgstr "Melakukan pembaharuan"
 
 #. TRANSLATORS: getting details of any distro upgrades
-#: ../tools/zif-main.c:1520
+#: ../tools/zif-main.c:1543
 msgid "Getting upgrades"
 msgstr "Mendapatkan penambahbaikan"
 
-#. print the results
-#: ../tools/zif-main.c:1533
+#: ../tools/zif-main.c:1557
+msgid "No distribution upgrades are available."
+msgstr ""
+
+#: ../tools/zif-main.c:1559
 msgid "Distribution upgrades available:"
 msgstr "Penambahbaikan bagi distribusi tersedia:"
 
-#: ../tools/zif-main.c:1540
+#: ../tools/zif-main.c:1566
 msgid "stable"
 msgstr "stabil"
 
-#: ../tools/zif-main.c:1540
+#: ../tools/zif-main.c:1566
 msgid "unstable"
 msgstr "tak stabil"
 
 #. TRANSLATORS: A user didn't specify a required value
-#: ../tools/zif-main.c:1565
+#: ../tools/zif-main.c:1592
 msgid "Specify a config key"
 msgstr "Tentukan kunci tatarajah"
 
 #. TRANSLATORS: there was no value in the config files
-#: ../tools/zif-main.c:1573
+#: ../tools/zif-main.c:1600
 #, c-format
 msgid "No value for %s"
 msgstr "Tidak ada nilai untuk %s"
 
 #. TRANSLATORS: this is the reason the action is to be taken
-#: ../tools/zif-main.c:1656
+#: ../tools/zif-main.c:1683
 msgid "Installing for dependencies"
 msgstr "Pemasangan untuk kebergantungan"
 
 #. TRANSLATORS: this is the reason the action is to be taken
-#: ../tools/zif-main.c:1660
+#: ../tools/zif-main.c:1687
 msgid "Updating to new versions"
 msgstr "Update ke versi baru"
 
 #. TRANSLATORS: this is the reason the action is to be taken
-#: ../tools/zif-main.c:1668
+#: ../tools/zif-main.c:1695
 msgid "Removing due to multiple versions"
 msgstr "Menghapus kerana terdapal banyak versi"
 
 #. TRANSLATORS: this is the reason the action is to be taken
-#: ../tools/zif-main.c:1672
+#: ../tools/zif-main.c:1699
 msgid "Removing for dependencies"
 msgstr "Memadam untuk kebergantungan"
 
 #. TRANSLATORS: this is the reason the action is to be taken
-#: ../tools/zif-main.c:1676
+#: ../tools/zif-main.c:1703
 msgid "Removing old versions"
 msgstr "Memadam versi lama"
 
 #. TRANSLATORS: this is the reason the action is to be taken
-#: ../tools/zif-main.c:1680
+#: ../tools/zif-main.c:1707
 msgid "Removing as obsolete"
 msgstr "Memadam kerana telah ketinggalan masa"
 
 #. TRANSLATORS: this is the reason the action is to be taken
-#: ../tools/zif-main.c:1692
+#: ../tools/zif-main.c:1719
 msgid "Updating for conflict"
 msgstr ""
 
 #. TRANSLATORS: this is the reason the action is to be taken
-#: ../tools/zif-main.c:1696
+#: ../tools/zif-main.c:1723
 msgid "Updating for dependencies"
 msgstr ""
 
 #. TRANSLATORS: this is the reason the action is to be taken
-#: ../tools/zif-main.c:1700
+#: ../tools/zif-main.c:1727
 msgid "Unknown reason"
 msgstr "Alasan yang tidak diketahui"
 
-#: ../tools/zif-main.c:1726
+#: ../tools/zif-main.c:1753
 msgid "Transaction summary:"
 msgstr "Maklumat transaksi:"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:1800
+#: ../tools/zif-main.c:1828
 msgid "Automatically declined action"
 msgstr "Penolakan tindakan auto"
 
-#: ../tools/zif-main.c:1808 ../tools/zif-main.c:1843
+#: ../tools/zif-main.c:1836 ../tools/zif-main.c:1871
 msgid "Run transaction?"
 msgstr "Jalankan transaksi?"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:1811 ../tools/zif-main.c:1846
+#: ../tools/zif-main.c:1839 ../tools/zif-main.c:1874
 msgid "User declined action"
 msgstr "Pengguna menolak tindakan"
 
-#: ../tools/zif-main.c:1839
+#: ../tools/zif-main.c:1867
 msgid "There are untrusted packages:"
 msgstr "Ada pakej tidak dipercayai:"
 
+#. TRANSLATORS: this is the stdout and stderr output
+#. * from the transaction, that may indicate something
+#. * went horribly wrong
+#: ../tools/zif-main.c:1896
+msgid "Transaction error:"
+msgstr ""
+
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:1939
+#: ../tools/zif-main.c:1976
 #, c-format
 msgid "%s is already installed"
 msgstr "%s sudah pun dipasang"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:1970
+#: ../tools/zif-main.c:2007
 #, c-format
 msgid "Could not find %s in repositories"
 msgstr "Tidak dapat menjumpai %s didalam repo-repo"
 
 #. TRANSLATORS: performing action
-#: ../tools/zif-main.c:2045
+#: ../tools/zif-main.c:2082
 msgid "Installing a local file"
 msgstr "Pemasangan fail lokal"
 
 #. TRANSLATORS: performing action
-#: ../tools/zif-main.c:2128
+#: ../tools/zif-main.c:2165
 msgid "Checking manifest files"
 msgstr "Menyemak fail-fail manifest"
 
-#: ../tools/zif-main.c:2149
+#: ../tools/zif-main.c:2186
 msgid "All manifest files were checked successfully"
 msgstr "Semua fail manifest diperiksa dengan jayanya"
 
 #. TRANSLATORS: performing action
-#: ../tools/zif-main.c:2187
+#: ../tools/zif-main.c:2224
 msgid "Dumping manifest to file"
 msgstr "Dumping nyata ke fail"
 
 #. TRANSLATORS: performing action
-#: ../tools/zif-main.c:2303
+#: ../tools/zif-main.c:2340
 msgid "Refreshing cache"
 msgstr "Menyegarkan cache"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:2407
+#: ../tools/zif-main.c:2444
 #, c-format
 msgid "The package is not installed"
 msgstr "Pekej ini tidak dipasang"
 
 #. TRANSLATORS: performing action
-#: ../tools/zif-main.c:2475
+#: ../tools/zif-main.c:2512
 msgid "Disabling repo"
 msgstr "Mematikan repo"
 
 #. TRANSLATORS: performing action
-#: ../tools/zif-main.c:2549
+#: ../tools/zif-main.c:2586
 msgid "Enabling repo"
 msgstr "Aktifkan repo"
 
 #. TRANSLATORS: performing action
-#: ../tools/zif-main.c:2617
+#: ../tools/zif-main.c:2654
 msgid "Getting repo list"
 msgstr "Mendapatkan senarai repo"
 
 #. TRANSLATORS: finding packages from a name
-#: ../tools/zif-main.c:2696
+#: ../tools/zif-main.c:2733
 msgid "Finding package name"
 msgstr "Mencari nama pakej"
 
-#: ../tools/zif-main.c:2768
+#: ../tools/zif-main.c:2805
 msgid "Specify a category"
 msgstr "Tentukan kategori"
 
 #. TRANSLATORS: returning all packages that match a category
-#: ../tools/zif-main.c:2773
+#: ../tools/zif-main.c:2810
 msgid "Search category"
 msgstr "Cari kategori"
 
 #. TRANSLATORS: user needs to specify something
-#: ../tools/zif-main.c:2832 ../tools/zif-main.c:2988 ../tools/zif-main.c:3063
-#: ../tools/zif-main.c:3593 ../tools/zif-main.c:3675 ../tools/zif-main.c:3757
-#: ../tools/zif-main.c:3840
+#: ../tools/zif-main.c:2869 ../tools/zif-main.c:3025 ../tools/zif-main.c:3100
+#: ../tools/zif-main.c:3642 ../tools/zif-main.c:3724 ../tools/zif-main.c:3806
+#: ../tools/zif-main.c:3889
 #, c-format
 msgid "No search term specified"
 msgstr "Tidak ada istilah pencarian ditentukan"
 
 #. TRANSLATORS: searching by package details, not just name
-#: ../tools/zif-main.c:2837
+#: ../tools/zif-main.c:2874
 msgid "Searching details"
 msgstr "Mencari maklumat"
 
 #. TRANSLATORS: user needs to specify something
-#: ../tools/zif-main.c:2908
+#: ../tools/zif-main.c:2945
 msgid "Specify a filename"
 msgstr "Tentukan nama fail"
 
 #. TRANSLATORS: searching for a specific file
-#: ../tools/zif-main.c:2913
+#: ../tools/zif-main.c:2950
 msgid "Searching file"
 msgstr "Mencari fail"
 
 #. TRANSLATORS: searching by a specific group
-#: ../tools/zif-main.c:2993
+#: ../tools/zif-main.c:3030
 msgid "Search group"
 msgstr "Cari kumpulan"
 
 #. TRANSLATORS: search, based on the package name only
-#: ../tools/zif-main.c:3068
+#: ../tools/zif-main.c:3105
 msgid "Searching name"
 msgstr "Mencari nama"
 
 #. TRANSLATORS: used when the user did not explicitly specify a
 #. * list of updates to install
-#: ../tools/zif-main.c:3138
+#: ../tools/zif-main.c:3175
 msgid "Updating everything"
 msgstr "Mengemas kini segalanya"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:3253 ../tools/zif-main.c:3365
+#: ../tools/zif-main.c:3290 ../tools/zif-main.c:3402
 #, c-format
 msgid "The %s package is not installed"
 msgstr "Pakej %s tidak dipasang"
 
 #. TRANSLATORS: gettin details about an update
-#: ../tools/zif-main.c:3331
+#: ../tools/zif-main.c:3368
 msgid "Getting update details"
 msgstr "Mendapatkan pembaharuan butiran"
 
-#: ../tools/zif-main.c:3408
+#: ../tools/zif-main.c:3445
 msgid "No update detail"
 msgstr ""
 
-#: ../tools/zif-main.c:3422
+#: ../tools/zif-main.c:3460
 msgid "Kind:"
 msgstr ""
 
-#: ../tools/zif-main.c:3424
+#: ../tools/zif-main.c:3464
 msgid "State:"
 msgstr ""
 
-#: ../tools/zif-main.c:3426
+#: ../tools/zif-main.c:3468
 msgid "ID:"
 msgstr ""
 
-#: ../tools/zif-main.c:3428
+#: ../tools/zif-main.c:3472
 msgid "Title:"
 msgstr ""
 
-#: ../tools/zif-main.c:3430
+#: ../tools/zif-main.c:3476
 msgid "Description:"
 msgstr ""
 
-#: ../tools/zif-main.c:3432
+#: ../tools/zif-main.c:3480
 msgid "Issued:"
 msgstr ""
 
 #. TRANSLATORS: error message, missing value
-#: ../tools/zif-main.c:3494
+#: ../tools/zif-main.c:3543
 msgid "Specify a distro name, e.g."
 msgstr "Tentukan nama distro, misalnya"
 
 #. TRANSLATORS: upgrading to a new distro release, *not*
 #. * updating to a new package version
-#: ../tools/zif-main.c:3500
+#: ../tools/zif-main.c:3549
 msgid "Upgrading"
 msgstr "Menambahbaikan"
 
 #. TRANSLATORS: error message, invalid value
-#: ../tools/zif-main.c:3506
+#: ../tools/zif-main.c:3555
 msgid "Distribution name invalid"
 msgstr "Nama distribusi tidak sah"
 
 #. TRANSLATORS: error message, invalid value
-#: ../tools/zif-main.c:3513
+#: ../tools/zif-main.c:3562
 msgid "Only 'fedora' is supported"
 msgstr "Hanya 'Fedora' disokong"
 
 #. TRANSLATORS: error message, invalid value
-#: ../tools/zif-main.c:3521
+#: ../tools/zif-main.c:3570
 #, c-format
 msgid "Version number %i is invalid"
 msgstr "Nombor versi %i tidak sah"
 
 #. TRANSLATORS: find out what package conflicts
-#: ../tools/zif-main.c:3598
+#: ../tools/zif-main.c:3647
 msgid "Conflicts"
 msgstr "Konflik"
 
 #. TRANSLATORS: find out what package obsoletes
-#: ../tools/zif-main.c:3680
+#: ../tools/zif-main.c:3729
 msgid "Obsoletes"
 msgstr "Ketinggalan zaman"
 
 #. TRANSLATORS: find out what package provides
-#: ../tools/zif-main.c:3762
+#: ../tools/zif-main.c:3811
 msgid "Provides"
 msgstr "Menyediakan"
 
 #. TRANSLATORS: find out what package requires
-#: ../tools/zif-main.c:3845
+#: ../tools/zif-main.c:3894
 msgid "Requires"
 msgstr "Memerlukan"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:3932
+#: ../tools/zif-main.c:3981
 msgid "Command not found, valid commands are:"
 msgstr "Perintah tidak dijumpai, perintah yang sah adalah:"
 
-#: ../tools/zif-main.c:3990
+#: ../tools/zif-main.c:4039
 #, c-format
 msgid "Welcome to the shell. Type '%s' to finish."
 msgstr "Selamat datang ke cengkerang. Taip  '%s' untuk menamatkan."
 
 #. TRANSLATORS: used when the install database is being checked
-#: ../tools/zif-main.c:4208
+#: ../tools/zif-main.c:4257
 msgid "Checking installed database"
 msgstr ""
 
 #. TRANSLATORS: used when the install database is being set
-#: ../tools/zif-main.c:4293
+#: ../tools/zif-main.c:4342
 msgid "Setting key"
 msgstr ""
 
 #. TRANSLATORS: used when the install database is being set
-#: ../tools/zif-main.c:4364
+#: ../tools/zif-main.c:4413
 msgid "Getting key"
 msgstr ""
 
 #. TRANSLATORS: used when the install database is being set
-#: ../tools/zif-main.c:4436
+#: ../tools/zif-main.c:4485
 msgid "Deleting key"
 msgstr ""
 
 #. TRANSLATORS: this is when the database key is deleted, e.g.
 #. * "from_repo deleted");
-#: ../tools/zif-main.c:4477
+#: ../tools/zif-main.c:4526
 msgid "deleted"
 msgstr ""
 
 #. TRANSLATORS: used when the install database is listed
-#: ../tools/zif-main.c:4513
+#: ../tools/zif-main.c:4562
 msgid "Listing keys"
 msgstr ""
 
-#: ../tools/zif-main.c:4624
+#: ../tools/zif-main.c:4673
 msgid "Show extra debugging information"
 msgstr "Papar maklumat debug tambahan"
 
-#: ../tools/zif-main.c:4626
+#: ../tools/zif-main.c:4675
 msgid "Enable low level profiling of Zif"
 msgstr "Aktifkan profil rendah ZIF"
 
-#: ../tools/zif-main.c:4628
+#: ../tools/zif-main.c:4677
 msgid "Enable background mode to run using less CPU"
 msgstr ""
 
-#: ../tools/zif-main.c:4630
+#: ../tools/zif-main.c:4679
 msgid "Work offline when possible"
 msgstr "Bekerja secara offline apabila dibenarkan"
 
-#: ../tools/zif-main.c:4632
+#: ../tools/zif-main.c:4681
 msgid "Use different config file"
 msgstr "Gunakan fail konfigurasi yang berbeza"
 
-#: ../tools/zif-main.c:4634
+#: ../tools/zif-main.c:4683
 msgid "Exclude certain packages"
 msgstr "Kecualikan pakej tertentu"
 
-#: ../tools/zif-main.c:4636
+#: ../tools/zif-main.c:4685
 msgid "Use different rpm database root"
 msgstr "Gunakan akarumbi pangkalan data rpm yang berbeza"
 
-#: ../tools/zif-main.c:4638
+#: ../tools/zif-main.c:4687
 msgid "Proxy server setting"
 msgstr "Tetapan pelayan proksi"
 
-#: ../tools/zif-main.c:4640
+#: ../tools/zif-main.c:4689
 msgid "Permitted age of the cache in seconds, 0 for never (default)"
 msgstr "Usia cache disimpan, ditetapkan dalam saat, 0 untuk tidak sesekali menyimpan (default)"
 
-#: ../tools/zif-main.c:4642
+#: ../tools/zif-main.c:4691
 msgid "Skip broken dependencies rather than failing"
 msgstr "Langkah kepada kebergantungan yang lain, daripada menggagalkan proses"
 
-#: ../tools/zif-main.c:4644
+#: ../tools/zif-main.c:4693
 msgid "Assume yes to all questions"
 msgstr "Tetapkan \"YA\" pada semua soalan selanjutnya"
 
-#: ../tools/zif-main.c:4646
+#: ../tools/zif-main.c:4695
 msgid "Assume no to all questions"
 msgstr "Tetapkan \"TIDAK\" pada semua soalan selanjutnya"
 
 #. TRANSLATORS: we can't run as the user
-#: ../tools/zif-main.c:4758
+#: ../tools/zif-main.c:4807
 msgid "This program has to be run as the root user."
 msgstr "Program ini harus dijalankan sebagai pengguna \"ROOT\"."
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:4802
+#: ../tools/zif-main.c:4851
 msgid "Remove cached data"
 msgstr "Padam data cache"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:4807
+#: ../tools/zif-main.c:4856
 msgid "Download a package"
 msgstr "Download pakej"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:4812
+#: ../tools/zif-main.c:4861
 msgid "Find a given package given the ID"
 msgstr "Cari pakej yang diberikan berdasarkan ID"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:4817
+#: ../tools/zif-main.c:4866
 msgid "Returns the list of categories"
 msgstr "Kembali kepada senarai kategori"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:4822
+#: ../tools/zif-main.c:4871
 msgid "List a package's dependencies"
 msgstr "Senaraikan kebergantungan-kebergantungan pakej"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:4827
+#: ../tools/zif-main.c:4876
 msgid "Display details about a package or group of packages"
 msgstr "Lampirkan setiap maklumat mengenai sekumpulan pakej-pakej"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:4832
+#: ../tools/zif-main.c:4881
 msgid "List the files in a package"
 msgstr "Senarai fail dalam pakej"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:4837
+#: ../tools/zif-main.c:4886
 msgid "Get the groups the system supports"
 msgstr "Minta kumpulan yang disokong oleh sistem"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:4842
+#: ../tools/zif-main.c:4891
 msgid "List all packages"
 msgstr "Senaraikan semua pakej"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:4847
+#: ../tools/zif-main.c:4896
 msgid "Check for available package updates"
 msgstr "Semak pengemaskinian terbaharu untuk pakej"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:4852
+#: ../tools/zif-main.c:4901
 msgid "Check for newer operating system versions"
 msgstr "Semak sistem operasi yang lebih baharu"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:4857
+#: ../tools/zif-main.c:4906
 msgid "Get an expanded value from the config file"
 msgstr "Dapatkan nilai yang diperluas dari fail tetapan"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:4862
+#: ../tools/zif-main.c:4911
 msgid "Display a helpful usage message"
 msgstr "Paparkan mesej penggunaan yang membantu"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:4867
+#: ../tools/zif-main.c:4916
 msgid "Install a package"
 msgstr "Pasang pakej"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:4872
+#: ../tools/zif-main.c:4921
 msgid "Install a local package"
 msgstr "Pasang pakej lokal"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:4877
+#: ../tools/zif-main.c:4926
 msgid "Check a transaction manifest"
 msgstr "Cek transaksi nyata"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:4882
+#: ../tools/zif-main.c:4931
 msgid "Dump a transaction manifest to a file"
 msgstr "Dump manifest transaksi ke fail"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:4887
+#: ../tools/zif-main.c:4936
 msgid "Generate the metadata cache"
 msgstr "Hasilkan cache metadata"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:4892
+#: ../tools/zif-main.c:4941
 msgid "Remove a package"
 msgstr "Hapuskan pakej"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:4897
+#: ../tools/zif-main.c:4946
 msgid "Disable a specific software repository"
 msgstr "Matikan peranti repo perisian tertentu"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:4902
+#: ../tools/zif-main.c:4951
 msgid "Enable a specific software repository"
 msgstr "Aktifkan repo perisian tertentu"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:4907
+#: ../tools/zif-main.c:4956
 msgid "Display the configured software repositories"
 msgstr "Papar repositori perisian yang dikonfigurasikan"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:4912
+#: ../tools/zif-main.c:4961
 msgid "Find a given package name"
 msgstr "Cari nama pakej yang diberikan"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:4917
+#: ../tools/zif-main.c:4966
 msgid "Search package details for the given category"
 msgstr "Cari butiran pakej untuk kategori yang diberikan"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:4922
+#: ../tools/zif-main.c:4971
 msgid "Search package details for the given string"
 msgstr "Cari butiran pakej untuk string yang diberikan"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:4927
+#: ../tools/zif-main.c:4976
 msgid "Search packages for the given filename"
 msgstr "Cari pakej berdasarkan pada nama yang diberi"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:4932
+#: ../tools/zif-main.c:4981
 msgid "Search packages in the given group"
 msgstr "Cari pakej berdasarkan pada kumpulan yang diberi"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:4937
+#: ../tools/zif-main.c:4986
 msgid "Search package name for the given string"
 msgstr "Cari pakej berdasarkan pada string yang diberi"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:4942
+#: ../tools/zif-main.c:4991
 msgid "Run an interactive shell"
 msgstr "Jalankan sebuah cengkerang yang interaktif"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:4947
+#: ../tools/zif-main.c:4996
 msgid "Update a package to the newest available version"
 msgstr "Kemaskini pakej kepada versi yang terbaharu"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:4952
+#: ../tools/zif-main.c:5001
 msgid "Display details about an update"
 msgstr "Paparkan maklumat mengenai pengemaskinian"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:4957
+#: ../tools/zif-main.c:5006
 msgid "Upgrade the operating system to a newer version"
 msgstr "Perbaharui sistem operasi kepada versi yang lebih baru"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:4962
+#: ../tools/zif-main.c:5011
 msgid "Find what package conflicts with the given value"
 msgstr "Cari pakej apa yang bertentangan dengan nilai yang diberikan"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:4967
+#: ../tools/zif-main.c:5016
 msgid "Find what package obsoletes the given value"
 msgstr "Cari apa pakej apa yang telah ketinggalan zaman berdasarkan nilai yang diberikan"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:4972
+#: ../tools/zif-main.c:5021
 msgid "Find what package provides the given value"
 msgstr "Cari pakej apa yang memberikan maklumat yang diberi"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:4977
+#: ../tools/zif-main.c:5026
 msgid "Find what package requires the given value"
 msgstr "Cari apa pakej memerlukan nilai yang diberikan"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:4982
+#: ../tools/zif-main.c:5031
 msgid "Check for problems in the installed database"
 msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:4987
+#: ../tools/zif-main.c:5036
 msgid "Get a value in the package database"
 msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:4992
+#: ../tools/zif-main.c:5041
 msgid "Set a value in the installed package database"
 msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:4997
+#: ../tools/zif-main.c:5046
 msgid "Remove a value from the installed package database"
 msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:5002
+#: ../tools/zif-main.c:5051
 msgid "List values from the installed package database"
 msgstr ""
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5029
+#: ../tools/zif-main.c:5078
 msgid "Cancelled"
 msgstr "Dibatalkan"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5033
+#: ../tools/zif-main.c:5082
 msgid "The system state was invalid"
 msgstr "Keadaan sistem tidak sah"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5037
+#: ../tools/zif-main.c:5086
 msgid "Unhandled state error"
 msgstr "Ralat yang tidak diketahui"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5043
+#: ../tools/zif-main.c:5092
 msgid "The transaction failed"
 msgstr "Transaksi gagal"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5047
+#: ../tools/zif-main.c:5096
 msgid "Nothing to do"
 msgstr "Tiada tugas diberi"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5051
+#: ../tools/zif-main.c:5100
 msgid "No supported"
 msgstr "Tidak disokong"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5055
+#: ../tools/zif-main.c:5104
 msgid "The transaction conflicts"
 msgstr "Transaksi berkonflik"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5059
+#: ../tools/zif-main.c:5108
 msgid "Unhandled transaction error"
 msgstr "Ralat transaksi yang tidak diketahui"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5065
+#: ../tools/zif-main.c:5114
 msgid "Failed to store"
 msgstr "Gagal untuk menyimpan"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5069 ../tools/zif-main.c:5153
+#: ../tools/zif-main.c:5118 ../tools/zif-main.c:5202
 msgid "Failed as offline"
 msgstr "Gagal kerana offline"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5073
+#: ../tools/zif-main.c:5122
 msgid "Failed to find"
 msgstr "Gagal untuk mencari"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5077 ../tools/zif-main.c:5157
+#: ../tools/zif-main.c:5126 ../tools/zif-main.c:5206
 msgid "Failed to download"
 msgstr "Gagal untuk memuat turun"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5081
+#: ../tools/zif-main.c:5130
 msgid "Store array is empty"
 msgstr "Stor array kosong"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5085
+#: ../tools/zif-main.c:5134
 msgid "Not supported"
 msgstr "Tidak disokong"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5089
+#: ../tools/zif-main.c:5138
 msgid "Not locked"
 msgstr "Tidak dikunci"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5093
+#: ../tools/zif-main.c:5142
 msgid "There are multiple matches"
 msgstr "Ada banyak yang padanan"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5097
+#: ../tools/zif-main.c:5146
 msgid "Unhandled store error"
 msgstr "Ralat penyimpanan yang tidak diketahui"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5103
+#: ../tools/zif-main.c:5152
 msgid "Package operation failed"
 msgstr "Operasi pakej gagal"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5107
+#: ../tools/zif-main.c:5156
 msgid "Unhandled package error"
 msgstr "Ralat pakej yang tidak diketahui"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5113
+#: ../tools/zif-main.c:5162
 msgid "Settings operation failed"
 msgstr "Tetapan operasi gagal"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5117
+#: ../tools/zif-main.c:5166
 msgid "Unhandled config error"
 msgstr "Ralat tetapan yang tidak diketahui"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5123
+#: ../tools/zif-main.c:5172
 msgid "Download failed"
 msgstr ""
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5127
+#: ../tools/zif-main.c:5176
 msgid "Download failed as permission denied"
 msgstr ""
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5131
+#: ../tools/zif-main.c:5180
 msgid "Download was cancelled"
 msgstr ""
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5135
+#: ../tools/zif-main.c:5184
 msgid "Unhandled download error"
 msgstr ""
 
 #. TRANSLATORS: error message
 #. TRANSLATORS: we suck
-#: ../tools/zif-main.c:5141 ../tools/zif-main.c:5180
+#: ../tools/zif-main.c:5190 ../tools/zif-main.c:5229
 msgid "Failed"
 msgstr "Gagal"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5145
+#: ../tools/zif-main.c:5194
 msgid "No support"
 msgstr "Tidak ada sokongan"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5149
+#: ../tools/zif-main.c:5198
 msgid "Failed to load"
 msgstr "Gagal untuk memuatkan"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5161
+#: ../tools/zif-main.c:5210
 msgid "Bad SQL"
 msgstr "SQL teruk"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5165
+#: ../tools/zif-main.c:5214
 msgid "File is too old"
 msgstr "Fail itu terlalu usang"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5169
+#: ../tools/zif-main.c:5218
 msgid "No filename"
 msgstr "Tidak ada nama fail"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5173
+#: ../tools/zif-main.c:5222
 msgid "Unhandled metadata error"
 msgstr "Ralat metadata yang tidak diketahui"
