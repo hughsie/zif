@@ -678,9 +678,6 @@ zif_md_primary_sql_get_depends (ZifMd *md,
 				     version,
 				     release,
 				     zif_package_get_arch (package));
-	g_debug ("running %s on %s",
-		 statement,
-		 zif_md_get_filename_uncompressed (md));
 	rc = sqlite3_exec (md_primary_sql->priv->db,
 			   statement,
 			   zif_md_primary_sql_sqlite_depend_cb,
