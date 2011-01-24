@@ -430,12 +430,13 @@ out:
 static gboolean
 zif_md_load_get_repomd_and_download (ZifMd *md, ZifState *state, GError **error)
 {
+	const gchar *content_type;
+	const gchar *location;
 	gboolean compressed_check = FALSE;
 	gboolean ret;
 	gchar *dirname = NULL;
 	GError *error_local = NULL;
 	ZifState *state_local;
-	const gchar *location;
 
 	/* set steps */
 	ret = zif_state_set_steps (state,
@@ -460,7 +461,9 @@ zif_md_load_get_repomd_and_download (ZifMd *md, ZifState *state, GError **error)
 	/* reget repomd in case it's changed */
 	g_debug ("regetting repomd as checksum was invalid");
 	state_local = zif_state_get_child (state);
-	ret = zif_store_remote_download_repomd (md->priv->remote, state_local, &error_local);
+	ret = zif_store_remote_download_repomd (md->priv->remote,
+						state_local,
+						&error_local);
 	if (!ret) {
 		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED_DOWNLOAD,
 			     "failed to download repomd after failing checksum: %s",
@@ -508,15 +511,20 @@ zif_md_load_get_repomd_and_download (ZifMd *md, ZifState *state, GError **error)
 	 * the invalid register copy we ensure the new location is used.
 	 * Phew! */
 	location = zif_md_get_location (md);
+	content_type = zif_guess_content_type (location);
 
 	/* download file */
 	state_local = zif_state_get_child (state);
 	dirname = g_path_get_dirname (md->priv->filename);
-	ret = zif_store_remote_download (md->priv->remote,
-					 location,
-					 dirname,
-					 state_local,
-					 &error_local);
+	ret = zif_store_remote_download_full (md->priv->remote,
+					      location,
+					      dirname,
+					      0,
+					      content_type,
+					      G_CHECKSUM_MD5,
+					      NULL,
+					      state_local,
+					      &error_local);
 	if (!ret) {
 		g_set_error (error,
 			     ZIF_MD_ERROR,

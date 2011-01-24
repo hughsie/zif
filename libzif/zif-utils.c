@@ -259,6 +259,29 @@ zif_init (void)
 }
 
 /**
+ * zif_store_remote_refresh_md:
+ * @filename: The target filename
+ *
+ * Guesses a cntent type, based on the filename ending.
+ *
+ * Return value: a content type, or %NULL
+ *
+ * Since: 0.1.5
+ **/
+const gchar *
+zif_guess_content_type (const gchar *filename)
+{
+	if (g_str_has_suffix (filename, ".gz"))
+		return "application/x-gzip";
+	if (g_str_has_suffix (filename, ".bz2"))
+		return "application/x-bzip";
+	if (g_str_has_suffix (filename, ".xml"))
+		return "application/xml";
+	g_warning ("cannot guess content type for %s", filename);
+	return NULL;
+}
+
+/**
  * zif_boolean_from_text:
  * @text: The input text
  *

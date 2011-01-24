@@ -101,6 +101,15 @@ gboolean	 zif_store_remote_download		(ZifStoreRemote		*store,
 							 const gchar		*directory,
 							 ZifState		*state,
 							 GError			**error);
+gboolean	 zif_store_remote_download_full		(ZifStoreRemote		*store,
+							 const gchar		*filename,
+							 const gchar		*directory,
+							 guint64		 size,
+							 const gchar		*content_types,
+							 GChecksumType		 checksum_type,
+							 const gchar		*checksum,
+							 ZifState		*state,
+							 GError			**error);
 gboolean	 zif_store_remote_download_repomd	(ZifStoreRemote		*store,
 							 ZifState		*state,
 							 GError			**error);

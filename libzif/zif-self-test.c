@@ -1742,6 +1742,9 @@ zif_package_remote_func (void)
 	zif_package_set_location_href (package, string);
 	zif_string_unref (string);
 
+	/* set size */
+	zif_package_set_size (package, 156896);
+
 	/* set remote store */
 	zif_package_remote_set_store_remote (ZIF_PACKAGE_REMOTE (package), store_remote);
 

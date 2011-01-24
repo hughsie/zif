@@ -439,6 +439,10 @@ out:
  * @store: A #ZifStoreRemote
  * @filename: Filename to download, e.g. "Packages/hal-0.1.0.rpm"
  * @directory: Directory to put the downloaded file, e.g. "/var/cache/zif"
+ * @size: Expected size in bytes, or 0
+ * @content_types: Comma delimited expected content types of the file, or %NULL
+ * @checksum_type: Checksum type, e.g. %G_CHECKSUM_SHA256, or 0
+ * @checksum: Expected checksum of the file, or %NULL
  * @state: A #ZifState to use for progress reporting
  * @error: A #GError, or %NULL
  *
@@ -448,11 +452,18 @@ out:
  *
  * Return value: %TRUE for success, %FALSE otherwise
  *
- * Since: 0.1.0
+ * Since: 0.1.5
  **/
 gboolean
-zif_store_remote_download (ZifStoreRemote *store, const gchar *filename, const gchar *directory,
-			   ZifState *state, GError **error)
+zif_store_remote_download_full (ZifStoreRemote *store,
+				const gchar *filename,
+				const gchar *directory,
+				guint64 size,
+				const gchar *content_types,
+				GChecksumType checksum_type,
+				const gchar *checksum,
+				ZifState *state,
+				GError **error)
 {
 	gboolean ret = FALSE;
 	GError *error_local = NULL;
@@ -536,7 +547,15 @@ repomd_confirm:
 
 	/* try to use all uris */
 	state_local = zif_state_get_child (state);
-	ret = zif_download_location (store->priv->download, filename, filename_local, state_local, &error_local);
+	ret = zif_download_location_full (store->priv->download,
+					  filename,
+					  filename_local,
+					  size,
+					  content_types,
+					  checksum_type,
+					  checksum,
+					  state_local,
+					  &error_local);
 	if (!ret) {
 		g_debug ("failed to download on attempt %i (non-fatal): %s",
 			 store->priv->download_retries, error_local->message);
@@ -577,6 +596,43 @@ out:
 	g_free (basename);
 	g_free (filename_local);
 	return ret;
+}
+
+
+/**
+ * zif_store_remote_download:
+ * @store: A #ZifStoreRemote
+ * @filename: Filename to download, e.g. "Packages/hal-0.1.0.rpm"
+ * @directory: Directory to put the downloaded file, e.g. "/var/cache/zif"
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
+ *
+ * Downloads a remote package to a local directory.
+ * NOTE: if @filename is "Packages/hal-0.1.0.rpm" and @directory is "/var/cache/zif"
+ * then the downloaded file will "/var/cache/zif/hal-0.1.0.rpm"
+ *
+ * Return value: %TRUE for success, %FALSE otherwise
+ *
+ * Since: 0.1.0
+ **/
+gboolean
+zif_store_remote_download (ZifStoreRemote *store,
+			   const gchar *filename,
+			   const gchar *directory,
+			   ZifState *state,
+			   GError **error)
+{
+	g_warning ("You probably want to be using "
+		   "zif_store_remote_download_full() instead!");
+	return zif_store_remote_download_full (store,
+					       filename,
+					       directory,
+					       0,
+					       NULL,
+					       G_CHECKSUM_MD5,
+					       NULL,
+					       state,
+					       error);
 }
 
 /**
@@ -1095,10 +1151,14 @@ zif_store_remote_download_repomd (ZifStoreRemote *store, ZifState *state, GError
 	/* download new file */
 	store->priv->loaded_metadata = TRUE;
 	state_local = zif_state_get_child (state);
-	ret = zif_store_remote_download (store, "repodata/repomd.xml",
-					 store->priv->directory,
-					 state_local,
-					 &error_local);
+	ret = zif_store_remote_download_full (store, "repodata/repomd.xml",
+					      store->priv->directory,
+					      0,
+					      "application/xml",
+					      G_CHECKSUM_MD5,
+					      NULL,
+					      state_local,
+					      &error_local);
 	store->priv->loaded_metadata = FALSE;
 	if (!ret) {
 		g_set_error (error, error_local->domain, error_local->code,
@@ -1384,13 +1444,18 @@ out:
  * zif_store_remote_refresh_md:
  **/
 static gboolean
-zif_store_remote_refresh_md (ZifStoreRemote *remote, ZifMd *md, gboolean force, ZifState *state, GError **error)
+zif_store_remote_refresh_md (ZifStoreRemote *remote,
+			     ZifMd *md,
+			     gboolean force,
+			     ZifState *state,
+			     GError **error)
 {
 	const gchar *filename;
 	gboolean repo_verified;
 	gboolean ret;
 	GError *error_local = NULL;
 	ZifState *state_local = NULL;
+	const gchar *content_type = NULL;
 
 	g_return_val_if_fail (zif_state_valid (state), FALSE);
 
@@ -1412,6 +1477,9 @@ zif_store_remote_refresh_md (ZifStoreRemote *remote, ZifMd *md, gboolean force, 
 		ret = zif_state_finished (state, error);
 		goto out;
 	}
+
+	/* get content type */
+	content_type = zif_guess_content_type (filename);
 
 	/* does current uncompressed file equal what repomd says it should be */
 	state_local = zif_state_get_child (state);
@@ -1436,7 +1504,15 @@ zif_store_remote_refresh_md (ZifStoreRemote *remote, ZifMd *md, gboolean force, 
 	/* download new file */
 	state_local = zif_state_get_child (state);
 	filename = zif_md_get_location (md);
-	ret = zif_store_remote_download (remote, filename, remote->priv->directory, state_local, &error_local);
+	ret = zif_store_remote_download_full (remote,
+					      filename,
+					      remote->priv->directory,
+					      0,
+					      content_type,
+					      G_CHECKSUM_MD5,
+					      NULL,
+					      state_local,
+					      &error_local);
 	if (!ret) {
 		g_set_error (error, error_local->domain, error_local->code,
 			     "failed to refresh %s (%s): %s",
@@ -1520,7 +1596,15 @@ zif_store_remote_refresh (ZifStore *store, gboolean force, ZifState *state, GErr
 
 	/* download new repomd file */
 	state_local = zif_state_get_child (state);
-	ret = zif_store_remote_download (remote, "repodata/repomd.xml", remote->priv->directory, state_local, &error_local);
+	ret = zif_store_remote_download_full (remote,
+					      "repodata/repomd.xml",
+					      remote->priv->directory,
+					      0,
+					      "application/xml",
+					      G_CHECKSUM_MD5,
+					      NULL,
+					      state_local,
+					      &error_local);
 	if (!ret) {
 		g_set_error (error, error_local->domain, error_local->code,
 			     "failed to download repomd: %s", error_local->message);

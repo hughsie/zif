@@ -209,7 +209,10 @@ out:
  * Since: 0.1.3
  **/
 gboolean
-zif_package_remote_download (ZifPackageRemote *pkg, const gchar *directory, ZifState *state, GError **error)
+zif_package_remote_download (ZifPackageRemote *pkg,
+			     const gchar *directory,
+			     ZifState *state,
+			     GError **error)
 {
 	gboolean ret = FALSE;
 	ZifStoreRemote *store_remote = NULL;
@@ -217,6 +220,7 @@ zif_package_remote_download (ZifPackageRemote *pkg, const gchar *directory, ZifS
 	ZifState *state_local = NULL;
 	const gchar *filename;
 	gchar *directory_new = NULL;
+	guint64 size;
 
 	g_return_val_if_fail (ZIF_IS_PACKAGE_REMOTE (pkg), FALSE);
 	g_return_val_if_fail (zif_state_valid (state), FALSE);
@@ -225,8 +229,9 @@ zif_package_remote_download (ZifPackageRemote *pkg, const gchar *directory, ZifS
 	/* setup steps */
 	ret = zif_state_set_steps (state,
 				   error,
-				   5,
-				   95,
+				   5, /* get filename */
+				   5, /* get size */
+				   90,
 				   -1);
 	if (!ret)
 		goto out;
@@ -258,15 +263,30 @@ zif_package_remote_download (ZifPackageRemote *pkg, const gchar *directory, ZifS
 	if (!ret)
 		goto out;
 
+	/* get filename */
+	state_local = zif_state_get_child (state);
+	size = zif_package_get_size (ZIF_PACKAGE (pkg), state_local, error);
+	if (size == 0)
+		goto out;
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
 	/* create a chain of states */
 	state_local = zif_state_get_child (state);
 
 	/* download from the store */
-	ret = zif_store_remote_download (pkg->priv->store_remote,
-					 filename,
-					 directory_new,
-					 state_local,
-					 &error_local);
+	ret = zif_store_remote_download_full (pkg->priv->store_remote,
+					      filename,
+					      directory_new,
+					      size,
+					      "application/x-rpm",
+					      G_CHECKSUM_MD5,
+					      NULL,
+					      state_local,
+					      &error_local);
 	if (!ret) {
 		g_set_error (error, ZIF_PACKAGE_ERROR, ZIF_PACKAGE_ERROR_FAILED,
 			     "cannot download from store: %s", error_local->message);
