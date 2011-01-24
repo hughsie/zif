@@ -1,3 +1,38 @@
+Version 0.1.5
+~~~~~~~~~~~~~
+Released: 2011-01-24
+
+Notes:
+ - A few nice bugfixes in this release.
+ - Zif now reports the speed of installing and downloading.
+
+Translations:
+ - Update Arabic translation (karim)
+ - Update Czech translation (fri)
+ - Update Frech translation (mathdabomb)
+ - Update Malay translation (farizluqman)
+ - Update Spanish (Chile) translation (rahermosillac)
+
+New Features:
+ - Add a default value of the rpmdb prefix in the config file (Richard Hughes)
+ - Add some example programs for people learning the API (Richard Hughes)
+ - Add zif_state_set_speed() to be able to track the speed (Richard Hughes)
+ - Allow specifying an array of possible content types for download (Richard Hughes)
+ - Allow the user to specify the upgrade type using the zif CLI (Richard Hughes)
+ - Enable the verbose depsolve if the environment variable is set (Richard Hughes)
+ - Report the disk speed when installing and removing packages (Richard Hughes)
+ - Set the file download speed in ZifDownload (Richard Hughes)
+ - Show the transaction speed in the CLI tool (Richard Hughes)
+ - Verify the package content type and completed size when downloading (Richard Hughes)
+
+Bugfixes:
+ - Avoid a critical warning when cancelling a GetPackages method (Richard Hughes)
+ - Do WhatProvides() on each dependancy when in remove (Richard Hughes)
+ - Increase the default metadata age to 7 days (Richard Hughes)
+ - Return a specific error early if the destination device is out of space (Richard Hughes)
+ - Return the filename in the error message if the rpm verify failed (Richard Hughes)
+ - Upstream grubby defaults to /etc/grub.conf, so change this for Fedora (Richard Hughes)
+
 Version 0.1.4
 ~~~~~~~~~~~~~
 Released: 2011-01-07
