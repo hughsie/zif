@@ -1,6 +1,6 @@
 .deps
 .libs
+*.o
 zif-file-requires
 zif-list-installed
-*.o
-
+zif-list-repos

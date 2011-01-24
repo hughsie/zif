@@ -17,6 +17,7 @@ ZIF_LIBS =						\
 
 noinst_PROGRAMS =					\
 	zif-file-requires				\
+	zif-list-repos					\
 	zif-list-installed
 
 zif_file_requires_SOURCES =				\
@@ -31,6 +32,13 @@ zif_list_installed_SOURCES =				\
 zif_list_installed_LDADD =				\
 	$(ZIF_LIBS)
 zif_list_installed_CFLAGS =				\
+	$(WARNINGFLAGS_C)
+
+zif_list_repos_SOURCES =				\
+	zif-list-repos.c
+zif_list_repos_LDADD =					\
+	$(ZIF_LIBS)
+zif_list_repos_CFLAGS =					\
 	$(WARNINGFLAGS_C)
 
 clean-local:
