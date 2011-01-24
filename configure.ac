@@ -244,6 +244,7 @@ libzif/Makefile
 libzif/zif.pc
 libzif/zif-version.h
 tools/Makefile
+examples/Makefile
 docs/Makefile
 docs/api/Makefile
 docs/api/version.xml

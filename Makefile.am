@@ -5,6 +5,7 @@ SUBDIRS = 						\
 	data						\
 	man						\
 	po						\
+	examples					\
 	tools
 
 security-check:
