@@ -259,7 +259,7 @@ zif_lock_set_locked (ZifLock *lock, guint *pid, GError **error)
 	pid_text = g_strdup_printf ("%i", pid_tmp);
 	ret = g_file_set_contents (lock->priv->filename, pid_text, -1, &error_local);
 	if (!ret) {
-		g_set_error (error, ZIF_LOCK_ERROR, ZIF_LOCK_ERROR_FAILED,
+		g_set_error (error, ZIF_LOCK_ERROR, ZIF_LOCK_ERROR_PERMISSION,
 			     "failed to write: %s", error_local->message);
 		g_error_free (error_local);
 		goto out;

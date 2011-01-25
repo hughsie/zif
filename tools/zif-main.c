@@ -4885,6 +4885,13 @@ main (int argc, char *argv[])
 		ret = zif_lock_set_locked (lock, &pid, &error);
 		if (ret)
 			break;
+		/* this one is really fatal */
+		if (error->domain == ZIF_LOCK_ERROR &&
+		    error->code == ZIF_LOCK_ERROR_PERMISSION) {
+			g_print ("Failed to lock: %s\n",
+				 error->message);
+			goto out;
+		}
 		g_print ("Failed to lock on try %i of %i, already locked by PID %i (sleeping for %ims)\n",
 			 i+1, lock_retries, pid, lock_delay);
 		g_debug ("failed to lock: %s", error->message);
