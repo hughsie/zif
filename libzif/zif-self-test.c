@@ -1255,6 +1255,7 @@ zif_md_other_sql_func (void)
 
 	config = zif_config_new ();
 	zif_config_set_uint (config, "metadata_expire", 0, NULL);
+	zif_config_set_uint (config, "mirrorlist_expire", 0, NULL);
 
 	md = zif_md_other_sql_new ();
 	g_assert (md != NULL);
@@ -1647,6 +1648,7 @@ zif_package_remote_func (void)
 	zif_config_set_filename (config, filename, NULL);
 	zif_config_set_boolean (config, "network", TRUE, NULL);
 	zif_config_set_uint (config, "metadata_expire", 0, NULL);
+	zif_config_set_uint (config, "mirrorlist_expire", 0, NULL);
 	g_free (filename);
 
 	pidfile = g_build_filename (g_get_tmp_dir (), "zif.lock", NULL);
@@ -2560,6 +2562,7 @@ zif_store_remote_func (void)
 	filename = zif_test_get_data_file ("zif.conf");
 	zif_config_set_filename (config, filename, NULL);
 	zif_config_set_uint (config, "metadata_expire", 0, NULL);
+	zif_config_set_uint (config, "mirrorlist_expire", 0, NULL);
 	g_free (filename);
 
 	pidfile = g_build_filename (g_get_tmp_dir (), "zif.lock", NULL);

@@ -63,8 +63,6 @@
 
 #define ZIF_STORE_REMOTE_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_STORE_REMOTE, ZifStoreRemotePrivate))
 
-#define ZIF_STORE_REMOTE_LINK_MAX_AGE		60*60*24*30
-
 typedef enum {
 	ZIF_STORE_REMOTE_PARSER_SECTION_CHECKSUM,
 	ZIF_STORE_REMOTE_PARSER_SECTION_CHECKSUM_UNCOMPRESSED,
@@ -1683,6 +1681,7 @@ zif_store_remote_load (ZifStore *store, ZifState *state, GError **error)
 	gchar *temp_expand;
 	gchar *filename;
 	gchar *media_root;
+	guint mirrorlist_expire;
 	gboolean got_baseurl = FALSE;
 	ZifStoreRemote *remote = ZIF_STORE_REMOTE (store);
 
@@ -1815,7 +1814,11 @@ zif_store_remote_load (ZifStore *store, ZifState *state, GError **error)
 	if (remote->priv->metalink != NULL) {
 		filename = g_build_filename (remote->priv->directory, "metalink.xml", NULL);
 		zif_md_set_filename (remote->priv->md_metalink, filename);
-		zif_md_set_max_age (remote->priv->md_metalink, ZIF_STORE_REMOTE_LINK_MAX_AGE);
+		mirrorlist_expire = zif_config_get_uint (remote->priv->config,
+							 "mirrorlist_expire",
+							 NULL);
+		zif_md_set_max_age (remote->priv->md_metalink,
+				    mirrorlist_expire);
 		g_free (filename);
 	}
 
@@ -1823,7 +1826,11 @@ zif_store_remote_load (ZifStore *store, ZifState *state, GError **error)
 	if (remote->priv->mirrorlist != NULL) {
 		filename = g_build_filename (remote->priv->directory, "mirrorlist.txt", NULL);
 		zif_md_set_filename (remote->priv->md_mirrorlist, filename);
-		zif_md_set_max_age (remote->priv->md_mirrorlist, ZIF_STORE_REMOTE_LINK_MAX_AGE);
+		mirrorlist_expire = zif_config_get_uint (remote->priv->config,
+							 "mirrorlist_expire",
+							 NULL);
+		zif_md_set_max_age (remote->priv->md_mirrorlist,
+				    mirrorlist_expire);
 		g_free (filename);
 	}
 
