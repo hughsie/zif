@@ -151,6 +151,8 @@ gboolean	 zif_store_remove_packages	(ZifStore		*store,
 gboolean	 zif_store_load			(ZifStore		*store,
 						 ZifState		*state,
 						 GError			**error);
+gboolean	 zif_store_unload		(ZifStore		*store,
+						 GError			**error);
 gboolean	 zif_store_clean		(ZifStore		*store,
 						 ZifState		*state,
 						 GError			**error);

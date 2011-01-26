@@ -1020,6 +1020,12 @@ zif_transaction_get_package_requires_from_store (ZifStore *store,
 	zif_state_reset (state);
 	array = zif_store_get_packages (store, state, &error_local);
 	if (array == NULL) {
+		/* this is special */
+		if (error_local->domain == ZIF_STORE_ERROR ||
+		    error_local->code == ZIF_STORE_ERROR_ARRAY_IS_EMPTY) {
+			g_error_free (error_local);
+			goto out;
+		}
 		ret = FALSE;
 		g_set_error (error,
 			     ZIF_TRANSACTION_ERROR,
@@ -1547,6 +1553,12 @@ zif_transaction_resolve_remove_require (ZifTransactionResolve *data,
 							  data->state,
 							  &error_local);
 		if (local_provides == NULL) {
+			/* this is special */
+			if (error_local->domain == ZIF_STORE_ERROR ||
+			    error_local->code == ZIF_STORE_ERROR_ARRAY_IS_EMPTY) {
+				g_error_free (error_local);
+				goto out;
+			}
 			ret = FALSE;
 			g_set_error (error,
 				     ZIF_TRANSACTION_ERROR,
@@ -2450,13 +2462,26 @@ zif_transaction_setup_post_resolve_package_array (ZifTransactionResolve *data,
 	guint i;
 	ZifPackage *package_tmp;
 	ZifTransactionItem *item;
+	GError *error_local = NULL;
 	ZifTransactionPrivate *priv = data->transaction->priv;
 
 	/* add existing installed packages */
 	packages = zif_store_get_packages (priv->store_local,
-					   data->state, error);
-	if (packages == NULL)
+					   data->state, &error_local);
+	if (packages == NULL) {
+		/* ignore this error */
+		if (error_local->domain == ZIF_STORE_ERROR &&
+		    error_local->code == ZIF_STORE_ERROR_ARRAY_IS_EMPTY) {
+			g_debug ("no packages in installed database");
+			g_error_free (error_local);
+			ret = TRUE;
+		} else {
+			ret = FALSE;
+			g_propagate_error (error, error_local);
+		}
 		goto out;
+	}
+
 	for (i=0; i<packages->len; i++) {
 		package_tmp = g_ptr_array_index (packages, i);
 		zif_array_add (data->post_resolve_package_array, package_tmp);

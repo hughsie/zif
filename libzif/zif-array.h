@@ -75,6 +75,7 @@ GObject		*zif_array_index		(ZifArray		*array,
 						 guint			 index);
 void		 zif_array_set_mapping_func	(ZifArray		*array,
 						 ZifArrayMappingFuncCb	 mapping_func);
+void		 zif_array_empty		(ZifArray		*array);
 GPtrArray	*zif_array_get_array		(ZifArray		*array);
 
 G_END_DECLS

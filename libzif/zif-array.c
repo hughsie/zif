@@ -261,6 +261,22 @@ zif_array_set_mapping_func (ZifArray *array, ZifArrayMappingFuncCb mapping_func)
 }
 
 /**
+ * zif_array_empty:
+ * @array: A #ZifArray
+ *
+ * Empties the array.
+ *
+ * Since: 0.1.6
+ **/
+void
+zif_array_empty (ZifArray *array)
+{
+	g_return_if_fail (ZIF_IS_ARRAY (array));
+	g_ptr_array_set_size (array->priv->array, 0);
+	g_hash_table_remove_all (array->priv->hash);
+}
+
+/**
  * zif_array_finalize:
  **/
 static void

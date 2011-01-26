@@ -83,6 +83,15 @@ zif_store_meta_get_id (ZifStore *store)
 }
 
 /**
+ * zif_store_meta_load:
+ **/
+static gboolean
+zif_store_meta_load (ZifStore *store, ZifState *state, GError **error)
+{
+	return TRUE;
+}
+
+/**
  * zif_store_meta_finalize:
  **/
 static void
@@ -105,6 +114,7 @@ zif_store_meta_class_init (ZifStoreMetaClass *klass)
 
 	/* map */
 	store_class->get_id = zif_store_meta_get_id;
+	store_class->load = zif_store_meta_load;
 
 	g_type_class_add_private (klass, sizeof (ZifStoreMetaPrivate));
 }

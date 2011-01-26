@@ -37,6 +37,7 @@
 
 #include "zif-array.h"
 #include "zif-object-array.h"
+#include "zif-package-array.h"
 #include "zif-package.h"
 #include "zif-store.h"
 #include "zif-utils.h"
@@ -47,6 +48,7 @@ struct _ZifStorePrivate
 {
 	ZifArray		*packages;
 	gboolean		 is_local;
+	gboolean		 loaded;
 };
 
 G_DEFINE_TYPE (ZifStore, zif_store, G_TYPE_OBJECT)
@@ -244,20 +246,70 @@ zif_store_remove_packages (ZifStore *store,
 gboolean
 zif_store_load (ZifStore *store, ZifState *state, GError **error)
 {
+	gboolean ret = FALSE;
 	ZifStoreClass *klass = ZIF_STORE_GET_CLASS (store);
 
 	g_return_val_if_fail (ZIF_IS_STORE (store), FALSE);
 	g_return_val_if_fail (zif_state_valid (state), FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
-	/* superclass */
+	/* already loaded */
+	if (store->priv->loaded) {
+		ret = TRUE;
+		goto out;
+	}
+
+	/* all superclasses must implement load */
 	if (klass->load == NULL) {
 		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_NO_SUPPORT,
 				     "operation cannot be performed on this store");
-		return FALSE;
+		goto out;
 	}
 
-	return klass->load (store, state, error);
+	/* superclass */
+	ret = klass->load (store, state, error);
+	if (!ret)
+		goto out;
+
+	/* okay */
+	store->priv->loaded = TRUE;
+out:
+	return ret;
+}
+
+/**
+ * zif_store_unload:
+ * @store: A #ZifStore
+ * @error: A #GError, or %NULL
+ *
+ * Unloads the #ZifStore object.
+ *
+ * Return value: %TRUE for success, %FALSE otherwise
+ *
+ * Since: 0.1.6
+ **/
+gboolean
+zif_store_unload (ZifStore *store, GError **error)
+{
+	gboolean ret = FALSE;
+
+	g_return_val_if_fail (ZIF_IS_STORE (store), FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+	/* all superclasses must implement load */
+	if (!store->priv->loaded) {
+		g_set_error_literal (error,
+				     ZIF_STORE_ERROR,
+				     ZIF_STORE_ERROR_NO_SUPPORT,
+				     "no loaded");
+		goto out;
+	}
+
+	/* okay */
+	store->priv->loaded = FALSE;
+	zif_array_empty (store->priv->packages);
+out:
+	return ret;
 }
 
 /**
@@ -346,11 +398,14 @@ zif_store_search_name (ZifStore *store,
 		       GError **error)
 {
 	const gchar *package_id;
-	gboolean ret = FALSE;
+	gboolean ret;
 	gchar *split_name;
+	GError *error_local = NULL;
 	GPtrArray *array = NULL;
+	GPtrArray *array_tmp = NULL;
 	guint i, j;
 	ZifPackage *package;
+	ZifState *state_local = NULL;
 	ZifStoreClass *klass = ZIF_STORE_GET_CLASS (store);
 
 	g_return_val_if_fail (ZIF_IS_STORE (store), NULL);
@@ -364,36 +419,80 @@ zif_store_search_name (ZifStore *store,
 		goto out;
 	}
 
-	/* we just search a virtual in-memory-sack */
-	zif_state_set_number_steps (state, store->priv->packages->len);
-
-	/* check we have packages */
-	if (store->priv->packages->len == 0) {
-		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
-				     "cannot search name, no packages in meta sack");
-		goto out;
+	/* setup steps */
+	if (store->priv->loaded) {
+		zif_state_set_number_steps (state, 1);
+	} else {
+		ret = zif_state_set_steps (state,
+					   error,
+					   80, /* load */
+					   20, /* search */
+					   -1);
+		if (!ret)
+			goto out;
 	}
 
-	/* iterate list */
-	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
-	for (i=0;i<store->priv->packages->len;i++) {
-		package = ZIF_PACKAGE (zif_array_index (store->priv->packages, i));
-		package_id = zif_package_get_id (package);
-		split_name = zif_package_id_get_name (package_id);
-		for (j=0; search[j] != NULL; j++) {
-			if (strcasestr (split_name, search[j]) != NULL) {
-				g_ptr_array_add (array, g_object_ref (package));
-				break;
-			}
+	/* if not already loaded, load */
+	if (!store->priv->loaded) {
+		state_local = zif_state_get_child (state);
+		ret = zif_store_load (store, state_local, &error_local);
+		if (!ret) {
+			g_set_error (error,
+				     ZIF_STORE_ERROR,
+				     ZIF_STORE_ERROR_FAILED,
+				     "failed to load package store: %s",
+				     error_local->message);
+			g_error_free (error_local);
+			goto out;
 		}
-		g_free (split_name);
 
 		/* this section done */
 		ret = zif_state_done (state, error);
 		if (!ret)
 			goto out;
 	}
+
+	/* check we have packages */
+	if (store->priv->packages->len == 0) {
+		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+				     "no packages in local sack");
+		goto out;
+	}
+
+	/* setup state with the correct number of steps */
+	state_local = zif_state_get_child (state);
+	zif_state_set_number_steps (state_local, store->priv->packages->len);
+
+	/* iterate list */
+	array_tmp = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
+	for (i=0;i<store->priv->packages->len;i++) {
+		package = ZIF_PACKAGE (zif_array_index (store->priv->packages, i));
+		package_id = zif_package_get_id (package);
+		split_name = zif_package_id_get_name (package_id);
+		for (j=0; search[j] != NULL; j++) {
+			if (strcasestr (split_name, search[j]) != NULL) {
+				g_ptr_array_add (array_tmp, g_object_ref (package));
+				break;
+			}
+		}
+		g_free (split_name);
+
+		/* this section done */
+		ret = zif_state_done (state_local, error);
+		if (!ret)
+			goto out;
+	}
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* success */
+	array = g_ptr_array_ref (array_tmp);
 out:
+	if (array_tmp != NULL)
+		g_ptr_array_unref (array_tmp);
 	return array;
 }
 
@@ -416,6 +515,14 @@ zif_store_search_category (ZifStore *store,
 			   ZifState *state,
 			   GError **error)
 {
+	const gchar *category;
+	gboolean ret;
+	GError *error_local = NULL;
+	GPtrArray *array = NULL;
+	guint i, j;
+	ZifPackage *package;
+	ZifState *state_local = NULL;
+	ZifState *state_loop = NULL;
 	ZifStoreClass *klass = ZIF_STORE_GET_CLASS (store);
 
 	g_return_val_if_fail (ZIF_IS_STORE (store), NULL);
@@ -424,13 +531,82 @@ zif_store_search_category (ZifStore *store,
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* superclass */
-	if (klass->search_category == NULL) {
-		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_NO_SUPPORT,
-				     "operation cannot be performed on this store");
-		return NULL;
+	if (klass->search_category != NULL) {
+		array = klass->search_category (store, search, state, error);
+		goto out;
 	}
 
-	return klass->search_category (store, search, state, error);
+	/* setup steps */
+	if (store->priv->loaded) {
+		zif_state_set_number_steps (state, 1);
+	} else {
+		ret = zif_state_set_steps (state,
+					   error,
+					   80, /* load */
+					   20, /* search */
+					   -1);
+		if (!ret)
+			goto out;
+	}
+
+	/* if not already loaded, load */
+	if (!store->priv->loaded) {
+		state_local = zif_state_get_child (state);
+		ret = zif_store_load (store, state_local, &error_local);
+		if (!ret) {
+			g_set_error (error,
+				     ZIF_STORE_ERROR,
+				     ZIF_STORE_ERROR_FAILED,
+				     "failed to load package store: %s",
+				     error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+
+		/* this section done */
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
+	}
+
+	/* check we have packages */
+	if (store->priv->packages->len == 0) {
+		g_set_error_literal (error,
+				     ZIF_STORE_ERROR,
+				     ZIF_STORE_ERROR_ARRAY_IS_EMPTY,
+				     "no packages in local sack");
+		goto out;
+	}
+
+	/* setup state with the correct number of steps */
+	state_local = zif_state_get_child (state);
+	zif_state_set_number_steps (state_local, store->priv->packages->len);
+
+	/* iterate list */
+	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
+	for (i=0;i<store->priv->packages->len;i++) {
+		package = ZIF_PACKAGE (zif_array_index (store->priv->packages, i));
+		state_loop = zif_state_get_child (state_local);
+		category = zif_package_get_category (package, state_loop, NULL);
+		for (j=0; search[j] != NULL; j++) {
+			if (g_strcmp0 (category, search[j]) == 0) {
+				g_ptr_array_add (array, g_object_ref (package));
+				break;
+			}
+		}
+
+		/* this section done */
+		ret = zif_state_done (state_local, error);
+		if (!ret)
+			goto out;
+	}
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+out:
+	return array;
 }
 
 /**
@@ -452,6 +628,16 @@ zif_store_search_details (ZifStore *store,
 			  ZifState *state,
 			  GError **error)
 {
+	const gchar *description;
+	const gchar *package_id;
+	gboolean ret;
+	gchar *split_name;
+	GError *error_local = NULL;
+	GPtrArray *array = NULL;
+	guint i, j;
+	ZifPackage *package;
+	ZifState *state_local = NULL;
+	ZifState *state_loop = NULL;
 	ZifStoreClass *klass = ZIF_STORE_GET_CLASS (store);
 
 	g_return_val_if_fail (ZIF_IS_STORE (store), NULL);
@@ -460,13 +646,88 @@ zif_store_search_details (ZifStore *store,
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* superclass */
-	if (klass->search_details == NULL) {
-		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_NO_SUPPORT,
-				     "operation cannot be performed on this store");
-		return NULL;
+	if (klass->search_details != NULL) {
+		array = klass->search_details (store, search, state, error);
+		goto out;
 	}
 
-	return klass->search_details (store, search, state, error);
+	/* depending if we are loaded or not */
+	if (store->priv->loaded) {
+		zif_state_set_number_steps (state, 1);
+	} else {
+		ret = zif_state_set_steps (state,
+					   error,
+					   10, /* load */
+					   90, /* search */
+					   -1);
+		if (!ret)
+			goto out;
+	}
+
+	/* if not already loaded, load */
+	if (!store->priv->loaded) {
+		state_local = zif_state_get_child (state);
+		ret = zif_store_load (store, state_local, &error_local);
+		if (!ret) {
+			g_set_error (error,
+				     ZIF_STORE_ERROR,
+				     ZIF_STORE_ERROR_FAILED,
+				     "failed to load package store: %s",
+				     error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+
+		/* this section done */
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
+	}
+
+	/* check we have packages */
+	if (store->priv->packages->len == 0) {
+		g_set_error_literal (error,
+				     ZIF_STORE_ERROR,
+				     ZIF_STORE_ERROR_ARRAY_IS_EMPTY,
+				     "no packages in local sack");
+		goto out;
+	}
+
+	/* setup state with the correct number of steps */
+	state_local = zif_state_get_child (state);
+	zif_state_set_number_steps (state_local, store->priv->packages->len);
+
+	/* iterate list */
+	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
+	for (i=0;i<store->priv->packages->len;i++) {
+		package = ZIF_PACKAGE (zif_array_index (store->priv->packages, i));
+		package_id = zif_package_get_id (package);
+		state_loop = zif_state_get_child (state_local);
+		description = zif_package_get_description (package, state_loop, NULL);
+		split_name = zif_package_id_get_name (package_id);
+		for (j=0; search[j] != NULL; j++) {
+			if (strcasestr (split_name, search[j]) != NULL) {
+				g_ptr_array_add (array, g_object_ref (package));
+				break;
+			} else if (strcasestr (description, search[j]) != NULL) {
+				g_ptr_array_add (array, g_object_ref (package));
+				break;
+			}
+		}
+		g_free (split_name);
+
+		/* this section done */
+		ret = zif_state_done (state_local, error);
+		if (!ret)
+			goto out;
+	}
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+out:
+	return array;
 }
 
 /**
@@ -483,8 +744,20 @@ zif_store_search_details (ZifStore *store,
  * Since: 0.1.0
  **/
 GPtrArray *
-zif_store_search_group (ZifStore *store, gchar **search, ZifState *state, GError **error)
+zif_store_search_group (ZifStore *store,
+			gchar **search,
+			ZifState *state,
+			GError **error)
 {
+	const gchar *group;
+	const gchar *group_tmp;
+	gboolean ret;
+	GError *error_local = NULL;
+	GPtrArray *array = NULL;
+	guint i, j;
+	ZifPackage *package;
+	ZifState *state_local = NULL;
+	ZifState *state_loop = NULL;
 	ZifStoreClass *klass = ZIF_STORE_GET_CLASS (store);
 
 	g_return_val_if_fail (ZIF_IS_STORE (store), NULL);
@@ -493,13 +766,83 @@ zif_store_search_group (ZifStore *store, gchar **search, ZifState *state, GError
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* superclass */
-	if (klass->search_group == NULL) {
-		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_NO_SUPPORT,
-				     "operation cannot be performed on this store");
-		return NULL;
+	if (klass->search_group != NULL) {
+		array = klass->search_group (store, search, state, error);
+		goto out;
 	}
 
-	return klass->search_group (store, search, state, error);
+	/* setup steps */
+	if (store->priv->loaded) {
+		zif_state_set_number_steps (state, 1);
+	} else {
+		ret = zif_state_set_steps (state,
+					   error,
+					   80, /* load */
+					   20, /* search */
+					   -1);
+		if (!ret)
+			goto out;
+	}
+
+	/* if not already loaded, load */
+	if (!store->priv->loaded) {
+		state_local = zif_state_get_child (state);
+		ret = zif_store_load (store, state_local, &error_local);
+		if (!ret) {
+			g_set_error (error,
+				     ZIF_STORE_ERROR,
+				     ZIF_STORE_ERROR_FAILED,
+				     "failed to load package store: %s",
+				     error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+
+		/* this section done */
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
+	}
+
+	/* check we have packages */
+	if (store->priv->packages->len == 0) {
+		g_set_error_literal (error,
+				     ZIF_STORE_ERROR,
+				     ZIF_STORE_ERROR_ARRAY_IS_EMPTY,
+				     "no packages in local sack");
+		goto out;
+	}
+
+	/* setup state with the correct number of steps */
+	state_local = zif_state_get_child (state);
+	zif_state_set_number_steps (state_local, store->priv->packages->len);
+
+	/* iterate list */
+	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
+	for (i=0;i<store->priv->packages->len;i++) {
+		package = ZIF_PACKAGE (zif_array_index (store->priv->packages, i));
+		for (j=0; search[j] != NULL; j++) {
+			group = search[j];
+			state_loop = zif_state_get_child (state_local);
+			group_tmp = zif_package_get_group (package, state_loop, NULL);
+			if (g_strcmp0 (group, group_tmp) == 0) {
+				g_ptr_array_add (array, g_object_ref (package));
+				break;
+			}
+		}
+
+		/* this section done */
+		ret = zif_state_done (state_local, error);
+		if (!ret)
+			goto out;
+	}
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+out:
+	return array;
 }
 
 /**
@@ -516,8 +859,21 @@ zif_store_search_group (ZifStore *store, gchar **search, ZifState *state, GError
  * Since: 0.1.0
  **/
 GPtrArray *
-zif_store_search_file (ZifStore *store, gchar **search, ZifState *state, GError **error)
+zif_store_search_file (ZifStore *store,
+		       gchar **search,
+		       ZifState *state,
+		       GError **error)
 {
+	const gchar *filename;
+	gboolean ret;
+	GError *error_local = NULL;
+	GPtrArray *array = NULL;
+	GPtrArray *array_tmp = NULL;
+	GPtrArray *files;
+	guint i, j, l;
+	ZifPackage *package;
+	ZifState *state_local = NULL;
+	ZifState *state_loop = NULL;
 	ZifStoreClass *klass = ZIF_STORE_GET_CLASS (store);
 
 	g_return_val_if_fail (ZIF_IS_STORE (store), NULL);
@@ -526,13 +882,101 @@ zif_store_search_file (ZifStore *store, gchar **search, ZifState *state, GError 
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* superclass */
-	if (klass->search_file == NULL) {
-		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_NO_SUPPORT,
-				     "operation cannot be performed on this store");
-		return NULL;
+	if (klass->search_file != NULL) {
+		array = klass->search_file (store, search, state, error);
+		goto out;
 	}
 
-	return klass->search_file (store, search, state, error);
+	/* setup steps */
+	if (store->priv->loaded) {
+		zif_state_set_number_steps (state, 1);
+	} else {
+		ret = zif_state_set_steps (state,
+					   error,
+					   80, /* load */
+					   20, /* search */
+					   -1);
+		if (!ret)
+			goto out;
+	}
+
+	/* if not already loaded, load */
+	if (!store->priv->loaded) {
+		state_local = zif_state_get_child (state);
+		ret = zif_store_load (store, state_local, &error_local);
+		if (!ret) {
+			g_set_error (error,
+				     ZIF_STORE_ERROR,
+				     ZIF_STORE_ERROR_FAILED,
+				     "failed to load package store: %s",
+				     error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+
+		/* this section done */
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
+	}
+
+	/* check we have packages */
+	if (store->priv->packages->len == 0) {
+		g_set_error_literal (error,
+				     ZIF_STORE_ERROR,
+				     ZIF_STORE_ERROR_ARRAY_IS_EMPTY,
+				     "no packages in local sack");
+		goto out;
+	}
+	g_debug ("using %i local packages", store->priv->packages->len);
+
+	/* setup state with the correct number of steps */
+	state_local = zif_state_get_child (state);
+	zif_state_set_number_steps (state_local, store->priv->packages->len);
+
+	/* iterate list */
+	array_tmp = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
+	for (i=0;i<store->priv->packages->len;i++) {
+		package = ZIF_PACKAGE (zif_array_index (store->priv->packages, i));
+		state_loop = zif_state_get_child (state_local);
+		files = zif_package_get_files (package, state_loop, &error_local);
+		if (files == NULL) {
+			g_set_error (error,
+				     ZIF_STORE_ERROR,
+				     ZIF_STORE_ERROR_FAILED,
+				     "failed to get file lists: %s",
+				     error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+		for (j=0; j<files->len; j++) {
+			filename = g_ptr_array_index (files, j);
+			for (l=0; search[l] != NULL; l++) {
+				if (g_strcmp0 (search[l], filename) == 0) {
+					g_ptr_array_add (array_tmp, g_object_ref (package));
+					break;
+				}
+			}
+		}
+		g_ptr_array_unref (files);
+
+		/* this section done */
+		ret = zif_state_done (state_local, error);
+		if (!ret)
+			goto out;
+	}
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* success */
+	array = g_ptr_array_ref (array_tmp);
+out:
+	if (array_tmp != NULL)
+		g_ptr_array_unref (array_tmp);
+	return array;
 }
 
 /**
@@ -555,11 +999,13 @@ zif_store_resolve (ZifStore *store,
 		   GError **error)
 {
 	const gchar *package_id;
-	gboolean ret = FALSE;
+	gboolean ret;
 	gchar *split_name;
+	GError *error_local = NULL;
 	GPtrArray *array = NULL;
 	guint i, j;
 	ZifPackage *package;
+	ZifState *state_local = NULL;
 	ZifStoreClass *klass = ZIF_STORE_GET_CLASS (store);
 
 	g_return_val_if_fail (ZIF_IS_STORE (store), NULL);
@@ -573,15 +1019,51 @@ zif_store_resolve (ZifStore *store,
 		goto out;
 	}
 
+	/* setup steps */
+	if (store->priv->loaded) {
+		zif_state_set_number_steps (state, 1);
+	} else {
+		ret = zif_state_set_steps (state,
+					   error,
+					   80, /* load */
+					   20, /* search */
+					   -1);
+		if (!ret)
+			goto out;
+	}
+
+	/* if not already loaded, load */
+	if (!store->priv->loaded) {
+		state_local = zif_state_get_child (state);
+		ret = zif_store_load (store, state_local, &error_local);
+		if (!ret) {
+			g_set_error (error,
+				     ZIF_STORE_ERROR,
+				     ZIF_STORE_ERROR_FAILED,
+				     "failed to load package store: %s",
+				     error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+
+		/* this section done */
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
+	}
+
 	/* check we have packages */
 	if (store->priv->packages->len == 0) {
-		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_ARRAY_IS_EMPTY,
-				     "cannot resolve, no packages in meta sack");
+		g_set_error_literal (error,
+				     ZIF_STORE_ERROR,
+				     ZIF_STORE_ERROR_ARRAY_IS_EMPTY,
+				     "no packages in local sack");
 		goto out;
 	}
 
-	/* we just search a virtual in-memory-sack */
-	zif_state_set_number_steps (state, store->priv->packages->len);
+	/* setup state with the correct number of steps */
+	state_local = zif_state_get_child (state);
+	zif_state_set_number_steps (state_local, store->priv->packages->len);
 
 	/* iterate list */
 	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
@@ -598,14 +1080,20 @@ zif_store_resolve (ZifStore *store,
 		g_free (split_name);
 
 		/* this section done */
-		ret = zif_state_done (state, error);
+		ret = zif_state_done (state_local, error);
 		if (!ret)
 			goto out;
 	}
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 out:
 	return array;
 }
 
+#if 0
 /**
  * zif_store_what_depends:
  **/
@@ -696,6 +1184,128 @@ zif_store_what_depends (ZifStore *store,
 		if (!ret)
 			goto out;
 	}
+
+	/* success */
+	array = g_ptr_array_ref (array_tmp);
+out:
+	if (array_tmp != NULL)
+		g_ptr_array_unref (array_tmp);
+	return array;
+}
+#endif
+
+/**
+ * zif_store_what_depends:
+ **/
+static GPtrArray *
+zif_store_what_depends (ZifStore *store,
+			ZifPackageEnsureType type,
+			GPtrArray *depends,
+			ZifState *state,
+			GError **error)
+{
+	GPtrArray *array = NULL;
+	GPtrArray *array_tmp = NULL;
+	GPtrArray *array_pkgs = NULL;
+	GPtrArray *depends_tmp;
+	guint i;
+	ZifDepend *depend_tmp;
+	GError *error_local = NULL;
+	gboolean ret;
+	ZifState *state_local = NULL;
+
+	g_return_val_if_fail (ZIF_IS_STORE (store), NULL);
+	g_return_val_if_fail (depends != NULL, NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
+
+	/* setup steps */
+	if (store->priv->loaded) {
+		zif_state_set_number_steps (state, 1);
+	} else {
+		ret = zif_state_set_steps (state,
+					   error,
+					   80, /* load */
+					   20, /* search */
+					   -1);
+		if (!ret)
+			goto out;
+	}
+
+	/* if not already loaded, load */
+	if (!store->priv->loaded) {
+		state_local = zif_state_get_child (state);
+		ret = zif_store_load (store, state_local, &error_local);
+		if (!ret) {
+			g_set_error (error,
+				     ZIF_STORE_ERROR,
+				     ZIF_STORE_ERROR_FAILED,
+				     "failed to load package store: %s",
+				     error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+
+		/* this section done */
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
+	}
+
+	/* check we have packages */
+	if (store->priv->packages->len == 0) {
+		g_set_error_literal (error,
+				     ZIF_STORE_ERROR,
+				     ZIF_STORE_ERROR_ARRAY_IS_EMPTY,
+				     "no packages in local sack");
+		goto out;
+	}
+
+	/* just use the helper function */
+	state_local = zif_state_get_child (state);
+	array_tmp = zif_object_array_new ();
+	for (i=0; i<depends->len; i++) {
+		depend_tmp = g_ptr_array_index (depends, i);
+		array_pkgs = zif_array_get_array (store->priv->packages);
+		if (type == ZIF_PACKAGE_ENSURE_TYPE_PROVIDES) {
+			ret = zif_package_array_provide (array_pkgs,
+							 depend_tmp, NULL,
+							 &depends_tmp,
+							 state_local,
+							 error);
+		} else if (type == ZIF_PACKAGE_ENSURE_TYPE_REQUIRES) {
+			ret = zif_package_array_require (array_pkgs,
+							 depend_tmp, NULL,
+							 &depends_tmp,
+							 state_local,
+							 error);
+		} else if (type == ZIF_PACKAGE_ENSURE_TYPE_CONFLICTS) {
+			ret = zif_package_array_conflict (array_pkgs,
+							  depend_tmp, NULL,
+							  &depends_tmp,
+							  state_local,
+							  error);
+		} else if (type == ZIF_PACKAGE_ENSURE_TYPE_OBSOLETES) {
+			ret = zif_package_array_obsolete (array_pkgs,
+							  depend_tmp, NULL,
+							  &depends_tmp,
+							  state_local,
+							  error);
+		} else {
+			g_assert_not_reached ();
+		}
+		g_ptr_array_unref (array_pkgs);
+		if (!ret)
+			goto out;
+
+		/* add results */
+		zif_object_array_add_array (array_tmp, depends_tmp);
+		g_ptr_array_unref (depends_tmp);
+	}
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 
 	/* success */
 	array = g_ptr_array_ref (array_tmp);
@@ -862,6 +1472,10 @@ zif_store_get_packages (ZifStore *store,
 			ZifState *state,
 			GError **error)
 {
+	gboolean ret;
+	GError *error_local = NULL;
+	GPtrArray *array = NULL;
+	ZifState *state_local = NULL;
 	ZifStoreClass *klass = ZIF_STORE_GET_CLASS (store);
 
 	g_return_val_if_fail (ZIF_IS_STORE (store), NULL);
@@ -870,10 +1484,52 @@ zif_store_get_packages (ZifStore *store,
 
 	/* superclass */
 	if (klass->get_packages != NULL) {
-		return klass->get_packages (store, state, error);
+		array = klass->get_packages (store, state, error);
+		goto out;
 	}
 
-	return zif_array_get_array (store->priv->packages);
+	/* setup steps */
+	if (store->priv->loaded) {
+		zif_state_set_number_steps (state, 1);
+	} else {
+		ret = zif_state_set_steps (state,
+					   error,
+					   99, /* load */
+					   1, /* get copy */
+					   -1);
+		if (!ret)
+			goto out;
+	}
+
+	/* if not already loaded, load */
+	if (!store->priv->loaded) {
+		state_local = zif_state_get_child (state);
+		ret = zif_store_load (store, state_local, &error_local);
+		if (!ret) {
+			g_set_error (error,
+				     ZIF_STORE_ERROR,
+				     ZIF_STORE_ERROR_FAILED,
+				     "failed to load package store: %s",
+				     error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+
+		/* this section done */
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
+	}
+
+	/* just get refcounted copy */
+	array = zif_array_get_array (store->priv->packages);
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+out:
+	return array;
 }
 
 /**
@@ -896,11 +1552,13 @@ zif_store_find_package (ZifStore *store,
 			GError **error)
 {
 	const gchar *package_id_tmp;
-	gboolean ret = FALSE;
+	gboolean ret;
+	GError *error_local = NULL;
 	GPtrArray *array = NULL;
 	guint i;
 	ZifPackage *package = NULL;
 	ZifPackage *package_tmp = NULL;
+	ZifState *state_local = NULL;
 	ZifStoreClass *klass = ZIF_STORE_GET_CLASS (store);
 
 	g_return_val_if_fail (ZIF_IS_STORE (store), NULL);
@@ -910,19 +1568,63 @@ zif_store_find_package (ZifStore *store,
 
 	/* superclass */
 	if (klass->find_package != NULL) {
-		package = klass->find_package (store, package_id, state, error);
+		package = klass->find_package (store,
+					       package_id,
+					       state,
+					       error);
 		goto out;
+	}
+
+	/* setup steps */
+	if (store->priv->loaded) {
+		zif_state_set_number_steps (state, 1);
+	} else {
+		ret = zif_state_set_steps (state,
+					   error,
+					   80, /* load */
+					   20, /* search */
+					   -1);
+		if (!ret)
+			goto out;
+	}
+
+	/* if not already loaded, load */
+	if (!store->priv->loaded) {
+		state_local = zif_state_get_child (state);
+		ret = zif_store_load (store,
+				      state_local,
+				      &error_local);
+		if (!ret) {
+			g_set_error (error,
+				     ZIF_STORE_ERROR,
+				     ZIF_STORE_ERROR_FAILED,
+				     "failed to load package store: %s",
+				     error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+
+		/* this section done */
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
 	}
 
 	/* check we have packages */
 	if (store->priv->packages->len == 0) {
-		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_ARRAY_IS_EMPTY,
-				     "cannot find package, no packages in meta sack");
+		g_set_error_literal (error,
+				     ZIF_STORE_ERROR,
+				     ZIF_STORE_ERROR_ARRAY_IS_EMPTY,
+				     "no packages in local sack");
 		goto out;
 	}
 
-	/* we just search a virtual in-memory-sack */
-	zif_state_set_number_steps (state, store->priv->packages->len);
+	/* setup state with the correct number of steps */
+	state_local = zif_state_get_child (state);
+
+	/* setup state */
+	zif_state_set_number_steps (state_local,
+				    store->priv->packages->len);
 
 	/* iterate list */
 	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
@@ -933,30 +1635,38 @@ zif_store_find_package (ZifStore *store,
 			g_ptr_array_add (array, g_object_ref (package_tmp));
 
 		/* this section done */
-		ret = zif_state_done (state, error);
+		ret = zif_state_done (state_local, error);
 		if (!ret)
 			goto out;
 	}
 
 	/* nothing */
 	if (array->len == 0) {
-		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED_TO_FIND,
+		g_set_error_literal (error,
+				     ZIF_STORE_ERROR,
+				     ZIF_STORE_ERROR_FAILED_TO_FIND,
 				     "failed to find package");
 		goto out;
 	}
 
 	/* more than one match */
 	if (array->len > 1) {
-		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_MULTIPLE_MATCHES,
+		g_set_error_literal (error,
+				     ZIF_STORE_ERROR,
+				     ZIF_STORE_ERROR_MULTIPLE_MATCHES,
 				     "more than one match");
 		goto out;
 	}
 
 	/* return ref to package */
 	package = g_object_ref (g_ptr_array_index (array, 0));
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 out:
-	if (array != NULL)
-		g_ptr_array_unref (array);
+	g_ptr_array_unref (array);
 	return package;
 }
 
