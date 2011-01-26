@@ -100,7 +100,7 @@ zif_manifest_add_package_to_store (ZifManifest *manifest,
 	GError *error_local = NULL;
 
 	/* add to store */
-	ret = zif_store_meta_add_package (ZIF_STORE_META (store), package, &error_local);
+	ret = zif_store_add_package (store, package, &error_local);
 	if (!ret) {
 		g_set_error (error,
 			     ZIF_MANIFEST_ERROR,
@@ -777,7 +777,7 @@ zif_manifest_check (ZifManifest *manifest,
 
 	/* add the output of the resolve to the fake local repo */
 	resolve_install = zif_transaction_get_install (transaction);
-	ret = zif_store_meta_add_packages (ZIF_STORE_META (local), resolve_install, &error_local);
+	ret = zif_store_add_packages (local, resolve_install, &error_local);
 	if (!ret) {
 		g_set_error (error,
 			     ZIF_MANIFEST_ERROR,
@@ -790,7 +790,7 @@ zif_manifest_check (ZifManifest *manifest,
 
 	/* remove the output of the resolve to the fake local repo */
 	resolve_remove = zif_transaction_get_remove (transaction);
-	ret = zif_store_meta_remove_packages (ZIF_STORE_META (local), resolve_remove, &error_local);
+	ret = zif_store_remove_packages (local, resolve_remove, &error_local);
 	if (!ret) {
 		g_set_error (error,
 			     ZIF_MANIFEST_ERROR,

@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*-
  *
- * Copyright (C) 2008-2010 Richard Hughes <richard@hughsie.com>
+ * Copyright (C) 2008-2011 Richard Hughes <richard@hughsie.com>
  *
  * Licensed under the GNU General Public License Version 2
  *
@@ -136,6 +136,18 @@ typedef enum {
 GType		 zif_store_get_type		(void);
 GQuark		 zif_store_error_quark		(void);
 ZifStore	*zif_store_new			(void);
+gboolean	 zif_store_add_package		(ZifStore		*store,
+						 ZifPackage		*package,
+						 GError			**error);
+gboolean	 zif_store_add_packages		(ZifStore		*store,
+						 GPtrArray		*array,
+						 GError			**error);
+gboolean	 zif_store_remove_package	(ZifStore		*store,
+						 ZifPackage		*package,
+						 GError			**error);
+gboolean	 zif_store_remove_packages	(ZifStore		*store,
+						 GPtrArray		*array,
+						 GError			**error);
 gboolean	 zif_store_load			(ZifStore		*store,
 						 ZifState		*state,
 						 GError			**error);

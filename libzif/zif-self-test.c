@@ -2495,12 +2495,12 @@ zif_store_meta_func (void)
 	g_assert_cmpstr (zif_package_get_id (pkg), ==, "test;0.1-1%{?dist};i386;meta");
 
 	/* add to array */
-	ret = zif_store_meta_add_package (ZIF_STORE_META (store), pkg, &error);
+	ret = zif_store_add_package (store, pkg, &error);
 	g_assert_no_error (error);
 	g_assert (ret);
 
 	/* add to array, again */
-	ret = zif_store_meta_add_package (ZIF_STORE_META (store), pkg, &error);
+	ret = zif_store_add_package (store, pkg, &error);
 	g_assert_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED);
 	g_assert (!ret);
 	g_clear_error (&error);
@@ -2523,12 +2523,12 @@ zif_store_meta_func (void)
 	g_ptr_array_unref (array);
 
 	/* delete from array */
-	ret = zif_store_meta_remove_package (ZIF_STORE_META (store), pkg, &error);
+	ret = zif_store_remove_package (store, pkg, &error);
 	g_assert_no_error (error);
 	g_assert (ret);
 
 	/* delete from array, again */
-	ret = zif_store_meta_remove_package (ZIF_STORE_META (store), pkg, &error);
+	ret = zif_store_remove_package (store, pkg, &error);
 	g_assert_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED);
 	g_assert (!ret);
 	g_clear_error (&error);
