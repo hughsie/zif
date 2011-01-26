@@ -3961,10 +3961,11 @@ zif_transaction_get_problem_str (rpmProblem prob)
 				       diskspace,
 				       generic_str);
 		break;
-//	case RPMPROB_OBSOLETES:
-//		str = g_strdup_printf ("package %s is obsoleted by ...",
-//				       pkg_nevr_alt);
-//		break;
+	case RPMPROB_OBSOLETES:
+		str = g_strdup_printf ("package %s is obsoleted by %s",
+				       pkg_nevr,
+				       pkg_nevr_alt);
+		break;
 	}
 	return str;
 }
