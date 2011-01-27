@@ -1038,6 +1038,10 @@ zif_package_ensure_type_to_string (ZifPackageEnsureType type)
 		return "obsoletes";
 	if (type == ZIF_PACKAGE_ENSURE_TYPE_CONFLICTS)
 		return "conflicts";
+	if (type == ZIF_PACKAGE_ENSURE_TYPE_CATEGORY)
+		return "category";
+	if (type == ZIF_PACKAGE_ENSURE_TYPE_CACHE_FILENAME)
+		return "cache-filename";
 	return "unknown";
 }
 
