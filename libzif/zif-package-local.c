@@ -454,6 +454,13 @@ zif_package_local_ensure_data (ZifPackage *pkg,
 			g_ptr_array_unref (versions);
 			g_ptr_array_unref (flags);
 		}
+	} else {
+		g_set_error (error,
+			     ZIF_PACKAGE_ERROR,
+			     ZIF_PACKAGE_ERROR_NO_SUPPORT,
+			     "Ensure type '%s' not supported on ZifPackageLocal",
+			     zif_package_ensure_type_to_string (type));
+		goto out;
 	}
 
 	/* success */

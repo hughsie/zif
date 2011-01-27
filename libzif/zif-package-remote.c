@@ -577,8 +577,10 @@ zif_package_remote_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, ZifS
 		zif_package_set_group (pkg, tmp);
 		zif_string_unref (tmp);
 	} else {
-		g_set_error (error, 1, 0,
-			     "Getting ensure type '%s' not supported on a ZifPackageRemote",
+		g_set_error (error,
+			     ZIF_PACKAGE_ERROR,
+			     ZIF_PACKAGE_ERROR_NO_SUPPORT,
+			     "Ensure type '%s' not supported on ZifPackageRemote",
 			     zif_package_ensure_type_to_string (type));
 		goto out;
 	}
