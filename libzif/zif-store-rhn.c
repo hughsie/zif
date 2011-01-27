@@ -48,7 +48,11 @@ struct _ZifStoreRhnPrivate
 	gchar			*session_key;
 	SoupSession		*session;
 	ZifConfig		*config;
+	ZifPackageRhnPrecache	 precache;
 };
+
+/* picked from thin air */
+#define ZIF_STORE_RHN_MAX_THREADS	50
 
 G_DEFINE_TYPE (ZifStoreRhn, zif_store_rhn, ZIF_TYPE_STORE)
 static gpointer zif_store_rhn_object = NULL;
@@ -89,6 +93,25 @@ zif_store_rhn_set_channel (ZifStoreRhn *store,
 	g_return_if_fail (channel != NULL);
 	g_free (store->priv->channel);
 	store->priv->channel = g_strdup (channel);
+}
+
+/**
+ * zif_store_rhn_set_precache:
+ * @store: A #ZifStoreRhn
+ * @precache: The data to cache, e.g. %ZIF_PACKAGE_RHN_PRECACHE_GET_DETAILS
+ *
+ * Sets the precache policy. Precaching slows down zif_store_load() but
+ * dramatically speeds up any data access because each request is
+ * multithreaded on up to 50 threads at once.
+ *
+ * Since: 0.1.6
+ **/
+void
+zif_store_rhn_set_precache (ZifStoreRhn *store,
+			    ZifPackageRhnPrecache precache)
+{
+	g_return_if_fail (ZIF_IS_STORE_RHN (store));
+	store->priv->precache = precache;
 }
 
 /**
@@ -332,7 +355,7 @@ zif_store_rhn_get_session_key (ZifStoreRhn *store)
 /**
  * zif_store_rhn_add_package:
  **/
-static gboolean
+static ZifPackage *
 zif_store_rhn_add_package (ZifStore *store,
 			   GHashTable *hash,
 			   GError **error)
@@ -346,6 +369,7 @@ zif_store_rhn_add_package (ZifStore *store,
 	GValue *rhn_id;
 	GValue *version;
 	ZifPackage *package = NULL;
+	ZifPackage *package_tmp = NULL;
 	ZifStoreRhn *rhn = ZIF_STORE_RHN (store);
 
 	/* generate the id */
@@ -362,29 +386,60 @@ zif_store_rhn_add_package (ZifStore *store,
 					"rhn");
 
 	/* create the package */
-	package = zif_package_rhn_new ();
-	ret = zif_package_set_id (package, id, error);
+	package_tmp = zif_package_rhn_new ();
+	ret = zif_package_set_id (package_tmp, id, error);
 	if (!ret)
 		goto out;
 
 	/* add RHN specific attributes */
 	rhn_id = g_hash_table_lookup (hash, "package_id");
-	zif_package_rhn_set_id (ZIF_PACKAGE_RHN (package),
+	zif_package_rhn_set_id (ZIF_PACKAGE_RHN (package_tmp),
 				g_value_get_int (rhn_id));
-	zif_package_rhn_set_session_key (ZIF_PACKAGE_RHN (package),
+	zif_package_rhn_set_session_key (ZIF_PACKAGE_RHN (package_tmp),
 					 rhn->priv->session_key);
-	zif_package_rhn_set_server (ZIF_PACKAGE_RHN (package),
+	zif_package_rhn_set_server (ZIF_PACKAGE_RHN (package_tmp),
 				    rhn->priv->server);
 
 	/* add it to the generic store */
-	ret = zif_store_add_package (store, package, error);
+	ret = zif_store_add_package (store, package_tmp, error);
 	if (!ret)
 		goto out;
+
+	/* success */
+	package = g_object_ref (package_tmp);
 out:
-	if (package != NULL)
-		g_object_unref (package);
+	if (package_tmp != NULL)
+		g_object_unref (package_tmp);
 	g_free (id);
-	return ret;
+	return package;
+}
+
+/**
+ * zif_store_rhn_coldplug_cb:
+ **/
+static void
+zif_store_rhn_coldplug_cb (ZifPackage *package, ZifStoreRhn *rhn)
+{
+	gboolean ret;
+	GError *error = NULL;
+	GTimer *timer = g_timer_new ();
+
+	/* coldplug */
+	ret = zif_package_rhn_precache (ZIF_PACKAGE_RHN (package),
+					rhn->priv->precache,
+					&error);
+	if (!ret) {
+		g_warning ("failed to precache %s: %s",
+			   zif_package_get_printable (package),
+			   error->message);
+		g_error_free (error);
+		goto out;
+	}
+	g_debug ("coldplug of %s took %fms",
+		 zif_package_get_printable (package),
+		 g_timer_elapsed (timer, NULL) * 1000);
+out:
+	g_timer_destroy (timer);
 }
 
 /**
@@ -398,9 +453,11 @@ zif_store_rhn_load (ZifStore *store,
 	gboolean ret = TRUE;
 	GError *error_local = NULL;
 	GHashTable *hash;
+	GThreadPool *pool = NULL;
 	guint i;
 	GValueArray *array = NULL;
 	SoupMessage *msg = NULL;
+	ZifPackage *package;
 	ZifStoreRhn *rhn = ZIF_STORE_RHN (store);
 
 	g_return_val_if_fail (ZIF_IS_STORE_RHN (store), FALSE);
@@ -477,13 +534,25 @@ zif_store_rhn_load (ZifStore *store,
 	if (!ret)
 		goto out;
 
+	/* optionally coldplug all the RHN packages */
+	pool = g_thread_pool_new ((GFunc) zif_store_rhn_coldplug_cb,
+				  rhn, ZIF_STORE_RHN_MAX_THREADS, TRUE, NULL);
+
 	/* get packages */
 	g_debug ("got %i elements", array->n_values);
 	for (i=0; i<array->n_values; i++) {
 		hash = g_value_get_boxed (&array->values[i]);
-		ret = zif_store_rhn_add_package (store, hash, error);
-		if (!ret)
+		package = zif_store_rhn_add_package (store, hash, error);
+		if (package == NULL) {
+			ret = FALSE;
 			goto out;
+		}
+
+		/* coldplug this */
+		if (rhn->priv->precache > 0)
+			g_thread_pool_push (pool, package, NULL);
+
+		g_object_unref (package);
 	}
 
 	/* this section done */
@@ -491,6 +560,8 @@ zif_store_rhn_load (ZifStore *store,
 	if (!ret)
 		goto out;
 out:
+	if (pool != NULL)
+		g_thread_pool_free (pool, FALSE, TRUE);
 	if (array != NULL)
 		g_value_array_free (array);
 	if (msg != NULL)

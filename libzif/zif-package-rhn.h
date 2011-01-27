@@ -54,6 +54,12 @@ struct _ZifPackageRhnClass
 	ZifPackageClass		 parent_class;
 };
 
+typedef enum {
+	ZIF_PACKAGE_RHN_PRECACHE_GET_DETAILS	= 1,
+	ZIF_PACKAGE_RHN_PRECACHE_LIST_FILES	= 2,
+	ZIF_PACKAGE_RHN_PRECACHE_LIST_DEPS	= 4
+} ZifPackageRhnPrecache;
+
 GType		 zif_package_rhn_get_type	(void);
 ZifPackage	*zif_package_rhn_new		(void);
 void		 zif_package_rhn_set_id		(ZifPackageRhn		*pkg,
@@ -63,6 +69,9 @@ void		 zif_package_rhn_set_server	(ZifPackageRhn		*pkg,
 void		 zif_package_rhn_set_session_key (ZifPackageRhn		*pkg,
 						 const gchar		*session_key);
 guint		 zif_package_rhn_get_id		(ZifPackageRhn		*pkg);
+gboolean	 zif_package_rhn_precache	(ZifPackageRhn		*pkg,
+						 ZifPackageRhnPrecache	 precache,
+						 GError			**error);
 
 G_END_DECLS
 

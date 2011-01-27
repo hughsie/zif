@@ -30,6 +30,7 @@
 
 #include "zif-store.h"
 #include "zif-package.h"
+#include "zif-package-rhn.h"
 
 G_BEGIN_DECLS
 
@@ -61,6 +62,8 @@ void		 zif_store_rhn_set_server	(ZifStoreRhn		*store,
 						 const gchar		*server);
 void		 zif_store_rhn_set_channel	(ZifStoreRhn		*store,
 						 const gchar		*channel);
+void		 zif_store_rhn_set_precache	(ZifStoreRhn		*store,
+						 ZifPackageRhnPrecache	 precache);
 gboolean	 zif_store_rhn_login		(ZifStoreRhn		*store,
 						 const gchar		*username,
 						 const gchar		*password,

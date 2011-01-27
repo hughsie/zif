@@ -218,7 +218,6 @@ zif_package_rhn_list_files (ZifPackageRhn *rhn,
 	}
 
 	/* get packages */
-	g_debug ("got %i files", array->n_values);
 	files = g_ptr_array_new_with_free_func (g_free);
 	for (i=0; i<array->n_values; i++) {
 		hash = g_value_get_boxed (&array->values[i]);
@@ -328,7 +327,6 @@ zif_package_rhn_list_deps (ZifPackageRhn *rhn,
 	}
 
 	/* get packages */
-	g_debug ("got %i deps", array->n_values);
 	provides = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	requires = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	obsoletes = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
@@ -439,6 +437,40 @@ zif_package_rhn_ensure_data (ZifPackage *pkg,
 			     "Ensure type '%s' not supported on ZifPackageRhn",
 			     zif_package_ensure_type_to_string (type));
 		break;
+	}
+out:
+	return ret;
+}
+
+/*
+ * zif_package_rhn_precache:
+ */
+gboolean
+zif_package_rhn_precache (ZifPackageRhn *rhn,
+			  ZifPackageRhnPrecache precache,
+			  GError **error)
+{
+	gboolean ret = TRUE;
+
+	/* get details */
+	if ((precache & ZIF_PACKAGE_RHN_PRECACHE_GET_DETAILS) > 1) {
+		ret = zif_package_rhn_get_details (rhn, NULL, error);
+		if (!ret)
+			goto out;
+	}
+
+	/* list files */
+	if ((precache & ZIF_PACKAGE_RHN_PRECACHE_LIST_FILES) > 1) {
+		ret = zif_package_rhn_list_files (rhn, NULL, error);
+		if (!ret)
+			goto out;
+	}
+
+	/* list deps */
+	if ((precache & ZIF_PACKAGE_RHN_PRECACHE_LIST_DEPS) > 1) {
+		ret = zif_package_rhn_list_deps (rhn, NULL, error);
+		if (!ret)
+			goto out;
 	}
 out:
 	return ret;
