@@ -48,6 +48,7 @@ libzif_include_HEADERS =					\
 	zif-package-array.h					\
 	zif-package-local.h					\
 	zif-package-remote.h					\
+	zif-package-rhn.h					\
 	zif-release.h						\
 	zif-repos.h						\
 	zif-state.h						\
@@ -55,6 +56,7 @@ libzif_include_HEADERS =					\
 	zif-store.h						\
 	zif-store-local.h					\
 	zif-store-remote.h					\
+	zif-store-rhn.h						\
 	zif-string.h						\
 	zif-transaction.h					\
 	zif-update.h						\
@@ -128,6 +130,8 @@ libzif_la_SOURCES =						\
 	zif-package-meta.h					\
 	zif-package-remote.c					\
 	zif-package-remote.h					\
+	zif-package-rhn.c					\
+	zif-package-rhn.h					\
 	zif-release.c						\
 	zif-release.h						\
 	zif-repos.c						\
@@ -144,6 +148,8 @@ libzif_la_SOURCES =						\
 	zif-store-meta.h					\
 	zif-store-remote.c					\
 	zif-store-remote.h					\
+	zif-store-rhn.c						\
+	zif-store-rhn.h						\
 	zif-string.c						\
 	zif-string.h						\
 	zif-transaction.c					\

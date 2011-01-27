@@ -62,6 +62,7 @@
 #include "zif-store-local.h"
 #include "zif-store-meta.h"
 #include "zif-store-remote.h"
+#include "zif-store-rhn.h"
 #include "zif-string.h"
 #include "zif-transaction.h"
 #include "zif-release.h"
@@ -2820,6 +2821,101 @@ zif_store_remote_func (void)
 }
 
 static void
+zif_store_rhn_func (void)
+{
+	ZifStore *store;
+	ZifConfig *config;
+	ZifLock *lock;
+	ZifState *state;
+	gboolean ret;
+	GError *error = NULL;
+	gchar *pidfile;
+	gchar *filename;
+
+	/* set this up as dummy */
+	config = zif_config_new ();
+	filename = zif_test_get_data_file ("zif.conf");
+	zif_config_set_filename (config, filename, NULL);
+	zif_config_set_uint (config, "metadata_expire", 0, NULL);
+	zif_config_set_uint (config, "mirrorlist_expire", 0, NULL);
+	g_free (filename);
+
+	pidfile = g_build_filename (g_get_tmp_dir (), "zif.lock", NULL);
+	zif_config_set_string (config, "pidfile", pidfile, NULL);
+	g_free (pidfile);
+
+	/* use state object */
+	state = zif_state_new ();
+
+	store = zif_store_rhn_new ();
+	g_assert (store != NULL);
+
+	lock = zif_lock_new ();
+	g_assert (lock != NULL);
+
+	ret = zif_lock_set_locked (lock, NULL, &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	/* try to load without session key */
+	zif_state_reset (state);
+	ret = zif_store_load (store, state, &error);
+	g_assert_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED_AS_OFFLINE);
+	g_assert (!ret);
+	g_clear_error (&error);
+
+	/* logout before login */
+	ret = zif_store_rhn_logout (ZIF_STORE_RHN (store),
+				    &error);
+	g_assert_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED);
+	g_assert (!ret);
+	g_clear_error (&error);
+
+	/* login without a server */
+	ret = zif_store_rhn_login (ZIF_STORE_RHN (store),
+				   "test",
+				   "test",
+				   &error);
+	g_assert_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED);
+	g_assert (!ret);
+	g_clear_error (&error);
+
+	/* set the server, then try again to login */
+	zif_store_rhn_set_server (ZIF_STORE_RHN (store),
+				  "https://rhn.redhat.com/rpc/api");
+	ret = zif_store_rhn_login (ZIF_STORE_RHN (store),
+				   "test",
+				   "test",
+				   &error);
+	g_assert_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED);
+	g_assert (!ret);
+	g_clear_error (&error);
+
+#if 0
+	/* show the session key and version */
+	version = zif_store_rhn_get_version (ZIF_STORE_RHN (store),
+					     &error);
+	g_assert_no_error (error);
+	g_assert (version != NULL);
+	g_debug ("version = '%s', session_key = %s",
+		 version,
+		 zif_store_rhn_get_session_key (ZIF_STORE_RHN (store)));
+	g_free (version);
+
+	/* logout */
+	ret = zif_store_rhn_logout (ZIF_STORE_RHN (store),
+				    &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+#endif
+
+	g_object_unref (store);
+	g_object_unref (config);
+	g_object_unref (lock);
+	g_object_unref (state);
+}
+
+static void
 zif_string_func (void)
 {
 	ZifString *string;
@@ -3059,6 +3155,7 @@ main (int argc, char **argv)
 	g_test_add_func ("/zif/store-local", zif_store_local_func);
 	g_test_add_func ("/zif/store-meta", zif_store_meta_func);
 	g_test_add_func ("/zif/store-remote", zif_store_remote_func);
+	g_test_add_func ("/zif/store-rhn", zif_store_rhn_func);
 	g_test_add_func ("/zif/string", zif_string_func);
 	g_test_add_func ("/zif/transaction", zif_transaction_func);
 	g_test_add_func ("/zif/update-info", zif_update_info_func);

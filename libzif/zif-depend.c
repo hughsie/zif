@@ -498,8 +498,8 @@ zif_depend_parse_description (ZifDepend *depend, const gchar *value, GError **er
 		if (flag == ZIF_DEPEND_FLAG_UNKNOWN) {
 			ret = FALSE;
 			g_set_error (error, 1, 0,
-				     "failed to parse the depend flag: %s",
-				     split[1]);
+				     "failed to parse depend flag '%s' from %s",
+				     split[1], value);
 			goto out;
 		}
 		zif_depend_set_name (depend, split[0]);

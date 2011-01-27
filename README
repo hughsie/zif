@@ -69,7 +69,8 @@ Zif features:
 • Self test program (602 tests with 49 test transactions)
 • Checking of signed packages, and auto-importing of keyrings
 
-Zif is compatible with rpm, yum and the Fedora infrastructure, specifically:
+Zif is compatible with rpm, yum and the Red Hat and Fedora
+infrastructure, specifically:
 • Shares the yum lock
 • Uses librpm to get data from rpm andto install and remove packages
 • Reads and updates yum metadata (primary, filelists, updateinfo, other,
@@ -81,6 +82,7 @@ Zif is compatible with rpm, yum and the Fedora infrastructure, specifically:
 • Uses the PackageKit categories->group mapping file
 • Fast depsolving, using the same algorithms as yum
 • Reading and writing of the YumDB for storing where packages come from
+• Uses the XMLRPC API of RHN where available.
 
 What doesn't work (yet):
 • Checking of signed repodata (code is in place, but waiting for Fedora)

@@ -16,6 +16,7 @@ ZIF_LIBS =						\
 	$(top_builddir)/libzif/libzif.la
 
 noinst_PROGRAMS =					\
+	zif-rhn						\
 	zif-file-requires				\
 	zif-list-repos					\
 	zif-list-installed
@@ -39,6 +40,13 @@ zif_list_repos_SOURCES =				\
 zif_list_repos_LDADD =					\
 	$(ZIF_LIBS)
 zif_list_repos_CFLAGS =					\
+	$(WARNINGFLAGS_C)
+
+zif_rhn_SOURCES =					\
+	zif-rhn.c
+zif_rhn_LDADD =						\
+	$(ZIF_LIBS)
+zif_rhn_CFLAGS =					\
 	$(WARNINGFLAGS_C)
 
 clean-local:

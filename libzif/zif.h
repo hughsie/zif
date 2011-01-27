@@ -41,12 +41,14 @@
 #include <zif-package-array.h>
 #include <zif-package-local.h>
 #include <zif-package-remote.h>
+#include <zif-package-rhn.h>
 #include <zif-release.h>
 #include <zif-repos.h>
 #include <zif-state.h>
 #include <zif-store-array.h>
 #include <zif-store-local.h>
 #include <zif-store-remote.h>
+#include <zif-store-rhn.h>
 #include <zif-string.h>
 #include <zif-transaction.h>
 #include <zif-update.h>
