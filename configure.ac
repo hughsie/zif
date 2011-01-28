@@ -168,6 +168,16 @@ AC_SUBST(SOUP_CFLAGS)
 AC_SUBST(SOUP_LIBS)
 
 dnl ---------------------------------------------------------------------------
+dnl - new RPM?
+dnl ---------------------------------------------------------------------------
+AC_CHECK_HEADERS("rpm/rpmprob.h",
+		 HAVE_RPMPROB_H="yes",
+		 HAVE_RPMPROB_H="no")
+if test "x$HAVE_RPMPROB_H" = "xyes"; then
+	AC_DEFINE(HAVE_RPMPROB_H,1,[have rpmprob.h])
+fi
+
+dnl ---------------------------------------------------------------------------
 dnl - libarchive
 dnl ---------------------------------------------------------------------------
 AC_CHECK_HEADERS(archive.h,
