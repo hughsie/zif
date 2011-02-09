@@ -450,7 +450,7 @@ zif_config_get_release_filename (ZifConfig *config)
 gboolean
 zif_config_set_filename (ZifConfig *config, const gchar *filename, GError **error)
 {
-	gboolean ret;
+	gboolean ret = FALSE;
 	GError *error_local = NULL;
 	gchar *basearch = NULL;
 	gchar *releasever = NULL;
@@ -463,8 +463,16 @@ zif_config_set_filename (ZifConfig *config, const gchar *filename, GError **erro
 	guint i;
 
 	g_return_val_if_fail (ZIF_IS_CONFIG (config), FALSE);
-	g_return_val_if_fail (!config->priv->loaded, FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+	/* already loaded */
+	if (config->priv->loaded) {
+		g_set_error_literal (error,
+				     ZIF_CONFIG_ERROR,
+				     ZIF_CONFIG_ERROR_FAILED,
+				     "config already loaded");
+		goto out;
+	}
 
 	/* do we use te default? */
 	if (filename == NULL) {
@@ -477,6 +485,7 @@ zif_config_set_filename (ZifConfig *config, const gchar *filename, GError **erro
 	}
 
 	/* check file exists */
+	g_debug ("using config %s", filename_default);
 	ret = g_file_test (filename_default, G_FILE_TEST_IS_REGULAR);
 	if (!ret) {
 		g_set_error (error,
