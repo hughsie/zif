@@ -137,6 +137,7 @@ zif_release_func (void)
 	zif_config_set_string (config, "upgrade_cache_dir", "/tmp", NULL);
 	zif_config_set_string (config, "upgrade_boot_dir", "/tmp", NULL);
 	zif_config_set_string (config, "upgrade_repo_dir", "/tmp", NULL);
+	zif_config_set_string (config, "basearch", "i386", NULL);
 	zif_config_set_string (config, "upgrade_releases_uri",
 			       "http://people.freedesktop.org/~hughsient/fedora/preupgrade/releases.txt", NULL);
 
