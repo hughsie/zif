@@ -73,6 +73,19 @@ zif_lock_error_quark (void)
 }
 
 /**
+ * zif_lock_is_instance_valid:
+ *
+ * Return value: %TRUE if a singleton instance already exists
+ *
+ * Since: 0.1.6
+ **/
+gboolean
+zif_lock_is_instance_valid (void)
+{
+	return (zif_lock_object != NULL);
+}
+
+/**
  * zif_lock_get_pid:
  **/
 static guint

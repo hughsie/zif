@@ -105,6 +105,12 @@ out:
 	return full;
 }
 
+/* not a function, as we want the line number */
+#define zif_check_singletons()	do { \
+				g_assert (!zif_config_is_instance_valid ()); \
+				g_assert (!zif_lock_is_instance_valid ()); \
+				} while (0);
+
 static void
 zif_release_func (void)
 {
@@ -175,6 +181,9 @@ zif_release_func (void)
 	g_object_unref (config);
 	g_object_unref (release);
 	g_object_unref (download);
+	g_object_unref (state);
+
+	zif_check_singletons ();
 }
 
 static gint
@@ -247,6 +256,8 @@ zif_manifest_func (void)
 	g_object_unref (state);
 	g_object_unref (config);
 	g_object_unref (manifest);
+
+	zif_check_singletons ();
 }
 
 static void
@@ -350,6 +361,8 @@ zif_transaction_func (void)
 	g_object_unref (state);
 	g_object_unref (local);
 	g_object_unref (transaction);
+
+	zif_check_singletons ();
 }
 
 static void
@@ -379,6 +392,8 @@ zif_changeset_func (void)
 	g_assert_cmpstr (zif_changeset_get_version (changeset), ==, "2.29.91-1.fc13");
 
 	g_object_unref (changeset);
+
+	zif_check_singletons ();
 }
 
 static void
@@ -459,6 +474,8 @@ zif_config_func (void)
 	}
 	g_free (basearch);
 	g_object_unref (config);
+
+	zif_check_singletons ();
 }
 
 static void
@@ -532,6 +549,8 @@ zif_db_func (void)
 	g_ptr_array_unref (array);
 
 	g_object_unref (db);
+
+	zif_check_singletons ();
 }
 
 static void
@@ -693,6 +712,8 @@ zif_depend_func (void)
 	g_object_unref (need);
 
 	g_object_unref (depend);
+
+	zif_check_singletons ();
 }
 
 static guint _updates = 0;
@@ -824,6 +845,8 @@ zif_download_func (void)
 	g_object_unref (download);
 	g_object_unref (config);
 	g_object_unref (state);
+
+	zif_check_singletons ();
 }
 
 static void
@@ -875,6 +898,8 @@ zif_groups_func (void)
 	g_ptr_array_unref (array);
 
 	g_object_unref (groups);
+
+	zif_check_singletons ();
 }
 
 static void
@@ -910,6 +935,8 @@ zif_legal_func (void)
 	g_assert (!is_free);
 
 	g_object_unref (legal);
+
+	zif_check_singletons ();
 }
 
 static void
@@ -957,6 +984,8 @@ zif_lock_func (void)
 	g_object_unref (lock);
 	g_object_unref (config);
 	g_free (pidfile);
+
+	zif_check_singletons ();
 }
 
 static void
@@ -983,6 +1012,8 @@ zif_md_func (void)
 
 	g_object_unref (md);
 	g_object_unref (state);
+
+	zif_check_singletons ();
 }
 
 static void
@@ -1051,6 +1082,8 @@ zif_md_comps_func (void)
 
 	g_object_unref (md);
 	g_object_unref (state);
+
+	zif_check_singletons ();
 }
 
 static void
@@ -1096,6 +1129,8 @@ zif_md_filelists_sql_func (void)
 
 	g_object_unref (md);
 	g_object_unref (state);
+
+	zif_check_singletons ();
 }
 
 static void
@@ -1140,6 +1175,8 @@ zif_md_filelists_xml_func (void)
 
 	g_object_unref (state);
 	g_object_unref (md);
+
+	zif_check_singletons ();
 }
 
 static void
@@ -1186,6 +1223,8 @@ zif_md_metalink_func (void)
 	g_object_unref (md);
 	g_object_unref (state);
 	g_object_unref (config);
+
+	zif_check_singletons ();
 }
 
 static void
@@ -1238,6 +1277,8 @@ zif_md_mirrorlist_func (void)
 	g_object_unref (md);
 	g_object_unref (state);
 	g_object_unref (config);
+
+	zif_check_singletons ();
 }
 
 static void
@@ -1294,6 +1335,8 @@ zif_md_other_sql_func (void)
 	g_object_unref (config);
 	g_object_unref (state);
 	g_object_unref (md);
+
+	zif_check_singletons ();
 }
 
 static void
@@ -1339,6 +1382,8 @@ zif_md_primary_sql_func (void)
 
 	g_object_unref (state);
 	g_object_unref (md);
+
+	zif_check_singletons ();
 }
 
 static void
@@ -1384,6 +1429,8 @@ zif_md_primary_xml_func (void)
 
 	g_object_unref (state);
 	g_object_unref (md);
+
+	zif_check_singletons ();
 }
 
 static void
@@ -1423,6 +1470,8 @@ zif_md_updateinfo_func (void)
 	g_ptr_array_unref (array);
 	g_object_unref (md);
 	g_object_unref (state);
+
+	zif_check_singletons ();
 }
 
 static void
@@ -1463,6 +1512,8 @@ zif_md_delta_func (void)
 	g_object_unref (delta);
 	g_object_unref (md);
 	g_object_unref (state);
+
+	zif_check_singletons ();
 }
 
 static void
@@ -1479,6 +1530,8 @@ zif_monitor_test_touch (gpointer data)
 	utime (filename, NULL);
 	g_free (filename);
 	return FALSE;
+
+	zif_check_singletons ();
 }
 
 static void
@@ -1508,12 +1561,16 @@ zif_monitor_func (void)
 	/* wait for changed */
 	g_main_loop_unref (loop);
 	g_object_unref (monitor);
+
+	zif_check_singletons ();
 }
 
 static void
 zif_package_func (void)
 {
 	return;
+
+	zif_check_singletons ();
 }
 
 static void
@@ -1551,6 +1608,8 @@ zif_package_local_func (void)
 			 "RSA/SHA256, Thu Sep 23 17:25:34 2010, Key ID 421caddb97a1071f");
 
 	g_object_unref (pkg);
+
+	zif_check_singletons ();
 }
 
 static void
@@ -1618,6 +1677,8 @@ zif_package_meta_func (void)
 	g_free (filename);
 	g_object_unref (pkg);
 	g_object_unref (state);
+
+	zif_check_singletons ();
 }
 
 static void
@@ -1785,6 +1846,8 @@ zif_package_remote_func (void)
 	g_object_unref (store);
 	g_object_unref (store_remote);
 	g_ptr_array_unref (changelog);
+
+	zif_check_singletons ();
 }
 
 static void
@@ -1866,6 +1929,8 @@ zif_repos_func (void)
 	g_object_unref (repos);
 	g_object_unref (lock);
 	g_object_unref (config);
+
+	zif_check_singletons ();
 }
 
 static guint _allow_cancel_updates = 0;
@@ -1973,6 +2038,9 @@ zif_state_func (void)
 	g_assert (zif_state_get_allow_cancel (state));
 
 	g_object_unref (state);
+
+	/* check we've not leaked anything */
+	zif_check_singletons ();
 
 	/* reset */
 	_updates = 0;
@@ -2469,6 +2537,8 @@ zif_store_local_func (void)
 	g_object_unref (lock);
 	g_object_unref (legal);
 	g_object_unref (state);
+
+	zif_check_singletons ();
 }
 
 static void
@@ -2538,6 +2608,8 @@ zif_store_meta_func (void)
 	g_object_unref (pkg);
 	g_object_unref (state);
 	g_object_unref (store);
+
+	zif_check_singletons ();
 }
 
 static void
@@ -2820,6 +2892,8 @@ zif_store_remote_func (void)
 	g_object_unref (state);
 	g_object_unref (groups);
 	g_object_unref (store_local);
+
+	zif_check_singletons ();
 }
 
 static void
@@ -2915,6 +2989,8 @@ zif_store_rhn_func (void)
 	g_object_unref (config);
 	g_object_unref (lock);
 	g_object_unref (state);
+
+	zif_check_singletons ();
 }
 
 static void
@@ -2928,6 +3004,8 @@ zif_string_func (void)
 	g_assert_cmpstr (zif_string_get_value (string), ==, "kernel");
 	string = zif_string_unref (string);
 	g_assert (string == NULL);
+
+	zif_check_singletons ();
 }
 
 static void
@@ -3111,6 +3189,8 @@ zif_utils_func (void)
 	/* verify with invalid version */
 	ret = zif_package_id_to_nevra ("kernel;0.1;i386;fedora", &sn, &se, &sv, &sr, &sa);
 	g_assert (!ret);
+
+	zif_check_singletons ();
 }
 
 int

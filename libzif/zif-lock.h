@@ -64,6 +64,7 @@ typedef enum {
 
 GType		 zif_lock_get_type			(void);
 GQuark		 zif_lock_error_quark			(void);
+gboolean	 zif_lock_is_instance_valid		(void);
 ZifLock		*zif_lock_new				(void);
 gboolean	 zif_lock_is_locked			(ZifLock		*lock,
 							 guint			*pid);

@@ -81,6 +81,19 @@ zif_config_error_quark (void)
 }
 
 /**
+ * zif_config_is_instance_valid:
+ *
+ * Return value: %TRUE if a singleton instance already exists
+ *
+ * Since: 0.1.6
+ **/
+gboolean
+zif_config_is_instance_valid (void)
+{
+	return (zif_config_object != NULL);
+}
+
+/**
  * zif_config_unset:
  * @config: A #ZifConfig
  * @key: A key name to unset, e.g. "cachedir"

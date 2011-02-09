@@ -61,6 +61,8 @@ typedef enum {
 GQuark		 zif_config_error_quark		(void);
 GType		 zif_config_get_type		(void);
 ZifConfig	*zif_config_new			(void);
+gboolean	 zif_config_is_instance_valid	(void);
+
 gboolean	 zif_config_set_filename	(ZifConfig	*config,
 						 const gchar	*filename,
 						 GError		**error);
