@@ -2107,7 +2107,9 @@ zif_state_func (void)
 	g_assert ((_last_percent == 100));
 
 	g_object_unref (state);
-	g_object_unref (child);
+
+	/* check we've not leaked anything */
+	zif_check_singletons ();
 
 	/* reset */
 	_updates = 0;
@@ -2129,7 +2131,9 @@ zif_state_func (void)
 	g_assert (_last_percent == 33);
 
 	g_object_unref (state);
-	g_object_unref (child);
+
+	/* check we've not leaked anything */
+	zif_check_singletons ();
 
 	/* test error ignoring */
 	state = zif_state_new ();
@@ -2152,8 +2156,10 @@ zif_state_func (void)
 	g_assert (ret);
 
 	g_object_unref (state);
-	g_object_unref (child);
 	g_clear_error (&error);
+
+	/* check we've not leaked anything */
+	zif_check_singletons ();
 
 	/* test new child gets error handler passed to it */
 	state = zif_state_new ();
@@ -2164,8 +2170,10 @@ zif_state_func (void)
 	g_assert (ret);
 
 	g_object_unref (state);
-	g_object_unref (child);
 	g_clear_error (&error);
+
+	/* check we've not leaked anything */
+	zif_check_singletons ();
 
 	/* check straight finish */
 	state = zif_state_new ();
@@ -2183,7 +2191,9 @@ zif_state_func (void)
 	g_assert (ret);
 
 	g_object_unref (state);
-	g_object_unref (child);
+
+	/* check we've not leaked anything */
+	zif_check_singletons ();
 
 	/* test non-equal steps */
 	state = zif_state_new ();
@@ -2301,6 +2311,9 @@ zif_state_func (void)
 
 	g_object_unref (state);
 
+	/* check we've not leaked anything */
+	zif_check_singletons ();
+
 	/* test a state where we don't care about progress */
 	state = zif_state_new ();
 	zif_state_set_report_progress (state, FALSE);
@@ -2329,6 +2342,9 @@ zif_state_func (void)
 	g_assert_cmpint (zif_state_get_percentage (state), ==, 0);
 
 	g_object_unref (state);
+
+	/* check we've not leaked anything */
+	zif_check_singletons ();
 
 	/* speed averaging test */
 	state = zif_state_new ();

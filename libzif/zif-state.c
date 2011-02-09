@@ -852,7 +852,8 @@ zif_state_reset (ZifState *state)
 
 	/* disconnect client */
 	if (state->priv->percentage_child_id != 0) {
-		g_signal_handler_disconnect (state->priv->child, state->priv->percentage_child_id);
+		g_signal_handler_disconnect (state->priv->child,
+					     state->priv->percentage_child_id);
 		state->priv->percentage_child_id = 0;
 	}
 	if (state->priv->subpercentage_child_id != 0) {
@@ -932,7 +933,7 @@ zif_state_get_child (ZifState *state)
 
 	/* do we care */
 	if (!state->priv->report_progress) {
-		child = g_object_ref (state);
+		child = state;
 		goto out;
 	}
 
@@ -953,8 +954,8 @@ zif_state_get_child (ZifState *state)
 
 	/* connect up signals */
 	child = zif_state_new ();
-	state->priv->child = g_object_ref (child);
-	state->priv->child->priv->parent = g_object_ref (state);
+	child->priv->parent = state; /* do not ref! */
+	state->priv->child = child;
 	state->priv->percentage_child_id =
 		g_signal_connect (child, "percentage-changed",
 				  G_CALLBACK (zif_state_child_percentage_changed_cb),
@@ -995,7 +996,8 @@ zif_state_get_child (ZifState *state)
 	}
 
 	/* set the profile state */
-	zif_state_set_enable_profile (child, state->priv->enable_profile);
+	zif_state_set_enable_profile (child,
+				      state->priv->enable_profile);
 out:
 	return child;
 }
@@ -1356,8 +1358,6 @@ zif_state_finalize (GObject *object)
 	g_free (state->priv->action_hint);
 	g_free (state->priv->step_data);
 	g_free (state->priv->step_profile);
-	if (state->priv->parent != NULL)
-		g_object_unref (state->priv->parent);
 	if (state->priv->cancellable != NULL)
 		g_object_unref (state->priv->cancellable);
 	g_timer_destroy (state->priv->timer);
