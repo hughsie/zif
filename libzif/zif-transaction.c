@@ -2805,10 +2805,8 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 out:
 	zif_transaction_show_array ("installing", priv->install);
 	zif_transaction_show_array ("removing", priv->remove);
-	if (data != NULL) {
-		g_object_unref (data->state);
+	if (data != NULL)
 		g_free (data);
-	}
 	return ret;
 }
 
@@ -4090,6 +4088,13 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 
 	/* get private */
 	priv = transaction->priv;
+
+	/* take lock */
+	ret = zif_state_take_lock (state,
+				   ZIF_LOCK_TYPE_RPMDB_WRITE,
+				   error);
+	if (!ret)
+		goto out;
 
 	/* is valid */
 	if (priv->state != ZIF_TRANSACTION_STATE_PREPARED) {

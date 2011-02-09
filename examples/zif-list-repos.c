@@ -32,7 +32,6 @@ main (int argc, char **argv)
 	GPtrArray *stores;
 	guint i;
 	ZifConfig *config;
-	ZifLock *lock;
 	ZifState *state;
 	ZifStore *store;
 	ZifRepos *repos;
@@ -44,12 +43,6 @@ main (int argc, char **argv)
 	/* the config file provides defaults */
 	config = zif_config_new ();
 	ret = zif_config_set_filename (config, "../etc/zif.conf", &error);
-	g_assert_no_error (error);
-	g_assert (ret);
-
-	/* lock the transaction early, to avoid waiting later */
-	lock = zif_lock_new ();
-	ret = zif_lock_set_locked (lock, NULL, &error);
 	g_assert_no_error (error);
 	g_assert (ret);
 
@@ -71,15 +64,7 @@ main (int argc, char **argv)
 		g_print ("%s\n", zif_store_get_id (store));
 	}
 
-	/* unlock now, although it's not the end of the world if we just
-	 * return, as on next start the pid will be gone and the lock
-	 * will succed anyway */
-	ret = zif_lock_set_unlocked (lock, &error);
-	g_assert_no_error (error);
-	g_assert (ret);
-
 	g_ptr_array_unref (stores);
-	g_object_unref (lock);
 	g_object_unref (config);
 	g_object_unref (repos);
 	g_object_unref (state);

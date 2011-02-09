@@ -29,6 +29,8 @@
 #include <glib-object.h>
 #include <gio/gio.h>
 
+#include "zif-lock.h"
+
 G_BEGIN_DECLS
 
 #define ZIF_TYPE_STATE		(zif_state_get_type ())
@@ -100,6 +102,11 @@ typedef enum {
 
 typedef gboolean (*ZifStateErrorHandlerCb)		(const GError		*error,
 							 gpointer		 user_data);
+typedef gboolean (*ZifStateLockHandlerCb)		(ZifState		*state,
+							 ZifLock		*lock,
+							 ZifLockType		 lock_type,
+							 GError			**error,
+							 gpointer		 user_data);
 
 GType		 zif_state_get_type			(void);
 GQuark		 zif_state_error_quark			(void);
@@ -156,6 +163,14 @@ void		 zif_state_set_error_handler		(ZifState		*state,
 							 gpointer		 user_data);
 gboolean	 zif_state_error_handler		(ZifState		*state,
 							 const GError		*error);
+
+/* lock handling */
+void		 zif_state_set_lock_handler		(ZifState		*state,
+							 ZifStateLockHandlerCb	 lock_handler_cb,
+							 gpointer		 user_data);
+gboolean	 zif_state_take_lock			(ZifState		*state,
+							 ZifLockType		 lock_type,
+							 GError			**error);
 
 G_END_DECLS
 

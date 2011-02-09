@@ -1368,19 +1368,11 @@ out:
 static gboolean
 zif_store_remote_load_metadata (ZifStoreRemote *store, ZifState *state, GError **error)
 {
-	gboolean ret;
+	gboolean ret = TRUE;
 	GError *error_local = NULL;
 
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), FALSE);
 	g_return_val_if_fail (zif_state_valid (state), FALSE);
-
-	/* not locked */
-	ret = zif_lock_is_locked (store->priv->lock, NULL);
-	if (!ret) {
-		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_NOT_LOCKED,
-				     "not locked");
-		goto out;
-	}
 
 	/* already loaded */
 	if (store->priv->loaded_metadata)
@@ -1566,6 +1558,13 @@ zif_store_remote_refresh (ZifStore *store, gboolean force, ZifState *state, GErr
 	g_return_val_if_fail (remote->priv->id != NULL, FALSE);
 	g_return_val_if_fail (zif_state_valid (state), FALSE);
 
+	/* take lock */
+	ret = zif_state_take_lock (state,
+				   ZIF_LOCK_TYPE_METADATA_WRITE,
+				   error);
+	if (!ret)
+		goto out;
+
 	/* if not online, then this is fatal */
 	ret = zif_config_get_boolean (remote->priv->config, "network", NULL);
 	if (!ret) {
@@ -1583,14 +1582,6 @@ zif_store_remote_refresh (ZifStore *store, gboolean force, ZifState *state, GErr
 				   -1);
 	if (!ret)
 		goto out;
-
-	/* not locked */
-	ret = zif_lock_is_locked (remote->priv->lock, NULL);
-	if (!ret) {
-		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_NOT_LOCKED,
-				     "not locked");
-		goto out;
-	}
 
 	/* download new repomd file */
 	state_local = zif_state_get_child (state);
@@ -1689,14 +1680,6 @@ zif_store_remote_load (ZifStore *store, ZifState *state, GError **error)
 	g_return_val_if_fail (remote->priv->id != NULL, FALSE);
 	g_return_val_if_fail (remote->priv->repo_filename != NULL, FALSE);
 	g_return_val_if_fail (zif_state_valid (state), FALSE);
-
-	/* not locked */
-	ret = zif_lock_is_locked (remote->priv->lock, NULL);
-	if (!ret) {
-		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_NOT_LOCKED,
-				     "not locked");
-		goto out;
-	}
 
 	/* already loaded */
 	if (remote->priv->loaded)
@@ -1924,14 +1907,6 @@ zif_store_remote_clean (ZifStore *store, ZifState *state, GError **error)
 	g_return_val_if_fail (remote->priv->id != NULL, FALSE);
 	g_return_val_if_fail (zif_state_valid (state), FALSE);
 
-	/* not locked */
-	ret = zif_lock_is_locked (remote->priv->lock, NULL);
-	if (!ret) {
-		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_NOT_LOCKED,
-				     "not locked");
-		goto out;
-	}
-
 	/* setup state with the correct number of steps */
 	if (remote->priv->loaded_metadata) {
 		ret = zif_state_set_steps (state,
@@ -2110,14 +2085,6 @@ zif_store_remote_set_from_file (ZifStoreRemote *store, const gchar *repo_filenam
 	g_return_val_if_fail (zif_state_valid (state), FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
-	/* not locked */
-	ret = zif_lock_is_locked (store->priv->lock, NULL);
-	if (!ret) {
-		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_NOT_LOCKED,
-				     "not locked");
-		goto out;
-	}
-
 	/* save */
 	zif_store_remote_set_id (store, id);
 	store->priv->repo_filename = g_strdup (repo_filename);
@@ -2175,17 +2142,19 @@ zif_store_remote_set_enabled (ZifStoreRemote *store,
 	g_return_val_if_fail (store->priv->id != NULL, FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
-	/* not locked */
-	ret = zif_lock_is_locked (store->priv->lock, NULL);
-	if (!ret) {
-		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_NOT_LOCKED,
-				     "not locked");
+	/* take lock */
+	ret = zif_state_take_lock (state,
+				   ZIF_LOCK_TYPE_REPO_WRITE,
+				   error);
+	if (!ret)
 		goto out;
-	}
 
 	/* load file */
 	file = g_key_file_new ();
-	ret = g_key_file_load_from_file (file, store->priv->repo_filename, G_KEY_FILE_KEEP_COMMENTS, &error_local);
+	ret = g_key_file_load_from_file (file,
+					 store->priv->repo_filename,
+					 G_KEY_FILE_KEEP_COMMENTS,
+					 &error_local);
 	if (!ret) {
 		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 			     "failed to load store file: %s", error_local->message);
@@ -2254,14 +2223,6 @@ zif_store_remote_resolve (ZifStore *store, gchar **search, ZifState *state, GErr
 	g_return_val_if_fail (remote->priv->id != NULL, NULL);
 	g_return_val_if_fail (zif_state_valid (state), FALSE);
 
-	/* not locked */
-	ret = zif_lock_is_locked (remote->priv->lock, NULL);
-	if (!ret) {
-		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_NOT_LOCKED,
-				     "not locked");
-		goto out;
-	}
-
 	/* setup state */
 	if (remote->priv->loaded_metadata) {
 		zif_state_set_number_steps (state, 1);
@@ -2325,14 +2286,6 @@ zif_store_remote_search_name (ZifStore *store, gchar **search, ZifState *state, 
 	g_return_val_if_fail (remote->priv->id != NULL, NULL);
 	g_return_val_if_fail (zif_state_valid (state), FALSE);
 
-	/* not locked */
-	ret = zif_lock_is_locked (remote->priv->lock, NULL);
-	if (!ret) {
-		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_NOT_LOCKED,
-				     "not locked");
-		goto out;
-	}
-
 	/* setup state */
 	if (remote->priv->loaded_metadata) {
 		zif_state_set_number_steps (state, 1);
@@ -2395,14 +2348,6 @@ zif_store_remote_search_details (ZifStore *store, gchar **search, ZifState *stat
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), NULL);
 	g_return_val_if_fail (remote->priv->id != NULL, NULL);
 	g_return_val_if_fail (zif_state_valid (state), FALSE);
-
-	/* not locked */
-	ret = zif_lock_is_locked (remote->priv->lock, NULL);
-	if (!ret) {
-		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_NOT_LOCKED,
-				     "not locked");
-		goto out;
-	}
 
 	/* setup state */
 	if (remote->priv->loaded_metadata) {
@@ -2560,14 +2505,6 @@ zif_store_remote_search_category (ZifStore *store, gchar **group_id, ZifState *s
 	g_return_val_if_fail (remote->priv->id != NULL, NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 
-	/* not locked */
-	ret = zif_lock_is_locked (remote->priv->lock, NULL);
-	if (!ret) {
-		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_NOT_LOCKED,
-				     "not locked");
-		goto out;
-	}
-
 	/* setup state */
 	if (remote->priv->loaded_metadata) {
 		ret = zif_state_set_steps (state,
@@ -2712,14 +2649,6 @@ zif_store_remote_search_group (ZifStore *store, gchar **search, ZifState *state,
 	g_return_val_if_fail (remote->priv->id != NULL, NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 
-	/* not locked */
-	ret = zif_lock_is_locked (remote->priv->lock, NULL);
-	if (!ret) {
-		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_NOT_LOCKED,
-				     "not locked");
-		goto out;
-	}
-
 	/* setup state */
 	if (remote->priv->loaded_metadata) {
 		zif_state_set_number_steps (state, 1);
@@ -2805,14 +2734,6 @@ zif_store_remote_find_package (ZifStore *store, const gchar *package_id, ZifStat
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), NULL);
 	g_return_val_if_fail (remote->priv->id != NULL, NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
-
-	/* not locked */
-	ret = zif_lock_is_locked (remote->priv->lock, NULL);
-	if (!ret) {
-		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_NOT_LOCKED,
-				     "not locked");
-		goto out;
-	}
 
 	/* setup state */
 	if (remote->priv->loaded_metadata) {
@@ -2901,14 +2822,6 @@ zif_store_remote_get_packages (ZifStore *store, ZifState *state, GError **error)
 	g_return_val_if_fail (remote->priv->id != NULL, NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 
-	/* not locked */
-	ret = zif_lock_is_locked (remote->priv->lock, NULL);
-	if (!ret) {
-		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_NOT_LOCKED,
-				     "not locked");
-		goto out;
-	}
-
 	/* setup state */
 	if (remote->priv->loaded_metadata) {
 		zif_state_set_number_steps (state, 1);
@@ -2978,14 +2891,6 @@ zif_store_remote_get_categories (ZifStore *store, ZifState *state, GError **erro
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), NULL);
 	g_return_val_if_fail (remote->priv->id != NULL, NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
-
-	/* not locked */
-	ret = zif_lock_is_locked (remote->priv->lock, NULL);
-	if (!ret) {
-		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_NOT_LOCKED,
-				     "not locked");
-		goto out;
-	}
 
 	/* setup state */
 	if (remote->priv->loaded_metadata) {
@@ -3127,14 +3032,6 @@ zif_store_remote_what_provides (ZifStore *store, GPtrArray *depends,
 
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 
-	/* not locked */
-	ret = zif_lock_is_locked (remote->priv->lock, NULL);
-	if (!ret) {
-		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_NOT_LOCKED,
-				     "not locked");
-		goto out;
-	}
-
 	/* setup state */
 	if (remote->priv->loaded_metadata) {
 		zif_state_set_number_steps (state, 1);
@@ -3198,14 +3095,6 @@ zif_store_remote_what_requires (ZifStore *store, GPtrArray *depends,
 	ZifMd *primary;
 
 	g_return_val_if_fail (zif_state_valid (state), NULL);
-
-	/* not locked */
-	ret = zif_lock_is_locked (remote->priv->lock, NULL);
-	if (!ret) {
-		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_NOT_LOCKED,
-				     "not locked");
-		goto out;
-	}
 
 	/* setup state */
 	if (remote->priv->loaded_metadata) {
@@ -3271,14 +3160,6 @@ zif_store_remote_what_obsoletes (ZifStore *store, GPtrArray *depends,
 
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 
-	/* not locked */
-	ret = zif_lock_is_locked (remote->priv->lock, NULL);
-	if (!ret) {
-		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_NOT_LOCKED,
-				     "not locked");
-		goto out;
-	}
-
 	/* setup state */
 	if (remote->priv->loaded_metadata) {
 		zif_state_set_number_steps (state, 1);
@@ -3342,14 +3223,6 @@ zif_store_remote_what_conflicts (ZifStore *store, GPtrArray *depends,
 	ZifMd *primary;
 
 	g_return_val_if_fail (zif_state_valid (state), NULL);
-
-	/* not locked */
-	ret = zif_lock_is_locked (remote->priv->lock, NULL);
-	if (!ret) {
-		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_NOT_LOCKED,
-				     "not locked");
-		goto out;
-	}
 
 	/* setup state */
 	if (remote->priv->loaded_metadata) {
@@ -3420,14 +3293,6 @@ zif_store_remote_search_file (ZifStore *store, gchar **search, ZifState *state, 
 	const gchar *to_array[] = { NULL, NULL };
 
 	g_return_val_if_fail (zif_state_valid (state), NULL);
-
-	/* not locked */
-	ret = zif_lock_is_locked (remote->priv->lock, NULL);
-	if (!ret) {
-		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_NOT_LOCKED,
-				     "not locked");
-		goto out;
-	}
 
 	/* setup state */
 	if (remote->priv->loaded_metadata) {
@@ -3548,14 +3413,6 @@ zif_store_remote_is_devel (ZifStoreRemote *store, ZifState *state, GError **erro
 	g_return_val_if_fail (zif_state_valid (state), FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
-	/* not locked */
-	ret = zif_lock_is_locked (store->priv->lock, NULL);
-	if (!ret) {
-		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_NOT_LOCKED,
-				     "not locked");
-		goto out;
-	}
-
 	/* if not already loaded, load */
 	if (!store->priv->loaded) {
 		ret = zif_store_remote_load (ZIF_STORE (store), state, &error_local);
@@ -3621,14 +3478,6 @@ zif_store_remote_get_name (ZifStoreRemote *store, ZifState *state, GError **erro
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
-	/* not locked */
-	ret = zif_lock_is_locked (store->priv->lock, NULL);
-	if (!ret) {
-		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_NOT_LOCKED,
-				     "not locked");
-		goto out;
-	}
-
 	/* if not already loaded, load */
 	if (!store->priv->loaded) {
 		ret = zif_store_remote_load (ZIF_STORE (store), state, &error_local);
@@ -3665,14 +3514,6 @@ zif_store_remote_get_enabled (ZifStoreRemote *store, ZifState *state, GError **e
 	g_return_val_if_fail (store->priv->id != NULL, FALSE);
 	g_return_val_if_fail (zif_state_valid (state), FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
-
-	/* not locked */
-	ret = zif_lock_is_locked (store->priv->lock, NULL);
-	if (!ret) {
-		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_NOT_LOCKED,
-				     "not locked");
-		goto out;
-	}
 
 	/* if not already loaded, load */
 	if (!store->priv->loaded) {

@@ -38,7 +38,6 @@ main (int argc, char **argv)
 	guint i, j;
 	ZifConfig *config;
 	ZifDepend *depend;
-	ZifLock *lock;
 	ZifPackage *package;
 	ZifState *state;
 
@@ -57,11 +56,6 @@ main (int argc, char **argv)
 	stores = zif_store_array_new ();
 
 	state = zif_state_new ();
-
-	lock = zif_lock_new ();
-	ret = zif_lock_set_locked (lock, NULL, &error);
-	g_assert_no_error (error);
-	g_assert (ret);
 
 	zif_state_reset (state);
 	ret = zif_store_array_add_local (stores, state, &error);

@@ -4708,6 +4708,57 @@ out:
 }
 
 /**
+ * zif_take_lock_cb:
+ **/
+static gboolean
+zif_take_lock_cb (ZifState *state,
+		  ZifLock *lock,
+		  ZifLockType lock_type,
+		  GError **error,
+		  gpointer user_data)
+{
+	guint i;
+	gboolean ret = FALSE;
+	guint lock_delay;
+	guint lock_retries;
+	GError *error_local = NULL;
+	ZifCmdPrivate *priv = (ZifCmdPrivate *) user_data;
+
+	/* ZifLock */
+	lock_retries = zif_config_get_uint (priv->config,
+					    "lock_retries",
+					    NULL);
+	lock_delay = zif_config_get_uint (priv->config,
+					  "lock_delay",
+					  NULL);
+	for (i=0; i<lock_retries; i++) {
+
+		/* try to take */
+		ret = zif_lock_take (lock, lock_type, &error_local);
+		if (ret)
+			break;
+
+		/* this one is really fatal */
+		if (error_local->domain == ZIF_LOCK_ERROR &&
+		    error_local->code == ZIF_LOCK_ERROR_PERMISSION) {
+			g_propagate_error (error, error_local);
+			goto out;
+		}
+		g_print ("Failed to lock on try %i of %i (sleeping for %ims)\n",
+			 i+1, lock_retries, lock_delay);
+		g_debug ("failed to lock: %s", error_local->message);
+		if (i == lock_retries - 1) {
+			g_propagate_error (error, error_local);
+			goto out;
+		}
+		g_clear_error (&error_local);
+		g_usleep (lock_delay * 1000);
+	}
+out:
+	return ret;
+}
+
+/**
  * main:
  **/
 int
@@ -4730,13 +4781,8 @@ main (int argc, char *argv[])
 	GError *error = NULL;
 	gint retval = 0;
 	guint age = 0;
-	guint i;
-	guint lock_delay;
-	guint lock_retries;
-	guint pid;
 	guint uid;
 	ZifCmdPrivate *priv;
-	ZifLock *lock = NULL;
 	ZifState *state = NULL;
 
 	const GOptionEntry options[] = {
@@ -4863,6 +4909,21 @@ main (int argc, char *argv[])
 		goto out;
 	}
 
+	/* are we root? */
+	uid = getuid ();
+	if (uid != 0) {
+		if (age != 0) {
+			/* TRANSLATORS: we can't run as the user */
+			g_print ("%s\n", _("Cannot specify age when not a privileged user."));
+			goto out;
+		}
+		if (!offline) {
+			/* TRANSLATORS: we can't download new stuff as a user */
+			g_print ("%s\n", _("Enabling offline mode as user unprivileged."));
+			offline = TRUE;
+		}
+	}
+
 	/* are we allowed to access the repos */
 	if (!offline)
 		zif_config_set_boolean (priv->config, "network", TRUE, NULL);
@@ -4870,40 +4931,6 @@ main (int argc, char *argv[])
 	/* set the maximum age of the repo data */
 	if (age > 0)
 		zif_config_set_uint (priv->config, "metadata_expire", age, NULL);
-
-	/* are we root? */
-	uid = getuid ();
-	if (uid != 0) {
-		/* TRANSLATORS: we can't run as the user */
-		g_print ("%s\n", _("This program has to be run as the root user."));
-		goto out;
-	}
-
-	/* ZifLock */
-	lock = zif_lock_new ();
-	lock_retries = zif_config_get_uint (priv->config, "lock_retries", NULL);
-	lock_delay = zif_config_get_uint (priv->config, "lock_delay", NULL);
-	for (i=0; i<lock_retries; i++) {
-		ret = zif_lock_set_locked (lock, &pid, &error);
-		if (ret)
-			break;
-		/* this one is really fatal */
-		if (error->domain == ZIF_LOCK_ERROR &&
-		    error->code == ZIF_LOCK_ERROR_PERMISSION) {
-			g_print ("Failed to lock: %s\n",
-				 error->message);
-			goto out;
-		}
-		g_print ("Failed to lock on try %i of %i, already locked by PID %i (sleeping for %ims)\n",
-			 i+1, lock_retries, pid, lock_delay);
-		g_debug ("failed to lock: %s", error->message);
-		g_clear_error (&error);
-		g_usleep (lock_delay * 1000);
-	}
-
-	/* could not lock, even after retrying */
-	if (!ret)
-		goto out;
 
 	/* ZifState */
 	priv->state = zif_state_new ();
@@ -4920,6 +4947,9 @@ main (int argc, char *argv[])
 	g_signal_connect (priv->state, "notify::speed",
 			  G_CALLBACK (zif_state_speed_changed_cb),
 			  priv->progressbar);
+	zif_state_set_lock_handler (priv->state,
+				    zif_take_lock_cb,
+				    priv);
 
 	/* for the signal handler */
 	_state = state;
@@ -5306,6 +5336,28 @@ main (int argc, char *argv[])
 				/* TRANSLATORS: error message */
 				message = _("Unhandled metadata error");
 			}
+		} else if (error->domain == ZIF_LOCK_ERROR) {
+			switch (error->code) {
+			case ZIF_LOCK_ERROR_FAILED:
+				/* TRANSLATORS: error message */
+				message = _("Failed");
+				break;
+			case ZIF_LOCK_ERROR_ALREADY_LOCKED:
+				/* TRANSLATORS: error message */
+				message = _("Already locked");
+				break;
+			case ZIF_LOCK_ERROR_NOT_LOCKED:
+				/* TRANSLATORS: error message */
+				message = _("Not locked");
+				break;
+			case ZIF_LOCK_ERROR_PERMISSION:
+				/* TRANSLATORS: error message */
+				message = _("No permissions");
+				break;
+			default:
+				/* TRANSLATORS: error message */
+				message = _("Unhandled metadata error");
+			}
 		} else if (error->domain == 1) {
 			/* local error, already translated */
 			message = NULL;
@@ -5336,15 +5388,6 @@ out:
 			g_ptr_array_unref (priv->cmd_array);
 		g_option_context_free (priv->context);
 		g_free (priv);
-	}
-	if (lock != NULL) {
-		GError *error_local = NULL;
-		ret = zif_lock_set_unlocked (lock, &error_local);
-		if (!ret) {
-			g_warning ("failed to unlock: %s", error_local->message);
-			g_error_free (error_local);
-		}
-		g_object_unref (lock);
 	}
 
 	/* free state */

@@ -34,6 +34,7 @@
 #include <unistd.h>
 #include <glib.h>
 #include <glib/gstdio.h>
+#include <gio/gio.h>
 
 #include "zif-lock.h"
 #include "zif-config.h"
@@ -47,9 +48,8 @@
  **/
 struct _ZifLockPrivate
 {
-	gchar			*filename;
 	ZifConfig		*config;
-	gboolean		 self_locked;
+	guint			 refcount[ZIF_LOCK_TYPE_LAST];
 };
 
 static gpointer zif_lock_object = NULL;
@@ -86,10 +86,29 @@ zif_lock_is_instance_valid (void)
 }
 
 /**
+ * zif_lock_type_to_string:
+ *
+ * Return value: The string representation of the type
+ *
+ * Since: 0.1.6
+ **/
+const gchar *
+zif_lock_type_to_string (ZifLockType lock_type)
+{
+	if (lock_type == ZIF_LOCK_TYPE_RPMDB_WRITE)
+		return "rpmdb-write";
+	if (lock_type == ZIF_LOCK_TYPE_REPO_WRITE)
+		return "repo-write";
+	if (lock_type == ZIF_LOCK_TYPE_METADATA_WRITE)
+		return "metadata-write";
+	return "unknown";
+}
+
+/**
  * zif_lock_get_pid:
  **/
 static guint
-zif_lock_get_pid (ZifLock *lock, GError **error)
+zif_lock_get_pid (ZifLock *lock, const gchar *filename, GError **error)
 {
 	gboolean ret;
 	GError *error_local = NULL;
@@ -99,29 +118,24 @@ zif_lock_get_pid (ZifLock *lock, GError **error)
 
 	g_return_val_if_fail (ZIF_IS_LOCK (lock), FALSE);
 
-	/* get default filename */
-	if (lock->priv->filename == NULL)
-		lock->priv->filename = zif_config_get_string (lock->priv->config, "pidfile", &error_local);
-	if (lock->priv->filename == NULL) {
-		g_set_error (error, ZIF_LOCK_ERROR, ZIF_LOCK_ERROR_FAILED,
-			     "lock file not set: %s", error_local->message);
-		g_error_free (error_local);
-		goto out;
-	}
-
 	/* file doesn't exists */
-	ret = g_file_test (lock->priv->filename, G_FILE_TEST_EXISTS);
+	ret = g_file_test (filename, G_FILE_TEST_EXISTS);
 	if (!ret) {
-		g_set_error_literal (error, ZIF_LOCK_ERROR, ZIF_LOCK_ERROR_FAILED,
+		g_set_error_literal (error,
+				     ZIF_LOCK_ERROR,
+				     ZIF_LOCK_ERROR_FAILED,
 				     "lock file not present");
 		goto out;
 	}
 
 	/* get contents */
-	ret = g_file_get_contents (lock->priv->filename, &contents, NULL, &error_local);
+	ret = g_file_get_contents (filename, &contents, NULL, &error_local);
 	if (!ret) {
-		g_set_error (error, ZIF_LOCK_ERROR, ZIF_LOCK_ERROR_FAILED,
-			     "lock file not set: %s", error_local->message);
+		g_set_error (error,
+			     ZIF_LOCK_ERROR,
+			     ZIF_LOCK_ERROR_FAILED,
+			     "lock file not set: %s",
+			     error_local->message);
 		g_error_free (error_local);
 		goto out;
 	}
@@ -150,50 +164,36 @@ out:
 }
 
 /**
- * zif_lock_is_locked:
- * @lock: A #ZifLock
- * @pid: The PID of the process holding the lock, or %NULL
- *
- * Gets the lock state.
- *
- * Return value: %TRUE if we are already locked
- *
- * Since: 0.1.0
+ * zif_lock_get_filename_for_type:
  **/
-gboolean
-zif_lock_is_locked (ZifLock *lock, guint *pid)
+static gchar *
+zif_lock_get_filename_for_type (ZifLock *lock,
+				ZifLockType type,
+				GError **error)
 {
-	guint pid_tmp;
-	gboolean ret = FALSE;
+	gboolean compat_mode;
+	gchar *pidfile = NULL;
 	gchar *filename = NULL;
 
-	g_return_val_if_fail (ZIF_IS_LOCK (lock), FALSE);
-
-	/* optimise as we hold the lock */
-	if (lock->priv->self_locked) {
-		ret = TRUE;
-		if (pid != NULL)
-			*pid = getpid ();
+	/* get the lock file root */
+	pidfile = zif_config_get_string (lock->priv->config,
+					 "pidfile", error);
+	if (pidfile == NULL)
 		goto out;
+
+	/* get filename */
+	compat_mode = zif_config_get_boolean (lock->priv->config,
+					      "lock_compat", NULL);
+	if (compat_mode) {
+		filename = g_strdup_printf ("%s.lock", pidfile);
+	} else {
+		filename = g_strdup_printf ("%s-%s.lock",
+					    pidfile,
+					    zif_lock_type_to_string (type));
 	}
-
-	/* get pid */
-	pid_tmp = zif_lock_get_pid (lock, NULL);
-	if (pid_tmp == 0)
-		goto out;
-
-	/* pid is not still running? */
-	filename = g_strdup_printf ("/proc/%i/cmdline", pid_tmp);
-	ret = g_file_test (filename, G_FILE_TEST_EXISTS);
-	if (!ret)
-		goto out;
-
-	/* return pid */
-	if (pid != NULL)
-		*pid = pid_tmp;
 out:
-	g_free (filename);
-	return ret;
+	g_free (pidfile);
+	return filename;
 }
 
 /**
@@ -220,6 +220,187 @@ zif_lock_get_cmdline_for_pid (guint pid)
 	g_free (data);
 	return cmdline;
 }
+
+/**
+ * zif_lock_take:
+ * @lock: A #ZifLock
+ * @type: A ZifLockType, e.g. %ZIF_LOCK_TYPE_RPMDB_WRITE
+ * @error: A #GError, or %NULL
+ *
+ * Tries to take a lock for the packaging system.
+ *
+ * Return value: %TRUE if we locked, else %FALSE and the error is set
+ *
+ * Since: 0.1.6
+ **/
+gboolean
+zif_lock_take (ZifLock *lock, ZifLockType type, GError **error)
+{
+	gboolean ret = FALSE;
+	gchar *cmdline = NULL;
+	gchar *filename = NULL;
+	gchar *pid_filename = NULL;
+	gchar *pid_text = NULL;
+	GError *error_local = NULL;
+	guint pid;
+
+	g_return_val_if_fail (ZIF_IS_LOCK (lock), FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+	if (lock->priv->refcount[type] == 0) {
+
+		/* get the lock filename */
+		filename = zif_lock_get_filename_for_type (lock,
+							   type,
+							   error);
+		if (filename == NULL)
+			goto out;
+
+		/* does file already exists? */
+		if (g_file_test (filename, G_FILE_TEST_EXISTS)) {
+
+			/* check the pid is still valid */
+			pid = zif_lock_get_pid (lock, filename, error);
+			if (pid == 0)
+				goto out;
+
+			/* pid is not still running? */
+			pid_filename = g_strdup_printf ("/proc/%i/cmdline",
+							pid);
+			ret = g_file_test (pid_filename, G_FILE_TEST_EXISTS);
+			if (ret) {
+				ret = FALSE;
+				cmdline = zif_lock_get_cmdline_for_pid (pid);
+				g_set_error (error,
+					     ZIF_LOCK_ERROR,
+					     ZIF_LOCK_ERROR_ALREADY_LOCKED,
+					     "already locked by %s",
+					     cmdline);
+				goto out;
+			}
+		}
+
+		/* create file with our process ID */
+		pid_text = g_strdup_printf ("%i", getpid ());
+		ret = g_file_set_contents (filename,
+					   pid_text,
+					   -1,
+					   &error_local);
+		if (!ret) {
+			g_set_error (error,
+				     ZIF_LOCK_ERROR,
+				     ZIF_LOCK_ERROR_PERMISSION,
+				     "failed to obtain lock '%s': %s",
+				     zif_lock_type_to_string (type),
+				     error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+	}
+
+	/* increment ref count */
+	lock->priv->refcount[type]++;
+
+	/* success */
+	ret = TRUE;
+out:
+	g_free (pid_text);
+	g_free (pid_filename);
+	g_free (filename);
+	g_free (cmdline);
+	return ret;
+}
+
+/**
+ * zif_lock_release:
+ * @lock: A #ZifLock
+ * @type: A ZifLockType, e.g. %ZIF_LOCK_TYPE_RPMDB_WRITE
+ * @error: A #GError, or %NULL
+ *
+ * Tries to release a lock for the packaging system.
+ *
+ * Return value: %TRUE if we locked, else %FALSE and the error is set
+ *
+ * Since: 0.1.6
+ **/
+gboolean
+zif_lock_release (ZifLock *lock, ZifLockType type, GError **error)
+{
+	gboolean ret = FALSE;
+	gchar *filename = NULL;
+	GError *error_local = NULL;
+	GFile *file = NULL;
+
+	g_return_val_if_fail (ZIF_IS_LOCK (lock), FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+	/* never took */
+	if (lock->priv->refcount[type] == 0) {
+		g_set_error (error,
+			     ZIF_LOCK_ERROR,
+			     ZIF_LOCK_ERROR_NOT_LOCKED,
+			     "Lock %s was never taken",
+			     zif_lock_type_to_string (type));
+		goto out;
+	}
+
+	/* idecrement ref count */
+	lock->priv->refcount[type]--;
+
+	/* delete file? */
+	if (lock->priv->refcount[type] == 0) {
+		/* get the lock filename */
+		filename = zif_lock_get_filename_for_type (lock,
+							   type,
+							   error);
+		if (filename == NULL)
+			goto out;
+
+		/* unlink */
+		file = g_file_new_for_path (filename);
+		ret = g_file_delete (file, NULL, &error_local);
+		if (!ret) {
+			g_set_error (error,
+				     ZIF_LOCK_ERROR,
+				     ZIF_LOCK_ERROR_PERMISSION,
+				     "failed to write: %s",
+				     error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+	}
+
+	/* success */
+	ret = TRUE;
+out:
+	if (file != NULL)
+		g_object_unref (file);
+	g_free (filename);
+	return ret;
+}
+
+/**
+ * zif_lock_is_locked:
+ * @lock: A #ZifLock
+ * @pid: The PID of the process holding the lock, or %NULL
+ *
+ * Gets the lock state.
+ *
+ * This function is DEPRECATED as it's not threadsafe.
+ *
+ * Return value: %TRUE if we are already locked
+ *
+ * Since: 0.1.0
+ **/
+gboolean
+zif_lock_is_locked (ZifLock *lock, guint *pid)
+{
+	g_return_val_if_fail (ZIF_IS_LOCK (lock), FALSE);
+
+	g_warning ("Do not use zif_lock_is_locked(), it's deprecated");
+	return (lock->priv->refcount[ZIF_LOCK_TYPE_RPMDB_WRITE] > 0);
+}
+
 /**
  * zif_lock_set_locked:
  * @lock: A #ZifLock
@@ -228,6 +409,8 @@ zif_lock_get_cmdline_for_pid (guint pid)
  *
  * Tries to lock the packaging system.
  *
+ * This function is DEPRECATED. Use zif_lock_take() instead.
+ *
  * Return value: %TRUE if we locked, else %FALSE and the error is set
  *
  * Since: 0.1.0
@@ -235,59 +418,11 @@ zif_lock_get_cmdline_for_pid (guint pid)
 gboolean
 zif_lock_set_locked (ZifLock *lock, guint *pid, GError **error)
 {
-	gboolean ret = FALSE;
-	guint pid_tmp = 0;
-	gchar *pid_text = NULL;
-	gchar *cmdline = NULL;
-	GError *error_local = NULL;
-
 	g_return_val_if_fail (ZIF_IS_LOCK (lock), FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
-	/* already locked */
-	ret = zif_lock_is_locked (lock, &pid_tmp);
-	if (ret) {
-		cmdline = zif_lock_get_cmdline_for_pid (pid_tmp);
-		g_set_error (error, ZIF_LOCK_ERROR, ZIF_LOCK_ERROR_ALREADY_LOCKED,
-			     "already locked by %s", cmdline);
-		if (pid != NULL)
-			*pid = pid_tmp;
-		ret = FALSE;
-		goto out;
-	}
-
-	/* get default filename */
-	if (lock->priv->filename == NULL)
-		lock->priv->filename = zif_config_get_string (lock->priv->config, "pidfile", &error_local);
-	if (lock->priv->filename == NULL) {
-		g_set_error (error, ZIF_LOCK_ERROR, ZIF_LOCK_ERROR_FAILED,
-			     "lock file not set: %s", error_local->message);
-		g_error_free (error_local);
-		ret = FALSE;
-		goto out;
-	}
-
-	/* save our pid */
-	pid_tmp = getpid ();
-	pid_text = g_strdup_printf ("%i", pid_tmp);
-	ret = g_file_set_contents (lock->priv->filename, pid_text, -1, &error_local);
-	if (!ret) {
-		g_set_error (error, ZIF_LOCK_ERROR, ZIF_LOCK_ERROR_PERMISSION,
-			     "failed to write: %s", error_local->message);
-		g_error_free (error_local);
-		goto out;
-	}
-
-	/* optimise as we now hold the lock */
-	lock->priv->self_locked = TRUE;
-
-	/* return pid */
-	if (pid != NULL)
-		*pid = pid_tmp;
-out:
-	g_free (pid_text);
-	g_free (cmdline);
-	return ret;
+	g_warning ("Do not use zif_lock_set_locked(), it's deprecated");
+	return zif_lock_take (lock, ZIF_LOCK_TYPE_RPMDB_WRITE, error);
 }
 
 /**
@@ -297,6 +432,8 @@ out:
  *
  * Unlocks the packaging system.
  *
+ * This function is DEPRECATED. Use zif_lock_take() instead.
+ *
  * Return value: %TRUE for success, %FALSE otherwise
  *
  * Since: 0.1.0
@@ -304,64 +441,11 @@ out:
 gboolean
 zif_lock_set_unlocked (ZifLock *lock, GError **error)
 {
-	gboolean ret = FALSE;
-	guint pid = 0;
-	guint pid_tmp;
-	gint retval;
-	GError *error_local = NULL;
-
 	g_return_val_if_fail (ZIF_IS_LOCK (lock), FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
-	/* optimise as we hold the lock */
-	if (lock->priv->self_locked) {
-		lock->priv->self_locked = FALSE;
-		goto skip_checks;
-	}
-
-	/* are we already locked */
-	ret = zif_lock_is_locked (lock, &pid);
-	if (!ret) {
-		g_set_error_literal (error, ZIF_LOCK_ERROR, ZIF_LOCK_ERROR_NOT_LOCKED,
-				     "not locked");
-		goto out;
-	}
-
-	/* is it locked by somethine that isn't us? */
-	pid_tmp = getpid ();
-	if (pid != pid_tmp) {
-		g_set_error (error, ZIF_LOCK_ERROR, ZIF_LOCK_ERROR_ALREADY_LOCKED,
-			     "locked by %i, cannot unlock", pid_tmp);
-		ret = FALSE;
-		goto out;
-	}
-
-skip_checks:
-
-	/* get default filename */
-	if (lock->priv->filename == NULL)
-		lock->priv->filename = zif_config_get_string (lock->priv->config, "pidfile", &error_local);
-	if (lock->priv->filename == NULL) {
-		g_set_error (error, ZIF_LOCK_ERROR, ZIF_LOCK_ERROR_FAILED,
-			     "lock file not set: %s", error_local->message);
-		g_error_free (error_local);
-		ret = FALSE;
-		goto out;
-	}
-
-	/* remove file */
-	retval = g_unlink (lock->priv->filename);
-	if (retval != 0) {
-		g_set_error (error, ZIF_LOCK_ERROR, ZIF_LOCK_ERROR_FAILED,
-			     "cannot remove %s, cannot unlock", lock->priv->filename);
-		ret = FALSE;
-		goto out;
-	}
-
-	/* success */
-	ret = TRUE;
-out:
-	return ret;
+	g_warning ("Do not use zif_lock_set_unlocked(), it's deprecated");
+	return zif_lock_release (lock, ZIF_LOCK_TYPE_RPMDB_WRITE, error);
 }
 
 /**
@@ -370,6 +454,7 @@ out:
 static void
 zif_lock_finalize (GObject *object)
 {
+	guint i;
 	ZifLock *lock;
 
 	g_return_if_fail (object != NULL);
@@ -377,10 +462,14 @@ zif_lock_finalize (GObject *object)
 	lock = ZIF_LOCK (object);
 
 	/* unlock if we hold the lock */
-	if (lock->priv->self_locked)
-		zif_lock_set_unlocked (lock, NULL);
+	for (i=0; i<ZIF_LOCK_TYPE_LAST; i++) {
+		if (lock->priv->refcount[i] > 0) {
+			g_warning ("held lock %s at shutdown",
+				   zif_lock_type_to_string (i));
+			zif_lock_release (lock, i, NULL);
+		}
+	}
 
-	g_free (lock->priv->filename);
 	g_object_unref (lock->priv->config);
 
 	G_OBJECT_CLASS (zif_lock_parent_class)->finalize (object);
@@ -405,9 +494,7 @@ static void
 zif_lock_init (ZifLock *lock)
 {
 	lock->priv = ZIF_LOCK_GET_PRIVATE (lock);
-	lock->priv->self_locked = FALSE;
 	lock->priv->config = zif_config_new ();
-	lock->priv->filename = NULL;
 }
 
 /**

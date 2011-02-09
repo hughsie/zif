@@ -27,7 +27,6 @@
 #define __ZIF_LOCK_H
 
 #include <glib-object.h>
-#include "zif-state.h"
 
 G_BEGIN_DECLS
 
@@ -62,17 +61,35 @@ typedef enum {
 	ZIF_LOCK_ERROR_LAST
 } ZifLockError;
 
-GType		 zif_lock_get_type			(void);
-GQuark		 zif_lock_error_quark			(void);
-gboolean	 zif_lock_is_instance_valid		(void);
-ZifLock		*zif_lock_new				(void);
-gboolean	 zif_lock_is_locked			(ZifLock		*lock,
-							 guint			*pid);
-gboolean	 zif_lock_set_locked			(ZifLock		*lock,
-							 guint			*pid,
-							 GError			**error);
-gboolean	 zif_lock_set_unlocked			(ZifLock		*lock,
-							 GError			**error);
+typedef enum {
+	ZIF_LOCK_TYPE_RPMDB_WRITE,
+	ZIF_LOCK_TYPE_REPO_WRITE,
+	ZIF_LOCK_TYPE_METADATA_WRITE,
+	ZIF_LOCK_TYPE_LAST
+} ZifLockType;
+
+GType		 zif_lock_get_type		(void);
+GQuark		 zif_lock_error_quark		(void);
+ZifLock		*zif_lock_new			(void);
+gboolean	 zif_lock_is_instance_valid	(void);
+
+/* deprecated methods */
+gboolean	 zif_lock_is_locked		(ZifLock	*lock,
+						 guint		*pid);
+gboolean	 zif_lock_set_locked		(ZifLock	*lock,
+						 guint		*pid,
+						 GError		**error);
+gboolean	 zif_lock_set_unlocked		(ZifLock	*lock,
+						 GError		**error);
+
+/* new methods */
+gboolean	 zif_lock_take			(ZifLock	*lock,
+						 ZifLockType	 type,
+						 GError		**error);
+gboolean	 zif_lock_release		(ZifLock	*lock,
+						 ZifLockType	 type,
+						 GError		**error);
+const gchar	*zif_lock_type_to_string	(ZifLockType	 lock_type);
 
 G_END_DECLS
 

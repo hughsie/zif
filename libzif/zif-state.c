@@ -99,6 +99,7 @@ struct _ZifStatePrivate
 	gdouble			 global_share;
 	gdouble			*step_profile;
 	gpointer		 error_handler_user_data;
+	gpointer		 lock_handler_user_data;
 	GTimer			*timer;
 	guint64			 speed;
 	guint64			*speed_data;
@@ -115,7 +116,10 @@ struct _ZifStatePrivate
 	ZifStateAction		 last_action;
 	ZifState		*child;
 	ZifStateErrorHandlerCb	 error_handler_cb;
+	ZifStateLockHandlerCb	 lock_handler_cb;
 	ZifState		*parent;
+	GPtrArray		*locks;
+	ZifLock			*lock;
 };
 
 enum {
@@ -202,14 +206,19 @@ zif_state_set_enable_profile (ZifState *state, gboolean enable_profile)
  * Since: 0.1.0
  **/
 void
-zif_state_set_error_handler (ZifState *state, ZifStateErrorHandlerCb error_handler_cb, gpointer user_data)
+zif_state_set_error_handler (ZifState *state,
+			     ZifStateErrorHandlerCb error_handler_cb,
+			     gpointer user_data)
 {
 	state->priv->error_handler_cb = error_handler_cb;
 	state->priv->error_handler_user_data = user_data;
 
 	/* if there is an existing child, set the handler on this too */
-	if (state->priv->child != NULL)
-		zif_state_set_error_handler (state->priv->child, error_handler_cb, user_data);
+	if (state->priv->child != NULL) {
+		zif_state_set_error_handler (state->priv->child,
+					     error_handler_cb,
+					     user_data);
+	}
 }
 
 /**
@@ -235,6 +244,77 @@ zif_state_error_handler (ZifState *state, const GError *error)
 	/* run the handler */
 	ret = state->priv->error_handler_cb (error, state->priv->error_handler_user_data);
 	g_debug ("error handler reported %s", ret ? "IGNORE" : "FAILURE");
+out:
+	return ret;
+}
+
+/**
+ * zif_state_set_lock_handler:
+ * @state: A #ZifState
+ * @lock_handler_cb: A #ZifStateLockHandlerCb which returns %FALSE if the lock cannot be got
+ * @user_data: A user_data to be passed to the #ZifStateLockHandlerCb
+ *
+ * Since: 0.1.6
+ **/
+void
+zif_state_set_lock_handler (ZifState *state,
+			    ZifStateLockHandlerCb lock_handler_cb,
+			    gpointer user_data)
+{
+	state->priv->lock_handler_cb = lock_handler_cb;
+	state->priv->lock_handler_user_data = user_data;
+
+	/* if there is an existing child, set the handler on this too */
+	if (state->priv->child != NULL) {
+		zif_state_set_lock_handler (state->priv->child,
+					    lock_handler_cb,
+					    user_data);
+	}
+}
+
+/**
+ * zif_state_take_lock:
+ * @state: A #ZifState
+ * @lock_type: A #ZifLockType, e.g. %ZIF_LOCK_TYPE_RPMDB_WRITE
+ * @error: A #GError
+ *
+ * Takes a lock of a specified type.
+ * The lock is automatically free'd when the ZifState has been completed.
+ *
+ * You can call zif_state_take_lock() multiple times with different or
+ * even the same @lock_type value.
+ *
+ * Return value: %FALSE if the lock is fatal, %TRUE otherwise
+ *
+ * Since: 0.1.6
+ **/
+gboolean
+zif_state_take_lock (ZifState *state,
+		     ZifLockType lock_type,
+		     GError **error)
+{
+	gboolean ret = FALSE;
+
+	/* no custom handler */
+	if (state->priv->lock_handler_cb == NULL) {
+		ret = zif_lock_take (state->priv->lock,
+				     lock_type,
+				     error);
+	} else {
+		ret = state->priv->lock_handler_cb (state,
+						    state->priv->lock,
+						    lock_type,
+						    error,
+						    state->priv->lock_handler_user_data);
+	}
+	if (!ret)
+		goto out;
+
+	/* add the lock to an array so we can release on completion */
+	g_debug ("adding lock %s",
+		 zif_lock_type_to_string (lock_type));
+	g_ptr_array_add (state->priv->locks,
+			 GUINT_TO_POINTER (lock_type));
 out:
 	return ret;
 }
@@ -410,6 +490,32 @@ zif_state_set_speed (ZifState *state, guint64 speed)
 }
 
 /**
+ * zif_state_release_locks:
+ **/
+static gboolean
+zif_state_release_locks (ZifState *state)
+{
+	gboolean ret = TRUE;
+	guint i;
+	ZifLockType lock_type;
+
+	/* release each one */
+	for (i=0; i<state->priv->locks->len; i++) {
+		lock_type = GPOINTER_TO_UINT (g_ptr_array_index (state->priv->locks, i));
+		g_debug ("releasing lock %s",
+			 zif_lock_type_to_string (lock_type));
+		ret = zif_lock_release (state->priv->lock,
+					lock_type,
+					NULL);
+		if (!ret)
+			goto out;
+	}
+	g_ptr_array_set_size (state->priv->locks, 0);
+out:
+	return ret;
+}
+
+/**
  * zif_state_set_percentage:
  * @state: A #ZifState
  * @percentage: Percentage value between 0% and 100%
@@ -466,6 +572,13 @@ zif_state_set_percentage (ZifState *state, guint percentage)
 	/* speed no longer valid */
 	if (percentage == 100)
 		zif_state_set_speed_internal (state, 0);
+
+	/* release locks? */
+	if (percentage == 100) {
+		ret = zif_state_release_locks (state);
+		if (!ret)
+			goto out;
+	}
 
 	/* save */
 	state->priv->last_percentage = percentage;
@@ -883,6 +996,9 @@ zif_state_reset (ZifState *state)
 		state->priv->child = NULL;
 	}
 
+	/* no more locks */
+	zif_state_release_locks (state);
+
 	/* no more step data */
 	g_free (state->priv->step_data);
 	g_free (state->priv->step_profile);
@@ -993,6 +1109,13 @@ zif_state_get_child (ZifState *state)
 		zif_state_set_error_handler (child,
 					     state->priv->error_handler_cb,
 					     state->priv->error_handler_user_data);
+	}
+
+	/* set the lock handler if one exists on the child */
+	if (state->priv->lock_handler_cb != NULL) {
+		zif_state_set_lock_handler (child,
+					    state->priv->lock_handler_cb,
+					    state->priv->lock_handler_user_data);
 	}
 
 	/* set the profile state */
@@ -1352,7 +1475,9 @@ zif_state_finalize (GObject *object)
 	g_return_if_fail (ZIF_IS_STATE (object));
 	state = ZIF_STATE (object);
 
-	/* unref child too */
+	/* no more locks */
+	zif_state_release_locks (state);
+
 	zif_state_reset (state);
 	g_free (state->priv->id);
 	g_free (state->priv->action_hint);
@@ -1362,6 +1487,8 @@ zif_state_finalize (GObject *object)
 		g_object_unref (state->priv->cancellable);
 	g_timer_destroy (state->priv->timer);
 	g_free (state->priv->speed_data);
+	g_ptr_array_unref (state->priv->locks);
+	g_object_unref (state->priv->lock);
 
 	G_OBJECT_CLASS (zif_state_parent_class)->finalize (object);
 }
@@ -1477,7 +1604,9 @@ zif_state_init (ZifState *state)
 	state->priv->action = ZIF_STATE_ACTION_UNKNOWN;
 	state->priv->last_action = ZIF_STATE_ACTION_UNKNOWN;
 	state->priv->timer = g_timer_new ();
+	state->priv->locks = g_ptr_array_new ();
 	state->priv->report_progress = TRUE;
+	state->priv->lock = zif_lock_new ();
 	state->priv->speed_data = g_new0 (guint64, ZIF_STATE_SPEED_SMOOTHING_ITEMS);
 }
 

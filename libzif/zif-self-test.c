@@ -948,7 +948,6 @@ zif_lock_func (void)
 	gboolean ret;
 	GError *error = NULL;
 	gchar *pidfile;
-	guint pid = 0;
 	gchar *filename;
 
 	config = zif_config_new ();
@@ -970,17 +969,48 @@ zif_lock_func (void)
 
 	/* remove file */
 	g_unlink (pidfile);
-	g_assert (!zif_lock_is_locked (lock, &pid));
-	g_assert (!zif_lock_set_unlocked (lock, NULL));
-	ret = zif_lock_set_locked (lock, &pid, &error);
+
+	/* nothing yet! */
+	ret = zif_lock_release (lock, ZIF_LOCK_TYPE_RPMDB_WRITE, &error);
+	g_assert_error (error, ZIF_LOCK_ERROR, ZIF_LOCK_ERROR_NOT_LOCKED);
+	g_assert (!ret);
+	g_clear_error (&error);
+
+	/* take one */
+	ret = zif_lock_take (lock, ZIF_LOCK_TYPE_RPMDB_WRITE, &error);
 	g_assert_no_error (error);
 	g_assert (ret);
-	g_assert (zif_lock_is_locked (lock, &pid));
 
-	/* ensure pid is us */
-	g_assert ((pid == (guint)getpid ()));
-	g_assert (zif_lock_set_unlocked (lock, NULL));
-	g_assert (!zif_lock_set_unlocked (lock, NULL));
+	/* take a different one */
+	ret = zif_lock_take (lock, ZIF_LOCK_TYPE_REPO_WRITE, &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	/* take two */
+	ret = zif_lock_take (lock, ZIF_LOCK_TYPE_RPMDB_WRITE, &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	/* release one */
+	ret = zif_lock_release (lock, ZIF_LOCK_TYPE_RPMDB_WRITE, &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	/* release different one */
+	ret = zif_lock_release (lock, ZIF_LOCK_TYPE_REPO_WRITE, &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	/* release two */
+	ret = zif_lock_release (lock, ZIF_LOCK_TYPE_RPMDB_WRITE, &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	/* no more! */
+	ret = zif_lock_release (lock, ZIF_LOCK_TYPE_RPMDB_WRITE, &error);
+	g_assert_error (error, ZIF_LOCK_ERROR, ZIF_LOCK_ERROR_NOT_LOCKED);
+	g_assert (!ret);
+	g_clear_error (&error);
 
 	g_object_unref (lock);
 	g_object_unref (config);
@@ -1698,7 +1728,6 @@ zif_package_remote_func (void)
 	gchar *pidfile;
 	const gchar *cache_filename;
 	ZifConfig *config;
-	ZifLock *lock;
 	ZifRepos *repos;
 	ZifStoreLocal *store;
 
@@ -1724,18 +1753,12 @@ zif_package_remote_func (void)
 
 	state = zif_state_new ();
 
-	lock = zif_lock_new ();
-	ret = zif_lock_set_locked (lock, NULL, &error);
-	g_assert_no_error (error);
-	g_assert (ret);
-
 	store = ZIF_STORE_LOCAL (zif_store_local_new ());
 	g_assert (store != NULL);
 	filename = zif_test_get_data_file ("root");
 	zif_store_local_set_prefix (store, filename, &error);
 	g_free (filename);
 	g_assert_no_error (error);
-	g_assert (ret);
 
 	repos = zif_repos_new ();
 	filename = zif_test_get_data_file ("repos");
@@ -1746,7 +1769,6 @@ zif_package_remote_func (void)
 
 	pkg = zif_package_remote_new ();
 	g_assert (pkg != NULL);
-	state = zif_state_new ();
 
 	/* get remote store */
 	store_remote = ZIF_STORE_REMOTE (zif_store_remote_new ());
@@ -1832,14 +1854,10 @@ zif_package_remote_func (void)
 	g_assert (ret);
 	g_assert (g_file_test (cache_filename, G_FILE_TEST_EXISTS));
 
-	/* set to unlocked */
-	g_assert (zif_lock_set_unlocked (lock, NULL));
-
 	/* delete files we created */
 	g_unlink ("../data/tests/./fedora/packages/powerman-2.3.5-2.fc13.i686.rpm");
 
 	g_object_unref (config);
-	g_object_unref (lock);
 	g_object_unref (package);
 	g_object_unref (pkg);
 	g_object_unref (repos);
@@ -1857,7 +1875,6 @@ zif_repos_func (void)
 	ZifStoreRemote *store;
 	ZifConfig *config;
 	ZifRepos *repos;
-	ZifLock *lock;
 	ZifState *state;
 	GPtrArray *array;
 	GError *error = NULL;
@@ -1875,12 +1892,6 @@ zif_repos_func (void)
 	pidfile = g_build_filename (g_get_tmp_dir (), "zif.lock", NULL);
 	zif_config_set_string (config, "pidfile", pidfile, NULL);
 	g_free (pidfile);
-
-	lock = zif_lock_new ();
-	g_assert (lock != NULL);
-	ret = zif_lock_set_locked (lock, NULL, &error);
-	g_assert_no_error (error);
-	g_assert (ret);
 
 	repos = zif_repos_new ();
 	g_assert (repos != NULL);
@@ -1928,7 +1939,6 @@ zif_repos_func (void)
 
 	g_object_unref (state);
 	g_object_unref (repos);
-	g_object_unref (lock);
 	g_object_unref (config);
 
 	zif_check_singletons ();
@@ -1972,15 +1982,29 @@ zif_state_error_handler_cb (const GError *error, gpointer user_data)
 	return TRUE;
 }
 
+static gboolean
+zif_state_take_lock_cb (ZifState *state,
+			ZifLock *lock,
+			ZifLockType lock_type,
+			GError **error,
+			gpointer user_data)
+{
+	/* just return success without asking or writing any files */
+	return TRUE;
+}
+
 static void
 zif_state_func (void)
 {
-	ZifState *state;
+	gboolean ret;
+	gchar *filename;
+	gchar *pidfile;
+	GError *error = NULL;
+	guint i;
+	ZifConfig *config;
 	ZifState *child;
 	ZifState *child_child;
-	gboolean ret;
-	guint i;
-	GError *error = NULL;
+	ZifState *state;
 
 	for (i=0; i<ZIF_STATE_ACTION_UNKNOWN ;i++)
 		g_assert (zif_state_action_to_string (i) != NULL);
@@ -2362,6 +2386,42 @@ zif_state_func (void)
 	zif_state_set_speed (state, 600);
 	g_assert_cmpint (zif_state_get_speed (state), ==, 400);
 	g_object_unref (state);
+
+	/* check we've not leaked anything */
+	zif_check_singletons ();
+
+	/* locking test */
+	config = zif_config_new ();
+	filename = zif_test_get_data_file ("zif.conf");
+	zif_config_set_filename (config, filename, NULL);
+	g_free (filename);
+
+	pidfile = g_build_filename (g_get_tmp_dir (), "zif.lock", NULL);
+	zif_config_set_string (config, "pidfile", pidfile, NULL);
+	g_free (pidfile);
+
+	state = zif_state_new ();
+
+	zif_state_set_lock_handler (state, zif_state_take_lock_cb, NULL);
+
+	/* lock once */
+	ret = zif_state_take_lock (state,
+				   ZIF_LOCK_TYPE_RPMDB_WRITE,
+				   &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	/* succeeded, even again */
+	ret = zif_state_take_lock (state,
+				   ZIF_LOCK_TYPE_RPMDB_WRITE,
+				   &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	g_object_unref (state);
+	g_object_unref (config);
+
+	zif_check_singletons ();
 }
 
 static void
@@ -2372,7 +2432,6 @@ zif_store_local_func (void)
 	GPtrArray *array;
 	ZifPackage *package;
 	ZifGroups *groups;
-	ZifLock *lock;
 	ZifLegal *legal;
 	ZifConfig *config;
 	ZifState *state;
@@ -2412,13 +2471,6 @@ zif_store_local_func (void)
 
 	store = ZIF_STORE_LOCAL (zif_store_local_new ());
 	g_assert (store != NULL);
-
-	lock = zif_lock_new ();
-	g_assert (lock != NULL);
-
-	ret = zif_lock_set_locked (lock, NULL, &error);
-	g_assert_no_error (error);
-	g_assert (ret);
 
 	filename = zif_test_get_data_file ("root");
 	zif_store_local_set_prefix (store, filename, &error);
@@ -2551,7 +2603,6 @@ zif_store_local_func (void)
 	g_object_unref (store);
 	g_object_unref (groups);
 	g_object_unref (config);
-	g_object_unref (lock);
 	g_object_unref (legal);
 	g_object_unref (state);
 
@@ -2636,7 +2687,6 @@ zif_store_remote_func (void)
 	ZifStoreRemote *store;
 	ZifStoreLocal *store_local;
 	ZifConfig *config;
-	ZifLock *lock;
 	ZifState *state;
 	ZifDownload *download;
 	GPtrArray *array;
@@ -2668,13 +2718,6 @@ zif_store_remote_func (void)
 
 	store = ZIF_STORE_REMOTE (zif_store_remote_new ());
 	g_assert (store != NULL);
-
-	lock = zif_lock_new ();
-	g_assert (lock != NULL);
-
-	ret = zif_lock_set_locked (lock, NULL, &error);
-	g_assert_no_error (error);
-	g_assert (ret);
 
 	zif_state_reset (state);
 	filename = zif_test_get_data_file ("repos/fedora.repo");
@@ -2905,7 +2948,6 @@ zif_store_remote_func (void)
 	g_object_unref (download);
 	g_object_unref (store);
 	g_object_unref (config);
-	g_object_unref (lock);
 	g_object_unref (state);
 	g_object_unref (groups);
 	g_object_unref (store_local);
@@ -2918,7 +2960,6 @@ zif_store_rhn_func (void)
 {
 	ZifStore *store;
 	ZifConfig *config;
-	ZifLock *lock;
 	ZifState *state;
 	gboolean ret;
 	GError *error = NULL;
@@ -2942,13 +2983,6 @@ zif_store_rhn_func (void)
 
 	store = zif_store_rhn_new ();
 	g_assert (store != NULL);
-
-	lock = zif_lock_new ();
-	g_assert (lock != NULL);
-
-	ret = zif_lock_set_locked (lock, NULL, &error);
-	g_assert_no_error (error);
-	g_assert (ret);
 
 	/* try to load without session key */
 	zif_state_reset (state);
@@ -3004,7 +3038,6 @@ zif_store_rhn_func (void)
 
 	g_object_unref (store);
 	g_object_unref (config);
-	g_object_unref (lock);
 	g_object_unref (state);
 
 	zif_check_singletons ();
@@ -3223,6 +3256,7 @@ main (int argc, char **argv)
 	g_log_set_fatal_mask (NULL, G_LOG_LEVEL_ERROR | G_LOG_LEVEL_CRITICAL);
 
 	/* tests go here */
+	g_test_add_func ("/zif/state", zif_state_func);
 	g_test_add_func ("/zif/changeset", zif_changeset_func);
 	g_test_add_func ("/zif/config", zif_config_func);
 	g_test_add_func ("/zif/db", zif_db_func);
@@ -3250,7 +3284,6 @@ main (int argc, char **argv)
 	g_test_add_func ("/zif/package", zif_package_func);
 	g_test_add_func ("/zif/release", zif_release_func);
 	g_test_add_func ("/zif/repos", zif_repos_func);
-	g_test_add_func ("/zif/state", zif_state_func);
 	g_test_add_func ("/zif/store-local", zif_store_local_func);
 	g_test_add_func ("/zif/store-meta", zif_store_meta_func);
 	g_test_add_func ("/zif/store-remote", zif_store_remote_func);
