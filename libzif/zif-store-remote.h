@@ -95,6 +95,7 @@ gboolean	 zif_store_remote_get_enabled		(ZifStoreRemote		*store,
 							 GError			**error);
 gboolean	 zif_store_remote_set_enabled		(ZifStoreRemote		*store,
 							 gboolean		 enabled,
+							 ZifState		*state,
 							 GError			**error);
 gboolean	 zif_store_remote_download		(ZifStoreRemote		*store,
 							 const gchar		*filename,

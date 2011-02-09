@@ -2158,10 +2158,13 @@ out:
  *
  * Return value: %TRUE for success, %FALSE otherwise
  *
- * Since: 0.1.0
+ * Since: 0.1.6
  **/
 gboolean
-zif_store_remote_set_enabled (ZifStoreRemote *store, gboolean enabled, GError **error)
+zif_store_remote_set_enabled (ZifStoreRemote *store,
+			      gboolean enabled,
+			      ZifState *state,
+			      GError **error)
 {
 	GKeyFile *file;
 	gboolean ret;

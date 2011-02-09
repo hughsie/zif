@@ -2651,13 +2651,15 @@ zif_store_remote_func (void)
 
 	g_ptr_array_unref (array);
 
-	ret = zif_store_remote_set_enabled (store, FALSE, &error);
+	zif_state_reset (state);
+	ret = zif_store_remote_set_enabled (store, FALSE, state, &error);
 	g_assert_no_error (error);
 	g_assert (ret);
 	zif_state_reset (state);
 	g_assert (!zif_store_remote_get_enabled (store, state, NULL));
 
-	ret = zif_store_remote_set_enabled (store, TRUE, &error);
+	zif_state_reset (state);
+	ret = zif_store_remote_set_enabled (store, TRUE, state, &error);
 	g_assert_no_error (error);
 	g_assert (ret);
 	zif_state_reset (state);

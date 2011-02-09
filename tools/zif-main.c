@@ -2563,7 +2563,8 @@ zif_cmd_repo_disable (ZifCmdPrivate *priv, gchar **values, GError **error)
 		goto out;
 
 	/* change the enabled state */
-	ret = zif_store_remote_set_enabled (store_remote, FALSE, error);
+	state_local = zif_state_get_child (priv->state);
+	ret = zif_store_remote_set_enabled (store_remote, FALSE, state_local, error);
 	if (!ret) {
 		ret = FALSE;
 		goto out;
@@ -2637,7 +2638,8 @@ zif_cmd_repo_enable (ZifCmdPrivate *priv, gchar **values, GError **error)
 		goto out;
 
 	/* change the enabled state */
-	ret = zif_store_remote_set_enabled (store_remote, TRUE, error);
+	state_local = zif_state_get_child (priv->state);
+	ret = zif_store_remote_set_enabled (store_remote, TRUE, state_local, error);
 	if (!ret)
 		goto out;
 
