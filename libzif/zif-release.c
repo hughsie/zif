@@ -65,6 +65,7 @@ typedef struct {
 	gchar			*uuid_root;
 	gchar			*uuid_boot;
 	gchar			*images_section;
+	gboolean		 has_stage2;
 } ZifReleaseUpgradeData;
 
 G_DEFINE_TYPE (ZifRelease, zif_release, G_TYPE_OBJECT)
@@ -527,8 +528,7 @@ zif_release_add_kernel (ZifRelease *release,
 			        data->uuid_boot);
 
 	/* kernel arguments */
-	if (data->upgrade_kind == ZIF_RELEASE_UPGRADE_KIND_DEFAULT ||
-	    data->upgrade_kind == ZIF_RELEASE_UPGRADE_KIND_COMPLETE) {
+	if (data->has_stage2) {
 		g_string_append_printf (args,
 					"stage2=hd:UUID=%s:/upgrade/install.img ",
 					data->uuid_boot);
@@ -1032,10 +1032,9 @@ zif_release_get_stage2 (ZifRelease *release,
 	/* get data */
 	stage2 = g_key_file_get_string (data->key_file_treeinfo, "stage2", "mainimage", NULL);
 	if (stage2 == NULL) {
-		g_set_error_literal (error,
-				     ZIF_RELEASE_ERROR,
-				     ZIF_RELEASE_ERROR_FILE_INVALID,
-				     "failed to get stage2 section");
+		/* distros from F15+ do not ship a seporate stage2 image */
+		g_debug ("failed to get stage2 section as nothing was specified");
+		ret = TRUE;
 		goto out;
 	}
 	checksum = g_key_file_get_string (data->key_file_treeinfo, "checksums", stage2, NULL);
@@ -1075,6 +1074,9 @@ zif_release_get_stage2 (ZifRelease *release,
 			goto out;
 		}
 	}
+
+	/* got valid stage2 image */
+	data->has_stage2 = TRUE;
 out:
 	g_free (boot_dir);
 	g_free (filename);
@@ -1628,7 +1630,7 @@ zif_release_upgrade_version (ZifRelease *release, guint version, ZifReleaseUpgra
 		if (!ret)
 			goto out;
 
-		/* gets stage2 */
+		/* gets package data */
 		state_local = zif_state_get_child (state);
 		ret = zif_release_get_package_data (release, data, state_local, error);
 		if (!ret)
