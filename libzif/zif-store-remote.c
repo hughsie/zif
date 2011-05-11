@@ -1726,19 +1726,8 @@ zif_store_remote_load (ZifStore *store, ZifState *state, GError **error)
 	if (metadata_expire != NULL)
 		remote->priv->metadata_expire = zif_time_string_to_seconds (metadata_expire);
 
-	/* enabled is required for non-media repos */
-	if (remote->priv->media_id == NULL) {
-		enabled = g_key_file_get_string (file, remote->priv->id, "enabled", &error_local);
-		if (enabled == NULL) {
-			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
-				     "failed to get enabled: %s", error_local->message);
-			g_error_free (error_local);
-			ret = FALSE;
-			goto out;
-		}
-	} else {
-		enabled = g_key_file_get_string (file, remote->priv->id, "enabled", NULL);
-	}
+	/* enabled is not a required key */
+	enabled = g_key_file_get_string (file, remote->priv->id, "enabled", NULL);
 
 	/* convert to bool, otherwise assume valid */
 	if (enabled != NULL)
