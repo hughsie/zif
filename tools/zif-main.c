@@ -4759,6 +4759,18 @@ out:
 }
 
 /**
+ * pk_error_handler_cb:
+ */
+static gboolean
+pk_error_handler_cb (const GError *error, gpointer user_data)
+{
+	/* emit a warning, this isn't fatal */
+	g_debug ("non-fatal error: %s",
+		 error->message);
+	return TRUE;
+}
+
+/**
  * main:
  **/
 int
@@ -4805,7 +4817,7 @@ main (int argc, char *argv[])
 		{ "age", 'a', 0, G_OPTION_ARG_INT, &age,
 			_("Permitted age of the cache in seconds, 0 for never (default)"), NULL },
 		{ "skip-broken", 's', 0, G_OPTION_ARG_NONE, &skip_broken,
-			_("Skip broken dependencies rather than failing"), NULL },
+			_("Skip broken dependencies and repos rather than failing"), NULL },
 		{ "assume-yes", 'y', 0, G_OPTION_ARG_NONE, &assume_yes,
 			_("Assume yes to all questions"), NULL },
 		{ "assume-no", 'n', 0, G_OPTION_ARG_NONE, &assume_no,
@@ -4950,6 +4962,11 @@ main (int argc, char *argv[])
 	zif_state_set_lock_handler (priv->state,
 				    zif_take_lock_cb,
 				    priv);
+	if (skip_broken) {
+		zif_state_set_error_handler (priv->state,
+					     pk_error_handler_cb,
+					     NULL);
+	}
 
 	/* for the signal handler */
 	_state = state;
