@@ -158,19 +158,19 @@ zif_package_array_filter_newest (GPtrArray *packages)
 	GHashTable *hash;
 	ZifPackage *package;
 	ZifPackage *package_tmp;
-	const gchar *name;
+	const gchar *key;
 	gboolean ret = FALSE;
 
 	/* use a hash so it's O(n) not O(n^2) */
 	hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_object_unref);
 	for (i=0; i<packages->len;) {
 		package = ZIF_PACKAGE (g_ptr_array_index (packages, i));
-		name = zif_package_get_name (package);
-		package_tmp = g_hash_table_lookup (hash, name);
+		key = zif_package_get_name_arch (package);
+		package_tmp = g_hash_table_lookup (hash, key);
 
 		/* does not already exist */
 		if (package_tmp == NULL) {
-			g_hash_table_insert (hash, g_strdup (name), g_object_ref (package));
+			g_hash_table_insert (hash, g_strdup (key), g_object_ref (package));
 			i++;
 			continue;
 		}
@@ -189,8 +189,8 @@ zif_package_array_filter_newest (GPtrArray *packages)
 		g_debug ("adding %s", zif_package_get_id (package));
 
 		/* remove the old one */
-		g_hash_table_remove (hash, zif_package_get_name (package_tmp));
-		g_hash_table_insert (hash, g_strdup (name), g_object_ref (package));
+		g_hash_table_remove (hash, zif_package_get_name_arch (package_tmp));
+		g_hash_table_insert (hash, g_strdup (key), g_object_ref (package));
 		g_ptr_array_remove_fast (packages, package_tmp);
 	}
 	g_hash_table_unref (hash);

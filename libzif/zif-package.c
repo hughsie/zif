@@ -49,6 +49,7 @@ struct _ZifPackagePrivate
 	gchar			**package_id_split;
 	gchar			*package_id;
 	gchar			*printable;
+	gchar			*name_arch;
 	gchar			*cache_filename;
 	GFile			*cache_file;
 	ZifString		*summary;
@@ -111,6 +112,7 @@ zif_package_error_quark (void)
  * @b: The second package to compare
  *
  * Compares one package versions against each other.
+ * If the architectures are different, then an error is returned.
  *
  * Return value: 1 for a>b, 0 for a==b, -1 for b>a, or G_MAXINT for error
  *
@@ -909,6 +911,35 @@ zif_package_get_printable (ZifPackage *package)
 		zif_package_id_get_printable (package->priv->package_id);
 out:
 	return package->priv->printable;
+}
+
+/**
+ * zif_package_get_name_arch:
+ * @package: A #ZifPackage
+ *
+ * Gets a string which is the package name and architecture. This is
+ * often useful for matching on a multiarch system.
+ *
+ * Return value: A name-arch key string, e.g. "hal-i386"
+ *
+ * Since: 0.1.6
+ **/
+const gchar *
+zif_package_get_name_arch (ZifPackage *package)
+{
+	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
+
+	/* already got */
+	if (package->priv->name_arch != NULL)
+		goto out;
+
+	/* format */
+	package->priv->name_arch =
+		g_strdup_printf ("%s-%s",
+				 package->priv->package_id_split[ZIF_PACKAGE_ID_NAME],
+				 package->priv->package_id_split[ZIF_PACKAGE_ID_ARCH]);
+out:
+	return package->priv->name_arch;
 }
 
 /**
@@ -2193,6 +2224,7 @@ zif_package_finalize (GObject *object)
 	package = ZIF_PACKAGE (object);
 
 	g_free (package->priv->printable);
+	g_free (package->priv->name_arch);
 	g_free (package->priv->cache_filename);
 	if (package->priv->cache_file != NULL)
 		g_object_unref (package->priv->cache_file);
