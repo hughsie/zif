@@ -1311,7 +1311,7 @@ out:
 }
 
 /**
- * zif_cmd_get_updates:
+ * zif_get_update_array:
  *
  * Returns an array of the *new* packages, not the things that are
  * going to be updated.
@@ -1413,11 +1413,15 @@ zif_get_update_array (ZifCmdPrivate *priv, ZifState *state, GError **error)
 			val = zif_package_compare (update, package);
 			if (val == G_MAXINT)
 				continue;
+
+			/* arch okay, add to list */
 			if (val > 0) {
-				g_debug ("*** update %s from %s to %s",
+				g_debug ("*** update %s from %s.%s to %s.%s",
 					 zif_package_get_name (package),
 					 zif_package_get_version (package),
-					 zif_package_get_version (update));
+					 zif_package_get_arch (package),
+					 zif_package_get_version (update),
+					 zif_package_get_arch (update));
 				g_ptr_array_add (updates_available, g_object_ref (update));
 				break;
 			}
