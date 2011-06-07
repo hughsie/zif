@@ -1,16 +1,16 @@
 # SOME DESCRIPTIVE TITLE.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 # 
+# Mathieu LEFEBVRE Mathdabomb <mathdabomb@gmail.com>, 2011
 msgid ""
 msgstr ""
 "Project-Id-Version: Zif\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-01-07 11:31+0000\n"
-"PO-Revision-Date: 2011-01-24 15:52+0000\n"
+"PO-Revision-Date: 2011-03-22 15:07+0000\n"
 "Last-Translator: mathdabomb <mathdabomb@gmail.com>\n"
-"Language-Team: French <None>\n"
+"Language-Team: French (http://www.transifex.net/projects/p/zif/team/fr/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -230,7 +230,7 @@ msgstr "Obtenir les mises à niveau"
 
 #: ../tools/zif-main.c:1557
 msgid "No distribution upgrades are available."
-msgstr ""
+msgstr "Aucune mise à niveau de distribution disponible."
 
 #: ../tools/zif-main.c:1559
 msgid "Distribution upgrades available:"
@@ -327,7 +327,7 @@ msgstr "Ce sont des paquets non fiable:"
 #. * went horribly wrong
 #: ../tools/zif-main.c:1896
 msgid "Transaction error:"
-msgstr ""
+msgstr "Erreur de transaction:"
 
 #. TRANSLATORS: error message
 #: ../tools/zif-main.c:1976
@@ -576,7 +576,9 @@ msgstr "Activer le profilage de faible niveau de Zif"
 
 #: ../tools/zif-main.c:4677
 msgid "Enable background mode to run using less CPU"
-msgstr "Activer le mode d'arrière-plan pour exécuter en utilisant moins de ressources CPU"
+msgstr ""
+"Activer le mode d'arrière-plan pour exécuter en utilisant moins de "
+"ressources CPU"
 
 #: ../tools/zif-main.c:4679
 msgid "Work offline when possible"
@@ -777,7 +779,8 @@ msgstr "Afficher les détails au sujet d'une mise à jour"
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:5006
 msgid "Upgrade the operating system to a newer version"
-msgstr "Mettre à niveau le système d'exploitation vers une version plus récente"
+msgstr ""
+"Mettre à niveau le système d'exploitation vers une version plus récente"
 
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:5011
@@ -822,7 +825,8 @@ msgstr "Supprimer une valeur dans la base de données des paquets installés"
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:5051
 msgid "List values from the installed package database"
-msgstr "Lister les valeurs à partir de la base de données des paquets installés"
+msgstr ""
+"Lister les valeurs à partir de la base de données des paquets installés"
 
 #. TRANSLATORS: error message
 #: ../tools/zif-main.c:5078
@@ -984,3 +988,5 @@ msgstr "Aucun nom de fichier"
 #: ../tools/zif-main.c:5222
 msgid "Unhandled metadata error"
 msgstr "Erreur de métadonnées non gérée"
+
+

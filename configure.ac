@@ -1,12 +1,12 @@
 AC_PREREQ(2.63)
 
 m4_define([zif_major_version], [0])
-m4_define([zif_minor_version], [1])
-m4_define([zif_micro_version], [6])
+m4_define([zif_minor_version], [2])
+m4_define([zif_micro_version], [0])
 m4_define([zif_version],
           [zif_major_version.zif_minor_version.zif_micro_version])
 
-AC_INIT([zif],[0.1.6])
+AC_INIT([zif],[0.2.0])
 AC_CONFIG_SRCDIR(libzif)
 AM_INIT_AUTOMAKE(AC_PACKAGE_NAME, AC_PACKAGE_VERSION)
 AC_CONFIG_HEADERS([config.h])
@@ -34,8 +34,8 @@ m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
 # REVISION	If the API and ABI remains the same, but bugs are fixed.
 # AGE		If libzif can be linked into executables which can be
 # 		built with previous versions of this library. Don't use.
-LT_CURRENT=2
-LT_REVISION=2
+LT_CURRENT=3
+LT_REVISION=0
 LT_AGE=0
 AC_SUBST(LT_CURRENT)
 AC_SUBST(LT_REVISION)

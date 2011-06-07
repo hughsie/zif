@@ -1,3 +1,32 @@
+Version 0.2.0
+~~~~~~~~~~~~~
+Released: 2011-06-07
+
+Notes:
+ - This release breaks API in a small way for zif_store_remote_set_enabled
+ - Multiarch is now well supported with some new transaction self tests
+ - Native RHN support has been added which works, but is slow
+
+New Features:
+ - Add an --exact-arch command line argument to the zif command line tool
+ - Add initial RHN package and store support with elective precaching
+ - Take the architecture in consideration when filtering a package list for age
+ - Use mirrorlist_expire from the config file
+
+Bugfixes:
+ - Add a ZifState argument to zif_store_remote_set_enabled()
+ - Create a nice format string for RPMPROB_OBSOLETES for new versions of RPM
+ - Do not assert if zif_config_set_filename() is called twice, return a GError instead
+ - Do not require the caller to unref zif_state_get_child() to match the method comment
+ - Ensure we exit with an error if we ensure a store that is not supported
+ - Fedora 15 and above no longer ships a stage2 upgrade image
+ - Fix updating a x86_64 package where multiple architecture updates are available
+ - If the user specified --skip-broken then connect up a dummy error handler
+ - If we failed to write the lock file, then do not retry another 9 times
+ - It's not valid to call zif_package_compare() with two packages of different architecture
+ - Remove the global lock and instead use three locks for writing and none for reading
+ - Repo files do not have to contain an 'enabled=' entry
+
 Version 0.1.5
 ~~~~~~~~~~~~~
 Released: 2011-01-24
