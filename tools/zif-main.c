@@ -4787,6 +4787,7 @@ main (int argc, char *argv[])
 	gboolean profile = FALSE;
 	gboolean ret;
 	gboolean skip_broken = FALSE;
+	gboolean exact_arch = FALSE;
 	gboolean verbose = FALSE;
 	gchar *cmd_descriptions = NULL;
 	gchar *config_file = NULL;
@@ -4822,6 +4823,8 @@ main (int argc, char *argv[])
 			_("Permitted age of the cache in seconds, 0 for never (default)"), NULL },
 		{ "skip-broken", 's', 0, G_OPTION_ARG_NONE, &skip_broken,
 			_("Skip broken dependencies and repos rather than failing"), NULL },
+		{ "exact-arch", 'x', 0, G_OPTION_ARG_NONE, &exact_arch,
+			_("Only use the exact architecture packages for this machine"), NULL },
 		{ "assume-yes", 'y', 0, G_OPTION_ARG_NONE, &assume_yes,
 			_("Assume yes to all questions"), NULL },
 		{ "assume-no", 'n', 0, G_OPTION_ARG_NONE, &assume_no,
@@ -4909,6 +4912,12 @@ main (int argc, char *argv[])
 	ret = zif_config_set_boolean (priv->config, "skip_broken", skip_broken, &error);
 	if (!ret) {
 		g_error ("failed to set skip_broken: %s", error->message);
+		g_error_free (error);
+		goto out;
+	}
+	ret = zif_config_set_boolean (priv->config, "exactarch", exact_arch, &error);
+	if (!ret) {
+		g_error ("failed to set exactarch: %s", error->message);
 		g_error_free (error);
 		goto out;
 	}
