@@ -112,6 +112,63 @@ out:
 				} while (0);
 
 static void
+zif_package_array_func (void)
+{
+	GPtrArray *array;
+	ZifPackage *pkg;
+	gboolean ret;
+	GError *error = NULL;
+
+	array = zif_package_array_new ();
+	g_assert (array != NULL);
+	g_assert_cmpint (array->len, ==, 0);
+
+	/* add first i386 pkg */
+	pkg = zif_package_new ();
+	ret = zif_package_set_id (pkg, "hal;0.1-1.fc13;i386;installed", &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+	g_ptr_array_add (array, pkg);
+
+	/* add new i686 pkg */
+	pkg = zif_package_new ();
+	ret = zif_package_set_id (pkg, "hal;0.1-1.fc13;i686;installed", &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+	g_ptr_array_add (array, pkg);
+
+	/* filter by arch */
+	zif_package_array_filter_best_arch (array);
+	g_assert_cmpint (array->len, ==, 1);
+	pkg = g_ptr_array_index (array, 0);
+	g_assert_cmpstr (zif_package_get_id (pkg), ==, "hal;0.1-1.fc13;i686;installed");
+
+	/* add new x86_64 pkg */
+	pkg = zif_package_new ();
+	ret = zif_package_set_id (pkg, "hal;0.1-1.fc13;x86_64;installed", &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+	g_ptr_array_add (array, pkg);
+
+	/* filter by arch */
+	zif_package_array_filter_best_arch (array);
+	g_assert_cmpint (array->len, ==, 2);
+	pkg = g_ptr_array_index (array, 0);
+	g_assert_cmpstr (zif_package_get_id (pkg), ==, "hal;0.1-1.fc13;i686;installed");
+	pkg = g_ptr_array_index (array, 1);
+	g_assert_cmpstr (zif_package_get_id (pkg), ==, "hal;0.1-1.fc13;x86_64;installed");
+
+	/* ensure we can't filter newest when there are two different
+	 * architectures in the array */
+	pkg = zif_package_array_get_newest (array, &error);
+	g_assert_error (error, ZIF_PACKAGE_ERROR, ZIF_PACKAGE_ERROR_FAILED);
+	g_assert (pkg == NULL);
+	g_clear_error (&error);
+
+	g_ptr_array_unref (array);
+}
+
+static void
 zif_release_func (void)
 {
 	gboolean ret;
@@ -3282,6 +3339,7 @@ main (int argc, char **argv)
 	g_test_add_func ("/zif/package-remote", zif_package_remote_func);
 	g_test_add_func ("/zif/package-meta", zif_package_meta_func);
 	g_test_add_func ("/zif/package", zif_package_func);
+	g_test_add_func ("/zif/package-array", zif_package_array_func);
 	g_test_add_func ("/zif/release", zif_release_func);
 	g_test_add_func ("/zif/repos", zif_repos_func);
 	g_test_add_func ("/zif/store-local", zif_store_local_func);

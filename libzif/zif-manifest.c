@@ -33,6 +33,7 @@
  * AddRemote=hal
  * TransactionInstall=hal;0.0.1;i386;meta
  * PostInstalled=hal;0.0.1;i386;meta
+ * SetConfig=archinfo:i386,skip_broken:true
  */
 
 #ifdef HAVE_CONFIG_H
@@ -440,6 +441,15 @@ zif_manifest_check_post_installed (ZifManifest *manifest,
 	split = g_strsplit (packages, ",", -1);
 	for (i=0; split[i] != NULL; i++) {
 		zif_state_reset (state);
+		if (!zif_package_id_check (split[i])) {
+			ret = FALSE;
+			g_set_error (error,
+				     ZIF_MANIFEST_ERROR,
+				     ZIF_MANIFEST_ERROR_POST_INSTALL,
+				     "invalid package id: %s",
+				     split[i]);
+			goto out;
+		}
 		package = zif_store_find_package (store, split[i], state, &error_local);
 		if (package == NULL) {
 			ret = FALSE;
@@ -763,7 +773,7 @@ zif_manifest_check (ZifManifest *manifest,
 			g_set_error (error,
 				     ZIF_MANIFEST_ERROR,
 				     ZIF_MANIFEST_ERROR_FAILED,
-				     "failed to add resolve transaction: %s",
+				     "failed to resolve transaction: %s",
 				     error_local->message);
 			g_error_free (error_local);
 			goto out;

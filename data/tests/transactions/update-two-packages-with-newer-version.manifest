@@ -6,3 +6,4 @@ AddLocal=bash;0:0.3.0-1;i386;meta@Provides:shell,system-base;1.0.0-1;i386;meta@R
 AddRemote=fish;1.8.1-2;i386;meta@Provides:shell,bash;1.7.1-2;i386;meta@Provides:shell = 1.0,zsh;1.8.1-2;i386;meta@Provides:shell = 4.0,system-base;2.0.0-1;i386;meta@Requires:shell
 TransactionUpdate=bash,system-base
 PostInstalled=bash;1.7.1-2;i386;meta,system-base;2.0.0-1;i386;meta
+SetConfig=archinfo:i386

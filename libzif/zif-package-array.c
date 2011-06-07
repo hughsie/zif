@@ -64,6 +64,7 @@ ZifPackage *
 zif_package_array_get_newest (GPtrArray *array, GError **error)
 {
 	ZifPackage *package_newest;
+	ZifPackage *package_tmp;
 	ZifPackage *package = NULL;
 	guint i;
 	gint retval;
@@ -72,7 +73,9 @@ zif_package_array_get_newest (GPtrArray *array, GError **error)
 
 	/* no results */
 	if (array->len == 0) {
-		g_set_error_literal (error, ZIF_PACKAGE_ERROR, ZIF_PACKAGE_ERROR_FAILED,
+		g_set_error_literal (error,
+				     ZIF_PACKAGE_ERROR,
+				     ZIF_PACKAGE_ERROR_FAILED,
 				     "nothing in array");
 		goto out;
 	}
@@ -82,10 +85,20 @@ zif_package_array_get_newest (GPtrArray *array, GError **error)
 
 	/* find newest in rest of the array */
 	for (i=1; i<array->len; i++) {
-		package = g_ptr_array_index (array, i);
-		retval = zif_package_compare (package, package_newest);
+		package_tmp = g_ptr_array_index (array, i);
+		retval = zif_package_compare (package_tmp,
+					      package_newest);
+		if (retval == G_MAXINT) {
+			g_set_error (error,
+				     ZIF_PACKAGE_ERROR,
+				     ZIF_PACKAGE_ERROR_FAILED,
+				     "cannot get newest for non-native architectures: %s,%s",
+				     zif_package_get_id (package_tmp),
+				     zif_package_get_id (package_newest));
+			goto out;
+		}
 		if (retval > 0)
-			package_newest = package;
+			package_newest = package_tmp;
 	}
 
 	/* return reference so we can unref the list */
@@ -226,14 +239,14 @@ zif_package_array_filter_best_arch (GPtrArray *array)
 		package = g_ptr_array_index (array, i);
 		arch = zif_package_get_arch (package);
 		if (g_strcmp0 (arch, "x86_64") == 0)
-			break;
+			continue;
 		if (g_strcmp0 (arch, best_arch) > 0) {
 			best_arch = arch;
 		}
 	}
 
 	/* if no obvious best, skip */
-	g_debug ("bestarch=%s", best_arch);
+	g_debug ("best 32 bit arch=%s", best_arch);
 	if (best_arch == NULL)
 		return;
 
@@ -241,7 +254,8 @@ zif_package_array_filter_best_arch (GPtrArray *array)
 	for (i=0; i<array->len;) {
 		package = g_ptr_array_index (array, i);
 		arch = zif_package_get_arch (package);
-		if (g_strcmp0 (arch, best_arch) != 0) {
+		if (g_strcmp0 (arch, best_arch) != 0 &&
+		    g_strcmp0 (arch, "x86_64") != 0) {
 			g_ptr_array_remove_index_fast (array, i);
 			continue;
 		}

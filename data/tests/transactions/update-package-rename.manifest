@@ -5,3 +5,4 @@ AddLocal=DeviceKit-power;0.0.1;i386;meta
 AddRemote=UPower;1.0.0;i386;meta@Obsoletes:DeviceKit-power
 TransactionUpdate=DeviceKit-power
 PostInstalled=UPower;1.0.0;i386;meta
+SetConfig=archinfo:i386

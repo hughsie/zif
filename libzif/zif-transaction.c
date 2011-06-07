@@ -891,6 +891,24 @@ _zif_package_array_filter_best_provide (ZifTransaction *transaction,
 		goto out;
 	}
 
+	/* we cannot find the newest entry for non-native packages */
+	if (archinfo == NULL) {
+		archinfo = zif_config_get_string (transaction->priv->config,
+						  "archinfo", NULL);
+		zif_package_array_filter_arch (array, archinfo);
+	}
+
+	/* we didn't provide any packages of the correct arch */
+	if (array->len == 0) {
+		ret = FALSE;
+		g_set_error (error,
+			     ZIF_TRANSACTION_ERROR,
+			     ZIF_TRANSACTION_ERROR_FAILED,
+			     "no packages compatible with %s",
+			     archinfo);
+		goto out;
+	}
+
 	/* return the newest */
 	*package = zif_package_array_get_newest (array, &error_local);
 	if (*package == NULL) {

@@ -1,0 +1,8 @@
+# Updating a base package pulls in the updated subpackages as well.
+
+[Zif Manifest]
+AddLocal=evo-plugins;1:0.3.0-1;x86_64;meta@Requires:evo = 1:0.3.0-1,evo;1:0.3.0-1;x86_64;meta
+AddRemote=evo-plugins;1:0.4.0-1;i386;meta@Requires:evo = 1:0.4.0-1,evo;1:0.4.0-1;i386;meta,evo-plugins;1:0.4.0-1;x86_64;meta@Requires:evo = 1:0.4.0-1,evo;1:0.4.0-1;x86_64;meta
+TransactionUpdate=evo-plugins
+PostInstalled=evo-plugins;1:0.4.0-1;x86_64;meta,evo;1:0.4.0-1;x86_64;meta
+SetConfig=archinfo:x86_64

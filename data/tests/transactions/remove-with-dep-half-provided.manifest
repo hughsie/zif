@@ -5,3 +5,4 @@
 AddLocal=PackageKit;0:0.1.0-1;i386;meta@Provides:PKGS@Provides:DAEMON,gnome-packagekit;0:0.1.0-1;i386;meta@Requires:PKGS@Requires:DAEMON,hal;0:0.1.0-1;i386;meta@Provides:DAEMON
 TransactionRemove=PackageKit
 PostInstalled=hal;0:0.1.0-1;i386;meta
+SetConfig=archinfo:i386

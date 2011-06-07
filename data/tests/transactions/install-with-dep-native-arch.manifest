@@ -6,3 +6,4 @@ AddLocal=
 AddRemote=intltool;1.3.1-2;noarch;meta@Requires:gettext-devel,gettext-devel;1.0-1;x86_64;meta,gettext-devel;1.0-1;i586;meta
 TransactionInstall=intltool
 PostInstalled=intltool;1.3.1-2;noarch;meta,gettext-devel;1.0-1;i586;meta
+SetConfig=archinfo:i386

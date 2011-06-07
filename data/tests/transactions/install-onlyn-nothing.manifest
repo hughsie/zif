@@ -5,3 +5,4 @@ AddLocal=kernel;2.6.35-1;i386;meta,kernel;2.6.36-1;i386;meta,kernel;2.6.37-1;i38
 AddRemote=kernel;2.6.36-1;i386;meta,kernel;2.6.37-1;i386;meta
 TransactionUpdate=kernel;2.6.37-1;i386;meta
 PostInstalled=kernel;2.6.35-1;i386;meta,kernel;2.6.36-1;i386;meta,kernel;2.6.37-1;i386;meta
+SetConfig=archinfo:i386
