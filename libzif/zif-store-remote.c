@@ -77,8 +77,9 @@ struct _ZifStoreRemotePrivate
 	gchar			*name_expanded;		/* Fedora i386 */
 	gchar			*directory;		/* /var/cache/yum/fedora */
 	gchar			*repomd_filename;	/* /var/cache/yum/fedora/repomd.xml */
-	gchar			*mirrorlist;
-	gchar			*metalink;
+	gchar			*baseurl;		/* http://dl.fp.org/pub/fedora/16/i386 */
+	gchar			*mirrorlist;		/* http://dl.fp.org/mirrorlist.txt */
+	gchar			*metalink;		/* http://m.fp.org/ml?repo=f-15&arch=i386 */
 	gchar			*cache_dir;		/* /var/cache/yum */
 	gchar			*repo_filename;		/* /etc/yum.repos.d/fedora.repo */
 	gchar			*media_id;		/* 1273587559.563492 */
@@ -939,155 +940,6 @@ out:
 }
 
 /**
- * zif_store_remote_add_metalink:
- **/
-static gboolean
-zif_store_remote_add_metalink (ZifStoreRemote *store, ZifState *state, GError **error)
-{
-	GPtrArray *array = NULL;
-	GError *error_local = NULL;
-	const gchar *filename;
-	gboolean ret = FALSE;
-	ZifState *state_local;
-
-	g_return_val_if_fail (zif_state_valid (state), FALSE);
-
-	/* if we're loading the metadata with an empty cache, the file won't yet exist. So download it */
-	filename = zif_md_get_filename_uncompressed (store->priv->md_metalink);
-	if (filename == NULL) {
-		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
-			     "metalink filename not set for %s", store->priv->id);
-		goto out;
-	}
-
-	/* set state */
-	ret = zif_state_set_steps (state,
-				   error,
-				   80, /* download */
-				   20, /* parse */
-				   -1);
-	if (!ret)
-		goto out;
-
-	/* find if the file already exists */
-	ret = g_file_test (filename, G_FILE_TEST_EXISTS);
-	if (!ret) {
-		state_local = zif_state_get_child (state);
-
-		/* ensure path is valid */
-		ret = zif_store_remote_ensure_parent_dir_exists (filename, error);
-		if (!ret)
-			goto out;
-
-		/* download object directly, as we don't have the repo setup yet */
-		ret = zif_download_file (store->priv->download, store->priv->metalink, filename, state_local, &error_local);
-		if (!ret) {
-			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED_TO_DOWNLOAD,
-				     "failed to download %s from %s: %s", filename, store->priv->metalink, error_local->message);
-			g_error_free (error_local);
-			goto out;
-		}
-	}
-
-	ret = zif_state_done (state, error);
-	if (!ret)
-		goto out;
-
-	/* get mirrors */
-	state_local = zif_state_get_child (state);
-	ret = zif_download_location_add_md (store->priv->download, store->priv->md_metalink, state_local, &error_local);
-	if (!ret) {
-		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
-			     "failed to add mirrors from metalink: %s", error_local->message);
-		g_error_free (error_local);
-		goto out;
-	}
-
-	ret = zif_state_done (state, error);
-	if (!ret)
-		goto out;
-out:
-	if (array != NULL)
-		g_ptr_array_unref (array);
-	return ret;
-}
-
-/**
- * zif_store_remote_add_mirrorlist:
- **/
-static gboolean
-zif_store_remote_add_mirrorlist (ZifStoreRemote *store, ZifState *state, GError **error)
-{
-	GPtrArray *array = NULL;
-	GError *error_local = NULL;
-	const gchar *filename;
-	gboolean ret = FALSE;
-	ZifState *state_local;
-
-	g_return_val_if_fail (zif_state_valid (state), FALSE);
-
-	/* if we're loading the metadata with an empty cache, the file won't yet exist. So download it */
-	filename = zif_md_get_filename_uncompressed (store->priv->md_mirrorlist);
-	if (filename == NULL) {
-		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
-			     "mirrorlist filename not set for %s", store->priv->id);
-		goto out;
-	}
-
-	/* set state */
-	ret = zif_state_set_steps (state,
-				   error,
-				   99, /* download */
-				   1, /* parse */
-				   -1);
-	if (!ret)
-		goto out;
-
-	/* find if the file already exists */
-	ret = g_file_test (filename, G_FILE_TEST_EXISTS);
-	if (!ret) {
-		state_local = zif_state_get_child (state);
-
-		/* ensure path is valid */
-		ret = zif_store_remote_ensure_parent_dir_exists (filename, error);
-		if (!ret)
-			goto out;
-
-		/* download object directly, as we don't have the repo setup yet */
-		ret = zif_download_file (store->priv->download, store->priv->mirrorlist, filename, state_local, &error_local);
-		if (!ret) {
-			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
-				     "failed to download %s from %s: %s", filename, store->priv->mirrorlist, error_local->message);
-			g_error_free (error_local);
-			goto out;
-		}
-	}
-
-	ret = zif_state_done (state, error);
-	if (!ret)
-		goto out;
-
-	/* get mirrors */
-	state_local = zif_state_get_child (state);
-	ret = zif_download_location_add_md (store->priv->download, store->priv->md_mirrorlist, state_local, &error_local);
-	if (!ret) {
-		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
-			     "failed to add mirrors from mirrorlist: %s", error_local->message);
-		g_error_free (error_local);
-		goto out;
-	}
-
-	ret = zif_state_done (state, error);
-	if (!ret)
-		goto out;
-out:
-	if (array != NULL)
-		g_ptr_array_unref (array);
-	return ret;
-
-}
-
-/**
  * zif_store_remote_download_repomd:
  * @store: A #ZifStoreRemote
  * @state: A #ZifState to use for progress reporting
@@ -1101,7 +953,9 @@ out:
  * Since: 0.1.2
  **/
 gboolean
-zif_store_remote_download_repomd (ZifStoreRemote *store, ZifState *state, GError **error)
+zif_store_remote_download_repomd (ZifStoreRemote *store,
+				  ZifState *state,
+				  GError **error)
 {
 	gboolean ret;
 	GError *error_local = NULL;
@@ -1115,8 +969,11 @@ zif_store_remote_download_repomd (ZifStoreRemote *store, ZifState *state, GError
 	/* if not online, then this is fatal */
 	ret = zif_config_get_boolean (store->priv->config, "network", NULL);
 	if (!ret) {
-		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED_AS_OFFLINE,
-			     "failed to download %s as offline", store->priv->repomd_filename);
+		g_set_error (error,
+			     ZIF_STORE_ERROR,
+			     ZIF_STORE_ERROR_FAILED_AS_OFFLINE,
+			     "failed to download %s as offline",
+			     store->priv->repomd_filename);
 		goto out;
 	}
 
@@ -1136,7 +993,9 @@ zif_store_remote_download_repomd (ZifStoreRemote *store, ZifState *state, GError
 	/* if not already loaded, load */
 	if (!store->priv->loaded) {
 		state_local = zif_state_get_child (state);
-		ret = zif_store_remote_load (ZIF_STORE (store), state_local, error);
+		ret = zif_store_remote_load (ZIF_STORE (store),
+					     state_local,
+					     error);
 		if (!ret)
 			goto out;
 
@@ -1149,7 +1008,8 @@ zif_store_remote_download_repomd (ZifStoreRemote *store, ZifState *state, GError
 	/* download new file */
 	store->priv->loaded_metadata = TRUE;
 	state_local = zif_state_get_child (state);
-	ret = zif_store_remote_download_full (store, "repodata/repomd.xml",
+	ret = zif_store_remote_download_full (store,
+					      "repodata/repomd.xml",
 					      store->priv->directory,
 					      0,
 					      "application/xml",
@@ -1159,8 +1019,11 @@ zif_store_remote_download_repomd (ZifStoreRemote *store, ZifState *state, GError
 					      &error_local);
 	store->priv->loaded_metadata = FALSE;
 	if (!ret) {
-		g_set_error (error, error_local->domain, error_local->code,
-			     "failed to download missing repomd: %s", error_local->message);
+		g_set_error (error,
+			     error_local->domain,
+			     error_local->code,
+			     "failed to download missing repomd: %s",
+			     error_local->message);
 		g_error_free (error_local);
 		goto out;
 	}
@@ -1174,13 +1037,14 @@ out:
 }
 
 /**
- * zif_store_remote_load_metadata_try:
+ * zif_store_remote_parse_repomd:
  **/
 static gboolean
-zif_store_remote_load_metadata_try (ZifStoreRemote *store, ZifState *state, GError **error)
+zif_store_remote_parse_repomd (ZifStoreRemote *store,
+			       ZifState *state,
+			       GError **error)
 {
 	guint i;
-	ZifState *state_local;
 	const gchar *location;
 	gboolean ret = TRUE;
 	gchar *contents = NULL;
@@ -1189,7 +1053,6 @@ zif_store_remote_load_metadata_try (ZifStoreRemote *store, ZifState *state, GErr
 	gboolean primary_okay = FALSE;
 	guint max_age;
 	gsize size;
-	GError *error_local = NULL;
 	ZifMd *md;
 	GMarkupParseContext *context = NULL;
 	const GMarkupParser gpk_store_remote_markup_parser = {
@@ -1200,94 +1063,26 @@ zif_store_remote_load_metadata_try (ZifStoreRemote *store, ZifState *state, GErr
 		NULL /* error */
 	};
 
-	/* setup state */
-	if (store->priv->mirrorlist != NULL) {
-		g_assert (store->priv->metalink == NULL);
-		ret = zif_state_set_steps (state,
-					   error,
-					   50, /* add mirror list */
-					   45, /* download repomd */
-					   5, /* parse repomd */
-					   -1);
-	} else if (store->priv->metalink != NULL) {
-		g_assert (store->priv->mirrorlist == NULL);
-		ret = zif_state_set_steps (state,
-					   error,
-					   50, /* add metalink */
-					   45, /* download repomd */
-					   5, /* parse repomd */
-					   -1);
-	} else {
-		g_assert (store->priv->mirrorlist == NULL);
-		ret = zif_state_set_steps (state,
-					   error,
-					   50, /* download repomd */
-					   50, /* parse repomd */
-					   -1);
-	}
-	if (!ret)
-		goto out;
-
-	/* extract details from mirrorlist */
-	if (store->priv->mirrorlist != NULL) {
-		state_local = zif_state_get_child (state);
-		ret = zif_store_remote_add_mirrorlist (store, state_local, &error_local);
-		if (!ret) {
-			g_set_error (error, error_local->domain, error_local->code,
-				     "failed to add mirrorlist: %s", error_local->message);
-			g_error_free (error_local);
-			goto out;
-		}
-
-		/* this section done */
-		ret = zif_state_done (state, error);
-		if (!ret)
-			goto out;
-	}
-
-	/* extract details from metalink */
-	if (store->priv->metalink != NULL) {
-		state_local = zif_state_get_child (state);
-		ret = zif_store_remote_add_metalink (store, state_local, &error_local);
-		if (!ret) {
-			g_set_error (error, error_local->domain, error_local->code,
-				     "failed to add metalink: %s", error_local->message);
-			g_error_free (error_local);
-			goto out;
-		}
-
-		/* this section done */
-		ret = zif_state_done (state, error);
-		if (!ret)
-			goto out;
-	}
-
-	/* repomd file does not exist */
-	ret = g_file_test (store->priv->repomd_filename, G_FILE_TEST_EXISTS);
-	if (!ret) {
-		state_local = zif_state_get_child (state);
-		ret = zif_store_remote_download_repomd (store, state_local, error);
-		if (!ret)
-			goto out;
-	}
-
-	/* this section done */
-	ret = zif_state_done (state, error);
-	if (!ret)
-		goto out;
-
 	/* get repo contents */
 	zif_state_set_allow_cancel (state, FALSE);
-	ret = g_file_get_contents (store->priv->repomd_filename, &contents, &size, error);
+	ret = g_file_get_contents (store->priv->repomd_filename,
+				   &contents,
+				   &size,
+				   error);
 	if (!ret)
 		goto out;
 
 	/* create parser */
-	context = g_markup_parse_context_new (&gpk_store_remote_markup_parser, G_MARKUP_PREFIX_ERROR_POSITION, store, NULL);
+	context = g_markup_parse_context_new (&gpk_store_remote_markup_parser,
+					      G_MARKUP_PREFIX_ERROR_POSITION,
+					      store, NULL);
 
 	/* parse data */
 	zif_state_set_allow_cancel (state, FALSE);
-	ret = g_markup_parse_context_parse (context, contents, (gssize) size, error);
+	ret = g_markup_parse_context_parse (context,
+					    contents,
+					    (gssize) size,
+					    error);
 	if (!ret)
 		goto out;
 
@@ -1298,8 +1093,10 @@ zif_store_remote_load_metadata_try (ZifStoreRemote *store, ZifState *state, GErr
 	for (i=1; i<ZIF_MD_KIND_LAST; i++) {
 		md = zif_store_remote_get_md_from_type (store, i);
 		if (md == NULL) {
-			/* TODO: until we've created ZifMdComps and ZifMdOther we'll get warnings here */
-			g_debug ("failed to get local store for %s with %s", zif_md_kind_to_text (i), store->priv->id);
+			/* TODO: until we've created ZifMdComps and
+			 * ZifMdOther we'll get warnings here */
+			g_debug ("failed to get local store for %s with %s",
+				 zif_md_kind_to_text (i), store->priv->id);
 			continue;
 		}
 
@@ -1321,13 +1118,15 @@ zif_store_remote_load_metadata_try (ZifStoreRemote *store, ZifState *state, GErr
 
 		/* location not set */
 		if (location == NULL) {
-			g_debug ("no location set for %s with %s", zif_md_kind_to_text (i), store->priv->id);
+			g_debug ("no location set for %s with %s",
+				 zif_md_kind_to_text (i), store->priv->id);
 			continue;
 		}
 
 		/* set MD id and filename */
 		basename = g_path_get_basename (location);
-		filename = g_build_filename (store->priv->directory, basename, NULL);
+		filename = g_build_filename (store->priv->directory,
+					     basename, NULL);
 		zif_md_set_filename (md, filename);
 		zif_md_set_max_age (md, max_age);
 		g_free (basename);
@@ -1336,21 +1135,412 @@ zif_store_remote_load_metadata_try (ZifStoreRemote *store, ZifState *state, GErr
 
 	/* messed up repo file */
 	if (!primary_okay) {
-		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
+		g_set_error (error,
+			     ZIF_STORE_ERROR,
+			     ZIF_STORE_ERROR_FAILED,
 			     "failed to get primary metadata location for %s",
 			     store->priv->id);
 		ret = FALSE;
 		goto out;
 	}
-
-	/* this section done */
-	ret = zif_state_done (state, error);
-	if (!ret)
-		goto out;
 out:
 	if (context != NULL)
 		g_markup_parse_context_free (context);
 	g_free (contents);
+	return ret;
+}
+
+/**
+ * zif_store_remote_get_repomd:
+ **/
+static gboolean
+zif_store_remote_get_repomd (ZifStoreRemote *store,
+			     ZifState *state,
+			     GError **error)
+{
+	ZifState *state_local;
+	gboolean ret = TRUE;
+	GError *error_local = NULL;
+	gchar *tmp;
+
+	/* clear download locations that will not be valid anymore */
+	zif_download_location_clear (store->priv->download);
+
+	/* always add the baseurl as a location if it is set */
+	if (store->priv->baseurl != NULL) {
+		zif_download_location_add_uri (store->priv->download,
+					       store->priv->baseurl, NULL);
+	}
+
+	/* set steps */
+	if (store->priv->baseurl != NULL) {
+		zif_state_set_number_steps (state, 1);
+	} else {
+		ret = zif_state_set_steps (state,
+					   error,
+					   40, /* download mirrorlist / metalink */
+					   20, /* load locations */
+					   40, /* download repomd */
+					   -1);
+		if (!ret)
+			goto out;
+	}
+
+	/* ensure path is valid */
+	ret = zif_store_remote_ensure_parent_dir_exists (store->priv->repomd_filename,
+							 error);
+	if (!ret)
+		goto out;
+
+	/* do we have a baseurl, if so just use that */
+	if (store->priv->baseurl != NULL) {
+		tmp = g_build_filename (store->priv->baseurl,
+					"repodata/repomd.xml", NULL);
+		state_local = zif_state_get_child (state);
+		ret = zif_download_file_full (store->priv->download,
+					      tmp,
+					      store->priv->repomd_filename,
+					      0, /* size */
+					      "application/xml",
+					      G_CHECKSUM_MD5,
+					      NULL, /* checksum */
+					      state_local,
+					      &error_local);
+		if (!ret) {
+			g_set_error (error,
+				     ZIF_STORE_ERROR,
+				     ZIF_STORE_ERROR_FAILED_TO_DOWNLOAD,
+				     "failed to download repomd.xml from baseurl: %s",
+				     error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+
+		/* done */
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
+		goto out;
+	}
+
+	/* do we have a mirrorlist */
+	if (store->priv->mirrorlist != NULL) {
+		state_local = zif_state_get_child (state);
+
+		ret = zif_download_file_full (store->priv->download,
+					      store->priv->mirrorlist,
+					      zif_md_get_filename (store->priv->md_mirrorlist),
+					      0, /* size */
+					      "text/plain",
+					      G_CHECKSUM_MD5,
+					      NULL, /* checksum */
+					      state_local,
+					      &error_local);
+		if (!ret) {
+			g_set_error (error,
+				     ZIF_STORE_ERROR,
+				     ZIF_STORE_ERROR_FAILED_TO_DOWNLOAD,
+				     "failed to download mirrorlist.txt: %s",
+				     error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+
+		/* done */
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
+
+		/* get mirrors */
+		state_local = zif_state_get_child (state);
+		ret = zif_download_location_add_md (store->priv->download,
+						    store->priv->md_mirrorlist,
+						    state_local,
+						    &error_local);
+		if (!ret) {
+			g_set_error (error,
+				     ZIF_STORE_ERROR,
+				     ZIF_STORE_ERROR_FAILED_TO_DOWNLOAD,
+				     "failed to add mirrors from mirrorlist: %s",
+				     error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+
+		/* done */
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
+
+		/* download repomd */
+		state_local = zif_state_get_child (state);
+		ret = zif_download_location_full (store->priv->download,
+					          "repodata/repomd.xml",
+					          store->priv->repomd_filename,
+					          0, /* size */
+					          "application/xml",
+					          G_CHECKSUM_MD5,
+					          NULL, /* checksum */
+					          state_local,
+					          &error_local);
+		if (!ret) {
+			g_set_error (error,
+				     ZIF_STORE_ERROR,
+				     ZIF_STORE_ERROR_FAILED_TO_DOWNLOAD,
+				     "failed to add download repomd.xml using mirrorlist: %s",
+				     error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+
+		/* done */
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
+		goto out;
+	}
+
+	/* do we have a metalink */
+	if (store->priv->metalink != NULL) {
+		state_local = zif_state_get_child (state);
+
+		ret = zif_download_file_full (store->priv->download,
+					      store->priv->metalink,
+					      zif_md_get_filename (store->priv->md_metalink),
+					      0, /* size */
+					      "application/xml",
+					      G_CHECKSUM_MD5,
+					      NULL, /* checksum */
+					      state_local,
+					      &error_local);
+		if (!ret) {
+			g_set_error (error,
+				     ZIF_STORE_ERROR,
+				     ZIF_STORE_ERROR_FAILED_TO_DOWNLOAD,
+				     "failed to download metalink.xml: %s",
+				     error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+
+		/* done */
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
+
+		/* get mirrors */
+		state_local = zif_state_get_child (state);
+		ret = zif_download_location_add_md (store->priv->download,
+						    store->priv->md_metalink,
+						    state_local,
+						    &error_local);
+		if (!ret) {
+			g_set_error (error,
+				     ZIF_STORE_ERROR,
+				     ZIF_STORE_ERROR_FAILED_TO_DOWNLOAD,
+				     "failed to add mirrors from mirrorlist: %s",
+				     error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+
+		/* done */
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
+
+		/* download repomd */
+		state_local = zif_state_get_child (state);
+		ret = zif_download_location_full (store->priv->download,
+					          "repodata/repomd.xml",
+					          store->priv->repomd_filename,
+					          0, /* size */
+					          "application/xml",
+					          G_CHECKSUM_MD5,
+					          NULL, /* checksum */
+					          state_local,
+					          &error_local);
+		if (!ret) {
+			g_set_error (error,
+				     ZIF_STORE_ERROR,
+				     ZIF_STORE_ERROR_FAILED_TO_DOWNLOAD,
+				     "failed to add download repomd.xml using mirrorlist: %s",
+				     error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+
+		/* done */
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
+		goto out;
+	}
+
+	/* we failed */
+	g_set_error_literal (error,
+			     ZIF_STORE_ERROR,
+			     ZIF_STORE_ERROR_FAILED,
+			     "failed to download repodata.xml as no sources");
+out:
+	return ret;
+}
+
+/**
+ * zif_store_remote_process_repomd:
+ **/
+static gboolean
+zif_store_remote_process_repomd (ZifStoreRemote *store,
+				 ZifState *state,
+				 GError **error)
+{
+	gboolean ret = TRUE;
+	GError *error_local = NULL;
+	gboolean valid;
+	ZifState *state_local;
+
+	/* set steps */
+	if (store->priv->mirrorlist == NULL &&
+	    store->priv->metalink == NULL) {
+		zif_state_set_number_steps (state, 1); /* parse */
+	} else {
+		ret = zif_state_set_steps (state,
+					   error,
+					   10, /* parse */
+					   80, /* check */
+					   10, /* parse */
+					   -1);
+		if (!ret)
+			goto out;
+	}
+
+	/* parse the repomd */
+	state_local = zif_state_get_child (state);
+	ret = zif_store_remote_parse_repomd (store,
+					     state_local,
+					     &error_local);
+	if (!ret) {
+		g_unlink (store->priv->repomd_filename);
+		g_set_error (error,
+			     ZIF_STORE_ERROR,
+			     ZIF_STORE_ERROR_RECOVERABLE,
+			     "failed to parse repomd.xml: %s",
+			     error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* does mirrorlist look okay */
+	if (store->priv->mirrorlist != NULL) {
+		state_local = zif_state_get_child (state);
+		ret = zif_md_file_check (store->priv->md_mirrorlist,
+					 FALSE, &valid,
+					 state_local,
+					 &error_local);
+		if (!ret) {
+			g_set_error (error,
+				     ZIF_STORE_ERROR,
+				     ZIF_STORE_ERROR_FAILED,
+				     "failed to check mirrorlist: %s",
+				     error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+		if (!valid) {
+			ret = FALSE;
+			g_unlink (zif_md_get_filename (store->priv->md_mirrorlist));
+			g_set_error_literal (error,
+					     ZIF_STORE_ERROR,
+					     ZIF_STORE_ERROR_RECOVERABLE,
+					     "mirrorlist looks bad, deleting");
+			goto out;
+		}
+
+		/* done */
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
+
+		/* add mirrorlist entries */
+		state_local = zif_state_get_child (state);
+		ret = zif_download_location_add_md (store->priv->download,
+						    store->priv->md_mirrorlist,
+						    state_local,
+						    &error_local);
+		if (!ret) {
+			g_set_error (error,
+				     ZIF_STORE_ERROR,
+				     ZIF_STORE_ERROR_FAILED,
+				     "failed to add mirrors from mirrorlist: %s",
+				     error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+
+		/* done */
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
+	}
+
+	/* does metalink look okay */
+	if (store->priv->metalink != NULL) {
+		state_local = zif_state_get_child (state);
+		ret = zif_md_file_check (store->priv->md_metalink,
+					 FALSE, &valid,
+					 state_local,
+					 &error_local);
+		if (!ret) {
+			g_set_error (error,
+				     ZIF_STORE_ERROR,
+				     ZIF_STORE_ERROR_FAILED,
+				     "failed to check mirrorlist: %s",
+				     error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+		if (!valid) {
+			ret = FALSE;
+			g_unlink (zif_md_get_filename (store->priv->md_mirrorlist));
+			g_set_error_literal (error,
+					     ZIF_STORE_ERROR,
+					     ZIF_STORE_ERROR_RECOVERABLE,
+					     "metalink looks bad, deleting");
+			goto out;
+		}
+
+		/* done */
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
+
+		/* add metalink entries */
+		state_local = zif_state_get_child (state);
+		ret = zif_download_location_add_md (store->priv->download,
+						    store->priv->md_metalink,
+						    state_local,
+						    &error_local);
+		if (!ret) {
+			g_set_error (error,
+				     ZIF_STORE_ERROR,
+				     ZIF_STORE_ERROR_FAILED,
+				     "failed to add mirrors from mirrorlist: %s",
+				     error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+
+		/* done */
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
+	}
+out:
 	return ret;
 }
 
@@ -1369,7 +1559,9 @@ static gboolean
 zif_store_remote_load_metadata (ZifStoreRemote *store, ZifState *state, GError **error)
 {
 	gboolean ret = TRUE;
+	gboolean file_exists = TRUE;
 	GError *error_local = NULL;
+	ZifState *state_local;
 
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), FALSE);
 	g_return_val_if_fail (zif_state_valid (state), FALSE);
@@ -1378,25 +1570,91 @@ zif_store_remote_load_metadata (ZifStoreRemote *store, ZifState *state, GError *
 	if (store->priv->loaded_metadata)
 		goto out;
 
-	/* try to download metadata */
-	ret = zif_store_remote_load_metadata_try (store, state, &error_local);
-	if (!ret) {
-		g_debug ("failed to get primary metadata location for %s, retrying: %s",
-			 store->priv->id, error_local->message);
-		g_error_free (error_local);
+	/* does repomd.xml exist */
+	file_exists = g_file_test (store->priv->repomd_filename,
+				   G_FILE_TEST_EXISTS);
 
-		/* delete existing repomd */
-		g_unlink (store->priv->repomd_filename);
-
-		/* re-download repomd, but not from the same repo */
-		zif_state_reset (state);
-		ret = zif_store_remote_load_metadata_try (store, state, error);
+	/* set steps */
+	if (file_exists) {
+		zif_state_set_number_steps (state, 1);
+	} else {
+		ret = zif_state_set_steps (state,
+					   error,
+					   80, /* download */
+					   20, /* parse */
+					   -1);
 		if (!ret)
 			goto out;
 	}
 
-	/* all okay */
-	store->priv->loaded_metadata = TRUE;
+	/* simple case */
+	if (file_exists) {
+		g_debug ("%s already exists",
+			 store->priv->repomd_filename);
+		state_local = zif_state_get_child (state);
+		ret = zif_store_remote_process_repomd (store,
+						       state_local,
+						       &error_local);
+		if (!ret) {
+			if (error_local->domain == ZIF_STORE_ERROR &&
+			    error_local->code == ZIF_STORE_ERROR_RECOVERABLE) {
+				g_debug ("ignoring %s", error_local->message);
+				g_error_free (error_local);
+				zif_state_reset (state);
+				ret = zif_store_remote_load_metadata (store,
+								      state,
+								      error);
+			} else {
+				g_propagate_error (error, error_local);
+			}
+			goto out;
+		}
+
+		/* done */
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
+		goto out;
+	}
+
+	/* get the repomd */
+	g_debug ("%s does not exist", store->priv->repomd_filename);
+	state_local = zif_state_get_child (state);
+	ret = zif_store_remote_get_repomd (store,
+					   state_local,
+					   error);
+	if (!ret)
+		goto out;
+
+	/* done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* process repomd.xml */
+	state_local = zif_state_get_child (state);
+	ret = zif_store_remote_process_repomd (store,
+					       state_local,
+					       &error_local);
+	if (!ret) {
+		if (error_local->domain == ZIF_STORE_ERROR &&
+		    error_local->code == ZIF_STORE_ERROR_RECOVERABLE) {
+			g_debug ("ignoring %s", error_local->message);
+			g_error_free (error_local);
+			zif_state_reset (state);
+			ret = zif_store_remote_load_metadata (store,
+							      state,
+							      error);
+		} else {
+			g_propagate_error (error, error_local);
+		}
+		goto out;
+	}
+
+	/* done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 out:
 	return ret;
 }
@@ -1669,7 +1927,6 @@ zif_store_remote_load (ZifStore *store, ZifState *state, GError **error)
 	gchar *metadata_expire = NULL;
 	GError *error_local = NULL;
 	gchar *temp;
-	gchar *temp_expand;
 	gchar *filename;
 	gchar *media_root;
 	guint mirrorlist_expire;
@@ -1753,10 +2010,10 @@ zif_store_remote_load (ZifStore *store, ZifState *state, GError **error)
 	/* get base url (allowed to be blank) */
 	temp = g_key_file_get_string (file, remote->priv->id, "baseurl", NULL);
 	if (temp != NULL && temp[0] != '\0') {
-		temp_expand = zif_config_expand_substitutions (remote->priv->config, temp, NULL);
+		remote->priv->baseurl = zif_config_expand_substitutions (remote->priv->config,
+									 temp, NULL);
 		zif_download_location_add_uri (remote->priv->download,
-					       temp_expand, NULL);
-		g_free (temp_expand);
+					       remote->priv->baseurl, NULL);
 		got_baseurl = TRUE;
 	}
 	g_free (temp);
@@ -1764,13 +2021,15 @@ zif_store_remote_load (ZifStore *store, ZifState *state, GError **error)
 	/* get mirror list (allowed to be blank) */
 	temp = g_key_file_get_string (file, remote->priv->id, "mirrorlist", NULL);
 	if (temp != NULL && temp[0] != '\0')
-		remote->priv->mirrorlist = zif_config_expand_substitutions (remote->priv->config, temp, NULL);
+		remote->priv->mirrorlist = zif_config_expand_substitutions (remote->priv->config,
+									    temp, NULL);
 	g_free (temp);
 
 	/* get metalink (allowed to be blank) */
 	temp = g_key_file_get_string (file, remote->priv->id, "metalink", NULL);
 	if (temp != NULL && temp[0] != '\0')
-		remote->priv->metalink = zif_config_expand_substitutions (remote->priv->config, temp, NULL);
+		remote->priv->metalink = zif_config_expand_substitutions (remote->priv->config,
+									  temp, NULL);
 	g_free (temp);
 
 	/* urgh.. yum allows mirrorlist= to be used as well as metalink= for metalink URLs */
@@ -2230,8 +2489,12 @@ zif_store_remote_resolve (ZifStore *store, gchar **search, ZifState *state, GErr
 		state_local = zif_state_get_child (state);
 		ret = zif_store_remote_load_metadata (remote, state_local, &error_local);
 		if (!ret) {
-			g_set_error (error, error_local->domain, error_local->code,
-				     "failed to load metadata for %s: %s", remote->priv->id, error_local->message);
+			g_set_error (error,
+				     error_local->domain,
+				     error_local->code,
+				     "failed to load metadata for %s: %s",
+				     remote->priv->id,
+				     error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
@@ -2293,8 +2556,12 @@ zif_store_remote_search_name (ZifStore *store, gchar **search, ZifState *state, 
 		state_local = zif_state_get_child (state);
 		ret = zif_store_remote_load_metadata (remote, state_local, &error_local);
 		if (!ret) {
-			g_set_error (error, error_local->domain, error_local->code,
-				     "failed to load metadata xml: %s", error_local->message);
+			g_set_error (error,
+				     error_local->domain,
+				     error_local->code,
+				     "failed to load metadata for %s: %s",
+				     remote->priv->id,
+				     error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
@@ -2356,8 +2623,12 @@ zif_store_remote_search_details (ZifStore *store, gchar **search, ZifState *stat
 		state_local = zif_state_get_child (state);
 		ret = zif_store_remote_load_metadata (remote, state_local, &error_local);
 		if (!ret) {
-			g_set_error (error, error_local->domain, error_local->code,
-				     "failed to load metadata xml: %s", error_local->message);
+			g_set_error (error,
+				     error_local->domain,
+				     error_local->code,
+				     "failed to load metadata for %s: %s",
+				     remote->priv->id,
+				     error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
@@ -2517,8 +2788,12 @@ zif_store_remote_search_category (ZifStore *store, gchar **group_id, ZifState *s
 		state_local = zif_state_get_child (state);
 		ret = zif_store_remote_load_metadata (remote, state_local, &error_local);
 		if (!ret) {
-			g_set_error (error, error_local->domain, error_local->code,
-				     "failed to load metadata xml: %s", error_local->message);
+			g_set_error (error,
+				     error_local->domain,
+				     error_local->code,
+				     "failed to load metadata for %s: %s",
+				     remote->priv->id,
+				     error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
@@ -2656,8 +2931,12 @@ zif_store_remote_search_group (ZifStore *store, gchar **search, ZifState *state,
 		state_local = zif_state_get_child (state);
 		ret = zif_store_remote_load_metadata (remote, state_local, &error_local);
 		if (!ret) {
-			g_set_error (error, error_local->domain, error_local->code,
-				     "failed to load metadata xml: %s", error_local->message);
+			g_set_error (error,
+				     error_local->domain,
+				     error_local->code,
+				     "failed to load metadata for %s: %s",
+				     remote->priv->id,
+				     error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
@@ -2742,8 +3021,12 @@ zif_store_remote_find_package (ZifStore *store, const gchar *package_id, ZifStat
 		state_local = zif_state_get_child (state);
 		ret = zif_store_remote_load_metadata (remote, state_local, &error_local);
 		if (!ret) {
-			g_set_error (error, error_local->domain, error_local->code,
-				     "failed to load metadata xml: %s", error_local->message);
+			g_set_error (error,
+				     error_local->domain,
+				     error_local->code,
+				     "failed to load metadata for %s: %s",
+				     remote->priv->id,
+				     error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
@@ -2829,8 +3112,12 @@ zif_store_remote_get_packages (ZifStore *store, ZifState *state, GError **error)
 		state_local = zif_state_get_child (state);
 		ret = zif_store_remote_load_metadata (remote, state_local, &error_local);
 		if (!ret) {
-			g_set_error (error, error_local->domain, error_local->code,
-				     "failed to load metadata xml: %s", error_local->message);
+			g_set_error (error,
+				     error_local->domain,
+				     error_local->code,
+				     "failed to load metadata for %s: %s",
+				     remote->priv->id,
+				     error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
@@ -2904,8 +3191,12 @@ zif_store_remote_get_categories (ZifStore *store, ZifState *state, GError **erro
 		state_local = zif_state_get_child (state);
 		ret = zif_store_remote_load_metadata (remote, state_local, &error_local);
 		if (!ret) {
-			g_set_error (error, error_local->domain, error_local->code,
-				     "failed to load metadata xml: %s", error_local->message);
+			g_set_error (error,
+				     error_local->domain,
+				     error_local->code,
+				     "failed to load metadata for %s: %s",
+				     remote->priv->id,
+				     error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
@@ -3039,8 +3330,12 @@ zif_store_remote_what_provides (ZifStore *store, GPtrArray *depends,
 		state_local = zif_state_get_child (state);
 		ret = zif_store_remote_load_metadata (remote, state_local, &error_local);
 		if (!ret) {
-			g_set_error (error, error_local->domain, error_local->code,
-				     "failed to load metadata xml: %s", error_local->message);
+			g_set_error (error,
+				     error_local->domain,
+				     error_local->code,
+				     "failed to load metadata for %s: %s",
+				     remote->priv->id,
+				     error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
@@ -3103,8 +3398,12 @@ zif_store_remote_what_requires (ZifStore *store, GPtrArray *depends,
 		state_local = zif_state_get_child (state);
 		ret = zif_store_remote_load_metadata (remote, state_local, &error_local);
 		if (!ret) {
-			g_set_error (error, error_local->domain, error_local->code,
-				     "failed to load metadata xml: %s", error_local->message);
+			g_set_error (error,
+				     error_local->domain,
+				     error_local->code,
+				     "failed to load metadata for %s: %s",
+				     remote->priv->id,
+				     error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
@@ -3167,8 +3466,12 @@ zif_store_remote_what_obsoletes (ZifStore *store, GPtrArray *depends,
 		state_local = zif_state_get_child (state);
 		ret = zif_store_remote_load_metadata (remote, state_local, &error_local);
 		if (!ret) {
-			g_set_error (error, error_local->domain, error_local->code,
-				     "failed to load metadata xml: %s", error_local->message);
+			g_set_error (error,
+				     error_local->domain,
+				     error_local->code,
+				     "failed to load metadata for %s: %s",
+				     remote->priv->id,
+				     error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
@@ -3231,8 +3534,12 @@ zif_store_remote_what_conflicts (ZifStore *store, GPtrArray *depends,
 		state_local = zif_state_get_child (state);
 		ret = zif_store_remote_load_metadata (remote, state_local, &error_local);
 		if (!ret) {
-			g_set_error (error, error_local->domain, error_local->code,
-				     "failed to load metadata xml: %s", error_local->message);
+			g_set_error (error,
+				     error_local->domain,
+				     error_local->code,
+				     "failed to load metadata for %s: %s",
+				     remote->priv->id,
+				     error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
@@ -3306,8 +3613,12 @@ zif_store_remote_search_file (ZifStore *store, gchar **search, ZifState *state, 
 		state_local = zif_state_get_child (state);
 		ret = zif_store_remote_load_metadata (remote, state_local, &error_local);
 		if (!ret) {
-			g_set_error (error, error_local->domain, error_local->code,
-				     "failed to load metadata xml: %s", error_local->message);
+			g_set_error (error,
+				     error_local->domain,
+				     error_local->code,
+				     "failed to load metadata for %s: %s",
+				     remote->priv->id,
+				     error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
@@ -3640,6 +3951,7 @@ zif_store_remote_file_monitor_cb (ZifMonitor *monitor, ZifStoreRemote *store)
 	g_free (store->priv->name_expanded);
 	g_free (store->priv->repo_filename);
 	g_free (store->priv->mirrorlist);
+	g_free (store->priv->baseurl);
 	g_free (store->priv->metalink);
 
 	store->priv->loaded = FALSE;
@@ -3671,6 +3983,7 @@ zif_store_remote_finalize (GObject *object)
 	g_free (store->priv->name);
 	g_free (store->priv->name_expanded);
 	g_free (store->priv->repo_filename);
+	g_free (store->priv->baseurl);
 	g_free (store->priv->mirrorlist);
 	g_free (store->priv->metalink);
 	g_free (store->priv->cache_dir);

@@ -711,13 +711,35 @@ zif_download_location_remove_uri (ZifDownload *download, const gchar *uri, GErro
 }
 
 /**
- * zif_download_location_full_try:
+ * zif_download_location_full:
+ * @download: A #ZifDownload
+ * @uri: A full remote URI.
+ * @filename: Local filename to save to
+ * @size: Expected size in bytes, or 0
+ * @content_types: Comma delimited expected content types of the file, or %NULL
+ * @checksum_type: Checksum type, e.g. %G_CHECKSUM_SHA256, or 0
+ * @checksum: Expected checksum of the file, or %NULL
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
+ *
+ * Downloads a file either from a remote site, or copying the file
+ * from the local filesystem, and then verifying it against what we are
+ * expecting.
+ *
+ * Return value: %TRUE for success, %FALSE otherwise
+ *
+ * Since: 0.2.1
  **/
-static gboolean
-zif_download_location_full_try (ZifDownload *download, const gchar *uri, const gchar *filename,
-				guint64 size, const gchar *content_types,
-				GChecksumType checksum_type, const gchar *checksum,
-				ZifState *state, GError **error)
+gboolean
+zif_download_file_full (ZifDownload *download,
+			const gchar *uri,
+			const gchar *filename,
+			guint64 size,
+			const gchar *content_types,
+			GChecksumType checksum_type,
+			const gchar *checksum,
+			ZifState *state,
+			GError **error)
 {
 	gboolean ret;
 	gchar *checksum_tmp = NULL;
@@ -870,9 +892,9 @@ zif_download_location_full (ZifDownload *download,
 
 		g_debug ("attempt to download %s", uri_tmp);
 		zif_state_reset (state);
-		ret = zif_download_location_full_try (download, uri_tmp, filename,
-						  size, content_types, checksum_type, checksum,
-						  state, &error_local);
+		ret = zif_download_file_full (download, uri_tmp, filename,
+					      size, content_types, checksum_type, checksum,
+					      state, &error_local);
 		if (!ret) {
 			/* some errors really are fatal */
 			if (error_local->domain == ZIF_DOWNLOAD_ERROR &&

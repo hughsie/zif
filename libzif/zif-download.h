@@ -76,6 +76,15 @@ gboolean	 zif_download_file			(ZifDownload		*download,
 							 const gchar		*filename,
 							 ZifState		*state,
 							 GError			**error);
+gboolean	 zif_download_file_full			(ZifDownload		*download,
+							 const gchar		*uri,
+							 const gchar		*filename,
+							 guint64		 size,
+							 const gchar		*content_types,
+							 GChecksumType		 checksum_type,
+							 const gchar		*checksum,
+							 ZifState		*state,
+							 GError			**error);
 
 /* multiple mirror support */
 gboolean	 zif_download_location_add_uri		(ZifDownload		*download,

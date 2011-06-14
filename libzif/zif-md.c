@@ -1661,7 +1661,11 @@ zif_md_file_check (ZifMd *md, gboolean use_uncompressed, gboolean *valid,
 	/* get file attributes */
 	file = g_file_new_for_path (filename);
 	cancellable = zif_state_get_cancellable (state);
-	file_info = g_file_query_info (file, G_FILE_ATTRIBUTE_TIME_MODIFIED, G_FILE_QUERY_INFO_NONE, cancellable, &error_local);
+	file_info = g_file_query_info (file,
+				       G_FILE_ATTRIBUTE_TIME_MODIFIED,
+				       G_FILE_QUERY_INFO_NONE,
+				       cancellable,
+				       &error_local);
 	if (file_info == NULL) {
 		/* this is not fatal, the checksum just fails as the file does not exist */
 		g_debug ("failed to get file information for %s: %s",
@@ -1675,7 +1679,8 @@ zif_md_file_check (ZifMd *md, gboolean use_uncompressed, gboolean *valid,
 	}
 
 	/* check age */
-	modified = g_file_info_get_attribute_uint64 (file_info, G_FILE_ATTRIBUTE_TIME_MODIFIED);
+	modified = g_file_info_get_attribute_uint64 (file_info,
+						     G_FILE_ATTRIBUTE_TIME_MODIFIED);
 	age = time (NULL) - modified;
 	g_debug ("age of %s is %" G_GUINT64_FORMAT
 		 " hours (max-age is %" G_GUINT64_FORMAT " hours)",
