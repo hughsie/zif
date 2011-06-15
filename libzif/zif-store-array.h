@@ -110,6 +110,9 @@ ZifPackage	*zif_store_array_find_package		(GPtrArray		*store_array,
 GPtrArray	*zif_store_array_get_categories		(GPtrArray		*store_array,
 							 ZifState		*state,
 							 GError			**error);
+GPtrArray	*zif_store_array_get_updates		(GPtrArray		*store_array,
+							 ZifState		*state,
+							 GError			**error);
 
 G_END_DECLS
 

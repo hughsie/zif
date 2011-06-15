@@ -42,9 +42,11 @@
 #include "zif-store-local.h"
 #include "zif-store-array.h"
 #include "zif-package.h"
+#include "zif-package-array.h"
 #include "zif-utils.h"
 #include "zif-repos.h"
 #include "zif-category.h"
+#include "zif-object-array.h"
 
 typedef enum {
 	ZIF_ROLE_GET_PACKAGES,
@@ -915,6 +917,180 @@ zif_store_array_get_categories (GPtrArray *store_array,
 	}
 out:
 	return array;
+}
+
+/**
+ * zif_store_array_get_updates:
+ * @store_array: An array of #ZifStores
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
+ *
+ * Gets the list of packages that can be updated to newer versions.
+ *
+ * Return value: An array of the *new* #ZifPackage's, not the existing
+ * installed packages that are going to be updated.
+ *
+ * Note: this is a convenience function which makes a few assumptions.
+ *
+ * Since: 0.2.1
+ **/
+GPtrArray *
+zif_store_array_get_updates (GPtrArray *store_array,
+			     ZifState *state,
+			     GError **error)
+{
+	gboolean ret = FALSE;
+	gchar **search = NULL;
+	gint val;
+	GPtrArray *array_installed = NULL;
+	GPtrArray *array_obsoletes = NULL;
+	GPtrArray *updates_available = NULL;
+	GPtrArray *updates = NULL;
+	GPtrArray *depend_array = NULL;
+	guint i;
+	guint j;
+	ZifDepend *depend;
+	ZifPackage *package;
+	ZifPackage *update;
+	ZifState *state_local;
+	ZifStore *store_local = NULL;
+
+	/* setup state with the correct number of steps */
+	ret = zif_state_set_steps (state,
+				   error,
+				   5, /* get local packages */
+				   5, /* filter newest */
+				   10, /* resolve local list to remote */
+				   10, /* add obsoletes */
+				   70, /* filter out anything not newer */
+				   -1);
+	if (!ret)
+		goto out;
+
+	/* get installed packages */
+	state_local = zif_state_get_child (state);
+	store_local = zif_store_local_new ();
+	array_installed = zif_store_get_packages (store_local,
+						  state_local,
+						  error);
+	if (array_installed == NULL)
+		goto out;
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* remove any packages that are not newest (think kernel) */
+	zif_package_array_filter_newest (array_installed);
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* resolve each one remote */
+	search = g_new0 (gchar *, array_installed->len + 1);
+	for (i=0; i<array_installed->len; i++) {
+		package = g_ptr_array_index (array_installed, i);
+		search[i] = g_strdup (zif_package_get_name (package));
+	}
+	state_local = zif_state_get_child (state);
+	updates = zif_store_array_resolve (store_array,
+					   search,
+					   state_local,
+					   error);
+	if (updates == NULL)
+		goto out;
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* some repos contain lots of versions of one package */
+	zif_package_array_filter_newest (updates);
+
+	/* find each one in a remote repo */
+	updates_available = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
+	for (i=0; i<array_installed->len; i++) {
+		package = ZIF_PACKAGE (g_ptr_array_index (array_installed, i));
+
+		/* find updates */
+		for (j=0; j<updates->len; j++) {
+			update = ZIF_PACKAGE (g_ptr_array_index (updates, j));
+
+			/* newer? */
+			val = zif_package_compare (update, package);
+			if (val == G_MAXINT)
+				continue;
+
+			/* arch okay, add to list */
+			if (val > 0) {
+				g_debug ("*** update %s from %s.%s to %s.%s",
+					 zif_package_get_name (package),
+					 zif_package_get_version (package),
+					 zif_package_get_arch (package),
+					 zif_package_get_version (update),
+					 zif_package_get_arch (update));
+				g_ptr_array_add (updates_available,
+						 g_object_ref (update));
+				break;
+			}
+		}
+	}
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* add obsoletes */
+	depend_array = zif_object_array_new ();
+	for (i=0; i<array_installed->len; i++) {
+		package = ZIF_PACKAGE (g_ptr_array_index (array_installed, i));
+		depend = zif_depend_new ();
+		zif_depend_set_flag (depend, ZIF_DEPEND_FLAG_EQUAL);
+		zif_depend_set_name (depend, zif_package_get_name (package));
+		zif_depend_set_version (depend, zif_package_get_version (package));
+		zif_object_array_add (depend_array, depend);
+		g_object_unref (depend);
+	}
+
+	/* find if anything obsoletes these */
+	state_local = zif_state_get_child (state);
+	array_obsoletes = zif_store_array_what_obsoletes (store_array,
+							  depend_array,
+							  state_local,
+							  error);
+	if (array_obsoletes == NULL)
+		goto out;
+	for (j=0; j<array_obsoletes->len; j++) {
+		update = ZIF_PACKAGE (g_ptr_array_index (array_obsoletes, j));
+		g_debug ("*** obsolete %s",
+			 zif_package_get_name (update));
+	}
+
+	/* add obsolete array to updates */
+	zif_object_array_add_array (updates_available, array_obsoletes);
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+out:
+	g_strfreev (search);
+	if (store_local != NULL)
+		g_object_unref (store_local);
+	if (depend_array != NULL)
+		g_ptr_array_unref (depend_array);
+	if (array_obsoletes != NULL)
+		g_ptr_array_unref (array_obsoletes);
+	if (array_installed != NULL)
+		g_ptr_array_unref (array_installed);
+	if (updates != NULL)
+		g_ptr_array_unref (updates);
+	return updates_available;
 }
 
 /**
