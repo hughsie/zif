@@ -892,7 +892,7 @@ _zif_package_array_filter_best_provide (ZifTransaction *transaction,
 	}
 
 	/* we cannot find the newest entry for non-native packages */
-	if (archinfo == NULL) {
+	if (array->len > 1 && archinfo == NULL) {
 		archinfo = zif_config_get_string (transaction->priv->config,
 						  "archinfo", NULL);
 		zif_package_array_filter_arch (array, archinfo);
@@ -1502,6 +1502,13 @@ skip_resolve:
 		goto out;
 	}
 	g_debug ("got %i requires", requires->len);
+	if (data->transaction->priv->verbose) {
+		for (i=0; i<requires->len; i++) {
+			depend = g_ptr_array_index (requires, i);
+			g_debug ("%i\t%s", i+1,
+				 zif_depend_to_string (depend));
+		}
+	}
 
 	/* find each require */
 	for (i=0; i<requires->len; i++) {
