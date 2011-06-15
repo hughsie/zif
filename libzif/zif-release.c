@@ -39,10 +39,13 @@
 #include <glib/gstdio.h>
 
 #include "zif-config.h"
-#include "zif-release.h"
-#include "zif-monitor.h"
 #include "zif-download.h"
 #include "zif-md-mirrorlist.h"
+#include "zif-monitor.h"
+#include "zif-package-remote.h"
+#include "zif-release.h"
+#include "zif-repos.h"
+#include "zif-store-array.h"
 
 #define ZIF_RELEASE_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_RELEASE, ZifReleasePrivate))
 
@@ -824,13 +827,17 @@ zif_release_get_treeinfo (ZifRelease *release,
 	}
 
 	/* verify the version is sane */
-	version_tmp = g_key_file_get_integer (data->key_file_treeinfo, "general", "version", NULL);
+	version_tmp = g_key_file_get_integer (data->key_file_treeinfo,
+					      "general",
+					      "version",
+					      NULL);
 	if (version_tmp != (gint) data->version) {
 		ret = FALSE;
-		g_set_error_literal (error,
-				     ZIF_RELEASE_ERROR,
-				     ZIF_RELEASE_ERROR_FILE_INVALID,
-				     "treeinfo release differs from wanted release");
+		g_set_error (error,
+			     ZIF_RELEASE_ERROR,
+			     ZIF_RELEASE_ERROR_FILE_INVALID,
+			     "treeinfo release '%i' differs from wanted release '%i'",
+			     version_tmp, data->version);
 		goto out;
 	}
 
@@ -1267,15 +1274,39 @@ out:
  * zif_release_get_package_data:
  **/
 static gboolean
-zif_release_get_package_data (ZifRelease *release, ZifReleaseUpgradeData *data, ZifState *state, GError **error)
+zif_release_get_package_data (ZifRelease *release,
+			      ZifReleaseUpgradeData *data,
+			      ZifState *state,
+			      GError **error)
 {
 	gboolean ret;
+	GCancellable *cancellable;
 	gchar *cmdline = NULL;
 	gchar *repo_dir = NULL;
+	gchar *repo_packages = NULL;
 	GError *error_local = NULL;
 	GFile *file = NULL;
-	GCancellable *cancellable;
+	GPtrArray *array = NULL;
+	GPtrArray *updates = NULL;
+	guint i;
+	ZifPackage *package;
+	ZifRepos *repos = NULL;
+	ZifState *state_local;
+	ZifState *state_loop;
 	ZifReleasePrivate *priv = release->priv;
+
+	/* setup state with the correct number of steps */
+	ret = zif_state_set_steps (state,
+				   error,
+				   5, /* setup directory */
+				   5, /* get local stores */
+				   5, /* refresh each repo */
+				   5, /* get updates */
+				   75, /* download files */
+				   5, /* createrepo */
+				   -1);
+	if (!ret)
+		goto out;
 
 	/* create directory path */
 	repo_dir = zif_config_get_string (priv->config,
@@ -1301,6 +1332,88 @@ zif_release_get_package_data (ZifRelease *release, ZifReleaseUpgradeData *data, 
 		}
 	}
 
+	/* override the release version */
+	ret = zif_config_unset (priv->config,
+				"releasever",
+				error);
+	if (!ret)
+		goto out;
+	ret = zif_config_set_uint (priv->config,
+				   "releasever",
+				   data->version,
+				   error);
+	if (!ret)
+		goto out;
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* get the list of currently enabled repos */
+	repos = zif_repos_new ();
+	state_local = zif_state_get_child (state);
+	array = zif_repos_get_stores_enabled (repos, state_local, error);
+	if (array == NULL)
+		goto out;
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* refresh each repo */
+	state_local = zif_state_get_child (state);
+	ret = zif_store_array_refresh (array, FALSE, state_local, error);
+	if (!ret)
+		goto out;
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* get the list of updates */
+	state_local = zif_state_get_child (state);
+	updates = zif_store_array_get_updates (array, state_local, error);
+	if (updates == NULL)
+		goto out;
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* set number of download files */
+	state_local = zif_state_get_child (state);
+	zif_state_set_number_steps (state_local, updates->len);
+
+	/* download each update to /var/cache/preupgrade/packages*/
+	repo_packages = g_build_filename (repo_dir, "packages", NULL);
+	for (i=0; i<updates->len; i++) {
+		package = g_ptr_array_index (updates, i);
+		g_debug ("download %s", zif_package_get_printable (package));
+		state_loop = zif_state_get_child (state_local);
+		ret = zif_package_remote_download (ZIF_PACKAGE_REMOTE (package),
+						   repo_packages,
+						   state_loop,
+						   error);
+		if (!ret)
+			goto out;
+
+		/* this section done */
+		ret = zif_state_done (state_local, error);
+		if (!ret)
+			goto out;
+	}
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* TODO: maybe do a test transaction */
+
 	/* create the repodata */
 	cmdline = g_strdup_printf ("/usr/bin/createrepo %s", repo_dir);
 	g_debug ("running command %s", cmdline);
@@ -1309,32 +1422,28 @@ zif_release_get_package_data (ZifRelease *release, ZifReleaseUpgradeData *data, 
 		g_set_error (error,
 			     ZIF_RELEASE_ERROR,
 			     ZIF_RELEASE_ERROR_SPAWN_FAILED,
-			     "failed to add kernel: %s", error_local->message);
+			     "failed to create the repo: %s",
+			     error_local->message);
 		g_error_free (error_local);
 		goto out;
 	}
 
-	/* 1. get the list of enabled repos
-	 * 2. create a repo file for them
-	 * 3. create a ZifStoreRemote object for each
-	 * 4. if getting primary succeeded, add to sack
-	 * 5. upgrade the local store with the newly created sack
-	 * 6. download the list of updates
-	 * 7. copy all the rpms to a /var/cache/preupgrade/packages
-	 * 8. run repocreate on the directory
-	 * 9. add a repo= line to the arguments
-	 */
-	//FIXME
-	ret = FALSE;
-	g_set_error_literal (error,
-			     ZIF_RELEASE_ERROR,
-			     ZIF_RELEASE_ERROR_NOT_SUPPORTED,
-			     "getting the package data is not supported yet");
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 out:
 	g_free (repo_dir);
+	g_free (repo_packages);
 	g_free (cmdline);
 	if (file != NULL)
 		g_object_unref (file);
+	if (repos != NULL)
+		g_object_unref (repos);
+	if (array != NULL)
+		g_ptr_array_unref (array);
+	if (updates != NULL)
+		g_ptr_array_unref (updates);
 	return ret;
 }
 
@@ -1394,7 +1503,11 @@ out:
  * Since: 0.1.3
  **/
 gboolean
-zif_release_upgrade_version (ZifRelease *release, guint version, ZifReleaseUpgradeKind upgrade_kind, ZifState *state, GError **error)
+zif_release_upgrade_version (ZifRelease *release,
+			     guint version,
+			     ZifReleaseUpgradeKind upgrade_kind,
+			     ZifState *state,
+			     GError **error)
 {
 	gboolean ret = FALSE;
 	gchar *boot_dir = NULL;
