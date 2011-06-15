@@ -1811,6 +1811,7 @@ zif_store_remote_refresh (ZifStore *store, gboolean force, ZifState *state, GErr
 	ZifStoreRemote *remote = ZIF_STORE_REMOTE (store);
 	ZifMd *md;
 	guint i;
+	gboolean md_priority[ZIF_MD_KIND_LAST];
 
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), FALSE);
 	g_return_val_if_fail (remote->priv->id != NULL, FALSE);
@@ -1883,8 +1884,35 @@ zif_store_remote_refresh (ZifStore *store, gboolean force, ZifState *state, GErr
 	state_local = zif_state_get_child (state);
 	zif_state_set_number_steps (state_local, ZIF_MD_KIND_LAST - 1);
 
-	/* refresh each repo type */
-	for (i=1; i<ZIF_MD_KIND_LAST; i++) {
+	/* initialize failed state */
+	for (i = 0; i < ZIF_MD_KIND_LAST; i++)
+		md_priority[i] = FALSE;
+
+	/* refresh each repo type in a specific order, so we can avoid
+	 * downloading duplicate copies of the same data */
+	for (i=1; i < ZIF_MD_KIND_LAST; i++) {
+
+		/* don't download xml if sqlite is available */
+		if (i == ZIF_MD_KIND_PRIMARY_XML &&
+		    md_priority[ZIF_MD_KIND_PRIMARY_SQL]) {
+			g_debug ("skipping download of xml as sqlite exists");
+			goto skip;
+		}
+		if (i == ZIF_MD_KIND_FILELISTS_XML &&
+		    md_priority[ZIF_MD_KIND_FILELISTS_SQL]) {
+			g_debug ("skipping download of xml as sqlite exists");
+			goto skip;
+		}
+		if (i == ZIF_MD_KIND_OTHER_XML &&
+		    md_priority[ZIF_MD_KIND_OTHER_SQL]) {
+			g_debug ("skipping download of xml as sqlite exists");
+			goto skip;
+		}
+		if (i == ZIF_MD_KIND_COMPS &&
+		    md_priority[ZIF_MD_KIND_COMPS_GZ]) {
+			g_debug ("skipping download of xml as sqlite exists");
+			goto skip;
+		}
 
 		/* get md */
 		md = zif_store_remote_get_md_from_type (remote, i);
@@ -1896,8 +1924,11 @@ zif_store_remote_refresh (ZifStore *store, gboolean force, ZifState *state, GErr
 			ret = zif_store_remote_refresh_md (remote, md, force, state_loop, error);
 			if (!ret)
 				goto out;
-		}
 
+			/* mark this one as done */
+			md_priority[i] = TRUE;
+		}
+skip:
 		/* this section done */
 		ret = zif_state_done (state_local, error);
 		if (!ret)
