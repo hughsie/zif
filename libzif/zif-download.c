@@ -190,8 +190,14 @@ zif_download_check_content_types (GFile *file,
 	gboolean ret = FALSE;
 	gchar **expected = NULL;
 	GError *error_local = NULL;
-	GFileInfo *info;
+	GFileInfo *info = NULL;
 	guint i;
+
+	/* no data */
+	if (content_types_expected == NULL) {
+		ret = TRUE;
+		goto out;
+	}
 
 	/* get content type */
 	info = g_file_query_info (file,
@@ -711,6 +717,97 @@ zif_download_location_remove_uri (ZifDownload *download, const gchar *uri, GErro
 }
 
 /**
+ * zif_download_check_size:
+ **/
+static gboolean
+zif_download_check_size (GFile *file,
+			 guint64 size,
+			 GCancellable *cancellable,
+			 GError **error)
+{
+	gboolean ret = FALSE;
+	gchar *filename = NULL;
+	GFileInfo *info = NULL;
+	guint64 size_tmp = G_MAXUINT64;
+
+	/* no data */
+	if (size == 0) {
+		ret = TRUE;
+		goto out;
+	}
+
+	info = g_file_query_info (file,
+				  G_FILE_ATTRIBUTE_STANDARD_SIZE,
+				  0,
+				  cancellable,
+				  error);
+	if (info == NULL) {
+		ret = FALSE;
+		goto out;
+	}
+	size_tmp = g_file_info_get_attribute_uint64 (info,
+						     G_FILE_ATTRIBUTE_STANDARD_SIZE);
+	ret = (size == size_tmp);
+	if (!ret) {
+		filename = g_file_get_path (file);
+		g_set_error (error,
+			     ZIF_DOWNLOAD_ERROR,
+			     ZIF_DOWNLOAD_ERROR_FAILED,
+			     "incorrect size for %s: got %" G_GUINT64_FORMAT
+			     " but expected %" G_GUINT64_FORMAT,
+			     filename, size_tmp, size);
+		goto out;
+	}
+out:
+	g_free (filename);
+	if (info != NULL)
+		g_object_unref (info);
+	return ret;
+}
+
+/**
+ * zif_download_check_checksum:
+ **/
+static gboolean
+zif_download_check_checksum (GFile *file,
+			     GChecksumType checksum_type,
+			     const gchar *checksum,
+			     GError **error)
+{
+	gboolean ret;
+	gchar *checksum_tmp = NULL;
+	gchar *data = NULL;
+	gchar *filename = NULL;
+	gsize len;
+
+	/* no data */
+	if (checksum == NULL) {
+		ret = TRUE;
+		goto out;
+	}
+
+	filename = g_file_get_path (file);
+	ret = g_file_get_contents (filename, &data, &len, error);
+	if (!ret)
+		goto out;
+	checksum_tmp = g_compute_checksum_for_string (checksum_type, data, len);
+	ret = (g_strcmp0 (checksum_tmp, checksum) == 0);
+	if (!ret) {
+		g_set_error (error,
+			     ZIF_DOWNLOAD_ERROR,
+			     ZIF_DOWNLOAD_ERROR_FAILED,
+			     "incorrect checksum for %s: got %s but expected %s",
+			     filename, checksum_tmp, checksum);
+		goto out;
+	}
+out:
+	g_free (checksum_tmp);
+	g_free (data);
+	g_free (filename);
+	return ret;
+}
+
+/**
  * zif_download_location_full:
  * @download: A #ZifDownload
  * @uri: A full remote URI.
@@ -742,69 +839,54 @@ zif_download_file_full (ZifDownload *download,
 			GError **error)
 {
 	gboolean ret;
-	gchar *checksum_tmp = NULL;
-	gchar *data = NULL;
 	GFile *file;
-	GFileInfo *info_size = NULL;
-	gsize len;
-	guint64 size_tmp;
+	GCancellable *cancellable;
+
+	/* does file already exist and valid? */
+	file = g_file_new_for_path (filename);
+	cancellable = zif_state_get_cancellable (state);
+	ret = g_file_query_exists (file, cancellable);
+	if (ret &&
+	    zif_download_check_size (file, size, cancellable, NULL) &&
+	    zif_download_check_content_types (file, content_types, NULL) &&
+	    zif_download_check_checksum (file, checksum_type, checksum, NULL)) {
+		g_debug ("%s exists and is valid, skipping download",
+			 filename);
+		goto out;
+	}
 
 	/* download */
-	file = g_file_new_for_path (filename);
-	ret = zif_download_file (download, uri, filename, state, error);
+	ret = zif_download_file (download,
+				 uri,
+				 filename,
+				 state,
+				 error);
 	if (!ret)
 		goto out;
 
 	/* verify size */
-	if (size > 0) {
-		info_size = g_file_query_info (file, G_FILE_ATTRIBUTE_STANDARD_SIZE, 0, NULL, error);
-		if (info_size == NULL) {
-			ret = FALSE;
-			goto out;
-		}
-		size_tmp = g_file_info_get_attribute_uint64 (info_size, G_FILE_ATTRIBUTE_STANDARD_SIZE);
-		ret = (size_tmp == size);
-		if (!ret) {
-			g_set_error (error,
-				     ZIF_DOWNLOAD_ERROR,
-				     ZIF_DOWNLOAD_ERROR_FAILED,
-				     "incorrect size for %s: got %" G_GUINT64_FORMAT
-				     " but expected %" G_GUINT64_FORMAT,
-				     filename, size_tmp, size);
-			goto out;
-		}
-	}
+	ret = zif_download_check_size (file,
+				       size,
+				       cancellable,
+				       error);
+	if (!ret)
+		goto out;
 
 	/* check content type is what we expect */
-	if (content_types != NULL) {
-		ret = zif_download_check_content_types (file,
-							content_types,
-							error);
-		if (!ret)
-			goto out;
-	}
+	ret = zif_download_check_content_types (file,
+						content_types,
+						error);
+	if (!ret)
+		goto out;
 
 	/* verify checksum */
-	if (checksum != NULL) {
-		ret = g_file_get_contents (filename, &data, &len, error);
-		if (!ret)
-			goto out;
-		checksum_tmp = g_compute_checksum_for_string (checksum_type, data, len);
-		ret = (g_strcmp0 (checksum_tmp, checksum) == 0);
-		if (!ret) {
-			g_set_error (error,
-				     ZIF_DOWNLOAD_ERROR,
-				     ZIF_DOWNLOAD_ERROR_FAILED,
-				     "incorrect checksum for %s: got %s but expected %s",
-				     filename, checksum_tmp, checksum);
-			goto out;
-		}
-	}
+	ret = zif_download_check_checksum (file,
+					   checksum_type,
+					   checksum,
+					   error);
+	if (!ret)
+		goto out;
 out:
-	g_free (checksum_tmp);
-	g_free (data);
-	if (info_size != NULL)
-		g_object_unref (info_size);
 	g_object_unref (file);
 	return ret;
 }
