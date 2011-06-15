@@ -992,7 +992,10 @@ zif_release_get_initrd (ZifRelease *release,
 	if (!ret) {
 		ret = zif_download_location_full (priv->download, initrd,
 						  filename,
-						  0, "application/x-gzip,application/x-extension-img",
+						  0,
+						  "application/x-gzip,"
+						  "application/x-extension-img,"
+						  "application/x-xz",
 						  G_CHECKSUM_SHA256, checksum+7,
 						  state, &error_local);
 		if (!ret) {
@@ -1271,6 +1274,7 @@ zif_release_get_package_data (ZifRelease *release, ZifReleaseUpgradeData *data, 
 	gchar *repo_dir = NULL;
 	GError *error_local = NULL;
 	GFile *file = NULL;
+	GCancellable *cancellable;
 	ZifReleasePrivate *priv = release->priv;
 
 	/* create directory path */
@@ -1282,15 +1286,19 @@ zif_release_get_package_data (ZifRelease *release, ZifReleaseUpgradeData *data, 
 		goto out;
 	}
 	file = g_file_new_for_path (repo_dir);
-	ret = g_file_make_directory_with_parents (file, NULL, &error_local);
+	cancellable = zif_state_get_cancellable (state);
+	ret = g_file_query_exists (file, cancellable);
 	if (!ret) {
-		g_set_error (error,
-			     ZIF_RELEASE_ERROR,
-			     ZIF_RELEASE_ERROR_SETUP_INVALID,
-			     "failed to create repo: %s",
-			     error_local->message);
-		g_error_free (error_local);
-		goto out;
+		ret = g_file_make_directory_with_parents (file, cancellable, &error_local);
+		if (!ret) {
+			g_set_error (error,
+				     ZIF_RELEASE_ERROR,
+				     ZIF_RELEASE_ERROR_SETUP_INVALID,
+				     "failed to create repo: %s",
+				     error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
 	}
 
 	/* create the repodata */
