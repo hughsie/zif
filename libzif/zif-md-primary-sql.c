@@ -133,7 +133,7 @@ zif_md_primary_sql_sqlite_create_package_cb (void *data, gint argc, gchar **argv
 	gboolean ret;
 
 	package = zif_package_remote_new ();
-	store_remote = zif_md_get_store_remote (ZIF_MD (fldata->md));
+	store_remote = ZIF_STORE_REMOTE (zif_md_get_store (ZIF_MD (fldata->md)));
 	if (store_remote != NULL) {
 		/* this is not set in a test harness */
 		zif_package_remote_set_store_remote (ZIF_PACKAGE_REMOTE (package), store_remote);

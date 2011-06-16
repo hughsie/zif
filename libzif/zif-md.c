@@ -37,9 +37,10 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "zif-utils.h"
-#include "zif-md.h"
 #include "zif-config.h"
+#include "zif-md.h"
+#include "zif-store-remote.h"
+#include "zif-utils.h"
 
 #define ZIF_MD_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_MD, ZifMdPrivate))
 
@@ -60,7 +61,7 @@ struct _ZifMdPrivate
 	gchar			*checksum_uncompressed;	/* of uncompressed file */
 	GChecksumType		 checksum_type;
 	ZifMdKind		 kind;
-	ZifStoreRemote		*remote;
+	ZifStore		*store;
 	ZifConfig		*config;
 	guint64			 max_age;
 };
@@ -363,39 +364,39 @@ zif_md_set_id (ZifMd *md, const gchar *id)
 }
 
 /**
- * zif_md_set_store_remote:
+ * zif_md_set_store:
  * @md: A #ZifMd
- * @remote: The #ZifStoreRemote that created this metadata
+ * @remote: The #ZifStore that created this metadata
  *
  * Sets the remote store for this metadata.
  *
- * Since: 0.1.0
+ * Since: 0.2.1
  **/
 void
-zif_md_set_store_remote (ZifMd *md, ZifStoreRemote *remote)
+zif_md_set_store (ZifMd *md, ZifStore *store)
 {
 	g_return_if_fail (ZIF_IS_MD (md));
-	g_return_if_fail (remote != NULL);
+	g_return_if_fail (store != NULL);
 
 	/* do not take a reference, else the parent never goes away */
-	md->priv->remote = remote;
+	md->priv->store = store;
 }
 
 /**
- * zif_md_get_store_remote:
+ * zif_md_get_store:
  * @md: A #ZifMd
  *
  * Gets the remote store for this metadata.
  *
- * Return value: A #ZifStoreRemote or %NULL for unset
+ * Return value: A #ZifStore or %NULL for unset
  *
- * Since: 0.1.0
+ * Since: 0.2.1
  **/
-ZifStoreRemote *
-zif_md_get_store_remote (ZifMd *md)
+ZifStore *
+zif_md_get_store (ZifMd *md)
 {
 	g_return_val_if_fail (ZIF_IS_MD (md), NULL);
-	return md->priv->remote;
+	return md->priv->store;
 }
 
 /**
@@ -461,7 +462,7 @@ zif_md_load_get_repomd_and_download (ZifMd *md, ZifState *state, GError **error)
 	/* reget repomd in case it's changed */
 	g_debug ("regetting repomd as checksum was invalid");
 	state_local = zif_state_get_child (state);
-	ret = zif_store_remote_download_repomd (md->priv->remote,
+	ret = zif_store_remote_download_repomd (ZIF_STORE_REMOTE (md->priv->store),
 						state_local,
 						&error_local);
 	if (!ret) {
@@ -479,7 +480,7 @@ zif_md_load_get_repomd_and_download (ZifMd *md, ZifState *state, GError **error)
 
 	/* reload new data */
 	state_local = zif_state_get_child (state);
-	ret = zif_store_load (ZIF_STORE (md->priv->remote), state_local, &error_local);
+	ret = zif_store_load (md->priv->store, state_local, &error_local);
 	if (!ret) {
 		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED_DOWNLOAD,
 			     "failed to load repomd after downloading new copy: %s",
@@ -516,7 +517,7 @@ zif_md_load_get_repomd_and_download (ZifMd *md, ZifState *state, GError **error)
 	/* download file */
 	state_local = zif_state_get_child (state);
 	dirname = g_path_get_dirname (md->priv->filename);
-	ret = zif_store_remote_download_full (md->priv->remote,
+	ret = zif_store_remote_download_full (ZIF_STORE_REMOTE (md->priv->store),
 					      location,
 					      dirname,
 					      0,
@@ -1919,7 +1920,7 @@ zif_md_init (ZifMd *md)
 	md->priv->checksum_uncompressed = NULL;
 	md->priv->checksum_type = 0;
 	md->priv->max_age = 0;
-	md->priv->remote = NULL;
+	md->priv->store = NULL;
 	md->priv->config = zif_config_new ();
 }
 

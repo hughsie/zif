@@ -29,10 +29,10 @@
 #include <glib-object.h>
 #include <gio/gio.h>
 
-#include "zif-md.h"
 #include "zif-depend.h"
+#include "zif-md.h"
 #include "zif-state.h"
-#include "zif-store-remote.h"
+#include "zif-store.h"
 
 G_BEGIN_DECLS
 
@@ -173,8 +173,8 @@ GQuark		 zif_md_error_quark			(void);
 ZifMd		*zif_md_new				(void);
 
 /* setters */
-void		 zif_md_set_store_remote		(ZifMd		*md,
-							 ZifStoreRemote	*remote);
+void		 zif_md_set_store			(ZifMd		*md,
+							 ZifStore	*remote);
 void		 zif_md_set_id				(ZifMd		*md,
 							 const gchar	*id);
 void		 zif_md_set_filename			(ZifMd		*md,
@@ -195,7 +195,7 @@ const gchar	*zif_md_kind_to_text			(ZifMdKind	 type);
 
 /* getters */
 gboolean	 zif_md_get_is_loaded			(ZifMd		*md);
-ZifStoreRemote	*zif_md_get_store_remote		(ZifMd		*md);
+ZifStore	*zif_md_get_store			(ZifMd		*md);
 const gchar	*zif_md_get_id				(ZifMd		*md);
 ZifMdKind	 zif_md_get_kind			(ZifMd		*md);
 const gchar	*zif_md_get_filename			(ZifMd		*md);
