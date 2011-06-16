@@ -1431,6 +1431,7 @@ zif_release_get_package_data (ZifRelease *release,
 
 	/* create the repodata */
 	cmdline_create = g_strdup_printf ("/usr/bin/createrepo "
+					  "--unique-md-filenames "
 					  "--database %s", repo_dir);
 	g_debug ("running command %s", cmdline_create);
 	ret = g_spawn_command_line_sync (cmdline_create,
