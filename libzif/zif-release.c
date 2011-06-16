@@ -1281,8 +1281,9 @@ zif_release_get_package_data (ZifRelease *release,
 {
 	gboolean ret;
 	GCancellable *cancellable;
-	gchar *cmdline = NULL;
-	gchar *cmdline2 = NULL;
+	gchar *cmdline_create = NULL;
+	gchar *cmdline_modify = NULL;
+	gchar *cmdline_copy = NULL;
 	gchar *repo_dir = NULL;
 	gchar *repo_packages = NULL;
 	gchar *repo_metadata = NULL;
@@ -1429,9 +1430,12 @@ zif_release_get_package_data (ZifRelease *release,
 	/* TODO: maybe do a test transaction */
 
 	/* create the repodata */
-	cmdline = g_strdup_printf ("/usr/bin/createrepo --database %s", repo_dir);
-	g_debug ("running command %s", cmdline);
-	ret = g_spawn_command_line_sync (cmdline, NULL, NULL, NULL, &error_local);
+	cmdline_create = g_strdup_printf ("/usr/bin/createrepo "
+					  "--database %s", repo_dir);
+	g_debug ("running command %s", cmdline_create);
+	ret = g_spawn_command_line_sync (cmdline_create,
+					 NULL, NULL, NULL,
+					 &error_local);
 	if (!ret) {
 		g_set_error (error,
 			     ZIF_RELEASE_ERROR,
@@ -1472,13 +1476,44 @@ zif_release_get_package_data (ZifRelease *release,
 		goto out;
 	}
 
-	/* create the repodata */
+	/* fedora 14 has a old modifyrepo that does not support the
+	 * --mdtype=group_gz argument */
 	repo_metadata = g_build_filename (repo_dir, "repodata", NULL);
-	cmdline2 = g_strdup_printf ("/usr/bin/modifyrepo --mdtype=group_gz %s %s",
-				    zif_md_get_filename (md_tmp),
-				    repo_metadata);
-	g_debug ("running command %s", cmdline2);
-	ret = g_spawn_command_line_sync (cmdline2, NULL, NULL, NULL, &error_local);
+	if (old_release >= 15) {
+		cmdline_modify = g_strdup_printf ("/usr/bin/modifyrepo "
+						  "--mdtype=group_gz %s %s",
+						  zif_md_get_filename (md_tmp),
+						  repo_metadata);
+	} else {
+		cmdline_copy = g_strdup_printf ("cp %s %s/group_gz.xml.gz",
+						zif_md_get_filename (md_tmp),
+						repo_dir);
+
+		g_debug ("running command %s", cmdline_copy);
+		ret = g_spawn_command_line_sync (cmdline_copy,
+						 NULL, NULL, NULL,
+						 &error_local);
+		if (!ret) {
+			g_set_error (error,
+				     ZIF_RELEASE_ERROR,
+				     ZIF_RELEASE_ERROR_SPAWN_FAILED,
+				     "failed to copy the groups file: %s",
+				     error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+
+		cmdline_modify = g_strdup_printf ("/usr/bin/modifyrepo "
+						  "%s/group_gz.xml.gz %s",
+						  repo_dir,
+						  repo_metadata);
+	}
+
+	/* create the repodata */
+	g_debug ("running command %s", cmdline_modify);
+	ret = g_spawn_command_line_sync (cmdline_modify,
+					 NULL, NULL, NULL,
+					 &error_local);
 	if (!ret) {
 		g_set_error (error,
 			     ZIF_RELEASE_ERROR,
@@ -1510,8 +1545,9 @@ out:
 	g_free (repo_dir);
 	g_free (repo_packages);
 	g_free (repo_metadata);
-	g_free (cmdline);
-	g_free (cmdline2);
+	g_free (cmdline_create);
+	g_free (cmdline_modify);
+	g_free (cmdline_copy);
 	if (file != NULL)
 		g_object_unref (file);
 	if (repos != NULL)
