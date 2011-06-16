@@ -1415,7 +1415,7 @@ zif_release_get_package_data (ZifRelease *release,
 	/* TODO: maybe do a test transaction */
 
 	/* create the repodata */
-	cmdline = g_strdup_printf ("/usr/bin/createrepo %s", repo_dir);
+	cmdline = g_strdup_printf ("/usr/bin/createrepo --database %s", repo_dir);
 	g_debug ("running command %s", cmdline);
 	ret = g_spawn_command_line_sync (cmdline, NULL, NULL, NULL, &error_local);
 	if (!ret) {
