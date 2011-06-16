@@ -32,6 +32,7 @@
 #include "zif-store.h"
 #include "zif-package.h"
 #include "zif-update.h"
+#include "zif-md.h"
 
 G_BEGIN_DECLS
 
@@ -129,6 +130,8 @@ ZifDelta	*zif_store_remote_find_delta	 	(ZifStoreRemote		*store,
 							 ZifPackage		*installed,
 							 ZifState		*state,
 							 GError			**error);
+ZifMd		*zif_store_remote_get_md_from_type	(ZifStoreRemote		*store,
+							 ZifMdKind		 type);
 
 G_END_DECLS
 

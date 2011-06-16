@@ -174,8 +174,16 @@ zif_store_remote_get_filelists (ZifStoreRemote *store, GError **error)
 
 /**
  * zif_store_remote_get_md_from_type:
+ * @store: A #ZifStoreRemote
+ * @type: the #ZifMdKind to get
+ *
+ * Gets the metadata object of a specific type.
+ *
+ * Return value: (transfer none): A #ZifMd
+ *
+ * Since: 0.2.1
  **/
-static ZifMd *
+ZifMd *
 zif_store_remote_get_md_from_type (ZifStoreRemote *store, ZifMdKind type)
 {
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), NULL);
