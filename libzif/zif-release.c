@@ -1291,6 +1291,7 @@ zif_release_get_package_data (ZifRelease *release,
 	GPtrArray *array = NULL;
 	GPtrArray *updates = NULL;
 	guint i;
+	guint old_release;
 	ZifMd *md_tmp;
 	ZifPackage *package;
 	ZifRepos *repos = NULL;
@@ -1339,6 +1340,13 @@ zif_release_get_package_data (ZifRelease *release,
 	}
 
 	/* override the release version */
+	old_release = zif_config_get_uint (priv->config,
+					   "releasever",
+					   error);
+	if (old_release == G_MAXUINT) {
+		ret = FALSE;
+		goto out;
+	}
 	ret = zif_config_unset (priv->config,
 				"releasever",
 				error);
@@ -1483,6 +1491,19 @@ zif_release_get_package_data (ZifRelease *release,
 
 	/* this section done */
 	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* reset the release version */
+	ret = zif_config_unset (priv->config,
+				"releasever",
+				error);
+	if (!ret)
+		goto out;
+	ret = zif_config_set_uint (priv->config,
+				   "releasever",
+				   old_release,
+				   error);
 	if (!ret)
 		goto out;
 out:
