@@ -1282,28 +1282,34 @@ zif_release_get_package_data (ZifRelease *release,
 	gboolean ret;
 	GCancellable *cancellable;
 	gchar *cmdline = NULL;
+	gchar *cmdline2 = NULL;
 	gchar *repo_dir = NULL;
 	gchar *repo_packages = NULL;
+	gchar *repo_metadata = NULL;
 	GError *error_local = NULL;
 	GFile *file = NULL;
 	GPtrArray *array = NULL;
 	GPtrArray *updates = NULL;
 	guint i;
+	ZifMd *md_tmp;
 	ZifPackage *package;
 	ZifRepos *repos = NULL;
 	ZifState *state_local;
 	ZifState *state_loop;
+	ZifStoreRemote *store;
 	ZifReleasePrivate *priv = release->priv;
 
 	/* setup state with the correct number of steps */
 	ret = zif_state_set_steps (state,
 				   error,
 				   5, /* setup directory */
-				   5, /* get local stores */
+				   1, /* get local stores */
 				   5, /* refresh each repo */
 				   5, /* get updates */
 				   75, /* download files */
 				   5, /* createrepo */
+				   2, /* get comps data */
+				   2, /* modify repo */
 				   -1);
 	if (!ret)
 		goto out;
@@ -1432,10 +1438,59 @@ zif_release_get_package_data (ZifRelease *release,
 	ret = zif_state_done (state, error);
 	if (!ret)
 		goto out;
+
+	/* add the comps group data */
+	state_local = zif_state_get_child (state);
+	store = zif_repos_get_store (repos, "updates", state_local, error);
+	if (store == NULL) {
+		ret = FALSE;
+		goto out;
+	}
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* get the correct metadata */
+	md_tmp = zif_store_remote_get_md_from_type (store,
+						    ZIF_MD_KIND_COMPS_GZ);
+	if (md_tmp == NULL) {
+		md_tmp = zif_store_remote_get_md_from_type (store,
+							    ZIF_MD_KIND_COMPS_GZ);
+	}
+	if (md_tmp == NULL) {
+		ret = FALSE;
+		goto out;
+	}
+
+	/* create the repodata */
+	repo_metadata = g_build_filename (repo_dir, "repodata", NULL);
+	cmdline2 = g_strdup_printf ("/usr/bin/modifyrepo --mdtype=group_gz %s %s",
+				    zif_md_get_filename (md_tmp),
+				    repo_metadata);
+	g_debug ("running command %s", cmdline2);
+	ret = g_spawn_command_line_sync (cmdline2, NULL, NULL, NULL, &error_local);
+	if (!ret) {
+		g_set_error (error,
+			     ZIF_RELEASE_ERROR,
+			     ZIF_RELEASE_ERROR_SPAWN_FAILED,
+			     "failed to create the repo: %s",
+			     error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 out:
 	g_free (repo_dir);
 	g_free (repo_packages);
+	g_free (repo_metadata);
 	g_free (cmdline);
+	g_free (cmdline2);
 	if (file != NULL)
 		g_object_unref (file);
 	if (repos != NULL)
