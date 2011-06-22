@@ -270,6 +270,7 @@ zif_md_primary_xml_parser_end_element (GMarkupParseContext *context, const gchar
 	gchar *package_id = NULL;
 	GError *error_local = NULL;
 	gboolean ret;
+	ZifStore *store;
 
 	/* no element */
 	if (primary_xml->priv->section == ZIF_MD_PRIMARY_XML_SECTION_UNKNOWN) {
@@ -302,6 +303,14 @@ zif_md_primary_xml_parser_end_element (GMarkupParseContext *context, const gchar
 				g_error_free (error_local);
 				goto out;
 			}
+
+			/* set the store the package came from */
+			store = zif_md_get_store (ZIF_MD (primary_xml));
+			if (store != NULL) {
+				zif_package_remote_set_store_remote (ZIF_PACKAGE_REMOTE (primary_xml->priv->package_temp),
+								     ZIF_STORE_REMOTE (store));
+			}
+
 			primary_xml->priv->package_temp = NULL;
 			g_free (primary_xml->priv->package_name_temp);
 			g_free (primary_xml->priv->package_version_temp);

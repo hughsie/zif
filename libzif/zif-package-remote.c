@@ -496,7 +496,10 @@ out:
  * zif_package_remote_ensure_data:
  */
 static gboolean
-zif_package_remote_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, ZifState *state, GError **error)
+zif_package_remote_ensure_data (ZifPackage *pkg,
+				ZifPackageEnsureType type,
+				ZifState *state,
+				GError **error)
 {
 	gboolean ret = FALSE;
 	GPtrArray *array = NULL;
@@ -509,8 +512,21 @@ zif_package_remote_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, ZifS
 
 	if (type == ZIF_PACKAGE_ENSURE_TYPE_FILES) {
 
+		/* never been set */
+		if (pkg_remote->priv->store_remote == NULL) {
+			g_set_error (error,
+				     ZIF_PACKAGE_ERROR,
+				     ZIF_PACKAGE_ERROR_FAILED,
+				     "no remote store set on %s",
+				     zif_package_get_printable (pkg));
+			goto out;
+		}
+
 		/* get the file list for this package */
-		array = zif_store_remote_get_files (pkg_remote->priv->store_remote, pkg, state, error);
+		array = zif_store_remote_get_files (pkg_remote->priv->store_remote,
+						    pkg,
+						    state,
+						    error);
 		if (array == NULL)
 			goto out;
 
@@ -519,8 +535,21 @@ zif_package_remote_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, ZifS
 
 	} else if (type == ZIF_PACKAGE_ENSURE_TYPE_REQUIRES) {
 
+		/* never been set */
+		if (pkg_remote->priv->store_remote == NULL) {
+			g_set_error (error,
+				     ZIF_PACKAGE_ERROR,
+				     ZIF_PACKAGE_ERROR_FAILED,
+				     "no remote store set on %s",
+				     zif_package_get_printable (pkg));
+			goto out;
+		}
+
 		/* get the file list for this package */
-		array = zif_store_remote_get_requires (pkg_remote->priv->store_remote, pkg, state, error);
+		array = zif_store_remote_get_requires (pkg_remote->priv->store_remote,
+						       pkg,
+						       state,
+						       error);
 		if (array == NULL)
 			goto out;
 
@@ -529,8 +558,21 @@ zif_package_remote_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, ZifS
 
 	} else if (type == ZIF_PACKAGE_ENSURE_TYPE_PROVIDES) {
 
+		/* never been set */
+		if (pkg_remote->priv->store_remote == NULL) {
+			g_set_error (error,
+				     ZIF_PACKAGE_ERROR,
+				     ZIF_PACKAGE_ERROR_FAILED,
+				     "no remote store set on %s",
+				     zif_package_get_printable (pkg));
+			goto out;
+		}
+
 		/* get the file list for this package */
-		array = zif_store_remote_get_provides (pkg_remote->priv->store_remote, pkg, state, error);
+		array = zif_store_remote_get_provides (pkg_remote->priv->store_remote,
+						       pkg,
+						       state,
+						       error);
 		if (array == NULL)
 			goto out;
 
@@ -539,8 +581,21 @@ zif_package_remote_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, ZifS
 
 	} else if (type == ZIF_PACKAGE_ENSURE_TYPE_OBSOLETES) {
 
+		/* never been set */
+		if (pkg_remote->priv->store_remote == NULL) {
+			g_set_error (error,
+				     ZIF_PACKAGE_ERROR,
+				     ZIF_PACKAGE_ERROR_FAILED,
+				     "no remote store set on %s",
+				     zif_package_get_printable (pkg));
+			goto out;
+		}
+
 		/* get the file list for this package */
-		array = zif_store_remote_get_obsoletes (pkg_remote->priv->store_remote, pkg, state, error);
+		array = zif_store_remote_get_obsoletes (pkg_remote->priv->store_remote,
+						        pkg,
+						        state,
+						        error);
 		if (array == NULL)
 			goto out;
 
@@ -549,8 +604,21 @@ zif_package_remote_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, ZifS
 
 	} else if (type == ZIF_PACKAGE_ENSURE_TYPE_CONFLICTS) {
 
+		/* never been set */
+		if (pkg_remote->priv->store_remote == NULL) {
+			g_set_error (error,
+				     ZIF_PACKAGE_ERROR,
+				     ZIF_PACKAGE_ERROR_FAILED,
+				     "no remote store set on %s",
+				     zif_package_get_printable (pkg));
+			goto out;
+		}
+
 		/* get the file list for this package */
-		array = zif_store_remote_get_conflicts (pkg_remote->priv->store_remote, pkg, state, error);
+		array = zif_store_remote_get_conflicts (pkg_remote->priv->store_remote,
+						        pkg,
+						        state,
+						        error);
 		if (array == NULL)
 			goto out;
 
@@ -560,7 +628,9 @@ zif_package_remote_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, ZifS
 	} else if (type == ZIF_PACKAGE_ENSURE_TYPE_CACHE_FILENAME) {
 
 		/* get the file list for this package */
-		ret = zif_package_remote_ensure_cache_filename (pkg_remote, state, error);
+		ret = zif_package_remote_ensure_cache_filename (pkg_remote,
+								state,
+								error);
 		if (!ret)
 			goto out;
 
@@ -569,7 +639,9 @@ zif_package_remote_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, ZifS
 		text = zif_package_get_category (pkg, state, error);
 		if (text == NULL)
 			goto out;
-		group = zif_groups_get_group_for_cat (pkg_remote->priv->groups, text, error);
+		group = zif_groups_get_group_for_cat (pkg_remote->priv->groups,
+						      text,
+						      error);
 		if (group == NULL)
 			goto out;
 
