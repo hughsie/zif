@@ -618,6 +618,22 @@ zif_depend_func (void)
 	ZifDepend *need;
 	gboolean ret;
 	GError *error = NULL;
+	const gchar *keys1[] = { "name",
+				 "epoch",
+				 "version",
+				 "release",
+				 "flags",
+				 NULL };
+	const gchar *vals1[] = { "kernel",
+				 "1",
+				 "2.6.0",
+				 "1.fc15",
+				 "GT",
+				 NULL };
+	const gchar *keys2[] = { "name",
+				 NULL };
+	const gchar *vals2[] = { "kernel",
+				 NULL };
 
 	depend = zif_depend_new ();
 	zif_depend_set_flag (depend, ZIF_DEPEND_FLAG_GREATER);
@@ -769,6 +785,19 @@ zif_depend_func (void)
 	g_assert (ret);
 	g_object_unref (need);
 
+	g_object_unref (depend);
+
+	/* create with data */
+	depend = zif_depend_new_from_data (keys1, vals1);
+	g_assert_cmpstr (zif_depend_get_name (depend), ==, "kernel");
+	g_assert_cmpstr (zif_depend_get_version (depend), ==, "1:2.6.0-1.fc15");
+	g_assert_cmpint (zif_depend_get_flag (depend), ==, ZIF_DEPEND_FLAG_GREATER);
+	g_object_unref (depend);
+
+	depend = zif_depend_new_from_data (keys2, vals2);
+	g_assert_cmpstr (zif_depend_get_name (depend), ==, "kernel");
+	g_assert_cmpstr (zif_depend_get_version (depend), ==, NULL);
+	g_assert_cmpint (zif_depend_get_flag (depend), ==, ZIF_DEPEND_FLAG_ANY);
 	g_object_unref (depend);
 
 	zif_check_singletons ();

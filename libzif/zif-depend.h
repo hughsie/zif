@@ -68,6 +68,8 @@ struct _ZifDependClass
 
 GType			 zif_depend_get_type		(void);
 ZifDepend		*zif_depend_new			(void);
+ZifDepend		*zif_depend_new_from_data	(const gchar			**keys,
+							 const gchar			**values);
 
 /* utility functions */
 gchar			*zif_depend_to_string		(ZifDepend		*depend);

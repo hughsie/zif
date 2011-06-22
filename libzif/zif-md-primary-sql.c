@@ -368,72 +368,16 @@ zif_md_primary_sql_search_pkgid (ZifMd *md, gchar **search, ZifState *state, GEr
 }
 
 /**
- * zif_md_primary_sql_flags_to_flag:
- **/
-static ZifDependFlag
-zif_md_primary_sql_flags_to_flag (const gchar *flags)
-{
-	if (flags == NULL)
-		return ZIF_DEPEND_FLAG_ANY;
-	if (g_strcmp0 (flags, "EQ") == 0)
-		return ZIF_DEPEND_FLAG_EQUAL;
-	if (g_strcmp0 (flags, "LT") == 0)
-		return ZIF_DEPEND_FLAG_LESS;
-	if (g_strcmp0 (flags, "GT") == 0)
-		return ZIF_DEPEND_FLAG_GREATER;
-	if (g_strcmp0 (flags, "LE") == 0)
-		return ZIF_DEPEND_FLAG_LESS | ZIF_DEPEND_FLAG_EQUAL;
-	if (g_strcmp0 (flags, "GE") == 0)
-		return ZIF_DEPEND_FLAG_GREATER | ZIF_DEPEND_FLAG_EQUAL;
-	g_warning ("unknown flag string %s", flags);
-	return ZIF_DEPEND_FLAG_UNKNOWN;
-}
-
-/**
  * zif_md_primary_sql_sqlite_depend_cb:
  **/
 static gint
 zif_md_primary_sql_sqlite_depend_cb (void *data, gint argc, gchar **argv, gchar **col_name)
 {
-	gint i;
-	GString *version;
 	ZifDepend *depend;
 	GPtrArray *array = (GPtrArray *) data;
-
-	/* get the depend */
-	version = g_string_new ("");
-	depend = zif_depend_new ();
-	for (i=0; i<argc; i++) {
-		if (g_strcmp0 (col_name[i], "name") == 0) {
-			zif_depend_set_name (depend, argv[i]);
-		} else if (g_strcmp0 (col_name[i], "epoch") == 0) {
-			/* only add epoch if not zero */
-			if (argv[i] != NULL && g_strcmp0 (argv[i], "0") != 0)
-				g_string_append (version, argv[i]);
-		} else if (g_strcmp0 (col_name[i], "version") == 0) {
-			/* only add version if not NULL */
-			if (argv[i] != NULL) {
-				if (version->len > 0)
-					g_string_append (version, ":");
-				g_string_append (version, argv[i]);
-			}
-		} else if (g_strcmp0 (col_name[i], "release") == 0) {
-			/* only add release if not NULL */
-			if (argv[i] != NULL) {
-				if (version->len > 0)
-					g_string_append (version, "-");
-				g_string_append (version, argv[i]);
-			}
-		} else if (g_strcmp0 (col_name[i], "flags") == 0) {
-			zif_depend_set_flag (depend,
-					     zif_md_primary_sql_flags_to_flag (argv[i]));
-		} else {
-			g_warning ("unrecognized: %s=%s", col_name[i], argv[i]);
-		}
-	}
-	zif_depend_set_version (depend, version->str);
+	depend = zif_depend_new_from_data ((const gchar **)col_name,
+					   (const gchar **)argv);
 	g_ptr_array_add (array, depend);
-	g_string_free (version, TRUE);
 	return 0;
 }
 

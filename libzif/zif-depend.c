@@ -517,6 +517,102 @@ out:
 }
 
 /**
+ * zif_depend_flag_desc_to_flag:
+ **/
+static ZifDependFlag
+zif_depend_flag_desc_to_flag (const gchar *flags)
+{
+	if (flags == NULL)
+		return ZIF_DEPEND_FLAG_ANY;
+	if (g_strcmp0 (flags, "EQ") == 0)
+		return ZIF_DEPEND_FLAG_EQUAL;
+	if (g_strcmp0 (flags, "LT") == 0)
+		return ZIF_DEPEND_FLAG_LESS;
+	if (g_strcmp0 (flags, "GT") == 0)
+		return ZIF_DEPEND_FLAG_GREATER;
+	if (g_strcmp0 (flags, "LE") == 0)
+		return ZIF_DEPEND_FLAG_LESS | ZIF_DEPEND_FLAG_EQUAL;
+	if (g_strcmp0 (flags, "GE") == 0)
+		return ZIF_DEPEND_FLAG_GREATER | ZIF_DEPEND_FLAG_EQUAL;
+	g_warning ("unknown flag string %s", flags);
+	return ZIF_DEPEND_FLAG_UNKNOWN;
+}
+
+/**
+ * zif_depend_new_from_data:
+ * @keys: Data keys
+ * @values: Data values
+ *
+ * Return value: A new #ZifDepend instance.
+ *
+ * Since: 0.2.1
+ **/
+ZifDepend *
+zif_depend_new_from_data (const gchar **keys,
+			  const gchar **values)
+{
+	gint i;
+	GString *version_tmp;
+	const gchar *name = NULL;
+	const gchar *version = NULL;
+	ZifDepend *depend;
+	ZifDependFlag flag = ZIF_DEPEND_FLAG_ANY;
+
+	g_assert (keys != NULL);
+	g_assert (values != NULL);
+
+	/* parse the data */
+	version_tmp = g_string_new ("");
+	for (i=0; keys[i] != NULL && values[i] != NULL; i++) {
+		if (g_strcmp0 (keys[i], "name") == 0) {
+			name = values[i];
+		} else if (g_strcmp0 (keys[i], "epoch") == 0) {
+			/* only add epoch if not zero */
+			if (values[i] != NULL &&
+			    g_strcmp0 (values[i], "0") != 0) {
+				g_string_append (version_tmp, values[i]);
+			}
+		} else if (g_strcmp0 (keys[i], "ver") == 0 ||
+			   g_strcmp0 (keys[i], "version") == 0) {
+			/* only add version if not NULL */
+			if (values[i] != NULL) {
+				if (version_tmp->len > 0)
+					g_string_append (version_tmp, ":");
+				g_string_append (version_tmp, values[i]);
+			}
+		} else if (g_strcmp0 (keys[i], "rel") == 0 ||
+			   g_strcmp0 (keys[i], "release") == 0) {
+			/* only add release if not NULL */
+			if (values[i] != NULL) {
+				if (version_tmp->len > 0)
+					g_string_append (version_tmp, "-");
+				g_string_append (version_tmp, values[i]);
+			}
+		} else if (g_strcmp0 (keys[i], "flags") == 0) {
+			flag = zif_depend_flag_desc_to_flag (values[i]);
+		} else if (g_strcmp0 (keys[i], "pre") == 0) {
+			/* no idea what this is for */;
+		} else {
+			g_warning ("unrecognized: %s=%s",
+				   keys[i], values[i]);
+		}
+	}
+
+	/* don't set an empty string */
+	if (version_tmp->len > 0)
+		version = version_tmp->str;
+
+	/* create the new object */
+	depend = g_object_new (ZIF_TYPE_DEPEND,
+			       "name", name,
+			       "flag", flag,
+			       "version", version,
+			       NULL);
+	g_string_free (version_tmp, TRUE);
+	return depend;
+}
+
+/**
  * zif_depend_get_property:
  **/
 static void
