@@ -408,10 +408,10 @@ void
 zif_depend_set_version (ZifDepend *depend, const gchar *version)
 {
 	g_return_if_fail (depend != NULL);
-	g_return_if_fail (version != NULL);
 	g_return_if_fail (depend->priv->version == NULL);
 
-	depend->priv->version = zif_string_new (version);
+	if (version != NULL)
+		depend->priv->version = zif_string_new (version);
 	depend->priv->description_ok = FALSE;
 }
 
