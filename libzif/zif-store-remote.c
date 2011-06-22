@@ -165,8 +165,9 @@ zif_store_remote_get_filelists (ZifStoreRemote *store, GError **error)
 		return store->priv->md_filelists_xml;
 
 	/* no support */
-	g_set_error (error, ZIF_STORE_ERROR,
-		     ZIF_STORE_ERROR_FAILED,
+	g_set_error (error,
+		     ZIF_STORE_ERROR,
+		     ZIF_STORE_ERROR_NO_SUPPORT,
 		     "remote store %s has no filelists",
 		     store->priv->id);
 	return NULL;
