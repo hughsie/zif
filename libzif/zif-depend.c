@@ -547,6 +547,22 @@ zif_depend_get_property (GObject *object, guint prop_id, GValue *value, GParamSp
 static void
 zif_depend_set_property (GObject *object, guint prop_id, const GValue *value, GParamSpec *pspec)
 {
+	ZifDepend *depend = ZIF_DEPEND (object);
+
+	switch (prop_id) {
+	case PROP_FLAG:
+		zif_depend_set_flag (depend, g_value_get_uint (value));
+		break;
+	case PROP_NAME:
+		zif_depend_set_name (depend, g_value_get_string (value));
+		break;
+	case PROP_VERSION:
+		zif_depend_set_version (depend, g_value_get_string (value));
+		break;
+	default:
+		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+		break;
+	}
 }
 
 /**
@@ -589,7 +605,7 @@ zif_depend_class_init (ZifDependClass *klass)
 	 */
 	pspec = g_param_spec_uint ("flag", NULL, NULL,
 				   0, G_MAXUINT, 0,
-				   G_PARAM_READABLE);
+				   G_PARAM_READWRITE);
 	g_object_class_install_property (object_class, PROP_FLAG, pspec);
 
 	/**
@@ -599,7 +615,7 @@ zif_depend_class_init (ZifDependClass *klass)
 	 */
 	pspec = g_param_spec_string ("name", NULL, NULL,
 				     NULL,
-				     G_PARAM_READABLE);
+				     G_PARAM_READWRITE);
 	g_object_class_install_property (object_class, PROP_NAME, pspec);
 
 	/**
@@ -609,7 +625,7 @@ zif_depend_class_init (ZifDependClass *klass)
 	 */
 	pspec = g_param_spec_string ("version", NULL, NULL,
 				     NULL,
-				     G_PARAM_READABLE);
+				     G_PARAM_READWRITE);
 	g_object_class_install_property (object_class, PROP_VERSION, pspec);
 
 	g_type_class_add_private (klass, sizeof (ZifDependPrivate));
