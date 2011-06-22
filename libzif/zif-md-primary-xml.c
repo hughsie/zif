@@ -66,6 +66,7 @@ typedef enum {
 #include "zif-depend.h"
 #include "zif-md-primary-xml.h"
 #include "zif-package-remote.h"
+#include "zif-object-array.h"
 
 #define ZIF_MD_PRIMARY_XML_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_MD_PRIMARY_XML, ZifMdPrimaryXmlPrivate))
 
@@ -80,6 +81,10 @@ struct _ZifMdPrimaryXmlPrivate
 	ZifMdPrimaryXmlSection		 section;
 	ZifMdPrimaryXmlSectionPackage	 section_package;
 	ZifPackage			*package_temp;
+	GPtrArray			*package_provides_temp;
+	GPtrArray			*package_requires_temp;
+	GPtrArray			*package_obsoletes_temp;
+	GPtrArray			*package_conflicts_temp;
 	GPtrArray			*array;
 	gchar				*package_name_temp;
 	gchar				*package_arch_temp;
@@ -109,6 +114,7 @@ zif_md_primary_xml_parser_start_element (GMarkupParseContext *context, const gch
 					gpointer user_data, GError **error)
 {
 	guint i;
+	ZifDepend *depend;
 	ZifMdPrimaryXml *primary_xml = user_data;
 
 	g_return_if_fail (ZIF_IS_MD_PRIMARY_XML (primary_xml));
@@ -124,6 +130,10 @@ zif_md_primary_xml_parser_start_element (GMarkupParseContext *context, const gch
 		if (g_strcmp0 (element_name, "package") == 0) {
 			primary_xml->priv->section = ZIF_MD_PRIMARY_XML_SECTION_PACKAGE;
 			primary_xml->priv->package_temp = ZIF_PACKAGE (zif_package_remote_new ());
+			primary_xml->priv->package_provides_temp = zif_object_array_new ();
+			primary_xml->priv->package_requires_temp = zif_object_array_new ();
+			primary_xml->priv->package_obsoletes_temp = zif_object_array_new ();
+			primary_xml->priv->package_conflicts_temp = zif_object_array_new ();
 			goto out;
 		}
 
@@ -234,18 +244,34 @@ zif_md_primary_xml_parser_start_element (GMarkupParseContext *context, const gch
 
 		} else if (primary_xml->priv->section_package == ZIF_MD_PRIMARY_XML_SECTION_PACKAGE_REQUIRES) {
 			if (g_strcmp0 (element_name, "rpm:entry") == 0) {
+				depend = zif_depend_new_from_data (attribute_names,
+								   attribute_values);
+				g_ptr_array_add (primary_xml->priv->package_requires_temp,
+						 depend);
 				goto out;
 			}
 		} else if (primary_xml->priv->section_package == ZIF_MD_PRIMARY_XML_SECTION_PACKAGE_OBSOLETES) {
 			if (g_strcmp0 (element_name, "rpm:entry") == 0) {
+				depend = zif_depend_new_from_data (attribute_names,
+								   attribute_values);
+				g_ptr_array_add (primary_xml->priv->package_obsoletes_temp,
+						 depend);
 				goto out;
 			}
 		} else if (primary_xml->priv->section_package == ZIF_MD_PRIMARY_XML_SECTION_PACKAGE_CONFLICTS) {
 			if (g_strcmp0 (element_name, "rpm:entry") == 0) {
+				depend = zif_depend_new_from_data (attribute_names,
+								   attribute_values);
+				g_ptr_array_add (primary_xml->priv->package_conflicts_temp,
+						 depend);
 				goto out;
 			}
 		} else if (primary_xml->priv->section_package == ZIF_MD_PRIMARY_XML_SECTION_PACKAGE_PROVIDES) {
 			if (g_strcmp0 (element_name, "rpm:entry") == 0) {
+				depend = zif_depend_new_from_data (attribute_names,
+								   attribute_values);
+				g_ptr_array_add (primary_xml->priv->package_provides_temp,
+						 depend);
 				goto out;
 			}
 			goto out;
@@ -296,7 +322,16 @@ zif_md_primary_xml_parser_end_element (GMarkupParseContext *context, const gchar
 								zif_md_get_id (ZIF_MD (primary_xml)));
 			ret = zif_package_set_id (primary_xml->priv->package_temp, package_id, &error_local);
 			if (ret) {
-				g_ptr_array_add (primary_xml->priv->array, primary_xml->priv->package_temp);
+				g_ptr_array_add (primary_xml->priv->array,
+						 primary_xml->priv->package_temp);
+				zif_package_set_provides (primary_xml->priv->package_temp,
+							  primary_xml->priv->package_provides_temp);
+				zif_package_set_requires (primary_xml->priv->package_temp,
+							  primary_xml->priv->package_requires_temp);
+				zif_package_set_obsoletes (primary_xml->priv->package_temp,
+							   primary_xml->priv->package_obsoletes_temp);
+				zif_package_set_conflicts (primary_xml->priv->package_temp,
+							   primary_xml->priv->package_conflicts_temp);
 			} else {
 				g_warning ("failed to set %s: %s", package_id, error_local->message);
 				g_object_unref (primary_xml->priv->package_temp);
@@ -316,6 +351,10 @@ zif_md_primary_xml_parser_end_element (GMarkupParseContext *context, const gchar
 			g_free (primary_xml->priv->package_version_temp);
 			g_free (primary_xml->priv->package_release_temp);
 			g_free (primary_xml->priv->package_arch_temp);
+			g_ptr_array_unref (primary_xml->priv->package_provides_temp);
+			g_ptr_array_unref (primary_xml->priv->package_requires_temp);
+			g_ptr_array_unref (primary_xml->priv->package_obsoletes_temp);
+			g_ptr_array_unref (primary_xml->priv->package_conflicts_temp);
 			goto out;
 		}
 
@@ -935,6 +974,100 @@ zif_md_primary_xml_get_packages (ZifMd *md, ZifState *state, GError **error)
 }
 
 /**
+ * zif_md_primary_xml_get_provides:
+ **/
+static GPtrArray *
+zif_md_primary_xml_get_depends (ZifMd *md,
+				const gchar *type,
+				ZifPackage *package,
+				ZifState *state,
+				GError **error)
+{
+	guint i;
+	ZifMdPrimaryXml *primary_xml = ZIF_MD_PRIMARY_XML (md);
+	GPtrArray *array;
+	GPtrArray *depends = NULL;
+	ZifPackage *pkg_tmp;
+
+	array = primary_xml->priv->array;
+	for (i=0; i<array->len; i++) {
+		pkg_tmp = g_ptr_array_index (array, i);
+		if (zif_package_compare (pkg_tmp, package) == 0) {
+			if (g_strcmp0 (type, "provides") == 0) {
+				depends = zif_package_get_provides (pkg_tmp,
+								    state,
+								    error);
+			} else if (g_strcmp0 (type, "requires") == 0) {
+				depends = zif_package_get_requires (pkg_tmp,
+								    state,
+								    error);
+			} else if (g_strcmp0 (type, "obsoletes") == 0) {
+				depends = zif_package_get_obsoletes (pkg_tmp,
+								     state,
+								     error);
+			} else if (g_strcmp0 (type, "conflicts") == 0) {
+				depends = zif_package_get_conflicts (pkg_tmp,
+								     state,
+								     error);
+			} else {
+				g_assert_not_reached ();
+			}
+			goto out;
+		}
+	}
+	if (depends == NULL) {
+		g_set_error (error,
+			     ZIF_MD_ERROR,
+			     ZIF_MD_ERROR_FAILED,
+			     "Failed to find package %s in %s",
+			     zif_package_get_printable (package),
+			     zif_md_get_id (md));
+	}
+out:
+	return depends;
+}
+
+/**
+ * zif_md_primary_xml_get_provides:
+ **/
+static GPtrArray *
+zif_md_primary_xml_get_provides (ZifMd *md, ZifPackage *package,
+				 ZifState *state, GError **error)
+{
+	return zif_md_primary_xml_get_depends (md, "provides", package, state, error);
+}
+
+/**
+ * zif_md_primary_xml_get_requires:
+ **/
+static GPtrArray *
+zif_md_primary_xml_get_requires (ZifMd *md, ZifPackage *package,
+				 ZifState *state, GError **error)
+{
+	return zif_md_primary_xml_get_depends (md, "requires", package, state, error);
+}
+
+/**
+ * zif_md_primary_xml_get_obsoletes:
+ **/
+static GPtrArray *
+zif_md_primary_xml_get_obsoletes (ZifMd *md, ZifPackage *package,
+				  ZifState *state, GError **error)
+{
+	return zif_md_primary_xml_get_depends (md, "obsoletes", package, state, error);
+}
+
+/**
+ * zif_md_primary_xml_get_conflicts:
+ **/
+static GPtrArray *
+zif_md_primary_xml_get_conflicts (ZifMd *md, ZifPackage *package,
+				  ZifState *state, GError **error)
+{
+	return zif_md_primary_xml_get_depends (md, "conflicts", package, state, error);
+}
+
+/**
  * zif_md_primary_xml_finalize:
  **/
 static void
@@ -974,6 +1107,10 @@ zif_md_primary_xml_class_init (ZifMdPrimaryXmlClass *klass)
 	md_class->resolve = zif_md_primary_xml_resolve;
 	md_class->get_packages = zif_md_primary_xml_get_packages;
 	md_class->find_package = zif_md_primary_xml_find_package;
+	md_class->get_provides = zif_md_primary_xml_get_provides;
+	md_class->get_requires = zif_md_primary_xml_get_requires;
+	md_class->get_obsoletes = zif_md_primary_xml_get_obsoletes;
+	md_class->get_conflicts = zif_md_primary_xml_get_conflicts;
 
 	g_type_class_add_private (klass, sizeof (ZifMdPrimaryXmlPrivate));
 }

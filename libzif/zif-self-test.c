@@ -1508,14 +1508,26 @@ zif_md_primary_sql_func (void)
 static void
 zif_md_primary_xml_func (void)
 {
-	ZifMd *md;
+	const gchar *data[] = { "gnome-power-manager", NULL };
 	gboolean ret;
+	gchar *filename;
 	GError *error = NULL;
 	GPtrArray *array;
+	GPtrArray *depends;
+	ZifConfig *config;
+	ZifDepend *depend;
+	ZifMd *md;
 	ZifPackage *package;
 	ZifState *state;
-	const gchar *data[] = { "gnome-power-manager", NULL };
-	gchar *filename;
+	ZifStoreRemote *store_remote;
+
+	config = zif_config_new ();
+	filename = zif_test_get_data_file ("zif.conf");
+	zif_config_set_filename (config, filename, NULL);
+	zif_config_set_boolean (config, "network", FALSE, NULL);
+	zif_config_set_uint (config, "metadata_expire", 0, NULL);
+	zif_config_set_uint (config, "mirrorlist_expire", 0, NULL);
+	g_free (filename);
 
 	state = zif_state_new ();
 
@@ -1541,13 +1553,46 @@ zif_md_primary_xml_func (void)
 	g_assert (array != NULL);
 	g_assert (array->len == 1);
 
+	/* get remote store */
+	store_remote = ZIF_STORE_REMOTE (zif_store_remote_new ());
+	zif_state_reset (state);
+	filename = zif_test_get_data_file ("repos/fedora.repo");
+	ret = zif_store_remote_set_from_file (store_remote, filename, "fedora", state, &error);
+	g_free (filename);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	/* check the provides array */
+	package = g_ptr_array_index (array, 0);
+	zif_package_remote_set_store_remote (ZIF_PACKAGE_REMOTE (package),
+					     store_remote);
+	zif_state_reset (state);
+	depends = zif_package_get_provides (package, state, &error);
+	g_assert_no_error (error);
+	g_assert (depends != NULL);
+	g_assert_cmpint (depends->len, ==, 2);
+	depend = g_ptr_array_index (depends, 0);
+	g_assert_cmpstr (zif_depend_get_description (depend), ==,
+			 "[gnome-power-manager = 2.31.1-1.258.20100330git.fc13]");
+	g_ptr_array_unref (depends);
+
+	/* check the requires array */
 	package = g_ptr_array_index (array, 0);
 	zif_state_reset (state);
-	g_assert_cmpstr (zif_package_get_summary (package, state, NULL), ==, "GNOME power management service");
+	depends = zif_package_get_requires (package, state, &error);
+	g_assert_no_error (error);
+	g_assert (depends != NULL);
+	g_assert_cmpint (depends->len, ==, 66);
+	depend = g_ptr_array_index (depends, 0);
+	g_assert_cmpstr (zif_depend_get_description (depend), ==, "[libbonobo-activation.so.4 ~ ]");
+	g_ptr_array_unref (depends);
+
 	g_ptr_array_unref (array);
 
+	g_object_unref (store_remote);
 	g_object_unref (state);
 	g_object_unref (md);
+	g_object_unref (config);
 
 	zif_check_singletons ();
 }
