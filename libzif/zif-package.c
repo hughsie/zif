@@ -1605,6 +1605,7 @@ GPtrArray *
 zif_package_get_provides (ZifPackage *package, ZifState *state, GError **error)
 {
 	gboolean ret;
+	GError *error_local = NULL;
 
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
 	g_return_val_if_fail (package->priv->package_id_split != NULL, NULL);
@@ -1624,9 +1625,18 @@ zif_package_get_provides (ZifPackage *package, ZifState *state, GError **error)
 		ret = zif_package_ensure_data (package,
 					       ZIF_PACKAGE_ENSURE_TYPE_FILES,
 					       state,
-					       error);
-		if (!ret)
-			return NULL;
+					       &error_local);
+		if (!ret) {
+			if (error_local->domain == ZIF_STORE_ERROR &&
+			    error_local->code == ZIF_STORE_ERROR_NO_SUPPORT) {
+				g_debug ("ignoring error: %s",
+					 error_local->message);
+				g_error_free (error_local);
+			} else {
+				g_propagate_error (error, error_local);
+				return NULL;
+			}
+		}
 	}
 
 	/* return refcounted */
