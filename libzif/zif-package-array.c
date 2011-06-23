@@ -173,6 +173,7 @@ zif_package_array_filter_newest (GPtrArray *packages)
 	ZifPackage *package_tmp;
 	const gchar *key;
 	gboolean ret = FALSE;
+	gint retval;
 
 	/* use a hash so it's O(n) not O(n^2) */
 	hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_object_unref);
@@ -188,8 +189,15 @@ zif_package_array_filter_newest (GPtrArray *packages)
 			continue;
 		}
 
+		/* the new package is the same */
+		retval = zif_package_compare (package, package_tmp);
+		if (retval == 0) {
+			g_ptr_array_remove_fast (packages, package_tmp);
+			continue;
+		}
+
 		/* the new package is older */
-		if (zif_package_compare (package, package_tmp) < 0) {
+		if (retval < 0) {
 			g_debug ("%s is older than %s, so ignoring it",
 				   zif_package_get_id (package), zif_package_get_id (package_tmp));
 			g_ptr_array_remove_index_fast (packages, i);
@@ -207,7 +215,7 @@ zif_package_array_filter_newest (GPtrArray *packages)
 		g_ptr_array_remove_fast (packages, package_tmp);
 	}
 	g_hash_table_unref (hash);
-	return  ret;
+	return ret;
 }
 
 /**
