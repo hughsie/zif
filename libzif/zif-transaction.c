@@ -1114,7 +1114,11 @@ zif_transaction_get_packages_provides_from_store_array (ZifTransaction *transact
 	guint i;
 	ZifPackage *package = NULL;
 	ZifStore *store;
+	ZifState *state_local;
 	gboolean ret = TRUE;
+
+	/* set steps */
+	zif_state_set_number_steps (state, store_array->len);
 
 	/* find the depend in the store array */
 	*array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
@@ -1122,11 +1126,12 @@ zif_transaction_get_packages_provides_from_store_array (ZifTransaction *transact
 		store = g_ptr_array_index (store_array, i);
 
 		/* get provide */
+		state_local = zif_state_get_child (state);
 		ret = zif_transaction_get_package_provide_from_store (transaction,
 								      store,
 								      depend,
 								      &package,
-								      state,
+								      state_local,
 								      error);
 		if (!ret) {
 			g_assert (error == NULL || *error != NULL);
@@ -1136,6 +1141,11 @@ zif_transaction_get_packages_provides_from_store_array (ZifTransaction *transact
 		/* gotcha */
 		if (package != NULL)
 			g_ptr_array_add (*array, package);
+
+		/* done */
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
 	}
 
 	/* success */
@@ -2337,14 +2347,14 @@ zif_transaction_resolve_wind_back_failure_package (ZifTransaction *transaction, 
 	item_tmp = zif_transaction_get_item_from_hash (transaction->priv->install_hash,
 						       package);
 	if (item_tmp != NULL && !item_tmp->cancelled) {
-		g_debug ("mark %s as CANCELLED",
+		g_debug ("mark %s as CANCELLED (install)",
 			 zif_package_get_id (item_tmp->package));
 		item_tmp->cancelled = TRUE;
 	}
 	item_tmp = zif_transaction_get_item_from_array_by_related_package (transaction->priv->install,
 									   package);
 	if (item_tmp != NULL && !item_tmp->cancelled) {
-		g_debug ("mark %s as CANCELLED",
+		g_debug ("mark %s as CANCELLED (install related)",
 			 zif_package_get_id (item_tmp->package));
 		item_tmp->cancelled = TRUE;
 	}
@@ -2353,14 +2363,14 @@ zif_transaction_resolve_wind_back_failure_package (ZifTransaction *transaction, 
 	item_tmp = zif_transaction_get_item_from_hash (transaction->priv->remove_hash,
 						       package);
 	if (item_tmp != NULL && !item_tmp->cancelled) {
-		g_debug ("mark %s as CANCELLED",
+		g_debug ("mark %s as CANCELLED (remove)",
 			 zif_package_get_id (item_tmp->package));
 		item_tmp->cancelled = TRUE;
 	}
 	item_tmp = zif_transaction_get_item_from_array_by_related_package (transaction->priv->remove,
 									   package);
 	if (item_tmp != NULL && !item_tmp->cancelled) {
-		g_debug ("mark %s as CANCELLED",
+		g_debug ("mark %s as CANCELLED (remove related)",
 			 zif_package_get_id (item_tmp->package));
 		item_tmp->cancelled = TRUE;
 	}
@@ -2376,7 +2386,7 @@ zif_transaction_resolve_wind_back_failure (ZifTransaction *transaction, ZifTrans
 	ZifPackage *update_package;
 
 	/* don't try to run this again */
-	g_debug ("mark %s as CANCELLED",
+	g_debug ("mark %s as CANCELLED (wound back)",
 		 zif_package_get_id (item->package));
 	item->cancelled = TRUE;
 
@@ -2576,7 +2586,7 @@ zif_transaction_resolve_loop (ZifTransactionResolve *data, ZifState *state, GErr
 				break;
 			}
 			if (data->skip_broken) {
-				g_debug ("ignoring error as we're skip-broken: %s",
+				g_debug ("ignoring install error as we're skip-broken: %s",
 					 error_local->message);
 				zif_transaction_resolve_wind_back_failure (data->transaction, item);
 				g_clear_error (&error_local);
@@ -2624,7 +2634,7 @@ zif_transaction_resolve_loop (ZifTransactionResolve *data, ZifState *state, GErr
 				break;
 			}
 			if (data->skip_broken) {
-				g_debug ("ignoring error as we're skip-broken: %s",
+				g_debug ("ignoring update error as we're skip-broken: %s",
 					 error_local->message);
 				zif_transaction_resolve_wind_back_failure (data->transaction, item);
 				g_ptr_array_remove (priv->update, item);
@@ -2673,7 +2683,7 @@ zif_transaction_resolve_loop (ZifTransactionResolve *data, ZifState *state, GErr
 				break;
 			}
 			if (data->skip_broken) {
-				g_debug ("ignoring error as we're skip-broken: %s",
+				g_debug ("ignoring remove error as we're skip-broken: %s",
 					 error_local->message);
 				zif_transaction_resolve_wind_back_failure (data->transaction, item);
 				g_ptr_array_remove (priv->remove, item);
@@ -2710,7 +2720,7 @@ zif_transaction_resolve_loop (ZifTransactionResolve *data, ZifState *state, GErr
 		ret = zif_transaction_resolve_conflicts_item (data, item, &error_local);
 		if (!ret) {
 			if (data->skip_broken) {
-				g_debug ("ignoring error as we're skip-broken: %s",
+				g_debug ("ignoring conflicts error as we're skip-broken: %s",
 					 error_local->message);
 				g_ptr_array_remove (priv->install, item);
 				data->unresolved_dependencies = TRUE;
