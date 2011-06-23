@@ -855,15 +855,14 @@ _zif_package_array_filter_best_provide (ZifTransaction *transaction,
 	/* is the exact arch required? */
 	exactarch = zif_config_get_boolean (transaction->priv->config,
 					    "exactarch", NULL);
-	if (exactarch) {
-		archinfo = zif_config_get_string (transaction->priv->config,
-						  "archinfo", NULL);
+	archinfo = zif_config_get_string (transaction->priv->config,
+					  "archinfo", NULL);
+	if (exactarch)
 		zif_package_array_filter_arch (array, archinfo);
-	}
 
 	/* filter these down so we get best architectures listed first */
 	if (array->len > 1) {
-		zif_package_array_filter_best_arch (array);
+		zif_package_array_filter_best_arch (array, archinfo);
 		g_debug ("after filtering by arch, array now %i packages", array->len);
 	}
 
@@ -892,11 +891,8 @@ _zif_package_array_filter_best_provide (ZifTransaction *transaction,
 	}
 
 	/* we cannot find the newest entry for non-native packages */
-	if (array->len > 1 && archinfo == NULL) {
-		archinfo = zif_config_get_string (transaction->priv->config,
-						  "archinfo", NULL);
+	if (array->len > 1)
 		zif_package_array_filter_arch (array, archinfo);
-	}
 
 	/* we didn't provide any packages of the correct arch */
 	if (array->len == 0) {
@@ -916,7 +912,7 @@ _zif_package_array_filter_best_provide (ZifTransaction *transaction,
 		g_set_error (error,
 			     ZIF_TRANSACTION_ERROR,
 			     ZIF_TRANSACTION_ERROR_FAILED,
-			     "failed to get newest: %s",
+			     "failed to get newest provide: %s",
 			     error_local->message);
 		g_error_free (error_local);
 		goto out;
@@ -2170,7 +2166,7 @@ zif_transaction_get_package_conflict_from_package_array (GPtrArray *array,
 		g_set_error (error,
 			     ZIF_TRANSACTION_ERROR,
 			     ZIF_TRANSACTION_ERROR_FAILED,
-			     "failed to get newest: %s",
+			     "failed to get newest conflict: %s",
 			     error_local->message);
 		g_error_free (error_local);
 		goto out;

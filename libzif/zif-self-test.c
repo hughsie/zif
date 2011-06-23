@@ -138,7 +138,7 @@ zif_package_array_func (void)
 	g_ptr_array_add (array, pkg);
 
 	/* filter by arch */
-	zif_package_array_filter_best_arch (array);
+	zif_package_array_filter_best_arch (array, "i686");
 	g_assert_cmpint (array->len, ==, 1);
 	pkg = g_ptr_array_index (array, 0);
 	g_assert_cmpstr (zif_package_get_id (pkg), ==, "hal;0.1-1.fc13;i686;installed");
@@ -151,19 +151,71 @@ zif_package_array_func (void)
 	g_ptr_array_add (array, pkg);
 
 	/* filter by arch */
-	zif_package_array_filter_best_arch (array);
-	g_assert_cmpint (array->len, ==, 2);
+	zif_package_array_filter_best_arch (array, "x86_64");
+	g_assert_cmpint (array->len, ==, 1);
 	pkg = g_ptr_array_index (array, 0);
-	g_assert_cmpstr (zif_package_get_id (pkg), ==, "hal;0.1-1.fc13;i686;installed");
-	pkg = g_ptr_array_index (array, 1);
 	g_assert_cmpstr (zif_package_get_id (pkg), ==, "hal;0.1-1.fc13;x86_64;installed");
+
+	/* filter by arch */
+	zif_package_array_filter_best_arch (array, "i686");
+	g_assert_cmpint (array->len, ==, 0);
+
+	g_ptr_array_unref (array);
 
 	/* ensure we can't filter newest when there are two different
 	 * architectures in the array */
+	array = zif_package_array_new ();
+
+	/* add first i386 pkg */
+	pkg = zif_package_new ();
+	ret = zif_package_set_id (pkg, "hal;0.1-1.fc13;i386;installed", &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+	g_ptr_array_add (array, pkg);
+
+	/* add new x86_64 pkg */
+	pkg = zif_package_new ();
+	ret = zif_package_set_id (pkg, "hal;0.1-1.fc13;x86_64;installed", &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+	g_ptr_array_add (array, pkg);
+
 	pkg = zif_package_array_get_newest (array, &error);
 	g_assert_error (error, ZIF_PACKAGE_ERROR, ZIF_PACKAGE_ERROR_FAILED);
 	g_assert (pkg == NULL);
 	g_clear_error (&error);
+
+	g_ptr_array_unref (array);
+
+	/* check we filter newest */
+	array = zif_package_array_new ();
+
+	/* add old pkg */
+	pkg = zif_package_new ();
+	ret = zif_package_set_id (pkg, "hal;0.1-1.fc13;i686;installed", &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+	g_ptr_array_add (array, pkg);
+
+	/* add newer pkg */
+	pkg = zif_package_new ();
+	ret = zif_package_set_id (pkg, "hal;0.2-1.fc13;i686;installed", &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+	g_ptr_array_add (array, pkg);
+
+	/* add same pkg */
+	pkg = zif_package_new ();
+	ret = zif_package_set_id (pkg, "hal;0.2-1.fc13;i686;installed", &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+	g_ptr_array_add (array, pkg);
+
+	/* filter by newest */
+	zif_package_array_filter_newest (array);
+	g_assert_cmpint (array->len, ==, 1);
+	pkg = g_ptr_array_index (array, 0);
+	g_assert_cmpstr (zif_package_get_id (pkg), ==, "hal;0.2-1.fc13;i686;installed");
 
 	g_ptr_array_unref (array);
 }

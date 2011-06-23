@@ -500,6 +500,61 @@ out:
 }
 
 /**
+ * zif_filter_post_resolve:
+ **/
+static gboolean
+zif_filter_post_resolve (ZifCmdPrivate *priv,
+			 GPtrArray *array,
+			 GError **error)
+{
+	gboolean exactarch;
+	gchar *archinfo = NULL;
+	gboolean ret = FALSE;
+
+	/*no input */
+	if (array->len == 0) {
+		ret = FALSE;
+		/* TRANSLATORS: error message */
+		g_set_error_literal (error, 1, 0,
+				     _("No packages found"));
+		goto out;
+	}
+
+	/* is the exact arch required? */
+	exactarch = zif_config_get_boolean (priv->config,
+					    "exactarch", error);
+	if (*error != NULL)
+		goto out;
+
+	/* be more harsh if we're exactarch */
+	archinfo = zif_config_get_string (priv->config,
+					  "archinfo", error);
+	if (archinfo == NULL)
+		goto out;
+	if (exactarch)
+		zif_package_array_filter_arch (array, archinfo);
+	else
+		zif_package_array_filter_best_arch (array, archinfo);
+
+	/* we only want the newest version */
+	zif_package_array_filter_newest (array);
+
+	/* eek, nothing left */
+	if (array->len == 0) {
+		/* TRANSLATORS: error message */
+		g_set_error_literal (error, 1, 0,
+				     _("No packages found (after filter)"));
+		goto out;
+	}
+
+	/* success */
+	ret = TRUE;
+out:
+	g_free (archinfo);
+	return ret;
+}
+
+/**
  * zif_cmd_download:
  **/
 static gboolean
@@ -546,6 +601,11 @@ zif_cmd_download (ZifCmdPrivate *priv, gchar **values, GError **error)
 		g_set_error (error, 1, 0, _("No %s package was found"), values[0]);
 		goto out;
 	}
+
+	/* filter the results in a sane way */
+	ret = zif_filter_post_resolve (priv, array, error);
+	if (!ret)
+		goto out;
 
 	/* this section done */
 	ret = zif_state_done (priv->state, error);
@@ -844,6 +904,12 @@ zif_cmd_get_depends (ZifCmdPrivate *priv, gchar **values, GError **error)
 		g_set_error_literal (error, 1, 0, "no package found");
 		goto out;
 	}
+
+	/* filter the results in a sane way */
+	ret = zif_filter_post_resolve (priv, array, error);
+	if (!ret)
+		goto out;
+
 	package = g_ptr_array_index (array, 0);
 
 	/* this section done */
@@ -990,6 +1056,11 @@ zif_cmd_get_details (ZifCmdPrivate *priv, gchar **values, GError **error)
 		goto out;
 	}
 
+	/* filter the results in a sane way */
+	ret = zif_filter_post_resolve (priv, array, error);
+	if (!ret)
+		goto out;
+
 	/* this section done */
 	ret = zif_state_done (priv->state, error);
 	if (!ret)
@@ -1126,6 +1197,11 @@ zif_cmd_get_files (ZifCmdPrivate *priv, gchar **values, GError **error)
 		ret = FALSE;
 		goto out;
 	}
+
+	/* filter the results in a sane way */
+	ret = zif_filter_post_resolve (priv, array, error);
+	if (!ret)
+		goto out;
 
 	/* this section done */
 	ret = zif_state_done (priv->state, error);
@@ -1820,12 +1896,12 @@ static gboolean
 zif_cmd_install (ZifCmdPrivate *priv, gchar **values, GError **error)
 {
 	gboolean ret = FALSE;
-	guint i;
 	GError *error_local = NULL;
 	GPtrArray *array = NULL;
 	GPtrArray *store_array_local = NULL;
 	GPtrArray *store_array = NULL;
 	GPtrArray *store_array_remote = NULL;
+	guint i;
 	ZifPackage *package;
 	ZifState *state_local;
 	ZifTransaction *transaction = NULL;
@@ -1904,16 +1980,21 @@ zif_cmd_install (ZifCmdPrivate *priv, gchar **values, GError **error)
 		ret = FALSE;
 		goto out;
 	}
-	if (array->len == 0) {
-		ret = FALSE;
-		/* TRANSLATORS: error message */
-		g_set_error (error, 1, 0, _("Could not find %s in repositories"), values[0]);
-		goto out;
+
+	for (i=0; i<array->len; i++) {
+		package = g_ptr_array_index (array, i);
+		g_debug ("%i Prefilter %s", i, zif_package_get_printable (package));
 	}
 
-	/* we only want the newest version installed */
-	zif_package_array_filter_newest (array);
+	/* filter the results in a sane way */
+	ret = zif_filter_post_resolve (priv, array, error);
+	if (!ret)
+		goto out;
 
+	for (i=0; i<array->len; i++) {
+		package = g_ptr_array_index (array, i);
+		g_debug ("%i Postfilter %s", i, zif_package_get_printable (package));
+	}
 	/* this section done */
 	ret = zif_state_done (priv->state, error);
 	if (!ret)
@@ -1923,6 +2004,7 @@ zif_cmd_install (ZifCmdPrivate *priv, gchar **values, GError **error)
 	transaction = zif_transaction_new ();
 	for (i=0; i<array->len; i++) {
 		package = g_ptr_array_index (array, i);
+		g_debug ("Adding %s", zif_package_get_printable (package));
 		ret = zif_transaction_add_install (transaction, package, &error_local);
 		if (!ret) {
 			g_set_error (error, 1, 0, "failed to add install %s: %s",
@@ -2355,6 +2437,11 @@ zif_cmd_remove (ZifCmdPrivate *priv, gchar **values, GError **error)
 		g_set_error (error, 1, 0, _("The package is not installed"));
 		goto out;
 	}
+
+	/* filter the results in a sane way */
+	ret = zif_filter_post_resolve (priv, array, error);
+	if (!ret)
+		goto out;
 
 	/* this section done */
 	ret = zif_state_done (priv->state, error);
@@ -3212,8 +3299,10 @@ zif_cmd_update (ZifCmdPrivate *priv, gchar **values, GError **error)
 		goto out;
 	}
 
-	/* filter down to the newest installed version */
-	zif_package_array_filter_newest (array);
+	/* filter the results in a sane way */
+	ret = zif_filter_post_resolve (priv, array, error);
+	if (!ret)
+		goto out;
 
 	/* this section done */
 	ret = zif_state_done (priv->state, error);
@@ -3321,12 +3410,11 @@ zif_cmd_update_details (ZifCmdPrivate *priv, gchar **values, GError **error)
 		ret = FALSE;
 		goto out;
 	}
-	if (array->len == 0) {
-		ret = FALSE;
-		/* TRANSLATORS: error message */
-		g_set_error (error, 1, 0, _("The %s package is not installed"), values[0]);
+
+	/* filter the results in a sane way */
+	ret = zif_filter_post_resolve (priv, array, error);
+	if (!ret)
 		goto out;
-	}
 
 	/* this section done */
 	ret = zif_state_done (priv->state, error);

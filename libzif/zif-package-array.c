@@ -219,23 +219,13 @@ zif_package_array_filter_newest (GPtrArray *packages)
 }
 
 /**
- * zif_package_array_filter_best_arch:
+ * zif_package_array_filter_best_arch32:
  * @array: Array of %ZifPackage's
  *
  * Filters the array so that only the best version of a package remains.
- *
- * If we have the following packages:
- *  - glibc.i386
- *  - hal.i386
- *  - glibc.i686
- *
- * Then we output:
- *  - glibc.i686
- *
- * Since: 0.1.3
  **/
-void
-zif_package_array_filter_best_arch (GPtrArray *array)
+static void
+zif_package_array_filter_best_arch32 (GPtrArray *array)
 {
 	ZifPackage *package;
 	guint i;
@@ -255,8 +245,10 @@ zif_package_array_filter_best_arch (GPtrArray *array)
 
 	/* if no obvious best, skip */
 	g_debug ("best 32 bit arch=%s", best_arch);
-	if (best_arch == NULL)
+	if (best_arch == NULL) {
+		g_ptr_array_set_size (array, 0);
 		return;
+	}
 
 	/* remove any that are not best */
 	for (i=0; i<array->len;) {
@@ -269,6 +261,35 @@ zif_package_array_filter_best_arch (GPtrArray *array)
 		}
 		i++;
 	}
+}
+
+/**
+ * zif_package_array_filter_best_arch:
+ * @array: Array of %ZifPackage's
+ *
+ * Filters the array so that only the best version of a package remains.
+ *
+ * If we have the following packages:
+ *  - glibc.i386
+ *  - hal.i386
+ *  - glibc.i686
+ *
+ * Then we output:
+ *  - glibc.i686
+ *
+ * Since: 0.2.1
+ **/
+void
+zif_package_array_filter_best_arch (GPtrArray *array, const gchar *arch)
+{
+	/* only x86_64 can be installed on x86_64 */
+	if (g_strcmp0 (arch, "x86_64") == 0) {
+		zif_package_array_filter_arch (array, arch);
+		return;
+	}
+
+	/* just filter to the best 32 bit arch */
+	zif_package_array_filter_best_arch32 (array);
 }
 
 /**
