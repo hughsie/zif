@@ -236,7 +236,8 @@ zif_package_array_filter_best_arch32 (GPtrArray *array)
 	for (i=0; i<array->len; i++) {
 		package = g_ptr_array_index (array, i);
 		arch = zif_package_get_arch (package);
-		if (g_strcmp0 (arch, "x86_64") == 0)
+		if (g_strcmp0 (arch, "x86_64") == 0 ||
+		    g_strcmp0 (arch, "noarch") == 0)
 			continue;
 		if (g_strcmp0 (arch, best_arch) > 0) {
 			best_arch = arch;
@@ -246,7 +247,7 @@ zif_package_array_filter_best_arch32 (GPtrArray *array)
 	/* if no obvious best, skip */
 	g_debug ("best 32 bit arch=%s", best_arch);
 	if (best_arch == NULL) {
-		g_ptr_array_set_size (array, 0);
+		zif_package_array_filter_arch (array, "noarch");
 		return;
 	}
 
@@ -255,7 +256,8 @@ zif_package_array_filter_best_arch32 (GPtrArray *array)
 		package = g_ptr_array_index (array, i);
 		arch = zif_package_get_arch (package);
 		if (g_strcmp0 (arch, best_arch) != 0 &&
-		    g_strcmp0 (arch, "x86_64") != 0) {
+		    g_strcmp0 (arch, "x86_64") != 0 &&
+		    g_strcmp0 (arch, "noarch") != 0) {
 			g_ptr_array_remove_index_fast (array, i);
 			continue;
 		}
