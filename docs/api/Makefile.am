@@ -75,5 +75,18 @@ GTKDOC_LIBS =						\
 # This includes the standard gtk-doc make rules, copied by gtkdocize.
 include $(top_srcdir)/gtk-doc.make
 
+CLEANFILES +=						\
+	*.txt						\
+	*.types						\
+	*.args						\
+	*.hierarchy					\
+	*.interfaces					\
+	*.prerequisites					\
+	*.signals					\
+	*.stamp						\
+	tmpl
+
 # Other files to distribute
 EXTRA_DIST += version.xml.in
+
+-include $(top_srcdir)/git.mk

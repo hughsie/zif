@@ -29,5 +29,10 @@ CLEANFILES =	\
 	fedora/filelists.sqlite					\
 	fedora/filelists.xml					\
 	fedora/comps-fedora.xml					\
+	fedora/prestodelta.xml					\
+	fedora/updateinfo.xml					\
+	corrupt-repomd						\
 	${NULL}
 
+
+-include $(top_srcdir)/git.mk

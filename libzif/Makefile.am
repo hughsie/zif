@@ -229,3 +229,5 @@ clean-local:
 	rm -f *~
 	rm -f $(CLEANFILES)
 
+
+-include $(top_srcdir)/git.mk

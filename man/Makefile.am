@@ -16,3 +16,10 @@ clean-local :
 	rm -f *.1
 	rm -f manpage.*
 
+CLEANFILES =						\
+	manpage.links					\
+	manpage.log					\
+	manpage.refs					\
+	$(man_MANS)
+
+-include $(top_srcdir)/git.mk

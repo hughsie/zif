@@ -1,8 +1,0 @@
-.deps
-.libs
-*.o
-rhn.conf
-zif-file-requires
-zif-list-installed
-zif-list-repos
-zif-rhn

@@ -21,6 +21,8 @@ MAINTAINERCLEANFILES =					\
 	*~						\
 	compile						\
 	configure					\
+	ChangeLog					\
+	gtk-doc.make					\
 	INSTALL						\
 	install-sh					\
 	missing						\
@@ -70,3 +72,5 @@ ChangeLog:
 
 .PHONY: ChangeLog
 
+
+-include $(top_srcdir)/git.mk
