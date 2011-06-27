@@ -82,6 +82,7 @@ struct _ZifPackagePrivate
 	gboolean		 any_file_conflicts;
 	gboolean		 installed;
 	ZifPackageTrustKind	 trust_kind;
+	ZifPackageCompareMode	 compare_mode;
 };
 
 G_DEFINE_TYPE (ZifPackage, zif_package, G_TYPE_OBJECT)
@@ -104,6 +105,63 @@ zif_package_error_quark (void)
 	if (!quark)
 		quark = g_quark_from_static_string ("zif_package_error");
 	return quark;
+}
+
+/**
+ * zif_package_set_compare_mode:
+ * @package: A #ZifPackage
+ * @compare_mode: The mode to use when comparing this package to others
+ *
+ * Sets the compare mode for packages.
+ *
+ * Since: 0.2.1
+ **/
+void
+zif_package_set_compare_mode (ZifPackage *package,
+			      ZifPackageCompareMode compare_mode)
+{
+	g_return_if_fail (ZIF_IS_PACKAGE (package));
+	package->priv->compare_mode = compare_mode;
+}
+
+/**
+ * zif_package_compare_mode_to_string:
+ * @value: the compare mode to convert
+ *
+ * Converts a string to a #ZifPackageCompareMode.
+ *
+ * Return value: a enum, or %ZIF_PACKAGE_COMPARE_MODE_UNKNOWN for invalid
+ *
+ * Since: 0.2.1
+ **/
+ZifPackageCompareMode
+zif_package_compare_mode_from_string (const gchar *value)
+{
+	if (g_strcmp0 (value, "version") == 0)
+		return ZIF_PACKAGE_COMPARE_MODE_VERSION;
+	if (g_strcmp0 (value, "distro") == 0)
+		return ZIF_PACKAGE_COMPARE_MODE_DISTRO;
+	return ZIF_PACKAGE_COMPARE_MODE_UNKNOWN;
+}
+
+/**
+ * zif_package_compare_mode_to_string:
+ * @value: the compare mode to convert
+ *
+ * Converts the #ZifPackageCompareMode to a string.
+ *
+ * Return value: a const string, or NULL for invalid
+ *
+ * Since: 0.2.1
+ **/
+const gchar *
+zif_package_compare_mode_to_string (ZifPackageCompareMode value)
+{
+	if (value == ZIF_PACKAGE_COMPARE_MODE_VERSION)
+		return "version";
+	if (value == ZIF_PACKAGE_COMPARE_MODE_DISTRO)
+		return "distro";
+	return NULL;
 }
 
 /**
@@ -2298,6 +2356,9 @@ static void
 zif_package_init (ZifPackage *package)
 {
 	package->priv = ZIF_PACKAGE_GET_PRIVATE (package);
+
+	/* version compare by default */
+	package->priv->compare_mode = ZIF_PACKAGE_COMPARE_MODE_VERSION;
 
 	/* we have to create this now to allow us to call
 	 * zif_package_set_files() before zif_package_set_provides() */

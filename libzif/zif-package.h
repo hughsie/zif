@@ -73,6 +73,12 @@ typedef enum {
 	ZIF_PACKAGE_TRUST_KIND_LAST
 } ZifPackageTrustKind;
 
+typedef enum {
+	ZIF_PACKAGE_COMPARE_MODE_VERSION,
+	ZIF_PACKAGE_COMPARE_MODE_DISTRO,
+	ZIF_PACKAGE_COMPARE_MODE_UNKNOWN
+} ZifPackageCompareMode;
+
 struct _ZifPackage
 {
 	GObject			 parent;
@@ -232,6 +238,10 @@ gboolean		 zif_package_is_compatible_arch	(ZifPackage	*a,
 							 ZifPackage	*b);
 const gchar		*zif_package_ensure_type_to_string (ZifPackageEnsureType type);
 const gchar		*zif_package_trust_kind_to_string (ZifPackageTrustKind trust_kind);
+void			 zif_package_set_compare_mode	(ZifPackage	*package,
+							 ZifPackageCompareMode compare_mode);
+ZifPackageCompareMode	 zif_package_compare_mode_from_string (const gchar *value);
+const gchar		*zif_package_compare_mode_to_string (ZifPackageCompareMode value);
 
 G_END_DECLS
 
