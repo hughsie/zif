@@ -441,18 +441,25 @@ out:
 }
 
 /**
- * zif_package_convert_evr:
+ * zif_package_convert_evr_full:
  * @evr: epoch, version, release
  * @epoch: The package epoch
  * @version: The package version
- * @release: The package release
+ * @release: The package release, or %NULL
+ * @distro: The package distro, or %NULL
  *
  * Modifies evr, so pass in copy
  *
  * Return value: %TRUE if the EVR was parsed
+ *
+ * Since: 0.2.1
  **/
 gboolean
-zif_package_convert_evr (gchar *evr, const gchar **epoch, const gchar **version, const gchar **release)
+zif_package_convert_evr_full (gchar *evr,
+			      const gchar **epoch,
+			      const gchar **version,
+			      const gchar **release,
+			      const gchar **distro)
 {
 	gchar *find;
 
@@ -473,36 +480,82 @@ zif_package_convert_evr (gchar *evr, const gchar **epoch, const gchar **version,
 	}
 
 	/* split possible release */
-	find = g_strrstr (*version, "-");
-	if (find != NULL) {
-		*find = '\0';
-		*release = find+1;
-	} else {
-		*release = NULL;
+	if (*version != NULL) {
+		find = g_strrstr (*version, "-");
+		if (find != NULL) {
+			*find = '\0';
+			*release = find+1;
+		} else {
+			*release = NULL;
+		}
 	}
 
+	/* distro is optional */
+	if (distro == NULL)
+		goto out;
+
+	/* split possible release */
+	if (*release != NULL) {
+		find = g_strrstr (*release, ".");
+		if (find != NULL) {
+			*find = '\0';
+			*distro = find+1;
+		} else {
+			*distro = NULL;
+		}
+	}
+out:
 	return TRUE;
 }
 
 /**
- * zif_compare_evr:
+ * zif_package_convert_evr:
+ * @evr: epoch, version, release
+ * @epoch: The package epoch
+ * @version: The package version
+ * @release: The package release
+ * @distro: The package distro
+ *
+ * Modifies evr, so pass in copy
+ *
+ * Return value: %TRUE if the EVR was parsed
+ *
+ * Since: 0.1.0
+ **/
+gboolean
+zif_package_convert_evr (gchar *evr,
+			 const gchar **epoch,
+			 const gchar **version,
+			 const gchar **release)
+{
+	return zif_package_convert_evr_full (evr,
+					     epoch,
+					     version,
+					     release,
+					     NULL);
+}
+
+/**
+ * zif_compare_evr_full:
  * @a: The first version string, or %NULL
  * @b: The second version string, or %NULL
+ * @compare_mode: the way the versions are compared
  *
  * Compare two [epoch:]version[-release] strings
  *
  * Return value: 1 for a>b, 0 for a==b, -1 for b>a
  *
- * Since: 0.1.0
+ * Since: 0.2.1
  **/
 gint
-zif_compare_evr (const gchar *a, const gchar *b)
+zif_compare_evr_full (const gchar *a, const gchar *b,
+		      ZifPackageCompareMode compare_mode)
 {
 	gint val = 0;
-	gchar ad[128]; /* 128 bytes should be enough for anybody, heh */
-	gchar bd[128];
-	const gchar *ae, *av, *ar;
-	const gchar *be, *bv, *br;
+	gchar a_tmp[128]; /* 128 bytes should be enough for anybody, heh */
+	gchar b_tmp[128];
+	const gchar *ae, *av, *ar, *ad;
+	const gchar *be, *bv, *br, *bd;
 
 	/* exactly the same, optimise */
 	if (g_strcmp0 (a, b) == 0)
@@ -519,12 +572,21 @@ zif_compare_evr (const gchar *a, const gchar *b)
 	}
 
 	/* copy */
-	g_strlcpy (ad, a, 128);
-	g_strlcpy (bd, b, 128);
+	g_strlcpy (a_tmp, a, 128);
+	g_strlcpy (b_tmp, b, 128);
 
 	/* split */
-	zif_package_convert_evr (ad, &ae, &av, &ar);
-	zif_package_convert_evr (bd, &be, &bv, &br);
+	zif_package_convert_evr_full (a_tmp, &ae, &av, &ar, &ad);
+	zif_package_convert_evr_full (b_tmp, &be, &bv, &br, &bd);
+
+	/* compare distro */
+	if (ad != NULL &&
+	    bd != NULL &&
+	    compare_mode == ZIF_PACKAGE_COMPARE_MODE_DISTRO) {
+		val = rpmvercmp (ad, bd);
+		if (val != 0)
+			goto out;
+	}
 
 	/* compare epoch */
 	if (ae != NULL && be != NULL) {
@@ -545,10 +607,40 @@ zif_compare_evr (const gchar *a, const gchar *b)
 		goto out;
 
 	/* compare release */
-	if (ar != NULL && br != NULL)
+	if (ar != NULL && br != NULL) {
 		val = rpmvercmp (ar, br);
+		if (val != 0)
+			goto out;
+	}
+
+	/* compare distro */
+	if (ad != NULL && bd != NULL) {
+		val = rpmvercmp (ad, bd);
+		if (val != 0)
+			goto out;
+	}
 out:
 	return val;
+}
+
+/**
+ * zif_compare_evr:
+ * @a: The first version string, or %NULL
+ * @b: The second version string, or %NULL
+ *
+ * Compare two [epoch:]version[-release] strings
+ *
+ * Return value: 1 for a>b, 0 for a==b, -1 for b>a
+ *
+ * Since: 0.1.0
+ **/
+gint
+zif_compare_evr (const gchar *a, const gchar *b)
+{
+	gint ret;
+	ret = zif_compare_evr_full (a, b,
+				    ZIF_PACKAGE_COMPARE_MODE_VERSION);
+	return ret;
 }
 
 /**

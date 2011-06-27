@@ -30,6 +30,7 @@
 #include <glib-object.h>
 
 #include "zif-state.h"
+#include "zif-package.h"
 
 G_BEGIN_DECLS
 
@@ -61,6 +62,9 @@ gchar		*zif_package_id_from_nevra	(const gchar	*name,
 gboolean	 zif_boolean_from_text		(const gchar	*text);
 gint		 zif_compare_evr		(const gchar	*a,
 						 const gchar	*b);
+gint		 zif_compare_evr_full		(const gchar	*a,
+						 const gchar	*b,
+						 ZifPackageCompareMode compare_mode);
 gboolean	 zif_arch_is_native		(const gchar	*a,
 						 const gchar	*b);
 gboolean	 zif_file_untar			(const gchar	*filename,
@@ -81,6 +85,11 @@ gboolean	 zif_package_convert_evr	(gchar		*evr,
 						 const gchar	**epoch,
 						 const gchar	**version,
 						 const gchar	**release);
+gboolean	 zif_package_convert_evr_full	(gchar		*evr,
+						 const gchar	**epoch,
+						 const gchar	**version,
+						 const gchar	**release,
+						 const gchar	**distro);
 gboolean	 zif_utils_gpg_verify		(const gchar	*filename,
 						 const gchar	*filename_gpg,
 						 GError		**error);

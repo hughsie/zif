@@ -1793,7 +1793,31 @@ zif_monitor_func (void)
 static void
 zif_package_func (void)
 {
-	return;
+	ZifPackage *a;
+	ZifPackage *b;
+	gboolean ret;
+	gint retval;
+	GError *error = NULL;
+
+	/* check compare */
+	a = zif_package_new ();
+	ret = zif_package_set_id (a, "colord;0.0.1-1.fc15;i386;fedora", &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+	b = zif_package_new ();
+	ret = zif_package_set_id (b, "colord;0.0.2-1.fc14;i386;fedora", &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+	retval = zif_package_compare (a, b);
+	g_assert_cmpint (retval, ==, -1);
+
+	/* check compare with distro-sync */
+	zif_package_set_compare_mode (a, ZIF_PACKAGE_COMPARE_MODE_DISTRO);
+	retval = zif_package_compare (a, b);
+	g_assert_cmpint (retval, ==, 1);
+
+	g_object_unref (a);
+	g_object_unref (b);
 
 	zif_check_singletons ();
 }

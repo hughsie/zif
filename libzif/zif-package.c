@@ -210,7 +210,9 @@ zif_package_compare (ZifPackage *a, ZifPackage *b)
 		goto out;
 
 	/* do a version compare */
-	val = zif_compare_evr (splita[ZIF_PACKAGE_ID_VERSION], splitb[ZIF_PACKAGE_ID_VERSION]);
+	val = zif_compare_evr_full (splita[ZIF_PACKAGE_ID_VERSION],
+				    splitb[ZIF_PACKAGE_ID_VERSION],
+				    a->priv->compare_mode);
 out:
 	return val;
 }
