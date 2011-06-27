@@ -61,15 +61,6 @@ GTK_DOC_CHECK(1.9)
 
 AC_PATH_PROG(GLIB_GENMARSHAL, glib-genmarshal)
 
-
-dnl ---------------------------------------------------------------------------
-dnl - Extra verbose warning switches
-dnl ---------------------------------------------------------------------------
-CPPFLAGS="$CPPFLAGS -DG_DISABLE_SINGLE_INCLUDES -DGTK_DISABLE_SINGLE_INCLUDES"
-CPPFLAGS="$CPPFLAGS -DG_DISABLE_DEPRECATED -DGTK_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED"
-CPPFLAGS="$CPPFLAGS -DGDK_MULTIHEAD_SAFE -DGTK_MULTIHEAD_SAFE"
-CPPFLAGS="$CPPFLAGS -DGSEAL_ENABLE"
-
 dnl ---------------------------------------------------------------------------
 dnl - Use strict options (default enabled for devs, disabled in releases)
 dnl ---------------------------------------------------------------------------
@@ -124,19 +115,14 @@ if test "$GCC" = "yes"; then
 	WARNINGFLAGS_C="$WARNINGFLAGS_C -Wformat-security"
 	WARNINGFLAGS_C="$WARNINGFLAGS_C -Wmissing-include-dirs"
 	WARNINGFLAGS_C="$WARNINGFLAGS_C -Wmissing-format-attribute"
-#	WARNINGFLAGS_C="$WARNINGFLAGS_C -Wclobbered"
-#	WARNINGFLAGS_C="$WARNINGFLAGS_C -Wempty-body"
-#	WARNINGFLAGS_C="$WARNINGFLAGS_C -Wignored-qualifiers"
 	WARNINGFLAGS_C="$WARNINGFLAGS_C -Wsign-compare"
-#	WARNINGFLAGS_C="$WARNINGFLAGS_C -Wtype-limits"
+	WARNINGFLAGS_C="$WARNINGFLAGS_C -Wtype-limits"
 	WARNINGFLAGS_C="$WARNINGFLAGS_C -Wuninitialized"
 	WARNINGFLAGS_C="$WARNINGFLAGS_C -Waggregate-return"
 	WARNINGFLAGS_C="$WARNINGFLAGS_C -Wdeclaration-after-statement"
 	WARNINGFLAGS_C="$WARNINGFLAGS_C -Wshadow"
 	WARNINGFLAGS_C="$WARNINGFLAGS_C -Wno-strict-aliasing"
 	WARNINGFLAGS_C="$WARNINGFLAGS_C -Winline"
-#	WARNINGFLAGS_C="$WARNINGFLAGS_C -Wmissing-parameter-type"
-#	WARNINGFLAGS_C="$WARNINGFLAGS_C -Woverride-init"
 else
 	WARNINGFLAGS_C=""
 fi
