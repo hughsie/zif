@@ -411,21 +411,9 @@ zif_cmd_get_descriptions (GPtrArray *array)
 	guint i;
 	guint j;
 	guint len;
-	guint max_len = 0;
+	guint max_len = 19;
 	ZifCmdItem *item;
 	GString *string;
-
-	/* get maximum command length */
-	for (i=0; i<array->len; i++) {
-		item = g_ptr_array_index (array, i);
-		len = strlen (item->name);
-		if (len > max_len)
-			max_len = len;
-	}
-
-	/* ensure we're spaced by at least this */
-	if (max_len < 19)
-		max_len = 19;
 
 	/* print each command */
 	string = g_string_new ("");
@@ -433,8 +421,9 @@ zif_cmd_get_descriptions (GPtrArray *array)
 		item = g_ptr_array_index (array, i);
 		g_string_append (string, "  ");
 		g_string_append (string, item->name);
+		g_string_append (string, " ");
 		len = strlen (item->name);
-		for (j=len; j<max_len+3; j++)
+		for (j=len; j<max_len+2; j++)
 			g_string_append_c (string, ' ');
 		g_string_append (string, item->description);
 		g_string_append_c (string, '\n');
@@ -3350,6 +3339,24 @@ out:
 }
 
 /**
+ * zif_cmd_distro_sync:
+ **/
+static gboolean
+zif_cmd_distro_sync (ZifCmdPrivate *priv, gchar **values, GError **error)
+{
+	gboolean ret;
+	ret = zif_config_set_string (priv->config,
+				     "pkg_compare_mode",
+				     "distro",
+				     error);
+	if (!ret)
+		goto out;
+	ret = zif_cmd_update (priv, values, error);
+out:
+	return ret;
+}
+
+/**
  * zif_cmd_update_details:
  **/
 static gboolean
@@ -4759,6 +4766,7 @@ main (int argc, char *argv[])
 	gboolean skip_broken = FALSE;
 	gboolean exact_arch = FALSE;
 	gboolean verbose = FALSE;
+	gboolean distro_sync = FALSE;
 	gchar *cmd_descriptions = NULL;
 	gchar *config_file = NULL;
 	gchar *excludes = NULL;
@@ -4781,6 +4789,8 @@ main (int argc, char *argv[])
 			_("Enable background mode to run using less CPU"), NULL },
 		{ "offline", 'o', 0, G_OPTION_ARG_NONE, &offline,
 			_("Work offline when possible"), NULL },
+		{ "distro-sync", '\0', 0, G_OPTION_ARG_NONE, &distro_sync,
+			_("Take into account distribution versions when calculating updates"), NULL },
 		{ "config", 'c', 0, G_OPTION_ARG_STRING, &config_file,
 			_("Use different config file"), NULL },
 		{ "excludes", 'c', 0, G_OPTION_ARG_STRING, &excludes,
@@ -4902,6 +4912,20 @@ main (int argc, char *argv[])
 		g_error ("failed to set background: %s", error->message);
 		g_error_free (error);
 		goto out;
+	}
+
+	/* disto sync? */
+	if (distro_sync) {
+		ret = zif_config_set_string (priv->config,
+					     "pkg_compare_mode",
+					     "distro",
+					     &error);
+		if (!ret) {
+			g_error ("failed to set pkg_compare_mode: %s",
+				 error->message);
+			g_error_free (error);
+			goto out;
+		}
 	}
 
 	/* are we root? */
@@ -5106,6 +5130,11 @@ main (int argc, char *argv[])
 		     /* TRANSLATORS: command description */
 		     _("Update a package to the newest available version"),
 		     zif_cmd_update);
+	zif_cmd_add (priv->cmd_array,
+		     "distro-sync,distribution-synchronization",
+		     /* TRANSLATORS: command description */
+		     _("Update a package taking into account distribution version"),
+		     zif_cmd_distro_sync);
 	zif_cmd_add (priv->cmd_array,
 		     "update-details",
 		     /* TRANSLATORS: command description */
