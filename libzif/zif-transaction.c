@@ -2982,11 +2982,13 @@ zif_transaction_prepare_ensure_trusted (ZifTransaction *transaction,
 					GError **error)
 {
 	const gchar *cache_filename;
+	const gchar *tmp;
 	gboolean ret = FALSE;
 	Header h;
 	int rc;
 	pgpDig dig = NULL;
 	rpmtd td = NULL;
+	ZifPackageCompareMode compare_mode;
 	ZifPackage *package_tmp = NULL;
 	ZifPackageTrustKind trust_kind = ZIF_PACKAGE_TRUST_KIND_NONE;
 
@@ -3004,6 +3006,17 @@ zif_transaction_prepare_ensure_trusted (ZifTransaction *transaction,
 						   error);
 	if (!ret)
 		goto out;
+
+	/* set the compare mode */
+	tmp = zif_config_get_string (transaction->priv->config,
+				     "pkg_compare_mode",
+				     error);
+	if (tmp == NULL) {
+		ret = FALSE;
+		goto out;
+	}
+	compare_mode = zif_package_compare_mode_from_string (tmp);
+	zif_package_set_compare_mode (package_tmp, compare_mode);
 
 	/* get RSA key */
 	td = rpmtdNew ();

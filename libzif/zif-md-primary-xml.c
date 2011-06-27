@@ -61,6 +61,7 @@ typedef enum {
 #include <sqlite3.h>
 #include <gio/gio.h>
 
+#include "zif-config.h"
 #include "zif-md.h"
 #include "zif-utils.h"
 #include "zif-depend.h"
@@ -91,6 +92,8 @@ struct _ZifMdPrimaryXmlPrivate
 	gchar				*package_version_temp;
 	gchar				*package_release_temp;
 	guint				 package_epoch_temp;
+	ZifConfig			*config;
+	ZifPackageCompareMode		 compare_mode;
 };
 
 G_DEFINE_TYPE (ZifMdPrimaryXml, zif_md_primary_xml, ZIF_TYPE_MD)
@@ -134,6 +137,8 @@ zif_md_primary_xml_parser_start_element (GMarkupParseContext *context, const gch
 			primary_xml->priv->package_requires_temp = zif_object_array_new ();
 			primary_xml->priv->package_obsoletes_temp = zif_object_array_new ();
 			primary_xml->priv->package_conflicts_temp = zif_object_array_new ();
+			zif_package_set_compare_mode (primary_xml->priv->package_temp,
+						      primary_xml->priv->compare_mode);
 			goto out;
 		}
 
@@ -473,6 +478,7 @@ static gboolean
 zif_md_primary_xml_load (ZifMd *md, ZifState *state, GError **error)
 {
 	const gchar *filename;
+	const gchar *tmp;
 	gboolean ret;
 	gchar *contents = NULL;
 	gsize size;
@@ -492,6 +498,14 @@ zif_md_primary_xml_load (ZifMd *md, ZifState *state, GError **error)
 	/* already loaded */
 	if (primary_xml->priv->loaded)
 		goto out;
+
+	/* get the compare mode */
+	tmp = zif_config_get_string (primary_xml->priv->config,
+				     "pkg_compare_mode",
+				     error);
+	if (tmp == NULL)
+		goto out;
+	primary_xml->priv->compare_mode = zif_package_compare_mode_from_string (tmp);
 
 	/* get filename */
 	filename = zif_md_get_filename_uncompressed (md);
@@ -1080,6 +1094,7 @@ zif_md_primary_xml_finalize (GObject *object)
 	md = ZIF_MD_PRIMARY_XML (object);
 
 	g_ptr_array_unref (md->priv->array);
+	g_object_unref (md->priv->config);
 
 	G_OBJECT_CLASS (zif_md_primary_xml_parent_class)->finalize (object);
 }
@@ -1127,6 +1142,7 @@ zif_md_primary_xml_init (ZifMdPrimaryXml *md)
 	md->priv->section = ZIF_MD_PRIMARY_XML_SECTION_UNKNOWN;
 	md->priv->section_package = ZIF_MD_PRIMARY_XML_SECTION_PACKAGE_UNKNOWN;
 	md->priv->package_temp = NULL;
+	md->priv->config = zif_config_new ();
 }
 
 /**

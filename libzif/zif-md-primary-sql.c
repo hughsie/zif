@@ -37,6 +37,7 @@
 #include <sqlite3.h>
 #include <gio/gio.h>
 
+#include "zif-config.h"
 #include "zif-md.h"
 #include "zif-md-primary-sql.h"
 #include "zif-package-array.h"
@@ -57,12 +58,14 @@ struct _ZifMdPrimarySqlPrivate
 {
 	gboolean		 loaded;
 	sqlite3			*db;
+	ZifConfig		*config;
 };
 
 typedef struct {
 	const gchar		*id;
 	GPtrArray		*packages;
 	ZifMdPrimarySql		*md;
+	ZifPackageCompareMode	 compare_mode;
 } ZifMdPrimarySqlData;
 
 G_DEFINE_TYPE (ZifMdPrimarySql, zif_md_primary_sql, ZIF_TYPE_MD)
@@ -140,6 +143,7 @@ zif_md_primary_sql_sqlite_create_package_cb (void *data, gint argc, gchar **argv
 	} else {
 		g_debug ("no remote store for %s, which is okay as we're in make check", argv[1]);
 	}
+	zif_package_set_compare_mode (package, fldata->compare_mode);
 
 	/* add */
 	ret = zif_package_remote_set_from_repo (ZIF_PACKAGE_REMOTE (package), argc, col_name, argv, fldata->id, NULL);
@@ -165,6 +169,7 @@ static GPtrArray *
 zif_md_primary_sql_search (ZifMdPrimarySql *md, const gchar *statement,
 			   ZifState *state, GError **error)
 {
+	const gchar *tmp;
 	gchar *error_msg = NULL;
 	gint rc;
 	gboolean ret;
@@ -178,20 +183,33 @@ zif_md_primary_sql_search (ZifMdPrimarySql *md, const gchar *statement,
 	if (!md->priv->loaded) {
 		ret = zif_md_load (ZIF_MD (md), state, &error_local);
 		if (!ret) {
-			g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED_TO_LOAD,
-				     "failed to load md_primary_sql file: %s", error_local->message);
+			g_set_error (error,
+				     ZIF_MD_ERROR,
+				     ZIF_MD_ERROR_FAILED_TO_LOAD,
+				     "failed to load md_primary_sql file: %s",
+				     error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
 	}
 
+	/* get the compare mode */
+	tmp = zif_config_get_string (md->priv->config,
+				     "pkg_compare_mode",
+				     error);
+	if (tmp == NULL)
+		goto out;
+
 	/* create data struct we can pass to the callback */
 	zif_state_set_allow_cancel (state, FALSE);
 	data = g_new0 (ZifMdPrimarySqlData, 1);
+	data->compare_mode = zif_package_compare_mode_from_string (tmp);
 	data->md = md;
 	data->id = zif_md_get_id (ZIF_MD (md));
 	data->packages = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
-	rc = sqlite3_exec (md->priv->db, statement, zif_md_primary_sql_sqlite_create_package_cb, data, &error_msg);
+	rc = sqlite3_exec (md->priv->db, statement,
+			   zif_md_primary_sql_sqlite_create_package_cb,
+			   data, &error_msg);
 	if (rc != SQLITE_OK) {
 		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_BAD_SQL,
 			     "SQL error: %s", error_msg);
@@ -766,6 +784,7 @@ zif_md_primary_sql_finalize (GObject *object)
 	md = ZIF_MD_PRIMARY_SQL (object);
 
 	sqlite3_close (md->priv->db);
+	g_object_unref (md->priv->config);
 
 	G_OBJECT_CLASS (zif_md_primary_sql_parent_class)->finalize (object);
 }
@@ -810,6 +829,7 @@ zif_md_primary_sql_init (ZifMdPrimarySql *md)
 	md->priv = ZIF_MD_PRIMARY_SQL_GET_PRIVATE (md);
 	md->priv->loaded = FALSE;
 	md->priv->db = NULL;
+	md->priv->config = zif_config_new ();
 }
 
 /**

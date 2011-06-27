@@ -1324,12 +1324,18 @@ zif_md_filelists_xml_func (void)
 	gchar *pkgid;
 	const gchar *data[] = { "/usr/lib/debug/usr/bin/gpk-prefs.debug", NULL };
 	gchar *filename;
+	ZifConfig *config;
 
 	state = zif_state_new ();
 
 	md = zif_md_filelists_xml_new ();
 	g_assert (md != NULL);
 	g_assert (!zif_md_get_is_loaded (md));
+
+	config = zif_config_new ();
+	filename = zif_test_get_data_file ("zif.conf");
+	zif_config_set_filename (config, filename, NULL);
+	g_free (filename);
 
 	zif_md_set_id (md, "fedora");
 	zif_md_set_checksum_type (md, G_CHECKSUM_SHA256);
@@ -1355,6 +1361,7 @@ zif_md_filelists_xml_func (void)
 
 	g_object_unref (state);
 	g_object_unref (md);
+	g_object_unref (config);
 
 	zif_check_singletons ();
 }
@@ -1528,6 +1535,7 @@ zif_md_primary_sql_func (void)
 	GPtrArray *array;
 	ZifPackage *package;
 	ZifState *state;
+	ZifConfig *config;
 	const gchar *data[] = { "gnome-power-manager", "gnome-color-manager", NULL };
 	gchar *filename;
 
@@ -1536,6 +1544,11 @@ zif_md_primary_sql_func (void)
 	md = zif_md_primary_sql_new ();
 	g_assert (md != NULL);
 	g_assert (!zif_md_get_is_loaded (md));
+
+	config = zif_config_new ();
+	filename = zif_test_get_data_file ("zif.conf");
+	zif_config_set_filename (config, filename, NULL);
+	g_free (filename);
 
 	zif_md_set_id (md, "fedora");
 	zif_md_set_checksum_type (md, G_CHECKSUM_SHA256);
@@ -1561,6 +1574,7 @@ zif_md_primary_sql_func (void)
 	g_ptr_array_unref (array);
 
 	g_object_unref (state);
+	g_object_unref (config);
 	g_object_unref (md);
 
 	zif_check_singletons ();

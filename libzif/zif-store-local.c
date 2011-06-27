@@ -181,6 +181,8 @@ zif_store_local_load (ZifStore *store, ZifState *state, GError **error)
 	ZifPackageLocalFlags flags = 0;
 	ZifPackage *package;
 	ZifStoreLocal *local = ZIF_STORE_LOCAL (store);
+	const gchar *tmp;
+	ZifPackageCompareMode compare_mode;
 
 	g_return_val_if_fail (ZIF_IS_STORE_LOCAL (store), FALSE);
 	g_return_val_if_fail (zif_state_valid (state), FALSE);
@@ -231,6 +233,16 @@ zif_store_local_load (ZifStore *store, ZifState *state, GError **error)
 	/* speed up for the future */
 //	flags += ZIF_PACKAGE_LOCAL_FLAG_REPAIR;
 
+	/* get the compare mode */
+	tmp = zif_config_get_string (local->priv->config,
+				     "pkg_compare_mode",
+				     error);
+	if (tmp == NULL) {
+		ret = FALSE;
+		goto out;
+	}
+	compare_mode = zif_package_compare_mode_from_string (tmp);
+
 	/* get list */
 	ts = rpmtsCreate ();
 	rc = rpmtsSetRootDir (ts, local->priv->prefix);
@@ -273,6 +285,8 @@ zif_store_local_load (ZifStore *store, ZifState *state, GError **error)
 				goto out;
 			}
 		} else {
+			zif_package_set_compare_mode (package,
+						      compare_mode);
 			zif_store_add_package (store, package, NULL);
 			g_object_unref (package);
 		}

@@ -52,6 +52,7 @@ typedef enum {
 #include <sqlite3.h>
 #include <gio/gio.h>
 
+#include "zif-config.h"
 #include "zif-md.h"
 #include "zif-md-filelists-xml.h"
 #include "zif-package-remote.h"
@@ -72,6 +73,8 @@ struct _ZifMdFilelistsXmlPrivate
 	ZifPackage			*package_temp;
 	GPtrArray			*array;
 	GPtrArray			*array_temp;
+	ZifConfig			*config;
+	ZifPackageCompareMode		 compare_mode;
 };
 
 G_DEFINE_TYPE (ZifMdFilelistsXml, zif_md_filelists_xml, ZIF_TYPE_MD)
@@ -90,13 +93,16 @@ zif_md_filelists_xml_unload (ZifMd *md, ZifState *state, GError **error)
  * zif_md_filelists_xml_parser_start_element:
  **/
 static void
-zif_md_filelists_xml_parser_start_element (GMarkupParseContext *context, const gchar *element_name,
-					const gchar **attribute_names, const gchar **attribute_values,
-					gpointer user_data, GError **error)
+zif_md_filelists_xml_parser_start_element (GMarkupParseContext *context,
+					   const gchar *element_name,
+					   const gchar **attribute_names,
+					   const gchar **attribute_values,
+					   gpointer user_data,
+					   GError **error)
 {
 	guint i;
-	ZifString *tmp;
 	ZifMdFilelistsXml *filelists_xml = user_data;
+	ZifString *tmp;
 
 	g_return_if_fail (ZIF_IS_MD_FILELISTS_XML (filelists_xml));
 
@@ -121,6 +127,8 @@ zif_md_filelists_xml_parser_start_element (GMarkupParseContext *context, const g
 			if (g_strcmp0 (element_name, "package") == 0) {
 				filelists_xml->priv->section_list = ZIF_MD_FILELISTS_XML_SECTION_LIST_PACKAGE;
 				filelists_xml->priv->package_temp = ZIF_PACKAGE (zif_package_remote_new ());
+				zif_package_set_compare_mode (filelists_xml->priv->package_temp,
+							      filelists_xml->priv->compare_mode);
 				filelists_xml->priv->array_temp = g_ptr_array_new_with_free_func (g_free);
 				for (i=0; attribute_names[i] != NULL; i++) {
 					if (g_strcmp0 (attribute_names[i], "pkgid") == 0) {
@@ -274,6 +282,7 @@ static gboolean
 zif_md_filelists_xml_load (ZifMd *md, ZifState *state, GError **error)
 {
 	const gchar *filename;
+	const gchar *tmp;
 	gboolean ret;
 	gchar *contents = NULL;
 	gsize size;
@@ -293,6 +302,14 @@ zif_md_filelists_xml_load (ZifMd *md, ZifState *state, GError **error)
 	/* already loaded */
 	if (filelists_xml->priv->loaded)
 		goto out;
+
+	/* get the compare mode */
+	tmp = zif_config_get_string (filelists_xml->priv->config,
+				     "pkg_compare_mode",
+				     error);
+	if (tmp == NULL)
+		goto out;
+	filelists_xml->priv->compare_mode = zif_package_compare_mode_from_string (tmp);
 
 	/* get filename */
 	filename = zif_md_get_filename_uncompressed (md);
@@ -525,6 +542,7 @@ zif_md_filelists_xml_finalize (GObject *object)
 	md = ZIF_MD_FILELISTS_XML (object);
 
 	g_ptr_array_unref (md->priv->array);
+	g_object_unref (md->priv->config);
 
 	G_OBJECT_CLASS (zif_md_filelists_xml_parent_class)->finalize (object);
 }
@@ -562,6 +580,7 @@ zif_md_filelists_xml_init (ZifMdFilelistsXml *md)
 	md->priv->section_list_package = ZIF_MD_FILELISTS_XML_SECTION_LIST_PACKAGE_UNKNOWN;
 	md->priv->package_temp = NULL;
 	md->priv->array_temp = NULL;
+	md->priv->config = zif_config_new ();
 }
 
 /**
