@@ -739,7 +739,7 @@ zif_depend_func (void)
 	depend = zif_depend_new ();
 	zif_depend_set_name (depend, "hal");
 	zif_depend_set_flag (depend, ZIF_DEPEND_FLAG_EQUAL);
-	zif_depend_set_version (depend, "0.5.8-1");
+	zif_depend_set_version (depend, "0.5.8-1.fc15");
 
 	/* exact */
 	need = zif_depend_new ();
@@ -3319,6 +3319,7 @@ zif_utils_func (void)
 	const gchar *package_id_const = "totem;0.1.2;i386;fedora";
 	const gchar *r;
 	const gchar *v;
+	const gchar *d;
 	const guint iterations = 100000;
 	gboolean ret;
 	gchar *evr;
@@ -3369,6 +3370,23 @@ zif_utils_func (void)
 	g_assert_cmpstr (r, ==, "6");
 	g_free (evr);
 
+	/* with distro-release (compat) */
+	evr = g_strdup ("1.0.0-6.fc15");
+	zif_package_convert_evr (evr, &e, &v, &r);
+	g_assert (e == NULL);
+	g_assert_cmpstr (v, ==, "1.0.0");
+	g_assert_cmpstr (r, ==, "6");
+	g_free (evr);
+
+	/* with distro-release */
+	evr = g_strdup ("1.0.0-6.fc15");
+	zif_package_convert_evr_full (evr, &e, &v, &r, &d);
+	g_assert (e == NULL);
+	g_assert_cmpstr (v, ==, "1.0.0");
+	g_assert_cmpstr (r, ==, "6");
+	g_assert_cmpstr (d, ==, "fc15");
+	g_free (evr);
+
 	/* no epoch or release */
 	evr = g_strdup ("1.0.0");
 	zif_package_convert_evr (evr, &e, &v, &r);
@@ -3385,6 +3403,8 @@ zif_utils_func (void)
 	g_assert (zif_compare_evr ("0.0.1-2", "0:0.0.1-2") == 0);
 	g_assert (zif_compare_evr ("0:0.0.1-2", "0.0.1-2") == 0);
 	g_assert (zif_compare_evr ("0.1", "0:0.1-1") == 0);
+	g_assert (zif_compare_evr ("0.1", "0.1-1.fc15") == 0);
+	g_assert (zif_compare_evr ("0.5.8-1.fc15", "0.5.8") == 0);
 
 	filename = zif_file_get_uncompressed_name ("/dave/moo.sqlite.gz");
 	g_assert_cmpstr (filename, ==, "/dave/moo.sqlite");
