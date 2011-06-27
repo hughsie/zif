@@ -236,7 +236,7 @@ zif_update_get_issued (ZifUpdate *update)
  * zif_update_get_source:
  * @update: A #ZifUpdate
  *
- * Gets the source of the update, e.g. "<updates@fedoraproject.org>".
+ * Gets the source of the update, e.g. "updates@fedoraproject.org".
  *
  * Return value: A string value, or %NULL.
  *
