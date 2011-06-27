@@ -1359,6 +1359,12 @@ zif_release_get_package_data (ZifRelease *release,
 				   error);
 	if (!ret)
 		goto out;
+	ret = zif_config_set_string (priv->config,
+				     "pkg_compare_mode",
+				     "distro",
+				     error);
+	if (!ret)
+		goto out;
 
 	/* this section done */
 	ret = zif_state_done (state, error);
