@@ -69,6 +69,16 @@ zif_print_package (ZifPackage *package, guint padding)
 }
 
 /**
+ * zif_package_sort_cb:
+ **/
+static gint
+zif_package_sort_cb (gconstpointer a, gconstpointer b)
+{
+	return g_strcmp0 (zif_package_get_id (*(ZifPackage **)a),
+			  zif_package_get_id (*(ZifPackage **)b));
+}
+
+/**
  * zif_print_packages:
  **/
 static void
@@ -78,6 +88,9 @@ zif_print_packages (GPtrArray *array)
 	guint max = 0;
 	const gchar *printable;
 	ZifPackage *package;
+
+	/* sort the array */
+	g_ptr_array_sort (array, zif_package_sort_cb);
 
 	/* get the padding required */
 	for (i=0;i<array->len;i++) {
