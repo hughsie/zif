@@ -199,15 +199,15 @@ zif_package_compare (ZifPackage *a, ZifPackage *b)
 	g_return_val_if_fail (splita != NULL, G_MAXINT);
 	g_return_val_if_fail (splitb != NULL, G_MAXINT);
 
+	/* check name the same */
+	if (g_strcmp0 (splita[ZIF_PACKAGE_ID_NAME], splitb[ZIF_PACKAGE_ID_NAME]) != 0)
+		goto out;
+
 	/* incompatible arch */
 	if (!zif_arch_is_native (splita[ZIF_PACKAGE_ID_ARCH],
 				 splitb[ZIF_PACKAGE_ID_ARCH])) {
 		goto out;
 	}
-
-	/* check name the same */
-	if (g_strcmp0 (splita[ZIF_PACKAGE_ID_NAME], splitb[ZIF_PACKAGE_ID_NAME]) != 0)
-		goto out;
 
 	/* do a version compare */
 	val = zif_compare_evr_full (splita[ZIF_PACKAGE_ID_VERSION],
