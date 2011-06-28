@@ -1666,7 +1666,8 @@ zif_store_find_package (ZifStore *store,
 	if (!ret)
 		goto out;
 out:
-	g_ptr_array_unref (array);
+	if (array != NULL)
+		g_ptr_array_unref (array);
 	return package;
 }
 
