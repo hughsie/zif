@@ -106,18 +106,26 @@ zif_groups_set_mapping_file (ZifGroups *groups, const gchar *mapping_file, GErro
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
 	/* check file exists */
-	ret = g_file_test (mapping_file, G_FILE_TEST_IS_REGULAR);
+	ret = g_file_test (mapping_file, G_FILE_TEST_EXISTS);
 	if (!ret) {
-		g_set_error (error, ZIF_GROUPS_ERROR, ZIF_GROUPS_ERROR_FAILED,
-			     "mapping file %s does not exist", mapping_file);
+		g_set_error (error,
+			     ZIF_GROUPS_ERROR,
+			     ZIF_GROUPS_ERROR_FAILED,
+			     "mapping file %s does not exist",
+			     mapping_file);
 		goto out;
 	}
 
 	/* setup watch */
-	ret = zif_monitor_add_watch (groups->priv->monitor, mapping_file, &error_local);
+	ret = zif_monitor_add_watch (groups->priv->monitor,
+				     mapping_file,
+				     &error_local);
 	if (!ret) {
-		g_set_error (error, ZIF_GROUPS_ERROR, ZIF_GROUPS_ERROR_FAILED,
-			     "failed to setup watch: %s", error_local->message);
+		g_set_error (error,
+			     ZIF_GROUPS_ERROR,
+			     ZIF_GROUPS_ERROR_FAILED,
+			     "failed to setup watch: %s",
+			     error_local->message);
 		g_error_free (error_local);
 		goto out;
 	}
