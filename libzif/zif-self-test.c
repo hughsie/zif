@@ -3375,7 +3375,7 @@ zif_utils_func (void)
 	zif_package_convert_evr (evr, &e, &v, &r);
 	g_assert (e == NULL);
 	g_assert_cmpstr (v, ==, "1.0.0");
-	g_assert_cmpstr (r, ==, "6");
+	g_assert_cmpstr (r, ==, "6.fc15");
 	g_free (evr);
 
 	/* with distro-release */

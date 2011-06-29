@@ -446,7 +446,7 @@ out:
  * @epoch: The package epoch
  * @version: The package version
  * @release: The package release
- * @distro: The package distro
+ * @distro: The package distro, or %NULL
  *
  * Modifies evr, so pass in copy
  *
@@ -465,7 +465,7 @@ zif_package_convert_evr_full (gchar *evr,
 
 	g_return_val_if_fail (evr != NULL, FALSE);
 
-	/* split possible epoch */
+	/* split possible epoch and version */
 	find = strstr (evr, ":");
 	if (find != NULL) {
 		*find = '\0';
@@ -485,17 +485,19 @@ zif_package_convert_evr_full (gchar *evr,
 		*release = NULL;
 	}
 
-	/* split possible release */
-	if (*release != NULL) {
-		find = g_strrstr (*release, ".");
-		if (find != NULL) {
-			*find = '\0';
-			*distro = find+1;
+	/* split possible and optional distro */
+	if (distro != NULL) {
+		if (*release != NULL) {
+			find = g_strrstr (*release, ".");
+			if (find != NULL) {
+				*find = '\0';
+				*distro = find+1;
+			} else {
+				*distro = NULL;
+			}
 		} else {
 			*distro = NULL;
 		}
-	} else {
-		*distro = NULL;
 	}
 	return TRUE;
 }
@@ -505,8 +507,7 @@ zif_package_convert_evr_full (gchar *evr,
  * @evr: epoch, version, release
  * @epoch: The package epoch
  * @version: The package version
- * @release: The package release
- * @distro: The package distro
+ * @release: The package release (note: with any distro)
  *
  * Modifies evr, so pass in copy
  *
@@ -520,12 +521,11 @@ zif_package_convert_evr (gchar *evr,
 			 const gchar **version,
 			 const gchar **release)
 {
-	const gchar *tmp;
 	return zif_package_convert_evr_full (evr,
 					     epoch,
 					     version,
 					     release,
-					     &tmp);
+					     NULL);
 }
 
 /**
