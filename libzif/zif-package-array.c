@@ -287,24 +287,32 @@ zif_package_array_filter_duplicates (GPtrArray *packages)
 	gpointer tmp;
 	guint i;
 	ZifPackage *package;
+	GPtrArray *array_new;
 
 	/* use a hash so it's O(n) not O(n^2) */
+	array_new = g_ptr_array_sized_new (packages->len);
 	hash_keep = g_hash_table_new_full (g_str_hash, g_str_equal,
 					   NULL, NULL);
-	for (i=0; i<packages->len;) {
+	for (i=0; i<packages->len; i++) {
 		package = ZIF_PACKAGE (g_ptr_array_index (packages, i));
 		key = zif_package_get_id (package);
 		tmp = g_hash_table_lookup (hash_keep, key);
-		if (tmp != NULL) {
-			g_debug ("removing from array %s", key);
-			g_ptr_array_remove_fast (packages, package);
-		} else {
+		if (tmp == NULL) {
 			g_hash_table_insert (hash_keep,
 					     (gchar*) key,
 					     (gchar*) "<keep>");
-			i++;
+			g_ptr_array_add (array_new,
+					 g_object_ref (package));
 		}
 	}
+
+	/* just copy the contents of the new array into the old array */
+	g_ptr_array_set_size (packages, 0);
+	for (i=0; i<array_new->len; i++) {
+		package = ZIF_PACKAGE (g_ptr_array_index (array_new, i));
+		g_ptr_array_add (packages, package);
+	}
+	g_ptr_array_unref (array_new);
 	g_hash_table_unref (hash_keep);
 }
 
