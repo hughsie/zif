@@ -86,16 +86,26 @@ zif_package_array_get_newest (GPtrArray *array, GError **error)
 	/* find newest in rest of the array */
 	for (i=1; i<array->len; i++) {
 		package_tmp = g_ptr_array_index (array, i);
-		retval = zif_package_compare (package_tmp,
-					      package_newest);
+		retval = zif_package_compare_full (package_tmp,
+						   package_newest,
+						   ZIF_PACKAGE_COMPARE_FLAG_CHECK_NAME |
+						   ZIF_PACKAGE_COMPARE_FLAG_CHECK_ARCH);
 		if (retval == G_MAXINT) {
-			g_set_error (error,
-				     ZIF_PACKAGE_ERROR,
-				     ZIF_PACKAGE_ERROR_FAILED,
-				     "cannot get newest for non-native architectures: %s,%s",
-				     zif_package_get_id (package_tmp),
-				     zif_package_get_id (package_newest));
-			goto out;
+			g_debug ("cannot compare %s with %s using NVA, falling back to VA",
+				 zif_package_get_id (package_tmp),
+				 zif_package_get_id (package_newest));
+			retval = zif_package_compare_full (package_tmp,
+							   package_newest,
+							   ZIF_PACKAGE_COMPARE_FLAG_CHECK_ARCH);
+			if (retval == G_MAXINT) {
+				g_set_error (error,
+					     ZIF_PACKAGE_ERROR,
+					     ZIF_PACKAGE_ERROR_FAILED,
+					     "cannot compare %s with %s",
+					     zif_package_get_id (package_tmp),
+					     zif_package_get_id (package_newest));
+				goto out;
+			}
 		}
 		if (retval > 0)
 			package_newest = package_tmp;
