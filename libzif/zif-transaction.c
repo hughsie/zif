@@ -3996,12 +3996,12 @@ zif_transaction_get_problem_str (rpmProblem prob)
 	case RPMPROB_REQUIRES:
 		str = g_strdup_printf ("package %s has unsatisfied Requires: %s",
 				       pkg_nevr,
-				       pkg_nevr_alt);
+				       generic_str);
 		break;
 	case RPMPROB_CONFLICT:
 		str = g_strdup_printf ("package %s has unsatisfied Conflicts: %s",
 				       pkg_nevr,
-				       pkg_nevr_alt);
+				       generic_str);
 		break;
 	case RPMPROB_NEW_FILE_CONFLICT:
 		str = g_strdup_printf ("file %s conflicts between attemped installs of %s",
