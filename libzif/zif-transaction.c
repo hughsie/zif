@@ -3122,6 +3122,8 @@ zif_transaction_prepare (ZifTransaction *transaction, ZifState *state, GError **
 {
 	const gchar *cache_filename;
 	gboolean ret = FALSE;
+	gboolean gpgcheck;
+	gboolean localpkg_gpgcheck;
 	GError *error_local = NULL;
 	GPtrArray *download = NULL;
 	guint i;
@@ -3269,17 +3271,31 @@ skip:
 	rpmtsEmpty (transaction->priv->ts);
 
 	/* check each package */
-	if (zif_config_get_boolean (priv->config, "gpgcheck", NULL)) {
-		keyring = rpmtsGetKeyring (transaction->priv->ts, 1);
-		for (i=0; i<priv->install->len; i++) {
-			item = g_ptr_array_index (priv->install, i);
-			ret = zif_transaction_prepare_ensure_trusted (transaction,
-								      keyring,
-								      item->package,
-								      error);
-			if (!ret)
-				goto out;
-		}
+	gpgcheck = zif_config_get_boolean (priv->config,
+					   "gpgcheck", NULL);
+	localpkg_gpgcheck = zif_config_get_boolean (priv->config,
+						    "localpkg_gpgcheck", NULL);
+	keyring = rpmtsGetKeyring (transaction->priv->ts, 1);
+	for (i=0; i<priv->install->len; i++) {
+		item = g_ptr_array_index (priv->install, i);
+
+		/* is local package */
+		if (ZIF_IS_PACKAGE_LOCAL (item->package) &&
+		    !localpkg_gpgcheck)
+			continue;
+
+		/* is remote package */
+		if (ZIF_IS_PACKAGE_REMOTE (item->package) &&
+		    !gpgcheck)
+			continue;
+
+		/* do the check */
+		ret = zif_transaction_prepare_ensure_trusted (transaction,
+							      keyring,
+							      item->package,
+							      error);
+		if (!ret)
+			goto out;
 	}
 
 skip_self_check:
