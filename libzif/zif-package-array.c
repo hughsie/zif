@@ -272,6 +272,43 @@ zif_package_array_filter_newest (GPtrArray *packages)
 }
 
 /**
+ * zif_package_array_filter_duplicates:
+ * @packages: array of %ZifPackage's
+ *
+ * Filters the list for duplicates.
+ *
+ * Since: 0.2.1
+ **/
+void
+zif_package_array_filter_duplicates (GPtrArray *packages)
+{
+	const gchar *key;
+	GHashTable *hash_keep;
+	gpointer tmp;
+	guint i;
+	ZifPackage *package;
+
+	/* use a hash so it's O(n) not O(n^2) */
+	hash_keep = g_hash_table_new_full (g_str_hash, g_str_equal,
+					   NULL, NULL);
+	for (i=0; i<packages->len;) {
+		package = ZIF_PACKAGE (g_ptr_array_index (packages, i));
+		key = zif_package_get_id (package);
+		tmp = g_hash_table_lookup (hash_keep, key);
+		if (tmp != NULL) {
+			g_debug ("removing from array %s", key);
+			g_ptr_array_remove_fast (packages, package);
+		} else {
+			g_hash_table_insert (hash_keep,
+					     (gchar*) key,
+					     (gchar*) "<keep>");
+			i++;
+		}
+	}
+	g_hash_table_unref (hash_keep);
+}
+
+/**
  * zif_package_array_filter_best_arch32:
  * @array: Array of %ZifPackage's
  *

@@ -227,6 +227,32 @@ zif_package_array_func (void)
 	g_assert_cmpstr (zif_package_get_id (pkg), ==, "hal;0.2-1.fc13;i686;installed");
 
 	g_ptr_array_unref (array);
+
+	/* filter duplicates */
+	array = zif_package_array_new ();
+
+	/* add same pkg three times */
+	pkg = zif_package_new ();
+	ret = zif_package_set_id (pkg, "hal;0.2-1.fc13;i686;installed", NULL);
+	g_assert (ret);
+	g_ptr_array_add (array, pkg);
+	pkg = zif_package_new ();
+	ret = zif_package_set_id (pkg, "hal;0.2-1.fc13;i686;installed", NULL);
+	g_assert (ret);
+	g_ptr_array_add (array, pkg);
+	pkg = zif_package_new ();
+	ret = zif_package_set_id (pkg, "hal;0.2-1.fc13;i686;installed", NULL);
+	g_assert (ret);
+	g_ptr_array_add (array, pkg);
+	g_assert_cmpint (array->len, ==, 3);
+
+	/* filter duplicates */
+	zif_package_array_filter_duplicates (array);
+	g_assert_cmpint (array->len, ==, 1);
+	pkg = g_ptr_array_index (array, 0);
+	g_assert_cmpstr (zif_package_get_id (pkg), ==, "hal;0.2-1.fc13;i686;installed");
+
+	g_ptr_array_unref (array);
 }
 
 static void
