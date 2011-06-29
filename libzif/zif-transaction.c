@@ -1077,13 +1077,17 @@ zif_transaction_get_package_requires_from_store (ZifStore *store,
 
 			/* gotcha */
 			if (satisfies != NULL) {
-				g_debug ("adding %s to requires", zif_package_get_id (package));
+				g_debug ("adding %s to requires for %s",
+					 zif_package_get_id (package),
+					 zif_depend_get_description (depend));
 				g_ptr_array_add (*requires, g_object_ref (package));
 				g_object_unref (satisfies);
 			}
 		}
-
 	}
+
+	/* filter */
+	zif_package_array_filter_duplicates (*requires);
 
 	/* success */
 	ret = TRUE;
@@ -1143,6 +1147,9 @@ zif_transaction_get_packages_provides_from_store_array (ZifTransaction *transact
 		if (!ret)
 			goto out;
 	}
+
+	/* filter */
+	zif_package_array_filter_duplicates (*array);
 
 	/* success */
 	ret = TRUE;
