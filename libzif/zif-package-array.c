@@ -186,6 +186,10 @@ zif_package_array_filter_newest (GPtrArray *packages)
 	guint i;
 	ZifPackage *package;
 	ZifPackage *package_tmp;
+	GPtrArray *array_new;
+
+	/* first, filter out any duplicates */
+	zif_package_array_filter_duplicates (packages);
 
 	/* use a hash so it's O(n) not O(n^2) */
 	hash_namearch = g_hash_table_new_full (g_str_hash, g_str_equal,
@@ -217,13 +221,6 @@ zif_package_array_filter_newest (GPtrArray *packages)
 			continue;
 		}
 
-		/* optimize removing duplicates */
-		if (retval == 0) {
-			g_debug ("not adding duplicate %s",
-				 zif_package_get_id (package));
-			continue;
-		}
-
 		/* the new package is older */
 		if (retval < 0) {
 			g_debug ("%s is older than %s, so ignoring it",
@@ -251,21 +248,25 @@ zif_package_array_filter_newest (GPtrArray *packages)
 				     (gchar*)"<keep>");
 	}
 
-	/* remove packages not in the hash */
-	for (i=0; i<packages->len;) {
+	/* only add packages to array_new in hash_keep */
+	array_new = g_ptr_array_sized_new (packages->len);
+	for (i=0; i<packages->len; i++) {
 		package = ZIF_PACKAGE (g_ptr_array_index (packages, i));
 		key = zif_package_get_id (package);
 		tmp = g_hash_table_lookup (hash_keep, key);
-		if (tmp == NULL) {
-			g_debug ("removing from array %s", key);
-			g_ptr_array_remove_fast (packages, package);
-			ret = TRUE;
-		} else {
-			g_hash_table_remove (hash_keep, key);
-			i++;
+		if (tmp != NULL) {
+			g_ptr_array_add (array_new,
+					 g_object_ref (package));
 		}
 	}
 
+	/* just copy the contents of the new array into the old array */
+	g_ptr_array_set_size (packages, 0);
+	for (i=0; i<array_new->len; i++) {
+		package = ZIF_PACKAGE (g_ptr_array_index (array_new, i));
+		g_ptr_array_add (packages, package);
+	}
+	g_ptr_array_unref (array_new);
 	g_hash_table_unref (hash_namearch);
 	g_hash_table_unref (hash_keep);
 	return ret;
