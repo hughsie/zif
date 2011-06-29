@@ -4064,6 +4064,7 @@ zif_transaction_look_for_problems (ZifTransaction *transaction, GError **error)
 		prob = rpmpsGetProblem (psi);
 		msg = zif_transaction_get_problem_str (prob);
 		g_string_append (string, msg);
+		g_string_append (string, "\n");
 		g_free (msg);
 	}
 	rpmpsFreeIterator (psi);
@@ -4073,6 +4074,7 @@ zif_transaction_look_for_problems (ZifTransaction *transaction, GError **error)
 
 	/* we failed, and got a reason to report */
 	if (string->len > 0) {
+		g_string_set_size (string, string->len - 1);
 		g_set_error (error,
 			     ZIF_TRANSACTION_ERROR,
 			     ZIF_TRANSACTION_ERROR_FAILED,
