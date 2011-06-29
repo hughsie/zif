@@ -79,6 +79,11 @@ typedef enum {
 	ZIF_PACKAGE_COMPARE_MODE_UNKNOWN
 } ZifPackageCompareMode;
 
+typedef enum {
+	ZIF_PACKAGE_COMPARE_FLAG_CHECK_NAME = 1,
+	ZIF_PACKAGE_COMPARE_FLAG_CHECK_ARCH = 2
+} ZifPackageCompareFlags;
+
 struct _ZifPackage
 {
 	GObject			 parent;
@@ -234,6 +239,9 @@ gboolean		 zif_package_is_free		(ZifPackage	*package);
 gboolean		 zif_package_is_native		(ZifPackage	*package);
 gint			 zif_package_compare		(ZifPackage	*a,
 							 ZifPackage	*b);
+gint			 zif_package_compare_full	(ZifPackage	*a,
+							 ZifPackage	*b,
+							 ZifPackageCompareFlags flags);
 gboolean		 zif_package_is_compatible_arch	(ZifPackage	*a,
 							 ZifPackage	*b);
 const gchar		*zif_package_ensure_type_to_string (ZifPackageEnsureType type);

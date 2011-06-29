@@ -1833,6 +1833,25 @@ zif_package_func (void)
 	g_object_unref (a);
 	g_object_unref (b);
 
+	/* check full version */
+	a = zif_package_new ();
+	ret = zif_package_set_id (a, "colord;0.0.1-1.fc15;i386;fedora", &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+	b = zif_package_new ();
+	ret = zif_package_set_id (b, "colord-freeworld;0.0.2-1.fc14;i386;fedora", &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+	retval = zif_package_compare_full (a, b,
+					   ZIF_PACKAGE_COMPARE_FLAG_CHECK_NAME);
+	g_assert_cmpint (retval, ==, G_MAXINT);
+	retval = zif_package_compare_full (a, b,
+					   0);
+	g_assert_cmpint (retval, ==, -1);
+
+	g_object_unref (a);
+	g_object_unref (b);
+
 	zif_check_singletons ();
 }
 

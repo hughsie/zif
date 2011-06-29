@@ -165,19 +165,21 @@ zif_package_compare_mode_to_string (ZifPackageCompareMode value)
 }
 
 /**
- * zif_package_compare:
+ * zif_package_compare_full:
  * @a: The first package to compare
  * @b: The second package to compare
+ * @flags: The amount of checking to do, e.g. %ZIF_PACKAGE_COMPARE_FLAG_CHECK_NAME
  *
  * Compares one package versions against each other.
- * If the architectures are different, then an error is returned.
  *
  * Return value: 1 for a>b, 0 for a==b, -1 for b>a, or G_MAXINT for error
  *
- * Since: 0.1.0
+ * Since: 0.2.1
  **/
 gint
-zif_package_compare (ZifPackage *a, ZifPackage *b)
+zif_package_compare_full (ZifPackage *a,
+			  ZifPackage *b,
+			  ZifPackageCompareFlags flags)
 {
 	gchar **splita;
 	gchar **splitb;
@@ -200,13 +202,18 @@ zif_package_compare (ZifPackage *a, ZifPackage *b)
 	g_return_val_if_fail (splitb != NULL, G_MAXINT);
 
 	/* check name the same */
-	if (g_strcmp0 (splita[ZIF_PACKAGE_ID_NAME], splitb[ZIF_PACKAGE_ID_NAME]) != 0)
-		goto out;
+	if ((flags & ZIF_PACKAGE_COMPARE_FLAG_CHECK_NAME) > 0) {
+		if (g_strcmp0 (splita[ZIF_PACKAGE_ID_NAME],
+			       splitb[ZIF_PACKAGE_ID_NAME]) != 0)
+			goto out;
+	}
 
 	/* incompatible arch */
-	if (!zif_arch_is_native (splita[ZIF_PACKAGE_ID_ARCH],
-				 splitb[ZIF_PACKAGE_ID_ARCH])) {
-		goto out;
+	if ((flags & ZIF_PACKAGE_COMPARE_FLAG_CHECK_ARCH) > 0) {
+		if (!zif_arch_is_native (splita[ZIF_PACKAGE_ID_ARCH],
+					 splitb[ZIF_PACKAGE_ID_ARCH])) {
+			goto out;
+		}
 	}
 
 	/* do a version compare */
@@ -215,6 +222,27 @@ zif_package_compare (ZifPackage *a, ZifPackage *b)
 				    a->priv->compare_mode);
 out:
 	return val;
+}
+
+/**
+ * zif_package_compare:
+ * @a: The first package to compare
+ * @b: The second package to compare
+ *
+ * Compares one package versions against each other.
+ * If the package names or architectures are different, then an error
+ * is returned.
+ *
+ * Return value: 1 for a>b, 0 for a==b, -1 for b>a, or G_MAXINT for error
+ *
+ * Since: 0.1.0
+ **/
+gint
+zif_package_compare (ZifPackage *a, ZifPackage *b)
+{
+	return zif_package_compare_full (a, b,
+					 ZIF_PACKAGE_COMPARE_FLAG_CHECK_NAME |
+					 ZIF_PACKAGE_COMPARE_FLAG_CHECK_ARCH);
 }
 
 /**
