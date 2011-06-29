@@ -49,6 +49,12 @@
     </para>
   </refsect1>
   <refsect1>
+    <title>ENVIRONMENT VARIABLES</title>
+    <para>Setting <command>ZIF_DEPSOLVE_DEBUG</command> is useful for
+    debugging dependency depsolve failurs.
+    </para>
+  </refsect1>
+  <refsect1>
     <title>AUTHOR</title>
     <para>This manual page was written by Richard Hughes <email>richard@hughsie.com</email>.
     </para>
