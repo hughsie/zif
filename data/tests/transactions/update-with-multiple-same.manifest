@@ -1,9 +1,19 @@
 # Update a single package, with the old version having a provides required
 # by another installed package.
 
-[Zif Manifest]
-AddLocal=bash;0:0.3.0-1;i386;meta-local
-AddRemote=bash;0:0.3.1-1;i386;meta-fedora,bash;0:0.3.1-1;i386;meta-updates
-TransactionUpdate=bash
-PostInstalled=bash;0:0.3.1-1;i386;meta-fedora
-SetConfig=archinfo:i386
+local
+	bash;0:0.3.0-1;i386;meta-local
+
+remote
+	bash;0:0.3.1-1;i386;meta-fedora
+	bash;0:0.3.1-1;i386;meta-updates
+
+transaction
+	update
+		bash
+
+result
+	bash;0:0.3.1-1;i386;meta-fedora
+
+config
+	archinfo=i386

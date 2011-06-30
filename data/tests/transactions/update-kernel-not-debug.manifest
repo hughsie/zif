@@ -1,8 +1,17 @@
 # A kernel should not be updated to a kernel-debug package.
 
-[Zif Manifest]
-AddLocal=kernel;0:0.3.0-1;i386;meta
-AddRemote=kernel-debug;1.3.1-2;i386;meta@Provides:kernel = 1.3.1-2
-TransactionUpdate=kernel
-PostInstalled=
-Disable=true
+disable
+
+local
+	kernel;0:0.3.0-1;i386;meta
+
+remote
+	kernel-debug;1.3.1-2;i386;meta
+		Provides
+			kernel = 1.3.1-2
+
+transaction
+	update
+		kernel
+
+result

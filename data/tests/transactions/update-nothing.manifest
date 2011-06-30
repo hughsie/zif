@@ -1,8 +1,16 @@
 # Update two packages, where one requires a file in the other.
 
-[Zif Manifest]
-AddLocal=DeviceKit-power;0.0.1;i386;meta
-AddRemote=
-TransactionUpdate=DeviceKit-power
-PostInstalled=DeviceKit-power;0.0.1;i386;meta
-SetConfig=archinfo:i386
+local
+	DeviceKit-power;0.0.1;i386;meta
+
+remote
+
+transaction
+	update
+		DeviceKit-power
+
+result
+	DeviceKit-power;0.0.1;i386;meta
+
+config
+	archinfo=i386

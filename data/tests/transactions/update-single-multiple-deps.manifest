@@ -2,9 +2,32 @@
 # The first package has multiple deps; but we must still notice a new
 # package was added.
 
-[Zif Manifest]
-AddLocal=zsh;1.0.0-1;i386;meta
-AddRemote=zsh;1.7.1-2;i386;meta@Requires:shell-libs@Requires:zsh,zsh-libs;1.7.1-2;i386;meta@Provides:shell-libs@Requires:base-libs,generic-libs;1.0.0-1;i386;meta@Provides:base-libs
-TransactionUpdate=zsh
-PostInstalled=zsh;1.7.1-2;i386;meta,zsh-libs;1.7.1-2;i386;meta,generic-libs;1.0.0-1;i386;meta
-SetConfig=archinfo:i386
+local
+	zsh;1.0.0-1;i386;meta
+
+remote
+	zsh;1.7.1-2;i386;meta
+		Requires
+			shell-libs
+		Requires
+			zsh
+	zsh-libs;1.7.1-2;i386;meta
+		Provides
+			shell-libs
+		Requires
+			base-libs
+	generic-libs;1.0.0-1;i386;meta
+		Provides
+			base-libs
+
+transaction
+	update
+		zsh
+
+result
+	zsh;1.7.1-2;i386;meta
+	zsh-libs;1.7.1-2;i386;meta
+	generic-libs;1.0.0-1;i386;meta
+
+config
+	archinfo=i386

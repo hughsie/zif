@@ -1,8 +1,17 @@
 # upgrading one package where the local version is newer than the remote version
 
-[Zif Manifest]
-AddLocal=hal;0.0.2-1;i386;meta
-AddRemote=hal;0.0.1-1;i386;meta
-TransactionUpdate=hal
-PostInstalled=hal;0.0.2-1;i386;meta
-SetConfig=archinfo:i386
+local
+	hal;0.0.2-1;i386;meta
+
+remote
+	hal;0.0.1-1;i386;meta
+
+transaction
+	update
+		hal
+
+result
+	hal;0.0.2-1;i386;meta
+
+config
+	archinfo=i386

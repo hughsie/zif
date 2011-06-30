@@ -1,9 +1,22 @@
 # update a package using conflicts
 
-[Zif Manifest]
-AddLocal=clamav;0.0.1-1;i386;meta,clamav-filesystem;0.0.1-1;i386;meta
-AddRemote=clamav-filesystem;0.0.2-1;i386;meta@Conflicts:clamav < 0.0.2-1
-TransactionUpdate=clamav-filesystem
-PostInstalled=clamav;0.0.1-1;i386;meta,clamav-filesystem;0.0.1-1;i386;meta
-SkipBroken=true
-SetConfig=archinfo:i386
+local
+	clamav;0.0.1-1;i386;meta
+	clamav-filesystem;0.0.1-1;i386;meta
+
+remote
+	clamav-filesystem;0.0.2-1;i386;meta
+		Conflicts
+			clamav < 0.0.2-1
+
+transaction
+	update
+		clamav-filesystem
+
+result
+	clamav;0.0.1-1;i386;meta
+	clamav-filesystem;0.0.1-1;i386;meta
+
+config
+	archinfo=i386
+	skip_broken=1

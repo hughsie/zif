@@ -1,8 +1,19 @@
 # simulate removing a package that has a dep that will be left alone
 
-[Zif Manifest]
-AddLocal=hal;0.0.1-1;i386;meta@Requires:hal-info,hal-info;0.0.1-1;i386;meta
-AddRemote=
-TransactionRemove=hal
-PostInstalled=hal-info;0.0.1-1;i386;meta
-SetConfig=archinfo:i386
+local
+	hal;0.0.1-1;i386;meta
+		Requires
+			hal-info
+	hal-info;0.0.1-1;i386;meta
+
+remote
+
+transaction
+	remove
+		hal
+
+result
+	hal-info;0.0.1-1;i386;meta
+
+config
+	archinfo=i386

@@ -1,9 +1,21 @@
 # Update a single package that is required by an existing installed package
 
-[Zif Manifest]
-AddLocal=bash;0:0.3.0-1;i386;meta@Requires:zsh,zsh;1.0.0-1;i386;meta
-AddRemote=zsh;1.7.1-2;i386;meta
-TransactionUpdate=zsh
-PostInstalled=bash;0:0.3.0-1;i386;meta,zsh;1.7.1-2;i386;meta
-#Disable=true
-SetConfig=archinfo:i386
+local
+	bash;0:0.3.0-1;i386;meta
+		Requires
+			zsh
+	zsh;1.0.0-1;i386;meta
+
+remote
+	zsh;1.7.1-2;i386;meta
+
+transaction
+	update
+		zsh
+
+result
+	bash;0:0.3.0-1;i386;meta
+	zsh;1.7.1-2;i386;meta
+
+config
+	archinfo=i386

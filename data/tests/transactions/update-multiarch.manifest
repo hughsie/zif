@@ -1,8 +1,21 @@
 # A 64 bit package should not update a 32 bit package
 
-[Zif Manifest]
-AddLocal=bash;0:0.3.0-1;i586;meta,bash;0:0.3.0-1;x86_64;meta
-AddRemote=bash;0:0.4.0-1;x86_64;meta,bash;0:0.4.0-1;i586;meta
-TransactionUpdate=bash;0:0.3.0-1;x86_64;meta,bash;0:0.3.0-1;i586;meta
-PostInstalled=bash;0:0.4.0-1;x86_64;meta,bash;0:0.4.0-1;i586;meta
-SetConfig=archinfo:i386
+config
+	archinfo=i386
+
+local
+	bash;0:0.3.0-1;i586;meta
+	bash;0:0.3.0-1;x86_64;meta
+
+remote
+	bash;0:0.4.0-1;x86_64;meta
+	bash;0:0.4.0-1;i586;meta
+
+transaction
+	update
+		bash;0:0.3.0-1;x86_64;meta
+		bash;0:0.3.0-1;i586;meta
+
+result
+	bash;0:0.4.0-1;x86_64;meta
+	bash;0:0.4.0-1;i586;meta

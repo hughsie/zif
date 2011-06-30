@@ -1,8 +1,15 @@
 # simulate removing one package
 
-[Zif Manifest]
-AddLocal=hal;0.0.1-1;i386;meta
-AddRemote=
-TransactionRemove=hal
-PostInstalled=
-SetConfig=archinfo:i386
+local
+	hal;0.0.1-1;i386;meta
+
+remote
+
+transaction
+	remove
+		hal
+
+result
+
+config
+	archinfo=i386

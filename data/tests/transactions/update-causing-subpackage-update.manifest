@@ -1,8 +1,31 @@
 # Updating a base package pulls in the updated subpackages as well.
 
-[Zif Manifest]
-AddLocal=openjdk-plugins;1:0.3.0-1;i386;meta@Requires:openjdk = 1:0.3.0-1,openjdk-devel;1:0.3.0-1;i386;meta@Requires:openjdk = 1:0.3.0-1,openjdk;1:0.3.0-1;i386;meta
-AddRemote=openjdk-plugins;1:0.4.0-1;i386;meta@Requires:openjdk = 1:0.4.0-1,openjdk-devel;1:0.4.0-1;i386;meta@Requires:openjdk = 1:0.4.0-1,openjdk;1:0.4.0-1;i386;meta
-TransactionUpdate=openjdk
-PostInstalled=openjdk-plugins;1:0.4.0-1;i386;meta,openjdk-devel;1:0.4.0-1;i386;meta,openjdk;1:0.4.0-1;i386;meta
-SetConfig=archinfo:i386
+local
+	openjdk-plugins;1:0.3.0-1;i386;meta
+		Requires
+			openjdk = 1:0.3.0-1
+	openjdk-devel;1:0.3.0-1;i386;meta
+		Requires
+			openjdk = 1:0.3.0-1
+	openjdk;1:0.3.0-1;i386;meta
+
+remote
+	openjdk-plugins;1:0.4.0-1;i386;meta
+		Requires
+			openjdk = 1:0.4.0-1
+	openjdk-devel;1:0.4.0-1;i386;meta
+		Requires
+			openjdk = 1:0.4.0-1
+	openjdk;1:0.4.0-1;i386;meta
+
+transaction
+	update
+		openjdk
+
+result
+	openjdk-plugins;1:0.4.0-1;i386;meta
+	openjdk-devel;1:0.4.0-1;i386;meta
+	openjdk;1:0.4.0-1;i386;meta
+
+config
+	archinfo=i386

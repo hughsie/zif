@@ -1,8 +1,21 @@
 # simulate upgrading one package with another
 
-[Zif Manifest]
-AddLocal=hal;0.0.1-1;i386;meta
-AddRemote=hal;0.0.2-1;i386;meta,gnome-power-manager;0.0.1-1;i386;meta@Requires:hal = 0.0.2
-TransactionInstall=gnome-power-manager
-PostInstalled=gnome-power-manager;0.0.1-1;i386;meta,hal;0.0.2-1;i386;meta
-SetConfig=archinfo:i386
+local
+	hal;0.0.1-1;i386;meta
+
+remote
+	hal;0.0.2-1;i386;meta
+	gnome-power-manager;0.0.1-1;i386;meta
+		Requires
+			hal = 0.0.2
+
+transaction
+	install
+		gnome-power-manager
+
+result
+	gnome-power-manager;0.0.1-1;i386;meta
+	hal;0.0.2-1;i386;meta
+
+config
+	archinfo=i386
