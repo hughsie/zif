@@ -1850,7 +1850,9 @@ zif_transaction_show_array (const gchar *title, GPtrArray *array)
  * zif_transaction_get_newest_from_remote_by_names:
  **/
 static ZifPackage *
-zif_transaction_get_newest_from_remote_by_names (ZifTransactionResolve *data, ZifPackage *package, GError **error)
+zif_transaction_get_newest_from_remote_by_names (ZifTransactionResolve *data,
+						 ZifPackage *package,
+						 GError **error)
 {
 	GPtrArray *matches;
 	ZifPackage *package_best = NULL;
@@ -1862,7 +1864,9 @@ zif_transaction_get_newest_from_remote_by_names (ZifTransactionResolve *data, Zi
 	search[0] = zif_package_get_name (package);
 	zif_state_reset (data->state);
 	matches = zif_store_array_resolve (data->transaction->priv->stores_remote,
-					   (gchar **) search, data->state, &error_local);
+					   (gchar **) search,
+					   data->state,
+					   &error_local);
 	if (matches == NULL) {
 
 		/* this is a special error */
@@ -1978,6 +1982,8 @@ zif_transaction_resolve_update_item (ZifTransactionResolve *data,
 	if (obsoletes == NULL) {
 		/* this is a special error */
 		if (error_local->code == ZIF_STORE_ERROR_ARRAY_IS_EMPTY) {
+			g_debug ("failed to get obsoletes, but ignoring: %s",
+				 error_local->message);
 			g_clear_error (&error_local);
 			goto skip;
 		}
