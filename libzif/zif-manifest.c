@@ -556,8 +556,11 @@ zif_manifest_check (ZifManifest *manifest,
 			continue;
 
 		/* special command */
-		if (g_strcmp0 (lines[i], "disable") == 0)
+		if (g_strcmp0 (lines[i], "disable") == 0) {
+			g_debug ("Skipping %s as disabled", filename);
+			ret = zif_state_finished (state, error);
 			goto out;
+		}
 
 		/* find curent line level */
 		for (level=0; lines[i][level] != '\0'; level++) {
