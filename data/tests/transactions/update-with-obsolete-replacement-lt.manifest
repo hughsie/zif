@@ -1,0 +1,21 @@
+# get the updates list when a new package obsoletes an old one
+
+config
+	archinfo=i386
+
+local
+	plymouth;0.0.1-1;i386;meta
+	plymouth-utils;0.0.1-1;i386;meta
+		Requires
+			plymouth = 0.0.1-1
+remote
+	plymouth;0.0.3-1;i386;meta
+		Obsoletes
+			plymouth-utils < 0.0.2-1
+
+transaction
+	update
+		plymouth
+
+result
+	plymouth;0.0.3-1;i386;meta

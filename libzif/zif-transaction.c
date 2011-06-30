@@ -820,6 +820,51 @@ out:
 }
 
 /**
+ * zif_transaction_get_package_provide_from_package_array:
+ **/
+static gboolean
+zif_transaction_get_package_provide_from_package_array (GPtrArray *array,
+							ZifDepend *depend,
+							ZifPackage **package,
+							ZifState *state,
+							GError **error)
+{
+	gboolean ret = TRUE;
+	guint i;
+	ZifPackage *package_tmp;
+	ZifDepend *satisfies = NULL;
+
+	/* interate through the array */
+	for (i=0; i<array->len; i++) {
+		package_tmp = g_ptr_array_index (array, i);
+
+		/* does this match */
+		ret = zif_package_provides (package_tmp,
+					     depend,
+					     &satisfies,
+					     state,
+					     error);
+		if (!ret) {
+			g_assert (error == NULL || *error != NULL);
+			goto out;
+		}
+
+		/* gotcha */
+		if (satisfies != NULL) {
+			*package = g_object_ref (package_tmp);
+			g_object_unref (satisfies);
+			goto out;
+		}
+	}
+
+	/* success, but did not find */
+	ret = TRUE;
+	*package = NULL;
+out:
+	return ret;
+}
+
+/**
  * _zif_package_array_filter_best_provide:
  **/
 static gboolean
@@ -1375,6 +1420,90 @@ out:
 	return ret;
 }
 
+
+/**
+ * zif_transaction_resolve_remove_depend:
+ **/
+static gboolean
+zif_transaction_resolve_remove_depend (ZifTransactionResolve *data,
+					ZifDepend *depend,
+					ZifTransactionItem *item,
+					GError **error)
+{
+	gboolean ret = TRUE;
+	ZifPackage *package_obsolete = NULL;
+	GPtrArray *already_installed = NULL;
+	GPtrArray *related_packages = NULL;
+	GPtrArray *packages = NULL;
+
+	g_return_val_if_fail (data->transaction->priv->stores_remote != NULL, FALSE);
+
+	/* already provided by something in the install set */
+	g_debug ("searching in install");
+	ret = zif_transaction_get_package_provide_from_array (data->transaction->priv->install,
+							      depend,
+							      &package_obsolete,
+							      data->state,
+							      error);
+	if (!ret) {
+		g_assert (error == NULL || *error != NULL);
+		goto out;
+	}
+	if (package_obsolete != NULL) {
+		g_debug ("depend %s is obsoleted by %s (to be installed)",
+			 zif_depend_get_description (depend),
+			 zif_package_get_id (package_obsolete));
+		goto skip;
+	}
+
+	/* already provided in the rpmdb */
+	g_debug ("searching for %s in local",
+		 zif_depend_get_description (depend));
+	packages = zif_store_get_packages (data->transaction->priv->store_local,
+					   data->state, error);
+	if (packages == NULL) {
+		ret = FALSE;
+		goto out;
+	}
+	ret = zif_transaction_get_package_provide_from_package_array (packages,
+								       depend,
+								       &package_obsolete,
+								       data->state,
+								       error);
+	if (!ret) {
+		g_assert (error == NULL || *error != NULL);
+		goto out;
+	}
+	if (package_obsolete == NULL) {
+		g_debug ("depend %s is not obsoleted by anything in installed",
+			 zif_depend_get_description (depend));
+		goto out;
+	}
+skip:
+	/* make a list of all the packages to revert if this item fails */
+	related_packages = zif_package_array_new ();
+	g_ptr_array_add (related_packages, g_object_ref (item->package));
+
+	g_debug ("depend %s is obsoleted by %s (installed)",
+		 zif_depend_get_description (depend),
+		 zif_package_get_id (package_obsolete));
+	ret = zif_transaction_add_remove_internal (data->transaction,
+						   package_obsolete,
+						   related_packages,
+						   ZIF_TRANSACTION_REASON_REMOVE_OBSOLETE,
+						   error);
+out:
+	if (packages != NULL)
+		g_ptr_array_unref (packages);
+	if (already_installed != NULL)
+		g_ptr_array_unref (already_installed);
+	if (related_packages != NULL)
+		g_ptr_array_unref (related_packages);
+	if (package_obsolete != NULL)
+		g_object_unref (package_obsolete);
+	return ret;
+}
+
 /**
  * zif_transaction_resolve_install_item:
  **/
@@ -1387,6 +1516,7 @@ zif_transaction_resolve_install_item (ZifTransactionResolve *data,
 	gboolean ret = FALSE;
 	GError *error_local = NULL;
 	GPtrArray *requires = NULL;
+	GPtrArray *obsoletes = NULL;
 	GPtrArray *related_packages = NULL;
 	guint i;
 	ZifDepend *depend;
@@ -1500,6 +1630,7 @@ zif_transaction_resolve_install_item (ZifTransactionResolve *data,
 
 skip_resolve:
 
+	/* get requires of the package */
 	g_debug ("getting requires for %s", zif_package_get_id (item->package));
 	zif_state_reset (data->state);
 	requires = zif_package_get_requires (item->package, data->state, &error_local);
@@ -1533,6 +1664,42 @@ skip_resolve:
 		}
 	}
 
+	/* get things the package obsoletes */
+	g_debug ("getting obsoletes for %s", zif_package_get_id (item->package));
+	zif_state_reset (data->state);
+	obsoletes = zif_package_get_obsoletes (item->package,
+					       data->state,
+					       &error_local);
+	if (obsoletes == NULL) {
+		ret = FALSE;
+		g_set_error (error,
+			     ZIF_TRANSACTION_ERROR,
+			     ZIF_TRANSACTION_ERROR_FAILED,
+			     "failed to get obsoletes for %s: %s",
+			     zif_package_get_printable (item->package),
+			     error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+	g_debug ("got %i obsoletes", obsoletes->len);
+	if (data->transaction->priv->verbose) {
+		for (i=0; i<obsoletes->len; i++) {
+			depend = g_ptr_array_index (obsoletes, i);
+			g_debug ("%i\t%s", i+1,
+				 zif_depend_to_string (depend));
+		}
+	}
+
+	/* find each obsolete */
+	for (i=0; i<obsoletes->len; i++) {
+		depend = g_ptr_array_index (obsoletes, i);
+		ret = zif_transaction_resolve_remove_depend (data, depend, item, error);
+		if (!ret) {
+			g_assert (error == NULL || *error != NULL);
+			goto out;
+		}
+	}
+
 	/* item is good now all the requires exist in the set */
 	ret = TRUE;
 out:
@@ -1548,6 +1715,8 @@ out:
 		g_ptr_array_unref (array);
 	if (requires != NULL)
 		g_ptr_array_unref (requires);
+	if (obsoletes != NULL)
+		g_ptr_array_unref (obsoletes);
 	return ret;
 }
 
@@ -2065,9 +2234,10 @@ skip:
 		g_set_error (error,
 			     ZIF_TRANSACTION_ERROR,
 			     ZIF_TRANSACTION_ERROR_FAILED,
-			     "failed to find %s in remote store: %s",
+			     "failed to find %s in remote store: %s (reason: %s)",
 			     zif_package_get_printable (item->package),
-			     error_local->message);
+			     error_local->message,
+			     zif_transaction_reason_to_string (item->reason));
 		g_error_free (error_local);
 		goto out;
 	}
