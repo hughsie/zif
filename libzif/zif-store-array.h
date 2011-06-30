@@ -111,6 +111,7 @@ GPtrArray	*zif_store_array_get_categories		(GPtrArray		*store_array,
 							 ZifState		*state,
 							 GError			**error);
 GPtrArray	*zif_store_array_get_updates		(GPtrArray		*store_array,
+							 ZifStore		*store_local,
 							 ZifState		*state,
 							 GError			**error);
 

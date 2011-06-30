@@ -922,6 +922,7 @@ out:
 /**
  * zif_store_array_get_updates:
  * @store_array: An array of #ZifStores
+ * @store_local: The #ZifStoreLocal to use for the installed packages
  * @state: A #ZifState to use for progress reporting
  * @error: A #GError, or %NULL
  *
@@ -936,6 +937,7 @@ out:
  **/
 GPtrArray *
 zif_store_array_get_updates (GPtrArray *store_array,
+			     ZifStore *store_local,
 			     ZifState *state,
 			     GError **error)
 {
@@ -953,7 +955,6 @@ zif_store_array_get_updates (GPtrArray *store_array,
 	ZifPackage *package;
 	ZifPackage *update;
 	ZifState *state_local;
-	ZifStore *store_local = NULL;
 
 	/* setup state with the correct number of steps */
 	ret = zif_state_set_steps (state,
@@ -969,7 +970,6 @@ zif_store_array_get_updates (GPtrArray *store_array,
 
 	/* get installed packages */
 	state_local = zif_state_get_child (state);
-	store_local = zif_store_local_new ();
 	array_installed = zif_store_get_packages (store_local,
 						  state_local,
 						  error);
@@ -1080,8 +1080,6 @@ zif_store_array_get_updates (GPtrArray *store_array,
 		goto out;
 out:
 	g_strfreev (search);
-	if (store_local != NULL)
-		g_object_unref (store_local);
 	if (depend_array != NULL)
 		g_ptr_array_unref (depend_array);
 	if (array_obsoletes != NULL)

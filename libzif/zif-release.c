@@ -46,6 +46,7 @@
 #include "zif-release.h"
 #include "zif-repos.h"
 #include "zif-store-array.h"
+#include "zif-store-local.h"
 
 #define ZIF_RELEASE_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_RELEASE, ZifReleasePrivate))
 
@@ -1298,6 +1299,7 @@ zif_release_get_package_data (ZifRelease *release,
 	ZifRepos *repos = NULL;
 	ZifState *state_local;
 	ZifState *state_loop;
+	ZifStore *store_local = NULL;
 	ZifStoreRemote *store;
 	ZifReleasePrivate *priv = release->priv;
 
@@ -1395,8 +1397,12 @@ zif_release_get_package_data (ZifRelease *release,
 		goto out;
 
 	/* get the list of updates */
+	store_local = zif_store_local_new ();
 	state_local = zif_state_get_child (state);
-	updates = zif_store_array_get_updates (array, state_local, error);
+	updates = zif_store_array_get_updates (array,
+					       store_local,
+					       state_local,
+					       error);
 	if (updates == NULL)
 		goto out;
 
@@ -1555,6 +1561,8 @@ out:
 	g_free (cmdline_create);
 	g_free (cmdline_modify);
 	g_free (cmdline_copy);
+	if (store_local != NULL)
+		g_object_unref (store_local);
 	if (file != NULL)
 		g_object_unref (file);
 	if (repos != NULL)

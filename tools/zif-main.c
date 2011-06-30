@@ -1398,6 +1398,7 @@ zif_get_update_array (ZifCmdPrivate *priv, ZifState *state, GError **error)
 	GPtrArray *store_array = NULL;
 	GPtrArray *updates = NULL;
 	ZifState *state_local;
+	ZifStore *store_local = NULL;
 
 	/* setup state with the correct number of steps */
 	ret = zif_state_set_steps (state,
@@ -1424,7 +1425,9 @@ zif_get_update_array (ZifCmdPrivate *priv, ZifState *state, GError **error)
 
 	/* get the updates list */
 	state_local = zif_state_get_child (state);
+	store_local = zif_store_local_new ();
 	updates = zif_store_array_get_updates (store_array,
+					       store_local,
 					       state_local,
 					       error);
 	if (updates == NULL)
@@ -1435,6 +1438,8 @@ zif_get_update_array (ZifCmdPrivate *priv, ZifState *state, GError **error)
 	if (!ret)
 		goto out;
 out:
+	if (store_local != NULL)
+		g_object_unref (store_local);
 	if (store_array != NULL)
 		g_ptr_array_unref (store_array);
 	return updates;
