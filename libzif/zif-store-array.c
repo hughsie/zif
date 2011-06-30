@@ -942,15 +942,18 @@ zif_store_array_get_updates (GPtrArray *store_array,
 			     GError **error)
 {
 	gboolean ret = FALSE;
+	gchar *archinfo = NULL;
 	gchar **search = NULL;
 	gint val;
 	GPtrArray *array_installed = NULL;
 	GPtrArray *array_obsoletes = NULL;
+	GPtrArray *depend_array = NULL;
+	GPtrArray *retval = NULL;
 	GPtrArray *updates_available = NULL;
 	GPtrArray *updates = NULL;
-	GPtrArray *depend_array = NULL;
 	guint i;
 	guint j;
+	ZifConfig *config = NULL;
 	ZifDepend *depend;
 	ZifPackage *package;
 	ZifPackage *update;
@@ -1068,18 +1071,34 @@ zif_store_array_get_updates (GPtrArray *store_array,
 	for (j=0; j<array_obsoletes->len; j++) {
 		update = ZIF_PACKAGE (g_ptr_array_index (array_obsoletes, j));
 		g_debug ("*** obsolete %s",
-			 zif_package_get_name (update));
+			 zif_package_get_printable (update));
 	}
 
+	/* filter by best architecture, as obsoletes do not have an arch */
+	config = zif_config_new ();
+	archinfo = zif_config_get_string (config,
+					  "archinfo",
+					  error);
+	if (archinfo == NULL)
+		goto out;
+	zif_package_array_filter_best_arch (array_obsoletes, archinfo);
+
 	/* add obsolete array to updates */
+	zif_package_array_filter_duplicates (array_obsoletes);
 	zif_object_array_add_array (updates_available, array_obsoletes);
 
 	/* this section done */
 	ret = zif_state_done (state, error);
 	if (!ret)
 		goto out;
+
+	/* success */
+	retval = g_ptr_array_ref (updates_available);
 out:
+	g_free (archinfo);
 	g_strfreev (search);
+	if (config != NULL)
+		g_object_unref (config);
 	if (depend_array != NULL)
 		g_ptr_array_unref (depend_array);
 	if (array_obsoletes != NULL)
@@ -1088,7 +1107,9 @@ out:
 		g_ptr_array_unref (array_installed);
 	if (updates != NULL)
 		g_ptr_array_unref (updates);
-	return updates_available;
+	if (updates_available != NULL)
+		g_ptr_array_unref (updates_available);
+	return retval;
 }
 
 /**
