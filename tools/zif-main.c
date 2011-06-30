@@ -2283,20 +2283,18 @@ zif_cmd_manifest_dump (ZifCmdPrivate *priv, gchar **values, GError **error)
 		goto out;
 
 	/* save to file */
-	string = g_string_new ("[Zif Manifest]\n");
-	g_string_append (string, "AddLocal=");
+	string = g_string_new ("# automatically generated manifest\n");
+	g_string_append (string, "local\n");
 	for (i=0; i<array_local->len; i++) {
 		package = g_ptr_array_index (array_local, i);
-		g_string_append (string, zif_package_get_id (package));
-		g_string_append (string, ",");
+		g_string_append_printf (string, "\t%s\n", zif_package_get_id (package));
 	}
 	g_string_set_size (string, string->len - 1);
-	g_string_append (string, "\n");
-	g_string_append (string, "AddRemote=");
+	g_string_append (string, "\n\n");
+	g_string_append (string, "remote\n");
 	for (i=0; i<array_remote->len; i++) {
 		package = g_ptr_array_index (array_remote, i);
-		g_string_append (string, zif_package_get_id (package));
-		g_string_append (string, ",");
+		g_string_append_printf (string, "\t%s\n", zif_package_get_id (package));
 	}
 	g_string_set_size (string, string->len - 1);
 	g_string_append (string, "\n");
