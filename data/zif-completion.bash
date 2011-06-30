@@ -53,6 +53,8 @@ __zif_commandlist="
     update
     update-details
     upgrade
+    upgrade-distro
+    upgrade-distro-live
     what-conflicts
     what-obsoletes
     what-provides

@@ -3242,6 +3242,84 @@ out:
 }
 
 /**
+ * zif_cmd_upgrade_distro_live:
+ **/
+static gboolean
+zif_cmd_upgrade_distro_live (ZifCmdPrivate *priv, gchar **values, GError **error)
+{
+	gboolean ret = FALSE;
+	gchar **distro_id_split = NULL;
+	guint version;
+
+	/* check we have a value */
+	if (values == NULL || values[0] == NULL) {
+		/* TRANSLATORS: error message, missing value */
+		g_set_error (error, 1, 0,
+			     "%s 'fedora-9'\n",
+			     _("Specify a distro name, e.g."));
+		goto out;
+	}
+
+	/* TRANSLATORS: upgrading to a new distro release, *not*
+	 * updating to a new package version */
+	zif_progress_bar_start (priv->progressbar, _("Upgrading"));
+
+	/* check valid */
+	distro_id_split = g_strsplit (values[0], "-", -1);
+	if (g_strv_length (distro_id_split) != 2) {
+		/* TRANSLATORS: error message, invalid value */
+		g_set_error_literal (error, 1, 0, _("Distribution name invalid"));
+		goto out;
+	}
+
+	/* check fedora */
+	if (g_strcmp0 (distro_id_split[0], "fedora") != 0) {
+		/* TRANSLATORS: error message, invalid value */
+		g_set_error_literal (error, 1, 0, _("Only 'fedora' is supported"));
+		goto out;
+	}
+
+	/* check release */
+	version = atoi (distro_id_split[1]);
+	if (version < 13 || version > 99) {
+		/* TRANSLATORS: error message, invalid value */
+		g_set_error (error, 1, 0, _("Version number %i is invalid"), version);
+		goto out;
+	}
+
+	/* change the releasever */
+	ret = zif_config_unset (priv->config,
+				"releasever",
+				error);
+	if (!ret)
+		goto out;
+	ret = zif_config_set_uint (priv->config,
+				   "releasever",
+				   version,
+				   error);
+	if (!ret)
+		goto out;
+
+	/* set the compare mode */
+	ret = zif_config_set_string (priv->config,
+				     "pkg_compare_mode",
+				     "distro",
+				     error);
+	if (!ret)
+		goto out;
+
+	/* do the live upgrade */
+	ret = zif_cmd_update_all (priv, values, error);
+	if (!ret)
+		goto out;
+
+	zif_progress_bar_end (priv->progressbar);
+out:
+	g_strfreev (distro_id_split);
+	return ret;
+}
+
+/**
  * zif_cmd_update:
  **/
 static gboolean
@@ -5158,6 +5236,11 @@ main (int argc, char *argv[])
 		     /* TRANSLATORS: command description */
 		     _("Upgrade the operating system to a newer version"),
 		     zif_cmd_upgrade);
+	zif_cmd_add (priv->cmd_array,
+		     "upgrade-distro-live",
+		     /* TRANSLATORS: command description */
+		     _("Live-upgrade the operating system to a newer version"),
+		     zif_cmd_upgrade_distro_live);
 	zif_cmd_add (priv->cmd_array,
 		     "what-conflicts",
 		     /* TRANSLATORS: command description */
