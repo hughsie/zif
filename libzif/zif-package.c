@@ -2114,6 +2114,57 @@ zif_package_set_size (ZifPackage *package, guint64 size)
 	package->priv->size = size;
 }
 
+
+/**
+ * zif_package_add_files_internal:
+ **/
+static void
+zif_package_add_files_internal (ZifPackage *package, const gchar *filename)
+{
+	ZifDepend *depend_tmp;
+	ZifString *string;
+
+	depend_tmp = zif_depend_new ();
+	zif_depend_set_flag (depend_tmp, ZIF_DEPEND_FLAG_ANY);
+
+	/* add this as a static string, as we know that the files
+	 * cannot be ripped from under us, and it'll save a few
+	 * thousand allocatons per package created */
+	string = zif_string_new_static (filename);
+	zif_depend_set_name_str (depend_tmp, string);
+	zif_string_unref (string);
+
+	g_hash_table_insert (package->priv->provides_any_hash,
+			     (gpointer) filename,
+			     depend_tmp);
+	g_ptr_array_add (package->priv->provides,
+			 g_object_ref (depend_tmp));
+	package->priv->any_file_provides = TRUE;
+}
+
+/**
+ * zif_package_add_file:
+ * @package: A #ZifPackage
+ * @filename: The package file to add
+ *
+ * Adds a single file to the package.
+ *
+ * Since: 0.2.1
+ **/
+void
+zif_package_add_file (ZifPackage *package, const gchar *filename)
+{
+	g_return_if_fail (ZIF_IS_PACKAGE (package));
+	g_return_if_fail (filename != NULL);
+
+	/* create if not already exists */
+	if (package->priv->files == NULL)
+		package->priv->files = g_ptr_array_new_with_free_func (g_free);
+
+	zif_package_add_files_internal (package, filename);
+	g_ptr_array_add (package->priv->files, g_strdup (filename));
+}
+
 /**
  * zif_package_set_files:
  * @package: A #ZifPackage
@@ -2128,8 +2179,6 @@ zif_package_set_files (ZifPackage *package, GPtrArray *files)
 {
 	const gchar *filename;
 	guint i;
-	ZifDepend *depend_tmp;
-	ZifString *string;
 
 	g_return_if_fail (ZIF_IS_PACKAGE (package));
 	g_return_if_fail (files != NULL);
@@ -2138,22 +2187,7 @@ zif_package_set_files (ZifPackage *package, GPtrArray *files)
 	/* add files as provides to 'any' cache */
 	for (i=0; i<files->len; i++) {
 		filename = g_ptr_array_index (files, i);
-		depend_tmp = zif_depend_new ();
-		zif_depend_set_flag (depend_tmp, ZIF_DEPEND_FLAG_ANY);
-
-		/* add this as a static string, as we know that the files
-		 * cannot be ripped from under us, and it'll save a few
-		 * thousand allocatons per package created */
-		string = zif_string_new_static (filename);
-		zif_depend_set_name_str (depend_tmp, string);
-		zif_string_unref (string);
-
-		g_hash_table_insert (package->priv->provides_any_hash,
-				     (gpointer) filename,
-				     depend_tmp);
-		g_ptr_array_add (package->priv->provides,
-				 g_object_ref (depend_tmp));
-		package->priv->any_file_provides = TRUE;
+		zif_package_add_files_internal (package, filename);
 	}
 
 	package->priv->files = g_ptr_array_ref (files);

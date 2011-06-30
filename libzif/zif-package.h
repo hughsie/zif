@@ -218,6 +218,8 @@ void			 zif_package_set_cache_filename	(ZifPackage	*package,
 							 const gchar	*cache_filename);
 void			 zif_package_set_size		(ZifPackage	*package,
 							 guint64	 size);
+void			 zif_package_add_file		(ZifPackage	*package,
+							 const gchar	*filename);
 void			 zif_package_set_files		(ZifPackage	*package,
 							 GPtrArray	*files);
 void			 zif_package_set_requires	(ZifPackage	*package,
