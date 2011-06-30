@@ -348,8 +348,6 @@ zif_manifest_check_array (GPtrArray *array,
 	/* success */
 	ret= TRUE;
 out:
-	if (array != NULL)
-		g_ptr_array_unref (array);
 	g_object_unref (state);
 	return ret;
 }
