@@ -395,8 +395,13 @@ zif_package_array_filter_best_arch32 (GPtrArray *array)
 		package = g_ptr_array_index (array, i);
 		arch = zif_package_get_arch (package);
 		if (g_strcmp0 (arch, best_arch) != 0 &&
-		    g_strcmp0 (arch, "x86_64") != 0 &&
 		    g_strcmp0 (arch, "noarch") != 0) {
+			g_ptr_array_remove_index_fast (array, i);
+			continue;
+		}
+
+		/* not compatible with i386 */
+		if (g_strcmp0 (arch, "x86_64") == 0) {
 			g_ptr_array_remove_index_fast (array, i);
 			continue;
 		}
