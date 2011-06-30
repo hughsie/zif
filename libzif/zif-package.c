@@ -41,6 +41,7 @@
 #include "zif-repos.h"
 #include "zif-string.h"
 #include "zif-legal.h"
+#include "zif-object-array.h"
 
 #define ZIF_PACKAGE_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_PACKAGE, ZifPackagePrivate))
 
@@ -2194,6 +2195,46 @@ zif_package_set_files (ZifPackage *package, GPtrArray *files)
 }
 
 /**
+ * zif_package_add_require_internal:
+ **/
+static void
+zif_package_add_require_internal (ZifPackage *package, ZifDepend *depend)
+{
+	const gchar *name_tmp;
+	name_tmp = zif_depend_get_name (depend);
+	g_hash_table_insert (package->priv->requires_any_hash,
+			     (gpointer) name_tmp,
+			     g_object_ref (depend));
+
+	/* this is a file depend */
+	if (name_tmp[0] == '/')
+		package->priv->any_file_requires = TRUE;
+}
+
+/**
+ * zif_package_add_require:
+ * @package: A #ZifPackage
+ * @depend: The package depend to add
+ *
+ * Adds the package require.
+ *
+ * Since: 0.2.1
+ **/
+void
+zif_package_add_require (ZifPackage *package, ZifDepend *depend)
+{
+	g_return_if_fail (ZIF_IS_PACKAGE (package));
+	g_return_if_fail (depend != NULL);
+
+	/* create if not already exists */
+	if (package->priv->requires == NULL)
+		package->priv->requires = zif_object_array_new ();
+
+	zif_package_add_require_internal (package, depend);
+	zif_object_array_add (package->priv->requires, depend);
+}
+
+/**
  * zif_package_set_requires:
  * @package: A #ZifPackage
  * @requires: The package requires
@@ -2205,7 +2246,6 @@ zif_package_set_files (ZifPackage *package, GPtrArray *files)
 void
 zif_package_set_requires (ZifPackage *package, GPtrArray *requires)
 {
-	const gchar *name_tmp;
 	guint i;
 	ZifDepend *depend_tmp;
 
@@ -2216,17 +2256,51 @@ zif_package_set_requires (ZifPackage *package, GPtrArray *requires)
 	/* add items to 'any' cache */
 	for (i=0; i<requires->len; i++) {
 		depend_tmp = g_ptr_array_index (requires, i);
-		name_tmp = zif_depend_get_name (depend_tmp);
-		g_hash_table_insert (package->priv->requires_any_hash,
-				     (gpointer) name_tmp,
-				     g_object_ref (depend_tmp));
-
-		/* this is a file depend */
-		if (name_tmp[0] == '/')
-			package->priv->any_file_requires = TRUE;
+		zif_package_add_require_internal (package, depend_tmp);
 	}
 
 	package->priv->requires = g_ptr_array_ref (requires);
+}
+
+/**
+ * zif_package_add_provide_internal:
+ **/
+static void
+zif_package_add_provide_internal (ZifPackage *package, ZifDepend *depend)
+{
+	const gchar *name_tmp;
+
+	name_tmp = zif_depend_get_name (depend);
+	g_hash_table_insert (package->priv->provides_any_hash,
+			     (gpointer) name_tmp,
+			     g_object_ref (depend));
+
+	/* this is a file depend */
+	if (name_tmp[0] == '/')
+		package->priv->any_file_provides = TRUE;
+}
+
+/**
+ * zif_package_add_provide:
+ * @package: A #ZifPackage
+ * @depend: The package depend to add
+ *
+ * Adds the package provide.
+ *
+ * Since: 0.2.1
+ **/
+void
+zif_package_add_provide (ZifPackage *package, ZifDepend *depend)
+{
+	g_return_if_fail (ZIF_IS_PACKAGE (package));
+	g_return_if_fail (depend != NULL);
+
+	/* create if not already exists */
+	if (package->priv->provides == NULL)
+		package->priv->provides = zif_object_array_new ();
+
+	zif_package_add_provide_internal (package, depend);
+	zif_object_array_add (package->priv->provides, depend);
 }
 
 /**
@@ -2241,7 +2315,6 @@ zif_package_set_requires (ZifPackage *package, GPtrArray *requires)
 void
 zif_package_set_provides (ZifPackage *package, GPtrArray *provides)
 {
-	const gchar *name_tmp;
 	guint i;
 	ZifDepend *depend_tmp;
 
@@ -2255,14 +2328,7 @@ zif_package_set_provides (ZifPackage *package, GPtrArray *provides)
 	/* add items to 'any' cache */
 	for (i=0; i<provides->len; i++) {
 		depend_tmp = g_ptr_array_index (provides, i);
-		name_tmp = zif_depend_get_name (depend_tmp);
-		g_hash_table_insert (package->priv->provides_any_hash,
-				     (gpointer) name_tmp,
-				     g_object_ref (depend_tmp));
-
-		/* this is a file depend */
-		if (name_tmp[0] == '/')
-			package->priv->any_file_provides = TRUE;
+		zif_package_add_provide_internal (package, depend_tmp);
 	}
 
 	/* add to the array, not replace */
@@ -2271,6 +2337,46 @@ zif_package_set_provides (ZifPackage *package, GPtrArray *provides)
 		g_ptr_array_add (package->priv->provides,
 				 g_object_ref (depend_tmp));
 	}
+}
+
+/**
+ * zif_package_add_obsolete_internal:
+ **/
+static void
+zif_package_add_obsolete_internal (ZifPackage *package, ZifDepend *depend)
+{
+	const gchar *name_tmp;
+	name_tmp = zif_depend_get_name (depend);
+	g_hash_table_insert (package->priv->obsoletes_any_hash,
+			     (gpointer) name_tmp,
+			     g_object_ref (depend));
+
+	/* this is a file depend */
+	if (name_tmp[0] == '/')
+		package->priv->any_file_obsoletes = TRUE;
+}
+
+/**
+ * zif_package_add_obsolete:
+ * @package: A #ZifPackage
+ * @depend: The package depend to add
+ *
+ * Adds the package obsolete.
+ *
+ * Since: 0.2.1
+ **/
+void
+zif_package_add_obsolete (ZifPackage *package, ZifDepend *depend)
+{
+	g_return_if_fail (ZIF_IS_PACKAGE (package));
+	g_return_if_fail (depend != NULL);
+
+	/* create if not already exists */
+	if (package->priv->obsoletes == NULL)
+		package->priv->obsoletes = zif_object_array_new ();
+
+	zif_package_add_obsolete_internal (package, depend);
+	zif_object_array_add (package->priv->obsoletes, depend);
 }
 
 /**
@@ -2285,7 +2391,6 @@ zif_package_set_provides (ZifPackage *package, GPtrArray *provides)
 void
 zif_package_set_obsoletes (ZifPackage *package, GPtrArray *obsoletes)
 {
-	const gchar *name_tmp;
 	guint i;
 	ZifDepend *depend_tmp;
 
@@ -2296,17 +2401,50 @@ zif_package_set_obsoletes (ZifPackage *package, GPtrArray *obsoletes)
 	/* add items to 'any' cache */
 	for (i=0; i<obsoletes->len; i++) {
 		depend_tmp = g_ptr_array_index (obsoletes, i);
-		name_tmp = zif_depend_get_name (depend_tmp);
-		g_hash_table_insert (package->priv->obsoletes_any_hash,
-				     (gpointer) name_tmp,
-				     g_object_ref (depend_tmp));
-
-		/* this is a file depend */
-		if (name_tmp[0] == '/')
-			package->priv->any_file_obsoletes = TRUE;
+		zif_package_add_obsolete_internal (package, depend_tmp);
 	}
 
 	package->priv->obsoletes = g_ptr_array_ref (obsoletes);
+}
+
+/**
+ * zif_package_add_conflict_internal:
+ **/
+static void
+zif_package_add_conflict_internal (ZifPackage *package, ZifDepend *depend)
+{
+	const gchar *name_tmp;
+	name_tmp = zif_depend_get_name (depend);
+	g_hash_table_insert (package->priv->conflicts_any_hash,
+			     (gpointer) name_tmp,
+			     g_object_ref (depend));
+
+	/* this is a file depend */
+	if (name_tmp[0] == '/')
+		package->priv->any_file_conflicts = TRUE;
+}
+
+/**
+ * zif_package_add_conflict:
+ * @package: A #ZifPackage
+ * @depend: The package depend to add
+ *
+ * Adds the package conflict.
+ *
+ * Since: 0.2.1
+ **/
+void
+zif_package_add_conflict (ZifPackage *package, ZifDepend *depend)
+{
+	g_return_if_fail (ZIF_IS_PACKAGE (package));
+	g_return_if_fail (depend != NULL);
+
+	/* create if not already exists */
+	if (package->priv->conflicts == NULL)
+		package->priv->conflicts = zif_object_array_new ();
+
+	zif_package_add_conflict_internal (package, depend);
+	zif_object_array_add (package->priv->conflicts, depend);
 }
 
 /**
@@ -2321,7 +2459,6 @@ zif_package_set_obsoletes (ZifPackage *package, GPtrArray *obsoletes)
 void
 zif_package_set_conflicts (ZifPackage *package, GPtrArray *conflicts)
 {
-	const gchar *name_tmp;
 	guint i;
 	ZifDepend *depend_tmp;
 
@@ -2332,14 +2469,7 @@ zif_package_set_conflicts (ZifPackage *package, GPtrArray *conflicts)
 	/* add items to 'any' cache */
 	for (i=0; i<conflicts->len; i++) {
 		depend_tmp = g_ptr_array_index (conflicts, i);
-		name_tmp = zif_depend_get_name (depend_tmp);
-		g_hash_table_insert (package->priv->conflicts_any_hash,
-				     (gpointer) name_tmp,
-				     g_object_ref (depend_tmp));
-
-		/* this is a file depend */
-		if (name_tmp[0] == '/')
-			package->priv->any_file_conflicts = TRUE;
+		zif_package_add_conflict_internal (package, depend_tmp);
 	}
 
 	package->priv->conflicts = g_ptr_array_ref (conflicts);

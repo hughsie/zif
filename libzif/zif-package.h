@@ -222,6 +222,14 @@ void			 zif_package_add_file		(ZifPackage	*package,
 							 const gchar	*filename);
 void			 zif_package_set_files		(ZifPackage	*package,
 							 GPtrArray	*files);
+void			 zif_package_add_require	(ZifPackage	*package,
+							 ZifDepend	*depend);
+void			 zif_package_add_provide	(ZifPackage	*package,
+							 ZifDepend	*depend);
+void			 zif_package_add_obsolete	(ZifPackage	*package,
+							 ZifDepend	*depend);
+void			 zif_package_add_conflict	(ZifPackage	*package,
+							 ZifDepend	*depend);
 void			 zif_package_set_requires	(ZifPackage	*package,
 							 GPtrArray	*requires);
 void			 zif_package_set_provides	(ZifPackage	*package,
