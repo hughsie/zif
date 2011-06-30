@@ -85,6 +85,9 @@ gboolean	 zif_package_array_obsolete		(GPtrArray	*array,
 							 GPtrArray	**results,
 							 ZifState	*state,
 							 GError		**error);
+ZifPackage	*zif_package_array_find			(GPtrArray	*array,
+							 const gchar	*package_id,
+							 GError		**error);
 
 G_END_DECLS
 

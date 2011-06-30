@@ -48,6 +48,46 @@ zif_package_array_new (void)
 }
 
 /**
+ * zif_package_array_find:
+ * @array: Array of %ZifPackage's
+ * @package_id: A #GError, or %NULL
+ * @error: A #GError, or %NULL
+ *
+ * Finds a package from an array.
+ *
+ * Return value: A single %ZifPackage, or %NULL in the case of an error.
+ * The returned object should be freed with g_object_unref() when no
+ * longer needed.
+ *
+ * Since: 0.2.1
+ **/
+ZifPackage *
+zif_package_array_find (GPtrArray *array,
+			const gchar *package_id,
+			GError **error)
+{
+	guint i;
+	ZifPackage *package = NULL;
+	ZifPackage *package_tmp;
+
+	for (i=0; i<array->len; i++) {
+		package_tmp = g_ptr_array_index (array, i);
+		if (g_strcmp0 (zif_package_get_id (package_tmp), package_id) == 0) {
+			package = g_object_ref (package_tmp);
+			break;
+		}
+	}
+	if (package == NULL) {
+		g_set_error (error,
+			     ZIF_PACKAGE_ERROR,
+			     ZIF_PACKAGE_ERROR_FAILED,
+			     "failed to find %s",
+			     package_id);
+	}
+	return package;
+}
+
+/**
  * zif_package_array_get_newest:
  * @array: Array of %ZifPackage's
  * @error: A #GError, or %NULL
