@@ -1,3 +1,5 @@
+# get the updates list
+
 config
 	archinfo=i386
 
