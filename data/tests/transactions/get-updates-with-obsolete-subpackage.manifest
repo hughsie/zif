@@ -1,0 +1,19 @@
+# get the updates list when a new package obsoletes an old one
+
+config
+	archinfo=i386
+
+local
+	abrt;0.0.1-1;i386;meta
+	abrt-plugin-runapp;0.0.1-1;i386;meta
+
+remote
+	abrt;0.0.2-1;i386;meta
+		Obsoletes
+			abrt-plugin-runapp
+
+transaction
+	get-updates
+
+result
+	abrt;0.0.2-1;i386;meta

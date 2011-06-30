@@ -1084,8 +1084,8 @@ zif_store_array_get_updates (GPtrArray *store_array,
 	zif_package_array_filter_best_arch (array_obsoletes, archinfo);
 
 	/* add obsolete array to updates */
-	zif_package_array_filter_duplicates (array_obsoletes);
 	zif_object_array_add_array (updates_available, array_obsoletes);
+	zif_package_array_filter_duplicates (updates_available);
 
 	/* this section done */
 	ret = zif_state_done (state, error);
