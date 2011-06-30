@@ -54,6 +54,7 @@
 
 #include "zif-config.h"
 #include "zif-package-meta.h"
+#include "zif-package-array.h"
 #include "zif-state.h"
 #include "zif-store-array.h"
 #include "zif-store-meta.h"
@@ -96,6 +97,7 @@ typedef enum {
 	ZIF_MANIFEST_ACTION_INSTALL,
 	ZIF_MANIFEST_ACTION_UPDATE,
 	ZIF_MANIFEST_ACTION_REMOVE,
+	ZIF_MANIFEST_ACTION_GET_UPDATES,
 	ZIF_MANIFEST_ACTION_UNKNOWN
 } ZifManifestAction;
 
@@ -167,6 +169,8 @@ zif_manifest_action_from_string (const gchar *section)
 		return ZIF_MANIFEST_ACTION_UPDATE;
 	if (g_strcmp0 (section, "remove") == 0)
 		return ZIF_MANIFEST_ACTION_REMOVE;
+	if (g_strcmp0 (section, "get-updates") == 0)
+		return ZIF_MANIFEST_ACTION_GET_UPDATES;
 	return ZIF_MANIFEST_ACTION_UNKNOWN;
 }
 
@@ -298,21 +302,18 @@ out:
 }
 
 /**
- * zif_manifest_check_post_installed:
+ * zif_manifest_check_array:
  **/
 static gboolean
-zif_manifest_check_post_installed (ZifManifest *manifest,
-				   ZifStore *store,
-				   GPtrArray *packages,
-				   GError **error)
+zif_manifest_check_array (GPtrArray *array,
+			  GPtrArray *packages,
+			  GError **error)
 {
 	guint i;
-	gboolean ret = TRUE;
-	GPtrArray *array = NULL;
+	gboolean ret = FALSE;
 	ZifState *state;
 	ZifPackage *package;
 	ZifPackage *package_tmp;
-	GError *error_local = NULL;
 
 	/* find each package */
 	state = zif_state_new ();
@@ -321,43 +322,20 @@ zif_manifest_check_post_installed (ZifManifest *manifest,
 		package_tmp = g_ptr_array_index (packages, i);
 
 		zif_state_reset (state);
-		package = zif_store_find_package (store,
+		package = zif_package_array_find (array,
 						  zif_package_get_id (package_tmp),
-						  state,
-						  &error_local);
-		if (package == NULL) {
-			ret = FALSE;
-			g_set_error (error,
-				     ZIF_MANIFEST_ERROR,
-				     ZIF_MANIFEST_ERROR_POST_INSTALL,
-				     "Failed to find post-installed package %s: %s",
-				     zif_package_get_id (package_tmp),
-				     error_local->message);
-			g_error_free (error_local);
+						  error);
+		if (package == NULL)
 			goto out;
-		}
 		g_object_unref (package);
 	}
 
 	/* ensure same size */
-	zif_state_reset (state);
-	array = zif_store_get_packages (store, state, &error_local);
-	if (array == NULL) {
-		ret = FALSE;
-		g_set_error (error,
-			     ZIF_MANIFEST_ERROR,
-			     ZIF_MANIFEST_ERROR_POST_INSTALL,
-			     "Failed to get store packages: %s",
-			     error_local->message);
-		g_error_free (error_local);
-		goto out;
-	}
 	if (packages->len != array->len) {
-		ret = FALSE;
 		g_set_error (error,
 			     ZIF_MANIFEST_ERROR,
 			     ZIF_MANIFEST_ERROR_POST_INSTALL,
-			     "post install database wrong size %i when supposed to be %i",
+			     "post action database wrong size %i when supposed to be %i",
 			     array->len, packages->len);
 		g_debug ("listing files in store");
 		for (i=0; i<array->len; i++) {
@@ -366,6 +344,37 @@ zif_manifest_check_post_installed (ZifManifest *manifest,
 		}
 		goto out;
 	}
+
+	/* success */
+	ret= TRUE;
+out:
+	if (array != NULL)
+		g_ptr_array_unref (array);
+	g_object_unref (state);
+	return ret;
+}
+
+/**
+ * zif_manifest_check_post_installed:
+ **/
+static gboolean
+zif_manifest_check_post_installed (ZifManifest *manifest,
+				   ZifStore *store,
+				   GPtrArray *packages,
+				   GError **error)
+{
+	gboolean ret = FALSE;
+	GPtrArray *array = NULL;
+	ZifState *state;
+
+	/* ensure same size */
+	state = zif_state_new ();
+	array = zif_store_get_packages (store, state, error);
+	if (array == NULL)
+		goto out;
+	ret = zif_manifest_check_array (array, packages, error);
+	if (!ret)
+		goto out;
 out:
 	if (array != NULL)
 		g_ptr_array_unref (array);
@@ -526,12 +535,12 @@ zif_manifest_check (ZifManifest *manifest,
 	zif_store_meta_set_is_local (ZIF_STORE_META (local), TRUE);
 	remote = zif_store_meta_new ();
 	remote_array = zif_store_array_new ();
+	zif_store_array_add_store (remote_array, remote);
 	result_array = zif_object_array_new ();
 
 	/* setup transaction */
 	transaction = zif_transaction_new ();
 	zif_transaction_set_verbose (transaction, TRUE);
-	zif_store_array_add_store (remote_array, remote);
 	zif_transaction_set_store_local (transaction, local);
 	zif_transaction_set_stores_remote (transaction, remote_array);
 
@@ -703,11 +712,33 @@ zif_manifest_check (ZifManifest *manifest,
 			g_assert_not_reached ();
 		}
 	}
-
 	/* this section done */
 	ret = zif_state_done (state, error);
 	if (!ret)
 		goto out;
+
+	/* treat get-updates specially */
+	if (action == ZIF_MANIFEST_ACTION_GET_UPDATES) {
+		state_local = zif_state_get_child (state);
+		resolve_install = zif_store_array_get_updates (remote_array,
+							       local,
+							       state_local,
+							       error);
+		if (resolve_install == NULL) {
+			ret = FALSE;
+			goto out;
+		}
+		ret = zif_manifest_check_array (resolve_install, result_array, error);
+		if (!ret)
+			goto out;
+
+		/* this section done */
+		ret = zif_state_finished (state, error);
+		if (!ret)
+			goto out;
+
+		goto out;
+	}
 
 	/* resolve */
 	state_local = zif_state_get_child (state);
