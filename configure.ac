@@ -8,7 +8,7 @@ m4_define([zif_version],
 
 AC_INIT([zif],[0.2.2])
 AC_CONFIG_SRCDIR(libzif)
-AM_INIT_AUTOMAKE(AC_PACKAGE_NAME, AC_PACKAGE_VERSION)
+AM_INIT_AUTOMAKE([1.9 no-dist-gzip dist-xz tar-ustar])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
 AC_SYS_LARGEFILE
