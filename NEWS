@@ -1,3 +1,55 @@
+Version 0.2.1
+~~~~~~~~~~~~~
+Released: 2011-07-04
+
+Notes:
+ - Lots of nice speed and depsolver fixes.
+ - New commands to the command line tool: distro-sync, upgrade-distro-live
+
+New Features:
+ - Add a distro-sync command to the zif command line tool
+ - Add a section in the manual page about the environment variables we can use
+ - Add a zif_package_array_find() convenience function
+ - Add localpkg_gpgcheck to the config file as yum has split up the policy for local and remote packages
+ - Add methods to be able to add a single depend to a package
+ - Add the ability to test getting the updates list in a manifest file
+ - Add the command line action 'upgrade-distro-live' to perform a live upgrade without using anaconda
+ - Add zif_compare_evr_full() which takes an additional ZifPackageCompareMode
+ - Add zif_depend_new_from_data() to be able to get a depend item from a pair of key,value data arrays
+ - Add zif_package_add_file() to be able to add a single file to a package
+ - Add zif_package_array_filter_duplicates() for O(n) duplicate package removal
+ - Add zif_package_compare_full() so we can pass in flags for name and arch checking
+ - Add zif_package_set_compare_mode() to set the version comparison mode to use
+ - Add zif_store_array_get_updates() to easily get the update set for an array of stores
+ - Create our own easy-to-read manifest format rather than abusing a keyfile
+ - Create the sqlite metadata when generating an install tree for anaconda
+ - Generate the group metadata when performing the distro upgrade
+ - Parse the provides, requires, obsoletes and conflicts data from legacy XML primary metadata
+ - Sort the package results in the command line tool
+
+Bugfixes:
+ - Allow clients to call zif_package_get_provides() on repos that don't have any filelists
+ - Allow the groups mapping file to be a symlink
+ - Change the default of upgrade_repo_dir to use the yum location, it's hardcoded in anaconda
+ - Complete the code for a 'complete' upgrade-distro that actually downloads packages
+ - Do not redownload files that already exist and are correct
+ - Enable distro package compare mode when getting the list of packages during a distribution upgrade
+ - Enable the automatic content type sniffing for the mirrorlist.txt file
+ - Ensure an obsoleted subpackage is removed on update
+ - Ensure packages created using the legacy metadata format get assigned a store
+ - Ensure we use the metalink and mirrorlist methods when downloading missing repomd.xml files
+ - Fix a critical warning in the error path for zif_store_find_package()
+ - Fix getting the updates list on multiarch when there is a package obsoletes
+ - Fix getting the updates list when there is an update with an obsoleted subpackage
+ - Fix 'zif distro-upgrade' as the compression format of the initrd is now xz, not gzip
+ - Fix zif_package_array_filter_best_arch() so that is does not prefer x86_64 on an i386 machine
+ - Fix zif_package_array_filter_newest() to correctly remove just the old packages
+ - If we try to get the newest package from a list with different names, fall back to just checking the versions
+ - Only filter the best provide array by architecture if there is more than one package
+ - Set the release version back to the orginal value when done doing a distro upgrade
+ - When processing the package requires, ensure the list contains the same package only once
+ - When refreshing do not download the .gz metadata if the .sqlite metadata is available
+
 Version 0.2.0
 ~~~~~~~~~~~~~
 Released: 2011-06-07
