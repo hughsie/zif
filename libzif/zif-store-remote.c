@@ -1014,6 +1014,9 @@ zif_store_remote_download_repomd (ZifStoreRemote *store,
 			goto out;
 	}
 
+	/* ensure we don't skip a valid-looking repomd.xml */
+	g_unlink (store->priv->repomd_filename);
+
 	/* download new file */
 	store->priv->loaded_metadata = TRUE;
 	state_local = zif_state_get_child (state);
