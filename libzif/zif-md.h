@@ -165,6 +165,8 @@ typedef enum {
 	ZIF_MD_ERROR_BAD_SQL,
 	ZIF_MD_ERROR_FILE_TOO_OLD,
 	ZIF_MD_ERROR_NO_FILENAME,
+	ZIF_MD_ERROR_FILE_NOT_EXISTS,
+	ZIF_MD_ERROR_CHECKSUM_INVALID,
 	ZIF_MD_ERROR_LAST
 } ZifMdError;
 
@@ -214,6 +216,12 @@ gboolean	 zif_md_clean				(ZifMd		*md,
 gboolean	 zif_md_file_check			(ZifMd		*md,
 							 gboolean	 use_uncompressed,
 							 gboolean	*valid,
+							 ZifState	*state,
+							 GError		**error);
+gboolean	 zif_md_check_compressed		(ZifMd		*md,
+							 ZifState	*state,
+							 GError		**error);
+gboolean	 zif_md_check_uncompressed		(ZifMd		*md,
 							 ZifState	*state,
 							 GError		**error);
 GPtrArray	*zif_md_search_file			(ZifMd		*md,

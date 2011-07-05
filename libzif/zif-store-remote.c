@@ -1427,7 +1427,6 @@ zif_store_remote_process_repomd (ZifStoreRemote *store,
 {
 	gboolean ret = TRUE;
 	GError *error_local = NULL;
-	gboolean valid;
 	ZifState *state_local;
 
 	/* set steps */
@@ -1472,26 +1471,28 @@ zif_store_remote_process_repomd (ZifStoreRemote *store,
 	/* does mirrorlist look okay */
 	if (store->priv->mirrorlist != NULL) {
 		state_local = zif_state_get_child (state);
-		ret = zif_md_file_check (store->priv->md_mirrorlist,
-					 FALSE, &valid,
-					 state_local,
-					 &error_local);
+		ret = zif_md_check_uncompressed (store->priv->md_mirrorlist,
+						 state_local,
+						 &error_local);
 		if (!ret) {
-			g_set_error (error,
-				     ZIF_STORE_ERROR,
-				     ZIF_STORE_ERROR_FAILED,
-				     "failed to check mirrorlist: %s",
-				     error_local->message);
-			g_error_free (error_local);
-			goto out;
-		}
-		if (!valid) {
-			ret = FALSE;
-			g_unlink (zif_md_get_filename (store->priv->md_mirrorlist));
-			g_set_error_literal (error,
+			if (error_local->domain == ZIF_MD_ERROR &&
+			    (error_local->code == ZIF_MD_ERROR_CHECKSUM_INVALID ||
+			     error_local->code == ZIF_MD_ERROR_FILE_NOT_EXISTS)) {
+				g_unlink (zif_md_get_filename (store->priv->md_mirrorlist));
+				g_set_error (error,
 					     ZIF_STORE_ERROR,
 					     ZIF_STORE_ERROR_RECOVERABLE,
-					     "mirrorlist looks bad, deleting");
+					     "failed to check mirrorlist: %s",
+					     error_local->message);
+				g_error_free (error_local);
+			} else {
+				g_set_error (error,
+					     ZIF_STORE_ERROR,
+					     ZIF_STORE_ERROR_FAILED,
+					     "failed to check mirrorlist: %s",
+					     error_local->message);
+				g_error_free (error_local);
+			}
 			goto out;
 		}
 
@@ -1525,26 +1526,29 @@ zif_store_remote_process_repomd (ZifStoreRemote *store,
 	/* does metalink look okay */
 	if (store->priv->metalink != NULL) {
 		state_local = zif_state_get_child (state);
-		ret = zif_md_file_check (store->priv->md_metalink,
-					 FALSE, &valid,
-					 state_local,
-					 &error_local);
+
+		ret = zif_md_check_uncompressed (store->priv->md_metalink,
+						 state_local,
+						 &error_local);
 		if (!ret) {
-			g_set_error (error,
-				     ZIF_STORE_ERROR,
-				     ZIF_STORE_ERROR_FAILED,
-				     "failed to check mirrorlist: %s",
-				     error_local->message);
-			g_error_free (error_local);
-			goto out;
-		}
-		if (!valid) {
-			ret = FALSE;
-			g_unlink (zif_md_get_filename (store->priv->md_metalink));
-			g_set_error_literal (error,
+			if (error_local->domain == ZIF_MD_ERROR &&
+			    (error_local->code == ZIF_MD_ERROR_CHECKSUM_INVALID ||
+			     error_local->code == ZIF_MD_ERROR_FILE_NOT_EXISTS)) {
+				g_unlink (zif_md_get_filename (store->priv->md_metalink));
+				g_set_error (error,
 					     ZIF_STORE_ERROR,
 					     ZIF_STORE_ERROR_RECOVERABLE,
-					     "metalink looks bad, deleting");
+					     "failed to check metalink: %s",
+					     error_local->message);
+				g_error_free (error_local);
+			} else {
+				g_set_error (error,
+					     ZIF_STORE_ERROR,
+					     ZIF_STORE_ERROR_FAILED,
+					     "failed to check metalink: %s",
+					     error_local->message);
+				g_error_free (error_local);
+			}
 			goto out;
 		}
 
@@ -1733,7 +1737,6 @@ zif_store_remote_refresh_md (ZifStoreRemote *remote,
 			     GError **error)
 {
 	const gchar *filename;
-	gboolean repo_verified;
 	gboolean ret;
 	GError *error_local = NULL;
 	ZifState *state_local = NULL;
@@ -1765,12 +1768,13 @@ zif_store_remote_refresh_md (ZifStoreRemote *remote,
 
 	/* does current uncompressed file equal what repomd says it should be */
 	state_local = zif_state_get_child (state);
-	ret = zif_md_file_check (md, TRUE, &repo_verified,
-				 state_local, error);
-	if (!ret)
-		goto out;
-	if (!repo_verified) {
-		g_debug ("failed to verify md, so will attempt update");
+	ret = zif_md_check_uncompressed (md,
+					 state_local,
+					 &error_local);
+	if (!ret) {
+		g_debug ("failed to verify md (%s), so will attempt update",
+			 error_local->message);
+		g_clear_error (&error_local);
 	} else if (!force) {
 		g_debug ("%s is okay, and we're not forcing",
 			   zif_md_kind_to_text (zif_md_get_kind (md)));
