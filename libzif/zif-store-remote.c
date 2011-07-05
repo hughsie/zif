@@ -1415,6 +1415,9 @@ zif_store_remote_process_repomd (ZifStoreRemote *store,
 	if (store->priv->mirrorlist == NULL &&
 	    store->priv->metalink == NULL) {
 		zif_state_set_number_steps (state, 1); /* parse */
+	} else if (store->priv->mirrorlist != NULL &&
+		   store->priv->metalink != NULL) {
+		g_assert_not_reached ();
 	} else {
 		ret = zif_state_set_steps (state,
 					   error,
