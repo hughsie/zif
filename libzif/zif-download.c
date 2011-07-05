@@ -852,6 +852,14 @@ zif_download_file_full (ZifDownload *download,
 	    zif_download_check_checksum (file, checksum_type, checksum, NULL)) {
 		g_debug ("%s exists and is valid, skipping download",
 			 filename);
+
+		/* set the file mtime */
+		ret = g_file_set_attribute_uint64 (file,
+						   G_FILE_ATTRIBUTE_TIME_MODIFIED,
+						   g_get_real_time () / G_USEC_PER_SEC,
+						   G_FILE_QUERY_INFO_NONE,
+						   cancellable,
+						   error);
 		goto out;
 	}
 
