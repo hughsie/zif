@@ -1521,7 +1521,7 @@ zif_store_remote_process_repomd (ZifStoreRemote *store,
 		}
 		if (!valid) {
 			ret = FALSE;
-			g_unlink (zif_md_get_filename (store->priv->md_mirrorlist));
+			g_unlink (zif_md_get_filename (store->priv->md_metalink));
 			g_set_error_literal (error,
 					     ZIF_STORE_ERROR,
 					     ZIF_STORE_ERROR_RECOVERABLE,
