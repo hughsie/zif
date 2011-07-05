@@ -1075,12 +1075,26 @@ zif_store_remote_parse_repomd (ZifStoreRemote *store,
 		NULL /* error */
 	};
 
+	/* set steps */
+	ret = zif_state_set_steps (state,
+				   error,
+				   80, /* get contents */
+				   20, /* parse */
+				   -1);
+	if (!ret)
+		goto out;
+
 	/* get repo contents */
 	zif_state_set_allow_cancel (state, FALSE);
 	ret = g_file_get_contents (store->priv->repomd_filename,
 				   &contents,
 				   &size,
 				   error);
+	if (!ret)
+		goto out;
+
+	/* done */
+	ret = zif_state_done (state, error);
 	if (!ret)
 		goto out;
 
@@ -1155,6 +1169,11 @@ zif_store_remote_parse_repomd (ZifStoreRemote *store,
 		ret = FALSE;
 		goto out;
 	}
+
+	/* done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 out:
 	if (context != NULL)
 		g_markup_parse_context_free (context);
