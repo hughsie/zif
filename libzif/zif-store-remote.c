@@ -2017,10 +2017,17 @@ zif_store_remote_load (ZifStore *store, ZifState *state, GError **error)
 		goto out;
 
 	file = g_key_file_new ();
-	ret = g_key_file_load_from_file (file, remote->priv->repo_filename, G_KEY_FILE_NONE, &error_local);
+	ret = g_key_file_load_from_file (file,
+					 remote->priv->repo_filename,
+					 G_KEY_FILE_NONE,
+					 &error_local);
 	if (!ret) {
-		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
-			     "failed to load %s: %s", remote->priv->repo_filename, error_local->message);
+		g_set_error (error,
+			     ZIF_STORE_ERROR,
+			     ZIF_STORE_ERROR_FAILED,
+			     "failed to load keyfile %s: %s",
+			     remote->priv->repo_filename,
+			     error_local->message);
 		g_error_free (error_local);
 		goto out;
 	}
@@ -2386,8 +2393,11 @@ zif_store_remote_set_id (ZifStoreRemote *store, const gchar *id)
  * Since: 0.1.0
  **/
 gboolean
-zif_store_remote_set_from_file (ZifStoreRemote *store, const gchar *repo_filename, const gchar *id,
-				ZifState *state, GError **error)
+zif_store_remote_set_from_file (ZifStoreRemote *store,
+				const gchar *repo_filename,
+				const gchar *id,
+				ZifState *state,
+				GError **error)
 {
 	gboolean ret = TRUE;
 	GError *error_local = NULL;
@@ -2401,25 +2411,40 @@ zif_store_remote_set_from_file (ZifStoreRemote *store, const gchar *repo_filenam
 	/* save */
 	zif_store_remote_set_id (store, id);
 	store->priv->repo_filename = g_strdup (repo_filename);
-	store->priv->directory = g_build_filename (store->priv->cache_dir, store->priv->id, NULL);
+	store->priv->directory = g_build_filename (store->priv->cache_dir,
+						   store->priv->id,
+						   NULL);
 
 	/* repomd location */
-	store->priv->repomd_filename = g_build_filename (store->priv->cache_dir, store->priv->id, "repomd.xml", NULL);
+	store->priv->repomd_filename = g_build_filename (store->priv->cache_dir,
+							 store->priv->id,
+							 "repomd.xml",
+							 NULL);
 
 	/* setup watch */
-	ret = zif_monitor_add_watch (store->priv->monitor, repo_filename, &error_local);
+	ret = zif_monitor_add_watch (store->priv->monitor,
+				     repo_filename,
+				     &error_local);
 	if (!ret) {
-		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
-			     "failed to setup watch: %s", error_local->message);
+		g_set_error (error,
+			     ZIF_STORE_ERROR,
+			     ZIF_STORE_ERROR_FAILED,
+			     "failed to setup watch: %s",
+			     error_local->message);
 		g_error_free (error_local);
 		goto out;
 	}
 
 	/* get data */
-	ret = zif_store_remote_load (ZIF_STORE (store), state, &error_local);
+	ret = zif_store_remote_load (ZIF_STORE (store),
+				     state,
+				     &error_local);
 	if (!ret) {
-		g_set_error (error, error_local->domain, error_local->code,
-			     "failed to load %s: %s", id, error_local->message);
+		g_set_error (error,
+			     error_local->domain,
+			     error_local->code,
+			     "failed to load store %s: %s",
+			     id, error_local->message);
 		g_error_free (error_local);
 		goto out;
 	}

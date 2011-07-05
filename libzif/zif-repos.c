@@ -121,16 +121,24 @@ zif_repos_set_repos_dir (ZifRepos *repos, const gchar *repos_dir, GError **error
 	/* check directory exists */
 	ret = g_file_test (repos_dir_real, G_FILE_TEST_IS_DIR);
 	if (!ret) {
-		g_set_error (error, ZIF_REPOS_ERROR, ZIF_REPOS_ERROR_FAILED,
-			     "repo directory %s does not exist", repos_dir_real);
+		g_set_error (error,
+			     ZIF_REPOS_ERROR,
+			     ZIF_REPOS_ERROR_FAILED,
+			     "repo directory %s does not exist",
+			     repos_dir_real);
 		goto out;
 	}
 
 	/* setup watch */
-	ret = zif_monitor_add_watch (repos->priv->monitor, repos_dir_real, &error_local);
+	ret = zif_monitor_add_watch (repos->priv->monitor,
+				     repos_dir_real,
+				     &error_local);
 	if (!ret) {
-		g_set_error (error, ZIF_REPOS_ERROR, ZIF_REPOS_ERROR_FAILED,
-			     "failed to setup watch: %s", error_local->message);
+		g_set_error (error,
+			     ZIF_REPOS_ERROR,
+			     ZIF_REPOS_ERROR_FAILED,
+			     "failed to setup watch: %s",
+			     error_local->message);
 		g_error_free (error_local);
 		goto out;
 	}
@@ -145,7 +153,10 @@ out:
  * zif_repos_get_for_filename:
  **/
 static gboolean
-zif_repos_get_for_filename (ZifRepos *repos, const gchar *filename, ZifState *state, GError **error)
+zif_repos_get_for_filename (ZifRepos *repos,
+			    const gchar *filename,
+			    ZifState *state,
+			    GError **error)
 {
 	GError *error_local = NULL;
 	GKeyFile *file;
@@ -161,10 +172,17 @@ zif_repos_get_for_filename (ZifRepos *repos, const gchar *filename, ZifState *st
 	/* find all the id's in this file */
 	file = g_key_file_new ();
 	path = g_build_filename (repos->priv->repos_dir, filename, NULL);
-	ret = g_key_file_load_from_file (file, path, G_KEY_FILE_NONE, &error_local);
+	ret = g_key_file_load_from_file (file,
+					 path,
+					 G_KEY_FILE_NONE,
+					 &error_local);
 	if (!ret) {
-		g_set_error (error, ZIF_REPOS_ERROR, ZIF_REPOS_ERROR_FAILED,
-			     "failed to load %s: %s", path, error_local->message);
+		g_set_error (error,
+			     ZIF_REPOS_ERROR,
+			     ZIF_REPOS_ERROR_FAILED,
+			     "failed to load keyfile %s: %s",
+			     path,
+			     error_local->message);
 		g_error_free (error_local);
 		goto out;
 	}
@@ -179,10 +197,18 @@ zif_repos_get_for_filename (ZifRepos *repos, const gchar *filename, ZifState *st
 	for (i=0; repos_groups[i] != NULL; i++) {
 		store = ZIF_STORE_REMOTE (zif_store_remote_new ());
 		state_local = zif_state_get_child (state);
-		ret = zif_store_remote_set_from_file (store, path, repos_groups[i], state_local, &error_local);
+		ret = zif_store_remote_set_from_file (store,
+						      path,
+						      repos_groups[i],
+						      state_local,
+						      &error_local);
 		if (!ret) {
-			g_set_error (error, ZIF_REPOS_ERROR, ZIF_REPOS_ERROR_FAILED,
-				     "failed to set from %s: %s", path, error_local->message);
+			g_set_error (error,
+				     ZIF_REPOS_ERROR,
+				     ZIF_REPOS_ERROR_FAILED,
+				     "failed to set from %s: %s",
+				     path,
+				     error_local->message);
 			g_error_free (error_local);
 			break;
 		}
@@ -206,7 +232,8 @@ out:
 static gint
 zif_repos_sort_store_cb (ZifStore **store1, ZifStore **store2)
 {
-	return g_strcmp0 (zif_store_get_id (*store1), zif_store_get_id (*store2));
+	return g_strcmp0 (zif_store_get_id (*store1),
+			  zif_store_get_id (*store2));
 }
 
 /**
@@ -278,8 +305,11 @@ zif_repos_load (ZifRepos *repos, ZifState *state, GError **error)
 	/* search repos dir */
 	dir = g_dir_open (repos->priv->repos_dir, 0, &error_local);
 	if (dir == NULL) {
-		g_set_error (error, ZIF_REPOS_ERROR, ZIF_REPOS_ERROR_FAILED,
-			     "failed to list directory: %s", error_local->message);
+		g_set_error (error,
+			     ZIF_REPOS_ERROR,
+			     ZIF_REPOS_ERROR_FAILED,
+			     "failed to list directory: %s",
+			     error_local->message);
 		g_error_free (error_local);
 		ret = FALSE;
 		goto out;
@@ -310,20 +340,32 @@ zif_repos_load (ZifRepos *repos, ZifState *state, GError **error)
 
 		/* setup watch */
 		filename = g_ptr_array_index (repofiles, i);
-		ret = zif_monitor_add_watch (repos->priv->monitor, filename, &error_local);
+		ret = zif_monitor_add_watch (repos->priv->monitor,
+					     filename,
+					     &error_local);
 		if (!ret) {
-			g_set_error (error, ZIF_REPOS_ERROR, ZIF_REPOS_ERROR_FAILED,
-				     "failed to setup watch: %s", error_local->message);
+			g_set_error (error,
+				     ZIF_REPOS_ERROR,
+				     ZIF_REPOS_ERROR_FAILED,
+				     "failed to setup watch: %s",
+				     error_local->message);
 			g_error_free (error_local);
 			break;
 		}
 
 		/* add all repos for filename */
 		state_loop = zif_state_get_child (state_local);
-		ret = zif_repos_get_for_filename (repos, filename, state_loop, &error_local);
+		ret = zif_repos_get_for_filename (repos,
+						  filename,
+						  state_loop,
+						  &error_local);
 		if (!ret) {
-			g_set_error (error, ZIF_REPOS_ERROR, ZIF_REPOS_ERROR_FAILED,
-				     "failed to get filename %s: %s", filename, error_local->message);
+			g_set_error (error,
+				     ZIF_REPOS_ERROR,
+				     ZIF_REPOS_ERROR_FAILED,
+				     "failed to get filename %s: %s",
+				     filename,
+				     error_local->message);
 			g_error_free (error_local);
 			g_ptr_array_set_size (repos->priv->list, 0);
 			ret = FALSE;
@@ -346,7 +388,8 @@ zif_repos_load (ZifRepos *repos, ZifState *state, GError **error)
 		goto out;
 
 	/* need to sort by id predictably */
-	g_ptr_array_sort (repos->priv->list, (GCompareFunc) zif_repos_sort_store_cb);
+	g_ptr_array_sort (repos->priv->list,
+			  (GCompareFunc) zif_repos_sort_store_cb);
 
 	/* find enabled */
 	state_local = zif_state_get_child (state);
@@ -357,18 +400,26 @@ zif_repos_load (ZifRepos *repos, ZifState *state, GError **error)
 
 		/* get repo enabled state */
 		state_loop = zif_state_get_child (state_local);
-		ret = zif_store_remote_get_enabled (store, state_loop, &error_local);
+		ret = zif_store_remote_get_enabled (store,
+						    state_loop,
+						    &error_local);
 		if (error_local != NULL) {
-			g_set_error (error, ZIF_REPOS_ERROR, ZIF_REPOS_ERROR_FAILED,
-				     "failed to get repo state for %s: %s", zif_store_get_id (ZIF_STORE (store)), error_local->message);
+			g_set_error (error,
+				     ZIF_REPOS_ERROR,
+				     ZIF_REPOS_ERROR_FAILED,
+				     "failed to get repo state for %s: %s",
+				     zif_store_get_id (ZIF_STORE (store)),
+				     error_local->message);
 			g_ptr_array_set_size (repos->priv->enabled, 0);
 			ret = FALSE;
 			goto out;
 		}
 
 		/* if enabled, add to array */
-		if (ret)
-			g_ptr_array_add (repos->priv->enabled, g_object_ref (store));
+		if (ret) {
+			g_ptr_array_add (repos->priv->enabled,
+					 g_object_ref (store));
+		}
 
 		/* this section done */
 		ret = zif_state_done (state_local, error);
@@ -418,8 +469,11 @@ zif_repos_get_stores (ZifRepos *repos, ZifState *state, GError **error)
 	if (!repos->priv->loaded) {
 		ret = zif_repos_load (repos, state, &error_local);
 		if (!ret) {
-			g_set_error (error, ZIF_REPOS_ERROR, ZIF_REPOS_ERROR_FAILED,
-				     "failed to load repos: %s", error_local->message);
+			g_set_error (error,
+				     ZIF_REPOS_ERROR,
+				     ZIF_REPOS_ERROR_FAILED,
+				     "failed to load repos: %s",
+				     error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
@@ -444,7 +498,9 @@ out:
  * Since: 0.1.0
  **/
 GPtrArray *
-zif_repos_get_stores_enabled (ZifRepos *repos, ZifState *state, GError **error)
+zif_repos_get_stores_enabled (ZifRepos *repos,
+			      ZifState *state,
+			      GError **error)
 {
 	GPtrArray *array = NULL;
 	GError *error_local = NULL;
@@ -458,8 +514,11 @@ zif_repos_get_stores_enabled (ZifRepos *repos, ZifState *state, GError **error)
 	if (!repos->priv->loaded) {
 		ret = zif_repos_load (repos, state, &error_local);
 		if (!ret) {
-			g_set_error (error, ZIF_REPOS_ERROR, ZIF_REPOS_ERROR_FAILED,
-				     "failed to load enabled repos: %s", error_local->message);
+			g_set_error (error,
+				     ZIF_REPOS_ERROR,
+				     ZIF_REPOS_ERROR_FAILED,
+				     "failed to load enabled repos: %s",
+				     error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
@@ -485,7 +544,10 @@ out:
  * Since: 0.1.0
  **/
 ZifStoreRemote *
-zif_repos_get_store (ZifRepos *repos, const gchar *id, ZifState *state, GError **error)
+zif_repos_get_store (ZifRepos *repos,
+		     const gchar *id,
+		     ZifState *state,
+		     GError **error)
 {
 	guint i;
 	ZifStoreRemote *store = NULL;
@@ -503,8 +565,11 @@ zif_repos_get_store (ZifRepos *repos, const gchar *id, ZifState *state, GError *
 	if (!repos->priv->loaded) {
 		ret = zif_repos_load (repos, state, &error_local);
 		if (!ret) {
-			g_set_error (error, ZIF_REPOS_ERROR, ZIF_REPOS_ERROR_FAILED,
-				     "failed to load repos: %s", error_local->message);
+			g_set_error (error,
+				     ZIF_REPOS_ERROR,
+				     ZIF_REPOS_ERROR_FAILED,
+				     "failed to load repos: %s",
+				     error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
@@ -517,7 +582,9 @@ zif_repos_get_store (ZifRepos *repos, const gchar *id, ZifState *state, GError *
 		/* get the id */
 		id_tmp = zif_store_get_id (ZIF_STORE (store_tmp));
 		if (id_tmp == NULL) {
-			g_set_error_literal (error, ZIF_REPOS_ERROR, ZIF_REPOS_ERROR_FAILED,
+			g_set_error_literal (error,
+					     ZIF_REPOS_ERROR,
+					     ZIF_REPOS_ERROR_FAILED,
 					     "failed to get id");
 			goto out;
 		}
@@ -531,7 +598,9 @@ zif_repos_get_store (ZifRepos *repos, const gchar *id, ZifState *state, GError *
 
 	/* we found nothing */
 	if (store == NULL) {
-		g_set_error (error, ZIF_REPOS_ERROR, ZIF_REPOS_ERROR_FAILED,
+		g_set_error (error,
+			     ZIF_REPOS_ERROR,
+			     ZIF_REPOS_ERROR_FAILED,
 			     "failed to find store '%s'", id);
 	}
 out:
@@ -562,7 +631,8 @@ zif_repos_finalize (GObject *object)
 	g_return_if_fail (ZIF_IS_REPOS (object));
 	repos = ZIF_REPOS (object);
 
-	g_signal_handler_disconnect (repos->priv->monitor, repos->priv->monitor_changed_id);
+	g_signal_handler_disconnect (repos->priv->monitor,
+				     repos->priv->monitor_changed_id);
 	g_object_unref (repos->priv->monitor);
 	g_object_unref (repos->priv->config);
 	g_free (repos->priv->repos_dir);

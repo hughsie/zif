@@ -1701,7 +1701,12 @@ zif_md_file_check (ZifMd *md, gboolean use_uncompressed, gboolean *valid,
 	zif_state_action_start (state, ZIF_STATE_ACTION_CHECKING, filename);
 
 	/* get contents */
-	ret = g_file_load_contents (file, cancellable, &data, &length, NULL, &error_local);
+	ret = g_file_load_contents (file,
+				    cancellable,
+				    &data,
+				    &length,
+				    NULL,
+				    &error_local);
 	if (!ret) {
 		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED,
 			     "failed to get contents of %s: %s", filename, error_local->message);
@@ -1750,7 +1755,9 @@ zif_md_file_check (ZifMd *md, gboolean use_uncompressed, gboolean *valid,
 
 	/* no checksum set */
 	if (checksum_wanted == NULL) {
-		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED,
+		g_set_error (error,
+			     ZIF_MD_ERROR,
+			     ZIF_MD_ERROR_FAILED,
 			     "checksum not set for %s", filename);
 		ret = FALSE;
 		goto out;
@@ -1758,7 +1765,8 @@ zif_md_file_check (ZifMd *md, gboolean use_uncompressed, gboolean *valid,
 
 	/* compute checksum */
 	zif_state_set_allow_cancel (state, FALSE);
-	checksum = g_compute_checksum_for_data (md->priv->checksum_type, (guchar*) data, length);
+	checksum = g_compute_checksum_for_data (md->priv->checksum_type,
+						(guchar*) data, length);
 
 	/* matches? */
 	*valid = (g_strcmp0 (checksum, checksum_wanted) == 0);
