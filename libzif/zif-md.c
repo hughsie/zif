@@ -594,7 +594,7 @@ zif_md_load_check_and_get_compressed (ZifMd *md, ZifState *state, GError **error
 			g_clear_error (&error_local);
 
 			/* fake */
-			ret = zif_state_done (state_local, error);
+			ret = zif_state_finished (state_local, error);
 			if (!ret)
 				goto out;
 
