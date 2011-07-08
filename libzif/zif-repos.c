@@ -40,6 +40,7 @@
 #include "zif-repos.h"
 #include "zif-utils.h"
 #include "zif-monitor.h"
+#include "zif-object-array.h"
 
 #define ZIF_REPOS_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_REPOS, ZifReposPrivate))
 
@@ -50,7 +51,6 @@ struct _ZifReposPrivate
 	ZifMonitor		*monitor;
 	ZifConfig		*config;
 	GPtrArray		*list;
-	GPtrArray		*enabled;
 	guint			 monitor_changed_id;
 };
 
@@ -410,15 +410,8 @@ zif_repos_load (ZifRepos *repos, ZifState *state, GError **error)
 				     "failed to get repo state for %s: %s",
 				     zif_store_get_id (ZIF_STORE (store)),
 				     error_local->message);
-			g_ptr_array_set_size (repos->priv->enabled, 0);
 			ret = FALSE;
 			goto out;
-		}
-
-		/* if enabled, add to array */
-		if (ret) {
-			g_ptr_array_add (repos->priv->enabled,
-					 g_object_ref (store));
 		}
 
 		/* this section done */
@@ -505,6 +498,8 @@ zif_repos_get_stores_enabled (ZifRepos *repos,
 	GPtrArray *array = NULL;
 	GError *error_local = NULL;
 	gboolean ret;
+	guint i;
+	ZifStore *store;
 
 	g_return_val_if_fail (ZIF_IS_REPOS (repos), NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
@@ -524,8 +519,14 @@ zif_repos_get_stores_enabled (ZifRepos *repos,
 		}
 	}
 
-	/* make a copy */
-	array = g_ptr_array_ref (repos->priv->enabled);
+	/* add stores that have not been disabled */
+	array = zif_object_array_new ();
+	for (i=0; i<repos->priv->list->len; i++) {
+		store = g_ptr_array_index (repos->priv->list, i);
+		if (zif_store_get_enabled (store)) {
+			zif_object_array_add (array, store);
+		}
+	}
 out:
 	return array;
 }
@@ -614,7 +615,6 @@ static void
 zif_repos_file_monitor_cb (ZifMonitor *monitor, ZifRepos *repos)
 {
 	g_ptr_array_set_size (repos->priv->list, 0);
-	g_ptr_array_set_size (repos->priv->enabled, 0);
 	repos->priv->loaded = FALSE;
 	g_debug ("repo file changed");
 }
@@ -638,7 +638,6 @@ zif_repos_finalize (GObject *object)
 	g_free (repos->priv->repos_dir);
 
 	g_ptr_array_unref (repos->priv->list);
-	g_ptr_array_unref (repos->priv->enabled);
 
 	G_OBJECT_CLASS (zif_repos_parent_class)->finalize (object);
 }
@@ -663,7 +662,6 @@ zif_repos_init (ZifRepos *repos)
 	repos->priv = ZIF_REPOS_GET_PRIVATE (repos);
 	repos->priv->repos_dir = NULL;
 	repos->priv->list = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
-	repos->priv->enabled = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	repos->priv->monitor = zif_monitor_new ();
 	repos->priv->config = zif_config_new ();
 	repos->priv->monitor_changed_id =

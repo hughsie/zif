@@ -2068,6 +2068,9 @@ zif_store_remote_load (ZifStore *store, ZifState *state, GError **error)
 	else
 		remote->priv->enabled = TRUE;
 
+	/* set the runtime enabled state */
+	zif_store_set_enabled (store, remote->priv->enabled);
+
 	/* find the baseurl for this device */
 	if (remote->priv->media_id != NULL) {
 		/* find the root for the media id */
@@ -3892,7 +3895,10 @@ out:
  * @state: A #ZifState to use for progress reporting
  * @error: A #GError, or %NULL
  *
- * Find out if this repository is enabled or not.
+ * Find out if this repository is enabled in the repo file.
+ *
+ * NOTE: the repo can still be runtime disabled by using
+ * zif_store_set_enabled(store, FALSE)
  *
  * Return value: %TRUE or %FALSE
  *

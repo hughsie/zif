@@ -49,6 +49,7 @@ struct _ZifStorePrivate
 	ZifArray		*packages;
 	gboolean		 is_local;
 	gboolean		 loaded;
+	gboolean		 enabled;
 };
 
 G_DEFINE_TYPE (ZifStore, zif_store, G_TYPE_OBJECT)
@@ -1753,6 +1754,41 @@ zif_store_print (ZifStore *store)
 		package = ZIF_PACKAGE (zif_array_index (store->priv->packages, i));
 		zif_package_print (package);
 	}
+}
+
+/**
+ * zif_store_get_enabled:
+ * @store: A #ZifStore
+ *
+ * Gets if the store is enabled at runtime.
+ *
+ * Since: 0.2.2
+ **/
+gboolean
+zif_store_get_enabled (ZifStore *store)
+{
+	g_return_val_if_fail (ZIF_IS_STORE (store), FALSE);
+	return store->priv->enabled;
+}
+
+/**
+ * zif_store_set_enabled:
+ * @store: A #ZifStore
+ * @enabled: The new value
+ *
+ * Sets the store runtime enabled state.
+ *
+ * NOTE: this will not change results if the store has already been
+ * referenced, but will stop the store showing up in the results from
+ * zif_repos_get_stores_enabled().
+ *
+ * Since: 0.2.2
+ **/
+void
+zif_store_set_enabled (ZifStore *store, gboolean enabled)
+{
+	g_return_if_fail (ZIF_IS_STORE (store));
+	store->priv->enabled = enabled;
 }
 
 /**

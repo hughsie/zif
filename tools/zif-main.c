@@ -354,6 +354,7 @@ typedef struct {
 	GPtrArray		*cmd_array;
 	ZifConfig		*config;
 	ZifProgressBar		*progressbar;
+	ZifRepos		*repos;
 	ZifState		*state;
 } ZifCmdPrivate;
 
@@ -4845,6 +4846,40 @@ pk_error_handler_cb (const GError *error, gpointer user_data)
 	return TRUE;
 }
 
+static gboolean
+zif_main_set_stores_runtime_enable (ZifCmdPrivate *priv,
+				    const gchar *repo_str,
+				    gboolean enabled,
+				    GError **error)
+{
+	gboolean ret = TRUE;
+	gchar **repos = NULL;
+	guint i;
+	ZifStoreRemote *store;
+
+	/* no input */
+	if (repo_str == NULL)
+		goto out;
+
+	/* enable or disable each one */
+	repos = g_strsplit (repo_str, ",", -1);
+	for (i=0; repos[i] != NULL; i++) {
+		zif_state_reset (priv->state);
+		store = zif_repos_get_store (priv->repos,
+					     repos[i],
+					     priv->state,
+					     error);
+		if (store == NULL) {
+			ret = FALSE;
+			goto out;
+		}
+		zif_store_set_enabled (ZIF_STORE (store), enabled);
+	}
+out:
+	g_strfreev (repos);
+	return ret;
+}
+
 /**
  * main:
  **/
@@ -4867,6 +4902,8 @@ main (int argc, char *argv[])
 	gchar *http_proxy = NULL;
 	gchar *options_help = NULL;
 	gchar *root = NULL;
+	gchar *enablerepo = NULL;
+	gchar *disablerepo = NULL;
 	GError *error = NULL;
 	gint retval = 0;
 	guint age = 0;
@@ -4903,6 +4940,10 @@ main (int argc, char *argv[])
 			_("Assume yes to all questions"), NULL },
 		{ "assume-no", 'n', 0, G_OPTION_ARG_NONE, &assume_no,
 			_("Assume no to all questions"), NULL },
+		{ "enablerepo", '\0', 0, G_OPTION_ARG_STRING, &enablerepo,
+			_("Enable one or more repositories"), NULL },
+		{ "disablerepo", '\0', 0, G_OPTION_ARG_STRING, &disablerepo,
+			_("Enable one or more repositories"), NULL },
 		{ NULL}
 	};
 
@@ -5067,6 +5108,27 @@ main (int argc, char *argv[])
 		zif_state_set_error_handler (priv->state,
 					     pk_error_handler_cb,
 					     NULL);
+	}
+
+	/* process the repo add and disables */
+	if (enablerepo != NULL ||
+	    disablerepo != NULL) {
+		priv->repos = zif_repos_new ();
+		ret = zif_main_set_stores_runtime_enable (priv,
+							  enablerepo,
+							  TRUE,
+							  &error);
+		if (!ret)
+			goto error;
+		ret = zif_main_set_stores_runtime_enable (priv,
+							  disablerepo,
+							  FALSE,
+							  &error);
+		if (!ret)
+			goto error;
+
+		/* restore progress */
+		zif_state_reset (priv->state);
 	}
 
 	/* for the signal handler */
@@ -5307,6 +5369,7 @@ main (int argc, char *argv[])
 
 	/* run the specified command */
 	ret = zif_cmd_run (priv, argv[1], (gchar**) &argv[2], &error);
+error:
 	zif_progress_bar_end (priv->progressbar);
 	if (!ret) {
 		const gchar *message;
@@ -5486,6 +5549,16 @@ main (int argc, char *argv[])
 				/* TRANSLATORS: error message */
 				message = _("Unhandled metadata error");
 			}
+		} else if (error->domain == ZIF_REPOS_ERROR) {
+			switch (error->code) {
+			case ZIF_REPOS_ERROR_FAILED:
+				/* TRANSLATORS: error message */
+				message = _("Failed");
+				break;
+			default:
+				/* TRANSLATORS: error message */
+				message = _("Unhandled repos error");
+			}
 		} else if (error->domain == 1) {
 			/* local error, already translated */
 			message = NULL;
@@ -5512,6 +5585,8 @@ out:
 			g_object_unref (priv->config);
 		if (priv->state != NULL)
 			g_object_unref (priv->state);
+		if (priv->repos != NULL)
+			g_object_unref (priv->repos);
 		if (priv->cmd_array != NULL)
 			g_ptr_array_unref (priv->cmd_array);
 		g_option_context_free (priv->context);
@@ -5519,6 +5594,8 @@ out:
 	}
 
 	/* free state */
+	g_free (enablerepo);
+	g_free (disablerepo);
 	g_free (root);
 	g_free (cmd_descriptions);
 	g_free (http_proxy);
