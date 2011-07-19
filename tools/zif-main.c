@@ -984,8 +984,6 @@ out:
 		g_ptr_array_unref (array);
 	if (store_array != NULL)
 		g_ptr_array_unref (store_array);
-	if (array != NULL)
-		g_ptr_array_unref (array);
 	return ret;
 }
 
