@@ -95,6 +95,7 @@ typedef enum {
 
 typedef enum {
 	ZIF_MANIFEST_ACTION_INSTALL,
+	ZIF_MANIFEST_ACTION_INSTALL_AS_UPDATE,
 	ZIF_MANIFEST_ACTION_UPDATE,
 	ZIF_MANIFEST_ACTION_REMOVE,
 	ZIF_MANIFEST_ACTION_GET_UPDATES,
@@ -167,6 +168,8 @@ zif_manifest_action_from_string (const gchar *section)
 		return ZIF_MANIFEST_ACTION_INSTALL;
 	if (g_strcmp0 (section, "update") == 0)
 		return ZIF_MANIFEST_ACTION_UPDATE;
+	if (g_strcmp0 (section, "install-as-update") == 0)
+		return ZIF_MANIFEST_ACTION_INSTALL_AS_UPDATE;
 	if (g_strcmp0 (section, "remove") == 0)
 		return ZIF_MANIFEST_ACTION_REMOVE;
 	if (g_strcmp0 (section, "get-updates") == 0)
@@ -281,6 +284,8 @@ zif_manifest_add_package_to_transaction (ZifManifest *manifest,
 		ret = zif_transaction_add_remove (transaction, package, &error_local);
 	else if (action == ZIF_MANIFEST_ACTION_UPDATE)
 		ret = zif_transaction_add_update (transaction, package, &error_local);
+	else if (action == ZIF_MANIFEST_ACTION_INSTALL_AS_UPDATE)
+		ret = zif_transaction_add_install_as_update (transaction, package, &error_local);
 	else
 		g_assert_not_reached ();
 	if (!ret) {
@@ -665,7 +670,8 @@ zif_manifest_check (ZifManifest *manifest,
 					goto out;
 				}
 			} else if (section == ZIF_MANIFEST_SECTION_TRANSACTION) {
-				if (action == ZIF_MANIFEST_ACTION_INSTALL) {
+				if (action == ZIF_MANIFEST_ACTION_INSTALL ||
+				    action == ZIF_MANIFEST_ACTION_INSTALL_AS_UPDATE) {
 					store_hint = remote;
 				} else {
 					store_hint = local;
