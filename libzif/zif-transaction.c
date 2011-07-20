@@ -4427,6 +4427,13 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 	for (i=0; i<priv->remove->len; i++) {
 		item = g_ptr_array_index (priv->remove, i);
 
+		/* not installed (depsolver has gone crazy) */
+		if (!zif_package_is_installed (item->package)) {
+			g_warning ("not adding %s as not installed",
+				   zif_package_get_printable (item->package));
+			continue;
+		}
+
 		/* remove it */
 		hdr = zif_package_local_get_header (ZIF_PACKAGE_LOCAL (item->package));
 		retval = rpmtsAddEraseElement (transaction->priv->ts, hdr, -1);
