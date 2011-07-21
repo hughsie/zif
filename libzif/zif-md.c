@@ -588,6 +588,7 @@ zif_md_load_check_and_get_compressed (ZifMd *md, ZifState *state, GError **error
 	if (!ret) {
 		if (error_local->domain == ZIF_MD_ERROR &&
 		    (error_local->code == ZIF_MD_ERROR_CHECKSUM_INVALID ||
+		     error_local->code == ZIF_MD_ERROR_FILE_TOO_OLD ||
 		     error_local->code == ZIF_MD_ERROR_FILE_NOT_EXISTS)) {
 			g_debug ("ignoring %s and regetting repomd",
 				 error_local->message);
@@ -715,6 +716,7 @@ zif_md_load (ZifMd *md, ZifState *state, GError **error)
 	if (!ret) {
 		if (error_local->domain == ZIF_MD_ERROR &&
 		    (error_local->code == ZIF_MD_ERROR_CHECKSUM_INVALID ||
+		     error_local->code == ZIF_MD_ERROR_FILE_TOO_OLD ||
 		     error_local->code == ZIF_MD_ERROR_FILE_NOT_EXISTS)) {
 			g_debug ("ignoring %s and regetting repomd",
 				 error_local->message);
@@ -1627,6 +1629,64 @@ zif_md_kind_to_text (ZifMdKind type)
 }
 
 /**
+ * zif_md_check_age:
+ **/
+static gboolean
+zif_md_check_age (ZifMd *md, GFile *file, GError **error)
+{
+	gboolean ret = FALSE;
+	GFileInfo *file_info = NULL;
+	GError *error_local = NULL;
+	guint64 modified, age;
+	gchar *filename = NULL;
+
+	/* get file attributes */
+	file_info = g_file_query_info (file,
+				       G_FILE_ATTRIBUTE_TIME_MODIFIED,
+				       G_FILE_QUERY_INFO_NONE,
+				       NULL,
+				       &error_local);
+	if (file_info == NULL) {
+		if (error_local->domain == G_IO_ERROR &&
+		    error_local->code == G_IO_ERROR_NOT_FOUND) {
+			g_set_error (error,
+				     ZIF_MD_ERROR,
+				     ZIF_MD_ERROR_FILE_NOT_EXISTS,
+				     "cannot query information: %s",
+				     error_local->message);
+			g_error_free (error_local);
+		} else {
+			g_propagate_error (error, error_local);
+		}
+		ret = FALSE;
+		goto out;
+	}
+
+	/* check age */
+	modified = g_file_info_get_attribute_uint64 (file_info,
+						     G_FILE_ATTRIBUTE_TIME_MODIFIED);
+	age = time (NULL) - modified;
+	filename = g_file_get_path (file);
+	g_debug ("age of %s is %" G_GUINT64_FORMAT
+		 " hours (max-age is %" G_GUINT64_FORMAT " hours)",
+		   filename, age / (60 * 60), md->priv->max_age / (60 * 60));
+	ret = (md->priv->max_age == 0 || age < md->priv->max_age);
+	if (!ret) {
+		/* the file is too old */
+		g_set_error (error,
+			     ZIF_MD_ERROR,
+			     ZIF_MD_ERROR_FILE_TOO_OLD,
+			     "data is too old: %s", filename);
+		goto out;
+	}
+out:
+	g_free (filename);
+	if (file_info != NULL)
+		g_object_unref (file_info);
+	return ret;
+}
+
+/**
  * zif_md_check_compressed:
  * @md: A #ZifMd
  * @state: A #ZifState to use for progress reporting
@@ -1643,7 +1703,6 @@ zif_md_check_compressed (ZifMd *md, ZifState *state, GError **error)
 {
 	gboolean ret = FALSE;
 	GFile *file = NULL;
-	GFileInfo *file_info = NULL;
 	GError *error_local = NULL;
 	gchar *data = NULL;
 	gchar *checksum = NULL;
@@ -1651,7 +1710,6 @@ zif_md_check_compressed (ZifMd *md, ZifState *state, GError **error)
 	const gchar *checksum_wanted;
 	gsize length;
 	GCancellable *cancellable;
-	guint64 modified, age;
 
 	g_return_val_if_fail (ZIF_IS_MD (md), FALSE);
 	g_return_val_if_fail (zif_state_valid (state), FALSE);
@@ -1705,45 +1763,10 @@ zif_md_check_compressed (ZifMd *md, ZifState *state, GError **error)
 		goto out;
 	}
 
-	/* get file attributes */
-	file_info = g_file_query_info (file,
-				       G_FILE_ATTRIBUTE_TIME_MODIFIED,
-				       G_FILE_QUERY_INFO_NONE,
-				       cancellable,
-				       &error_local);
-	if (file_info == NULL) {
-		if (error_local->domain == G_IO_ERROR &&
-		    error_local->code == G_IO_ERROR_NOT_FOUND) {
-			g_set_error (error,
-				     ZIF_MD_ERROR,
-				     ZIF_MD_ERROR_FILE_NOT_EXISTS,
-				     "cannot query information: %s",
-				     error_local->message);
-			g_error_free (error_local);
-		} else {
-			g_propagate_error (error, error_local);
-		}
-		ret = FALSE;
-		goto out;
-	}
-
 	/* check age */
-	modified = g_file_info_get_attribute_uint64 (file_info,
-						     G_FILE_ATTRIBUTE_TIME_MODIFIED);
-	age = time (NULL) - modified;
-	g_debug ("age of %s is %" G_GUINT64_FORMAT
-		 " hours (max-age is %" G_GUINT64_FORMAT " hours)",
-		   filename, age / (60 * 60), md->priv->max_age / (60 * 60));
-	ret = (md->priv->max_age == 0 || age < md->priv->max_age);
-	if (!ret) {
-		/* the file is too old */
-		g_set_error (error,
-			     ZIF_MD_ERROR,
-			     ZIF_MD_ERROR_FILE_TOO_OLD,
-			     "data is too old: %s", filename);
-		ret = FALSE;
+	ret = zif_md_check_age (md, file, error);
+	if (!ret)
 		goto out;
-	}
 
 	/* set action */
 	zif_state_action_start (state, ZIF_STATE_ACTION_CHECKING, filename);
@@ -1808,8 +1831,6 @@ zif_md_check_compressed (ZifMd *md, ZifState *state, GError **error)
 out:
 	if (file != NULL)
 		g_object_unref (file);
-	if (file_info != NULL)
-		g_object_unref (file_info);
 	g_free (data);
 	g_free (checksum);
 	return ret;
@@ -1889,6 +1910,11 @@ zif_md_check_uncompressed (ZifMd *md, ZifState *state, GError **error)
 		g_error_free (error_local);
 		goto out;
 	}
+
+	/* check age */
+	ret = zif_md_check_age (md, file, error);
+	if (!ret)
+		goto out;
 
 	/* this section done */
 	ret = zif_state_done (state, error);
