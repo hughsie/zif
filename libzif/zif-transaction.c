@@ -837,7 +837,7 @@ zif_transaction_get_package_provide_from_array (GPtrArray *array,
 		goto out;
 	}
 	if (array_tmp->len > 1) {
-		g_warning ("found multiple provides for %s (newest?):",
+		g_warning ("found multiple provides for %s:",
 			   zif_depend_to_string (depend));
 		for (i=0; i<array_tmp->len; i++) {
 			package_tmp = g_ptr_array_index (array_tmp, i);
@@ -1469,6 +1469,15 @@ zif_transaction_resolve_remove_depend (ZifTransactionResolve *data,
 		goto out;
 	}
 skip:
+	/* if we're obsoleting the package we're trying to ignore,
+	 * (which happens as the new package might 'provide' the
+	 * obsoleted package), then skip */
+	if (package_obsolete == item->package) {
+		g_debug ("not removing as provided obsolete: %s",
+			 zif_package_get_id (item->package));
+		goto out;
+	}
+
 	/* make a list of all the packages to revert if this item fails */
 	related_packages = g_ptr_array_new ();
 	g_ptr_array_add (related_packages, item->package);

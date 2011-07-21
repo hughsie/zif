@@ -1,0 +1,33 @@
+# Update an installed package required by another installed package which
+# can be updated.
+
+config
+	archinfo=i386
+
+local
+	system-config-printer;0.3.3-1;i386;meta
+	system-config-printer-udev;0.3.3-1;i386;meta
+		Obsoletes
+			hal-cups-utils <= 0.6.20
+		Provides
+			hal-cups-utils = 0.6.20
+		Requires
+			system-config-printer = 0.3.3
+
+remote
+	system-config-printer;0.3.4-1;i386;meta
+	system-config-printer-udev;0.3.4-1;i386;meta
+		Obsoletes
+			hal-cups-utils <= 0.6.20
+		Provides
+			hal-cups-utils = 0.6.20
+		Requires
+			system-config-printer = 0.3.4
+
+transaction
+	install-as-update
+		system-config-printer
+
+result
+	system-config-printer;0.3.4-1;i386;meta
+	system-config-printer-udev;0.3.4-1;i386;meta
