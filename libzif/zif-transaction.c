@@ -2608,7 +2608,7 @@ static void
 zif_transaction_set_progress (ZifTransaction *transaction, ZifState *state)
 {
 	guint max_items;
-	guint percentage;
+	guint percentage = 100;
 	guint resolved_items;
 
 	/* update implies install *and* remove */
@@ -2622,7 +2622,8 @@ zif_transaction_set_progress (ZifTransaction *transaction, ZifState *state)
 	resolved_items += 2 * zif_transaction_get_array_resolved (transaction->priv->update);
 
 	/* calculate using a rough metric */
-	percentage = resolved_items * 100 / max_items;
+	if (max_items > 0)
+		percentage = resolved_items * 100 / max_items;
 	g_debug ("progress is %i/%i (%i%%)",
 		 resolved_items, max_items, percentage);
 
