@@ -377,8 +377,10 @@ zif_manifest_func (void)
 	array = g_ptr_array_new_with_free_func (g_free);
 	filename = g_dir_read_name (dir);
 	while (filename != NULL) {
-		path = g_build_filename (dirname, filename, NULL);
-		g_ptr_array_add (array, path);
+		if (g_str_has_suffix (filename, ".manifest")) {
+			path = g_build_filename (dirname, filename, NULL);
+			g_ptr_array_add (array, path);
+		}
 		filename = g_dir_read_name (dir);
 	}
 	g_dir_close (dir);
