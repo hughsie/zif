@@ -3046,8 +3046,7 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 out:
 	zif_transaction_show_array ("installing", priv->install);
 	zif_transaction_show_array ("removing", priv->remove);
-	if (data != NULL)
-		g_free (data);
+	g_free (data);
 	return ret;
 }
 

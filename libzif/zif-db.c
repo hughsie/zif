@@ -185,7 +185,7 @@ zif_db_get_string (ZifDb *db, ZifPackage *package, const gchar *key, GError **er
 	gchar *value = NULL;
 
 	g_return_val_if_fail (ZIF_IS_DB (db), NULL);
-	g_return_val_if_fail (ZIF_IS_PACKAGE (package), FALSE);
+	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
 	g_return_val_if_fail (key != NULL, NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
@@ -243,7 +243,7 @@ zif_db_get_keys (ZifDb *db, ZifPackage *package, GError **error)
 	GPtrArray *array = NULL;
 
 	g_return_val_if_fail (ZIF_IS_DB (db), NULL);
-	g_return_val_if_fail (ZIF_IS_PACKAGE (package), FALSE);
+	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* not loaded yet */

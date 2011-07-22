@@ -804,7 +804,7 @@ zif_store_remote_get_update_detail (ZifStoreRemote *store, const gchar *package_
 	ZifUpdate *update_tmp = NULL;
 	ZifUpdate *update = NULL;
 
-	g_return_val_if_fail (zif_state_valid (state), FALSE);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* setup state */
@@ -2570,7 +2570,7 @@ zif_store_remote_resolve (ZifStore *store, gchar **search, ZifState *state, GErr
 
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), NULL);
 	g_return_val_if_fail (remote->priv->id != NULL, NULL);
-	g_return_val_if_fail (zif_state_valid (state), FALSE);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 
 	/* setup state */
 	if (remote->priv->loaded_metadata) {
@@ -2637,7 +2637,7 @@ zif_store_remote_search_name (ZifStore *store, gchar **search, ZifState *state, 
 
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), NULL);
 	g_return_val_if_fail (remote->priv->id != NULL, NULL);
-	g_return_val_if_fail (zif_state_valid (state), FALSE);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 
 	/* setup state */
 	if (remote->priv->loaded_metadata) {
@@ -2704,7 +2704,7 @@ zif_store_remote_search_details (ZifStore *store, gchar **search, ZifState *stat
 
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), NULL);
 	g_return_val_if_fail (remote->priv->id != NULL, NULL);
-	g_return_val_if_fail (zif_state_valid (state), FALSE);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 
 	/* setup state */
 	if (remote->priv->loaded_metadata) {

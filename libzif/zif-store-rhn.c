@@ -293,8 +293,8 @@ zif_store_rhn_get_version (ZifStoreRhn *store, GError **error)
 	GError *error_local = NULL;
 	SoupMessage *msg;
 
-	g_return_val_if_fail (ZIF_IS_STORE_RHN (store), FALSE);
-	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+	g_return_val_if_fail (ZIF_IS_STORE_RHN (store), NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* create request */
 	msg = soup_xmlrpc_request_new (store->priv->server,

@@ -406,7 +406,7 @@ zif_repos_load (ZifRepos *repos, ZifState *state, GError **error)
 		ret = zif_store_remote_get_enabled (store,
 						    state_loop,
 						    &error_local);
-		if (error_local != NULL) {
+		if (!ret) {
 			g_set_error (error,
 				     ZIF_REPOS_ERROR,
 				     ZIF_REPOS_ERROR_FAILED,

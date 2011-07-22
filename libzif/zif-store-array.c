@@ -275,7 +275,7 @@ zif_store_array_repos_search (GPtrArray *store_array, ZifRole role, gpointer sea
 	GError *error_local = NULL;
 	ZifState *state_local = NULL;
 
-	g_return_val_if_fail (zif_state_valid (state), FALSE);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 
 	/* nothing to do */
 	if (store_array->len == 0) {
@@ -386,7 +386,7 @@ zif_store_array_find_package (GPtrArray *store_array, const gchar *package_id, Z
 	GError *error_local = NULL;
 	ZifState *state_local = NULL;
 
-	g_return_val_if_fail (zif_state_valid (state), FALSE);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* nothing to do */

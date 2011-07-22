@@ -1200,6 +1200,7 @@ zif_package_ensure_data (ZifPackage *package, ZifPackageEnsureType type,
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), FALSE);
 	g_return_val_if_fail (zif_state_valid (state), FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+	g_return_val_if_fail (klass != NULL, FALSE);
 
 	/* no support */
 	if (klass->ensure_data == NULL) {

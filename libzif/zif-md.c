@@ -687,6 +687,7 @@ zif_md_load (ZifMd *md, ZifState *state, GError **error)
 	g_return_val_if_fail (ZIF_IS_MD (md), FALSE);
 	g_return_val_if_fail (zif_state_valid (state), FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+	g_return_val_if_fail (klass != NULL, FALSE);
 
 	/* no support */
 	if (klass->load == NULL) {
@@ -792,6 +793,7 @@ zif_md_unload (ZifMd *md, ZifState *state, GError **error)
 	g_return_val_if_fail (ZIF_IS_MD (md), FALSE);
 	g_return_val_if_fail (zif_state_valid (state), FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+	g_return_val_if_fail (klass != NULL, FALSE);
 
 	/* no support */
 	if (klass->unload == NULL) {
@@ -828,6 +830,7 @@ zif_md_resolve (ZifMd *md, gchar **search, ZifState *state, GError **error)
 	g_return_val_if_fail (ZIF_IS_MD (md), NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+	g_return_val_if_fail (klass != NULL, NULL);
 
 	/* no support */
 	if (klass->resolve == NULL) {
@@ -868,6 +871,7 @@ zif_md_search_file (ZifMd *md, gchar **search, ZifState *state, GError **error)
 	g_return_val_if_fail (ZIF_IS_MD (md), NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+	g_return_val_if_fail (klass != NULL, NULL);
 
 	/* no support */
 	if (klass->search_file == NULL) {
@@ -907,6 +911,7 @@ zif_md_search_name (ZifMd *md, gchar **search, ZifState *state, GError **error)
 	g_return_val_if_fail (ZIF_IS_MD (md), NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+	g_return_val_if_fail (klass != NULL, NULL);
 
 	/* no support */
 	if (klass->search_name == NULL) {
@@ -946,6 +951,7 @@ zif_md_search_details (ZifMd *md, gchar **search, ZifState *state, GError **erro
 	g_return_val_if_fail (ZIF_IS_MD (md), NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+	g_return_val_if_fail (klass != NULL, NULL);
 
 	/* no support */
 	if (klass->search_details == NULL) {
@@ -985,6 +991,7 @@ zif_md_search_group (ZifMd *md, gchar **search, ZifState *state, GError **error)
 	g_return_val_if_fail (ZIF_IS_MD (md), NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+	g_return_val_if_fail (klass != NULL, NULL);
 
 	/* no support */
 	if (klass->search_group == NULL) {
@@ -1024,6 +1031,7 @@ zif_md_search_pkgid (ZifMd *md, gchar **search, ZifState *state, GError **error)
 	g_return_val_if_fail (ZIF_IS_MD (md), NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+	g_return_val_if_fail (klass != NULL, NULL);
 
 	/* no support */
 	if (klass->search_pkgid == NULL) {
@@ -1065,6 +1073,7 @@ zif_md_what_provides (ZifMd *md, GPtrArray *depends,
 	g_return_val_if_fail (depends != NULL, NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+	g_return_val_if_fail (klass != NULL, NULL);
 
 	/* no support */
 	if (klass->what_provides == NULL) {
@@ -1106,6 +1115,7 @@ zif_md_what_requires (ZifMd *md, GPtrArray *depends,
 	g_return_val_if_fail (depends != NULL, NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+	g_return_val_if_fail (klass != NULL, NULL);
 
 	/* no support */
 	if (klass->what_provides == NULL) {
@@ -1147,6 +1157,7 @@ zif_md_what_obsoletes (ZifMd *md, GPtrArray *depends,
 	g_return_val_if_fail (depends != NULL, NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+	g_return_val_if_fail (klass != NULL, NULL);
 
 	/* no support */
 	if (klass->what_obsoletes == NULL) {
@@ -1188,6 +1199,7 @@ zif_md_what_conflicts (ZifMd *md, GPtrArray *depends,
 	g_return_val_if_fail (depends != NULL, NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+	g_return_val_if_fail (klass != NULL, NULL);
 
 	/* no support */
 	if (klass->what_conflicts == NULL) {
@@ -1227,6 +1239,7 @@ zif_md_find_package (ZifMd *md, const gchar *package_id, ZifState *state, GError
 	g_return_val_if_fail (ZIF_IS_MD (md), NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+	g_return_val_if_fail (klass != NULL, NULL);
 
 	/* no support */
 	if (klass->find_package == NULL) {
@@ -1266,6 +1279,7 @@ zif_md_get_changelog (ZifMd *md, const gchar *pkgid, ZifState *state, GError **e
 	g_return_val_if_fail (ZIF_IS_MD (md), NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+	g_return_val_if_fail (klass != NULL, NULL);
 
 	/* no support */
 	if (klass->get_changelog == NULL) {
@@ -1305,6 +1319,7 @@ zif_md_get_files (ZifMd *md, ZifPackage *package, ZifState *state, GError **erro
 	g_return_val_if_fail (ZIF_IS_MD (md), NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+	g_return_val_if_fail (klass != NULL, NULL);
 
 	/* no support */
 	if (klass->get_files == NULL) {
@@ -1344,6 +1359,7 @@ zif_md_get_provides (ZifMd *md, ZifPackage *package, ZifState *state, GError **e
 	g_return_val_if_fail (ZIF_IS_MD (md), NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+	g_return_val_if_fail (klass != NULL, NULL);
 
 	/* no support */
 	if (klass->get_provides == NULL) {
@@ -1383,6 +1399,7 @@ zif_md_get_requires (ZifMd *md, ZifPackage *package, ZifState *state, GError **e
 	g_return_val_if_fail (ZIF_IS_MD (md), NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+	g_return_val_if_fail (klass != NULL, NULL);
 
 	/* no support */
 	if (klass->get_requires == NULL) {
@@ -1422,6 +1439,7 @@ zif_md_get_obsoletes (ZifMd *md, ZifPackage *package, ZifState *state, GError **
 	g_return_val_if_fail (ZIF_IS_MD (md), NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+	g_return_val_if_fail (klass != NULL, NULL);
 
 	/* no support */
 	if (klass->get_obsoletes == NULL) {
@@ -1461,6 +1479,7 @@ zif_md_get_conflicts (ZifMd *md, ZifPackage *package, ZifState *state, GError **
 	g_return_val_if_fail (ZIF_IS_MD (md), NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+	g_return_val_if_fail (klass != NULL, NULL);
 
 	/* no support */
 	if (klass->get_conflicts == NULL) {
@@ -1499,6 +1518,7 @@ zif_md_get_packages (ZifMd *md, ZifState *state, GError **error)
 	g_return_val_if_fail (ZIF_IS_MD (md), NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+	g_return_val_if_fail (klass != NULL, NULL);
 
 	/* no support */
 	if (klass->get_packages == NULL) {

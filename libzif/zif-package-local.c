@@ -745,7 +745,7 @@ out:
 const gchar *
 zif_package_local_get_key_id (ZifPackageLocal *pkg)
 {
-	g_return_val_if_fail (ZIF_IS_PACKAGE_LOCAL (pkg), FALSE);
+	g_return_val_if_fail (ZIF_IS_PACKAGE_LOCAL (pkg), NULL);
 
 	/* cached copy */
 	if (pkg->priv->key_id != NULL)
