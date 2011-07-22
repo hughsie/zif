@@ -166,6 +166,7 @@ zif_repos_get_for_filename (ZifRepos *repos,
 	gboolean ret;
 	gchar *path;
 	guint i;
+	gsize groups_length;
 
 	g_return_val_if_fail (zif_state_valid (state), FALSE);
 
@@ -188,10 +189,12 @@ zif_repos_get_for_filename (ZifRepos *repos,
 	}
 
 	/* for each group, add a store object */
-	repos_groups = g_key_file_get_groups (file, NULL);
+	repos_groups = g_key_file_get_groups (file, &groups_length);
+	if (groups_length == 0)
+		goto out;
 
 	/* set number of stores */
-	zif_state_set_number_steps (state, g_strv_length (repos_groups));
+	zif_state_set_number_steps (state, groups_length);
 
 	/* create each repo */
 	for (i=0; repos_groups[i] != NULL; i++) {
