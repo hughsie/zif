@@ -807,6 +807,17 @@ out:
 	return ret;
 }
 
+#if !GLIB_CHECK_VERSION(2,28,0)
+#include <sys/time.h>
+static gint64
+_g_get_real_time (void)
+{
+	struct timeval tv;
+	gettimeofday (&tv, NULL);
+	return (tv.tv_sec * G_USEC_PER_SEC) + tv.tv_usec;
+}
+#endif
+
 /**
  * zif_download_location_full:
  * @download: A #ZifDownload
@@ -856,7 +867,11 @@ zif_download_file_full (ZifDownload *download,
 		/* set the file mtime */
 		ret = g_file_set_attribute_uint64 (file,
 						   G_FILE_ATTRIBUTE_TIME_MODIFIED,
+#if GLIB_CHECK_VERSION(2,28,0)
 						   g_get_real_time () / G_USEC_PER_SEC,
+#else
+						   _g_get_real_time () / G_USEC_PER_SEC,
+#endif
 						   G_FILE_QUERY_INFO_NONE,
 						   cancellable,
 						   error);
