@@ -453,21 +453,21 @@ zif_package_rhn_precache (ZifPackageRhn *rhn,
 	gboolean ret = TRUE;
 
 	/* get details */
-	if ((precache & ZIF_PACKAGE_RHN_PRECACHE_GET_DETAILS) > 1) {
+	if ((precache & ZIF_PACKAGE_RHN_PRECACHE_GET_DETAILS) > 0) {
 		ret = zif_package_rhn_get_details (rhn, NULL, error);
 		if (!ret)
 			goto out;
 	}
 
 	/* list files */
-	if ((precache & ZIF_PACKAGE_RHN_PRECACHE_LIST_FILES) > 1) {
+	if ((precache & ZIF_PACKAGE_RHN_PRECACHE_LIST_FILES) > 0) {
 		ret = zif_package_rhn_list_files (rhn, NULL, error);
 		if (!ret)
 			goto out;
 	}
 
 	/* list deps */
-	if ((precache & ZIF_PACKAGE_RHN_PRECACHE_LIST_DEPS) > 1) {
+	if ((precache & ZIF_PACKAGE_RHN_PRECACHE_LIST_DEPS) > 0) {
 		ret = zif_package_rhn_list_deps (rhn, NULL, error);
 		if (!ret)
 			goto out;

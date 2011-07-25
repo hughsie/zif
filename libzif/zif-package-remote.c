@@ -215,7 +215,6 @@ zif_package_remote_download (ZifPackageRemote *pkg,
 			     GError **error)
 {
 	gboolean ret = FALSE;
-	ZifStoreRemote *store_remote = NULL;
 	GError *error_local = NULL;
 	ZifState *state_local = NULL;
 	const gchar *filename;
@@ -300,8 +299,6 @@ zif_package_remote_download (ZifPackageRemote *pkg,
 		goto out;
 out:
 	g_free (directory_new);
-	if (store_remote != NULL)
-		g_object_unref (store_remote);
 	return ret;
 }
 

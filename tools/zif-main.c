@@ -648,7 +648,6 @@ static gboolean
 zif_cmd_find_package (ZifCmdPrivate *priv, gchar **values, GError **error)
 {
 	gboolean ret = FALSE;
-	GPtrArray *array = NULL;
 	GPtrArray *store_array = NULL;
 	ZifPackage *package = NULL;
 	ZifState *state_local;
@@ -724,8 +723,6 @@ out:
 		g_object_unref (package);
 	if (store_array != NULL)
 		g_ptr_array_unref (store_array);
-	if (array != NULL)
-		g_ptr_array_unref (array);
 	return ret;
 }
 
@@ -1452,7 +1449,6 @@ zif_cmd_get_updates (ZifCmdPrivate *priv, gchar **values, GError **error)
 {
 	gboolean ret = FALSE;
 	GPtrArray *array = NULL;
-	ZifTransaction *transaction = NULL;
 
 	/* TRANSLATORS: getting the list of packages that can be updated */
 	zif_progress_bar_start (priv->progressbar, _("Getting updates"));
@@ -1462,51 +1458,12 @@ zif_cmd_get_updates (ZifCmdPrivate *priv, gchar **values, GError **error)
 	if (array == NULL)
 		goto out;
 
-#if 0
-	/* setup transaction */
-	transaction = zif_transaction_new ();
-	store_local = zif_store_local_new ();
-	zif_transaction_set_store_local (transaction, store_local);
-	zif_transaction_set_stores_remote (transaction, store_array);
-
-	/* add each package as an update */
-	g_debug ("adding %i packages", array->len);
-	for (i=0; i<array->len; i++) {
-		package = g_ptr_array_index (array, i);
-		ret = zif_transaction_add_update (transaction, package, error);
-		if (!ret)
-			goto out;
-	}
-
-	/* are we running super verbose? */
-	zif_transaction_set_verbose (transaction,
-				     g_getenv ("ZIF_DEPSOLVE_DEBUG") != NULL);
-
-	/* this section done */
-	ret = zif_state_done (priv->state, error);
-	if (!ret)
-		goto out;
-
-	/* resolve */
-	state_local = zif_state_get_child (priv->state);
-	ret = zif_transaction_resolve (transaction, state_local, error);
-	if (!ret)
-		goto out;
-
-	/* this section done */
-	ret = zif_state_done (priv->state, error);
-	if (!ret)
-		goto out;
-#else
 	zif_progress_bar_end (priv->progressbar);
 	zif_print_packages (array);
-#endif
 
 	/* success */
 	ret = TRUE;
 out:
-	if (transaction != NULL)
-		g_object_unref (transaction);
 	if (array != NULL)
 		g_ptr_array_unref (array);
 	return ret;
@@ -1905,7 +1862,6 @@ zif_cmd_install (ZifCmdPrivate *priv, gchar **values, GError **error)
 	GError *error_local = NULL;
 	GPtrArray *array = NULL;
 	GPtrArray *store_array_local = NULL;
-	GPtrArray *store_array = NULL;
 	GPtrArray *store_array_remote = NULL;
 	guint i;
 	ZifPackage *package;
@@ -2036,10 +1992,6 @@ zif_cmd_install (ZifCmdPrivate *priv, gchar **values, GError **error)
 	if (!ret)
 		goto out;
 
-	g_ptr_array_unref (store_array_local);
-	if (store_array_remote != NULL)
-		g_ptr_array_unref (store_array_remote);
-
 	zif_progress_bar_end (priv->progressbar);
 
 	/* success */
@@ -2047,8 +1999,10 @@ zif_cmd_install (ZifCmdPrivate *priv, gchar **values, GError **error)
 out:
 	if (transaction != NULL)
 		g_object_unref (transaction);
-	if (store_array != NULL)
-		g_ptr_array_unref (store_array);
+	if (store_array_local != NULL)
+		g_ptr_array_unref (store_array_local);
+	if (store_array_remote != NULL)
+		g_ptr_array_unref (store_array_remote);
 	if (array != NULL)
 		g_ptr_array_unref (array);
 	return ret;
@@ -2500,7 +2454,6 @@ zif_cmd_repo_disable (ZifCmdPrivate *priv, gchar **values, GError **error)
 {
 	gboolean ret = FALSE;
 	GPtrArray *array = NULL;
-	GPtrArray *store_array = NULL;
 	ZifState *state_local;
 	ZifStoreRemote *store_remote = NULL;
 	ZifRepos *repos;
@@ -2560,8 +2513,6 @@ out:
 	g_object_unref (repos);
 	if (store_remote)
 		g_object_unref (store_remote);
-	if (store_array != NULL)
-		g_ptr_array_unref (store_array);
 	if (array != NULL)
 		g_ptr_array_unref (array);
 	return ret;
@@ -2574,8 +2525,6 @@ static gboolean
 zif_cmd_repo_enable (ZifCmdPrivate *priv, gchar **values, GError **error)
 {
 	gboolean ret = FALSE;
-	GPtrArray *array = NULL;
-	GPtrArray *store_array = NULL;
 	ZifRepos *repos;
 	ZifState *state_local;
 	ZifStoreRemote *store_remote = NULL;
@@ -2630,10 +2579,6 @@ out:
 	g_object_unref (repos);
 	if (store_remote)
 		g_object_unref (store_remote);
-	if (store_array != NULL)
-		g_ptr_array_unref (store_array);
-	if (array != NULL)
-		g_ptr_array_unref (array);
 	return ret;
 }
 
@@ -3329,7 +3274,6 @@ zif_cmd_update (ZifCmdPrivate *priv, gchar **values, GError **error)
 {
 	gboolean ret = FALSE;
 	GPtrArray *array = NULL;
-	GPtrArray *store_array_local = NULL;
 	GPtrArray *store_array = NULL;
 	guint i;
 	ZifPackage *package;
@@ -3356,9 +3300,9 @@ zif_cmd_update (ZifCmdPrivate *priv, gchar **values, GError **error)
 		goto out;
 
 	/* add local store */
-	store_array_local = zif_store_array_new ();
+	store_array = zif_store_array_new ();
 	state_local = zif_state_get_child (priv->state);
-	ret = zif_store_array_add_local (store_array_local, state_local, error);
+	ret = zif_store_array_add_local (store_array, state_local, error);
 	if (!ret)
 		goto out;
 
@@ -3369,7 +3313,7 @@ zif_cmd_update (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 	/* check not already installed */
 	state_local = zif_state_get_child (priv->state);
-	array = zif_store_array_resolve (store_array_local, values, state_local, error);
+	array = zif_store_array_resolve (store_array, values, state_local, error);
 	if (array == NULL) {
 		ret = FALSE;
 		goto out;
@@ -3415,17 +3359,15 @@ zif_cmd_update (ZifCmdPrivate *priv, gchar **values, GError **error)
 	if (!ret)
 		goto out;
 
-	g_ptr_array_unref (store_array_local);
-
 	zif_progress_bar_end (priv->progressbar);
 
 	/* success */
 	ret = TRUE;
 out:
-	if (transaction != NULL)
-		g_object_unref (transaction);
 	if (store_array != NULL)
 		g_ptr_array_unref (store_array);
+	if (transaction != NULL)
+		g_object_unref (transaction);
 	if (array != NULL)
 		g_ptr_array_unref (array);
 	return ret;
@@ -4017,7 +3959,6 @@ zif_cmd_what_requires (ZifCmdPrivate *priv, gchar **values, GError **error)
 	GPtrArray *array = NULL;
 	GPtrArray *store_array = NULL;
 	GPtrArray *depend_array = NULL;
-	ZifDepend *depend = NULL;
 	ZifState *state_local;
 
 	/* check we have a value */
@@ -4043,7 +3984,9 @@ zif_cmd_what_requires (ZifCmdPrivate *priv, gchar **values, GError **error)
 	/* add both local and remote packages */
 	store_array = zif_store_array_new ();
 	state_local = zif_state_get_child (priv->state);
-	ret = zif_store_array_add_local (store_array, state_local, error);
+	ret = zif_store_array_add_local (store_array,
+					 state_local,
+					 error);
 	if (!ret)
 		goto out;
 
@@ -4053,7 +3996,9 @@ zif_cmd_what_requires (ZifCmdPrivate *priv, gchar **values, GError **error)
 		goto out;
 
 	state_local = zif_state_get_child (priv->state);
-	ret = zif_store_array_add_remote_enabled (store_array, state_local, error);
+	ret = zif_store_array_add_remote_enabled (store_array,
+						  state_local,
+						  error);
 	if (!ret)
 		goto out;
 
@@ -4069,7 +4014,10 @@ zif_cmd_what_requires (ZifCmdPrivate *priv, gchar **values, GError **error)
 		goto out;
 	}
 	state_local = zif_state_get_child (priv->state);
-	array = zif_store_array_what_requires (store_array, depend_array, state_local, error);
+	array = zif_store_array_what_requires (store_array,
+					       depend_array,
+					       state_local,
+					       error);
 	if (array == NULL) {
 		ret = FALSE;
 		goto out;
@@ -4083,8 +4031,6 @@ zif_cmd_what_requires (ZifCmdPrivate *priv, gchar **values, GError **error)
 	zif_progress_bar_end (priv->progressbar);
 	zif_print_packages (array);
 out:
-	if (depend != NULL)
-		g_object_unref (depend);
 	if (store_array != NULL)
 		g_ptr_array_unref (store_array);
 	if (array != NULL)

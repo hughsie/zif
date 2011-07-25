@@ -607,7 +607,9 @@ zif_db_remove_all (ZifDb *db, ZifPackage *package, GError **error)
 
 		/* delete, ignoring error */
 		g_debug ("deleting %s from %s", filename, index_dir);
-		g_file_delete (file_tmp, NULL, NULL);
+		ret = g_file_delete (file_tmp, NULL, NULL);
+		if (!ret)
+			g_debug ("failed to delete %s", filename);
 		g_object_unref (file_tmp);
 		g_free (index_file);
 		filename = g_dir_read_name (dir);

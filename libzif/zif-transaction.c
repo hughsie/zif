@@ -1421,7 +1421,6 @@ zif_transaction_resolve_remove_depend (ZifTransactionResolve *data,
 {
 	gboolean ret = TRUE;
 	ZifPackage *package_obsolete = NULL;
-	GPtrArray *already_installed = NULL;
 	GPtrArray *related_packages = NULL;
 	GPtrArray *packages = NULL;
 
@@ -1493,8 +1492,6 @@ skip:
 out:
 	if (packages != NULL)
 		g_ptr_array_unref (packages);
-	if (already_installed != NULL)
-		g_ptr_array_unref (already_installed);
 	if (related_packages != NULL)
 		g_ptr_array_unref (related_packages);
 	if (package_obsolete != NULL)
@@ -3046,6 +3043,7 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 out:
 	zif_transaction_show_array ("installing", priv->install);
 	zif_transaction_show_array ("removing", priv->remove);
+	g_object_unref (data->post_resolve_package_array);
 	g_free (data);
 	return ret;
 }
