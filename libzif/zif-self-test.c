@@ -1898,6 +1898,7 @@ zif_package_local_func (void)
 	ret = zif_package_local_set_from_filename (ZIF_PACKAGE_LOCAL (pkg), filename, &error);
 	g_assert_no_error (error);
 	g_assert (ret);
+	g_assert (!zif_package_is_installed (pkg));
 	g_free (filename);
 
 	/* test getting the keys from an unsigned package */
@@ -2866,6 +2867,7 @@ zif_store_local_func (void)
 
 	/* get this package */
 	package = g_ptr_array_index (array, 0);
+	g_assert (zif_package_is_installed (package));
 
 	package_id = zif_package_get_id (package);
 	split = zif_package_id_split (package_id);

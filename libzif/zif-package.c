@@ -431,7 +431,6 @@ gboolean
 zif_package_is_installed (ZifPackage *package)
 {
 	g_return_val_if_fail (ZIF_IS_PACKAGE (package), FALSE);
-	g_return_val_if_fail (package->priv->package_id_split != NULL, FALSE);
 	return package->priv->installed;
 }
 

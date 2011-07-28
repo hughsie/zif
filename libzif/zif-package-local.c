@@ -510,6 +510,7 @@ zif_package_local_set_from_header (ZifPackageLocal *pkg,
 	const gchar *origin = NULL;
 	const gchar *release = NULL;
 	const gchar *version = NULL;
+	gboolean installed;
 	gboolean ret = FALSE;
 	gchar *from_repo = NULL;
 	gchar *origin_encoded = NULL;
@@ -524,8 +525,6 @@ zif_package_local_set_from_header (ZifPackageLocal *pkg,
 	g_return_val_if_fail (ZIF_IS_PACKAGE_LOCAL (pkg), FALSE);
 	g_return_val_if_fail (header != NULL, FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
-
-	zif_package_set_installed (ZIF_PACKAGE (pkg), TRUE);
 
 	/* save header so we can read when required */
 	pkg->priv->header = headerLink (header);
@@ -551,8 +550,11 @@ zif_package_local_set_from_header (ZifPackageLocal *pkg,
 	}
 	zif_package_set_pkgid (ZIF_PACKAGE (pkg), pkgid);
 
+	/* non-installed ZifPackageLocal objects are local files */
+	installed = zif_package_is_installed (ZIF_PACKAGE (pkg));
+
 	/* origin may be blank if the user is using yumdb rather than librpm */
-	if (origin != NULL) {
+	if (installed && origin != NULL) {
 		g_debug ("simple case, origin set as %s", origin);
 		package_id = zif_package_id_from_nevra (name,
 							epoch,
@@ -561,7 +563,7 @@ zif_package_local_set_from_header (ZifPackageLocal *pkg,
 							arch,
 							origin);
 
-	} else if ((flags & ZIF_PACKAGE_LOCAL_FLAG_LOOKUP) > 0) {
+	} else if (installed && (flags & ZIF_PACKAGE_LOCAL_FLAG_LOOKUP) > 0) {
 
 		/* create a dummy package we can use with ZifDb */
 		package_tmp = zif_package_new ();
@@ -625,7 +627,7 @@ zif_package_local_set_from_header (ZifPackageLocal *pkg,
 							version,
 							release,
 							arch,
-							"installed");
+							installed ? "installed" : "local");
 	}
 
 	/* set id */

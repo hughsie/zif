@@ -264,6 +264,7 @@ zif_store_local_load (ZifStore *store, ZifState *state, GError **error)
 		if (header == NULL)
 			break;
 		package = zif_package_local_new ();
+		zif_package_set_installed (package, TRUE);
 		ret = zif_package_local_set_from_header (ZIF_PACKAGE_LOCAL (package),
 							 header,
 							 flags,
