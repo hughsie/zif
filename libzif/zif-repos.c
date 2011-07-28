@@ -401,16 +401,16 @@ zif_repos_load (ZifRepos *repos, ZifState *state, GError **error)
 	for (i=0; i<repos->priv->list->len; i++) {
 		store = g_ptr_array_index (repos->priv->list, i);
 
-		/* get repo enabled state */
+		/* load, which sets the repo enabled state */
 		state_loop = zif_state_get_child (state_local);
-		ret = zif_store_remote_get_enabled (store,
-						    state_loop,
-						    &error_local);
+		ret = zif_store_load (ZIF_STORE (store),
+				      state_loop,
+				      &error_local);
 		if (!ret) {
 			g_set_error (error,
 				     ZIF_REPOS_ERROR,
 				     ZIF_REPOS_ERROR_FAILED,
-				     "failed to get repo state for %s: %s",
+				     "failed to get load repo %s: %s",
 				     zif_store_get_id (ZIF_STORE (store)),
 				     error_local->message);
 			ret = FALSE;
