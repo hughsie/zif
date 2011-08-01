@@ -1,3 +1,25 @@
+Version 0.2.2
+~~~~~~~~~~~~~
+Released: 2011-08-01
+
+New Features:
+ - Add a runtime interface for enabling and disabling repos
+ - Add 'install-as-update' command to the manifest file format
+ - Generate a xz tarball by default
+ - Reset the file modification date if we skip the download because the checksum matched
+ - Store arrays of ZifPackages when resolving to simplify things
+
+Bugfixes:
+ - Do not attempt to remove packages we want to remove if they obsolete *and* provide a depend
+ - Do not print a critical warning for an empty .repo file
+ - Ensure that local packages are not marked as installed
+ - Ensure we check the age of the uncompressed file when loading the metadata item
+ - Ensure we don't skip a valid-looking repomd.xml when we want to refresh it
+ - Fix a crash in the zif command line tool when getting the deps list
+ - Fix a potential division-by-zero in zif_transaction_set_progress()
+ - Fix a typo that could mean the metalink file was not re-downloaded in some cases
+ - Replace zif_md_file_check() with two seporate methods with sane semantics
+
 Version 0.2.1
 ~~~~~~~~~~~~~
 Released: 2011-07-04
