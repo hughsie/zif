@@ -3155,6 +3155,7 @@ zif_store_remote_func (void)
 	g_assert (ret);
 
 	/* set the repomd.xml to junk */
+	g_mkdir_with_parents ("../data/tests/corrupt-repomd", 0777);
 	ret = g_file_set_contents ("../data/tests/corrupt-repomd/repomd.xml",
 				   "<html><body><pre>invalid</pre></body></html>",
 				   -1, &error);
