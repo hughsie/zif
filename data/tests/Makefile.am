@@ -19,7 +19,6 @@ EXTRA_DIST =							\
 	fedora/other.sqlite.bz2					\
 	fedora/prestodelta.xml.gz				\
 	fedora/primary.xml.gz					\
-	fedora/updateinfo.xml					\
 	${NULL}
 
 CLEANFILES =	\
