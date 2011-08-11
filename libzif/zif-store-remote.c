@@ -1237,6 +1237,7 @@ zif_store_remote_get_repomd (ZifStoreRemote *store,
 					      NULL, /* checksum */
 					      state_local,
 					      &error_local);
+		g_free (tmp);
 		if (!ret) {
 			g_set_error (error,
 				     ZIF_STORE_ERROR,

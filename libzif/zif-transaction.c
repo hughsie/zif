@@ -1645,7 +1645,7 @@ skip_resolve:
 		for (i=0; i<requires->len; i++) {
 			depend = g_ptr_array_index (requires, i);
 			g_debug ("%i\t%s", i+1,
-				 zif_depend_to_string (depend));
+				 zif_depend_get_description (depend));
 		}
 	}
 
@@ -1681,7 +1681,7 @@ skip_resolve:
 		for (i=0; i<obsoletes->len; i++) {
 			depend = g_ptr_array_index (obsoletes, i);
 			g_debug ("%i\t%s", i+1,
-				 zif_depend_to_string (depend));
+				 zif_depend_get_description (depend));
 		}
 	}
 
