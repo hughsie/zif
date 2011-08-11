@@ -1118,6 +1118,133 @@ out:
 	return ret;
 }
 
+/**
+ * zif_cmd_get_provides:
+ **/
+static gboolean
+zif_cmd_get_provides (ZifCmdPrivate *priv, gchar **values, GError **error)
+{
+	gboolean ret = FALSE;
+	GPtrArray *array = NULL;
+	GPtrArray *depends = NULL;
+	GPtrArray *store_array = NULL;
+	guint i, j;
+	ZifPackage *package;
+	ZifDepend *depend;
+	ZifState *state_local;
+	ZifState *state_loop;
+
+	/* TRANSLATORS: getting the depends of a package */
+	zif_progress_bar_start (priv->progressbar, _("Getting depends"));
+
+	/* setup state with the correct number of steps */
+	ret = zif_state_set_steps (priv->state,
+				   error,
+				   25,
+				   25,
+				   25,
+				   25,
+				   -1);
+	if (!ret)
+		goto out;
+
+	/* add both local and remote packages */
+	store_array = zif_store_array_new ();
+	state_local = zif_state_get_child (priv->state);
+	ret = zif_store_array_add_local (store_array, state_local, error);
+	if (!ret)
+		goto out;
+
+	/* this section done */
+	ret = zif_state_done (priv->state, error);
+	if (!ret)
+		goto out;
+
+	state_local = zif_state_get_child (priv->state);
+	ret = zif_store_array_add_remote_enabled (store_array, state_local, error);
+	if (!ret)
+		goto out;
+
+	/* this section done */
+	ret = zif_state_done (priv->state, error);
+	if (!ret)
+		goto out;
+
+	/* check we have a value */
+	if (values == NULL || values[0] == NULL) {
+		/* TRANSLATORS: error message: A user did not specify
+		 * a required value */
+		g_set_error_literal (error, 1, 0,
+				     _("Specify a package name"));
+		goto out;
+	}
+	state_local = zif_state_get_child (priv->state);
+	array = zif_store_array_resolve (store_array, values, state_local, error);
+	if (array == NULL) {
+		ret = FALSE;
+		goto out;
+	}
+
+	/* filter the results in a sane way */
+	ret = zif_filter_post_resolve (priv, array, error);
+	if (!ret)
+		goto out;
+
+	/* this section done */
+	ret = zif_state_done (priv->state, error);
+	if (!ret)
+		goto out;
+
+	if (array->len == 0) {
+		/* TRANSLATORS: error message: nothing was found */
+		g_set_error_literal (error, 1, 0,
+				     _("No package was found"));
+		goto out;
+	}
+
+	state_local = zif_state_get_child (priv->state);
+	zif_state_set_number_steps (state_local, array->len);
+
+	for (i=0; i<array->len; i++) {
+		package = g_ptr_array_index (array, i);
+
+		state_loop = zif_state_get_child (state_local);
+		depends = zif_package_get_provides (package, state_loop, error);
+		if (depends == NULL) {
+			ret = FALSE;
+			goto out;
+		}
+
+		zif_progress_bar_end (priv->progressbar);
+		for (j=0; j<depends->len; j++) {
+			depend = g_ptr_array_index (depends, j);
+			if (g_str_has_prefix (zif_depend_get_name (depend), "/"))
+				continue;
+			g_print ("%s\n", zif_depend_get_description (depend));
+		}
+
+		g_ptr_array_unref (depends);
+		/* this section done */
+		ret = zif_state_done (state_local, error);
+		if (!ret)
+			goto out;
+	}
+
+	/* this section done */
+	ret = zif_state_done (priv->state, error);
+	if (!ret)
+		goto out;
+
+	/* success */
+	ret = TRUE;
+out:
+	if (store_array != NULL)
+		g_ptr_array_unref (store_array);
+	if (array != NULL)
+		g_ptr_array_unref (array);
+	return ret;
+}
+
 /*
  * zif_sort_indirect_strcmp_cb:
  */
@@ -5295,6 +5422,11 @@ main (int argc, char *argv[])
 		     /* TRANSLATORS: command description */
 		     _("List values from the installed package database"),
 		     zif_cmd_db_list);
+	zif_cmd_add (priv->cmd_array,
+		     "get-provides",
+		     /* TRANSLATORS: command description */
+		     _("Gets the provides for a given package"),
+		     zif_cmd_get_provides);
 
 	/* sort by command name */
 	g_ptr_array_sort (priv->cmd_array,
