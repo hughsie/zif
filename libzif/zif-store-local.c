@@ -181,7 +181,6 @@ zif_store_local_load (ZifStore *store, ZifState *state, GError **error)
 	ZifPackageLocalFlags flags = 0;
 	ZifPackage *package;
 	ZifStoreLocal *local = ZIF_STORE_LOCAL (store);
-	const gchar *tmp;
 	ZifPackageCompareMode compare_mode;
 
 	g_return_val_if_fail (ZIF_IS_STORE_LOCAL (store), FALSE);
@@ -234,14 +233,14 @@ zif_store_local_load (ZifStore *store, ZifState *state, GError **error)
 //	flags += ZIF_PACKAGE_LOCAL_FLAG_REPAIR;
 
 	/* get the compare mode */
-	tmp = zif_config_get_string (local->priv->config,
-				     "pkg_compare_mode",
-				     error);
-	if (tmp == NULL) {
+	compare_mode = zif_config_get_enum (local->priv->config,
+					    "pkg_compare_mode",
+					    zif_package_compare_mode_from_string,
+					    error);
+	if (compare_mode == G_MAXUINT) {
 		ret = FALSE;
 		goto out;
 	}
-	compare_mode = zif_package_compare_mode_from_string (tmp);
 
 	/* get list */
 	ts = rpmtsCreate ();

@@ -176,7 +176,6 @@ static GPtrArray *
 zif_md_primary_sql_search (ZifMdPrimarySql *md, const gchar *statement,
 			   ZifState *state, GError **error)
 {
-	const gchar *tmp;
 	gchar *error_msg = NULL;
 	gint rc;
 	gboolean ret;
@@ -200,19 +199,20 @@ zif_md_primary_sql_search (ZifMdPrimarySql *md, const gchar *statement,
 		}
 	}
 
-	/* get the compare mode */
-	tmp = zif_config_get_string (md->priv->config,
-				     "pkg_compare_mode",
-				     error);
-	if (tmp == NULL)
-		goto out;
-
 	/* create data struct we can pass to the callback */
 	zif_state_set_allow_cancel (state, FALSE);
 	data = g_new0 (ZifMdPrimarySqlData, 1);
-	data->compare_mode = zif_package_compare_mode_from_string (tmp);
 	data->md = md;
 	data->id = zif_md_get_id (ZIF_MD (md));
+
+	/* get the compare mode */
+	data->compare_mode = zif_config_get_enum (md->priv->config,
+						  "pkg_compare_mode",
+						  zif_package_compare_mode_from_string,
+						  error);
+	if (data->compare_mode == G_MAXUINT)
+		goto out;
+
 	data->packages = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	rc = sqlite3_exec (md->priv->db, statement,
 			   zif_md_primary_sql_sqlite_create_package_cb,

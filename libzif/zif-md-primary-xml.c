@@ -478,7 +478,6 @@ static gboolean
 zif_md_primary_xml_load (ZifMd *md, ZifState *state, GError **error)
 {
 	const gchar *filename;
-	const gchar *tmp;
 	gboolean ret;
 	gchar *contents = NULL;
 	gsize size;
@@ -500,12 +499,12 @@ zif_md_primary_xml_load (ZifMd *md, ZifState *state, GError **error)
 		goto out;
 
 	/* get the compare mode */
-	tmp = zif_config_get_string (primary_xml->priv->config,
-				     "pkg_compare_mode",
-				     error);
-	if (tmp == NULL)
+	primary_xml->priv->compare_mode = zif_config_get_enum (primary_xml->priv->config,
+							       "pkg_compare_mode",
+							       zif_package_compare_mode_from_string,
+							       error);
+	if (primary_xml->priv->compare_mode == G_MAXUINT)
 		goto out;
-	primary_xml->priv->compare_mode = zif_package_compare_mode_from_string (tmp);
 
 	/* get filename */
 	filename = zif_md_get_filename_uncompressed (md);
