@@ -1072,14 +1072,14 @@ zif_cmd_get_details (ZifCmdPrivate *priv, gchar **values, GError **error)
 	}
 
 	state_local = zif_state_get_child (priv->state);
-	zif_state_set_number_steps (state_local, array->len + 1);
+	zif_state_set_number_steps (state_local, array->len);
 
 	zif_progress_bar_end (priv->progressbar);
 
 	for (i=0; i<array->len; i++) {
 		package = g_ptr_array_index (array, i);
 
-		state_loop = zif_state_get_child (priv->state);
+		state_loop = zif_state_get_child (state_local);
 		summary = zif_package_get_summary (package, state_loop, NULL);
 		description = zif_package_get_description (package, state_loop, NULL);
 		license = zif_package_get_license (package, state_loop, NULL);
