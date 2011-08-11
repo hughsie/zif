@@ -330,6 +330,46 @@ out:
 }
 
 /**
+ * zif_config_get_enum:
+ * @config: A #ZifConfig
+ * @key: A key name to retrieve, e.g. "pkg_compare_mode"
+ * @func: A #ZifConfigEnumMappingFunc to convert the string to an enum
+ * @error: A #GError, or %NULL
+ *
+ * Gets an enumerated value from a local setting, falling back to the
+ * config file.
+ *
+ * Return value: Enumerated value, or %G_MAXUINT for an error
+ *
+ * Since: 0.2.3
+ **/
+guint
+zif_config_get_enum (ZifConfig *config,
+		     const gchar *key,
+		     ZifConfigEnumMappingFunc func,
+		     GError **error)
+{
+	gchar *tmp;
+	guint value = G_MAXUINT;
+
+	g_return_val_if_fail (ZIF_IS_CONFIG (config), G_MAXUINT);
+	g_return_val_if_fail (key != NULL, G_MAXUINT);
+	g_return_val_if_fail (func != NULL, G_MAXUINT);
+	g_return_val_if_fail (error == NULL || *error == NULL, G_MAXUINT);
+
+	/* get string value */
+	tmp = zif_config_get_string (config, key, error);
+	if (tmp == NULL)
+		goto out;
+
+	/* convert */
+	value = func (tmp);
+out:
+	g_free (tmp);
+	return value;
+}
+
+/**
  * zif_config_strreplace:
  **/
 static gboolean

@@ -58,6 +58,8 @@ typedef enum {
 	ZIF_CONFIG_ERROR_LAST
 } ZifConfigError;
 
+typedef guint (*ZifConfigEnumMappingFunc)	(const gchar	*str);
+
 GQuark		 zif_config_error_quark		(void);
 GType		 zif_config_get_type		(void);
 ZifConfig	*zif_config_new			(void);
@@ -83,6 +85,10 @@ guint		 zif_config_get_uint		(ZifConfig	*config,
 						 GError		**error);
 guint		 zif_config_get_time		(ZifConfig	*config,
 						 const gchar	*key,
+						 GError		**error);
+guint		 zif_config_get_enum		(ZifConfig	*config,
+						 const gchar	*key,
+						 ZifConfigEnumMappingFunc func,
 						 GError		**error);
 gboolean	 zif_config_set_local		(ZifConfig	*config,
 						 const gchar	*key,
