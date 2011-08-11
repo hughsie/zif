@@ -1780,6 +1780,9 @@ zif_store_remote_refresh_md (ZifStoreRemote *remote,
 		g_debug ("failed to verify md (%s), so will attempt update",
 			 error_local->message);
 		g_clear_error (&error_local);
+		ret = zif_state_finished (state_local, error);
+		if (!ret)
+			goto out;
 	} else if (!force) {
 		g_debug ("%s is okay, and we're not forcing",
 			   zif_md_kind_to_text (zif_md_get_kind (md)));
