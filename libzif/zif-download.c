@@ -918,6 +918,17 @@ out:
 }
 
 /**
+ * _g_propagate_error_replace:
+ **/
+static void
+_g_propagate_error_replace (GError **dest, GError *source)
+{
+	if (*dest != NULL)
+		g_clear_error (dest);
+	g_propagate_error (dest, source);
+}
+
+/**
  * zif_download_location_full:
  * @download: A #ZifDownload
  * @location: Location to add on to the end of the pool URIs
@@ -952,6 +963,7 @@ zif_download_location_full (ZifDownload *download,
 	gchar *failovermethod = NULL;
 	gchar *uri_tmp;
 	GError *error_local = NULL;
+	GError *error_last = NULL;
 	GPtrArray *array = NULL;
 	guint index;
 	guint retries;
@@ -1041,7 +1053,10 @@ zif_download_location_full (ZifDownload *download,
 					 item->uri,
 					 item->retries,
 					 error_local->message);
-				g_clear_error (&error_local);
+
+				/* save this for a better global error */
+				_g_propagate_error_replace (&error_last, error_local);
+				error_local = NULL;
 
 				/* remove it (error is NULL as we know it exists, we just used it) */
 				zif_download_location_remove_uri (download,
@@ -1054,7 +1069,10 @@ zif_download_location_full (ZifDownload *download,
 					 error_local->message,
 					 item->retries,
 					 retries);
-				g_clear_error (&error_local);
+
+				/* save this for a better global error */
+				_g_propagate_error_replace (&error_last, error_local);
+				error_local = NULL;
 			}
 		} else {
 			g_debug ("downloaded correct content %s into %s",
@@ -1066,13 +1084,23 @@ zif_download_location_full (ZifDownload *download,
 			break;
 	}
 	if (!ret && !set_error) {
-		g_set_error (error,
-			     ZIF_DOWNLOAD_ERROR,
-			     ZIF_DOWNLOAD_ERROR_FAILED,
-			     "Failed to download %s from any mirrors", location);
-		goto out;
+		if (error_last != NULL) {
+			g_set_error (error,
+				     error_last->domain,
+				     error_last->code,
+				     "Failed to download: %s",
+				     error_last->message);
+		} else {
+			g_set_error (error,
+				     ZIF_DOWNLOAD_ERROR,
+				     ZIF_DOWNLOAD_ERROR_NO_LOCATIONS,
+				     "Failed to download %s from any mirrors",
+				     location);
+		}
 	}
 out:
+	if (error_last != NULL)
+		g_error_free (error_last);
 	g_free (failovermethod);
 	return ret;
 }
