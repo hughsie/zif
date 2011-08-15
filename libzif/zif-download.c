@@ -208,7 +208,7 @@ zif_download_check_content_types (GFile *file,
 	if (info == NULL) {
 		g_set_error (error,
 			     ZIF_DOWNLOAD_ERROR,
-			     ZIF_DOWNLOAD_ERROR_FAILED,
+			     ZIF_DOWNLOAD_ERROR_WRONG_CONTENT_TYPE,
 			     "failed to detect content type: %s",
 			     error_local->message);
 		g_error_free (error_local);
@@ -227,7 +227,7 @@ zif_download_check_content_types (GFile *file,
 	if (!ret) {
 		g_set_error (error,
 			     ZIF_DOWNLOAD_ERROR,
-			     ZIF_DOWNLOAD_ERROR_FAILED,
+			     ZIF_DOWNLOAD_ERROR_WRONG_CONTENT_TYPE,
 			     "content type incorrect: got %s but expected %s",
 			     content_type, content_types_expected);
 		goto out;
@@ -343,7 +343,9 @@ zif_download_setup_session (ZifDownload *download, GError **error)
 								      SOUP_SESSION_TIMEOUT, timeout,
 								      NULL);
 	if (download->priv->session == NULL) {
-		g_set_error_literal (error, ZIF_DOWNLOAD_ERROR, ZIF_DOWNLOAD_ERROR_FAILED,
+		g_set_error_literal (error,
+				     ZIF_DOWNLOAD_ERROR,
+				     ZIF_DOWNLOAD_ERROR_FAILED,
 				     "could not setup session");
 		goto out;
 	}
@@ -461,7 +463,7 @@ zif_download_file (ZifDownload *download,
 		ret = FALSE;
 		g_set_error (error,
 			     ZIF_DOWNLOAD_ERROR,
-			     ZIF_DOWNLOAD_ERROR_FAILED,
+			     ZIF_DOWNLOAD_ERROR_WRONG_STATUS,
 			     "failed to get valid response for %s: %s",
 			     uri,
 			     soup_status_get_phrase (flight->msg->status_code));
@@ -473,7 +475,7 @@ zif_download_file (ZifDownload *download,
 		ret = FALSE;
 		g_set_error_literal (error,
 				     ZIF_DOWNLOAD_ERROR,
-				     ZIF_DOWNLOAD_ERROR_FAILED,
+				     ZIF_DOWNLOAD_ERROR_WRONG_SIZE,
 				     "remote file has zero size");
 		goto out;
 	}
@@ -673,7 +675,8 @@ zif_download_location_add_md (ZifDownload *download, ZifMd *md, ZifState *state,
 	g_set_error (error,
 		     ZIF_DOWNLOAD_ERROR,
 		     ZIF_DOWNLOAD_ERROR_FAILED,
-		     "md type %s is invalid", zif_md_kind_to_text (zif_md_get_kind (md)));
+		     "md type %s is invalid",
+		     zif_md_kind_to_text (zif_md_get_kind (md)));
 out:
 	if (array != NULL)
 		g_ptr_array_unref (array);
@@ -752,7 +755,7 @@ zif_download_check_size (GFile *file,
 		filename = g_file_get_path (file);
 		g_set_error (error,
 			     ZIF_DOWNLOAD_ERROR,
-			     ZIF_DOWNLOAD_ERROR_FAILED,
+			     ZIF_DOWNLOAD_ERROR_WRONG_SIZE,
 			     "incorrect size for %s: got %" G_GUINT64_FORMAT
 			     " but expected %" G_GUINT64_FORMAT,
 			     filename, size_tmp, size);
@@ -795,7 +798,7 @@ zif_download_check_checksum (GFile *file,
 	if (!ret) {
 		g_set_error (error,
 			     ZIF_DOWNLOAD_ERROR,
-			     ZIF_DOWNLOAD_ERROR_FAILED,
+			     ZIF_DOWNLOAD_ERROR_WRONG_CHECKSUM,
 			     "incorrect checksum for %s: got %s but expected %s",
 			     filename, checksum_tmp, checksum);
 		goto out;
@@ -966,7 +969,7 @@ zif_download_location_full (ZifDownload *download,
 	if (array->len == 0) {
 		g_set_error_literal (error,
 				     ZIF_DOWNLOAD_ERROR,
-				     ZIF_DOWNLOAD_ERROR_FAILED,
+				     ZIF_DOWNLOAD_ERROR_NO_LOCATIONS,
 				     "The download pool is empty");
 		goto out;
 	}
@@ -1054,7 +1057,8 @@ zif_download_location_full (ZifDownload *download,
 				g_clear_error (&error_local);
 			}
 		} else {
-			g_debug ("downloaded correct content %s into %s", uri_tmp, filename);
+			g_debug ("downloaded correct content %s into %s",
+				 uri_tmp, filename);
 		}
 
 		g_free (uri_tmp);

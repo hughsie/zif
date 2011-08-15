@@ -996,7 +996,9 @@ zif_download_func (void)
 	/* this exists in no mirror */
 	g_unlink ("/tmp/releases.txt");
 	ret = zif_download_location (download, "releases.bad", "/tmp/releases.txt", state, &error);
-	g_assert_error (error, ZIF_DOWNLOAD_ERROR, ZIF_DOWNLOAD_ERROR_FAILED);
+	g_assert_error (error,
+			ZIF_DOWNLOAD_ERROR,
+			ZIF_DOWNLOAD_ERROR_WRONG_STATUS);
 	g_assert (!ret);
 	g_clear_error (&error);
 
