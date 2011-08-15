@@ -1890,6 +1890,7 @@ zif_package_local_func (void)
 	gboolean ret;
 	GError *error = NULL;
 	gchar *filename;
+	const gchar *id;
 
 	pkg = zif_package_local_new ();
 	g_assert (pkg != NULL);
@@ -1915,8 +1916,9 @@ zif_package_local_func (void)
 	g_free (filename);
 
 	/* fedora key */
-	g_assert_cmpstr (zif_package_local_get_key_id (ZIF_PACKAGE_LOCAL (pkg)), ==,
-			 "RSA/SHA256, Thu Sep 23 17:25:34 2010, Key ID 421caddb97a1071f");
+	id = zif_package_local_get_key_id (ZIF_PACKAGE_LOCAL (pkg));
+	g_assert (g_str_has_prefix (id, "RSA/SHA256"));
+	g_assert (g_str_has_suffix (id, "Key ID 421caddb97a1071f"));
 
 	g_object_unref (pkg);
 
