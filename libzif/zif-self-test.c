@@ -71,6 +71,8 @@
 #include "zif-utils.h"
 #include "zif-manifest.h"
 
+static gboolean _has_network_access = TRUE;
+
 /**
  * zif_test_get_data_file:
  **/
@@ -267,6 +269,9 @@ zif_release_func (void)
 	ZifDownload *download;
 	gchar *filename;
 	ZifConfig *config;
+
+	if (!_has_network_access)
+		return;
 
 	config = zif_config_new ();
 	g_assert (config != NULL);
@@ -927,7 +932,7 @@ zif_download_func (void)
 	ZifDownload *download;
 	ZifState *state;
 	ZifConfig *config;
-	GCancellable *cancellable;
+	GCancellable *cancellable = NULL;
 	gboolean ret;
 	gchar *filename;
 	GError *error = NULL;
@@ -984,6 +989,16 @@ zif_download_func (void)
 					  "c69baf7ef17843d9205e9553fbe037eff9502d91299068594c4c28e225827c6f",
 					  state,
 					  &error);
+	/* special case running zif in a buildroot (no internet access) */
+	if (!ret &&
+	    error->domain == ZIF_DOWNLOAD_ERROR &&
+	    error->code == ZIF_DOWNLOAD_ERROR_WRONG_STATUS) {
+		g_assert (!ret);
+		g_debug ("Failed to download, but in a buildroot, so ignoring");
+		g_error_free (error);
+		_has_network_access = FALSE;
+		goto out;
+	}
 	g_assert_no_error (error);
 	g_assert (ret);
 
@@ -1020,8 +1035,9 @@ zif_download_func (void)
 	ret = zif_download_file (download, "http://people.freedesktop.org/~hughsient/temp/Screenshot.png",
 				 "/tmp/Screenshot.png", state, &error);
 	g_assert (!ret);
-
-	g_object_unref (cancellable);
+out:
+	if (cancellable != NULL)
+		g_object_unref (cancellable);
 	g_object_unref (download);
 	g_object_unref (config);
 	g_object_unref (state);
@@ -2126,6 +2142,9 @@ zif_package_remote_func (void)
 	g_assert (ret);
 	g_assert (!g_file_test (cache_filename, G_FILE_TEST_EXISTS));
 
+	if (!_has_network_access)
+		goto out;
+
 	/* download it */
 	ret = zif_package_remote_download (ZIF_PACKAGE_REMOTE (package), NULL, state, &error);
 	g_assert_no_error (error);
@@ -2140,7 +2159,7 @@ zif_package_remote_func (void)
 
 	/* delete files we created */
 	g_unlink ("../data/tests/./fedora/packages/powerman-2.3.5-2.fc13.i686.rpm");
-
+out:
 	g_object_unref (config);
 	g_object_unref (package);
 	g_object_unref (pkg);
