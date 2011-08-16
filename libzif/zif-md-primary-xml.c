@@ -987,7 +987,7 @@ zif_md_primary_xml_get_packages (ZifMd *md, ZifState *state, GError **error)
 }
 
 /**
- * zif_md_primary_xml_get_provides:
+ * zif_md_primary_xml_get_depends:
  **/
 static GPtrArray *
 zif_md_primary_xml_get_depends (ZifMd *md,
