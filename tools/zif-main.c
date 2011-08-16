@@ -1119,10 +1119,11 @@ out:
 }
 
 /**
- * zif_cmd_get_provides:
+ * zif_cmd_dep_common:
  **/
 static gboolean
-zif_cmd_get_provides (ZifCmdPrivate *priv, gchar **values, GError **error)
+zif_cmd_dep_common (ZifCmdPrivate *priv, ZifPackageEnsureType type,
+		    gchar **values, GError **error)
 {
 	gboolean ret = FALSE;
 	GPtrArray *array = NULL;
@@ -1209,7 +1210,25 @@ zif_cmd_get_provides (ZifCmdPrivate *priv, gchar **values, GError **error)
 		package = g_ptr_array_index (array, i);
 
 		state_loop = zif_state_get_child (state_local);
-		depends = zif_package_get_provides (package, state_loop, error);
+		if (type == ZIF_PACKAGE_ENSURE_TYPE_PROVIDES) {
+			depends = zif_package_get_provides (package,
+							    state_loop,
+							    error);
+		} else if (type == ZIF_PACKAGE_ENSURE_TYPE_REQUIRES) {
+			depends = zif_package_get_requires (package,
+							    state_loop,
+							    error);
+		} else if (type == ZIF_PACKAGE_ENSURE_TYPE_CONFLICTS) {
+			depends = zif_package_get_conflicts (package,
+							     state_loop,
+							     error);
+		} else if (type == ZIF_PACKAGE_ENSURE_TYPE_OBSOLETES) {
+			depends = zif_package_get_obsoletes (package,
+							     state_loop,
+							     error);
+		} else {
+			g_assert_not_reached ();
+		}
 		if (depends == NULL) {
 			ret = FALSE;
 			goto out;
@@ -1235,6 +1254,8 @@ zif_cmd_get_provides (ZifCmdPrivate *priv, gchar **values, GError **error)
 	if (!ret)
 		goto out;
 
+	zif_progress_bar_end (priv->progressbar);
+
 	/* success */
 	ret = TRUE;
 out:
@@ -1243,6 +1264,54 @@ out:
 	if (array != NULL)
 		g_ptr_array_unref (array);
 	return ret;
+}
+
+/**
+ * zif_cmd_dep_provides:
+ **/
+static gboolean
+zif_cmd_dep_provides (ZifCmdPrivate *priv, gchar **values, GError **error)
+{
+	return zif_cmd_dep_common (priv,
+				   ZIF_PACKAGE_ENSURE_TYPE_PROVIDES,
+				   values,
+				   error);
+}
+
+/**
+ * zif_cmd_dep_requires:
+ **/
+static gboolean
+zif_cmd_dep_requires (ZifCmdPrivate *priv, gchar **values, GError **error)
+{
+	return zif_cmd_dep_common (priv,
+				   ZIF_PACKAGE_ENSURE_TYPE_REQUIRES,
+				   values,
+				   error);
+}
+
+/**
+ * zif_cmd_dep_conflicts:
+ **/
+static gboolean
+zif_cmd_dep_conflicts (ZifCmdPrivate *priv, gchar **values, GError **error)
+{
+	return zif_cmd_dep_common (priv,
+				   ZIF_PACKAGE_ENSURE_TYPE_CONFLICTS,
+				   values,
+				   error);
+}
+
+/**
+ * zif_cmd_dep_obsoletes:
+ **/
+static gboolean
+zif_cmd_dep_obsoletes (ZifCmdPrivate *priv, gchar **values, GError **error)
+{
+	return zif_cmd_dep_common (priv,
+				   ZIF_PACKAGE_ENSURE_TYPE_OBSOLETES,
+				   values,
+				   error);
 }
 
 /*
@@ -5423,10 +5492,25 @@ main (int argc, char *argv[])
 		     _("List values from the installed package database"),
 		     zif_cmd_db_list);
 	zif_cmd_add (priv->cmd_array,
-		     "get-provides",
+		     "dep-provides",
 		     /* TRANSLATORS: command description */
 		     _("Gets the provides for a given package"),
-		     zif_cmd_get_provides);
+		     zif_cmd_dep_provides);
+	zif_cmd_add (priv->cmd_array,
+		     "dep-requires",
+		     /* TRANSLATORS: command description */
+		     _("Gets the requires for a given package"),
+		     zif_cmd_dep_requires);
+	zif_cmd_add (priv->cmd_array,
+		     "dep-conflicts",
+		     /* TRANSLATORS: command description */
+		     _("Gets the conflicts for a given package"),
+		     zif_cmd_dep_conflicts);
+	zif_cmd_add (priv->cmd_array,
+		     "dep-obsoletes",
+		     /* TRANSLATORS: command description */
+		     _("Gets the obsoletes for a given package"),
+		     zif_cmd_dep_obsoletes);
 
 	/* sort by command name */
 	g_ptr_array_sort (priv->cmd_array,
