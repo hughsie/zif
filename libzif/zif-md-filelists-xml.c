@@ -353,13 +353,13 @@ zif_md_filelists_xml_get_files (ZifMd *md, ZifPackage *package,
 	GPtrArray *array = NULL;
 	GPtrArray *packages;
 	ZifPackage *package_tmp;
+	ZifPackage *package_found = NULL;
 	guint i;
 	gboolean ret;
 	const gchar *pkgid;
 	const gchar *pkgid_tmp;
 	GError *error_local = NULL;
 	ZifState *state_local;
-	ZifState *state_loop;
 	ZifMdFilelistsXml *md_filelists = ZIF_MD_FILELISTS_XML (md);
 
 	g_return_val_if_fail (ZIF_IS_MD_FILELISTS_XML (md), NULL);
@@ -373,7 +373,7 @@ zif_md_filelists_xml_get_files (ZifMd *md, ZifPackage *package,
 		ret = zif_state_set_steps (state,
 					   error,
 					   80, /* load */
-					   20, /* search */
+					   20, /* get files */
 					   -1);
 		if (!ret)
 			goto out;
@@ -384,8 +384,11 @@ zif_md_filelists_xml_get_files (ZifMd *md, ZifPackage *package,
 		state_local = zif_state_get_child (state);
 		ret = zif_md_load (ZIF_MD (md), state_local, &error_local);
 		if (!ret) {
-			g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED_TO_LOAD,
-				     "failed to load md_filelists_xml file: %s", error_local->message);
+			g_set_error (error,
+				     ZIF_MD_ERROR,
+				     ZIF_MD_ERROR_FAILED_TO_LOAD,
+				     "failed to load md_filelists_xml file: %s",
+				     error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
@@ -396,10 +399,6 @@ zif_md_filelists_xml_get_files (ZifMd *md, ZifPackage *package,
 			goto out;
 	}
 
-	/* setup steps */
-	state_local = zif_state_get_child (state);
-	zif_state_set_number_steps (state_local, md_filelists->priv->array->len);
-
 	/* search array */
 	pkgid = zif_package_get_pkgid (package);
 	packages = md_filelists->priv->array;
@@ -407,21 +406,34 @@ zif_md_filelists_xml_get_files (ZifMd *md, ZifPackage *package,
 		package_tmp = g_ptr_array_index (packages, i);
 		pkgid_tmp = zif_package_get_pkgid (package_tmp);
 		if (g_strcmp0 (pkgid, pkgid_tmp) == 0) {
-			state_loop = zif_state_get_child (state_local);
-			array = zif_package_get_files (package_tmp, state_loop, NULL);
+			package_found = package_tmp;
 			break;
 		}
-
-		/* this section done */
-		ret = zif_state_done (state_local, error);
-		if (!ret)
-			goto out;
 	}
+
+	/* nothing found */
+	if (package_found == NULL) {
+		g_set_error (error,
+			     ZIF_MD_ERROR,
+			     ZIF_MD_ERROR_FAILED,
+			     "failed to find package %s",
+			     pkgid);
+		goto out;
+	}
+
+	/* get files */
+	state_local = zif_state_get_child (state);
+	array = zif_package_get_files (package_found,
+				       state_local,
+				       error);
+	if (array == NULL)
+		goto out;
 
 	/* this section done */
 	ret = zif_state_done (state, error);
 	if (!ret)
 		goto out;
+
 out:
 	return array;
 }
