@@ -34,6 +34,10 @@ __zif_commandlist="
     get-updates
     get-upgrades
     get-config-value
+    dep-conflicts
+    dep-obsoletes
+    dep-provides
+    dep-requires
     help
     install
     local-install
