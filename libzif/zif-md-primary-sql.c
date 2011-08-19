@@ -402,7 +402,8 @@ zif_md_primary_sql_sqlite_depend_cb (void *data, gint argc, gchar **argv, gchar 
 	GPtrArray *array = (GPtrArray *) data;
 	depend = zif_depend_new_from_data ((const gchar **)col_name,
 					   (const gchar **)argv);
-	g_ptr_array_add (array, depend);
+	if (depend != NULL)
+		g_ptr_array_add (array, depend);
 	return 0;
 }
 

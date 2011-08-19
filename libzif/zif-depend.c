@@ -543,7 +543,7 @@ zif_depend_flag_desc_to_flag (const gchar *flags)
  * @keys: Data keys
  * @values: Data values
  *
- * Return value: A new #ZifDepend instance.
+ * Return value: A new #ZifDepend instance, or %NULL for error
  *
  * Since: 0.2.1
  **/
@@ -555,7 +555,7 @@ zif_depend_new_from_data (const gchar **keys,
 	GString *version_tmp;
 	const gchar *name = NULL;
 	const gchar *version = NULL;
-	ZifDepend *depend;
+	ZifDepend *depend = NULL;
 	ZifDependFlag flag = ZIF_DEPEND_FLAG_ANY;
 
 	g_assert (keys != NULL);
@@ -602,12 +602,19 @@ zif_depend_new_from_data (const gchar **keys,
 	if (version_tmp->len > 0)
 		version = version_tmp->str;
 
+	/* some repos are broken and include RPMSENSE_RPMLIB depends */
+	if (g_str_has_prefix (name, "rpmlib(")) {
+		g_debug ("ignoring broken depend: %s", name);
+		goto out;
+	}
+
 	/* create the new object */
 	depend = g_object_new (ZIF_TYPE_DEPEND,
 			       "name", name,
 			       "flag", flag,
 			       "version", version,
 			       NULL);
+out:
 	g_string_free (version_tmp, TRUE);
 	return depend;
 }
