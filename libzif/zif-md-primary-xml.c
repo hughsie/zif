@@ -218,6 +218,12 @@ zif_md_primary_xml_parser_start_element (GMarkupParseContext *context, const gch
 			}
 			if (g_strcmp0 (element_name, "location") == 0) {
 				primary_xml->priv->section_package = ZIF_MD_PRIMARY_XML_SECTION_PACKAGE_LOCATION;
+				for (i=0; attribute_names[i] != NULL; i++) {
+					if (g_strcmp0 (attribute_names[i], "href") == 0) {
+						zif_package_set_location_href (primary_xml->priv->package_temp,
+									       zif_string_new (attribute_values[i]));
+					}
+				}
 				goto out;
 			}
 			if (g_strcmp0 (element_name, "rpm:license") == 0) {
