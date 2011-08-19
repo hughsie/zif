@@ -227,6 +227,14 @@ zif_package_local_get_depends_from_name_flags_version (GPtrArray *names, GPtrArr
 
 		/* unknown */
 		name = g_ptr_array_index (names, i);
+
+		/* some packages are broken and don't set
+		 * RPMSENSE_RPMLIB for rpmlib depends */
+		if (g_str_has_prefix (name, "rpmlib(")) {
+			g_warning ("ignoring broken depend: %s", name);
+			continue;
+		}
+
 		version = g_ptr_array_index (versions, i);
 		depend = zif_depend_new ();
 		zif_depend_set_flag (depend, flag);
