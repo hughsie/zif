@@ -261,6 +261,9 @@ zif_store_load (ZifStore *store, ZifState *state, GError **error)
 		goto out;
 	}
 
+	/* ensure any previous store is cleared */
+	zif_array_empty (store->priv->packages);
+
 	/* all superclasses must implement load */
 	if (klass->load == NULL) {
 		g_set_error_literal (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_NO_SUPPORT,
@@ -309,7 +312,6 @@ zif_store_unload (ZifStore *store, GError **error)
 
 	/* okay */
 	store->priv->loaded = FALSE;
-	zif_array_empty (store->priv->packages);
 out:
 	return ret;
 }
