@@ -1,3 +1,26 @@
+Version 0.2.3
+~~~~~~~~~~~~~
+Released: 2011-09-05
+
+New Features:
+ - Add a 'loaded' property to ZifStore
+ - Add commands to get the dependancy data about packages
+ - Return the last detailed download error message to aid debugging without --verbose
+ - Use different GError codes when downloading fails
+
+Bugfixes:
+ - Allow certain self test files to be skipped when there is no internet access
+ - Don't fail the self tests when not in the GMT timezone
+ - Ensure we set the location_href for primary XML metadata
+ - Fix a critical warning when refreshing the system cache
+ - Fix a critical warning when doing 'zif info name'
+ - Fix the error handling when getting filelists from XML metadata
+ - Fix three small memory leaks
+ - Ignore requires that start with 'rpmlib(' and don't have RPMSENSE_RPMLIB set
+ - Ignore rpmlib() defines from handcrafted incorrect metadata
+ - Use zif_config_get_enum() to avoid leaking pkg_compare_mode each time
+ - When the rpmdb changes, do not empty the package list on unload
+
 Version 0.2.2
 ~~~~~~~~~~~~~
 Released: 2011-08-01
