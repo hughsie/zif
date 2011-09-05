@@ -52,6 +52,12 @@ struct _ZifStorePrivate
 	gboolean		 enabled;
 };
 
+enum {
+	PROP_0,
+	PROP_LOADED,
+	PROP_LAST
+};
+
 G_DEFINE_TYPE (ZifStore, zif_store, G_TYPE_OBJECT)
 
 /**
@@ -1812,6 +1818,50 @@ zif_store_set_enabled (ZifStore *store, gboolean enabled)
 }
 
 /**
+ * zif_store_get_property:
+ **/
+static void
+zif_store_get_property (GObject *object,
+			guint prop_id,
+			GValue *value,
+			GParamSpec *pspec)
+{
+	ZifStore *store = ZIF_STORE (object);
+	ZifStorePrivate *priv = store->priv;
+
+	switch (prop_id) {
+	case PROP_LOADED:
+		g_value_set_boolean (value, priv->loaded);
+		break;
+	default:
+		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+		break;
+	}
+}
+
+/**
+ * zif_store_set_property:
+ **/
+static void
+zif_store_set_property (GObject *object,
+			guint prop_id,
+			const GValue *value,
+			GParamSpec *pspec)
+{
+	ZifStore *store = ZIF_STORE (object);
+	ZifStorePrivate *priv = store->priv;
+
+	switch (prop_id) {
+	case PROP_LOADED:
+		priv->loaded = g_value_get_boolean (value);
+		break;
+	default:
+		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+		break;
+	}
+}
+
+/**
  * zif_store_finalize:
  **/
 static void
@@ -1833,8 +1883,22 @@ zif_store_finalize (GObject *object)
 static void
 zif_store_class_init (ZifStoreClass *klass)
 {
+	GParamSpec *pspec;
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 	object_class->finalize = zif_store_finalize;
+	object_class->get_property = zif_store_get_property;
+	object_class->set_property = zif_store_set_property;
+
+	/**
+	 * ZifStore:loaded:
+	 *
+	 * Since: 0.2.3
+	 */
+	pspec = g_param_spec_boolean ("loaded", NULL, NULL,
+				      FALSE,
+				      G_PARAM_READWRITE);
+	g_object_class_install_property (object_class, PROP_LOADED, pspec);
+
 	g_type_class_add_private (klass, sizeof (ZifStorePrivate));
 }
 
