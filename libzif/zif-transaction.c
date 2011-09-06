@@ -3120,7 +3120,11 @@ zif_transaction_add_public_key_to_rpmdb (rpmKeyring keyring, const gchar *filena
 
 	/* add to rpmdb automatically, without a prompt */
 	rc = rpmKeyringAddKey (keyring, pubkey);
-	if (rc != 0) {
+	if (rc == 1) {
+		ret = TRUE;
+		g_debug ("%s is already added", filename);
+		goto out;
+	} else if (rc < 0) {
 		ret = FALSE;
 		g_set_error (error,
 			     ZIF_TRANSACTION_ERROR,
