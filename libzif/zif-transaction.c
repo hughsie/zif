@@ -1454,10 +1454,10 @@ zif_transaction_resolve_remove_depend (ZifTransactionResolve *data,
 		goto out;
 	}
 	ret = zif_transaction_get_package_provide_from_array (packages,
-								       depend,
-								       &package_obsolete,
-								       data->state,
-								       error);
+							      depend,
+							      &package_obsolete,
+							      data->state,
+							      error);
 	if (!ret) {
 		g_assert (error == NULL || *error != NULL);
 		goto out;
