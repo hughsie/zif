@@ -234,7 +234,7 @@ zif_state_action_changed_cb (ZifState *state, ZifStateAction action, const gchar
 	/* show nice name for package */
 	} else if (zif_package_id_check (action_hint)) {
 
-		pretty_hint = zif_package_id_get_printable (action_hint);
+		pretty_hint = zif_package_id_get_name (action_hint);
 
 	/* fallback to just showing it */
 	} else {
