@@ -5362,7 +5362,7 @@ main (int argc, char *argv[])
 		     _("Dump a transaction manifest to a file"),
 		     zif_cmd_manifest_dump);
 	zif_cmd_add (priv->cmd_array,
-		     "refresh-cache",
+		     "refresh-cache,makecache",
 		     /* TRANSLATORS: command description */
 		     _("Generate the metadata cache"),
 		     zif_cmd_refresh_cache);
