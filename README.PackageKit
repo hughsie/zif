@@ -37,6 +37,9 @@ and change this to
 DefaultBackend=zif
 ---
 
+If you can already see "DefaultBackend=auto" then you don't need to
+change anything.
+
 Then, you want to refresh any caches and databases kept by PackageKit.
 To do this, type (as the normal user):
 
@@ -49,3 +52,43 @@ Then, just use the normal graphical tools provided by your distribution
 
 If you find any problems, be sure to file bugs in Red Hat bugzillla,
 under the component 'zif'.
+
+
+                    Uncrippling zif to use yumdb
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In Fedora 14, the yum package maintainer added an artificial conflict
+for zif so that both systems could not be installed side-by-side.
+
+Given zif used it own cache and locks, this seemed unfair to me, but to
+get the conflict removed I had to agree not to read the yumdb, a special
+database written by yum every transaction.
+
+The reason I was given was that the format of the yumdb was not defined,
+and could change without notice and that is was not designed to be
+consumed by anything other than yum.
+
+If you disagree with the crippling that I was required to do, then just
+edit the config file and change the defaults, something like this:
+
+sudo vim /etc/zif/zif.conf
+
+Then change...
+
+---
+yumdb_allow_read=true
+---
+
+...and...
+
+---
+yumdb_allow_write=true
+---
+
+Now, please don't file bugs against yum if zif does indeed eat your
+yumdb for breakfast. If it's a datapoint, I've been using the yumdb
+support enabled for about two years now, without a single problem.
+
+Then you can close the daemon and re-refresh like instructed above.
+The added yumdb support allows you to see where installed packages were
+installed from, and also prevents certain warnings when using yum.
