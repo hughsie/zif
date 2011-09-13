@@ -1574,13 +1574,10 @@ zif_store_find_package (ZifStore *store,
 			ZifState *state,
 			GError **error)
 {
-	const gchar *package_id_tmp;
 	gboolean ret;
 	GError *error_local = NULL;
-	GPtrArray *array = NULL;
-	guint i;
+	gpointer package_tmp;
 	ZifPackage *package = NULL;
-	ZifPackage *package_tmp = NULL;
 	ZifState *state_local = NULL;
 	ZifStoreClass *klass = ZIF_STORE_GET_CLASS (store);
 
@@ -1643,29 +1640,10 @@ zif_store_find_package (ZifStore *store,
 		goto out;
 	}
 
-	/* setup state with the correct number of steps */
-	state_local = zif_state_get_child (state);
-
-	/* setup state */
-	zif_state_set_number_steps (state_local,
-				    store->priv->packages->len);
-
-	/* iterate list */
-	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
-	for (i=0;i<store->priv->packages->len;i++) {
-		package_tmp = ZIF_PACKAGE (zif_array_index (store->priv->packages, i));
-		package_id_tmp = zif_package_get_id (package_tmp);
-		if (g_strcmp0 (package_id_tmp, package_id) == 0)
-			g_ptr_array_add (array, g_object_ref (package_tmp));
-
-		/* this section done */
-		ret = zif_state_done (state_local, error);
-		if (!ret)
-			goto out;
-	}
-
-	/* nothing */
-	if (array->len == 0) {
+	/* just do a hash lookup */
+	package_tmp = zif_array_lookup_with_key (store->priv->packages,
+						 package_id);
+	if (package_tmp == NULL) {
 		g_set_error_literal (error,
 				     ZIF_STORE_ERROR,
 				     ZIF_STORE_ERROR_FAILED_TO_FIND,
@@ -1673,25 +1651,14 @@ zif_store_find_package (ZifStore *store,
 		goto out;
 	}
 
-	/* more than one match */
-	if (array->len > 1) {
-		g_set_error_literal (error,
-				     ZIF_STORE_ERROR,
-				     ZIF_STORE_ERROR_MULTIPLE_MATCHES,
-				     "more than one match");
-		goto out;
-	}
-
 	/* return ref to package */
-	package = g_object_ref (g_ptr_array_index (array, 0));
+	package = g_object_ref (ZIF_PACKAGE (package_tmp));
 
 	/* this section done */
 	ret = zif_state_done (state, error);
 	if (!ret)
 		goto out;
 out:
-	if (array != NULL)
-		g_ptr_array_unref (array);
 	return package;
 }
 
