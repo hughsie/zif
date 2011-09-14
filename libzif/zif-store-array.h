@@ -64,6 +64,11 @@ GPtrArray	*zif_store_array_resolve		(GPtrArray		*store_array,
 							 gchar			**search,
 							 ZifState		*state,
 							 GError			**error);
+GPtrArray	*zif_store_array_resolve_full		(GPtrArray		*store_array,
+							 gchar			**search,
+							 ZifStoreResolveFlags	 flags,
+							 ZifState		*state,
+							 GError			**error);
 GPtrArray	*zif_store_array_search_name		(GPtrArray		*store_array,
 							 gchar			**search,
 							 ZifState		*state,

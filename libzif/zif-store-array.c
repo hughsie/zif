@@ -262,8 +262,12 @@ out:
  * zif_store_array_repos_search:
  **/
 static GPtrArray *
-zif_store_array_repos_search (GPtrArray *store_array, ZifRole role, gpointer search,
-			      ZifState *state, GError **error)
+zif_store_array_repos_search (GPtrArray *store_array,
+			      ZifRole role,
+			      gpointer search,
+			      guint flags,
+			      ZifState *state,
+			      GError **error)
 {
 	gboolean ret;
 	guint i, j;
@@ -297,7 +301,7 @@ zif_store_array_repos_search (GPtrArray *store_array, ZifRole role, gpointer sea
 
 		/* get results for this store */
 		if (role == ZIF_ROLE_RESOLVE)
-			part = zif_store_resolve (store, (gchar**)search, state_local, &error_local);
+			part = zif_store_resolve_full (store, (gchar**)search, flags, state_local, &error_local);
 		else if (role == ZIF_ROLE_SEARCH_NAME)
 			part = zif_store_search_name (store, (gchar**)search, state_local, &error_local);
 		else if (role == ZIF_ROLE_SEARCH_DETAILS)
@@ -574,6 +578,39 @@ out:
 }
 
 /**
+ * zif_store_array_resolve_full:
+ * @store_array: An array of #ZifStores
+ * @search: The search terms, e.g. "gnome-power-manager"
+ * @flags: A bitfield of %ZifStoreResolveFlags, e.g. %ZIF_STORE_RESOLVE_FLAG_USE_NAME_ARCH
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
+ *
+ * Finds packages matching the package in a certain way, for instance
+ * matching the name, the name.arch or even the name-version depending
+ * on the flags used..
+ *
+ * Return value: An array of #ZifPackage's
+ *
+ * Since: 0.2.4
+ **/
+GPtrArray *
+zif_store_array_resolve_full (GPtrArray *store_array,
+			      gchar **search,
+			      ZifStoreResolveFlags flags,
+			      ZifState *state,
+			      GError **error)
+{
+	g_return_val_if_fail (zif_state_valid (state), NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+	return zif_store_array_repos_search (store_array,
+					     ZIF_ROLE_RESOLVE,
+					     search,
+					     flags,
+					     state,
+					     error);
+}
+
+/**
  * zif_store_array_resolve:
  * @store_array: An array of #ZifStores
  * @search: The search terms, e.g. "gnome-power-manager"
@@ -590,10 +627,11 @@ GPtrArray *
 zif_store_array_resolve (GPtrArray *store_array, gchar **search,
 			 ZifState *state, GError **error)
 {
-	g_return_val_if_fail (zif_state_valid (state), NULL);
-	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
-	return zif_store_array_repos_search (store_array, ZIF_ROLE_RESOLVE, search,
-					     state, error);
+	return zif_store_array_resolve_full (store_array,
+					     search,
+					     ZIF_STORE_RESOLVE_FLAG_USE_NAME,
+					     state,
+					     error);
 }
 
 /**
@@ -615,8 +653,12 @@ zif_store_array_search_name (GPtrArray *store_array, gchar **search,
 {
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
-	return zif_store_array_repos_search (store_array, ZIF_ROLE_SEARCH_NAME, search,
-					     state, error);
+	return zif_store_array_repos_search (store_array,
+					     ZIF_ROLE_SEARCH_NAME,
+					     search,
+					     0, /* flags */
+					     state,
+					     error);
 }
 
 /**
@@ -638,8 +680,12 @@ zif_store_array_search_details (GPtrArray *store_array, gchar **search,
 {
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
-	return zif_store_array_repos_search (store_array, ZIF_ROLE_SEARCH_DETAILS, search,
-					     state, error);
+	return zif_store_array_repos_search (store_array,
+					     ZIF_ROLE_SEARCH_DETAILS,
+					     search,
+					     0, /* flags */
+					     state,
+					     error);
 }
 
 /**
@@ -661,8 +707,12 @@ zif_store_array_search_group (GPtrArray *store_array, gchar **group_enum,
 {
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
-	return zif_store_array_repos_search (store_array, ZIF_ROLE_SEARCH_GROUP, group_enum,
-					     state, error);
+	return zif_store_array_repos_search (store_array,
+					     ZIF_ROLE_SEARCH_GROUP,
+					     group_enum,
+					     0, /* flags */
+					     state,
+					     error);
 }
 
 /**
@@ -693,8 +743,12 @@ zif_store_array_search_category (GPtrArray *store_array, gchar **group_id,
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* get all results from all repos */
-	array = zif_store_array_repos_search (store_array, ZIF_ROLE_SEARCH_CATEGORY, group_id,
-					      state, error);
+	array = zif_store_array_repos_search (store_array,
+					      ZIF_ROLE_SEARCH_CATEGORY,
+					      group_id,
+					      0, /* flags */
+					      state,
+					      error);
 	if (array == NULL)
 		goto out;
 
@@ -738,8 +792,12 @@ zif_store_array_search_file (GPtrArray *store_array, gchar **search,
 {
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
-	return zif_store_array_repos_search (store_array, ZIF_ROLE_SEARCH_FILE, search,
-					     state, error);
+	return zif_store_array_repos_search (store_array,
+					     ZIF_ROLE_SEARCH_FILE,
+					     search,
+					     0, /* flags */
+					     state,
+					     error);
 }
 
 /**
@@ -760,8 +818,12 @@ zif_store_array_get_packages (GPtrArray *store_array,
 {
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
-	return zif_store_array_repos_search (store_array, ZIF_ROLE_GET_PACKAGES, NULL,
-					     state, error);
+	return zif_store_array_repos_search (store_array,
+					     ZIF_ROLE_GET_PACKAGES,
+					     NULL,
+					     0, /* flags */
+					     state,
+					     error);
 }
 
 /**
@@ -783,8 +845,12 @@ zif_store_array_what_provides (GPtrArray *store_array, GPtrArray *depends,
 {
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
-	return zif_store_array_repos_search (store_array, ZIF_ROLE_WHAT_PROVIDES, depends,
-					     state, error);
+	return zif_store_array_repos_search (store_array,
+					     ZIF_ROLE_WHAT_PROVIDES,
+					     depends,
+					     0, /* flags */
+					     state,
+					     error);
 }
 
 /**
@@ -806,8 +872,12 @@ zif_store_array_what_requires (GPtrArray *store_array, GPtrArray *depends,
 {
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
-	return zif_store_array_repos_search (store_array, ZIF_ROLE_WHAT_REQUIRES, depends,
-					     state, error);
+	return zif_store_array_repos_search (store_array,
+					     ZIF_ROLE_WHAT_REQUIRES,
+					     depends,
+					     0, /* flags */
+					     state,
+					     error);
 }
 
 /**
@@ -830,8 +900,12 @@ zif_store_array_what_obsoletes (GPtrArray *store_array, GPtrArray *depends,
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
-	return zif_store_array_repos_search (store_array, ZIF_ROLE_WHAT_OBSOLETES, depends,
-					     state, error);
+	return zif_store_array_repos_search (store_array,
+					     ZIF_ROLE_WHAT_OBSOLETES,
+					     depends,
+					     0, /* flags */
+					     state,
+					     error);
 }
 
 /**
@@ -854,8 +928,12 @@ zif_store_array_what_conflicts (GPtrArray *store_array, GPtrArray *depends,
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
-	return zif_store_array_repos_search (store_array, ZIF_ROLE_WHAT_CONFLICTS, depends,
-					     state, error);
+	return zif_store_array_repos_search (store_array,
+					     ZIF_ROLE_WHAT_CONFLICTS,
+					     depends,
+					     0, /* flags */
+					     state,
+					     error);
 }
 
 /**
@@ -887,8 +965,12 @@ zif_store_array_get_categories (GPtrArray *store_array,
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* get all results from all repos */
-	array = zif_store_array_repos_search (store_array, ZIF_ROLE_GET_CATEGORIES, NULL,
-					      state, error);
+	array = zif_store_array_repos_search (store_array,
+					      ZIF_ROLE_GET_CATEGORIES,
+					      NULL,
+					      0, /* flags */
+					      state,
+					      error);
 	if (array == NULL)
 		goto out;
 

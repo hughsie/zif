@@ -2807,6 +2807,7 @@ zif_store_local_func (void)
 	g_assert (ret);
 	g_assert_cmpint (elapsed, <, 10);
 
+	/* resolve with just the name */
 	zif_state_reset (state);
 	to_array[0] = "test";
 	to_array[1] = NULL;
@@ -2816,9 +2817,71 @@ zif_store_local_func (void)
 	g_assert (array != NULL);
 	elapsed = g_test_timer_elapsed ();
 	g_assert_cmpint (array->len, ==, 1);
+	package = g_ptr_array_index (array, 0);
+	g_assert_cmpstr (zif_package_get_id (package), ==, "test;0.1-1.fc14;noarch;installed");
 	g_ptr_array_unref (array);
 	g_assert_cmpint (elapsed, <, 1000);
 
+	/* resolve with name and name.arch ensuring only one package */
+	zif_state_reset (state);
+	to_array[0] = "test.noarch";
+	to_array[1] = NULL;
+	array = zif_store_resolve_full (ZIF_STORE (store),
+					(gchar**)to_array,
+					ZIF_STORE_RESOLVE_FLAG_USE_NAME |
+					ZIF_STORE_RESOLVE_FLAG_USE_NAME_ARCH,
+					state,
+					&error);
+	g_assert_no_error (error);
+	g_assert (array != NULL);
+	g_assert_cmpint (array->len, ==, 1);
+	package = g_ptr_array_index (array, 0);
+	g_assert_cmpstr (zif_package_get_id (package), ==, "test;0.1-1.fc14;noarch;installed");
+	g_ptr_array_unref (array);
+
+	/* resolve with name-version */
+	zif_state_reset (state);
+	to_array[0] = "test-0.1-1.fc14";
+	to_array[1] = NULL;
+	array = zif_store_resolve_full (ZIF_STORE (store),
+					(gchar**)to_array,
+					ZIF_STORE_RESOLVE_FLAG_USE_NAME_VERSION,
+					state,
+					&error);
+	g_assert_no_error (error);
+	g_assert (array != NULL);
+	g_assert_cmpint (array->len, ==, 1);
+	package = g_ptr_array_index (array, 0);
+	g_assert_cmpstr (zif_package_get_id (package), ==, "test;0.1-1.fc14;noarch;installed");
+	g_ptr_array_unref (array);
+
+	/* resolve with name-version.arch */
+	zif_state_reset (state);
+	to_array[0] = "test-0.1-1.fc14.noarch";
+	to_array[1] = NULL;
+	array = zif_store_resolve_full (ZIF_STORE (store),
+					(gchar**)to_array,
+					ZIF_STORE_RESOLVE_FLAG_USE_NAME_VERSION_ARCH,
+					state,
+					&error);
+	g_assert_no_error (error);
+	g_assert (array != NULL);
+	g_assert_cmpint (array->len, ==, 1);
+	package = g_ptr_array_index (array, 0);
+	g_assert_cmpstr (zif_package_get_id (package), ==, "test;0.1-1.fc14;noarch;installed");
+	g_ptr_array_unref (array);
+
+	/* find package */
+	zif_state_reset (state);
+	package = zif_store_find_package (ZIF_STORE (store),
+					  "test;0.1-1.fc14;noarch;installed",
+					  state,
+					  &error);
+	g_assert_no_error (error);
+	g_assert (package != NULL);
+	g_object_unref (package);
+
+	/* search name */
 	zif_state_reset (state);
 	to_array[0] = "te";
 	to_array[1] = NULL;
@@ -3630,6 +3693,7 @@ main (int argc, char **argv)
 	g_test_add_func ("/zif/update-info", zif_update_info_func);
 	g_test_add_func ("/zif/update", zif_update_func);
 	g_test_add_func ("/zif/utils", zif_utils_func);
+
 	return g_test_run ();
 }
 

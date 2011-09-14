@@ -593,7 +593,11 @@ zif_cmd_download (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 	/* resolve package name */
 	state_local = zif_state_get_child (priv->state);
-	array = zif_store_array_resolve (store_array, values, state_local, error);
+	array = zif_store_array_resolve_full (store_array,
+					      values,
+					      ZIF_STORE_RESOLVE_FLAG_USE_ALL,
+					      state_local,
+					      error);
 	if (array == NULL) {
 		ret = FALSE;
 		goto out;
@@ -894,7 +898,11 @@ zif_cmd_get_depends (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 	/* resolve package name */
 	state_local = zif_state_get_child (priv->state);
-	array = zif_store_array_resolve (store_array, (gchar**)values, state_local, error);
+	array = zif_store_array_resolve_full (store_array,
+					      (gchar**)values,
+					      ZIF_STORE_RESOLVE_FLAG_USE_ALL,
+					      state_local,
+					      error);
 	if (array == NULL) {
 		ret = FALSE;
 		goto out;
@@ -1048,7 +1056,11 @@ zif_cmd_get_details (ZifCmdPrivate *priv, gchar **values, GError **error)
 		goto out;
 	}
 	state_local = zif_state_get_child (priv->state);
-	array = zif_store_array_resolve (store_array, values, state_local, error);
+	array = zif_store_array_resolve_full (store_array,
+					      values,
+					      ZIF_STORE_RESOLVE_FLAG_USE_ALL,
+					      state_local,
+					      error);
 	if (array == NULL) {
 		ret = FALSE;
 		goto out;
@@ -1180,7 +1192,11 @@ zif_cmd_dep_common (ZifCmdPrivate *priv, ZifPackageEnsureType type,
 		goto out;
 	}
 	state_local = zif_state_get_child (priv->state);
-	array = zif_store_array_resolve (store_array, values, state_local, error);
+	array = zif_store_array_resolve_full (store_array,
+					      values,
+					      ZIF_STORE_RESOLVE_FLAG_USE_ALL,
+					      state_local,
+					      error);
 	if (array == NULL) {
 		ret = FALSE;
 		goto out;
@@ -1386,7 +1402,11 @@ zif_cmd_get_files (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 	/* resolve */
 	state_local = zif_state_get_child (priv->state);
-	array = zif_store_array_resolve (store_array, values, state_local, error);
+	array = zif_store_array_resolve_full (store_array,
+					      values,
+					      ZIF_STORE_RESOLVE_FLAG_USE_ALL,
+					      state_local,
+					      error);
 	if (array == NULL) {
 		ret = FALSE;
 		goto out;
@@ -2102,7 +2122,11 @@ zif_cmd_install (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 	/* check not already installed */
 	state_local = zif_state_get_child (priv->state);
-	array = zif_store_array_resolve (store_array_local, values, state_local, error);
+	array = zif_store_array_resolve_full (store_array_local,
+					      values,
+					      ZIF_STORE_RESOLVE_FLAG_USE_ALL,
+					      state_local,
+					      error);
 	if (array == NULL) {
 		ret = FALSE;
 		goto out;
@@ -2133,7 +2157,11 @@ zif_cmd_install (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 	/* check we can find a package of this name */
 	state_local = zif_state_get_child (priv->state);
-	array = zif_store_array_resolve (store_array_remote, values, state_local, error);
+	array = zif_store_array_resolve_full (store_array_remote,
+					      values,
+					      ZIF_STORE_RESOLVE_FLAG_USE_ALL,
+					      state_local,
+					      error);
 	if (array == NULL) {
 		ret = FALSE;
 		goto out;
@@ -2580,7 +2608,11 @@ zif_cmd_remove (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 	/* check not already installed */
 	state_local = zif_state_get_child (priv->state);
-	array = zif_store_array_resolve (store_array_local, values, state_local, error);
+	array = zif_store_array_resolve_full (store_array_local,
+					      values,
+					      ZIF_STORE_RESOLVE_FLAG_USE_ALL,
+					      state_local,
+					      error);
 	if (array == NULL) {
 		ret = FALSE;
 		goto out;
@@ -2914,7 +2946,11 @@ zif_cmd_resolve (ZifCmdPrivate *priv, gchar **values, GError **error)
 		goto out;
 
 	state_local = zif_state_get_child (priv->state);
-	array = zif_store_array_resolve (store_array, values, state_local, error);
+	array = zif_store_array_resolve_full (store_array,
+					      values,
+					      ZIF_STORE_RESOLVE_FLAG_USE_ALL,
+					      state_local,
+					      error);
 	if (array == NULL) {
 		ret = FALSE;
 		goto out;
@@ -3509,7 +3545,11 @@ zif_cmd_update (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 	/* check not already installed */
 	state_local = zif_state_get_child (priv->state);
-	array = zif_store_array_resolve (store_array, values, state_local, error);
+	array = zif_store_array_resolve_full (store_array,
+					      values,
+					      ZIF_STORE_RESOLVE_FLAG_USE_ALL,
+					      state_local,
+					      error);
 	if (array == NULL) {
 		ret = FALSE;
 		goto out;
@@ -3643,7 +3683,11 @@ zif_cmd_update_details (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 	/* check not already installed */
 	state_local = zif_state_get_child (priv->state);
-	array = zif_store_array_resolve (store_array_local, values, state_local, error);
+	array = zif_store_array_resolve_full (store_array_local,
+					      values,
+					      ZIF_STORE_RESOLVE_FLAG_USE_ALL,
+					      state_local,
+					      error);
 	if (array == NULL) {
 		ret = FALSE;
 		goto out;
@@ -4410,7 +4454,11 @@ zif_cmd_shell (ZifCmdPrivate *priv, gchar **values, GError **error)
 					g_object_unref (package);
 				}
 			} else {
-				array = zif_store_array_resolve (stores_remote, &split[1], priv->state, &error_local);
+				array = zif_store_array_resolve_full (stores_remote,
+								      &split[1],
+								      ZIF_STORE_RESOLVE_FLAG_USE_ALL,
+								      priv->state,
+								      &error_local);
 				if (array == NULL) {
 					g_print ("%s\n", error_local->message);
 					g_clear_error (&error_local);

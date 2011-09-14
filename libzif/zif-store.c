@@ -997,9 +997,10 @@ out:
 }
 
 /**
- * zif_store_resolve:
+ * zif_store_resolve_full:
  * @store: A #ZifStore
- * @search: A search term, e.g. "gnome-power-manager"
+ * @search: A search term, e.g. "gnome-power-manager.i386"
+ * @flags: A bitfield of %ZifStoreResolveFlags, e.g. %ZIF_STORE_RESOLVE_FLAG_USE_NAME_ARCH
  * @state: A #ZifState to use for progress reporting
  * @error: A #GError, or %NULL
  *
@@ -1007,17 +1008,17 @@ out:
  *
  * Return value: An array of #ZifPackage's
  *
- * Since: 0.1.0
+ * Since: 0.2.4
  **/
 GPtrArray *
-zif_store_resolve (ZifStore *store,
-		   gchar **search,
-		   ZifState *state,
-		   GError **error)
+zif_store_resolve_full (ZifStore *store,
+			gchar **search,
+			ZifStoreResolveFlags flags,
+			ZifState *state,
+			GError **error)
 {
-	const gchar *package_id;
+	const gchar *tmp;
 	gboolean ret;
-	gchar *split_name;
 	GError *error_local = NULL;
 	GPtrArray *array = NULL;
 	guint i, j;
@@ -1087,15 +1088,42 @@ zif_store_resolve (ZifStore *store,
 	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	for (i=0;i<store->priv->packages->len;i++) {
 		package = ZIF_PACKAGE (zif_array_index (store->priv->packages, i));
-		package_id = zif_package_get_id (package);
-		split_name = zif_package_id_get_name (package_id);
-		for (j=0; search[j] != NULL; j++) {
-			if (strcmp (split_name, search[j]) == 0) {
-				g_ptr_array_add (array, g_object_ref (package));
-				break;
+
+		/* name */
+		if ((flags & ZIF_STORE_RESOLVE_FLAG_USE_NAME) > 0) {
+			tmp = zif_package_get_name (package);
+			for (j=0; search[j] != NULL; j++) {
+				if (strcmp (tmp, search[j]) == 0)
+					g_ptr_array_add (array, g_object_ref (package));
 			}
 		}
-		g_free (split_name);
+
+		/* name.arch */
+		if ((flags & ZIF_STORE_RESOLVE_FLAG_USE_NAME_ARCH) > 0) {
+			tmp = zif_package_get_name_arch (package);
+			for (j=0; search[j] != NULL; j++) {
+				if (strcmp (tmp, search[j]) == 0)
+					g_ptr_array_add (array, g_object_ref (package));
+			}
+		}
+
+		/* name-version */
+		if ((flags & ZIF_STORE_RESOLVE_FLAG_USE_NAME_VERSION) > 0) {
+			tmp = zif_package_get_name_version (package);
+			for (j=0; search[j] != NULL; j++) {
+				if (strcmp (tmp, search[j]) == 0)
+					g_ptr_array_add (array, g_object_ref (package));
+			}
+		}
+
+		/* name-version.arch */
+		if ((flags & ZIF_STORE_RESOLVE_FLAG_USE_NAME_VERSION_ARCH) > 0) {
+			tmp = zif_package_get_name_version_arch (package);
+			for (j=0; search[j] != NULL; j++) {
+				if (strcmp (tmp, search[j]) == 0)
+					g_ptr_array_add (array, g_object_ref (package));
+			}
+		}
 
 		/* this section done */
 		ret = zif_state_done (state_local, error);
@@ -1109,6 +1137,32 @@ zif_store_resolve (ZifStore *store,
 		goto out;
 out:
 	return array;
+}
+
+/**
+ * zif_store_resolve:
+ * @store: A #ZifStore
+ * @search: A search term, e.g. "gnome-power-manager"
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
+ *
+ * Finds packages matching the package name exactly.
+ *
+ * Return value: An array of #ZifPackage's
+ *
+ * Since: 0.1.0
+ **/
+GPtrArray *
+zif_store_resolve (ZifStore *store,
+		   gchar **search,
+		   ZifState *state,
+		   GError **error)
+{
+	return zif_store_resolve_full (store,
+				       search,
+				       ZIF_STORE_RESOLVE_FLAG_USE_NAME,
+				       state,
+				       error);
 }
 
 #if 0

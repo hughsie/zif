@@ -134,6 +134,19 @@ typedef enum {
 	ZIF_STORE_ERROR_LAST
 } ZifStoreError;
 
+typedef enum {
+	ZIF_STORE_RESOLVE_FLAG_USE_NAME			= 1<<0,
+	ZIF_STORE_RESOLVE_FLAG_USE_NAME_ARCH		= 1<<1,
+	ZIF_STORE_RESOLVE_FLAG_USE_NAME_VERSION		= 1<<2,
+	ZIF_STORE_RESOLVE_FLAG_USE_NAME_VERSION_ARCH	= 1<<3,
+} ZifStoreResolveFlags;
+
+/* just to avoid typing */
+#define ZIF_STORE_RESOLVE_FLAG_USE_ALL	(ZIF_STORE_RESOLVE_FLAG_USE_NAME |		\
+					 ZIF_STORE_RESOLVE_FLAG_USE_NAME_ARCH |		\
+					 ZIF_STORE_RESOLVE_FLAG_USE_NAME_VERSION |	\
+					 ZIF_STORE_RESOLVE_FLAG_USE_NAME_VERSION_ARCH)
+
 GType		 zif_store_get_type		(void);
 GQuark		 zif_store_error_quark		(void);
 ZifStore	*zif_store_new			(void);
@@ -183,6 +196,11 @@ GPtrArray	*zif_store_search_file		(ZifStore		*store,
 						 GError			**error);
 GPtrArray	*zif_store_resolve		(ZifStore		*store,
 						 gchar			**search,
+						 ZifState		*state,
+						 GError			**error);
+GPtrArray	*zif_store_resolve_full		(ZifStore		*store,
+						 gchar			**search,
+						 ZifStoreResolveFlags	 flags,
 						 ZifState		*state,
 						 GError			**error);
 GPtrArray	*zif_store_what_provides	(ZifStore		*store,

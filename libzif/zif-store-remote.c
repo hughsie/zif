@@ -3094,7 +3094,10 @@ out:
  * zif_store_remote_find_package:
  **/
 static ZifPackage *
-zif_store_remote_find_package (ZifStore *store, const gchar *package_id, ZifState *state, GError **error)
+zif_store_remote_find_package (ZifStore *store,
+			       const gchar *package_id,
+			       ZifState *state,
+			       GError **error)
 {
 	gboolean ret;
 	GPtrArray *array = NULL;
