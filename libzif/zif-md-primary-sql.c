@@ -214,6 +214,11 @@ zif_md_primary_sql_search (ZifMdPrimarySql *md, const gchar *statement,
 		goto out;
 
 	data->packages = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
+	if (g_getenv ("ZIF_SQL_DEBUG") != NULL) {
+		g_debug ("On %s\n%s",
+			 zif_md_get_filename_uncompressed (ZIF_MD (md)),
+			 statement);
+	}
 	rc = sqlite3_exec (md->priv->db, statement,
 			   zif_md_primary_sql_sqlite_create_package_cb,
 			   data, &error_msg);
@@ -621,6 +626,11 @@ zif_md_primary_sql_what_depends (ZifMd *md, const gchar *table_name, GPtrArray *
 	g_string_append (statement, "END;\n");
 
 	/* execute the query */
+	if (g_getenv ("ZIF_SQL_DEBUG") != NULL) {
+		g_debug ("On %s\n%s",
+			 zif_md_get_filename_uncompressed (md),
+			 statement->str);
+	}
 	rc = sqlite3_exec (md_primary_sql->priv->db,
 			   statement->str,
 			   zif_md_primary_sql_sqlite_create_package_cb,
@@ -765,6 +775,11 @@ zif_md_primary_sql_get_depends (ZifMd *md,
 				     version,
 				     release,
 				     zif_package_get_arch (package));
+	if (g_getenv ("ZIF_SQL_DEBUG") != NULL) {
+		g_debug ("On %s\n%s",
+			 zif_md_get_filename_uncompressed (md),
+			 statement);
+	}
 	rc = sqlite3_exec (md_primary_sql->priv->db,
 			   statement,
 			   zif_md_primary_sql_sqlite_depend_cb,

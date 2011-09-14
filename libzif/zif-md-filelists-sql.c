@@ -241,6 +241,11 @@ zif_md_filelists_sql_get_files (ZifMd *md, ZifPackage *package,
 	statement = g_strdup_printf ("SELECT dirname, filenames FROM packages p, filelist f WHERE "
 				     "p.pkgKey = f.pkgKey AND "
 				     "p.pkgId = '%s'", pkgid);
+	if (g_getenv ("ZIF_SQL_DEBUG") != NULL) {
+		g_debug ("On %s\n%s",
+			 zif_md_get_filename_uncompressed (md),
+			 statement);
+	}
 	rc = sqlite3_exec (md_filelists_sql->priv->db, statement, zif_md_filelists_sql_sqlite_get_files_cb, &files, &error_msg);
 	g_free (statement);
 	if (rc != SQLITE_OK) {
@@ -337,6 +342,11 @@ zif_md_filelists_sql_search_file (ZifMd *md, gchar **search,
 
 		/* populate _array with guint pkgKey */
 		statement = g_strdup_printf ("SELECT filenames, pkgKey FROM filelist WHERE dirname = '%s'", dirname);
+		if (g_getenv ("ZIF_SQL_DEBUG") != NULL) {
+			g_debug ("On %s\n%s",
+				 zif_md_get_filename_uncompressed (md),
+				 statement);
+		}
 		rc = sqlite3_exec (md_filelists_sql->priv->db, statement, zif_md_filelists_sql_sqlite_get_pkgkey_cb, data, &error_msg);
 		g_free (statement);
 		g_free (dirname);
@@ -370,6 +380,11 @@ zif_md_filelists_sql_search_file (ZifMd *md, gchar **search,
 		/* convert the pkgKey to a pkgId */
 		key = GPOINTER_TO_UINT (g_ptr_array_index (pkgkey_array, i));
 		statement = g_strdup_printf ("SELECT pkgId FROM packages WHERE pkgKey = %i LIMIT 1", key);
+		if (g_getenv ("ZIF_SQL_DEBUG") != NULL) {
+			g_debug ("On %s\n%s",
+				 zif_md_get_filename_uncompressed (md),
+				 statement);
+		}
 		rc = sqlite3_exec (md_filelists_sql->priv->db, statement, zif_md_filelists_sql_sqlite_get_id_cb, &pkgid, &error_msg);
 		g_free (statement);
 		if (rc != SQLITE_OK) {

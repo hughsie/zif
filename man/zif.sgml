@@ -51,7 +51,10 @@
   <refsect1>
     <title>ENVIRONMENT VARIABLES</title>
     <para>Setting <command>ZIF_DEPSOLVE_DEBUG</command> is useful for
-    debugging dependency depsolve failurs.
+    debugging dependency depsolve failures.
+    </para>
+    <para>Setting <command>ZIF_SQL_DEBUG</command> is useful for
+    debugging SQL query failures.
     </para>
   </refsect1>
   <refsect1>
