@@ -1010,7 +1010,7 @@ out:
  * Gets a string which is the package name and architecture. This is
  * often useful for matching on a multiarch system.
  *
- * Return value: A name-arch key string, e.g. "hal-i386"
+ * Return value: A name.arch key string, e.g. "hal.i386"
  *
  * Since: 0.1.6
  **/
@@ -1025,7 +1025,7 @@ zif_package_get_name_arch (ZifPackage *package)
 
 	/* format */
 	package->priv->name_arch =
-		g_strdup_printf ("%s-%s",
+		g_strdup_printf ("%s.%s",
 				 package->priv->package_id_split[ZIF_PACKAGE_ID_NAME],
 				 package->priv->package_id_split[ZIF_PACKAGE_ID_ARCH]);
 out:
