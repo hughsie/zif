@@ -1003,7 +1003,8 @@ out:
 static gboolean
 zif_store_has_search_arch_suffix (const gchar *search)
 {
-	if (g_str_has_suffix (search, ".x86_64") ||
+	if (g_str_has_suffix (search, ".noarch") ||
+	    g_str_has_suffix (search, ".x86_64") ||
 	    g_str_has_suffix (search, ".i386") ||
 	    g_str_has_suffix (search, ".i486") ||
 	    g_str_has_suffix (search, ".i586") ||
