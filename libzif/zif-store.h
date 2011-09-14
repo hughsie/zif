@@ -52,6 +52,12 @@ struct _ZifStore
 	GObject			 parent;
 	ZifStorePrivate		*priv;
 };
+typedef enum {
+	ZIF_STORE_RESOLVE_FLAG_USE_NAME			= 1<<0,
+	ZIF_STORE_RESOLVE_FLAG_USE_NAME_ARCH		= 1<<1,
+	ZIF_STORE_RESOLVE_FLAG_USE_NAME_VERSION		= 1<<2,
+	ZIF_STORE_RESOLVE_FLAG_USE_NAME_VERSION_ARCH	= 1<<3,
+} ZifStoreResolveFlags;
 
 struct _ZifStoreClass
 {
@@ -89,6 +95,7 @@ struct _ZifStoreClass
 						 GError			**error);
 	GPtrArray	*(*resolve)		(ZifStore		*store,
 						 gchar			**search,
+						 ZifStoreResolveFlags	 flags,
 						 ZifState		*state,
 						 GError			**error);
 	GPtrArray	*(*what_provides)	(ZifStore		*store,
@@ -119,6 +126,7 @@ struct _ZifStoreClass
 						 GError			**error);
 	const gchar	*(*get_id)		(ZifStore		*store);
 	void		 (*print)		(ZifStore		*store);
+	/* TODO: next time we break API, add padding! */
 };
 
 typedef enum {
@@ -133,13 +141,6 @@ typedef enum {
 	ZIF_STORE_ERROR_RECOVERABLE,
 	ZIF_STORE_ERROR_LAST
 } ZifStoreError;
-
-typedef enum {
-	ZIF_STORE_RESOLVE_FLAG_USE_NAME			= 1<<0,
-	ZIF_STORE_RESOLVE_FLAG_USE_NAME_ARCH		= 1<<1,
-	ZIF_STORE_RESOLVE_FLAG_USE_NAME_VERSION		= 1<<2,
-	ZIF_STORE_RESOLVE_FLAG_USE_NAME_VERSION_ARCH	= 1<<3,
-} ZifStoreResolveFlags;
 
 /* just to avoid typing */
 #define ZIF_STORE_RESOLVE_FLAG_USE_ALL	(ZIF_STORE_RESOLVE_FLAG_USE_NAME |		\

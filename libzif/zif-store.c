@@ -1034,7 +1034,7 @@ zif_store_resolve_full (ZifStore *store,
 
 	/* superclass */
 	if (klass->resolve != NULL) {
-		array = klass->resolve (store, search, state, error);
+		array = klass->resolve (store, search, flags, state, error);
 		goto out;
 	}
 

@@ -2563,7 +2563,11 @@ zif_store_remote_print (ZifStore *store)
  * zif_store_remote_resolve:
  **/
 static GPtrArray *
-zif_store_remote_resolve (ZifStore *store, gchar **search, ZifState *state, GError **error)
+zif_store_remote_resolve (ZifStore *store,
+			  gchar **search,
+			  ZifStoreResolveFlags flags,
+			  ZifState *state,
+			  GError **error)
 {
 	gboolean ret;
 	GError *error_local = NULL;
@@ -2614,7 +2618,11 @@ zif_store_remote_resolve (ZifStore *store, gchar **search, ZifState *state, GErr
 	primary = zif_store_remote_get_primary (remote, error);
 	if (primary == NULL)
 		goto out;
-	array = zif_md_resolve (primary, search, state_local, error);
+	array = zif_md_resolve_full (primary,
+				     search,
+				     flags,
+				     state_local,
+				     error);
 	if (array == NULL)
 		goto out;
 

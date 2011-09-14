@@ -1582,7 +1582,7 @@ zif_md_primary_sql_func (void)
 	ZifPackage *package;
 	ZifState *state;
 	ZifConfig *config;
-	const gchar *data[] = { "gnome-power-manager", "gnome-color-manager", NULL };
+	const gchar *data[] = { "gnome-power-manager.i686", "gnome-color-manager.i686", NULL };
 	gchar *filename;
 
 	state = zif_state_new ();
@@ -1609,7 +1609,11 @@ zif_md_primary_sql_func (void)
 	g_assert (zif_md_get_is_loaded (md));
 
 	zif_state_reset (state);
-	array = zif_md_resolve (md, (gchar**)data, state, &error);
+	array = zif_md_resolve_full (md,
+				     (gchar**)data,
+				     ZIF_STORE_RESOLVE_FLAG_USE_NAME_ARCH,
+				     state,
+				     &error);
 	g_assert_no_error (error);
 	g_assert (array != NULL);
 	g_assert (array->len == 1);

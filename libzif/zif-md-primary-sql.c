@@ -291,18 +291,127 @@ zif_md_primary_sql_resolve (ZifMd *md,
 			    ZifState *state,
 			    GError **error)
 {
+	gboolean ret;
 	gchar *statement;
-	GPtrArray *array;
+	GPtrArray *array = NULL;
+	GPtrArray *array_tmp;
+	GPtrArray *tmp;
+	guint cnt = 0;
+	guint i;
+	ZifState *state_local;
 	ZifMdPrimarySql *md_primary_sql = ZIF_MD_PRIMARY_SQL (md);
 
 	g_return_val_if_fail (ZIF_IS_MD_PRIMARY_SQL (md), NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
-	/* simple name match */
-	statement = zif_md_primary_sql_get_statement_for_pred ("p.name = '###'", search);
-	array = zif_md_primary_sql_search (md_primary_sql, statement, state, error);
-	g_free (statement);
+	/* find out how many steps we need to do */
+	cnt += ((flags & ZIF_STORE_RESOLVE_FLAG_USE_NAME) > 0);
+	cnt += ((flags & ZIF_STORE_RESOLVE_FLAG_USE_NAME_ARCH) > 0);
+	cnt += ((flags & ZIF_STORE_RESOLVE_FLAG_USE_NAME_VERSION) > 0);
+	cnt += ((flags & ZIF_STORE_RESOLVE_FLAG_USE_NAME_VERSION_ARCH) > 0);
+	zif_state_set_number_steps (state, cnt);
+
+	array_tmp = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
+
+	/* name */
+	if ((flags & ZIF_STORE_RESOLVE_FLAG_USE_NAME) > 0) {
+		statement = zif_md_primary_sql_get_statement_for_pred ("p.name = '###'",
+								       search);
+		state_local = zif_state_get_child (state);
+		tmp = zif_md_primary_sql_search (md_primary_sql,
+						 statement,
+						 state_local,
+						 error);
+		g_free (statement);
+		if (tmp == NULL)
+			goto out;
+		for (i=0; i<tmp->len; i++)
+			g_ptr_array_add (array_tmp, g_object_ref (g_ptr_array_index (tmp, i)));
+		g_ptr_array_unref (tmp);
+
+		/* this section done */
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
+	}
+
+	/* name.arch */
+	if ((flags & ZIF_STORE_RESOLVE_FLAG_USE_NAME_ARCH) > 0) {
+		statement = zif_md_primary_sql_get_statement_for_pred ("p.name||'.'||"
+								       "p.arch = '###'",
+								       search);
+		state_local = zif_state_get_child (state);
+		tmp = zif_md_primary_sql_search (md_primary_sql,
+						 statement,
+						 state_local,
+						 error);
+		g_free (statement);
+		if (tmp == NULL)
+			goto out;
+		for (i=0; i<tmp->len; i++)
+			g_ptr_array_add (array_tmp, g_object_ref (g_ptr_array_index (tmp, i)));
+		g_ptr_array_unref (tmp);
+
+		/* this section done */
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
+	}
+
+	/* name-version */
+	if ((flags & ZIF_STORE_RESOLVE_FLAG_USE_NAME_VERSION) > 0) {
+		statement = zif_md_primary_sql_get_statement_for_pred ("p.name||'-'||"
+								       "p.version||'-'||"
+								       "p.release = '###'",
+								       search);
+		state_local = zif_state_get_child (state);
+		tmp = zif_md_primary_sql_search (md_primary_sql,
+						 statement,
+						 state_local,
+						 error);
+		g_free (statement);
+		if (tmp == NULL)
+			goto out;
+		for (i=0; i<tmp->len; i++)
+			g_ptr_array_add (array_tmp, g_object_ref (g_ptr_array_index (tmp, i)));
+		g_ptr_array_unref (tmp);
+
+		/* this section done */
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
+	}
+
+	/* name-version.arch */
+	if ((flags & ZIF_STORE_RESOLVE_FLAG_USE_NAME_VERSION_ARCH) > 0) {
+		statement = zif_md_primary_sql_get_statement_for_pred ("p.name||'-'||"
+								       "p.version||'-'||"
+								       "p.release||'.'||"
+								       "p.arch = '###'",
+								       search);
+		state_local = zif_state_get_child (state);
+		tmp = zif_md_primary_sql_search (md_primary_sql,
+						 statement,
+						 state_local,
+						 error);
+		g_free (statement);
+		if (tmp == NULL)
+			goto out;
+		for (i=0; i<tmp->len; i++)
+			g_ptr_array_add (array_tmp, g_object_ref (g_ptr_array_index (tmp, i)));
+		g_ptr_array_unref (tmp);
+
+		/* this section done */
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
+	}
+
+	/* success */
+	array = g_ptr_array_ref (array_tmp);
+out:
+	g_ptr_array_unref (array_tmp);
 	return array;
 }
 
