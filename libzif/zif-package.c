@@ -51,6 +51,8 @@ struct _ZifPackagePrivate
 	gchar			*package_id;
 	gchar			*printable;
 	gchar			*name_arch;
+	gchar			*name_version;
+	gchar			*name_version_arch;
 	gchar			*cache_filename;
 	GFile			*cache_file;
 	ZifString		*summary;
@@ -1030,6 +1032,63 @@ zif_package_get_name_arch (ZifPackage *package)
 				 package->priv->package_id_split[ZIF_PACKAGE_ID_ARCH]);
 out:
 	return package->priv->name_arch;
+}
+
+/**
+ * zif_package_get_name_version:
+ * @package: A #ZifPackage
+ *
+ * Gets a string which is the package name and version.
+ *
+ * Return value: A name-version key string, e.g. "hal-0.5.8-1.fc16"
+ *
+ * Since: 0.2.4
+ **/
+const gchar *
+zif_package_get_name_version (ZifPackage *package)
+{
+	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
+
+	/* already got */
+	if (package->priv->name_version != NULL)
+		goto out;
+
+	/* format */
+	package->priv->name_version =
+		g_strdup_printf ("%s-%s",
+				 package->priv->package_id_split[ZIF_PACKAGE_ID_NAME],
+				 package->priv->package_id_split[ZIF_PACKAGE_ID_VERSION]);
+out:
+	return package->priv->name_version;
+}
+
+/**
+ * zif_package_get_name_version_arch:
+ * @package: A #ZifPackage
+ *
+ * Gets a string which is the package name, version and arch.
+ *
+ * Return value: A name-version.arch key string, e.g. "hal-0.5.8-1.fc16.i386"
+ *
+ * Since: 0.2.4
+ **/
+const gchar *
+zif_package_get_name_version_arch (ZifPackage *package)
+{
+	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
+
+	/* already got */
+	if (package->priv->name_version_arch != NULL)
+		goto out;
+
+	/* format */
+	package->priv->name_version_arch =
+		g_strdup_printf ("%s-%s.%s",
+				 package->priv->package_id_split[ZIF_PACKAGE_ID_NAME],
+				 package->priv->package_id_split[ZIF_PACKAGE_ID_VERSION],
+				 package->priv->package_id_split[ZIF_PACKAGE_ID_ARCH]);
+out:
+	return package->priv->name_version_arch;
 }
 
 /**
@@ -2489,6 +2548,8 @@ zif_package_finalize (GObject *object)
 
 	g_free (package->priv->printable);
 	g_free (package->priv->name_arch);
+	g_free (package->priv->name_version);
+	g_free (package->priv->name_version_arch);
 	g_free (package->priv->cache_filename);
 	if (package->priv->cache_file != NULL)
 		g_object_unref (package->priv->cache_file);
