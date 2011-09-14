@@ -34,6 +34,7 @@
 #include <string.h>
 
 #include <glib.h>
+#include <rpm/rpmlib.h>
 
 #include "zif-array.h"
 #include "zif-object-array.h"
@@ -997,6 +998,21 @@ out:
 }
 
 /**
+ * zif_store_has_search_arch_suffix:
+ **/
+static gboolean
+zif_store_has_search_arch_suffix (const gchar *search)
+{
+	if (g_str_has_suffix (search, ".x86_64") ||
+	    g_str_has_suffix (search, ".i386") ||
+	    g_str_has_suffix (search, ".i486") ||
+	    g_str_has_suffix (search, ".i586") ||
+	    g_str_has_suffix (search, ".i686"))
+		return TRUE;
+	return FALSE;
+}
+
+/**
  * zif_store_resolve_full:
  * @store: A #ZifStore
  * @search: A search term, e.g. "gnome-power-manager.i386"
@@ -1019,6 +1035,7 @@ zif_store_resolve_full (ZifStore *store,
 {
 	const gchar *tmp;
 	gboolean ret;
+	gchar **search_native = NULL;
 	GError *error_local = NULL;
 	GPtrArray *array = NULL;
 	guint i, j;
@@ -1032,9 +1049,35 @@ zif_store_resolve_full (ZifStore *store,
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 	g_return_val_if_fail (klass != NULL, NULL);
 
+	/* do we want to prefer the native arch */
+	if ((flags & ZIF_STORE_RESOLVE_FLAG_PREFER_NATIVE) > 0 &&
+	    ((flags & ZIF_STORE_RESOLVE_FLAG_USE_NAME_ARCH) > 0 ||
+	     (flags & ZIF_STORE_RESOLVE_FLAG_USE_NAME_VERSION_ARCH) > 0)) {
+
+		/* get the native machine arch */
+		rpmGetArchInfo (&tmp, NULL);
+		j = g_strv_length (search);
+		search_native = g_new0 (gchar *, j + 1);
+		for (i=0; i<j; i++) {
+			if (zif_store_has_search_arch_suffix (search[i])) {
+				search_native[i] = g_strdup (search[i]);
+			} else {
+				search_native[i] = g_strdup_printf ("%s.%s",
+								    search[i],
+								    tmp);
+			}
+		}
+	} else {
+		search_native = g_strdupv (search);
+	}
+
 	/* superclass */
 	if (klass->resolve != NULL) {
-		array = klass->resolve (store, search, flags, state, error);
+		array = klass->resolve (store,
+					search_native,
+					flags,
+					state,
+					error);
 		goto out;
 	}
 
@@ -1092,8 +1135,8 @@ zif_store_resolve_full (ZifStore *store,
 		/* name */
 		if ((flags & ZIF_STORE_RESOLVE_FLAG_USE_NAME) > 0) {
 			tmp = zif_package_get_name (package);
-			for (j=0; search[j] != NULL; j++) {
-				if (strcmp (tmp, search[j]) == 0)
+			for (j=0; search_native[j] != NULL; j++) {
+				if (strcmp (tmp, search_native[j]) == 0)
 					g_ptr_array_add (array, g_object_ref (package));
 			}
 		}
@@ -1101,8 +1144,8 @@ zif_store_resolve_full (ZifStore *store,
 		/* name.arch */
 		if ((flags & ZIF_STORE_RESOLVE_FLAG_USE_NAME_ARCH) > 0) {
 			tmp = zif_package_get_name_arch (package);
-			for (j=0; search[j] != NULL; j++) {
-				if (strcmp (tmp, search[j]) == 0)
+			for (j=0; search_native[j] != NULL; j++) {
+				if (strcmp (tmp, search_native[j]) == 0)
 					g_ptr_array_add (array, g_object_ref (package));
 			}
 		}
@@ -1110,8 +1153,8 @@ zif_store_resolve_full (ZifStore *store,
 		/* name-version */
 		if ((flags & ZIF_STORE_RESOLVE_FLAG_USE_NAME_VERSION) > 0) {
 			tmp = zif_package_get_name_version (package);
-			for (j=0; search[j] != NULL; j++) {
-				if (strcmp (tmp, search[j]) == 0)
+			for (j=0; search_native[j] != NULL; j++) {
+				if (strcmp (tmp, search_native[j]) == 0)
 					g_ptr_array_add (array, g_object_ref (package));
 			}
 		}
@@ -1119,8 +1162,8 @@ zif_store_resolve_full (ZifStore *store,
 		/* name-version.arch */
 		if ((flags & ZIF_STORE_RESOLVE_FLAG_USE_NAME_VERSION_ARCH) > 0) {
 			tmp = zif_package_get_name_version_arch (package);
-			for (j=0; search[j] != NULL; j++) {
-				if (strcmp (tmp, search[j]) == 0)
+			for (j=0; search_native[j] != NULL; j++) {
+				if (strcmp (tmp, search_native[j]) == 0)
 					g_ptr_array_add (array, g_object_ref (package));
 			}
 		}
@@ -1136,6 +1179,7 @@ zif_store_resolve_full (ZifStore *store,
 	if (!ret)
 		goto out;
 out:
+	g_strfreev (search_native);
 	return array;
 }
 

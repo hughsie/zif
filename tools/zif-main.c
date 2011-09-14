@@ -2948,7 +2948,8 @@ zif_cmd_resolve (ZifCmdPrivate *priv, gchar **values, GError **error)
 	state_local = zif_state_get_child (priv->state);
 	array = zif_store_array_resolve_full (store_array,
 					      values,
-					      ZIF_STORE_RESOLVE_FLAG_USE_ALL,
+					      ZIF_STORE_RESOLVE_FLAG_USE_ALL |
+					      ZIF_STORE_RESOLVE_FLAG_PREFER_NATIVE,
 					      state_local,
 					      error);
 	if (array == NULL) {
