@@ -1629,7 +1629,7 @@ zif_md_primary_sql_func (void)
 static void
 zif_md_primary_xml_func (void)
 {
-	const gchar *data[] = { "gnome-power-manager", NULL };
+	const gchar *data[] = { "gnome-power-manager.i686", NULL };
 	gboolean ret;
 	gchar *filename;
 	GError *error = NULL;
@@ -1669,7 +1669,11 @@ zif_md_primary_xml_func (void)
 	g_assert (zif_md_get_is_loaded (md));
 
 	zif_state_reset (state);
-	array = zif_md_resolve (md, (gchar**)data, state, &error);
+	array = zif_md_resolve_full (md,
+				     (gchar**)data,
+				     ZIF_STORE_RESOLVE_FLAG_USE_NAME_ARCH,
+				     state,
+				     &error);
 	g_assert_no_error (error);
 	g_assert (array != NULL);
 	g_assert (array->len == 1);

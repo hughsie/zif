@@ -285,7 +285,11 @@ zif_md_primary_sql_get_statement_for_pred (const gchar *pred, gchar **search)
  * zif_md_primary_sql_resolve:
  **/
 static GPtrArray *
-zif_md_primary_sql_resolve (ZifMd *md, gchar **search, ZifState *state, GError **error)
+zif_md_primary_sql_resolve (ZifMd *md,
+			    gchar **search,
+			    ZifStoreResolveFlags flags,
+			    ZifState *state,
+			    GError **error)
 {
 	gchar *statement;
 	GPtrArray *array;

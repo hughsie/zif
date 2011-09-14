@@ -102,6 +102,7 @@ struct _ZifMdClass
 						 GError			**error);
 	GPtrArray	*(*resolve)		(ZifMd			*md,
 						 gchar			**search,
+						 ZifStoreResolveFlags	 flags,
 						 ZifState		*state,
 						 GError			**error);
 	GPtrArray	*(*get_packages)	(ZifMd			*md,
@@ -135,6 +136,7 @@ struct _ZifMdClass
 						 ZifPackage		*package,
 						 ZifState		*state,
 						 GError			**error);
+	/* TODO: next time we break API, add padding! */
 };
 
 /* types of metadata */
@@ -262,6 +264,11 @@ GPtrArray	*zif_md_what_conflicts			(ZifMd		*md,
 							 GError		**error);
 GPtrArray	*zif_md_resolve				(ZifMd		*md,
 							 gchar		**search,
+							 ZifState	*state,
+							 GError		**error);
+GPtrArray	*zif_md_resolve_full			(ZifMd		*md,
+							 gchar		**search,
+							 ZifStoreResolveFlags flags,
 							 ZifState	*state,
 							 GError		**error);
 GPtrArray	*zif_md_get_packages			(ZifMd		*md,

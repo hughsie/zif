@@ -624,10 +624,11 @@ out:
 }
 
 /**
- * zif_md_primary_xml_resolve_cb:
+ * zif_md_primary_xml_resolve_name_cb:
  **/
 static gboolean
-zif_md_primary_xml_resolve_cb (ZifPackage *package, gpointer user_data)
+zif_md_primary_xml_resolve_name_cb (ZifPackage *package,
+				    gpointer user_data)
 {
 	guint i;
 	const gchar *value;
@@ -641,14 +642,173 @@ zif_md_primary_xml_resolve_cb (ZifPackage *package, gpointer user_data)
 }
 
 /**
+ * zif_md_primary_xml_resolve_name_arch_cb:
+ **/
+static gboolean
+zif_md_primary_xml_resolve_name_arch_cb (ZifPackage *package,
+					 gpointer user_data)
+{
+	guint i;
+	const gchar *value;
+	gchar **search = (gchar **) user_data;
+	value = zif_package_get_name_arch (package);
+	for (i=0; search[i] != NULL; i++) {
+		if (g_strcmp0 (value, search[i]) == 0)
+			return TRUE;
+	}
+	return FALSE;
+}
+
+/**
+ * zif_md_primary_xml_resolve_name_version_cb:
+ **/
+static gboolean
+zif_md_primary_xml_resolve_name_version_cb (ZifPackage *package,
+					    gpointer user_data)
+{
+	guint i;
+	const gchar *value;
+	gchar **search = (gchar **) user_data;
+	value = zif_package_get_name_version (package);
+	for (i=0; search[i] != NULL; i++) {
+		if (g_strcmp0 (value, search[i]) == 0)
+			return TRUE;
+	}
+	return FALSE;
+}
+
+/**
+ * zif_md_primary_xml_resolve_name_version_arch_cb:
+ **/
+static gboolean
+zif_md_primary_xml_resolve_name_version_arch_cb (ZifPackage *package,
+						 gpointer user_data)
+{
+	guint i;
+	const gchar *value;
+	gchar **search = (gchar **) user_data;
+	value = zif_package_get_name_version_arch (package);
+	for (i=0; search[i] != NULL; i++) {
+		if (g_strcmp0 (value, search[i]) == 0)
+			return TRUE;
+	}
+	return FALSE;
+}
+
+/**
  * zif_md_primary_xml_resolve:
  **/
 static GPtrArray *
-zif_md_primary_xml_resolve (ZifMd *md, gchar **search, ZifState *state, GError **error)
+zif_md_primary_xml_resolve (ZifMd *md,
+			    gchar **search,
+			    ZifStoreResolveFlags flags,
+			    ZifState *state,
+			    GError **error)
 {
+	gboolean ret;
+	GPtrArray *array = NULL;
+	GPtrArray *array_tmp;
+	GPtrArray *tmp;
+	guint cnt = 0;
+	guint i;
+	ZifState *state_local;
+
 	g_return_val_if_fail (zif_state_valid (state), NULL);
-	return zif_md_primary_xml_filter (md, zif_md_primary_xml_resolve_cb, (gpointer) search,
-					  state, error);
+
+	/* find out how many steps we need to do */
+	cnt += ((flags & ZIF_STORE_RESOLVE_FLAG_USE_NAME) > 0);
+	cnt += ((flags & ZIF_STORE_RESOLVE_FLAG_USE_NAME_ARCH) > 0);
+	cnt += ((flags & ZIF_STORE_RESOLVE_FLAG_USE_NAME_VERSION) > 0);
+	cnt += ((flags & ZIF_STORE_RESOLVE_FLAG_USE_NAME_VERSION_ARCH) > 0);
+	zif_state_set_number_steps (state, cnt);
+
+	array_tmp = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
+
+	/* name */
+	if ((flags & ZIF_STORE_RESOLVE_FLAG_USE_NAME) > 0) {
+		state_local = zif_state_get_child (state);
+		tmp = zif_md_primary_xml_filter (md,
+						 zif_md_primary_xml_resolve_name_cb,
+						 (gpointer) search,
+						 state_local,
+						 error);
+		if (tmp == NULL)
+			goto out;
+		for (i=0; i<tmp->len; i++)
+			g_ptr_array_add (array_tmp, g_object_ref (g_ptr_array_index (tmp, i)));
+		g_ptr_array_unref (tmp);
+
+		/* this section done */
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
+	}
+
+	/* name.arch */
+	if ((flags & ZIF_STORE_RESOLVE_FLAG_USE_NAME_ARCH) > 0) {
+		state_local = zif_state_get_child (state);
+		tmp = zif_md_primary_xml_filter (md,
+						 zif_md_primary_xml_resolve_name_arch_cb,
+						 (gpointer) search,
+						 state_local,
+						 error);
+		if (tmp == NULL)
+			goto out;
+		for (i=0; i<tmp->len; i++)
+			g_ptr_array_add (array_tmp, g_object_ref (g_ptr_array_index (tmp, i)));
+		g_ptr_array_unref (tmp);
+
+		/* this section done */
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
+	}
+
+	/* name-version */
+	if ((flags & ZIF_STORE_RESOLVE_FLAG_USE_NAME_VERSION) > 0) {
+		state_local = zif_state_get_child (state);
+		tmp = zif_md_primary_xml_filter (md,
+						 zif_md_primary_xml_resolve_name_version_cb,
+						 (gpointer) search,
+						 state_local,
+						 error);
+		if (tmp == NULL)
+			goto out;
+		for (i=0; i<tmp->len; i++)
+			g_ptr_array_add (array_tmp, g_object_ref (g_ptr_array_index (tmp, i)));
+		g_ptr_array_unref (tmp);
+
+		/* this section done */
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
+	}
+
+	/* name-version.arch */
+	if ((flags & ZIF_STORE_RESOLVE_FLAG_USE_NAME_VERSION_ARCH) > 0) {
+		state_local = zif_state_get_child (state);
+		tmp = zif_md_primary_xml_filter (md,
+						 zif_md_primary_xml_resolve_name_version_arch_cb,
+						 (gpointer) search,
+						 state_local,
+						 error);
+		if (tmp == NULL)
+			goto out;
+		for (i=0; i<tmp->len; i++)
+			g_ptr_array_add (array_tmp, g_object_ref (g_ptr_array_index (tmp, i)));
+		g_ptr_array_unref (tmp);
+
+		/* this section done */
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
+	}
+
+	/* success */
+	array = g_ptr_array_ref (array_tmp);
+out:
+	g_ptr_array_unref (array_tmp);
+	return array;
 }
 
 /**

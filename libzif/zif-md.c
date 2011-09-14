@@ -812,6 +812,7 @@ zif_md_unload (ZifMd *md, ZifState *state, GError **error)
  * zif_md_resolve:
  * @md: A #ZifMd
  * @search: Search term, e.g. "gnome-power-manager"
+ * @flags: A bitfield of %ZifStoreResolveFlags, e.g. %ZIF_STORE_RESOLVE_FLAG_USE_NAME_ARCH
  * @state: A #ZifState to use for progress reporting
  * @error: A #GError, or %NULL
  *
@@ -819,10 +820,14 @@ zif_md_unload (ZifMd *md, ZifState *state, GError **error)
  *
  * Return value: An array of #ZifPackageRemote's
  *
- * Since: 0.1.0
+ * Since: 0.2.4
  **/
 GPtrArray *
-zif_md_resolve (ZifMd *md, gchar **search, ZifState *state, GError **error)
+zif_md_resolve_full (ZifMd *md,
+		     gchar **search,
+		     ZifStoreResolveFlags flags,
+		     ZifState *state,
+		     GError **error)
 {
 	GPtrArray *array = NULL;
 	ZifMdClass *klass = ZIF_MD_GET_CLASS (md);
@@ -843,9 +848,35 @@ zif_md_resolve (ZifMd *md, gchar **search, ZifState *state, GError **error)
 	}
 
 	/* do subclassed action */
-	array = klass->resolve (md, search, state, error);
+	array = klass->resolve (md, search, flags, state, error);
 out:
 	return array;
+}
+
+/**
+ * zif_md_resolve:
+ * @md: A #ZifMd
+ * @search: Search term, e.g. "gnome-power-manager"
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
+ *
+ * Finds all remote packages that match the name exactly.
+ *
+ * Return value: An array of #ZifPackageRemote's
+ *
+ * Since: 0.1.0
+ **/
+GPtrArray *
+zif_md_resolve (ZifMd *md,
+		gchar **search,
+		ZifState *state,
+		GError **error)
+{
+	return zif_md_resolve_full (md,
+				    search,
+				    ZIF_STORE_RESOLVE_FLAG_USE_NAME,
+				    state,
+				    error);
 }
 
 /**
