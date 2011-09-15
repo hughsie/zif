@@ -1924,12 +1924,42 @@ zif_main_show_transaction (ZifTransaction *transaction)
 }
 
 /**
+ * zif_main_report_transaction_warnings:
+ **/
+static void
+zif_main_report_transaction_warnings (ZifTransaction *transaction)
+{
+	const gchar *script_output;
+	gchar **split = NULL;
+	guint i;
+
+	/* get the stderr and stdout */
+	script_output = zif_transaction_get_script_output (transaction);
+	if (script_output == NULL)
+		goto out;
+
+	split = g_strsplit (script_output, "\n", -1);
+	for (i = 0; split[i] != NULL; i++) {
+
+		/* skip blank lines */
+		if (split[i][0] == '\0')
+			continue;
+
+		/* TRANSLATORS: this is the stdout and stderr output
+		 * from the transaction, that may indicate something
+		 * went wrong */
+		g_print ("%s %s\n", _("Transaction warning:"), split[i]);
+	}
+out:
+	g_strfreev (split);
+}
+
+/**
  * zif_transaction_run:
  **/
 static gboolean
 zif_transaction_run (ZifCmdPrivate *priv, ZifTransaction *transaction, ZifState *state, GError **error)
 {
-	const gchar *script_output;
 	gboolean assume_yes;
 	gboolean ret;
 	gboolean untrusted = FALSE;
@@ -2045,19 +2075,18 @@ zif_transaction_run (ZifCmdPrivate *priv, ZifTransaction *transaction, ZifState 
 	if (!ret)
 		goto out;
 
-	/* get the output of the transaction, if any */
-	script_output = zif_transaction_get_script_output (transaction);
-	if (script_output != NULL) {
-		/* TRANSLATORS: this is the stdout and stderr output
-		 * from the transaction, that may indicate something
-		 * went horribly wrong */
-		g_print ("%s %s\n", _("Transaction error:"), script_output);
-	}
+	/* print the output of the transaction, if any */
+	zif_main_report_transaction_warnings (transaction);
 
 	/* this section done */
 	ret = zif_state_done (state, error);
 	if (!ret)
 		goto out;
+
+	zif_progress_bar_end (priv->progressbar);
+
+	/* TRANSLATORS: tell the user everything went okay */
+	g_print ("%s\n", _("Transaction success!"));
 out:
 	if (store_local != NULL)
 		g_object_unref (store_local);
