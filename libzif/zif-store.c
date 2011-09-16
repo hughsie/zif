@@ -1175,6 +1175,9 @@ zif_store_resolve_full (ZifStore *store,
 			goto out;
 	}
 
+	/* ensure we don't have duplicate packages */
+	zif_package_array_filter_duplicates (array);
+
 	/* this section done */
 	ret = zif_state_done (state, error);
 	if (!ret)
