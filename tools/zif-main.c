@@ -1018,6 +1018,7 @@ zif_cmd_get_details (ZifCmdPrivate *priv, gchar **values, GError **error)
 	gboolean ret = FALSE;
 	GPtrArray *array = NULL;
 	GPtrArray *store_array = NULL;
+	GString *string = NULL;
 	guint64 size;
 	guint i;
 	ZifPackage *package;
@@ -1100,8 +1101,7 @@ zif_cmd_get_details (ZifCmdPrivate *priv, gchar **values, GError **error)
 	state_local = zif_state_get_child (priv->state);
 	zif_state_set_number_steps (state_local, array->len);
 
-	zif_progress_bar_end (priv->progressbar);
-
+	string = g_string_new ("");
 	for (i=0; i<array->len; i++) {
 		package = g_ptr_array_index (array, i);
 
@@ -1113,15 +1113,15 @@ zif_cmd_get_details (ZifCmdPrivate *priv, gchar **values, GError **error)
 		size = zif_package_get_size (package, state_loop, NULL);
 
 		/* TRANSLATORS: these are headers for the package data */
-		g_print ("%s\t : %s\n", _("Name"), zif_package_get_name (package));
-		g_print ("%s\t : %s\n", _("Version"), zif_package_get_version (package));
-		g_print ("%s\t : %s\n", _("Arch"), zif_package_get_arch (package));
-		g_print ("%s\t : %" G_GUINT64_FORMAT " bytes\n", _("Size"), size);
-		g_print ("%s\t : %s\n", _("Repo"), zif_package_get_data (package));
-		g_print ("%s\t : %s\n", _("Summary"), summary);
-		g_print ("%s\t : %s\n", _("URL"), url);
-		g_print ("%s\t : %s\n", _("License"), license);
-		g_print ("%s\t : %s\n", _("Description"), description);
+		g_string_append_printf (string, "%s\t : %s\n", _("Name"), zif_package_get_name (package));
+		g_string_append_printf (string, "%s\t : %s\n", _("Version"), zif_package_get_version (package));
+		g_string_append_printf (string, "%s\t : %s\n", _("Arch"), zif_package_get_arch (package));
+		g_string_append_printf (string, "%s\t : %" G_GUINT64_FORMAT " bytes\n", _("Size"), size);
+		g_string_append_printf (string, "%s\t : %s\n", _("Repo"), zif_package_get_data (package));
+		g_string_append_printf (string, "%s\t : %s\n", _("Summary"), summary);
+		g_string_append_printf (string, "%s\t : %s\n", _("URL"), url);
+		g_string_append_printf (string, "%s\t : %s\n", _("License"), license);
+		g_string_append_printf (string, "%s\t : %s\n", _("Description"), description);
 
 		/* this section done */
 		ret = zif_state_done (state_local, error);
@@ -1134,9 +1134,15 @@ zif_cmd_get_details (ZifCmdPrivate *priv, gchar **values, GError **error)
 	if (!ret)
 		goto out;
 
+	/* print what we've got */
+	zif_progress_bar_end (priv->progressbar);
+	g_print ("%s", string->str);
+
 	/* success */
 	ret = TRUE;
 out:
+	if (string != NULL)
+		g_string_free (string, TRUE);
 	if (store_array != NULL)
 		g_ptr_array_unref (store_array);
 	if (array != NULL)
