@@ -855,6 +855,17 @@ out:
 
 /**
  * _zif_package_array_filter_best_provide:
+ *
+ * This  is how yum does it:
+ * Taken from: http://yum.baseurl.org/wiki/CompareProviders
+ *
+ * 1) Filter by the same srpm as the requiring package
+ * 2) Filter by names that start the same as the requiring package
+ * 3a) Filter by the same (or similar) arch as the requiring package
+ * 3b) Filter by the same (or similar) arch as the system
+ * 3c) Filter by less new deps to install
+ * 4) Filter by shorter name
+ * 5) Filter by highest alphabetically wins
  **/
 static gboolean
 _zif_package_array_filter_best_provide (ZifTransaction *transaction,
