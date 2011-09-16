@@ -912,18 +912,6 @@ _zif_package_array_filter_best_provide (ZifTransaction *transaction,
 		g_debug ("after filtering by depend, array now %i packages", array->len);
 	}
 
-	/* filter these down so we get smallest names listed first */
-	if (array->len > 1) {
-		zif_package_array_filter_smallest_name (array);
-		g_debug ("after filtering by name length, array now %i packages", array->len);
-	}
-
-	/* success, but no results */
-	if (array->len == 0) {
-		*package = NULL;
-		goto out;
-	}
-
 	/* we cannot find the newest entry for non-native packages */
 	if (array->len > 1)
 		zif_package_array_filter_arch (array, archinfo);
@@ -936,6 +924,18 @@ _zif_package_array_filter_best_provide (ZifTransaction *transaction,
 			     ZIF_TRANSACTION_ERROR_FAILED,
 			     "no packages compatible with %s",
 			     archinfo);
+		goto out;
+	}
+
+	/* filter these down so we get smallest names listed first */
+	if (array->len > 1) {
+		zif_package_array_filter_smallest_name (array);
+		g_debug ("after filtering by name length, array now %i packages", array->len);
+	}
+
+	/* success, but no results */
+	if (array->len == 0) {
+		*package = NULL;
 		goto out;
 	}
 
