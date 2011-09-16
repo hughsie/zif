@@ -1,0 +1,26 @@
+# Install a package where two packages provide the dep and we have to
+# compare provides versions.
+
+local
+
+remote
+	mozilla;0.0.1-1;i386;meta
+		Requires
+			certificates
+	redhat-certificates;0.0.1-1;i386;meta
+		Provides
+			certificates = 1
+	fedora-certificates;0.0.1-1;i386;meta
+		Provides
+			certificates = 2
+
+transaction
+	install
+		mozilla
+
+result
+	mozilla;0.0.1-1;i386;meta
+	fedora-certificates;0.0.1-1;i386;meta
+
+config
+	archinfo=i386
