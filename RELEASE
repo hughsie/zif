@@ -35,7 +35,7 @@ git push
 
 6. Upload tarball to:
 
-scp *.tar.* packagekit.org:/srv/www/html/releases/
+scp *.tar.* hughsient@people.freedesktop.org:~/public_html/zif/releases
 
 7. Do post release version bump in configure.ac
 
@@ -53,7 +53,7 @@ Zif 0.2.3 released!
 Zif is a simple yum-compatible library that only provides read-write
 access to the rpm database and the Fedora metadata for PackageKit.
 
-Tarballs available here: http://www.packagekit.org/releases/
+Tarballs available here: http://people.freedesktop.org/~hughsient/zif/releases/
 
 =================================================
 

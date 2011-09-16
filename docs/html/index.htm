@@ -1,0 +1,282 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+<meta name="robots" content="index,follow">
+<link rel="stylesheet" type="text/css" charset="utf-8" media="all" href="common.css">
+<title>Zif</title>
+</head>
+<body>
+<h1>Zif</h1>
+<p>
+<img src="img/logo.png" alt="[image of a zero-insertion-force socket]">
+</p>
+
+<p>
+Zif is a package manager for <a href="https://fedoraproject.org/">Fedora</a>
+written in C that's designed to replace <a href="http://yum.baseurl.org/">yum</a>.
+</p>
+
+<p>
+When designing <a href="http://www.packagekit.org/">PackageKit</a>,
+I coded a framework for a distro-specific backend to
+be coupled with a distro-agnostic service that listened for user requests to
+create a package manager daemon.
+</p>
+
+<p>
+In doing so, I've become very familiar with about a dozen (!) package systems,
+with all their specific nuances and peculiarities.
+It also became bewildering obvious to me that most of these package
+systems were not a good fit, as much of the package system functionality
+was not used and usually what PackageKit was using had to hide some
+pretty hideous hacks.
+</p>
+
+<p>
+For instance, PackageKit only exercises less that 5% of the
+<a href="http://yum.baseurl.org/">yum API</a>.
+Another example, is that a good chunk of the yum backend is just making sure
+that we send and receive text as Unicode.
+</p>
+
+<p>
+ This layering can be described below:
+</p>
+
+<table border="0" cellspacing="5px" width="100%">
+ <tr>
+  <td style="text-align:center;">
+   <a href="https://gitorious.org/packagekit/packagekit/src">packagekitd</a>
+  </td>
+  <td>PackageKit daemon (language: C)</td>
+  <td><b>10k lines</b></td>
+ </tr>
+ <tr>
+  <td style="text-align:center;"> | </td><td></td><td></td>
+ </tr>
+ <tr>
+  <td style="text-align:center;">
+   <a href="https://gitorious.org/packagekit/packagekit/backends/yum/pk-plugin-yum.c">pk-plugin-yum</a>
+  </td>
+  <td>PackageKit backend (language: C)</td>
+  <td><b>1k lines</b></td>
+ </tr>
+ <tr>
+  <td style="text-align:center;"> | </td><td></td><td></td>
+ </tr>
+ <tr>
+  <td style="text-align:center;">
+   <a href="https://gitorious.org/packagekit/packagekit/trees/master/lib/python/packagekit">PackageKit-python</a>
+  </td>
+  <td>PackageKit python interface code (language: python)</td>
+  <td><b>2.5k lines</b></td>
+ </tr>
+ <tr>
+  <td style="text-align:center;"> | </td><td></td><td></td>
+ </tr>
+ <tr>
+  <td style="text-align:center;">
+   <a href="https://gitorious.org/packagekit/packagekit/trees/master/backends/yum">yumBackend</a>
+  </td>
+  <td>PackageKit backend code (language: python)</td>
+  <td><b>4k lines</b></td>
+ </tr>
+ <tr>
+  <td style="text-align:center;"> | </td><td></td><td></td>
+ </tr>
+ <tr>
+  <td style="text-align:center;">
+   <a href="http://yum.baseurl.org/gitweb?p=yum.git;a=tree;f=yum;hb=refs/heads/yum-3_2_X">yum</a>
+  </td>
+  <td>Core yum (python)</td>
+  <td><b>20k lines</b></td>
+ </tr>
+ <tr>
+  <td style="text-align:center;"> | </td><td></td><td></td>
+ </tr>
+ <tr>
+  <td style="text-align:center;">
+   <a href="http://rpm.org/gitweb?p=rpm.git;a=tree;f=python;hb=refs/heads/master">rpm-python</a>
+  </td>
+  <td>The rpm python bindings (language: python)</td>
+  <td><b>2k lines</b></td>
+ </tr>
+ <tr>
+  <td style="text-align:center;"> | </td><td></td><td></td>
+ </tr>
+ <tr>
+  <td style="text-align:center;">
+   <a href="http://rpm.org/gitweb?p=rpm.git;a=tree;f=lib;hb=refs/heads/master">librpm</a>
+  </td>
+  <td>The RPM package manager (language: C)</td>
+  <td><b>40k lines</b></td>
+ </tr>
+</table>
+
+<p>
+What we're actually asking the package manager to do just isn't that
+complicated, and the layers, on layers, on layers just introduces bugs
+and demolishes our performance.
+</p>
+
+<p>
+It seems obvious, that instead of looking at the bottom-up approach, where you
+have an existing "fat" solution that is shoehorned into working with PackageKit,
+you design a top-down solution. This means that you essentially design a library
+for the sole use of PackageKit, and only code the parts that PackageKit will use.
+The fact that we don't want to support plugins means we can leave out a
+huge chunk of code from this new library.
+</p>
+
+<p>
+As we're only designing the library to be used by one thing, we can optimize
+things in the right places. We can do all operations with the assumption that
+the user wants an accurate time remaining, and doesn't want to be bothered with
+the low level details. If we're designing it for situations that only PackageKit
+cares about, we can do a lot of things a lot nicer than a generic solution.
+This would include working with offline copies of metadata whenever possible,
+and erring on returning results quickly rather than checking if the
+metadata is out of date.
+We'll aim to do as much as we can without bothering the user.
+</p>
+
+<p>
+So, if we're writing a shim library, it makes sense to be in the same language
+as PackageKit itself (C), to avoid all the spawning and watching of processes.
+This means all the backend actions can be run in threads, which are
+managed by the daemon.
+It also makes sense to make it distribution specific.
+<a href="http://labix.org/smart">Smart</a> does a wonderful job of
+trying to join all the distros together, but because of it's genericness
+means we loose all the top-down way of thinking.
+</p>
+
+<p>
+So, in the Christmas holidays of 2008, and since in a few evenings of spare time
+since then, I wrote Zif.
+Zif is designed to work on Fedora, and only Fedora.
+It's not really designed to be run by the end user, it's only designed to be
+run as part of a program using libzif.
+</p>
+
+<table border="0" cellspacing="5px" width="100%">
+ <tr>
+  <td style="text-align:center;">
+   <a href="https://gitorious.org/packagekit/packagekit/src">packagekitd</a>
+  </td>
+  <td>PackageKit daemon (language: C)</td>
+  <td><b>10k lines</b></td>
+ </tr>
+ <tr>
+  <td style="text-align:center;"> | </td><td></td><td></td>
+ </tr>
+ <tr>
+  <td style="text-align:center;">
+   <a href="https://gitorious.org/packagekit/packagekit/backends/yum/pk-plugin-zif.c">pk-plugin-zif</a>
+  </td>
+  <td>PackageKit backend (language: C)</td>
+  <td><b>5k lines</b></td>
+ </tr>
+ <tr>
+  <td style="text-align:center;"> | </td><td></td><td></td>
+ </tr>
+ <tr>
+  <td style="text-align:center;">
+   <a href="https://github.com/hughsie/zif/tree/master/libzif">libzif</a>
+  </td>
+  <td>libzif (language: C)</td>
+  <td><b>34k lines</b></td>
+ </tr>
+ <tr>
+  <td style="text-align:center;"> | </td><td></td><td></td>
+ </tr>
+ <tr>
+  <td style="text-align:center;">
+   <a href="http://rpm.org/gitweb?p=rpm.git;a=tree;f=lib;hb=refs/heads/master">librpm</a>
+  </td>
+  <td>The RPM package manager (language: C)</td>
+  <td><b>40k lines</b></td>
+ </tr>
+</table>
+
+<p>
+PackageKit has a zif backend, and it seems to work basically as well as the
+native yum code ever did.
+Zif is designed to only do what the user wants, and not do lots of
+cleverness in the background.
+To solve the difficult desktop problems we need answers to questions
+like <i>what package owns /usr/bin/totem</i> in milliseconds, not tens
+of seconds.
+</p>
+
+<p>
+Zif features:
+</p>
+<ul>
+<li>Modern GObject library with GCancellation and GError</li>
+<li>Full state support for accurate progress reporting</li>
+<li>Downloads using libsoup</li>
+<li>Internally ref-counted arrays and strings</li>
+<li>Remote, virtual, installed and local packages handled as abstract objects</li>
+<li>Local, virtual and remote sources handled using an abstract sack</li>
+<li>Self test program (67 test transactions)</li>
+<li>Checking of signed packages, and auto-importing of keyrings</li>
+<li>Sane and predictable error reporting</li>
+<li>Threadsafe (but librpm still isn't, obviously)</li>
+<li>No plugin support (an advantage, plugins now exist in PackageKit)</li>
+<li>Designed as a shared library, not a python module</li>
+<li>Can work offline and skip repos if they do not exist</li>
+<li>Compiles on Linux, FreeBSD and Windows</li>
+</ul>
+
+<p>
+Zif is compatible with rpm, yum and the Red Hat and Fedora
+infrastructure, specifically:
+</p>
+<ul>
+<li>Split locking model but can optionally use the yum global lock</li>
+<li>Uses librpm to get data from rpm and to install and remove packages</li>
+<li>Reads and updates yum metadata (primary, filelists, updateinfo, other,
+  metalink, mirrorlist, comps)</li>
+<li>Reads standard yum repo files</li>
+<li>Reads a subset of comps for distro-specific groups</li>
+<li>Uses metalink/mirrorlist repository handling</li>
+<li>Uses yum.conf main config file as a fallback</li>
+<li>Uses the PackageKit categories->group mapping file</li>
+<li>Fast depsolving, using the same algorithms as yum</li>
+<li>Reading and writing of the YumDB for storing where packages come from</li>
+<li>Uses the XMLRPC API of RHN where available.</li>
+</ul>
+
+<p>
+What doesn't work (yet):
+</p>
+<ul>
+<li>Checking of signed repodata (code is in place, but waiting for Fedora)</li>
+<li>Installing updates using deltas (need to implement)</li>
+<li>Some old style yum metadata (<code>ZifMdOtherXml</code>)</li>
+</ul>
+
+<p>
+Documentation is available <a href="docs/">here</a>.
+</p>
+<p>
+Releases are available <a href="releases/">here</a>.
+</p>
+<p>
+The source is managed using Git.
+You can <a href="https://github.com/hughsie/zif">browse</a> the
+repository using gitweb or clone it using the following command:
+</p>
+<pre>
+$ git clone git://github.com/hughsie/zif.git
+</pre>
+<p class="footer">
+Copyright <a href="mailto:richard@hughsie.com">Richard Hughes 2007-2011</a><br>
+<a href="http://validator.w3.org/check/referer">Optimized</a>
+for <a href="http://www.w3.org/">standards</a>.
+</p>
+</body>
+</html>
+

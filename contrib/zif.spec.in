@@ -5,8 +5,8 @@ Name:      zif
 Version:   #VERSION#
 Release:   0.#BUILD#%{?alphatag}%{?dist}
 License:   GPLv2+
-URL:       http://github.com/hughsie/zif
-Source0:   http://www.packagekit.org/releases/%{name}-%{version}.tar.xz
+URL:       http://people.freedesktop.org/~hughsient/zif/
+Source0:   http://people.freedesktop.org/~hughsient/zif/releases/%{name}-%{version}.tar.xz
 
 BuildRequires: glib2-devel >= 2.16.1
 BuildRequires: rpm-devel
