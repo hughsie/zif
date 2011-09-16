@@ -100,6 +100,16 @@ gboolean	 zif_package_id_to_nevra	(const gchar	 *package_id,
 						 gchar		**release,
 						 gchar		**arch);
 
+/* string comparison */
+typedef gboolean (*ZifStrCompareFunc)		(const gchar	*a,
+						 const gchar	*b);
+gboolean	 zif_str_compare_regex		(const gchar	*a,
+						 const gchar	*b);
+gboolean	 zif_str_compare_glob		(const gchar	*a,
+						 const gchar	*b);
+gboolean	 zif_str_compare_equal		(const gchar	*a,
+						 const gchar	*b);
+
 G_END_DECLS
 
 #endif /* __ZIF_UTILS_H */

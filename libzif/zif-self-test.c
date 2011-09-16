@@ -1346,7 +1346,7 @@ zif_md_filelists_sql_func (void)
 	array = zif_md_search_file (md, (gchar**)data, state, &error);
 	g_assert_no_error (error);
 	g_assert (array != NULL);
-	g_assert (array->len == 1);
+	g_assert_cmpint (array->len, ==, 1);
 
 	pkgid = g_ptr_array_index (array, 0);
 	g_assert_cmpstr (pkgid, ==, "888f5500947e6dafb215aaf4ca0cb789a12dab404397f2a37b3623a25ed72794");
@@ -1583,6 +1583,7 @@ zif_md_primary_sql_func (void)
 	ZifState *state;
 	ZifConfig *config;
 	const gchar *data[] = { "gnome-power-manager.i686", "gnome-color-manager.i686", NULL };
+	const gchar *data_glob[] = { "gnome-*", NULL };
 	gchar *filename;
 
 	state = zif_state_new ();
@@ -1608,6 +1609,7 @@ zif_md_primary_sql_func (void)
 	g_assert (ret);
 	g_assert (zif_md_get_is_loaded (md));
 
+	/* resolving by name.arch */
 	zif_state_reset (state);
 	array = zif_md_resolve_full (md,
 				     (gchar**)data,
@@ -1616,11 +1618,23 @@ zif_md_primary_sql_func (void)
 				     &error);
 	g_assert_no_error (error);
 	g_assert (array != NULL);
-	g_assert (array->len == 1);
-
+	g_assert_cmpint (array->len, ==, 1);
 	package = g_ptr_array_index (array, 0);
 	zif_state_reset (state);
 	g_assert_cmpstr (zif_package_get_summary (package, state, NULL), ==, "GNOME power management service");
+	g_ptr_array_unref (array);
+
+	/* resolving by name and globbing */
+	zif_state_reset (state);
+	array = zif_md_resolve_full (md,
+				     (gchar**)data_glob,
+				     ZIF_STORE_RESOLVE_FLAG_USE_NAME |
+				     ZIF_STORE_RESOLVE_FLAG_USE_GLOB,
+				     state,
+				     &error);
+	g_assert_no_error (error);
+	g_assert (array != NULL);
+	g_assert_cmpint (array->len, ==, 1);
 	g_ptr_array_unref (array);
 
 	g_object_unref (state);
@@ -1634,6 +1648,7 @@ static void
 zif_md_primary_xml_func (void)
 {
 	const gchar *data[] = { "gnome-power-manager.i686", NULL };
+	const gchar *data_glob[] = { "gnome-power*", NULL };
 	gboolean ret;
 	gchar *filename;
 	GError *error = NULL;
@@ -1672,6 +1687,20 @@ zif_md_primary_xml_func (void)
 	g_assert (ret);
 	g_assert (zif_md_get_is_loaded (md));
 
+	/* resolving by name and globbing */
+	zif_state_reset (state);
+	array = zif_md_resolve_full (md,
+				     (gchar**)data_glob,
+				     ZIF_STORE_RESOLVE_FLAG_USE_NAME |
+				     ZIF_STORE_RESOLVE_FLAG_USE_GLOB,
+				     state,
+				     &error);
+	g_assert_no_error (error);
+	g_assert (array != NULL);
+	g_assert_cmpint (array->len, ==, 3);
+	g_ptr_array_unref (array);
+
+	/* resolving by name.arch */
 	zif_state_reset (state);
 	array = zif_md_resolve_full (md,
 				     (gchar**)data,
@@ -1680,7 +1709,7 @@ zif_md_primary_xml_func (void)
 				     &error);
 	g_assert_no_error (error);
 	g_assert (array != NULL);
-	g_assert (array->len == 1);
+	g_assert_cmpint (array->len, ==, 1);
 
 	/* get remote store */
 	store_remote = ZIF_STORE_REMOTE (zif_store_remote_new ());
@@ -2838,6 +2867,23 @@ zif_store_local_func (void)
 					(gchar**)to_array,
 					ZIF_STORE_RESOLVE_FLAG_USE_NAME |
 					ZIF_STORE_RESOLVE_FLAG_USE_NAME_ARCH,
+					state,
+					&error);
+	g_assert_no_error (error);
+	g_assert (array != NULL);
+	g_assert_cmpint (array->len, ==, 1);
+	package = g_ptr_array_index (array, 0);
+	g_assert_cmpstr (zif_package_get_id (package), ==, "test;0.1-1.fc14;noarch;installed");
+	g_ptr_array_unref (array);
+
+	/* resolve with name globbing */
+	zif_state_reset (state);
+	to_array[0] = "t*";
+	to_array[1] = NULL;
+	array = zif_store_resolve_full (ZIF_STORE (store),
+					(gchar**)to_array,
+					ZIF_STORE_RESOLVE_FLAG_USE_NAME |
+					ZIF_STORE_RESOLVE_FLAG_USE_GLOB,
 					state,
 					&error);
 	g_assert_no_error (error);

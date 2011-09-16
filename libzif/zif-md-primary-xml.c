@@ -554,14 +554,19 @@ out:
 }
 
 typedef gboolean (*ZifPackageFilterFunc)		(ZifPackage		*package,
-							 gpointer		 user_data);
+							 gpointer		 user_data,
+							 ZifStrCompareFunc	 compare_func);
 
 /**
  * zif_md_primary_xml_filter:
  **/
 static GPtrArray *
-zif_md_primary_xml_filter (ZifMd *md, ZifPackageFilterFunc filter_func, gpointer user_data,
-			   ZifState *state, GError **error)
+zif_md_primary_xml_filter (ZifMd *md,
+			   ZifPackageFilterFunc filter_func,
+			   gpointer user_data,
+			   ZifStrCompareFunc compare_func,
+			   ZifState *state,
+			   GError **error)
 {
 	GPtrArray *array = NULL;
 	GPtrArray *packages;
@@ -611,7 +616,7 @@ zif_md_primary_xml_filter (ZifMd *md, ZifPackageFilterFunc filter_func, gpointer
 	packages = md_primary->priv->array;
 	for (i=0; i<packages->len; i++) {
 		package = g_ptr_array_index (packages, i);
-		if (filter_func (package, user_data))
+		if (filter_func (package, user_data, compare_func))
 			g_ptr_array_add (array, g_object_ref (package));
 	}
 
@@ -628,14 +633,15 @@ out:
  **/
 static gboolean
 zif_md_primary_xml_resolve_name_cb (ZifPackage *package,
-				    gpointer user_data)
+				    gpointer user_data,
+				    ZifStrCompareFunc compare_func)
 {
 	guint i;
 	const gchar *value;
 	gchar **search = (gchar **) user_data;
 	value = zif_package_get_name (package);
 	for (i=0; search[i] != NULL; i++) {
-		if (g_strcmp0 (value, search[i]) == 0)
+		if (compare_func (value, search[i]))
 			return TRUE;
 	}
 	return FALSE;
@@ -646,14 +652,15 @@ zif_md_primary_xml_resolve_name_cb (ZifPackage *package,
  **/
 static gboolean
 zif_md_primary_xml_resolve_name_arch_cb (ZifPackage *package,
-					 gpointer user_data)
+					 gpointer user_data,
+					 ZifStrCompareFunc compare_func)
 {
 	guint i;
 	const gchar *value;
 	gchar **search = (gchar **) user_data;
 	value = zif_package_get_name_arch (package);
 	for (i=0; search[i] != NULL; i++) {
-		if (g_strcmp0 (value, search[i]) == 0)
+		if (compare_func (value, search[i]))
 			return TRUE;
 	}
 	return FALSE;
@@ -664,14 +671,15 @@ zif_md_primary_xml_resolve_name_arch_cb (ZifPackage *package,
  **/
 static gboolean
 zif_md_primary_xml_resolve_name_version_cb (ZifPackage *package,
-					    gpointer user_data)
+					    gpointer user_data,
+					    ZifStrCompareFunc compare_func)
 {
 	guint i;
 	const gchar *value;
 	gchar **search = (gchar **) user_data;
 	value = zif_package_get_name_version (package);
 	for (i=0; search[i] != NULL; i++) {
-		if (g_strcmp0 (value, search[i]) == 0)
+		if (compare_func (value, search[i]))
 			return TRUE;
 	}
 	return FALSE;
@@ -682,14 +690,15 @@ zif_md_primary_xml_resolve_name_version_cb (ZifPackage *package,
  **/
 static gboolean
 zif_md_primary_xml_resolve_name_version_arch_cb (ZifPackage *package,
-						 gpointer user_data)
+						 gpointer user_data,
+						 ZifStrCompareFunc compare_func)
 {
 	guint i;
 	const gchar *value;
 	gchar **search = (gchar **) user_data;
 	value = zif_package_get_name_version_arch (package);
 	for (i=0; search[i] != NULL; i++) {
-		if (g_strcmp0 (value, search[i]) == 0)
+		if (compare_func (value, search[i]))
 			return TRUE;
 	}
 	return FALSE;
@@ -712,6 +721,7 @@ zif_md_primary_xml_resolve (ZifMd *md,
 	guint cnt = 0;
 	guint i;
 	ZifState *state_local;
+	ZifStrCompareFunc compare_func;
 
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 
@@ -722,6 +732,14 @@ zif_md_primary_xml_resolve (ZifMd *md,
 	cnt += ((flags & ZIF_STORE_RESOLVE_FLAG_USE_NAME_VERSION_ARCH) > 0);
 	zif_state_set_number_steps (state, cnt);
 
+	/* allow globbing (slow) or a regular expressions (much slower) */
+	if ((flags & ZIF_STORE_RESOLVE_FLAG_USE_REGEX) > 0)
+		compare_func = zif_str_compare_regex;
+	else if ((flags & ZIF_STORE_RESOLVE_FLAG_USE_GLOB) > 0)
+		compare_func = zif_str_compare_glob;
+	else
+		compare_func = zif_str_compare_equal;
+
 	array_tmp = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 
 	/* name */
@@ -730,6 +748,7 @@ zif_md_primary_xml_resolve (ZifMd *md,
 		tmp = zif_md_primary_xml_filter (md,
 						 zif_md_primary_xml_resolve_name_cb,
 						 (gpointer) search,
+						 compare_func,
 						 state_local,
 						 error);
 		if (tmp == NULL)
@@ -750,6 +769,7 @@ zif_md_primary_xml_resolve (ZifMd *md,
 		tmp = zif_md_primary_xml_filter (md,
 						 zif_md_primary_xml_resolve_name_arch_cb,
 						 (gpointer) search,
+						 compare_func,
 						 state_local,
 						 error);
 		if (tmp == NULL)
@@ -770,6 +790,7 @@ zif_md_primary_xml_resolve (ZifMd *md,
 		tmp = zif_md_primary_xml_filter (md,
 						 zif_md_primary_xml_resolve_name_version_cb,
 						 (gpointer) search,
+						 compare_func,
 						 state_local,
 						 error);
 		if (tmp == NULL)
@@ -790,6 +811,7 @@ zif_md_primary_xml_resolve (ZifMd *md,
 		tmp = zif_md_primary_xml_filter (md,
 						 zif_md_primary_xml_resolve_name_version_arch_cb,
 						 (gpointer) search,
+						 compare_func,
 						 state_local,
 						 error);
 		if (tmp == NULL)
@@ -815,7 +837,9 @@ out:
  * zif_md_primary_xml_search_name_cb:
  **/
 static gboolean
-zif_md_primary_xml_search_name_cb (ZifPackage *package, gpointer user_data)
+zif_md_primary_xml_search_name_cb (ZifPackage *package,
+				   gpointer user_data,
+				   ZifStrCompareFunc compare_func)
 {
 	guint i;
 	const gchar *value;
@@ -835,7 +859,10 @@ static GPtrArray *
 zif_md_primary_xml_search_name (ZifMd *md, gchar **search, ZifState *state, GError **error)
 {
 	g_return_val_if_fail (zif_state_valid (state), NULL);
-	return zif_md_primary_xml_filter (md, zif_md_primary_xml_search_name_cb, (gpointer) search,
+	return zif_md_primary_xml_filter (md,
+					  zif_md_primary_xml_search_name_cb,
+					  (gpointer) search,
+					  NULL,
 					  state, error);
 }
 
@@ -843,7 +870,9 @@ zif_md_primary_xml_search_name (ZifMd *md, gchar **search, ZifState *state, GErr
  * zif_md_primary_xml_search_details_cb:
  **/
 static gboolean
-zif_md_primary_xml_search_details_cb (ZifPackage *package, gpointer user_data)
+zif_md_primary_xml_search_details_cb (ZifPackage *package,
+				      gpointer user_data,
+				      ZifStrCompareFunc compare_func)
 {
 	guint i;
 	gboolean ret = FALSE;
@@ -894,15 +923,21 @@ static GPtrArray *
 zif_md_primary_xml_search_details (ZifMd *md, gchar **search, ZifState *state, GError **error)
 {
 	g_return_val_if_fail (zif_state_valid (state), NULL);
-	return zif_md_primary_xml_filter (md, zif_md_primary_xml_search_details_cb, (gpointer) search,
-					  state, error);
+	return zif_md_primary_xml_filter (md,
+					  zif_md_primary_xml_search_details_cb,
+					  (gpointer) search,
+					  NULL,
+					  state,
+					  error);
 }
 
 /**
  * zif_md_primary_xml_search_group_cb:
  **/
 static gboolean
-zif_md_primary_xml_search_group_cb (ZifPackage *package, gpointer user_data)
+zif_md_primary_xml_search_group_cb (ZifPackage *package,
+				    gpointer user_data,
+				    ZifStrCompareFunc compare_func)
 {
 	guint i;
 	gboolean ret = FALSE;
@@ -936,15 +971,21 @@ static GPtrArray *
 zif_md_primary_xml_search_group (ZifMd *md, gchar **search, ZifState *state, GError **error)
 {
 	g_return_val_if_fail (zif_state_valid (state), NULL);
-	return zif_md_primary_xml_filter (md, zif_md_primary_xml_search_group_cb, (gpointer) search,
-					  state, error);
+	return zif_md_primary_xml_filter (md,
+					  zif_md_primary_xml_search_group_cb,
+					  (gpointer) search,
+					  NULL,
+					  state,
+					  error);
 }
 
 /**
  * zif_md_primary_xml_search_pkgid_cb:
  **/
 static gboolean
-zif_md_primary_xml_search_pkgid_cb (ZifPackage *package, gpointer user_data)
+zif_md_primary_xml_search_pkgid_cb (ZifPackage *package,
+				    gpointer user_data,
+				    ZifStrCompareFunc compare_func)
 {
 	guint i;
 	const gchar *pkgid;
@@ -964,15 +1005,21 @@ static GPtrArray *
 zif_md_primary_xml_search_pkgid (ZifMd *md, gchar **search, ZifState *state, GError **error)
 {
 	g_return_val_if_fail (zif_state_valid (state), NULL);
-	return zif_md_primary_xml_filter (md, zif_md_primary_xml_search_pkgid_cb, (gpointer) search,
-					  state, error);
+	return zif_md_primary_xml_filter (md,
+					  zif_md_primary_xml_search_pkgid_cb,
+					  (gpointer) search,
+					  NULL,
+					  state,
+					  error);
 }
 
 /**
  * zif_md_primary_xml_what_provides_cb:
  **/
 static gboolean
-zif_md_primary_xml_what_provides_cb (ZifPackage *package, gpointer user_data)
+zif_md_primary_xml_what_provides_cb (ZifPackage *package,
+				     gpointer user_data,
+				     ZifStrCompareFunc compare_func)
 {
 	guint i, j;
 	gboolean ret = FALSE;
@@ -1013,7 +1060,9 @@ out:
  * zif_md_primary_xml_what_obsoletes_cb:
  **/
 static gboolean
-zif_md_primary_xml_what_obsoletes_cb (ZifPackage *package, gpointer user_data)
+zif_md_primary_xml_what_obsoletes_cb (ZifPackage *package,
+				      gpointer user_data,
+				      ZifStrCompareFunc compare_func)
 {
 	guint i, j;
 	gboolean ret = FALSE;
@@ -1054,7 +1103,9 @@ out:
  * zif_md_primary_xml_what_conflicts_cb:
  **/
 static gboolean
-zif_md_primary_xml_what_conflicts_cb (ZifPackage *package, gpointer user_data)
+zif_md_primary_xml_what_conflicts_cb (ZifPackage *package,
+				      gpointer user_data,
+				      ZifStrCompareFunc compare_func)
 {
 	guint i, j;
 	gboolean ret = FALSE;
@@ -1099,8 +1150,12 @@ zif_md_primary_xml_what_provides (ZifMd *md, GPtrArray *depends,
 				  ZifState *state, GError **error)
 {
 	g_return_val_if_fail (zif_state_valid (state), NULL);
-	return zif_md_primary_xml_filter (md, zif_md_primary_xml_what_provides_cb, (gpointer) depends,
-					  state, error);
+	return zif_md_primary_xml_filter (md,
+					  zif_md_primary_xml_what_provides_cb,
+					  (gpointer) depends,
+					  NULL,
+					  state,
+					  error);
 }
 
 /**
@@ -1111,8 +1166,12 @@ zif_md_primary_xml_what_obsoletes (ZifMd *md, GPtrArray *depends,
 				   ZifState *state, GError **error)
 {
 	g_return_val_if_fail (zif_state_valid (state), NULL);
-	return zif_md_primary_xml_filter (md, zif_md_primary_xml_what_obsoletes_cb, (gpointer) depends,
-					  state, error);
+	return zif_md_primary_xml_filter (md,
+					  zif_md_primary_xml_what_obsoletes_cb,
+					  (gpointer) depends,
+					  NULL,
+					  state,
+					  error);
 }
 
 /**
@@ -1123,15 +1182,21 @@ zif_md_primary_xml_what_conflicts (ZifMd *md, GPtrArray *depends,
 				   ZifState *state, GError **error)
 {
 	g_return_val_if_fail (zif_state_valid (state), NULL);
-	return zif_md_primary_xml_filter (md, zif_md_primary_xml_what_conflicts_cb, (gpointer) depends,
-					  state, error);
+	return zif_md_primary_xml_filter (md,
+					  zif_md_primary_xml_what_conflicts_cb,
+					  (gpointer) depends,
+					  NULL,
+					  state,
+					  error);
 }
 
 /**
  * zif_md_primary_xml_find_package_cb:
  **/
 static gboolean
-zif_md_primary_xml_find_package_cb (ZifPackage *package, gpointer user_data)
+zif_md_primary_xml_find_package_cb (ZifPackage *package,
+				    gpointer user_data,
+				    ZifStrCompareFunc compare_func)
 {
 	const gchar *value;
 	const gchar *search = (const gchar *) user_data;
@@ -1143,11 +1208,18 @@ zif_md_primary_xml_find_package_cb (ZifPackage *package, gpointer user_data)
  * zif_md_primary_xml_find_package:
  **/
 static GPtrArray *
-zif_md_primary_xml_find_package (ZifMd *md, const gchar *package_id, ZifState *state, GError **error)
+zif_md_primary_xml_find_package (ZifMd *md,
+				 const gchar *package_id,
+				 ZifState *state,
+				 GError **error)
 {
 	g_return_val_if_fail (zif_state_valid (state), NULL);
-	return zif_md_primary_xml_filter (md, zif_md_primary_xml_find_package_cb, (gpointer) package_id,
-					  state, error);
+	return zif_md_primary_xml_filter (md,
+					  zif_md_primary_xml_find_package_cb,
+					  (gpointer) package_id,
+					  NULL,
+					  state,
+					  error);
 }
 
 /**

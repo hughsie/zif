@@ -597,7 +597,8 @@ zif_cmd_download (ZifCmdPrivate *priv, gchar **values, GError **error)
 	state_local = zif_state_get_child (priv->state);
 	array = zif_store_array_resolve_full (store_array,
 					      values,
-					      ZIF_STORE_RESOLVE_FLAG_USE_ALL,
+					      ZIF_STORE_RESOLVE_FLAG_USE_ALL |
+					      ZIF_STORE_RESOLVE_FLAG_USE_GLOB,
 					      state_local,
 					      error);
 	if (array == NULL) {
@@ -911,7 +912,8 @@ zif_cmd_get_depends (ZifCmdPrivate *priv, gchar **values, GError **error)
 	state_local = zif_state_get_child (priv->state);
 	array = zif_store_array_resolve_full (store_array,
 					      (gchar**)values,
-					      ZIF_STORE_RESOLVE_FLAG_USE_ALL,
+					      ZIF_STORE_RESOLVE_FLAG_USE_ALL |
+					      ZIF_STORE_RESOLVE_FLAG_USE_GLOB,
 					      state_local,
 					      error);
 	if (array == NULL) {
@@ -1069,7 +1071,8 @@ zif_cmd_get_details (ZifCmdPrivate *priv, gchar **values, GError **error)
 	state_local = zif_state_get_child (priv->state);
 	array = zif_store_array_resolve_full (store_array,
 					      values,
-					      ZIF_STORE_RESOLVE_FLAG_USE_ALL,
+					      ZIF_STORE_RESOLVE_FLAG_USE_ALL |
+					      ZIF_STORE_RESOLVE_FLAG_USE_GLOB,
 					      state_local,
 					      error);
 	if (array == NULL) {
@@ -1205,7 +1208,8 @@ zif_cmd_dep_common (ZifCmdPrivate *priv, ZifPackageEnsureType type,
 	state_local = zif_state_get_child (priv->state);
 	array = zif_store_array_resolve_full (store_array,
 					      values,
-					      ZIF_STORE_RESOLVE_FLAG_USE_ALL,
+					      ZIF_STORE_RESOLVE_FLAG_USE_ALL |
+					      ZIF_STORE_RESOLVE_FLAG_USE_GLOB,
 					      state_local,
 					      error);
 	if (array == NULL) {
@@ -1415,7 +1419,8 @@ zif_cmd_get_files (ZifCmdPrivate *priv, gchar **values, GError **error)
 	state_local = zif_state_get_child (priv->state);
 	array = zif_store_array_resolve_full (store_array,
 					      values,
-					      ZIF_STORE_RESOLVE_FLAG_USE_ALL,
+					      ZIF_STORE_RESOLVE_FLAG_USE_ALL |
+					      ZIF_STORE_RESOLVE_FLAG_USE_GLOB,
 					      state_local,
 					      error);
 	if (array == NULL) {
@@ -2164,7 +2169,8 @@ zif_cmd_install (ZifCmdPrivate *priv, gchar **values, GError **error)
 	state_local = zif_state_get_child (priv->state);
 	array = zif_store_array_resolve_full (store_array_local,
 					      values,
-					      ZIF_STORE_RESOLVE_FLAG_USE_ALL,
+					      ZIF_STORE_RESOLVE_FLAG_USE_ALL |
+					      ZIF_STORE_RESOLVE_FLAG_USE_GLOB,
 					      state_local,
 					      error);
 	if (array == NULL) {
@@ -2199,7 +2205,8 @@ zif_cmd_install (ZifCmdPrivate *priv, gchar **values, GError **error)
 	state_local = zif_state_get_child (priv->state);
 	array = zif_store_array_resolve_full (store_array_remote,
 					      values,
-					      ZIF_STORE_RESOLVE_FLAG_USE_ALL,
+					      ZIF_STORE_RESOLVE_FLAG_USE_ALL |
+					      ZIF_STORE_RESOLVE_FLAG_USE_GLOB,
 					      state_local,
 					      error);
 	if (array == NULL) {
@@ -2650,7 +2657,8 @@ zif_cmd_remove (ZifCmdPrivate *priv, gchar **values, GError **error)
 	state_local = zif_state_get_child (priv->state);
 	array = zif_store_array_resolve_full (store_array_local,
 					      values,
-					      ZIF_STORE_RESOLVE_FLAG_USE_ALL,
+					      ZIF_STORE_RESOLVE_FLAG_USE_ALL |
+					      ZIF_STORE_RESOLVE_FLAG_USE_GLOB,
 					      state_local,
 					      error);
 	if (array == NULL) {
@@ -2989,7 +2997,8 @@ zif_cmd_resolve (ZifCmdPrivate *priv, gchar **values, GError **error)
 	array = zif_store_array_resolve_full (store_array,
 					      values,
 					      ZIF_STORE_RESOLVE_FLAG_USE_ALL |
-					      ZIF_STORE_RESOLVE_FLAG_PREFER_NATIVE,
+					      ZIF_STORE_RESOLVE_FLAG_PREFER_NATIVE |
+					      ZIF_STORE_RESOLVE_FLAG_USE_GLOB,
 					      state_local,
 					      error);
 	if (array == NULL) {
@@ -3588,7 +3597,8 @@ zif_cmd_update (ZifCmdPrivate *priv, gchar **values, GError **error)
 	state_local = zif_state_get_child (priv->state);
 	array = zif_store_array_resolve_full (store_array,
 					      values,
-					      ZIF_STORE_RESOLVE_FLAG_USE_ALL,
+					      ZIF_STORE_RESOLVE_FLAG_USE_ALL |
+					      ZIF_STORE_RESOLVE_FLAG_USE_GLOB,
 					      state_local,
 					      error);
 	if (array == NULL) {
@@ -3726,7 +3736,8 @@ zif_cmd_update_details (ZifCmdPrivate *priv, gchar **values, GError **error)
 	state_local = zif_state_get_child (priv->state);
 	array = zif_store_array_resolve_full (store_array_local,
 					      values,
-					      ZIF_STORE_RESOLVE_FLAG_USE_ALL,
+					      ZIF_STORE_RESOLVE_FLAG_USE_ALL |
+					      ZIF_STORE_RESOLVE_FLAG_USE_GLOB,
 					      state_local,
 					      error);
 	if (array == NULL) {
@@ -4497,7 +4508,8 @@ zif_cmd_shell (ZifCmdPrivate *priv, gchar **values, GError **error)
 			} else {
 				array = zif_store_array_resolve_full (stores_remote,
 								      &split[1],
-								      ZIF_STORE_RESOLVE_FLAG_USE_ALL,
+								      ZIF_STORE_RESOLVE_FLAG_USE_ALL |
+								      ZIF_STORE_RESOLVE_FLAG_USE_GLOB,
 								      priv->state,
 								      &error_local);
 				if (array == NULL) {

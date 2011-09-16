@@ -1042,6 +1042,7 @@ zif_store_resolve_full (ZifStore *store,
 	guint i, j;
 	ZifPackage *package;
 	ZifState *state_local = NULL;
+	ZifStrCompareFunc compare_func;
 	ZifStoreClass *klass = ZIF_STORE_GET_CLASS (store);
 
 	g_return_val_if_fail (ZIF_IS_STORE (store), NULL);
@@ -1128,6 +1129,14 @@ zif_store_resolve_full (ZifStore *store,
 	state_local = zif_state_get_child (state);
 	zif_state_set_number_steps (state_local, store->priv->packages->len);
 
+	/* allow globbing (slow) or a regular expressions (much slower) */
+	if ((flags & ZIF_STORE_RESOLVE_FLAG_USE_REGEX) > 0)
+		compare_func = zif_str_compare_regex;
+	else if ((flags & ZIF_STORE_RESOLVE_FLAG_USE_GLOB) > 0)
+		compare_func = zif_str_compare_glob;
+	else
+		compare_func = zif_str_compare_equal;
+
 	/* iterate list */
 	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	for (i=0;i<store->priv->packages->len;i++) {
@@ -1137,7 +1146,7 @@ zif_store_resolve_full (ZifStore *store,
 		if ((flags & ZIF_STORE_RESOLVE_FLAG_USE_NAME) > 0) {
 			tmp = zif_package_get_name (package);
 			for (j=0; search_native[j] != NULL; j++) {
-				if (strcmp (tmp, search_native[j]) == 0)
+				if (compare_func (tmp, search_native[j]))
 					g_ptr_array_add (array, g_object_ref (package));
 			}
 		}
@@ -1146,7 +1155,7 @@ zif_store_resolve_full (ZifStore *store,
 		if ((flags & ZIF_STORE_RESOLVE_FLAG_USE_NAME_ARCH) > 0) {
 			tmp = zif_package_get_name_arch (package);
 			for (j=0; search_native[j] != NULL; j++) {
-				if (strcmp (tmp, search_native[j]) == 0)
+				if (compare_func (tmp, search_native[j]))
 					g_ptr_array_add (array, g_object_ref (package));
 			}
 		}
@@ -1155,7 +1164,7 @@ zif_store_resolve_full (ZifStore *store,
 		if ((flags & ZIF_STORE_RESOLVE_FLAG_USE_NAME_VERSION) > 0) {
 			tmp = zif_package_get_name_version (package);
 			for (j=0; search_native[j] != NULL; j++) {
-				if (strcmp (tmp, search_native[j]) == 0)
+				if (compare_func (tmp, search_native[j]))
 					g_ptr_array_add (array, g_object_ref (package));
 			}
 		}
@@ -1164,7 +1173,7 @@ zif_store_resolve_full (ZifStore *store,
 		if ((flags & ZIF_STORE_RESOLVE_FLAG_USE_NAME_VERSION_ARCH) > 0) {
 			tmp = zif_package_get_name_version_arch (package);
 			for (j=0; search_native[j] != NULL; j++) {
-				if (strcmp (tmp, search_native[j]) == 0)
+				if (compare_func (tmp, search_native[j]))
 					g_ptr_array_add (array, g_object_ref (package));
 			}
 		}

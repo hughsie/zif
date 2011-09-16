@@ -37,6 +37,7 @@
 #include <archive_entry.h>
 #include <bzlib.h>
 #include <zlib.h>
+#include <fnmatch.h>
 
 #ifdef USE_GPGME
 #include <gpgme.h>
@@ -1218,3 +1219,53 @@ out:
 	return timeval;
 }
 
+/**
+ * zif_str_compare_regex:
+ * @a: The string
+ * @b: The pattern to match
+ *
+ * Compares one string against another
+ *
+ * Return value: %TRUE for success
+ *
+ * Since: 0.2.4
+ **/
+gboolean
+zif_str_compare_regex (const gchar *a, const gchar *b)
+{
+	return g_regex_match_simple (b, a, G_REGEX_OPTIMIZE, 0);
+}
+
+/**
+ * zif_str_compare_glob:
+ * @a: The string
+ * @b: The pattern to match
+ *
+ * Compares one string against another
+ *
+ * Return value: %TRUE for success
+ *
+ * Since: 0.2.4
+ **/
+gboolean
+zif_str_compare_glob (const gchar *a, const gchar *b)
+{
+	return fnmatch (b, a, 0) == 0;
+}
+
+/**
+ * zif_str_compare_equal:
+ * @a: The string
+ * @b: The pattern to match
+ *
+ * Compares one string against another
+ *
+ * Return value: %TRUE for success
+ *
+ * Since: 0.2.4
+ **/
+gboolean
+zif_str_compare_equal (const gchar *a, const gchar *b)
+{
+	return strcmp (a, b) == 0;
+}
