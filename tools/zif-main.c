@@ -564,9 +564,11 @@ static gboolean
 zif_cmd_download (ZifCmdPrivate *priv, gchar **values, GError **error)
 {
 	gboolean ret;
+	guint i;
 	GPtrArray *array = NULL;
 	ZifPackage *package;
 	ZifState *state_local;
+	ZifState *state_loop;
 	GPtrArray *store_array = NULL;
 
 	/* setup state */
@@ -623,12 +625,21 @@ zif_cmd_download (ZifCmdPrivate *priv, gchar **values, GError **error)
 	zif_progress_bar_start (priv->progressbar, _("Downloading"));
 
 	/* download package file */
-	package = g_ptr_array_index (array, 0);
 	state_local = zif_state_get_child (priv->state);
-	ret = zif_package_remote_download (ZIF_PACKAGE_REMOTE (package),
-					   "/tmp", state_local, error);
-	if (!ret)
-		goto out;
+	zif_state_set_number_steps (state_local, array->len);
+	for (i = 0; i < array->len; i++) {
+		package = g_ptr_array_index (array, i);
+		state_loop = zif_state_get_child (state_local);
+		ret = zif_package_remote_download (ZIF_PACKAGE_REMOTE (package),
+						   "/tmp", state_loop, error);
+		if (!ret)
+			goto out;
+
+		/* this section done */
+		ret = zif_state_done (state_local, error);
+		if (!ret)
+			goto out;
+	}
 
 	/* progress */
 	zif_progress_bar_end (priv->progressbar);
