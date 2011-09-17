@@ -327,7 +327,7 @@ zif_package_remote_set_store_remote (ZifPackageRemote *pkg, ZifStoreRemote *stor
  *
  * Gets the store used to create this package.
  *
- * Return value: A refcounted %ZifStoreRemote, or %NULL for failure.
+ * Return value: (transfer full): A refcounted %ZifStoreRemote, or %NULL for failure.
  * Use g_object_unref() when done.
  *
  * Since: 0.1.3
@@ -367,7 +367,7 @@ zif_package_remote_set_installed (ZifPackageRemote *pkg, ZifPackage *installed)
  *
  * Gets the installed package this package updates.
  *
- * Return value: A refcounted %ZifPackage, or %NULL for failure.
+ * Return value: (transfer full): A refcounted %ZifPackage, or %NULL for failure.
  * Use g_object_unref() when done.
  *
  * Since: 0.1.3
@@ -389,7 +389,7 @@ zif_package_remote_get_installed (ZifPackageRemote *pkg)
  *
  * Gets the update detail for a package if it exists.
  *
- * Return value: A %ZifUpdate, or %NULL for failure
+ * Return value: (transfer full): A %ZifUpdate, or %NULL for failure
  *
  * Since: 0.1.3
  **/
@@ -448,7 +448,7 @@ out:
  *
  * Gets the update detail for a package.
  *
- * Return value: A %ZifUpdate, or %NULL for failure
+ * Return value: (transfer full): A %ZifUpdate, or %NULL for failure
  *
  * Since: 0.1.3
  **/

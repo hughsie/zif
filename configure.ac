@@ -13,6 +13,8 @@ AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
 AC_SYS_LARGEFILE
 
+GOBJECT_INTROSPECTION_CHECK([0.9.8])
+
 ZIF_MAJOR_VERSION=zif_major_version
 ZIF_MINOR_VERSION=zif_minor_version
 ZIF_MICRO_VERSION=zif_micro_version
@@ -260,6 +262,7 @@ echo "
         compiler:                  ${CC}
         cflags:                    ${CFLAGS}
         cppflags:                  ${CPPFLAGS}
+        gobject-introspection:     ${found_introspection}
         Building gpgme support:    ${build_gpgme}
         Building unit tests:       ${enable_tests}
 "

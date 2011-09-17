@@ -315,7 +315,7 @@ out:
  *
  * Gets all the upgrades, older and newer.
  *
- * Return value: An array of #ZifUpgrade's, free with g_ptr_array_unref()
+ * Return value: (transfer full): An array of #ZifUpgrade's, free with g_ptr_array_unref()
  *
  * Since: 0.1.3
  **/
@@ -352,7 +352,7 @@ out:
  *
  * Gets all the upgrades older than the one currently installed.
  *
- * Return value: An array of #ZifUpgrade's, free with g_ptr_array_unref()
+ * Return value: (transfer full): An array of #ZifUpgrade's, free with g_ptr_array_unref()
  *
  * Since: 0.1.3
  **/
@@ -404,7 +404,7 @@ out:
  *
  * Gets a specific upgrade object for the given version.
  *
- * Return value: A #ZifUpgrade, free with g_object_unref()
+ * Return value: (transfer full): A #ZifUpgrade, free with g_object_unref()
  *
  * Since: 0.1.3
  **/

@@ -200,7 +200,7 @@ zif_state_set_enable_profile (ZifState *state, gboolean enable_profile)
 /**
  * zif_state_set_error_handler:
  * @state: A #ZifState
- * @error_handler_cb: A #ZifStateErrorHandlerCb which returns %FALSE if the error is fatal
+ * @error_handler_cb: (scope async): A #ZifStateErrorHandlerCb which returns %FALSE if the error is fatal
  * @user_data: A user_data to be passed to the #ZifStateErrorHandlerCb
  *
  * Since: 0.1.0
@@ -251,7 +251,7 @@ out:
 /**
  * zif_state_set_lock_handler:
  * @state: A #ZifState
- * @lock_handler_cb: A #ZifStateLockHandlerCb which returns %FALSE if the lock cannot be got
+ * @lock_handler_cb: (scope async): A #ZifStateLockHandlerCb which returns %FALSE if the lock cannot be got
  * @user_data: A user_data to be passed to the #ZifStateLockHandlerCb
  *
  * Since: 0.1.6
@@ -353,7 +353,7 @@ zif_state_print_parent_chain (ZifState *state, guint level)
  *
  * Gets the #GCancellable for this operation
  *
- * Return value: The #GCancellable or %NULL
+ * Return value: (transfer none): The #GCancellable or %NULL
  *
  * Since: 0.1.0
  **/
@@ -1036,7 +1036,7 @@ zif_state_child_notify_speed_cb (ZifState *child,
  * Monitor a child state and proxy back up to the parent state.
  * You should not g_object_unref() this object, it is owned by the parent.
  *
- * Return value: A new %ZifState or %NULL for failure
+ * Return value: (transfer none): A new %ZifState or %NULL for failure
  *
  * Since: 0.1.0
  **/

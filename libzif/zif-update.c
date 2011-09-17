@@ -272,7 +272,7 @@ zif_update_get_reboot (ZifUpdate *update)
  *
  * Gets the update info for this update.
  *
- * Return value: A refcounted #GPtrArray of #ZifUpdateInfo, or %NULL.
+ * Return value: (transfer full): A refcounted #GPtrArray of #ZifUpdateInfo, or %NULL.
  * Free with g_ptr_array_unref().
  *
  * Since: 0.1.0
@@ -290,7 +290,7 @@ zif_update_get_update_infos (ZifUpdate *update)
  *
  * Gets the packages for this update.
  *
- * Return value: A refcounted #GPtrArray of #ZifPackage, or %NULL.
+ * Return value: (transfer full): A refcounted #GPtrArray of #ZifPackage, or %NULL.
  * Free with g_ptr_array_unref().
  *
  * Since: 0.1.0
@@ -308,7 +308,7 @@ zif_update_get_packages (ZifUpdate *update)
  *
  * Gets the changelog for this update.
  *
- * Return value: A refcounted #GPtrArray of #ZifChangeset's, or %NULL.
+ * Return value: (transfer full): A refcounted #GPtrArray of #ZifChangeset's, or %NULL.
  * Free with g_ptr_array_unref().
  *
  * Since: 0.1.0

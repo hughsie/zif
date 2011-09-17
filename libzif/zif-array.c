@@ -172,7 +172,7 @@ out:
  *
  * Looks up an object from the array.
  *
- * Return value: An object, which is *not* ref'd.
+ * Return value: (transfer none): An object, which is *not* ref'd.
  *
  * Since: 0.1.3
  **/
@@ -195,7 +195,7 @@ zif_array_lookup (ZifArray *array, gpointer data)
  *
  * Looks up an object from the array.
  *
- * Return value: An object, which is *not* ref'd.
+ * Return value: (transfer none): An object, which is *not* ref'd.
  *
  * Since: 0.1.3
  **/
@@ -215,7 +215,7 @@ zif_array_lookup_with_key (ZifArray *array, const gchar *key)
  *
  * Gets an object from the array.
  *
- * Return value: An object, which is *not* ref'd.
+ * Return value: (transfer none): An object, which is *not* ref'd.
  *
  * Since: 0.1.3
  **/
@@ -233,7 +233,7 @@ zif_array_index (ZifArray *array, guint index)
  *
  * Gets the object array
  *
- * Return value: The refd #GPtrArray.
+ * Return value: (transfer full): The refd #GPtrArray.
  *
  * Since: 0.1.3
  **/
@@ -247,7 +247,7 @@ zif_array_get_array (ZifArray *array)
 /**
  * zif_array_set_mapping_func:
  * @array: A #ZifArray
- * @mapping_func: A mapping function from GObject to const string.
+ * @mapping_func: (scope call): A mapping function from GObject to const string.
  *
  * Sets the mapping function.
  *

@@ -376,7 +376,7 @@ out:
  *
  * Find a single package in the #GPtrArray.
  *
- * Return value: A single #ZifPackage or %NULL
+ * Return value: (transfer full): A single #ZifPackage or %NULL
  *
  * Since: 0.1.0
  **/
@@ -589,7 +589,7 @@ out:
  * matching the name, the name.arch or even the name-version depending
  * on the flags used..
  *
- * Return value: An array of #ZifPackage's
+ * Return value: (transfer full): An array of #ZifPackage's
  *
  * Since: 0.2.4
  **/
@@ -619,7 +619,7 @@ zif_store_array_resolve_full (GPtrArray *store_array,
  *
  * Finds packages matching the package name exactly.
  *
- * Return value: An array of #ZifPackage's
+ * Return value: (transfer full): An array of #ZifPackage's
  *
  * Since: 0.1.0
  **/
@@ -643,7 +643,7 @@ zif_store_array_resolve (GPtrArray *store_array, gchar **search,
  *
  * Find packages that match the package name in some part.
  *
- * Return value: An array of #ZifPackage's
+ * Return value: (transfer full): An array of #ZifPackage's
  *
  * Since: 0.1.0
  **/
@@ -670,7 +670,7 @@ zif_store_array_search_name (GPtrArray *store_array, gchar **search,
  *
  * Find packages that match some detail about the package.
  *
- * Return value: An array of #ZifPackage's
+ * Return value: (transfer full): An array of #ZifPackage's
  *
  * Since: 0.1.0
  **/
@@ -697,7 +697,7 @@ zif_store_array_search_details (GPtrArray *store_array, gchar **search,
  *
  * Find packages that belong in a specific group.
  *
- * Return value: An array of #ZifPackage's
+ * Return value: (transfer full): An array of #ZifPackage's
  *
  * Since: 0.1.0
  **/
@@ -724,7 +724,7 @@ zif_store_array_search_group (GPtrArray *store_array, gchar **group_enum,
  *
  * Find packages that belong in a specific category.
  *
- * Return value: An array of #ZifPackage's
+ * Return value: (transfer full): An array of #ZifPackage's
  *
  * Since: 0.1.0
  **/
@@ -782,7 +782,7 @@ out:
  *
  * Find packages that provide the specified file.
  *
- * Return value: An array of #ZifPackage's
+ * Return value: (transfer full): An array of #ZifPackage's
  *
  * Since: 0.1.0
  **/
@@ -808,7 +808,7 @@ zif_store_array_search_file (GPtrArray *store_array, gchar **search,
  *
  * Return all packages in the #GPtrArray's.
  *
- * Return value: An array of #ZifPackage's
+ * Return value: (transfer full): An array of #ZifPackage's
  *
  * Since: 0.1.0
  **/
@@ -835,7 +835,7 @@ zif_store_array_get_packages (GPtrArray *store_array,
  *
  * Find packages that provide a specific string.
  *
- * Return value: An array of #ZifPackage's
+ * Return value: (transfer full): An array of #ZifPackage's
  *
  * Since: 0.1.3
  **/
@@ -862,7 +862,7 @@ zif_store_array_what_provides (GPtrArray *store_array, GPtrArray *depends,
  *
  * Find packages that require a specific string.
  *
- * Return value: An array of #ZifPackage's
+ * Return value: (transfer full): An array of #ZifPackage's
  *
  * Since: 0.1.3
  **/
@@ -889,7 +889,7 @@ zif_store_array_what_requires (GPtrArray *store_array, GPtrArray *depends,
  *
  * Find packages that conflict with a specific string.
  *
- * Return value: An array of #ZifPackage's
+ * Return value: (transfer full): An array of #ZifPackage's
  *
  * Since: 0.1.3
  **/
@@ -917,7 +917,7 @@ zif_store_array_what_obsoletes (GPtrArray *store_array, GPtrArray *depends,
  *
  * Find packages that conflict with a specific string.
  *
- * Return value: An array of #ZifPackage's
+ * Return value: (transfer full): An array of #ZifPackage's
  *
  * Since: 0.1.3
  **/
@@ -944,7 +944,7 @@ zif_store_array_what_conflicts (GPtrArray *store_array, GPtrArray *depends,
  *
  * Return a list of custom categories from all repos.
  *
- * Return value: An array of #ZifCategory's
+ * Return value: (transfer full): An array of #ZifCategory's
  *
  * Since: 0.1.0
  **/
@@ -1013,7 +1013,7 @@ out:
  *
  * Gets the list of packages that can be updated to newer versions.
  *
- * Return value: An array of the *new* #ZifPackage's, not the existing
+ * Return value: (transfer full): An array of the *new* #ZifPackage's, not the existing
  * installed packages that are going to be updated.
  *
  * Note: this is a convenience function which makes a few assumptions.
@@ -1200,7 +1200,7 @@ out:
 /**
  * zif_store_array_new:
  *
- * Return value: A new #GPtrArray instance.
+ * Return value: (transfer full): A new #GPtrArray instance.
  *
  * Since: 0.1.0
  **/

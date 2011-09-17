@@ -388,7 +388,7 @@ zif_md_set_store (ZifMd *md, ZifStore *store)
  *
  * Gets the remote store for this metadata.
  *
- * Return value: A #ZifStore or %NULL for unset
+ * Return value: (transfer none): A #ZifStore or %NULL for unset
  *
  * Since: 0.2.1
  **/
@@ -809,7 +809,7 @@ zif_md_unload (ZifMd *md, ZifState *state, GError **error)
 }
 
 /**
- * zif_md_resolve:
+ * zif_md_resolve_full:
  * @md: A #ZifMd
  * @search: Search term, e.g. "gnome-power-manager"
  * @flags: A bitfield of %ZifStoreResolveFlags, e.g. %ZIF_STORE_RESOLVE_FLAG_USE_NAME_ARCH
@@ -818,7 +818,7 @@ zif_md_unload (ZifMd *md, ZifState *state, GError **error)
  *
  * Finds all remote packages that match the name exactly.
  *
- * Return value: An array of #ZifPackageRemote's
+ * Return value: (transfer full): An array of #ZifPackageRemote's
  *
  * Since: 0.2.4
  **/
@@ -862,7 +862,7 @@ out:
  *
  * Finds all remote packages that match the name exactly.
  *
- * Return value: An array of #ZifPackageRemote's
+ * Return value: (transfer full): An array of #ZifPackageRemote's
  *
  * Since: 0.1.0
  **/
@@ -889,7 +889,7 @@ zif_md_resolve (ZifMd *md,
  * Gets a list of all packages that contain the file.
  * Results are pkgId's descriptors, i.e. 64 bit hashes as test.
  *
- * Return value: A string list of pkgId's
+ * Return value: (transfer full): A string list of pkgId's
  *
  * Since: 0.1.0
  **/
@@ -929,7 +929,7 @@ out:
  *
  * Finds all packages that match the name.
  *
- * Return value: An array of #ZifPackageRemote's
+ * Return value: (transfer full): An array of #ZifPackageRemote's
  *
  * Since: 0.1.0
  **/
@@ -969,7 +969,7 @@ out:
  *
  * Finds all packages that match the name or description.
  *
- * Return value: An array of #ZifPackageRemote's
+ * Return value: (transfer full): An array of #ZifPackageRemote's
  *
  * Since: 0.1.0
  **/
@@ -1009,7 +1009,7 @@ out:
  *
  * Finds all packages that match the group.
  *
- * Return value: An array of #ZifPackageRemote's
+ * Return value: (transfer full): An array of #ZifPackageRemote's
  *
  * Since: 0.1.0
  **/
@@ -1049,7 +1049,7 @@ out:
  *
  * Finds all packages that match the given pkgId.
  *
- * Return value: An array of #ZifPackageRemote's
+ * Return value: (transfer full): An array of #ZifPackageRemote's
  *
  * Since: 0.1.0
  **/
@@ -1089,7 +1089,7 @@ out:
  *
  * Finds all packages that match the given provide.
  *
- * Return value: An array of #ZifPackageRemote's
+ * Return value: (transfer full): An array of #ZifPackageRemote's
  *
  * Since: 0.1.3
  **/
@@ -1131,7 +1131,7 @@ out:
  *
  * Finds all packages that match the given provide.
  *
- * Return value: An array of #ZifPackageRemote's
+ * Return value: (transfer full): An array of #ZifPackageRemote's
  *
  * Since: 0.1.3
  **/
@@ -1173,7 +1173,7 @@ out:
  *
  * Finds all packages that obsolete the given provide.
  *
- * Return value: An array of #ZifPackageRemote's
+ * Return value: (transfer full): An array of #ZifPackageRemote's
  *
  * Since: 0.1.3
  **/
@@ -1215,7 +1215,7 @@ out:
  *
  * Finds all packages that conflict with the given depends.
  *
- * Return value: An array of #ZifPackageRemote's
+ * Return value: (transfer full): An array of #ZifPackageRemote's
  *
  * Since: 0.1.3
  **/
@@ -1257,7 +1257,7 @@ out:
  *
  * Finds all packages that match PackageId.
  *
- * Return value: An array of #ZifPackageRemote's
+ * Return value: (transfer full): An array of #ZifPackageRemote's
  *
  * Since: 0.1.0
  **/
@@ -1297,7 +1297,7 @@ out:
  *
  * Gets the changelog data for a specific package
  *
- * Return value: An array of #ZifChangeset's
+ * Return value: (transfer full): An array of #ZifChangeset's
  *
  * Since: 0.1.0
  **/
@@ -1337,7 +1337,7 @@ out:
  *
  * Gets the file list for a specific package.
  *
- * Return value: an array of strings, free with g_ptr_array_unref()
+ * Return value: (transfer full): an array of strings, free with g_ptr_array_unref()
  *
  * Since: 0.1.0
  **/
@@ -1377,7 +1377,7 @@ out:
  *
  * Gets the provides for a specific package.
  *
- * Return value: An array of #ZifDepend's, free with g_ptr_array_unref()
+ * Return value: (transfer full): An array of #ZifDepend's, free with g_ptr_array_unref()
  *
  * Since: 0.1.3
  **/
@@ -1417,7 +1417,7 @@ out:
  *
  * Gets the requires for a specific package.
  *
- * Return value: An array of #ZifDepend's, free with g_ptr_array_unref()
+ * Return value: (transfer full): An array of #ZifDepend's, free with g_ptr_array_unref()
  *
  * Since: 0.1.3
  **/
@@ -1457,7 +1457,7 @@ out:
  *
  * Gets the obsoletes for a specific package.
  *
- * Return value: An array of #ZifDepend's, free with g_ptr_array_unref()
+ * Return value: (transfer full): An array of #ZifDepend's, free with g_ptr_array_unref()
  *
  * Since: 0.1.3
  **/
@@ -1497,7 +1497,7 @@ out:
  *
  * Gets the conflicts for a specific package.
  *
- * Return value: An array of #ZifDepend's, free with g_ptr_array_unref()
+ * Return value: (transfer full): An array of #ZifDepend's, free with g_ptr_array_unref()
  *
  * Since: 0.1.3
  **/
@@ -1536,7 +1536,7 @@ out:
  *
  * Returns all packages in the repo.
  *
- * Return value: An array of #ZifPackageRemote's
+ * Return value: (transfer full): An array of #ZifPackageRemote's
  *
  * Since: 0.1.0
  **/

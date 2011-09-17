@@ -228,7 +228,7 @@ out:
  *
  * Gets a string array value from a local setting, falling back to the config file.
  *
- * Return value: %NULL, or a string array, free with g_strfreev()
+ * Return value: (transfer full): %NULL, or a string array, free with g_strfreev()
  *
  * Since: 0.1.3
  **/
@@ -333,7 +333,7 @@ out:
  * zif_config_get_enum:
  * @config: A #ZifConfig
  * @key: A key name to retrieve, e.g. "pkg_compare_mode"
- * @func: A #ZifConfigEnumMappingFunc to convert the string to an enum
+ * @func: (scope call): A #ZifConfigEnumMappingFunc to convert the string to an enum
  * @error: A #GError, or %NULL
  *
  * Gets an enumerated value from a local setting, falling back to the
@@ -445,7 +445,7 @@ out:
  *
  * Gets the list of architectures that packages are native on for this machine.
  *
- * Return value: An a rray of strings, do not free, e.g. [ "i386", "i486", "noarch" ]
+ * Return value: (transfer none): An a rray of strings, do not free, e.g. [ "i386", "i486", "noarch" ]
  *
  * Since: 0.1.0
  **/

@@ -472,7 +472,7 @@ out:
  *
  * Gets the delta details for the package_id.
  *
- * Return value: #ZifDelta or %NULL, free with g_object_unref()
+ * Return value: (transfer full): #ZifDelta or %NULL, free with g_object_unref()
  *
  * Since: 0.1.0
  **/

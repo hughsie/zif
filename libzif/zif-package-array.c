@@ -37,7 +37,7 @@
 /**
  * zif_package_array_new:
  *
- * Return value: A new #GPtrArray instance.
+ * Return value: (transfer full): A new #GPtrArray instance.
  *
  * Since: 0.1.3
  **/
@@ -55,7 +55,7 @@ zif_package_array_new (void)
  *
  * Finds a package from an array.
  *
- * Return value: A single %ZifPackage, or %NULL in the case of an error.
+ * Return value: (transfer full): A single %ZifPackage, or %NULL in the case of an error.
  * The returned object should be freed with g_object_unref() when no
  * longer needed.
  *
@@ -94,7 +94,7 @@ zif_package_array_find (GPtrArray *array,
  *
  * Returns the newest package from a list.
  *
- * Return value: A single %ZifPackage, or %NULL in the case of an error.
+ * Return value: (transfer full): A single %ZifPackage, or %NULL in the case of an error.
  * The returned object should be freed with g_object_unref() when no
  * longer needed.
  *
@@ -164,7 +164,7 @@ out:
  *
  * Returns the oldest package from a list.
  *
- * Return value: A single %ZifPackage, or %NULL in the case of an error.
+ * Return value: (transfer full): A single %ZifPackage, or %NULL in the case of an error.
  * The returned object should be freed with g_object_unref() when no
  * longer needed.
  *

@@ -400,7 +400,7 @@ zif_store_refresh (ZifStore *store,
  *
  * Find packages that match the package name in some part.
  *
- * Return value: An array of #ZifPackage's
+ * Return value: (transfer full): An array of #ZifPackage's
  *
  * Since: 0.1.0
  **/
@@ -519,7 +519,7 @@ out:
  *
  * Return packages in a specific category.
  *
- * Return value: An array of #ZifPackage's
+ * Return value: (transfer full): An array of #ZifPackage's
  *
  * Since: 0.1.0
  **/
@@ -633,7 +633,7 @@ out:
  *
  * Find packages that match some detail about the package.
  *
- * Return value: An array of #ZifPackage's
+ * Return value: (transfer full): An array of #ZifPackage's
  *
  * Since: 0.1.0
  **/
@@ -755,7 +755,7 @@ out:
  *
  * Find packages that belong in a specific group.
  *
- * Return value: An array of #ZifPackage's
+ * Return value: (transfer full): An array of #ZifPackage's
  *
  * Since: 0.1.0
  **/
@@ -871,7 +871,7 @@ out:
  *
  * Find packages that provide the specified file.
  *
- * Return value: An array of #ZifPackage's
+ * Return value: (transfer full): An array of #ZifPackage's
  *
  * Since: 0.1.0
  **/
@@ -1023,7 +1023,7 @@ zif_store_has_search_arch_suffix (const gchar *search)
  *
  * Finds packages matching the package name exactly.
  *
- * Return value: An array of #ZifPackage's
+ * Return value: (transfer full): An array of #ZifPackage's
  *
  * Since: 0.2.4
  **/
@@ -1205,7 +1205,7 @@ out:
  *
  * Finds packages matching the package name exactly.
  *
- * Return value: An array of #ZifPackage's
+ * Return value: (transfer full): An array of #ZifPackage's
  *
  * Since: 0.1.0
  **/
@@ -1453,7 +1453,7 @@ out:
  *
  * Find packages that provide a specific string.
  *
- * Return value: An array of #ZifPackage's
+ * Return value: (transfer full): An array of #ZifPackage's
  *
  * Since: 0.1.3
  **/
@@ -1489,7 +1489,7 @@ zif_store_what_provides (ZifStore *store, GPtrArray *depends, ZifState *state, G
  *
  * Find packages that provide a specific string.
  *
- * Return value: An array of #ZifPackage's
+ * Return value: (transfer full): An array of #ZifPackage's
  *
  * Since: 0.1.3
  **/
@@ -1525,7 +1525,7 @@ zif_store_what_requires (ZifStore *store, GPtrArray *depends, ZifState *state, G
  *
  * Find packages that obsolete a specific string.
  *
- * Return value: An array of #ZifPackage's
+ * Return value: (transfer full): An array of #ZifPackage's
  *
  * Since: 0.1.3
  **/
@@ -1561,7 +1561,7 @@ zif_store_what_obsoletes (ZifStore *store, GPtrArray *depends, ZifState *state, 
  *
  * Find packages that conflict a specific string.
  *
- * Return value: An array of #ZifPackage's
+ * Return value: (transfer full): An array of #ZifPackage's
  *
  * Since: 0.1.3
  **/
@@ -1596,7 +1596,7 @@ zif_store_what_conflicts (ZifStore *store, GPtrArray *depends, ZifState *state, 
  *
  * Return all packages in the #ZifStore's.
  *
- * Return value: An array of #ZifPackage's
+ * Return value: (transfer full): An array of #ZifPackage's
  *
  * Since: 0.1.0
  **/
@@ -1675,7 +1675,7 @@ out:
  *
  * Find a single package in the #ZifStore.
  *
- * Return value: A single #ZifPackage or %NULL. Use g_object_unref when done().
+ * Return value: (transfer full): A single #ZifPackage or %NULL. Use g_object_unref when done().
  *
  * Since: 0.1.0
  **/
@@ -1781,7 +1781,7 @@ out:
  *
  * Return a list of custom categories.
  *
- * Return value: An array of #ZifCategory's, free with g_ptr_array_unref() when done.
+ * Return value: (transfer full): An array of #ZifCategory's, free with g_ptr_array_unref() when done.
  *
  * Since: 0.1.0
  **/

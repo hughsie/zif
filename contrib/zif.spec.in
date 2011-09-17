@@ -22,6 +22,7 @@ BuildRequires: zlib-devel
 BuildRequires: gpgme-devel
 BuildRequires: intltool
 BuildRequires: gettext
+BuildRequires: gobject-introspection-devel
 
 %description
 Zif is a simple yum-compatible library that provides read-write
@@ -70,6 +71,7 @@ rm -f $RPM_BUILD_ROOT%{_libdir}/libzif*.la
 %dir %{_sysconfdir}/zif
 %config %{_sysconfdir}/bash_completion.d/*-completion.bash
 %config %{_sysconfdir}/zif/zif.conf
+%{_libdir}/girepository-1.0/*.typelib
 
 %files devel
 %defattr(-,root,root,-)
@@ -78,6 +80,7 @@ rm -f $RPM_BUILD_ROOT%{_libdir}/libzif*.la
 %dir %{_includedir}/libzif
 %{_includedir}/libzif/*.h
 %{_datadir}/gtk-doc
+%{_datadir}/gir-1.0/*.gir
 
 %changelog
 * #LONGDATE# Richard Hughes <richard@hughsie.com> #VERSION#-0.#BUILD##ALPHATAG#

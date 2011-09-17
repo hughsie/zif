@@ -66,7 +66,7 @@ typedef enum {
 GType			 zif_package_local_get_type		(void);
 ZifPackage		*zif_package_local_new			(void);
 gboolean		 zif_package_local_set_from_header	(ZifPackageLocal *pkg,
-								 Header		 header,
+								 gpointer	 header,
 								 ZifPackageLocalFlags flags,
 								 GError		**error)
 								 G_GNUC_WARN_UNUSED_RESULT;
@@ -75,7 +75,7 @@ gboolean		 zif_package_local_set_from_filename	(ZifPackageLocal *pkg,
 								 GError		**error)
 								 G_GNUC_WARN_UNUSED_RESULT;
 const gchar		*zif_package_local_get_key_id		(ZifPackageLocal *pkg);
-Header			 zif_package_local_get_header		(ZifPackageLocal *pkg);
+gpointer		 zif_package_local_get_header		(ZifPackageLocal *pkg);
 
 G_END_DECLS
 

@@ -483,11 +483,11 @@ out:
  *
  * Gets the RPM header object for the package.
  *
- * Return value: The rpm Header structure, or %NULL if unset
+ * Return value: (transfer none): The rpm Header structure, or %NULL if unset
  *
  * Since: 0.1.0
  **/
-Header
+gpointer
 zif_package_local_get_header (ZifPackageLocal *pkg)
 {
 	g_return_val_if_fail (ZIF_IS_PACKAGE_LOCAL (pkg), NULL);
@@ -509,7 +509,7 @@ zif_package_local_get_header (ZifPackageLocal *pkg)
  **/
 gboolean
 zif_package_local_set_from_header (ZifPackageLocal *pkg,
-				   Header header,
+				   gpointer header,
 				   ZifPackageLocalFlags flags,
 				   GError **error)
 {

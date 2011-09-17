@@ -1,3 +1,8 @@
+-include $(INTROSPECTION_MAKEFILE)
+INTROSPECTION_GIRS =
+INTROSPECTION_SCANNER_ARGS = --add-include-path=$(srcdir)
+INTROSPECTION_COMPILER_ARGS = --includedir=$(srcdir)
+
 INCLUDES = \
 	$(GLIB_CFLAGS)						\
 	$(SQLITE_CFLAGS)					\
@@ -243,6 +248,33 @@ check-valgrind:
 
 .PHONY: check-tool check-valgrind
 
+endif
+
+if HAVE_INTROSPECTION
+introspection_sources =						\
+	$(libzif_la_SOURCES)					\
+	$(libzifbase_include_HEADERS)
+
+Zif-1.0.gir: libzif.la
+Zif_1_0_gir_INCLUDES = GObject-2.0 Gio-2.0
+Zif_1_0_gir_CFLAGS = $(INCLUDES)
+Zif_1_0_gir_SCANNERFLAGS = --identifier-prefix=Zif \
+				--symbol-prefix=zif_ \
+				--warn-all \
+				--add-include-path=$(srcdir) \
+				--c-include="zif.h"
+Zif_1_0_gir_EXPORT_PACKAGES = zif
+Zif_1_0_gir_LIBS = libzif.la
+Zif_1_0_gir_FILES = $(introspection_sources)
+INTROSPECTION_GIRS += Zif-1.0.gir
+
+girdir = $(datadir)/gir-1.0
+gir_DATA = $(INTROSPECTION_GIRS)
+
+typelibdir = $(libdir)/girepository-1.0
+typelib_DATA = $(INTROSPECTION_GIRS:.gir=.typelib)
+
+CLEANFILES += $(gir_DATA) $(typelib_DATA)
 endif
 
 EXTRA_DIST =							\

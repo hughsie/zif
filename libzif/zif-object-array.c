@@ -78,7 +78,7 @@ zif_object_array_add_array (GPtrArray *array, GPtrArray *source)
 /**
  * zif_object_array_new:
  *
- * Return value: A new #GPtrArray instance, free with g_ptr_array_unref()
+ * Return value: (transfer full): A new #GPtrArray instance, free with g_ptr_array_unref()
  *
  * Since: 0.1.3
  **/

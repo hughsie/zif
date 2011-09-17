@@ -1600,7 +1600,7 @@ zif_package_get_cache_filename (ZifPackage *package, ZifState *state, GError **e
  * zif_package_local_set_from_filename() for a local package or the
  * filename of the cached file for a remote package.
  *
- * Return value: The package GFile, or %NULL. Do not unref this object.
+ * Return value: (transfer none): The package GFile, or %NULL. Do not unref this object.
  *
  * Since: 0.1.3
  **/
@@ -1671,7 +1671,7 @@ zif_package_get_size (ZifPackage *package, ZifState *state, GError **error)
  *
  * Gets the file list for the package.
  *
- * Return value: An array of strings. The returned array should be
+ * Return value: (transfer full): An array of strings. The returned array should be
  * freed with g_ptr_array_unref() when no longer needed.
  *
  * Since: 0.1.0
@@ -1707,7 +1707,7 @@ zif_package_get_files (ZifPackage *package, ZifState *state, GError **error)
  *
  * Gets all the package requires.
  *
- * Return value: an array of ZifDepend's. The returned array should be
+ * Return value: (transfer full): an array of ZifDepend's. The returned array should be
  * freed with g_ptr_array_unref() when no longer needed.
  *
  * Since: 0.1.0
@@ -1744,7 +1744,7 @@ zif_package_get_requires (ZifPackage *package, ZifState *state, GError **error)
  *
  * Get all the package provides.
  *
- * Return value: an array of ZifDepend's. The returned array should be
+ * Return value: (transfer full): an array of ZifDepend's. The returned array should be
  * freed with g_ptr_array_unref() when no longer needed.
  *
  * Since: 0.1.0
@@ -1799,7 +1799,8 @@ zif_package_get_provides (ZifPackage *package, ZifState *state, GError **error)
  *
  * Get all the package obsoletes.
  *
- * Return value: an array of ZifDepend's. The returned array should be freed with g_ptr_array_unref() when no longer needed.
+ * Return value: (transfer full): an array of ZifDepend's.
+ * The returned array should be freed with g_ptr_array_unref() when no longer needed.
  *
  * Since: 0.1.3
  **/
@@ -1835,7 +1836,7 @@ zif_package_get_obsoletes (ZifPackage *package, ZifState *state, GError **error)
  *
  * Get all the package conflicts.
  *
- * Return value: A reference counted #GPtrArray. The returned array
+ * Return value: (transfer full): A reference counted #GPtrArray. The returned array
  * should be freed with g_ptr_array_unref() when no longer needed.
  *
  * Since: 0.1.3

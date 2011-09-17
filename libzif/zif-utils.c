@@ -378,7 +378,7 @@ zif_package_id_from_nevra (const gchar *name,
 }
 
 /**
- * zif_package_id_from_nevra:
+ * zif_package_id_to_nevra:
  * @package_id: The package ID, e.g. "hal;1:1.01-3;i386;fedora"
  * @name: The returned package name, e.g. "hal"
  * @epoch: The returned package epoch, e.g. 1 or 0 for none.
@@ -1035,7 +1035,7 @@ zif_file_is_compressed_name (const gchar *filename)
  * Splits a PackageID into the correct number of parts, checking the correct
  * number of delimiters are present.
  *
- * Return value: A #GStrv or %NULL if invalid, use g_strfreev() to free
+ * Return value: (transfer full): A #GStrv or %NULL if invalid, use g_strfreev() to free
  *
  * Since: 0.1.0
  **/

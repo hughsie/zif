@@ -220,7 +220,7 @@ out:
  *
  * Gets the groups supported by the packaging system.
  *
- * Return value: An array of the string groups that are supported, free
+ * Return value: (transfer full): An array of the string groups that are supported, free
  * with g_ptr_array_unref() when done.
  *
  * Since: 0.1.0
@@ -255,7 +255,7 @@ out:
  *
  * Gets the categories supported by the packaging system.
  *
- * Return value: category list as an array of strings, free
+ * Return value: (transfer full): An array of category list as strings, free
  * with g_ptr_array_unref() when done.
  *
  * Since: 0.1.0
@@ -298,7 +298,7 @@ out:
  *
  * Gets all the categories that map to to this group enumeration.
  *
- * Return value: category list as an array of strings, free
+ * Return value: (transfer full): An array of category list as strings, free
  * with g_ptr_array_unref() when done.
  *
  * Since: 0.1.1

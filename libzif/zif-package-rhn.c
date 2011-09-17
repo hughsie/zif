@@ -532,7 +532,7 @@ zif_package_rhn_set_session_key (ZifPackageRhn *pkg,
 /**
  * zif_package_rhn_set_server:
  * @pkg: A #ZifPackageRhn
- * @session_key: the RHN server to use
+ * @server: the RHN server to use
  *
  * Sets a RHN server.
  *

@@ -229,7 +229,7 @@ out:
  *
  * Gets all the keys for a given package.
  *
- * Return value: An allocated value, or %NULL
+ * Return value: (transfer full): An allocated value, or %NULL
  *
  * Since: 0.1.3
  **/
@@ -438,7 +438,7 @@ out:
  *
  * Gets all the packages in the yumdb 'database'.
  *
- * Return value: An array of #ZifPackage's
+ * Return value: (transfer full): An array of #ZifPackage's
  *
  * Since: 0.1.3
  **/

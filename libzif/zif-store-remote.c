@@ -409,7 +409,7 @@ zif_store_remote_ensure_parent_dir_exists (const gchar *filename, GError **error
  * much less data, at the expense of the amount of CPU taken during the
  * update when the delta package is rebuilt.
  *
- * Return value: A delta object or %NULL. Free with g_object_unref() when done.
+ * Return value: (transfer full): A delta object or %NULL. Free with g_object_unref() when done.
  *
  * Since: 0.1.3
  **/
@@ -786,7 +786,7 @@ out:
  *
  * Gets the update detail for a package.
  *
- * Return value: A %ZifUpdate, or %NULL for failure
+ * Return value: (transfer full): A %ZifUpdate, or %NULL for failure
  *
  * Since: 0.1.0
  **/
@@ -2371,7 +2371,7 @@ zif_store_remote_get_local_directory (ZifStoreRemote *store)
 
 /**
  * zif_store_remote_set_id:
- * @state: A #ZifState to use for progress reporting
+ * @store: A #ZifStoreRemote
  * @id: The repository id, e.g. "fedora"
  *
  * Sets the ID for the #ZifStoreRemote
@@ -3950,6 +3950,7 @@ out:
 
 /**
  * zif_store_remote_get_files:
+ * Return value: (transfer full): An array of strings
  **/
 GPtrArray *
 zif_store_remote_get_files (ZifStoreRemote *store, ZifPackage *package,
@@ -3972,6 +3973,7 @@ out:
 
 /**
  * zif_store_remote_get_requires:
+ * Return value: (transfer full): An array of #ZifDepend's, free with g_ptr_array_unref()
  **/
 GPtrArray *
 zif_store_remote_get_requires (ZifStoreRemote *store, ZifPackage *package,
@@ -3994,6 +3996,7 @@ out:
 
 /**
  * zif_store_remote_get_provides:
+ * Return value: (transfer full): An array of #ZifDepend's, free with g_ptr_array_unref()
  **/
 GPtrArray *
 zif_store_remote_get_provides (ZifStoreRemote *store, ZifPackage *package,
@@ -4016,6 +4019,7 @@ out:
 
 /**
  * zif_store_remote_get_obsoletes:
+ * Return value: (transfer full): An array of #ZifDepend's, free with g_ptr_array_unref()
  **/
 GPtrArray *
 zif_store_remote_get_obsoletes (ZifStoreRemote *store, ZifPackage *package,
@@ -4038,6 +4042,7 @@ out:
 
 /**
  * zif_store_remote_get_conflicts:
+ * Return value: (transfer full): An array of #ZifDepend's, free with g_ptr_array_unref()
  **/
 GPtrArray *
 zif_store_remote_get_conflicts (ZifStoreRemote *store, ZifPackage *package,

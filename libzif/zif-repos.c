@@ -446,7 +446,7 @@ out:
  *
  * Gets the enabled and disabled remote stores.
  *
- * Return value: A list of #ZifStore's
+ * Return value: (transfer full): A list of #ZifStore's
  *
  * Since: 0.1.0
  **/
@@ -489,7 +489,7 @@ out:
  *
  * Gets the enabled remote stores.
  *
- * Return value: A list of #ZifStore's
+ * Return value: (transfer full): A list of #ZifStore's
  *
  * Since: 0.1.0
  **/
@@ -543,7 +543,7 @@ out:
  *
  * Gets the store matching the ID.
  *
- * Return value: A #ZifStoreRemote object, or %NULL
+ * Return value: (transfer full): A #ZifStoreRemote object, or %NULL
  *
  * Since: 0.1.0
  **/
