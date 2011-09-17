@@ -70,7 +70,7 @@ rm -f $RPM_BUILD_ROOT%{_libdir}/libzif*.la
 %{_mandir}/man1/*.1.gz
 %dir %{_sysconfdir}/zif
 %config %{_sysconfdir}/bash_completion.d/*-completion.bash
-%config %{_sysconfdir}/zif/zif.conf
+%config(noreplace) %{_sysconfdir}/zif/zif.conf
 %{_libdir}/girepository-1.0/*.typelib
 
 %files devel
