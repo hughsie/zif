@@ -30,6 +30,14 @@ access to the rpm database and the Fedora metadata for PackageKit.
 
 Zif is not designed as a replacement to yum, nor to be used by end users.
 
+%package tools
+Summary: Command line tools for using libzif
+Requires: %{name} = %{version}-%{release}
+
+%description tools
+This provides the zif command line tool that can be used as an
+alternative to yum. It is not normally required.
+
 %package devel
 Summary: GLib Libraries and headers for zif
 Requires: %{name} = %{version}-%{release}
@@ -65,13 +73,15 @@ rm -f $RPM_BUILD_ROOT%{_libdir}/libzif*.la
 %files -f Zif.lang
 %defattr(-,root,root,-)
 %doc README AUTHORS NEWS COPYING
-%{_bindir}/zif
 %{_libdir}/*libzif*.so.*
-%{_mandir}/man1/*.1.gz
 %dir %{_sysconfdir}/zif
-%config %{_sysconfdir}/bash_completion.d/*-completion.bash
 %config(noreplace) %{_sysconfdir}/zif/zif.conf
 %{_libdir}/girepository-1.0/*.typelib
+
+%files tools
+%{_bindir}/zif
+%config %{_sysconfdir}/bash_completion.d/*-completion.bash
+%{_mandir}/man1/*.1.gz
 
 %files devel
 %defattr(-,root,root,-)
