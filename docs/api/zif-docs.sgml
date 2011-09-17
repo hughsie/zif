@@ -92,15 +92,5 @@
     <xi:include href="xml/zif-utils.xml"/>
   </reference>
 
-  <reference id="faq">
-    <title>Frequently asked questions</title>
-    <partintro>
-      <para>
-        This part has answers to developer frequently asked questions.
-      </para>
-    </partintro>
-    <xi:include href="spec/zif-faq.xml"/>
-  </reference>
-
 </book>
 
