@@ -443,7 +443,7 @@ out:
 }
 
 /**
- * zif_store_remote_download:
+ * zif_store_remote_download_full:
  * @store: A #ZifStoreRemote
  * @filename: Filename to download, e.g. "Packages/hal-0.1.0.rpm"
  * @directory: Directory to put the downloaded file, e.g. "/var/cache/zif"
