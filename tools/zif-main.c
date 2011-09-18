@@ -2381,6 +2381,246 @@ out:
 }
 
 /**
+ * zif_cmd_build_depends:
+ **/
+static gboolean
+zif_cmd_build_depends (ZifCmdPrivate *priv, gchar **values, GError **error)
+{
+	gboolean is_source;
+	gboolean ret;
+	gchar *archinfo = NULL;
+	GError *error_local = NULL;
+	GPtrArray *depends_all = NULL;
+	GPtrArray *depends = NULL;
+	GPtrArray *packages = NULL;
+	GPtrArray *provides = NULL;
+	GPtrArray *stores_enabled = NULL;
+	GPtrArray *stores = NULL;
+	guint i;
+	guint j;
+	ZifDepend *depend;
+	ZifPackage *package;
+	ZifRepos *repos = NULL;
+	ZifState *state_local;
+	ZifState *state_loop;
+	ZifStore *store;
+	ZifTransaction *transaction = NULL;
+
+	/* force this on, as some source repos don't provide the
+	 * right distro version */
+	ret = zif_config_unset (priv->config,
+				"skip_broken",
+				error);
+	if (!ret)
+		goto out;
+	ret = zif_config_set_boolean (priv->config,
+				      "skip_broken",
+				      TRUE,
+				      error);
+	if (!ret)
+		goto out;
+
+	/* ZifRepos */
+	repos = zif_repos_new ();
+
+	/* setup state with the correct number of steps */
+	ret = zif_state_set_steps (priv->state,
+				   error,
+				   20, /* get repos */
+				   5, /* get enabled repos */
+				   5, /* resolve */
+				   20, /* get-requires */
+				   25, /* what-provides */
+				   25, /* do install */
+				   -1);
+	if (!ret)
+		goto out;
+
+	/* get all repos */
+	state_local = zif_state_get_child (priv->state);
+	stores = zif_repos_get_stores (repos,
+				       state_local,
+				       error);
+	if (stores == NULL)
+		goto out;
+
+	/* this section done */
+	ret = zif_state_done (priv->state, error);
+	if (!ret)
+		goto out;
+
+	/* get all enabled repos */
+	state_local = zif_state_get_child (priv->state);
+	stores_enabled = zif_repos_get_stores_enabled (repos,
+						       state_local,
+						       error);
+	if (stores_enabled == NULL)
+		goto out;
+
+	/* this section done */
+	ret = zif_state_done (priv->state, error);
+	if (!ret)
+		goto out;
+
+	/* runtime enable the -source ones and disable others */
+	for (i=0; i<stores->len; i++) {
+		store = g_ptr_array_index (stores, i);
+		is_source = g_str_has_suffix (zif_store_get_id (store),
+					      "-source");
+		g_debug ("is source %s: %i",
+			 zif_store_get_id (store),
+			 is_source);
+		zif_store_set_enabled (store, is_source);
+	}
+
+	/* resolve for the set of packages */
+	state_local = zif_state_get_child (priv->state);
+	packages = zif_store_array_resolve_full (stores,
+						 values,
+						 ZIF_STORE_RESOLVE_FLAG_USE_ALL |
+						 ZIF_STORE_RESOLVE_FLAG_USE_GLOB,
+						 state_local,
+						 error);
+	if (packages == NULL) {
+		ret = FALSE;
+		goto out;
+	}
+
+	/* found nothing */
+	if (packages->len == 0) {
+		ret = FALSE;
+		g_set_error_literal (error, 1, 0, "no packages found");
+		goto out;
+	}
+
+	/* this section done */
+	ret = zif_state_done (priv->state, error);
+	if (!ret)
+		goto out;
+
+	/* get depends on each package */
+	depends_all = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
+	state_local = zif_state_get_child (priv->state);
+	zif_state_set_number_steps (state_local, packages->len);
+	for (i=0; i<packages->len; i++) {
+		package = g_ptr_array_index (packages, i);
+
+		/* get required for each source package */
+		state_loop = zif_state_get_child (state_local);
+		depends = zif_package_get_requires (package,
+						    state_loop,
+						    error);
+		if (depends == NULL)
+			goto out;
+		for (j=0; j<depends->len; j++) {
+			depend = g_ptr_array_index (depends, j);
+			g_debug ("%s needs %s",
+				 zif_package_get_printable (package),
+				 zif_depend_get_description (depend));
+			g_ptr_array_add (depends_all, g_object_ref (depend));
+		}
+		g_ptr_array_unref (depends);
+
+		/* this section done */
+		ret = zif_state_done (state_local, error);
+		if (!ret)
+			goto out;
+
+	}
+
+	/* this section done */
+	ret = zif_state_done (priv->state, error);
+	if (!ret)
+		goto out;
+
+	/* runtime enable the normal repos */
+	for (i=0; i<stores_enabled->len; i++) {
+		store = g_ptr_array_index (stores_enabled, i);
+		zif_store_set_enabled (store, TRUE);
+	}
+
+	/* get packages providing this dep */
+	state_local = zif_state_get_child (priv->state);
+	provides = zif_store_array_what_provides (stores_enabled,
+						  depends_all,
+						  state_local,
+						  error);
+	for (i=0; i<provides->len; i++) {
+		package = g_ptr_array_index (provides, i);
+		g_debug ("require installed %s",
+			 zif_package_get_printable (package));
+	}
+
+	/* filter to something sane */
+	zif_package_array_filter_duplicates (provides);
+	zif_package_array_filter_newest (provides);
+	archinfo = zif_config_get_string (priv->config,
+					  "archinfo", NULL);
+	zif_package_array_filter_best_arch (provides, archinfo);
+
+	for (i=0; i<provides->len; i++) {
+		package = g_ptr_array_index (provides, i);
+		g_debug ("post filter installed %s",
+			 zif_package_get_printable (package));
+	}
+
+	/* this section done */
+	ret = zif_state_done (priv->state, error);
+	if (!ret)
+		goto out;
+
+	/* install these non-installed packages */
+	transaction = zif_transaction_new ();
+	for (i=0; i<provides->len; i++) {
+		package = g_ptr_array_index (provides, i);
+		g_debug ("Adding %s", zif_package_get_printable (package));
+		ret = zif_transaction_add_install (transaction,
+						   package,
+						   &error_local);
+		if (!ret) {
+			g_set_error (error, 1, 0, "failed to add install %s: %s",
+				     zif_package_get_name (package),
+				     error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+	}
+
+	/* are we running super verbose? */
+	zif_transaction_set_verbose (transaction,
+				     g_getenv ("ZIF_DEPSOLVE_DEBUG") != NULL);
+
+	/* run what we've got */
+	state_local = zif_state_get_child (priv->state);
+	ret = zif_transaction_run (priv, transaction, state_local, error);
+	if (!ret)
+		goto out;
+
+	/* this section done */
+	ret = zif_state_done (priv->state, error);
+	if (!ret)
+		goto out;
+
+	zif_progress_bar_end (priv->progressbar);
+out:
+	g_free (archinfo);
+	g_object_unref (repos);
+	if (transaction != NULL)
+		g_object_unref (transaction);
+	if (depends_all != NULL)
+		g_ptr_array_unref (depends_all);
+	if (packages != NULL)
+		g_ptr_array_unref (packages);
+	if (provides != NULL)
+		g_ptr_array_unref (provides);
+	if (stores != NULL)
+		g_ptr_array_unref (stores);
+	if (stores_enabled != NULL)
+		g_ptr_array_unref (stores_enabled);
+	return ret;
+}
+
+/**
  * zif_cmd_manifest_check:
  **/
 static gboolean
@@ -5103,6 +5343,16 @@ out:
 static gboolean
 pk_error_handler_cb (const GError *error, gpointer user_data)
 {
+	ZifCmdPrivate *priv = (ZifCmdPrivate *) user_data;
+	gboolean skip_broken;
+
+	/* what does the config file say? */
+	skip_broken = zif_config_get_boolean (priv->config,
+					      "skip_broken",
+					      NULL);
+	if (!skip_broken)
+		return FALSE;
+
 	/* emit a warning, this isn't fatal */
 	g_debug ("non-fatal error: %s",
 		 error->message);
@@ -5369,11 +5619,12 @@ main (int argc, char *argv[])
 	zif_state_set_lock_handler (priv->state,
 				    zif_take_lock_cb,
 				    priv);
-	if (skip_broken) {
-		zif_state_set_error_handler (priv->state,
-					     pk_error_handler_cb,
-					     NULL);
-	}
+
+	/* always set this, even if --skip-broken isn't set so we can
+	 * override the config file at runtime */
+	zif_state_set_error_handler (priv->state,
+				     pk_error_handler_cb,
+				     priv);
 
 	/* process the repo add and disables */
 	if (enablerepo != NULL ||
@@ -5461,6 +5712,11 @@ main (int argc, char *argv[])
 		     /* TRANSLATORS: command description */
 		     _("Get an expanded value from the config file"),
 		     zif_cmd_get_config_value);
+	zif_cmd_add (priv->cmd_array,
+		     "build-depends,builddep",
+		     /* TRANSLATORS: command description */
+		     _("Installs the build dependencies for a given package"),
+		     zif_cmd_build_depends);
 	zif_cmd_add (priv->cmd_array,
 		     "help",
 		     /* TRANSLATORS: command description */
