@@ -1,6 +1,6 @@
 Zif
 
 Zif is a package manager for Fedora written in C that's designed to
-replace yum. See http://people.freedesktop.org/~hughsient/projects/zif
+replace yum. See http://people.freedesktop.org/~hughsient/zif
 for more information.
 
