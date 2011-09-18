@@ -58,10 +58,14 @@ struct _ZifPackageLocalClass
 
 typedef enum {
 	ZIF_PACKAGE_LOCAL_FLAG_NOTHING = 0,	/* fastest */
-	ZIF_PACKAGE_LOCAL_FLAG_LOOKUP = 1,	/* use yumdb for package_id data */
-	ZIF_PACKAGE_LOCAL_FLAG_REPAIR = 2,	/* use yumdb, and repair package header */
+	ZIF_PACKAGE_LOCAL_FLAG_USE_YUMDB = 1,	/* use yumdb for package_id data */
+	ZIF_PACKAGE_LOCAL_FLAG_REPAIR = 2,	/* repair package header in the rpmdb */
+	ZIF_PACKAGE_LOCAL_FLAG_USE_HISTORY = 4,	/* use history for package_id data */
 	ZIF_PACKAGE_LOCAL_FLAG_LAST
 } ZifPackageLocalFlags;
+
+/* old name */
+#define ZIF_PACKAGE_LOCAL_FLAG_LOOKUP	ZIF_PACKAGE_LOCAL_FLAG_USE_YUMDB
 
 GType			 zif_package_local_get_type		(void);
 ZifPackage		*zif_package_local_new			(void);

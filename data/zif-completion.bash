@@ -39,6 +39,9 @@ __zif_commandlist="
     dep-provides
     dep-requires
     help
+    history-import
+    history-list
+    history-package
     install
     local-install
     manifest-check

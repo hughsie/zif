@@ -50,6 +50,7 @@
 #include "zif-md-updateinfo.h"
 #include "zif-media.h"
 #include "zif-monitor.h"
+#include "zif-history.h"
 #include "zif-object-array.h"
 #include "zif-package.h"
 #include "zif-package-local.h"
@@ -3707,6 +3708,164 @@ zif_utils_func (void)
 	zif_check_singletons ();
 }
 
+static void
+zif_history_func (void)
+{
+	GArray *transactions;
+	gboolean ret;
+	gchar *filename;
+	gchar *tmp;
+	GError *error = NULL;
+	GPtrArray *packages;
+	guint timestamp;
+	guint uid;
+	ZifConfig *config;
+	ZifDb *db;
+	ZifHistory *history;
+	ZifPackage *package1;
+	ZifPackage *package2;
+	ZifPackage *package3;
+	ZifPackage *package_tmp;
+
+	/* set this up as dummy */
+	config = zif_config_new ();
+	filename = zif_test_get_data_file ("zif.conf");
+	zif_config_set_filename (config, filename, NULL);
+	zif_config_set_uint (config, "metadata_expire", 0, NULL);
+	zif_config_set_uint (config, "mirrorlist_expire", 0, NULL);
+	zif_config_set_string (config, "history_db", "/tmp/history.db", NULL);
+	g_free (filename);
+
+	/* create a new file */
+	g_unlink ("/tmp/history.db");
+	history = zif_history_new ();
+
+	/* add an entry */
+	timestamp = g_get_real_time () / G_USEC_PER_SEC;
+	package1 = zif_package_new ();
+	ret = zif_package_set_id (package1,
+				  "hal;0.1-1.fc13;i386;fedora",
+				  &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+	ret = zif_history_add_entry (history,
+				     package1,
+				     timestamp,
+				     ZIF_TRANSACTION_REASON_UPDATE_FOR_CONFLICT,
+				     1000,
+				     "install hal-info",
+				     &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	/* add another entry */
+	package2 = zif_package_new ();
+	ret = zif_package_set_id (package2,
+				  "upower;0.1-1.fc13;i386;fedora",
+				  &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+	ret = zif_history_add_entry (history,
+				     package2,
+				     timestamp,
+				     ZIF_TRANSACTION_REASON_INSTALL_FOR_UPDATE,
+				     500,
+				     "update upower-devel",
+				     &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	/* don't add this, used for checking error */
+	package3 = zif_package_new ();
+	ret = zif_package_set_id (package3,
+				  "PackageKit-glib-devel;0.6.9-4.fc14;i686;installed",
+				  &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	/* get all transactions */
+	transactions = zif_history_list_transactions (history, &error);
+	g_assert_no_error (error);
+	g_assert (transactions != NULL);
+	g_assert_cmpint (transactions->len, ==, 1);
+	g_assert_cmpint (g_array_index (transactions, guint, 0), ==, timestamp);
+
+	/* get both packages */
+	packages = zif_history_get_packages (history,
+					     timestamp,
+					     &error);
+	g_assert_no_error (error);
+	g_assert (packages != NULL);
+	g_assert_cmpint (packages->len, ==, 2);
+	package_tmp = g_ptr_array_index (packages, 0);
+	g_assert_cmpstr (zif_package_get_id (package_tmp), ==,
+			 "hal;0.1-1.fc13;i386;fedora");
+	package_tmp = g_ptr_array_index (packages, 1);
+	g_assert_cmpstr (zif_package_get_id (package_tmp), ==,
+			 "upower;0.1-1.fc13;i386;fedora");
+	g_ptr_array_unref (packages);
+
+	/* get uid */
+	uid = zif_history_get_uid (history, package1, timestamp, &error);
+	g_assert_no_error (error);
+	g_assert_cmpint (uid, ==, 1000);
+
+	/* get cmdline */
+	tmp = zif_history_get_cmdline (history, package1, timestamp, &error);
+	g_assert_no_error (error);
+	g_assert_cmpstr (tmp, ==, "install hal-info");
+	g_free (tmp);
+
+	/* get repo */
+	tmp = zif_history_get_repo (history, package1, timestamp, &error);
+	g_assert_no_error (error);
+	g_assert_cmpstr (tmp, ==, "fedora");
+	g_free (tmp);
+
+	/* get repo */
+	tmp = zif_history_get_repo (history, package3, timestamp, &error);
+	g_assert_error (error,
+			ZIF_HISTORY_ERROR,
+			ZIF_HISTORY_ERROR_FAILED);
+	g_assert_cmpstr (tmp, ==, NULL);
+	g_clear_error (&error);
+
+	/* get repo newest */
+	tmp = zif_history_get_repo_newest (history, package1, &error);
+	g_assert_no_error (error);
+	g_assert_cmpstr (tmp, ==, "fedora");
+	g_free (tmp);
+
+	/* create a dummy database */
+	db = zif_db_new ();
+	ret = zif_db_set_root (db, "../data/tests/yumdb", &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	/* check import */
+	ret = zif_history_import (history, db, &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	/* get repo newest */
+	tmp = zif_history_get_repo_newest (history, package3, &error);
+	g_assert_no_error (error);
+	g_assert_cmpstr (tmp, ==, "fedora");
+	g_free (tmp);
+
+	/* check uid */
+	uid = zif_history_get_uid (history, package3, 1287927872, &error);
+	g_assert_no_error (error);
+	g_assert_cmpint (uid, ==, 500);
+
+	g_object_unref (package1);
+	g_object_unref (package2);
+	g_object_unref (package3);
+	g_object_unref (config);
+	g_object_unref (history);
+	g_object_unref (db);
+}
+
 int
 main (int argc, char **argv)
 {
@@ -3720,6 +3879,8 @@ main (int argc, char **argv)
 	g_log_set_fatal_mask (NULL, G_LOG_LEVEL_ERROR | G_LOG_LEVEL_CRITICAL);
 
 	/* tests go here */
+	g_test_add_func ("/zif/history", zif_history_func);
+if (0){
 	g_test_add_func ("/zif/state", zif_state_func);
 	g_test_add_func ("/zif/changeset", zif_changeset_func);
 	g_test_add_func ("/zif/config", zif_config_func);
@@ -3758,7 +3919,7 @@ main (int argc, char **argv)
 	g_test_add_func ("/zif/update-info", zif_update_info_func);
 	g_test_add_func ("/zif/update", zif_update_func);
 	g_test_add_func ("/zif/utils", zif_utils_func);
-
+}
 	return g_test_run ();
 }
 

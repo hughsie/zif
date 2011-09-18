@@ -36,6 +36,7 @@
 #include <rpm/rpmts.h>
 
 #include "zif-db.h"
+#include "zif-history.h"
 #include "zif-utils.h"
 #include "zif-package.h"
 #include "zif-package-local.h"
@@ -55,6 +56,7 @@ struct _ZifPackageLocalPrivate
 	Header			 header;
 	ZifGroups		*groups;
 	ZifDb			*db;
+	ZifHistory		*history;
 	gchar			*key_id;
 };
 
@@ -523,7 +525,6 @@ zif_package_local_set_from_header (ZifPackageLocal *pkg,
 	gchar *from_repo = NULL;
 	gchar *package_id = NULL;
 	gchar *package_id_tmp = NULL;
-	GError *error_local = NULL;
 	guint epoch = 0;
 	ZifString *pkgid = NULL;
 
@@ -581,12 +582,26 @@ zif_package_local_set_from_header (ZifPackageLocal *pkg,
 	if (!ret)
 		goto out;
 
-	/* get repo_id for installed package from history or yumdb */
-	if (installed && (flags & ZIF_PACKAGE_LOCAL_FLAG_LOOKUP) > 0) {
+	/* get repo_id for installed package from history */
+	if (installed &&
+	    (flags & ZIF_PACKAGE_LOCAL_FLAG_USE_HISTORY) > 0) {
+		from_repo = zif_history_get_repo_newest (pkg->priv->history,
+							 ZIF_PACKAGE (pkg),
+							 NULL);
+		if (from_repo != NULL) {
+			zif_package_set_repo_id (ZIF_PACKAGE (pkg),
+						 from_repo);
+		}
+	}
+
+	/* get repo_id for installed package from yumdb */
+	if (from_repo == NULL &&
+	    installed &&
+	    (flags & ZIF_PACKAGE_LOCAL_FLAG_USE_YUMDB) > 0) {
 		from_repo = zif_db_get_string (pkg->priv->db,
 					       ZIF_PACKAGE (pkg),
 					       "from_repo",
-					       &error_local);
+					       NULL);
 		if (from_repo != NULL) {
 			zif_package_set_repo_id (ZIF_PACKAGE (pkg),
 						 from_repo);
@@ -740,6 +755,7 @@ zif_package_local_finalize (GObject *object)
 	g_free (pkg->priv->key_id);
 	g_object_unref (pkg->priv->groups);
 	g_object_unref (pkg->priv->db);
+	g_object_unref (pkg->priv->history);
 	if (pkg->priv->header != NULL)
 		headerFree (pkg->priv->header);
 
@@ -770,6 +786,7 @@ zif_package_local_init (ZifPackageLocal *pkg)
 	pkg->priv = ZIF_PACKAGE_LOCAL_GET_PRIVATE (pkg);
 	pkg->priv->groups = zif_groups_new ();
 	pkg->priv->db = zif_db_new ();
+	pkg->priv->history = zif_history_new ();
 	pkg->priv->header = NULL;
 }
 

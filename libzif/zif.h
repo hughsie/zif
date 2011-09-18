@@ -31,6 +31,7 @@
 #include <zif-delta.h>
 #include <zif-download.h>
 #include <zif-groups.h>
+#include <zif-history.h>
 #include <zif-lock.h>
 #include <zif-manifest.h>
 #include <zif-md.h>

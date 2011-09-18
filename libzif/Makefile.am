@@ -42,6 +42,7 @@ libzif_include_HEADERS =					\
 	zif-depend.h						\
 	zif-download.h						\
 	zif-groups.h						\
+	zif-history.h						\
 	zif-lock.h						\
 	zif-manifest.h						\
 	zif-md.h						\
@@ -89,6 +90,8 @@ libzif_la_SOURCES =						\
 	zif-download.h						\
 	zif-groups.c						\
 	zif-groups.h						\
+	zif-history.c						\
+	zif-history.h						\
 	zif-legal.c						\
 	zif-legal.h						\
 	zif-lock.c						\
@@ -276,6 +279,12 @@ typelib_DATA = $(INTROSPECTION_GIRS:.gir=.typelib)
 
 CLEANFILES += $(gir_DATA) $(typelib_DATA)
 endif
+
+install-data-hook:
+	if test -w $(DESTDIR)$(prefix)/; then \
+		mkdir -p $(DESTDIR)$(localstatedir)/lib/zif; \
+		touch $(DESTDIR)$(localstatedir)/lib/zif/history.db; \
+	fi
 
 EXTRA_DIST =							\
 	zif-version.h.in					\

@@ -41,6 +41,7 @@
 
 #include "zif-config.h"
 #include "zif-monitor.h"
+#include "zif-history.h"
 #include "zif-package-local.h"
 #include "zif-store-local.h"
 
@@ -172,6 +173,7 @@ static gboolean
 zif_store_local_load (ZifStore *store, ZifState *state, GError **error)
 {
 	gboolean ret = TRUE;
+	gboolean use_installed_history;
 	gboolean yumdb_allow_read;
 	GError *error_local = NULL;
 	gint rc;
@@ -224,13 +226,10 @@ zif_store_local_load (ZifStore *store, ZifState *state, GError **error)
 						   NULL);
 	if (yumdb_allow_read) {
 		g_debug ("using yumdb origin lookup");
-		flags += ZIF_PACKAGE_LOCAL_FLAG_LOOKUP;
+		flags += ZIF_PACKAGE_LOCAL_FLAG_USE_YUMDB;
 	} else {
 		g_debug ("not using yumdb lookup as disabled");
 	}
-
-	/* speed up for the future */
-//	flags += ZIF_PACKAGE_LOCAL_FLAG_REPAIR;
 
 	/* get the compare mode */
 	compare_mode = zif_config_get_enum (local->priv->config,
@@ -291,6 +290,28 @@ zif_store_local_load (ZifStore *store, ZifState *state, GError **error)
 			g_object_unref (package);
 		}
 	} while (TRUE);
+
+	/* lookup in history database */
+	use_installed_history = zif_config_get_boolean (local->priv->config,
+							"use_installed_history",
+							NULL);
+	if (use_installed_history) {
+		g_debug ("using history lookup");
+		g_object_set (store, "loaded", TRUE, NULL);
+{
+		ZifHistory *history;
+		history = zif_history_new ();
+		ret = zif_history_set_repo_for_store (history,
+						      store,
+						      error);
+		g_object_unref (history);
+		if (!ret)
+			goto out;
+
+}
+	} else {
+		g_debug ("not using history lookup as disabled");
+	}
 
 	/* this section done */
 	ret = zif_state_done (state, error);

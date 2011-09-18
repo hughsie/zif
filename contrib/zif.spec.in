@@ -77,6 +77,8 @@ rm -f $RPM_BUILD_ROOT%{_libdir}/libzif*.la
 %doc README AUTHORS NEWS COPYING
 %{_libdir}/*libzif*.so.*
 %dir %{_sysconfdir}/zif
+%dir %{_localstatedir}/lib/zif
+%ghost %verify(not md5 size mtime) %{_localstatedir}/lib/zif/history.db
 %config(noreplace) %{_sysconfdir}/zif/zif.conf
 %if 0%{?fedora} > 14
 %{_libdir}/girepository-1.0/*.typelib

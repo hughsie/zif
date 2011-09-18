@@ -61,6 +61,7 @@
 #include "zif-array.h"
 #include "zif-config.h"
 #include "zif-db.h"
+#include "zif-history.h"
 #include "zif-depend.h"
 #include "zif-object-array.h"
 #include "zif-package-array.h"
@@ -86,6 +87,7 @@ struct _ZifTransactionPrivate
 	ZifStore		*store_local;
 	ZifConfig		*config;
 	ZifDb			*db;
+	ZifHistory		*history;
 	GPtrArray		*stores_remote;	/* of ZifStote */
 	gboolean		 verbose;
 	gboolean		 auto_added_pubkeys;
@@ -4422,6 +4424,55 @@ out:
 }
 
 /**
+ * zif_transaction_write_history:
+ **/
+static gboolean
+zif_transaction_write_history (ZifTransaction *transaction,
+			      GError **error)
+{
+	gboolean ret = TRUE;
+	guint i;
+	guint timestamp;
+	ZifPackage *package_tmp;
+	ZifTransactionItem *item;
+	ZifTransactionPrivate *priv = transaction->priv;
+
+	timestamp = g_get_real_time () / G_USEC_PER_SEC;
+	for (i=0; i<transaction->priv->install->len; i++) {
+		package_tmp = g_ptr_array_index (transaction->priv->install, i);
+		item = zif_transaction_package_get_item (package_tmp);
+		if (item->cancelled)
+			continue;
+		ret = zif_history_add_entry (priv->history,
+					     package_tmp,
+					     timestamp,
+					     item->reason,
+					     transaction->priv->uid,
+					     transaction->priv->cmdline,
+					     error);
+		if (!ret)
+			goto out;
+	}
+	for (i=0; i<transaction->priv->remove->len; i++) {
+		package_tmp = g_ptr_array_index (transaction->priv->remove, i);
+		item = zif_transaction_package_get_item (package_tmp);
+		if (item->cancelled)
+			continue;
+		ret = zif_history_add_entry (priv->history,
+					     package_tmp,
+					     timestamp,
+					     item->reason,
+					     transaction->priv->uid,
+					     transaction->priv->cmdline,
+					     error);
+		if (!ret)
+			goto out;
+	}
+out:
+	return ret;
+}
+
+/**
  * zif_transaction_commit:
  * @transaction: A #ZifTransaction
  * @state: A #ZifState to use for progress reporting
@@ -4676,6 +4727,12 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 		g_debug ("Not writing to the yumdb");
 	}
 
+	/* write to the Zif history database */
+	ret = zif_transaction_write_history (transaction,
+					     error);
+	if (!ret)
+		goto out;
+
 	/* this section done */
 	ret = zif_state_done (state, error);
 	if (!ret)
@@ -4854,6 +4911,7 @@ zif_transaction_finalize (GObject *object)
 	if (transaction->priv->ts != NULL)
 		rpmtsFree (transaction->priv->ts);
 	g_object_unref (transaction->priv->db);
+	g_object_unref (transaction->priv->history);
 	g_object_unref (transaction->priv->config);
 	g_ptr_array_unref (transaction->priv->install);
 	g_ptr_array_unref (transaction->priv->update);
@@ -4891,6 +4949,7 @@ zif_transaction_init (ZifTransaction *transaction)
 
 	transaction->priv->config = zif_config_new ();
 	transaction->priv->db = zif_db_new ();
+	transaction->priv->history = zif_history_new ();
 	transaction->priv->ts = rpmtsCreate ();
 
 	/* packages we want to install */

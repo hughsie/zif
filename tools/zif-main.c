@@ -1365,6 +1365,121 @@ zif_cmd_dep_obsoletes (ZifCmdPrivate *priv, gchar **values, GError **error)
 				   error);
 }
 
+/**
+ * zif_cmd_history_list:
+ **/
+static gboolean
+zif_cmd_history_list (ZifCmdPrivate *priv, gchar **values, GError **error)
+{
+	GArray *transactions;
+	gboolean important = TRUE;
+	gboolean ret = FALSE;
+	gchar *cmdline;
+	gchar *reason_pad;
+	GPtrArray *packages;
+	guint i, j;
+	guint timestamp;
+	guint uid;
+	ZifHistory *history;
+	ZifPackage *package;
+	ZifTransactionReason reason;
+
+	/* open the history */
+	history = zif_history_new ();
+
+	/* get all transactions */
+	transactions = zif_history_list_transactions (history, error);
+	if (transactions == NULL)
+		goto out;
+
+	/* no entries */
+	if (transactions->len == 0) {
+		ret = TRUE;
+		g_print ("%s\n", _("The history database is empty"));
+		goto out;
+	}
+
+	/* list them */
+	for (i = 0; i < transactions->len; i++) {
+		timestamp = g_array_index (transactions, guint, i);
+
+		/* get packages */
+		packages = zif_history_get_packages (history,
+						     timestamp,
+						     error);
+		if (packages == NULL)
+			goto out;
+
+		/* filter by package */
+		if (values != NULL && values[0] != NULL) {
+			important = FALSE;
+			for (j = 0; j < packages->len; j++) {
+				package = g_ptr_array_index (packages, j);
+				if (g_strcmp0 (zif_package_get_name (package), values[0]) == 0) {
+					important = TRUE;
+					break;
+				}
+			}
+			if (!important)
+				continue;
+		}
+
+		/* print transaction */
+		g_print ("Transaction #%i, timestamp %i\n", i, timestamp);
+
+		for (j = 0; j < packages->len; j++) {
+			package = g_ptr_array_index (packages, j);
+			uid = zif_history_get_uid (history, package, timestamp, NULL);
+			cmdline = zif_history_get_cmdline (history, package, timestamp, NULL);
+			reason = zif_history_get_reason (history, package, timestamp, NULL);
+			reason_pad = zif_strpad (zif_transaction_reason_to_string (reason), 20);
+			g_print ("\t%s\t%s (user %i with %s)\n",
+				 reason_pad,
+				 zif_package_get_printable (package),
+				 uid,
+				 cmdline);
+			g_free (cmdline);
+		}
+
+		g_ptr_array_unref (packages);
+	}
+
+	/* success */
+	ret= TRUE;
+out:
+	if (transactions != NULL)
+		g_array_unref (transactions);
+	g_object_unref (history);
+	return ret;
+}
+
+/**
+ * zif_cmd_history_import:
+ **/
+static gboolean
+zif_cmd_history_import (ZifCmdPrivate *priv, gchar **values, GError **error)
+{
+	gboolean ret;
+	ZifDb *db;
+	ZifHistory *history;
+
+	/* open the history and database */
+	history = zif_history_new ();
+	db = zif_db_new ();
+
+	/* import entries */
+	ret = zif_history_import (history, db, error);
+	if (!ret)
+		goto out;
+
+	/* TRANSLATORS: we've imported the yumdb into the history database */
+	g_print ("%s\n", _("All database entries imported into history"));
+out:
+	g_object_unref (history);
+	g_object_unref (db);
+	return ret;
+}
+
 /*
  * zif_sort_indirect_strcmp_cb:
  */
@@ -5904,6 +6019,21 @@ main (int argc, char *argv[])
 		     /* TRANSLATORS: command description */
 		     _("Gets the obsoletes for a given package"),
 		     zif_cmd_dep_obsoletes);
+	zif_cmd_add (priv->cmd_array,
+		     "history-list,history",
+		     /* TRANSLATORS: command description */
+		     _("Gets the transaction history list"),
+		     zif_cmd_history_list);
+	zif_cmd_add (priv->cmd_array,
+		     "history-package",
+		     /* TRANSLATORS: command description */
+		     _("Gets the transaction history for a specified package"),
+		     zif_cmd_history_list);
+	zif_cmd_add (priv->cmd_array,
+		     "history-import",
+		     /* TRANSLATORS: command description */
+		     _("Imports the history data from a legacy database"),
+		     zif_cmd_history_import);
 
 	/* sort by command name */
 	g_ptr_array_sort (priv->cmd_array,
@@ -6009,6 +6139,16 @@ error:
 			default:
 				/* TRANSLATORS: error message */
 				message = _("Unhandled package error");
+			}
+		} else if (error->domain == ZIF_HISTORY_ERROR) {
+			switch (error->code) {
+			case ZIF_HISTORY_ERROR_FAILED:
+				/* TRANSLATORS: error message */
+				message = _("History operation failed");
+				break;
+			default:
+				/* TRANSLATORS: error message */
+				message = _("Unhandled history error");
 			}
 		} else if (error->domain == ZIF_CONFIG_ERROR) {
 			switch (error->code) {
