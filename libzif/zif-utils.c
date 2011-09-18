@@ -1269,3 +1269,80 @@ zif_str_compare_equal (const gchar *a, const gchar *b)
 {
 	return strcmp (a, b) == 0;
 }
+
+/**
+ * zif_load_multiline_key_file:
+ * @filename: The repo file to load
+ * @error: A #GError, or %NULL
+ *
+ * The source.repo files are not standard GKeyFiles as they can contain
+ * multiple lines for a key value, e.g.
+ *
+ * [multiline1]
+ * name=Multiline1
+ * baseurl=http://download1.fedoraproject.org/
+ *	http://download2.fedoraproject.org/
+ * enabled=true
+ *
+ * Return value: A #GKeyFile, or %NULL
+ *
+ * Since: 0.2.4
+ **/
+GKeyFile *
+zif_load_multiline_key_file (const gchar *filename,
+			     GError **error)
+{
+	gboolean ret;
+	gchar *data = NULL;
+	gchar **lines = NULL;
+	GKeyFile *file = NULL;
+	gsize len;
+	GString *string = NULL;
+	guint i;
+
+	/* load file */
+	ret = g_file_get_contents (filename, &data, &len, error);
+	if (!ret)
+		goto out;
+
+	/* split into lines */
+	string = g_string_new ("");
+	lines = g_strsplit (data, "\n", -1);
+	for (i=0; lines[i] != NULL; i++) {
+		/* if a line starts with a tab, then append it on the
+		 * previous line */
+		if (lines[i][0] == '\t' && string->len > 0) {
+			g_string_set_size (string, string->len - 1);
+			g_string_append_printf (string,
+						";%s\n",
+						lines[i] + 1);
+		} else {
+			g_string_append_printf (string,
+						"%s\n",
+						lines[i]);
+		}
+	}
+
+	/* remove final newline */
+	if (string->len > 0)
+		g_string_set_size (string, string->len - 1);
+
+	/* load modified lines */
+	file = g_key_file_new ();
+	ret = g_key_file_load_from_data (file,
+					 string->str,
+					 -1,
+					 G_KEY_FILE_KEEP_COMMENTS,
+					 error);
+	if (!ret) {
+		g_key_file_free (file);
+		file = NULL;
+		goto out;
+	}
+out:
+	if (string != NULL)
+		g_string_free (string, TRUE);
+	g_free (data);
+	g_strfreev (lines);
+	return file;
+}

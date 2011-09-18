@@ -163,30 +163,20 @@ zif_repos_get_for_filename (ZifRepos *repos,
 	gchar **repos_groups = NULL;
 	ZifStoreRemote *store;
 	ZifState *state_local;
-	gboolean ret;
+	gboolean ret = FALSE;
 	gchar *path;
 	guint i;
 	gsize groups_length;
 
 	g_return_val_if_fail (zif_state_valid (state), FALSE);
 
-	/* find all the id's in this file */
-	file = g_key_file_new ();
-	path = g_build_filename (repos->priv->repos_dir, filename, NULL);
-	ret = g_key_file_load_from_file (file,
-					 path,
-					 G_KEY_FILE_NONE,
-					 &error_local);
-	if (!ret) {
-		g_set_error (error,
-			     ZIF_REPOS_ERROR,
-			     ZIF_REPOS_ERROR_FAILED,
-			     "failed to load keyfile %s: %s",
-			     path,
-			     error_local->message);
-		g_error_free (error_local);
+	/* load file */
+	path = g_build_filename (repos->priv->repos_dir,
+				 filename,
+				 NULL);
+	file = zif_load_multiline_key_file (path, error);
+	if (file == NULL)
 		goto out;
-	}
 
 	/* for each group, add a store object */
 	repos_groups = g_key_file_get_groups (file, &groups_length);
@@ -225,7 +215,8 @@ zif_repos_get_for_filename (ZifRepos *repos,
 out:
 	g_strfreev (repos_groups);
 	g_free (path);
-	g_key_file_free (file);
+	if (file != NULL)
+		g_key_file_free (file);
 	return ret;
 }
 

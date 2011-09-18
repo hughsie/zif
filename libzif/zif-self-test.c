@@ -2248,14 +2248,14 @@ zif_repos_func (void)
 	array = zif_repos_get_stores (repos, state, &error);
 	g_assert_no_error (error);
 	g_assert (array != NULL);
-	g_assert_cmpint (array->len, ==, 2);
+	g_assert_cmpint (array->len, ==, 4);
 	g_ptr_array_unref (array);
 
 	zif_state_reset (state);
 	array = zif_repos_get_stores_enabled (repos, state, &error);
 	g_assert_no_error (error);
 	g_assert (array != NULL);
-	g_assert_cmpint (array->len, ==, 2);
+	g_assert_cmpint (array->len, ==, 4);
 
 	/* disable one store and reget */
 	store = g_ptr_array_index (array, 1);
@@ -2266,7 +2266,7 @@ zif_repos_func (void)
 	array = zif_repos_get_stores_enabled (repos, state, &error);
 	g_assert_no_error (error);
 	g_assert (array != NULL);
-	g_assert_cmpint (array->len, ==, 1);
+	g_assert_cmpint (array->len, ==, 3);
 
 	/* check returns error for invalid */
 	zif_state_reset (state);

@@ -1,0 +1,11 @@
+[multiline1]
+name=Multiline1
+baseurl=http://download1.fedoraproject.org/
+	http://download2.fedoraproject.org/
+enabled=true
+
+[multiline2]
+name=Multiline3
+baseurl=http://download3.fedoraproject.org/
+	http://download4.fedoraproject.org/
+enabled=true

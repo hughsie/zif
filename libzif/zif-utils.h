@@ -99,6 +99,8 @@ gboolean	 zif_package_id_to_nevra	(const gchar	 *package_id,
 						 gchar		**version,
 						 gchar		**release,
 						 gchar		**arch);
+GKeyFile	*zif_load_multiline_key_file	(const gchar	*filename,
+						 GError		**error);
 
 /* string comparison */
 typedef gboolean (*ZifStrCompareFunc)		(const gchar	*a,

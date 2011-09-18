@@ -77,7 +77,7 @@ struct _ZifStoreRemotePrivate
 	gchar			*name_expanded;		/* Fedora i386 */
 	gchar			*directory;		/* /var/cache/yum/fedora */
 	gchar			*repomd_filename;	/* /var/cache/yum/fedora/repomd.xml */
-	gchar			*baseurl;		/* http://dl.fp.org/pub/fedora/16/i386 */
+	gchar			**baseurl;		/* http://dl.fp.org/pub/fedora/16/i386 */
 	gchar			*mirrorlist;		/* http://dl.fp.org/mirrorlist.txt */
 	gchar			*metalink;		/* http://m.fp.org/ml?repo=f-15&arch=i386 */
 	gchar			*cache_dir;		/* /var/cache/yum */
@@ -1189,18 +1189,23 @@ zif_store_remote_get_repomd (ZifStoreRemote *store,
 			     ZifState *state,
 			     GError **error)
 {
+	ZifStoreRemotePrivate *priv = store->priv;
 	ZifState *state_local;
 	gboolean ret = TRUE;
 	GError *error_local = NULL;
 	gchar *tmp;
+	guint i;
 
 	/* clear download locations that will not be valid anymore */
 	zif_download_location_clear (store->priv->download);
 
 	/* always add the baseurl as a location if it is set */
 	if (store->priv->baseurl != NULL) {
-		zif_download_location_add_uri (store->priv->download,
-					       store->priv->baseurl, NULL);
+		for (i=0; priv->baseurl[i] != NULL; i++) {
+			zif_download_location_add_uri (priv->download,
+						       priv->baseurl[i],
+						       NULL);
+		}
 	}
 
 	/* set steps */
@@ -1225,7 +1230,7 @@ zif_store_remote_get_repomd (ZifStoreRemote *store,
 
 	/* do we have a baseurl, if so just use that */
 	if (store->priv->baseurl != NULL) {
-		tmp = g_build_filename (store->priv->baseurl,
+		tmp = g_build_filename (store->priv->baseurl[0],
 					"repodata/repomd.xml", NULL);
 		state_local = zif_state_get_child (state);
 		ret = zif_download_file_full (store->priv->download,
@@ -1998,16 +2003,18 @@ out:
 static gboolean
 zif_store_remote_load (ZifStore *store, ZifState *state, GError **error)
 {
-	GKeyFile *file = NULL;
+	gboolean got_baseurl = FALSE;
 	gboolean ret = TRUE;
+	gchar *baseurl_temp;
 	gchar *enabled = NULL;
-	gchar *metadata_expire = NULL;
-	GError *error_local = NULL;
-	gchar *temp;
 	gchar *filename;
 	gchar *media_root;
+	gchar *metadata_expire = NULL;
+	gchar *temp;
+	GError *error_local = NULL;
+	GKeyFile *file = NULL;
+	guint i;
 	guint mirrorlist_expire;
-	gboolean got_baseurl = FALSE;
 	ZifStoreRemote *remote = ZIF_STORE_REMOTE (store);
 
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), FALSE);
@@ -2028,11 +2035,9 @@ zif_store_remote_load (ZifStore *store, ZifState *state, GError **error)
 	if (!ret)
 		goto out;
 
-	file = g_key_file_new ();
-	ret = g_key_file_load_from_file (file,
-					 remote->priv->repo_filename,
-					 G_KEY_FILE_NONE,
-					 &error_local);
+	/* load repo file */
+	file = zif_load_multiline_key_file (remote->priv->repo_filename,
+					    &error_local);
 	if (!ret) {
 		g_set_error (error,
 			     ZIF_STORE_ERROR,
@@ -2094,14 +2099,19 @@ zif_store_remote_load (ZifStore *store, ZifState *state, GError **error)
 	/* expand out */
 	remote->priv->name_expanded = zif_config_expand_substitutions (remote->priv->config, remote->priv->name, NULL);
 
-	/* get base url (allowed to be blank) */
+	/* get base url array (allowed to be blank) */
 	temp = g_key_file_get_string (file, remote->priv->id, "baseurl", NULL);
 	if (temp != NULL && temp[0] != '\0') {
-		remote->priv->baseurl = zif_config_expand_substitutions (remote->priv->config,
-									 temp, NULL);
-		zif_download_location_add_uri (remote->priv->download,
-					       remote->priv->baseurl, NULL);
+		baseurl_temp = zif_config_expand_substitutions (remote->priv->config,
+								temp, NULL);
+		remote->priv->baseurl = g_strsplit (baseurl_temp, ";", -1);
+		for (i=0; remote->priv->baseurl[i] != NULL; i++) {
+			zif_download_location_add_uri (remote->priv->download,
+						       remote->priv->baseurl[i],
+						       NULL);
+		}
 		got_baseurl = TRUE;
+		g_free (baseurl_temp);
 	}
 	g_free (temp);
 
@@ -2503,14 +2513,15 @@ zif_store_remote_set_enabled (ZifStoreRemote *store,
 		goto out;
 
 	/* load file */
-	file = g_key_file_new ();
-	ret = g_key_file_load_from_file (file,
-					 store->priv->repo_filename,
-					 G_KEY_FILE_KEEP_COMMENTS,
-					 &error_local);
-	if (!ret) {
-		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
-			     "failed to load store file: %s", error_local->message);
+	file = zif_load_multiline_key_file (store->priv->repo_filename,
+					    &error_local);
+	if (file == NULL) {
+		ret = FALSE;
+		g_set_error (error,
+			     ZIF_STORE_ERROR,
+			     ZIF_STORE_ERROR_FAILED,
+			     "failed to load store file: %s",
+			     error_local->message);
 		g_error_free (error_local);
 		goto out;
 	}
@@ -4075,7 +4086,7 @@ zif_store_remote_file_monitor_cb (ZifMonitor *monitor, ZifStoreRemote *store)
 	g_free (store->priv->name_expanded);
 	g_free (store->priv->repo_filename);
 	g_free (store->priv->mirrorlist);
-	g_free (store->priv->baseurl);
+	g_strfreev (store->priv->baseurl);
 	g_free (store->priv->metalink);
 
 	store->priv->loaded = FALSE;
@@ -4107,7 +4118,7 @@ zif_store_remote_finalize (GObject *object)
 	g_free (store->priv->name);
 	g_free (store->priv->name_expanded);
 	g_free (store->priv->repo_filename);
-	g_free (store->priv->baseurl);
+	g_strfreev (store->priv->baseurl);
 	g_free (store->priv->mirrorlist);
 	g_free (store->priv->metalink);
 	g_free (store->priv->cache_dir);
