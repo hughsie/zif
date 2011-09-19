@@ -1128,8 +1128,10 @@ zif_store_array_get_updates (GPtrArray *store_array,
 				/* ensure the remote package knows about
 				 * the installed version so we can
 				 * calculate the delta */
-				zif_package_remote_set_installed (ZIF_PACKAGE_REMOTE (update),
-								  package);
+				if (ZIF_IS_PACKAGE_REMOTE (update)) {
+					zif_package_remote_set_installed (ZIF_PACKAGE_REMOTE (update),
+									  package);
+				}
 				break;
 			}
 		}
