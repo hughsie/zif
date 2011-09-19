@@ -327,8 +327,18 @@ zif_list_print_array (GPtrArray *array)
 
 /**
  * zif_package_id_build:
+ * @name: The package name, e.g. "hal"
+ * @version: The package version, e.g. "1.0.0-fc14"
+ * @arch: The package architecture, e.g. "i386"
+ * @data: The package data, typically the repo name, or "installed"
+ *
+ * Formats a PackageId structure.
+ *
+ * Return value: A PackageId value, or %NULL if invalid
+ *
+ * Since: 0.2.4
  **/
-static gchar *
+gchar *
 zif_package_id_build (const gchar *name, const gchar *version,
 		      const gchar *arch, const gchar *data)
 {

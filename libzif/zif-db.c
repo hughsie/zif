@@ -48,6 +48,7 @@
 #include "zif-db.h"
 #include "zif-object-array.h"
 #include "zif-package-remote.h"
+#include "zif-utils.h"
 
 #define ZIF_DB_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_DB, ZifDbPrivate))
 
@@ -364,11 +365,10 @@ zif_db_get_packages_for_filename (ZifDb *db,
 	g_string_set_size (version, version->len - 1);
 
 	/* create package-id */
-	package_id = g_strdup_printf ("%s;%s;%s;%s",
-				      name->str,
-				      version->str,
-				      split[len-1],
-				      "installed");
+	package_id = zif_package_id_build (name->str,
+					   version->str,
+					   split[len-1],
+					   "installed");
 
 	/* assign package-id */
 	package = zif_package_new ();

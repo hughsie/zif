@@ -53,6 +53,10 @@ gboolean	 zif_init			(void);
 GQuark		 zif_utils_error_quark		(void);
 void		 zif_list_print_array		(GPtrArray	*array);
 const gchar	*zif_guess_content_type		(const gchar	*filename);
+gchar		*zif_package_id_build		(const gchar	*name,
+						 const gchar	*version,
+						 const gchar	*arch,
+						 const gchar	*data);
 gchar		*zif_package_id_from_nevra	(const gchar	*name,
 						 guint		 epoch,
 						 const gchar	*version,
