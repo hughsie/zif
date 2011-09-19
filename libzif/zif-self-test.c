@@ -588,6 +588,9 @@ zif_config_func (void)
 	g_assert (ret);
 
 	ret = zif_config_set_string (config, "cachedir", "/tmp/cache", NULL);
+	g_assert (ret);
+
+	ret = zif_config_set_string (config, "cachedir", "/tmp/dave", NULL);
 	g_assert (!ret);
 
 	value = zif_config_get_string (config, "cachedir", &error);
