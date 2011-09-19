@@ -1309,13 +1309,14 @@ zif_load_multiline_key_file (const gchar *filename,
 	string = g_string_new ("");
 	lines = g_strsplit (data, "\n", -1);
 	for (i=0; lines[i] != NULL; i++) {
-		/* if a line starts with a tab, then append it on the
-		 * previous line */
-		if (lines[i][0] == '\t' && string->len > 0) {
+		/* if a line starts with whitespace, then append it on
+		 * the previous line */
+		g_strdelimit (lines[i], "\t", ' ');
+		if (lines[i][0] == ' ' && string->len > 0) {
 			g_string_set_size (string, string->len - 1);
 			g_string_append_printf (string,
 						";%s\n",
-						lines[i] + 1);
+						g_strchug (lines[i]));
 		} else {
 			g_string_append_printf (string,
 						"%s\n",

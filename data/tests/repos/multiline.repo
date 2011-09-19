@@ -2,6 +2,8 @@
 name=Multiline1
 baseurl=http://download1.fedoraproject.org/
 	http://download2.fedoraproject.org/
+        http://download3.fedoraproject.org/
+    	http://download4.fedoraproject.org/
 enabled=true
 
 [multiline2]
