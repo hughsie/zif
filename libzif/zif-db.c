@@ -379,6 +379,7 @@ zif_db_get_packages_for_filename (ZifDb *db,
 	/* set pkgid */
 	pkgid = zif_string_new (split[0]);
 	zif_package_set_pkgid (package, pkgid);
+	zif_package_set_installed (package, TRUE);
 	zif_object_array_add (array, package);
 out:
 	g_strfreev (split);
