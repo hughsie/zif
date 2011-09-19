@@ -962,6 +962,20 @@ out:
 	return 0;
 }
 
+/**
+ * zif_history_set_repo_for_store:
+ * @history: A #ZifHistory
+ * @store: A #ZifStore
+ * @error: A #GError, or %NULL
+ *
+ * Sets all the repo_id values for every package in the store.
+ * This is much quicker than calling zif_history_get_repo_newest()
+ * for each package as only one SQL statement is prepared.
+ *
+ * Return value: %TRUE on success
+ *
+ * Since: 0.2.4
+ **/
 gboolean
 zif_history_set_repo_for_store (ZifHistory *history,
 				ZifStore *store,

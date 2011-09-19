@@ -283,7 +283,7 @@ zif_transaction_state_to_string (ZifTransactionState state)
 /**
  * zif_transaction_set_euid:
  * @transaction: A #ZifTransaction
- * @euid: The effective user ID
+ * @uid: The effective user ID
  *
  * Sets the effective user ID that is responsible for the transaction.
  *
@@ -300,7 +300,7 @@ zif_transaction_set_euid (ZifTransaction *transaction,
 /**
  * zif_transaction_set_cmdline:
  * @transaction: A #ZifTransaction
- * @cmsline: The string to launch the tool
+ * @cmdline: The string to launch the tool
  *
  * Sets the command line responsible for the transaction.
  *

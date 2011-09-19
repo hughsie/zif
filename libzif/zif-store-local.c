@@ -180,10 +180,11 @@ zif_store_local_load (ZifStore *store, ZifState *state, GError **error)
 	Header header;
 	rpmdbMatchIterator mi = NULL;
 	rpmts ts = NULL;
+	ZifHistory *history = NULL;
+	ZifPackageCompareMode compare_mode;
 	ZifPackageLocalFlags flags = 0;
 	ZifPackage *package;
 	ZifStoreLocal *local = ZIF_STORE_LOCAL (store);
-	ZifPackageCompareMode compare_mode;
 
 	g_return_val_if_fail (ZIF_IS_STORE_LOCAL (store), FALSE);
 	g_return_val_if_fail (zif_state_valid (state), FALSE);
@@ -297,18 +298,18 @@ zif_store_local_load (ZifStore *store, ZifState *state, GError **error)
 							NULL);
 	if (use_installed_history) {
 		g_debug ("using history lookup");
+
+		/* we have to force this here, otherwise
+		 * zif_store_find_package() starts klass->load() again */
 		g_object_set (store, "loaded", TRUE, NULL);
-{
-		ZifHistory *history;
+
+		/* do all the packages in one pass */
 		history = zif_history_new ();
 		ret = zif_history_set_repo_for_store (history,
 						      store,
 						      error);
-		g_object_unref (history);
 		if (!ret)
 			goto out;
-
-}
 	} else {
 		g_debug ("not using history lookup as disabled");
 	}
@@ -318,6 +319,8 @@ zif_store_local_load (ZifStore *store, ZifState *state, GError **error)
 	if (!ret)
 		goto out;
 out:
+	if (history != NULL)
+		g_object_unref (history);
 	if (mi != NULL)
 		rpmdbFreeIterator (mi);
 	if (ts != NULL)
