@@ -1239,10 +1239,12 @@ zif_transaction_get_packages_provides_from_store_array (ZifTransaction *transact
 							GError **error)
 {
 	guint i;
-	ZifPackage *package = NULL;
+	ZifPackage *package;
 	ZifStore *store;
 	ZifState *state_local;
 	gboolean ret = TRUE;
+	gboolean skip_broken;
+	GError *error_local = NULL;
 
 	/* set steps */
 	zif_state_set_number_steps (state, store_array->len);
@@ -1253,16 +1255,32 @@ zif_transaction_get_packages_provides_from_store_array (ZifTransaction *transact
 		store = g_ptr_array_index (store_array, i);
 
 		/* get provide */
+		package = NULL;
 		state_local = zif_state_get_child (state);
 		ret = zif_transaction_get_package_provide_from_store (transaction,
 								      store,
 								      depend,
 								      &package,
 								      state_local,
-								      error);
+								      &error_local);
 		if (!ret) {
-			g_assert (error == NULL || *error != NULL);
-			goto out;
+			skip_broken = zif_config_get_boolean (transaction->priv->config,
+							      "skip_broken",
+							      NULL);
+			if (skip_broken &&
+			    error_local->domain == ZIF_STORE_ERROR &&
+			    error_local->code == ZIF_STORE_ERROR_FAILED_TO_DOWNLOAD) {
+				g_debug ("ignoring repo error as skip-broken: %s",
+					 error_local->message);
+				g_clear_error (&error_local);
+				ret = zif_state_finished (state_local,
+							  error);
+				if (!ret)
+					goto out;
+			} else {
+				g_propagate_error (error, error_local);
+				goto out;
+			}
 		}
 
 		/* gotcha */
