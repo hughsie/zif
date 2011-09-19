@@ -120,6 +120,10 @@ gboolean	 zif_transaction_prepare		(ZifTransaction	*transaction,
 gboolean	 zif_transaction_commit			(ZifTransaction	*transaction,
 							 ZifState	*state,
 							 GError		**error);
+void		 zif_transaction_set_euid		(ZifTransaction	*transaction,
+							 guint		 uid);
+void		 zif_transaction_set_cmdline		(ZifTransaction	*transaction,
+							 const gchar	*cmdline);
 void		 zif_transaction_set_store_local	(ZifTransaction	*transaction,
 							 ZifStore	*store);
 void		 zif_transaction_set_stores_remote	(ZifTransaction	*transaction,

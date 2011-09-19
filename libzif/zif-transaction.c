@@ -92,6 +92,8 @@ struct _ZifTransactionPrivate
 	ZifTransactionState	 state;
 	rpmts			 ts;
 	gchar			*script_stdout;
+	guint			 uid;
+	gchar			*cmdline;
 };
 
 typedef struct {
@@ -231,6 +233,41 @@ zif_transaction_state_to_string (ZifTransactionState state)
 		return "committed";
 	g_warning ("cannot convert state %i to string", state);
 	return NULL;
+}
+
+/**
+ * zif_transaction_set_euid:
+ * @transaction: A #ZifTransaction
+ * @euid: The effective user ID
+ *
+ * Sets the effective user ID that is responsible for the transaction.
+ *
+ * Since: 0.2.4
+ **/
+void
+zif_transaction_set_euid (ZifTransaction *transaction,
+			  guint uid)
+{
+	g_return_if_fail (ZIF_IS_TRANSACTION (transaction));
+	transaction->priv->uid = uid;
+}
+
+/**
+ * zif_transaction_set_cmdline:
+ * @transaction: A #ZifTransaction
+ * @cmsline: The string to launch the tool
+ *
+ * Sets the command line responsible for the transaction.
+ *
+ * Since: 0.2.4
+ **/
+void
+zif_transaction_set_cmdline (ZifTransaction *transaction,
+			     const gchar *cmdline)
+{
+	g_return_if_fail (ZIF_IS_TRANSACTION (transaction));
+	g_free (transaction->priv->cmdline);
+	transaction->priv->cmdline = g_strdup (cmdline);
 }
 
 /**
@@ -3993,6 +4030,7 @@ zif_transaction_write_yumdb_install_item (ZifTransaction *transaction,
 	const gchar *reason;
 	gchar *releasever = NULL;
 	gboolean ret;
+	gchar *tmp;
 
 	/* set steps */
 	zif_state_set_number_steps (state, 4);
@@ -4011,12 +4049,14 @@ zif_transaction_write_yumdb_install_item (ZifTransaction *transaction,
 	if (!ret)
 		goto out;
 
-	/* zif only runs as uid 0 */
+	/* write euid */
+	tmp = g_strdup_printf ("%i", transaction->priv->uid);
 	ret = zif_db_set_string (transaction->priv->db,
 				 item->package,
 				 "installed_by",
-				 "0", //TODO: don't hardcode
+				 tmp,
 				 error);
+	g_free (tmp);
 	if (!ret)
 		goto out;
 
@@ -4771,6 +4811,7 @@ zif_transaction_finalize (GObject *object)
 	g_return_if_fail (ZIF_IS_TRANSACTION (object));
 	transaction = ZIF_TRANSACTION (object);
 
+	g_free (transaction->priv->cmdline);
 	if (transaction->priv->ts != NULL)
 		rpmtsFree (transaction->priv->ts);
 	g_object_unref (transaction->priv->db);

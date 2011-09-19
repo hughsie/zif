@@ -356,6 +356,8 @@ typedef struct {
 	ZifProgressBar		*progressbar;
 	ZifRepos		*repos;
 	ZifState		*state;
+	guint			 uid;
+	gchar			*cmdline;
 } ZifCmdPrivate;
 
 typedef gboolean (*ZifCmdPrivateCb)	(ZifCmdPrivate	*cmd,
@@ -2241,6 +2243,8 @@ zif_cmd_install (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 	/* install these packages */
 	transaction = zif_transaction_new ();
+	zif_transaction_set_euid (transaction, priv->uid);
+	zif_transaction_set_cmdline (transaction, priv->cmdline);
 	for (i=0; i<array->len; i++) {
 		package = g_ptr_array_index (array, i);
 		g_debug ("Adding %s", zif_package_get_printable (package));
@@ -2335,6 +2339,8 @@ zif_cmd_local_install (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 	/* add the files to the transaction */
 	transaction = zif_transaction_new ();
+	zif_transaction_set_euid (transaction, priv->uid);
+	zif_transaction_set_cmdline (transaction, priv->cmdline);
 	for (i=0; i<array->len; i++) {
 		package = g_ptr_array_index (array, i);
 		ret = zif_transaction_add_install (transaction, package, error);
@@ -2690,6 +2696,8 @@ zif_cmd_remove (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 	/* remove these packages */
 	transaction = zif_transaction_new ();
+	zif_transaction_set_euid (transaction, priv->uid);
+	zif_transaction_set_cmdline (transaction, priv->cmdline);
 	for (i=0; i<array->len; i++) {
 		package = g_ptr_array_index (array, i);
 		ret = zif_transaction_add_remove (transaction, package, error);
@@ -3440,6 +3448,8 @@ zif_cmd_update_all (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 	/* update these packages */
 	transaction = zif_transaction_new ();
+	zif_transaction_set_euid (transaction, priv->uid);
+	zif_transaction_set_cmdline (transaction, priv->cmdline);
 	for (i=0; i<array->len; i++) {
 		package = g_ptr_array_index (array, i);
 		ret = zif_transaction_add_install_as_update (transaction, package, error);
@@ -3630,6 +3640,8 @@ zif_cmd_update (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 	/* update this package */
 	transaction = zif_transaction_new ();
+	zif_transaction_set_euid (transaction, priv->uid);
+	zif_transaction_set_cmdline (transaction, priv->cmdline);
 	for (i=0; i<array->len; i++) {
 		package = g_ptr_array_index (array, i);
 		ret = zif_transaction_add_update (transaction, package, error);
@@ -4413,6 +4425,8 @@ zif_cmd_shell (ZifCmdPrivate *priv, gchar **values, GError **error)
 	/* setup transaction */
 	store_local = zif_store_local_new ();
 	transaction = zif_transaction_new ();
+	zif_transaction_set_euid (transaction, priv->uid);
+	zif_transaction_set_cmdline (transaction, priv->cmdline);
 	zif_transaction_set_store_local (transaction, store_local);
 	zif_transaction_set_stores_remote (transaction, stores_remote);
 
@@ -4672,6 +4686,8 @@ zif_cmd_check (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 	/* update these packages */
 	transaction = zif_transaction_new ();
+	zif_transaction_set_euid (transaction, priv->uid);
+	zif_transaction_set_cmdline (transaction, priv->cmdline);
 	zif_transaction_set_store_local (transaction, store_local);
 	for (i=0; i<array->len; i++) {
 		package = g_ptr_array_index (array, i);
@@ -5154,7 +5170,6 @@ main (int argc, char *argv[])
 	GError *error = NULL;
 	gint retval = 0;
 	guint age = 0;
-	guint uid;
 	ZifCmdPrivate *priv;
 	ZifState *state = NULL;
 
@@ -5310,9 +5325,12 @@ main (int argc, char *argv[])
 		}
 	}
 
+	/* save the command line in case we modify the history db */
+	priv->cmdline = g_strjoinv (" ", argv);
+
 	/* are we root? */
-	uid = getuid ();
-	if (uid != 0) {
+	priv->uid = getuid ();
+	if (priv->uid != 0) {
 		if (age != 0) {
 			/* TRANSLATORS: we can't run as the user */
 			g_print ("%s\n", _("Cannot specify age when not a privileged user."));
@@ -5857,6 +5875,7 @@ out:
 		if (priv->cmd_array != NULL)
 			g_ptr_array_unref (priv->cmd_array);
 		g_option_context_free (priv->context);
+		g_free (priv->cmdline);
 		g_free (priv);
 	}
 
