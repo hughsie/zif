@@ -1667,6 +1667,39 @@ out:
 }
 
 /**
+ * zif_utils_get_package_id_no_repo_suffix:
+ **/
+static gchar *
+zif_utils_get_package_id_no_repo_suffix (const gchar *package_id)
+{
+	gchar *package_id_new;
+	gchar **split = NULL;
+	gchar *tmp;
+
+	/* can we shortcut? */
+	tmp = g_strstr_len (package_id, -1, ":");
+	if (tmp == NULL) {
+		package_id_new = g_strdup (package_id);
+		goto out;
+	}
+
+	/* remove the :repo_id suffix */
+	split = zif_package_id_split (package_id);
+	tmp = g_strstr_len (split[ZIF_PACKAGE_ID_DATA], -1, ":");
+	if (tmp != NULL)
+		*tmp = '\0';
+
+	/* rebuild the package ID */
+	package_id_new = zif_package_id_build (split[ZIF_PACKAGE_ID_NAME],
+					       split[ZIF_PACKAGE_ID_VERSION],
+					       split[ZIF_PACKAGE_ID_ARCH],
+					       split[ZIF_PACKAGE_ID_DATA]);
+out:
+	g_strfreev (split);
+	return package_id_new;
+}
+
+/**
  * zif_store_find_package:
  * @store: A #ZifStore
  * @package_id: A package ID which defines the package
@@ -1688,6 +1721,7 @@ zif_store_find_package (ZifStore *store,
 	gboolean ret;
 	GError *error_local = NULL;
 	gpointer package_tmp;
+	gchar *package_id_new = NULL;
 	ZifPackage *package = NULL;
 	ZifState *state_local = NULL;
 	ZifStoreClass *klass = ZIF_STORE_GET_CLASS (store);
@@ -1751,9 +1785,12 @@ zif_store_find_package (ZifStore *store,
 		goto out;
 	}
 
+	/* remove the repo_id suffix if we're going to do a key lookup */
+	package_id_new = zif_utils_get_package_id_no_repo_suffix (package_id);
+
 	/* just do a hash lookup */
 	package_tmp = zif_array_lookup_with_key (store->priv->packages,
-						 package_id);
+						 package_id_new);
 	if (package_tmp == NULL) {
 		g_set_error_literal (error,
 				     ZIF_STORE_ERROR,
@@ -1770,6 +1807,7 @@ zif_store_find_package (ZifStore *store,
 	if (!ret)
 		goto out;
 out:
+	g_free (package_id_new);
 	return package;
 }
 

@@ -2950,6 +2950,16 @@ zif_store_local_func (void)
 	g_assert (package != NULL);
 	g_object_unref (package);
 
+	/* find package with repo_id suffix */
+	zif_state_reset (state);
+	package = zif_store_find_package (ZIF_STORE (store),
+					  "test;0.1-1.fc14;noarch;installed:fedora",
+					  state,
+					  &error);
+	g_assert_no_error (error);
+	g_assert (package != NULL);
+	g_object_unref (package);
+
 	/* search name */
 	zif_state_reset (state);
 	to_array[0] = "te";
