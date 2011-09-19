@@ -3882,8 +3882,6 @@ main (int argc, char **argv)
 	g_log_set_fatal_mask (NULL, G_LOG_LEVEL_ERROR | G_LOG_LEVEL_CRITICAL);
 
 	/* tests go here */
-	g_test_add_func ("/zif/history", zif_history_func);
-if (0){
 	g_test_add_func ("/zif/state", zif_state_func);
 	g_test_add_func ("/zif/changeset", zif_changeset_func);
 	g_test_add_func ("/zif/config", zif_config_func);
@@ -3891,6 +3889,7 @@ if (0){
 	g_test_add_func ("/zif/depend", zif_depend_func);
 	g_test_add_func ("/zif/download", zif_download_func);
 	g_test_add_func ("/zif/groups", zif_groups_func);
+	g_test_add_func ("/zif/history", zif_history_func);
 	g_test_add_func ("/zif/legal", zif_legal_func);
 	g_test_add_func ("/zif/lock", zif_lock_func);
 	g_test_add_func ("/zif/manifest", zif_manifest_func);
@@ -3922,7 +3921,7 @@ if (0){
 	g_test_add_func ("/zif/update-info", zif_update_info_func);
 	g_test_add_func ("/zif/update", zif_update_func);
 	g_test_add_func ("/zif/utils", zif_utils_func);
-}
+
 	return g_test_run ();
 }
 
