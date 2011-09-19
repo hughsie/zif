@@ -196,6 +196,8 @@ gboolean		 zif_package_set_id		(ZifPackage	*package,
 							 const gchar	*package_id,
 							 GError		**error)
 							 G_GNUC_WARN_UNUSED_RESULT;
+void			 zif_package_set_repo_id	(ZifPackage	*package,
+							 const gchar	*repo_id);
 void			 zif_package_set_installed	(ZifPackage	*package,
 							 gboolean	 installed);
 void			 zif_package_set_trust_kind	(ZifPackage	*package,

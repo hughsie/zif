@@ -521,13 +521,10 @@ zif_package_local_set_from_header (ZifPackageLocal *pkg,
 	gboolean installed;
 	gboolean ret = FALSE;
 	gchar *from_repo = NULL;
-	gchar *origin_encoded = NULL;
 	gchar *package_id = NULL;
 	gchar *package_id_tmp = NULL;
 	GError *error_local = NULL;
-	gint rc;
 	guint epoch = 0;
-	ZifPackage *package_tmp = NULL;
 	ZifString *pkgid = NULL;
 
 	g_return_val_if_fail (ZIF_IS_PACKAGE_LOCAL (pkg), FALSE);
@@ -570,65 +567,6 @@ zif_package_local_set_from_header (ZifPackageLocal *pkg,
 							release,
 							arch,
 							origin);
-
-	} else if (installed && (flags & ZIF_PACKAGE_LOCAL_FLAG_LOOKUP) > 0) {
-
-		/* create a dummy package we can use with ZifDb */
-		package_tmp = zif_package_new ();
-		zif_package_set_pkgid (package_tmp, pkgid);
-		package_id_tmp = zif_package_id_from_nevra (name,
-							epoch,
-							version,
-							release,
-							arch,
-							"installed");
-
-		/* set id on temp package */
-		ret = zif_package_set_id (package_tmp, package_id_tmp, error);
-		if (!ret)
-			goto out;
-
-		/* fix up rpmdb entry */
-		from_repo = zif_db_get_string (pkg->priv->db,
-					       package_tmp,
-					       "from_repo",
-					       &error_local);
-		if (from_repo == NULL) {
-			g_debug ("no origin for %s and failed to get from db: %s",
-				 package_id_tmp,
-				 error_local->message);
-			g_error_free (error_local);
-			package_id = g_strdup (package_id_tmp);
-		} else {
-			origin_encoded = g_strdup_printf ("installed:%s",
-							  from_repo);
-			package_id = zif_package_id_from_nevra (name,
-								epoch,
-								version,
-								release,
-								arch,
-								origin_encoded);
-		}
-
-		/* fix? */
-		if (from_repo != NULL &&
-		    (flags & ZIF_PACKAGE_LOCAL_FLAG_REPAIR) > 0) {
-			g_debug ("repairing %s with origin '%s'",
-				 zif_package_get_printable (package_tmp),
-				 from_repo);
-			rc = headerPutString (header,
-					      RPMTAG_PACKAGEORIGIN,
-					      from_repo);
-			if (rc != 1) {
-				ret = FALSE;
-				g_set_error (error,
-					     ZIF_PACKAGE_ERROR,
-					     ZIF_PACKAGE_ERROR_FAILED,
-					     "failed to repair %s",
-					     zif_package_get_printable (package_tmp));
-				goto out;
-			}
-		}
 	} else {
 		package_id = zif_package_id_from_nevra (name,
 							epoch,
@@ -642,12 +580,21 @@ zif_package_local_set_from_header (ZifPackageLocal *pkg,
 	ret = zif_package_set_id (ZIF_PACKAGE (pkg), package_id, error);
 	if (!ret)
 		goto out;
+
+	/* get repo_id for installed package from history or yumdb */
+	if (installed && (flags & ZIF_PACKAGE_LOCAL_FLAG_LOOKUP) > 0) {
+		from_repo = zif_db_get_string (pkg->priv->db,
+					       ZIF_PACKAGE (pkg),
+					       "from_repo",
+					       &error_local);
+		if (from_repo != NULL) {
+			zif_package_set_repo_id (ZIF_PACKAGE (pkg),
+						 from_repo);
+		}
+	}
 out:
 	if (pkgid != NULL)
 		zif_string_unref (pkgid);
-	if (package_tmp != NULL)
-		g_object_unref (package_tmp);
-	g_free (origin_encoded);
 	g_free (from_repo);
 	g_free (package_id);
 	g_free (package_id_tmp);

@@ -1935,6 +1935,17 @@ zif_package_func (void)
 	g_object_unref (a);
 	g_object_unref (b);
 
+	/* check setting the repo_id */
+	a = zif_package_new ();
+	zif_package_set_installed (a, TRUE);
+	ret = zif_package_set_id (a, "colord;0.0.1-1.fc15;i386;installed", &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+	zif_package_set_repo_id (a, "fedora");
+	g_assert_cmpstr (zif_package_get_id (a), ==, "colord;0.0.1-1.fc15;i386;installed:fedora");
+	g_assert_cmpstr (zif_package_get_data (a), ==, "installed:fedora");
+	g_object_unref (a);
+
 	zif_check_singletons ();
 }
 

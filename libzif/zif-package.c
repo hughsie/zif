@@ -42,6 +42,7 @@
 #include "zif-string.h"
 #include "zif-legal.h"
 #include "zif-object-array.h"
+#include "zif-utils.h"
 
 #define ZIF_PACKAGE_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_PACKAGE, ZifPackagePrivate))
 
@@ -1977,6 +1978,43 @@ zif_package_set_id (ZifPackage *package, const gchar *package_id, GError **error
 	package->priv->package_id = g_strdup (package_id);
 	package->priv->package_id_split = zif_package_id_split (package_id);
 	return TRUE;
+}
+
+/**
+ * zif_package_set_repo_id:
+ * @package: A #ZifPackage
+ * @repo_id: A new repo ID, e.g. "fedora"
+ *
+ * Sets the repo ID for an installed package.
+ * The resulting "data" section of the package_id will be:
+ * changed from "installed" into "installed:@repo_id"
+ *
+ * Since: 0.2.4
+ **/
+void
+zif_package_set_repo_id (ZifPackage *package, const gchar *repo_id)
+{
+	gchar *new_data;
+	gchar **tmp;
+
+	g_return_if_fail (ZIF_IS_PACKAGE (package));
+	g_return_if_fail (repo_id != NULL);
+	g_return_if_fail (package->priv->package_id != NULL);
+	g_return_if_fail (zif_package_is_installed (package));
+
+	/* free old state */
+	tmp = package->priv->package_id_split;
+	g_free (tmp[ZIF_PACKAGE_ID_DATA]);
+	g_free (package->priv->package_id);
+
+	/* repair */
+	new_data = g_strdup_printf ("installed:%s", repo_id);
+	package->priv->package_id = zif_package_id_build (tmp[ZIF_PACKAGE_ID_NAME],
+							  tmp[ZIF_PACKAGE_ID_VERSION],
+							  tmp[ZIF_PACKAGE_ID_ARCH],
+							  new_data);
+	package->priv->package_id_split = zif_package_id_split (package->priv->package_id);
+	g_free (new_data);
 }
 
 /**
