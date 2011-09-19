@@ -44,6 +44,7 @@ zif_print_package (ZifPackage *package, guint padding)
 	gchar *padding_str;
 	ZifState *state_tmp;
 	ZifPackageTrustKind trust;
+	ZifPackage *installed = NULL;
 
 	printable = zif_package_get_printable (package);
 	state_tmp = zif_state_new ();
@@ -64,6 +65,17 @@ zif_print_package (ZifPackage *package, guint padding)
 		 trusted_str,
 		 padding_str,
 		 summary);
+
+	/* print installed package info */
+	if (ZIF_IS_PACKAGE_REMOTE (package)) {
+		installed = zif_package_remote_get_installed (ZIF_PACKAGE_REMOTE (package));
+		if (installed != NULL) {
+			g_print (" - %s: %s\n",
+				 _("Updates installed package"),
+				 zif_package_get_printable (installed));
+			g_object_unref (installed);
+		}
+	}
 	g_free (padding_str);
 	g_object_unref (state_tmp);
 }

@@ -43,6 +43,7 @@
 #include "zif-store-array.h"
 #include "zif-package.h"
 #include "zif-package-array.h"
+#include "zif-package-remote.h"
 #include "zif-utils.h"
 #include "zif-repos.h"
 #include "zif-category.h"
@@ -1123,6 +1124,12 @@ zif_store_array_get_updates (GPtrArray *store_array,
 					 zif_package_get_arch (update));
 				g_ptr_array_add (updates_available,
 						 g_object_ref (update));
+
+				/* ensure the remote package knows about
+				 * the installed version so we can
+				 * calculate the delta */
+				zif_package_remote_set_installed (ZIF_PACKAGE_REMOTE (update),
+								  package);
 				break;
 			}
 		}
