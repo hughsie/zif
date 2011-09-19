@@ -1481,6 +1481,7 @@ skip_resolve:
 		/* add the provide to the install set */
 		if (item->reason == ZIF_TRANSACTION_REASON_INSTALL_FOR_UPDATE ||
 		    item->reason == ZIF_TRANSACTION_REASON_UPDATE_DEPEND ||
+		    item->reason == ZIF_TRANSACTION_REASON_UPDATE_SYSTEM ||
 		    item->reason == ZIF_TRANSACTION_REASON_UPDATE_USER_ACTION) {
 			ret = zif_transaction_add_install_internal (data->transaction,
 								    package_provide,
@@ -1711,6 +1712,7 @@ zif_transaction_resolve_install_item (ZifTransactionResolve *data,
 				 installonlyn,
 				 zif_package_get_id (package_oldest));
 			if (item->reason == ZIF_TRANSACTION_REASON_UPDATE_USER_ACTION ||
+			    item->reason == ZIF_TRANSACTION_REASON_UPDATE_SYSTEM ||
 			    item->reason == ZIF_TRANSACTION_REASON_UPDATE_DEPEND) {
 				ret = zif_transaction_add_remove_internal (data->transaction,
 									   package_oldest,
