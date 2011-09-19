@@ -211,6 +211,45 @@ zif_transaction_reason_to_string (ZifTransactionReason reason)
 }
 
 /**
+ * zif_transaction_reason_from_string:
+ * @reason: A reason, e.g. "remove-obsolete"
+ *
+ * Gets the string representation of the reason a package was added.
+ *
+ * Return value: A reason, e.g. %ZIF_TRANSACTION_REASON_INSTALL_USER_ACTION
+ *
+ * Since: 0.1.3
+ **/
+ZifTransactionReason
+zif_transaction_reason_from_string (const gchar *reason)
+{
+	if (g_strcmp0 (reason, "install-user-action") == 0)
+		return ZIF_TRANSACTION_REASON_INSTALL_USER_ACTION;
+	if (g_strcmp0 (reason, "remove-user-action") == 0)
+		return ZIF_TRANSACTION_REASON_REMOVE_USER_ACTION;
+	if (g_strcmp0 (reason, "update-user-action") == 0)
+		return ZIF_TRANSACTION_REASON_UPDATE_USER_ACTION;
+	if (g_strcmp0 (reason, "remove-as-onlyn") == 0)
+		return ZIF_TRANSACTION_REASON_REMOVE_AS_ONLYN;
+	if (g_strcmp0 (reason, "install-depend") == 0)
+		return ZIF_TRANSACTION_REASON_INSTALL_DEPEND;
+	if (g_strcmp0 (reason, "remove-obsolete") == 0)
+		return ZIF_TRANSACTION_REASON_REMOVE_OBSOLETE;
+	if (g_strcmp0 (reason, "remove-for-update") == 0)
+		return ZIF_TRANSACTION_REASON_REMOVE_FOR_UPDATE;
+	if (g_strcmp0 (reason, "install-for-update") == 0)
+		return ZIF_TRANSACTION_REASON_INSTALL_FOR_UPDATE;
+	if (g_strcmp0 (reason, "update-depend") == 0)
+		return ZIF_TRANSACTION_REASON_UPDATE_DEPEND;
+	if (g_strcmp0 (reason, "update-for-conflict") == 0)
+		return ZIF_TRANSACTION_REASON_UPDATE_FOR_CONFLICT;
+	if (g_strcmp0 (reason, "remove-for-dep") == 0)
+		return ZIF_TRANSACTION_REASON_REMOVE_FOR_DEP;
+	g_warning ("cannot convert reason %s to string", reason);
+	return ZIF_TRANSACTION_REASON_INVALID;
+}
+
+/**
  * zif_transaction_state_to_string:
  * @state: A state, e.g. %ZIF_TRANSACTION_STATE_RESOLVED
  *
