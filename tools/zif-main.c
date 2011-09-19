@@ -2031,6 +2031,10 @@ zif_transaction_reason_to_string_localized (ZifTransactionReason reason)
 		/* TRANSLATORS: this is the reason the action is to be taken */
 		str = _("Updating for dependencies");
 		break;
+	case ZIF_TRANSACTION_REASON_UPDATE_SYSTEM:
+		/* TRANSLATORS: this is the reason the action is to be taken */
+		str = _("Updating the system");
+		break;
 	default:
 		/* TRANSLATORS: this is the reason the action is to be taken */
 		str = _("Unknown reason");
@@ -2051,6 +2055,7 @@ zif_main_show_transaction (ZifTransaction *transaction)
 		ZIF_TRANSACTION_REASON_INSTALL_FOR_UPDATE,
 		ZIF_TRANSACTION_REASON_INSTALL_DEPEND,
 		ZIF_TRANSACTION_REASON_UPDATE_USER_ACTION,
+		ZIF_TRANSACTION_REASON_UPDATE_SYSTEM,
 		ZIF_TRANSACTION_REASON_UPDATE_DEPEND,
 		ZIF_TRANSACTION_REASON_UPDATE_FOR_CONFLICT,
 		ZIF_TRANSACTION_REASON_REMOVE_USER_ACTION,

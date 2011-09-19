@@ -208,6 +208,8 @@ zif_transaction_reason_to_string (ZifTransactionReason reason)
 		return "update-for-conflict";
 	if (reason == ZIF_TRANSACTION_REASON_REMOVE_FOR_DEP)
 		return "remove-for-dep";
+	if (reason == ZIF_TRANSACTION_REASON_UPDATE_SYSTEM)
+		return "update-system";
 	g_warning ("cannot convert reason %i to string", reason);
 	return NULL;
 }
@@ -247,6 +249,8 @@ zif_transaction_reason_from_string (const gchar *reason)
 		return ZIF_TRANSACTION_REASON_UPDATE_FOR_CONFLICT;
 	if (g_strcmp0 (reason, "remove-for-dep") == 0)
 		return ZIF_TRANSACTION_REASON_REMOVE_FOR_DEP;
+	if (g_strcmp0 (reason, "update-system") == 0)
+		return ZIF_TRANSACTION_REASON_UPDATE_SYSTEM;
 	g_warning ("cannot convert reason %s to string", reason);
 	return ZIF_TRANSACTION_REASON_INVALID;
 }
@@ -714,7 +718,7 @@ zif_transaction_add_install_as_update (ZifTransaction *transaction,
 	ret = zif_transaction_add_install_internal (transaction,
 						    package,
 						    NULL,
-						    ZIF_TRANSACTION_REASON_UPDATE_DEPEND,
+						    ZIF_TRANSACTION_REASON_UPDATE_SYSTEM,
 						    error);
 	return ret;
 }
