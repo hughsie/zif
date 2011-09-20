@@ -9,6 +9,7 @@ INCLUDES = \
 	$(RPM_CFLAGS)						\
 	$(ZLIB_CFLAGS)						\
 	$(BZLIB_CFLAGS)						\
+	$(LZMA_CFLAGS)						\
 	$(SOUP_CFLAGS)						\
 	$(ARCHIVE_CFLAGS)					\
 	$(GPGME_CFLAGS)						\
@@ -190,6 +191,7 @@ libzif_la_LIBADD =						\
 	$(SQLITE_LIBS)						\
 	$(ZLIB_LIBS)						\
 	$(BZLIB_LIBS)						\
+	$(LZMA_LIBS)						\
 	$(RPM_LIBS)						\
 	$(SOUP_LIBS)						\
 	$(ARCHIVE_LIBS)						\
@@ -216,6 +218,7 @@ zif_self_test_LDADD =						\
 	$(GLIB_LIBS)						\
 	$(ZLIB_LIBS)						\
 	$(BZLIB_LIBS)						\
+	$(LZMA_LIBS)						\
 	$(SELFTEST_LIBS)					\
 	$(RPM_LIBS)						\
 	$(SOUP_LIBS)						\

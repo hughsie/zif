@@ -17,6 +17,7 @@ BuildRequires: libarchive-devel
 BuildRequires: docbook-utils
 BuildRequires: gnome-doc-utils
 BuildRequires: gtk-doc
+BuildRequires: xz-devel
 BuildRequires: bzip2-devel
 BuildRequires: zlib-devel
 BuildRequires: gpgme-devel

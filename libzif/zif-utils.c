@@ -37,6 +37,7 @@
 #include <archive_entry.h>
 #include <bzlib.h>
 #include <zlib.h>
+#include <lzma.h>
 #include <fnmatch.h>
 
 #ifdef USE_GPGME
@@ -850,6 +851,138 @@ out:
 }
 
 /**
+ * zif_file_decompress_lzma:
+ **/
+static gboolean
+zif_file_decompress_lzma (const gchar *in, const gchar *out, ZifState *state, GError **error)
+{
+	gboolean ret = FALSE;
+	gint size;
+	gint written;
+	FILE *f_in = NULL;
+	FILE *f_out = NULL;
+	guchar in_buf[ZIF_BUFFER_SIZE];
+	guchar out_buf[ZIF_BUFFER_SIZE];
+	GCancellable *cancellable;
+
+	lzma_ret r;
+	lzma_stream stream = LZMA_STREAM_INIT;
+	lzma_stream *strm = &stream;
+	lzma_action action;
+
+	g_return_val_if_fail (in != NULL, FALSE);
+	g_return_val_if_fail (out != NULL, FALSE);
+	g_return_val_if_fail (zif_state_valid (state), FALSE);
+
+	/* get cancellable */
+	cancellable = zif_state_get_cancellable (state);
+
+	r = lzma_auto_decoder(strm, UINT64_MAX, 0);
+	if (r == LZMA_MEM_ERROR) {
+		g_set_error (error,
+			     ZIF_UTILS_ERROR,
+			     ZIF_UTILS_ERROR_FAILED,
+			     "out of memory");
+		goto out;
+	}
+	else if (r != LZMA_OK) {
+		g_set_error (error,
+			     ZIF_UTILS_ERROR,
+			     ZIF_UTILS_ERROR_FAILED,
+			     "internal error");
+		goto out;
+	}
+
+	/* open file for reading */
+	f_in = fopen (in, "rb");
+	if (f_in == NULL) {
+		g_set_error (error,
+			     ZIF_UTILS_ERROR,
+			     ZIF_UTILS_ERROR_FAILED_TO_READ,
+			     "cannot open %s for reading", in);
+		goto out;
+	}
+
+	/* open file for writing */
+	f_out = fopen (out, "w");
+	if (f_out == NULL) {
+		g_set_error (error,
+			     ZIF_UTILS_ERROR,
+			     ZIF_UTILS_ERROR_FAILED_TO_WRITE,
+			     "cannot open %s for writing", out);
+		goto out;
+	}
+
+	strm->avail_in = 0;
+	strm->next_out = out_buf;
+	strm->avail_out = ZIF_BUFFER_SIZE;
+
+	action = LZMA_RUN;
+
+	/* read in all data in chunks */
+	while (r == LZMA_OK) {
+		/* read data */
+		if (strm->avail_in == 0) {
+			size = fread (in_buf, 1, ZIF_BUFFER_SIZE, f_in);
+	
+			/* error */
+			if (ferror (f_in)) {
+				g_set_error_literal (error, ZIF_UTILS_ERROR, ZIF_UTILS_ERROR_FAILED_TO_READ,
+						     "failed read");
+				goto out;
+			}
+	
+			if (feof (f_in))
+				action = LZMA_FINISH;
+	
+			strm->next_in = in_buf;
+			strm->avail_in = size;
+		}
+
+		r = lzma_code (strm, action);
+
+		/* write data */
+		if (strm->avail_out == 0 || r != LZMA_OK) {
+			size = ZIF_BUFFER_SIZE - strm->avail_out;
+
+			written = fwrite (out_buf, 1, size, f_out);
+			if (written != size) {
+				g_set_error (error, ZIF_UTILS_ERROR, ZIF_UTILS_ERROR_FAILED_TO_WRITE,
+					     "only wrote %i/%i bytes", written, size);
+				goto out;
+			}
+
+			strm->next_out = out_buf;
+			strm->avail_out = ZIF_BUFFER_SIZE;
+		}
+
+		/* is cancelled */
+		ret = !g_cancellable_is_cancelled (cancellable);
+		if (!ret) {
+			g_set_error_literal (error, ZIF_UTILS_ERROR, ZIF_UTILS_ERROR_CANCELLED, "cancelled");
+			goto out;
+		}
+	}
+
+	/* failed to read */
+	if (r != LZMA_STREAM_END) {
+		g_set_error (error, ZIF_UTILS_ERROR, ZIF_UTILS_ERROR_FAILED,
+			     "did not decompress file: %s", in);
+		goto out;
+	}
+
+	/* success */
+	ret = TRUE;
+out:
+	lzma_end (strm);
+	if (f_in != NULL)
+		fclose (f_in);
+	if (f_out != NULL)
+		fclose (f_out);
+	return ret;
+}
+
+/**
  * zif_file_decompress:
  * @in: A filename to unpack
  * @out: The file to create
@@ -884,6 +1017,13 @@ zif_file_decompress (const gchar *in, const gchar *out, ZifState *state, GError 
 	/* zlib */
 	if (g_str_has_suffix (in, "gz")) {
 		ret = zif_file_decompress_zlib (in, out, state, error);
+		goto out;
+	}
+
+	/* lzma */
+	if (g_str_has_suffix (in, "lzma") ||
+	    g_str_has_suffix (in, "xz")) {
+		ret = zif_file_decompress_lzma (in, out, state, error);
 		goto out;
 	}
 
