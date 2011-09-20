@@ -2091,6 +2091,7 @@ zif_package_remote_func (void)
 	filename = zif_test_get_data_file ("zif.conf");
 	zif_config_set_filename (config, filename, NULL);
 	zif_config_set_boolean (config, "network", TRUE, NULL);
+	zif_config_set_boolean (config, "use_installed_history", FALSE, NULL);
 	zif_config_set_uint (config, "metadata_expire", 0, NULL);
 	zif_config_set_uint (config, "mirrorlist_expire", 0, NULL);
 	g_free (filename);
@@ -2820,6 +2821,9 @@ zif_store_local_func (void)
 	pidfile = g_build_filename (g_get_tmp_dir (), "zif.lock", NULL);
 	zif_config_set_string (config, "pidfile", pidfile, NULL);
 	g_free (pidfile);
+
+	/* set this to something that can't exist */
+	zif_config_set_string (config, "history_db", "/dev/mapper/foobar", NULL);
 
 	filename = zif_test_get_data_file ("licenses.txt");
 	legal = zif_legal_new ();

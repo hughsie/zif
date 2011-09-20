@@ -307,9 +307,18 @@ zif_store_local_load (ZifStore *store, ZifState *state, GError **error)
 		history = zif_history_new ();
 		ret = zif_history_set_repo_for_store (history,
 						      store,
-						      error);
-		if (!ret)
-			goto out;
+						      &error_local);
+		if (!ret) {
+			if (error_local->domain == ZIF_HISTORY_ERROR &&
+			    error_local->code == ZIF_HISTORY_ERROR_FAILED_TO_OPEN) {
+				g_debug ("no history lookup avilable: %s",
+					 error_local->message);
+				g_clear_error (&error_local);
+			} else {
+				g_propagate_error (error, error_local);
+				goto out;
+			}
+		}
 	} else {
 		g_debug ("not using history lookup as disabled");
 	}

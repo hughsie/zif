@@ -59,6 +59,7 @@ struct _ZifHistoryClass
 
 typedef enum {
 	ZIF_HISTORY_ERROR_FAILED,
+	ZIF_HISTORY_ERROR_FAILED_TO_OPEN,
 	ZIF_HISTORY_ERROR_LAST
 } ZifHistoryError;
 
