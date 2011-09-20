@@ -1038,7 +1038,18 @@ zif_download_func (void)
 	zif_state_reset (state);
 	ret = zif_download_file (download, "http://people.freedesktop.org/~hughsient/temp/Screenshot.png",
 				 "/tmp/Screenshot.png", state, &error);
+	g_assert_error (error, ZIF_STATE_ERROR, ZIF_STATE_ERROR_CANCELLED);
 	g_assert (!ret);
+	g_clear_error (&error);
+
+	/* try to download a file from FTP */
+	g_unlink ("/tmp/LATEST");
+	ret = zif_download_file (download,
+				 "ftp://ftp.gnome.org/pub/GNOME/sources/gnome-color-manager/2.29/LATEST-IS-2.29.4",
+				 "/tmp/LATEST", state, &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+	g_assert (g_file_test ("/tmp/LATEST", G_FILE_TEST_EXISTS));
 out:
 	if (cancellable != NULL)
 		g_object_unref (cancellable);
