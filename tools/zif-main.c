@@ -1386,6 +1386,24 @@ zif_cmd_dep_obsoletes (ZifCmdPrivate *priv, gchar **values, GError **error)
 }
 
 /**
+ * zif_get_localised_date:
+ **/
+static gchar *
+zif_get_localised_date (guint timestamp)
+{
+	struct tm *tmp;
+	gchar buffer[100];
+	time_t timet = timestamp;
+
+	/* get printed string */
+	tmp = localtime (&timet);
+
+	/* TRANSLATORS: strftime formatted please */
+	strftime (buffer, 100, _("%F %R"), tmp);
+	return g_strdup (buffer);
+}
+
+/**
  * zif_cmd_history_list:
  **/
 static gboolean
@@ -1395,6 +1413,7 @@ zif_cmd_history_list (ZifCmdPrivate *priv, gchar **values, GError **error)
 	gboolean important = TRUE;
 	gboolean ret = FALSE;
 	gchar *cmdline;
+	gchar *date_str;
 	gchar *reason_pad;
 	GPtrArray *packages;
 	guint i, j;
@@ -1445,7 +1464,8 @@ zif_cmd_history_list (ZifCmdPrivate *priv, gchar **values, GError **error)
 		}
 
 		/* print transaction */
-		g_print ("Transaction #%i, timestamp %i\n", i, timestamp);
+		date_str = zif_get_localised_date (timestamp);
+		g_print ("%s #%i, %s\n", _("Transaction"), i, date_str);
 
 		for (j = 0; j < packages->len; j++) {
 			package = g_ptr_array_index (packages, j);
@@ -1461,6 +1481,7 @@ zif_cmd_history_list (ZifCmdPrivate *priv, gchar **values, GError **error)
 			g_free (cmdline);
 		}
 
+		g_free (date_str);
 		g_ptr_array_unref (packages);
 	}
 
