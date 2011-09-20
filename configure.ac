@@ -179,6 +179,19 @@ else
 fi
 
 dnl ---------------------------------------------------------------------------
+dnl - liblzma
+dnl ---------------------------------------------------------------------------
+AC_CHECK_HEADERS(lzma.h,
+		 HAVE_LZMA_H="yes",
+		 HAVE_LZMA_H="no")
+if test "x$HAVE_LZMA_H" = "xyes"; then
+	LZMA_LIBS=-llzma
+	AC_SUBST(LZMA_LIBS)
+else
+	AC_MSG_ERROR([Cannot find lzma.h])
+fi
+
+dnl ---------------------------------------------------------------------------
 dnl - libbzip2
 dnl ---------------------------------------------------------------------------
 AC_CHECK_HEADERS(bzlib.h,

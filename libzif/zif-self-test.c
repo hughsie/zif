@@ -3652,6 +3652,18 @@ zif_utils_func (void)
 	g_assert (ret);
 	g_free (filename);
 
+	filename = zif_test_get_data_file ("compress.txt.lzma");
+	ret = zif_file_decompress (filename, "/tmp/comps-fedora.xml", state, &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+	g_free (filename);
+
+	filename = zif_test_get_data_file ("compress.txt.xz");
+	ret = zif_file_decompress (filename, "/tmp/comps-fedora.xml", state, &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+	g_free (filename);
+
 	g_assert_cmpint (zif_time_string_to_seconds (""), ==, 0);
 	g_assert_cmpint (zif_time_string_to_seconds ("10"), ==, 0);
 	g_assert_cmpint (zif_time_string_to_seconds ("10f"), ==, 0);
