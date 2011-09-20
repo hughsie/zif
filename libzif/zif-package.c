@@ -642,7 +642,7 @@ zif_package_provides (ZifPackage *package,
 
 	/* insert into cache */
 	g_hash_table_insert (package->priv->provides_hash,
-			     (gpointer) depend_id,
+			     g_strdup (depend_id),
 			     *satisfies);
 out:
 	return ret;
@@ -748,7 +748,7 @@ zif_package_requires (ZifPackage *package,
 
 	/* insert into cache */
 	g_hash_table_insert (package->priv->requires_hash,
-			     (gpointer) depend_id,
+			     g_strdup (depend_id),
 			     *satisfies);
 out:
 	return ret;
@@ -852,7 +852,7 @@ zif_package_conflicts (ZifPackage *package,
 
 	/* insert into cache */
 	g_hash_table_insert (package->priv->conflicts_hash,
-			     (gpointer) depend_id,
+			     g_strdup (depend_id),
 			     *satisfies);
 out:
 	return ret;
@@ -957,7 +957,7 @@ zif_package_obsoletes (ZifPackage *package,
 
 	/* insert into cache */
 	g_hash_table_insert (package->priv->obsoletes_hash,
-			     (gpointer) depend_id,
+			     g_strdup (depend_id),
 			     *satisfies);
 out:
 	return ret;
@@ -2664,19 +2664,19 @@ zif_package_init (ZifPackage *package)
 	/* this provides a O(1) lookup for the entire provide */
 	package->priv->requires_hash = g_hash_table_new_full (g_str_hash,
 							      g_str_equal,
-							      NULL,
+							      g_free,
 							      NULL);
 	package->priv->provides_hash = g_hash_table_new_full (g_str_hash,
 							      g_str_equal,
-							      NULL,
+							      g_free,
 							      NULL);
 	package->priv->obsoletes_hash = g_hash_table_new_full (g_str_hash,
 							      g_str_equal,
-							      NULL,
+							      g_free,
 							      NULL);
 	package->priv->conflicts_hash = g_hash_table_new_full (g_str_hash,
 							      g_str_equal,
-							      NULL,
+							      g_free,
 							      NULL);
 
 	/* this provides a O(1) lookup for the provide name, which
