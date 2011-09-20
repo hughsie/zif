@@ -94,3 +94,10 @@ table {
 .center {
 	text-align: center;
 }
+div.nav a {
+	border-right: 1px solid black;
+	padding-right: 4px;
+}
+div.nav :last-child {
+	border-right: none;
+}

@@ -1,0 +1,115 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+		<meta name="robots" content="index,follow">
+		<link rel="stylesheet" type="text/css" media="all" href="common.css">
+		<title>Zif: How to use Zif with PackageKit</title>
+	</head>
+	<body>
+		<h1>Using Zif with PackageKit</h1>
+		<p>
+			<img src="img/logo.png" alt="[image of a zero-insertion-force socket]">
+		</p>
+		<div class="nav center">
+			<a href="index.htm">Homepage</a>
+			<a href="howto-pk.htm">How to use zif with PackageKit</a>
+			<a href="docs/">Documentation</a>
+			<a href="releases/">Releases</a>
+			<a href="https://github.com/hughsie/zif">Browse source code</a>
+		</div>
+		<p>
+			Switching from the 'yum' PackageKit backend to the 'zif' backend (and
+			back again) is really easy.
+		</p>
+		<p>		
+			First, we install the optional zif backend using:
+			<pre>pkcon install -y PackageKit-zif</pre>
+		</p>
+		<p>
+			Then, we want to ask the daemon to quit as soon as it's safe to do so,
+			so as a normal user, run:
+<pre>
+gdbus call --system \
+ --dest org.freedesktop.PackageKit \
+ --object-path /org/freedesktop/PackageKit \
+ --method org.freedesktop.PackageKit.SuggestDaemonQuit
+</pre>
+		</p>
+		<p>
+			After this completes, we need to edit the main daemon config file as
+			the root user, something like this:
+
+			<pre>sudo vim /etc/PackageKit/PackageKit.conf</pre>
+
+			Then scroll down until you see:
+
+			<pre>DefaultBackend=yum</pre>
+
+			and change this to
+
+			<pre>DefaultBackend=zif</pre>
+
+			If you can already see "DefaultBackend=auto" then you don't need to
+			change anything.
+		</p>
+		<p>
+			Then, you want to refresh any caches and databases kept by PackageKit.
+			To do this, type (as the normal user):
+			<pre>pkcon refresh</pre>
+		</p>
+		<p>
+			Then, just use the normal graphical tools provided by your distribution
+			(gnome-packagekit or kpackagekit) and it all should work much faster.
+		</p>
+		<p>
+			If you find any problems, be sure to file bugs in <a href="https://bugzilla.redhat.com/">Red Hat bugzillla</a>,
+			under the component 'zif'.
+		</p>
+		<h2>Uncrippling zif to use yumdb</h2>
+		<p>
+			In Fedora 14, the yum package maintainer added an artificial conflict
+			for zif so that both systems could not be installed side-by-side.
+		</p>
+		<p>
+			Given zif used it own cache and locks, this seemed unfair to me, but to
+			get the conflict removed I had to agree not to read the yumdb, a special
+			database written by yum every transaction.
+		</p>
+		<p>
+			The reason I was given was that the format of the yumdb was not defined,
+			and could change without notice and that is was not designed to be
+			consumed by anything other than yum.
+		</p>
+		<p>
+			If you disagree with the crippling that I was required to do, then just
+			edit the config file and change the defaults, something like this:
+
+			<pre>sudo vim /etc/zif/zif.conf</pre>
+
+			Then change...
+
+			<pre>yumdb_allow_read=true</pre>
+
+			...and...
+
+			<pre>yumdb_allow_write=true</pre>
+		</p>
+		<p>
+			Now, please don't file bugs against yum if zif does indeed eat your
+			yumdb for breakfast. If it's a datapoint, I've been using the yumdb
+			support enabled for about two years now, without a single problem.
+		</p>
+		<p>
+			Then you can close the daemon and re-refresh like instructed above.
+			The added yumdb support allows you to see where installed packages were
+			installed from, and also prevents certain warnings when using yum.
+		</p>
+		<p class="footer">
+			Copyright <a href="mailto:richard@hughsie.com">Richard Hughes 2007-2011</a><br>
+			<a href="http://validator.w3.org/check/referer">Optimized</a>
+			for <a href="http://www.w3.org/">standards</a>.
+		</p>
+	</body>
+</html>
