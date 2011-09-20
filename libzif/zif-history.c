@@ -338,7 +338,6 @@ zif_history_list_transactions (ZifHistory *history, GError **error)
 			   &array_tmp,
 			   &error_msg);
 	if (rc != SQLITE_OK) {
-		ret = FALSE;
 		g_set_error (error,
 			     ZIF_HISTORY_ERROR,
 			     ZIF_HISTORY_ERROR_FAILED,
@@ -429,7 +428,6 @@ zif_history_get_packages (ZifHistory *history,
 			   &array_tmp,
 			   &error_msg);
 	if (rc != SQLITE_OK) {
-		ret = FALSE;
 		g_set_error (error,
 			     ZIF_HISTORY_ERROR,
 			     ZIF_HISTORY_ERROR_FAILED,
@@ -512,7 +510,6 @@ zif_history_get_uid (ZifHistory *history,
 			   &uid,
 			   &error_msg);
 	if (rc != SQLITE_OK) {
-		ret = FALSE;
 		g_set_error (error,
 			     ZIF_HISTORY_ERROR,
 			     ZIF_HISTORY_ERROR_FAILED,
@@ -591,7 +588,6 @@ zif_history_get_cmdline (ZifHistory *history,
 			   &cmdline,
 			   &error_msg);
 	if (rc != SQLITE_OK) {
-		ret = FALSE;
 		g_set_error (error,
 			     ZIF_HISTORY_ERROR,
 			     ZIF_HISTORY_ERROR_FAILED,
@@ -656,7 +652,6 @@ zif_history_get_repo (ZifHistory *history,
 			   &repo_id,
 			   &error_msg);
 	if (rc != SQLITE_OK) {
-		ret = FALSE;
 		g_set_error (error,
 			     ZIF_HISTORY_ERROR,
 			     ZIF_HISTORY_ERROR_FAILED,
@@ -665,7 +660,6 @@ zif_history_get_repo (ZifHistory *history,
 		goto out;
 	}
 	if (repo_id == NULL) {
-		ret = FALSE;
 		g_set_error (error,
 			     ZIF_HISTORY_ERROR,
 			     ZIF_HISTORY_ERROR_FAILED,
@@ -731,7 +725,6 @@ zif_history_get_reason (ZifHistory *history,
 			   &reason_str,
 			   &error_msg);
 	if (rc != SQLITE_OK) {
-		ret = FALSE;
 		g_set_error (error,
 			     ZIF_HISTORY_ERROR,
 			     ZIF_HISTORY_ERROR_FAILED,
@@ -740,7 +733,6 @@ zif_history_get_reason (ZifHistory *history,
 		goto out;
 	}
 	if (reason_str == NULL) {
-		ret = FALSE;
 		g_set_error (error,
 			     ZIF_HISTORY_ERROR,
 			     ZIF_HISTORY_ERROR_FAILED,
@@ -802,7 +794,6 @@ zif_history_get_repo_newest (ZifHistory *history,
 			   &repo_id,
 			   &error_msg);
 	if (rc != SQLITE_OK) {
-		ret = FALSE;
 		g_set_error (error,
 			     ZIF_HISTORY_ERROR,
 			     ZIF_HISTORY_ERROR_FAILED,
@@ -811,7 +802,6 @@ zif_history_get_repo_newest (ZifHistory *history,
 		goto out;
 	}
 	if (repo_id == NULL) {
-		ret = FALSE;
 		g_set_error (error,
 			     ZIF_HISTORY_ERROR,
 			     ZIF_HISTORY_ERROR_FAILED,
