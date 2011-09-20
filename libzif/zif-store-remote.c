@@ -2138,6 +2138,14 @@ zif_store_remote_load (ZifStore *store, ZifState *state, GError **error)
 		remote->priv->mirrorlist = NULL;
 	}
 
+	/* .repo file is broken and has both metalink and baseurl */
+	if (got_baseurl && remote->priv->metalink != NULL) {
+		g_debug ("%s has both baseurl and metalink, ignoring metalink",
+			 remote->priv->repo_filename);
+		g_free (remote->priv->metalink);
+		remote->priv->metalink = NULL;
+	}
+
 	/* we have to set this here in case we are using the metalink to download repodata.xml */
 	if (remote->priv->metalink != NULL) {
 		filename = g_build_filename (remote->priv->directory, "metalink.xml", NULL);
