@@ -164,7 +164,7 @@ zif_repos_get_for_filename (ZifRepos *repos,
 	gchar **repos_groups = NULL;
 	ZifStoreRemote *store;
 	ZifState *state_local;
-	gboolean ret = FALSE;
+	gboolean ret = TRUE;
 	gchar *path;
 	guint i;
 	gsize groups_length;
@@ -176,13 +176,22 @@ zif_repos_get_for_filename (ZifRepos *repos,
 				 filename,
 				 NULL);
 	file = zif_load_multiline_key_file (path, error);
-	if (file == NULL)
+	if (file == NULL) {
+		ret = FALSE;
 		goto out;
+	}
 
 	/* for each group, add a store object */
 	repos_groups = g_key_file_get_groups (file, &groups_length);
-	if (groups_length == 0)
+	if (groups_length == 0) {
+		ret = FALSE;
+		g_set_error (error,
+			     ZIF_REPOS_ERROR,
+			     ZIF_REPOS_ERROR_NO_DATA,
+			     "no groups in %s",
+			     filename);
 		goto out;
+	}
 
 	/* set number of stores */
 	zif_state_set_number_steps (state, groups_length);
@@ -371,16 +380,22 @@ zif_repos_load (ZifRepos *repos, ZifState *state, GError **error)
 						  state_loop,
 						  &error_local);
 		if (!ret) {
-			g_set_error (error,
-				     ZIF_REPOS_ERROR,
-				     ZIF_REPOS_ERROR_FAILED,
-				     "failed to get filename %s: %s",
-				     filename,
-				     error_local->message);
-			g_error_free (error_local);
-			g_ptr_array_set_size (repos->priv->list, 0);
-			ret = FALSE;
-			break;
+			if (error_local->domain == ZIF_REPOS_ERROR &&
+			    error_local->code == ZIF_REPOS_ERROR_NO_DATA) {
+				g_debug ("ignoring: %s", error_local->message);
+				g_clear_error (&error_local);
+			} else {
+				g_set_error (error,
+					     ZIF_REPOS_ERROR,
+					     ZIF_REPOS_ERROR_FAILED,
+					     "failed to get filename %s: %s",
+					     filename,
+					     error_local->message);
+				g_error_free (error_local);
+				g_ptr_array_set_size (repos->priv->list, 0);
+				ret = FALSE;
+				break;
+			}
 		}
 
 		/* this section done */

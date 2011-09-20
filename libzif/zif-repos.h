@@ -56,6 +56,7 @@ struct _ZifReposClass
 
 typedef enum {
 	ZIF_REPOS_ERROR_FAILED,
+	ZIF_REPOS_ERROR_NO_DATA,
 	ZIF_REPOS_ERROR_LAST
 } ZifReposError;
 
