@@ -12,4 +12,5 @@ sudo yum install -y			\
 	libtool				\
 	rpm-devel			\
 	sqlite-devel			\
+	xz-devel			\
 	zlib-devel
