@@ -3870,7 +3870,7 @@ zif_transaction_ts_progress_cb (const void *arg,
  **/
 static gboolean
 zif_transaction_add_install_to_ts (ZifTransaction *transaction,
-				   ZifPackage *package,
+				   ZifTransactionItem *item,
 				   ZifState *state,
 				   GError **error)
 {
@@ -3879,9 +3879,10 @@ zif_transaction_add_install_to_ts (ZifTransaction *transaction,
 	Header hdr;
 	FD_t fd;
 	gboolean ret = FALSE;
+	gboolean is_upgrade = FALSE;
 
 	/* get the local file */
-	cache_filename = zif_package_get_cache_filename (package,
+	cache_filename = zif_package_get_cache_filename (item->package,
 							 state,
 							 error);
 	if (cache_filename == NULL)
@@ -3934,8 +3935,24 @@ zif_transaction_add_install_to_ts (ZifTransaction *transaction,
 	if (res != RPMRC_OK)
 		goto out;
 
+	/* is this an upgrade */
+	switch (item->reason) {
+	case ZIF_TRANSACTION_REASON_UPDATE_DEPEND:
+	case ZIF_TRANSACTION_REASON_UPDATE_FOR_CONFLICT:
+	case ZIF_TRANSACTION_REASON_UPDATE_SYSTEM:
+	case ZIF_TRANSACTION_REASON_UPDATE_USER_ACTION:
+		is_upgrade = TRUE;
+		break;
+	default:
+		break;
+	}
+
 	/* add to the transaction */
-	res = rpmtsAddInstallElement (transaction->priv->ts, hdr, (fnpyKey) cache_filename, 0, NULL);
+	res = rpmtsAddInstallElement (transaction->priv->ts,
+				      hdr,
+				      (fnpyKey) cache_filename,
+				      is_upgrade,
+				      NULL);
 	if (res != 0) {
 		g_set_error (error,
 			     ZIF_TRANSACTION_ERROR,
@@ -4528,6 +4545,7 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 	ZifPackage *package_tmp;
 	ZifTransactionCommit *commit = NULL;
 	ZifTransactionPrivate *priv;
+	ZifTransactionItem *item;
 
 	g_return_val_if_fail (ZIF_IS_TRANSACTION (transaction), FALSE);
 	g_return_val_if_fail (zif_state_valid (state), FALSE);
@@ -4604,11 +4622,12 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 					    priv->install->len);
 	for (i=0; i<priv->install->len; i++) {
 		package_tmp = g_ptr_array_index (priv->install, i);
+		item = zif_transaction_package_get_item (package_tmp);
 
 		/* add the install */
 		state_loop = zif_state_get_child (state_local);
 		ret = zif_transaction_add_install_to_ts (transaction,
-							 package_tmp,
+							 item,
 							 state_loop,
 							 error);
 		if (!ret)
