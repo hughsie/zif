@@ -5656,6 +5656,12 @@ main (int argc, char *argv[])
 				   zif_log_ignore_cb, NULL);
 	}
 
+	/* put this in the logs to help debugging */
+	g_debug ("Zif version %i.%i.%i",
+		 ZIF_MAJOR_VERSION,
+		 ZIF_MINOR_VERSION,
+		 ZIF_MICRO_VERSION);
+
 	/* fallback */
 	if (config_file == NULL)
 		config_file = g_build_filename (SYSCONFDIR, "zif", "zif.conf", NULL);
