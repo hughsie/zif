@@ -221,9 +221,15 @@ zif_state_action_to_string_localized (ZifStateAction action)
  * zif_state_action_changed_cb:
  **/
 static void
-zif_state_action_changed_cb (ZifState *state, ZifStateAction action, const gchar *action_hint, ZifProgressBar *progressbar)
+zif_state_action_changed_cb (ZifState *state,
+			     ZifStateAction action,
+			     const gchar *action_hint,
+			     ZifProgressBar *progressbar)
 {
+	const guint hash_ends = 6; /* show this many chars between the "..." */
+	const guint hash_len = 64; /* sha1 */
 	gchar *pretty_hint = NULL;
+	guint len;
 
 	/* show nothing for hint cancel */
 	if (action == ZIF_STATE_ACTION_UNKNOWN) {
@@ -242,6 +248,20 @@ zif_state_action_changed_cb (ZifState *state, ZifStateAction action, const gchar
 	} else if (action_hint[0] == '/') {
 
 		pretty_hint = g_path_get_basename (action_hint);
+		/* if this is a sha1-has prefixed filename like:
+		 * c723889aaa8c330b63397982a0bf012b78ed1c94a907ff96a1a7ba16c08bcb1e-primary.sqlite.bz2
+		 * then reduce it down to something like:
+		 * c72388...8bcb1e-primary.sqlite.bz2 */
+		len = strlen (pretty_hint);
+		if (len > hash_len + 1 &&
+		    pretty_hint[hash_len] == '-') {
+			g_strlcpy (pretty_hint + hash_ends,
+				   "...",
+				   len);
+			g_strlcpy (pretty_hint + hash_ends + 3,
+				   pretty_hint + hash_len - hash_ends,
+				   len);
+		}
 
 	/* show nice name for package */
 	} else if (zif_package_id_check (action_hint)) {
