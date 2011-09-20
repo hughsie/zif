@@ -959,6 +959,7 @@ zif_history_set_repo_for_store_sqlite_cb (void *data,
 	g_debug ("set %s on %s", argv[3], package_id);
 	zif_package_set_repo_id (package, argv[3]);
 out:
+	g_free (package_id);
 	g_object_unref (state);
 	if (package != NULL)
 		g_object_unref (package);
