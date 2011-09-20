@@ -167,6 +167,80 @@ zif_store_local_get_prefix (ZifStoreLocal *store)
 }
 
 /**
+ * zif_store_local_set_releasever:
+ **/
+static gboolean
+zif_store_local_set_releasever (ZifStoreLocal *store,
+				ZifState *state,
+				GError **error)
+{
+	gboolean ret = FALSE;
+	gchar *releasever = NULL;
+	gchar *releasever_pkg;
+	GPtrArray *depends = NULL;
+	GPtrArray *packages = NULL;
+	ZifDepend *depend;
+	ZifPackage *package_tmp;
+
+	/* get the package name of the provide */
+	releasever_pkg = zif_config_get_string (store->priv->config,
+						"releasever_pkg",
+						error);
+	if (releasever_pkg == NULL)
+		goto out;
+
+	/* get the thing that provides the releasever_pkg */
+	depends = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
+	depend = zif_depend_new ();
+	ret = zif_depend_parse_description (depend,
+					    releasever_pkg,
+					    error);
+	if (!ret)
+		goto out;
+	g_ptr_array_add (depends, depend);
+	packages = zif_store_what_provides (ZIF_STORE (store),
+					    depends,
+					    state,
+					    error);
+	if (packages == NULL) {
+		ret = FALSE;
+		goto out;
+	}
+
+	/* invalid */
+	if (packages->len == 0) {
+		ret = FALSE;
+		g_set_error (error,
+			     ZIF_STORE_ERROR,
+			     ZIF_STORE_ERROR_NO_RELEASEVER,
+			     "nothing installed provides %s",
+			     releasever_pkg);
+		goto out;
+	}
+
+	/* parse the package version */
+	package_tmp = g_ptr_array_index (packages, 0);
+	releasever = g_strdup (zif_package_get_version (package_tmp));
+	g_strdelimit (releasever, "-", '\0');
+
+	/* set the releasever */
+	g_debug ("setting releasever '%s'", releasever);
+	ret = zif_config_set_string (store->priv->config,
+				     "releasever",
+				     releasever,
+				     error);
+	if (!ret)
+		goto out;
+out:
+	g_free (releasever);
+	g_free (releasever_pkg);
+	if (depends != NULL)
+		g_ptr_array_unref (depends);
+	if (packages != NULL)
+		g_ptr_array_unref (packages);
+	return ret;
+}
+/**
  * zif_store_local_load:
  **/
 static gboolean
@@ -184,6 +258,7 @@ zif_store_local_load (ZifStore *store, ZifState *state, GError **error)
 	ZifPackageCompareMode compare_mode;
 	ZifPackageLocalFlags flags = 0;
 	ZifPackage *package;
+	ZifState *state_local;
 	ZifStoreLocal *local = ZIF_STORE_LOCAL (store);
 
 	g_return_val_if_fail (ZIF_IS_STORE_LOCAL (store), FALSE);
@@ -194,12 +269,14 @@ zif_store_local_load (ZifStore *store, ZifState *state, GError **error)
 		ret = zif_state_set_steps (state,
 					   error,
 					   10, /* set prefix */
-					   90, /* add packages */
+					   80, /* add packages */
+					   10, /* set releasever */
 					   -1);
 	} else {
 		ret = zif_state_set_steps (state,
 					   error,
-					   100, /* add packages */
+					   90, /* add packages */
+					   10, /* set releasever */
 					   -1);
 	}
 	if (!ret)
@@ -322,6 +399,20 @@ zif_store_local_load (ZifStore *store, ZifState *state, GError **error)
 	} else {
 		g_debug ("not using history lookup as disabled");
 	}
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* set releasever */
+	g_object_set (store, "loaded", TRUE, NULL);
+	state_local = zif_state_get_child (state);
+	ret = zif_store_local_set_releasever (local,
+					      state_local,
+					      error);
+	if (!ret)
+		goto out;
 
 	/* this section done */
 	ret = zif_state_done (state, error);

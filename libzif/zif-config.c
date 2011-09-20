@@ -457,22 +457,6 @@ zif_config_get_basearch_array (ZifConfig *config)
 }
 
 /**
- * zif_config_get_release_filename:
- **/
-static const gchar *
-zif_config_get_release_filename (ZifConfig *config)
-{
-	const gchar *filename;
-	filename = "/etc/fedora-release";
-	if (g_file_test (filename, G_FILE_TEST_EXISTS))
-		return filename;
-	filename = "/etc/redhat-release";
-	if (g_file_test (filename, G_FILE_TEST_EXISTS))
-		return filename;
-	return NULL;
-}
-
-/**
  * zif_config_set_filename:
  * @config: A #ZifConfig
  * @filename: A system wide config file, e.g. "/etc/zif/zif.conf", or %NULL to use the default.
@@ -493,8 +477,6 @@ zif_config_set_filename (ZifConfig *config, const gchar *filename, GError **erro
 	gboolean ret = FALSE;
 	GError *error_local = NULL;
 	gchar *basearch = NULL;
-	gchar *releasever = NULL;
-	const gchar *release_filename;
 	const gchar *text;
 	GPtrArray *array;
 	gchar *filename_default = NULL;
@@ -568,54 +550,6 @@ zif_config_set_filename (ZifConfig *config, const gchar *filename, GError **erro
 	/* done */
 	config->priv->loaded = TRUE;
 
-	/* calculate the release version if not specified in the config file */
-	releasever = zif_config_get_string (config, "releasever", NULL);
-	if (releasever == NULL) {
-
-		/* get correct file */
-		release_filename = zif_config_get_release_filename (config);
-		if (release_filename == NULL) {
-			ret = FALSE;
-			g_set_error_literal (error,
-					     ZIF_CONFIG_ERROR,
-					     ZIF_CONFIG_ERROR_FAILED,
-					     "could not get a correct release filename");
-			goto out;
-		}
-
-		/* get distro constants from fedora-release */
-		ret = g_file_get_contents (release_filename,
-					   &releasever,
-					   NULL,
-					   &error_local);
-		if (!ret) {
-			g_set_error (error, ZIF_CONFIG_ERROR,
-				     ZIF_CONFIG_ERROR_FAILED,
-				     "failed to get distro release version: %s",
-				     error_local->message);
-			g_error_free (error_local);
-			goto out;
-		}
-
-		/* get the value from 'Fedora release 11.92 (Rawhide)' */
-		g_strdelimit (releasever, " ", '\0');
-
-		/* set local */
-		ret = zif_config_set_string (config,
-					     "releasever",
-					     releasever+15,
-					     &error_local);
-		if (!ret) {
-			g_set_error (error,
-				     ZIF_CONFIG_ERROR,
-				     ZIF_CONFIG_ERROR_FAILED,
-				     "failed to set distro release version: %s",
-				     error_local->message);
-			g_error_free (error_local);
-			goto out;
-		}
-	}
-
 	/* calculate the valid basearchs */
 	basearch = zif_config_get_string (config, "basearch", &error_local);
 	if (basearch == NULL) {
@@ -686,7 +620,6 @@ out:
 	g_free (filename_override);
 	g_free (filename_override_sub);
 	g_free (basearch);
-	g_free (releasever);
 	return ret;
 }
 
