@@ -2152,6 +2152,69 @@ out:
 }
 
 /**
+ * zif_main_get_transaction_download_size:
+ **/
+static guint64
+zif_main_get_transaction_download_size (ZifTransaction *transaction,
+					ZifState *state,
+					GError **error)
+{
+	gboolean ret;
+	GPtrArray *install;
+	guint64 size;
+	guint64 size_retval = G_MAXUINT64;
+	guint64 size_total = 0;
+	guint i;
+	ZifPackage *package_tmp;
+	ZifState *state_local;
+	ZifState *state_loop;
+
+	/* get the packages that are being installed */
+	install = zif_transaction_get_install (transaction);
+	if (install->len == 0) {
+		size_retval = 0;
+		goto out;
+	}
+
+	/* find each package's remote size */
+	state_local = zif_state_get_child (state);
+	zif_state_set_number_steps (state_local, install->len);
+	for (i=0; i<install->len; i++) {
+		package_tmp = g_ptr_array_index (install, i);
+		if (ZIF_IS_PACKAGE_REMOTE (package_tmp)) {
+			state_loop = zif_state_get_child (state_local);
+			size = zif_package_get_size (package_tmp,
+						     state_loop,
+						     error);
+			if (size == 0)
+				goto out;
+		} else {
+			size = 0;
+		}
+		size_total += size;
+
+		/* this section done */
+		ret = zif_state_done (state_local, error);
+		if (!ret)
+			goto out;
+	}
+
+	/* success */
+	size_retval = size_total;
+out:
+	g_ptr_array_unref (install);
+	return size_retval;
+}
+
+#if !GLIB_CHECK_VERSION(2,29,14)
+static gchar *
+g_format_size (guint64 size)
+{
+	return g_strdup_printf ("%.1f Mb", (gdouble) size / (1024 * 1024));
+}
+#endif
+
+/**
  * zif_transaction_run:
  **/
 static gboolean
@@ -2160,8 +2223,10 @@ zif_transaction_run (ZifCmdPrivate *priv, ZifTransaction *transaction, ZifState 
 	gboolean assume_yes;
 	gboolean ret;
 	gboolean untrusted = FALSE;
+	gchar *size_str = NULL;
 	GPtrArray *install = NULL;
 	GPtrArray *store_array_remote = NULL;
+	guint64 size;
 	guint i;
 	ZifPackage *package_tmp;
 	ZifState *state_local;
@@ -2171,7 +2236,8 @@ zif_transaction_run (ZifCmdPrivate *priv, ZifTransaction *transaction, ZifState 
 	ret = zif_state_set_steps (state,
 				   error,
 				   1, /* add remote stores */
-				   30, /* resolve */
+				   25, /* resolve */
+				   5, /* get sizes */
 				   30, /* prepare */
 				   39, /* commit */
 				   -1);
@@ -2203,6 +2269,11 @@ zif_transaction_run (ZifCmdPrivate *priv, ZifTransaction *transaction, ZifState 
 	if (!ret)
 		goto out;
 
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
 	/* show */
 	zif_main_show_transaction (transaction);
 
@@ -2212,6 +2283,24 @@ zif_transaction_run (ZifCmdPrivate *priv, ZifTransaction *transaction, ZifState 
 		/* TRANSLATORS: error message */
 		g_set_error_literal (error, 1, 0, _("Automatically declined action"));
 		goto out;
+	}
+
+	/* get size */
+	state_local = zif_state_get_child (state);
+	size = zif_main_get_transaction_download_size (transaction,
+						       state_local,
+						       error);
+	if (size == G_MAXUINT64) {
+		ret = FALSE;
+		goto out;
+	}
+
+	/* inform the user in case it's costing per megabyte */
+	if (size > 0) {
+		size_str = g_format_size (size);
+		/* TRANSLATORS: how much we have to download */
+		g_print ("%s: %s\n", _("Total download size"), size_str);
+		g_free (size_str);
 	}
 
 	/* ask the question */
