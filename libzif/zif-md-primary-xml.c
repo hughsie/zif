@@ -118,6 +118,7 @@ zif_md_primary_xml_parser_start_element (GMarkupParseContext *context, const gch
 {
 	guint i;
 	ZifDepend *depend;
+	ZifString *tmp;
 	ZifMdPrimaryXml *primary_xml = user_data;
 
 	g_return_if_fail (ZIF_IS_MD_PRIMARY_XML (primary_xml));
@@ -220,8 +221,10 @@ zif_md_primary_xml_parser_start_element (GMarkupParseContext *context, const gch
 				primary_xml->priv->section_package = ZIF_MD_PRIMARY_XML_SECTION_PACKAGE_LOCATION;
 				for (i=0; attribute_names[i] != NULL; i++) {
 					if (g_strcmp0 (attribute_names[i], "href") == 0) {
+						tmp = zif_string_new (attribute_values[i]);
 						zif_package_set_location_href (primary_xml->priv->package_temp,
-									       zif_string_new (attribute_values[i]));
+									       tmp);
+						zif_string_unref (tmp);
 					}
 				}
 				goto out;
