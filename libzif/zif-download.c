@@ -240,6 +240,93 @@ out:
 }
 
 /**
+ * zif_download_file_ftp:
+ **/
+static gboolean
+zif_download_file_ftp (ZifDownload *download,
+		       const gchar *uri,
+		       const gchar *filename,
+		       ZifState *state,
+		       GError **error)
+{
+	gboolean ret;
+	gchar *cmdline = NULL;
+	gchar *password = NULL;
+	gchar *username = NULL;
+	gchar *standard_error = NULL;
+	gint exit_status = 0;
+	GPtrArray *array;
+	guint retries;
+	guint timeout;
+	ZifDownloadPrivate *priv = download->priv;
+
+	/* add arguments */
+	array = g_ptr_array_new_with_free_func (g_free);
+	g_ptr_array_add (array, g_strdup ("/usr/bin/wget"));
+	retries = zif_config_get_uint (priv->config, "retries", NULL);
+	if (retries > 0) {
+		g_ptr_array_add (array, g_strdup_printf ("--tries=%i",
+							 retries));
+	}
+	timeout = zif_config_get_uint (priv->config, "timeout", NULL);
+	if (timeout > 0) {
+		g_ptr_array_add (array, g_strdup_printf ("--timeout=%i",
+							 timeout));
+	}
+	g_ptr_array_add (array, g_strdup_printf ("--output-document=%s",
+						 filename));
+	username = zif_config_get_string (priv->config, "proxy_username", NULL);
+	if (username != NULL && username[0] != '\0') {
+		g_ptr_array_add (array, g_strdup_printf ("--username=%s",
+							 username));
+		g_ptr_array_add (array, g_strdup_printf ("--ftp-user=%s",
+							 username));
+	}
+	password = zif_config_get_string (priv->config, "proxy_password", NULL);
+	if (password != NULL && password[0] != '\0') {
+		g_ptr_array_add (array, g_strdup_printf ("--password=%s",
+							 password));
+		g_ptr_array_add (array, g_strdup_printf ("--ftp-password=%s",
+							 password));
+	}
+	g_ptr_array_add (array, g_strdup (uri));
+	g_ptr_array_add (array, NULL);
+
+	/* try to spawn it and wait for success */
+	cmdline = g_strjoinv (" ", (gchar **) array->pdata);
+	g_debug ("running %s", cmdline);
+	ret = g_spawn_sync (NULL, /* working_directory */
+			    (gchar **) array->pdata,
+			    NULL, /* envp */
+			    /*G_SPAWN_STDOUT_TO_DEV_NULL*/ 0,
+			    NULL, NULL,
+			    NULL, /* standard_out */
+			    &standard_error,
+			    &exit_status,
+			    error);
+	if (!ret)
+		goto out;
+
+	/* wget failed */
+	if (exit_status != 0) {
+		ret = FALSE;
+		g_set_error (error,
+			     ZIF_DOWNLOAD_ERROR,
+			     ZIF_DOWNLOAD_ERROR_FAILED,
+			     "failed to run wget: %s",
+			     standard_error);
+		goto out;
+	}
+out:
+	g_free (cmdline);
+	g_free (password);
+	g_free (standard_error);
+	g_free (username);
+	g_ptr_array_unref (array);
+	return ret;
+}
+
+/**
  * zif_download_local_copy:
  **/
 static gboolean
@@ -398,6 +485,16 @@ zif_download_file (ZifDownload *download,
 	/* local file */
 	if (g_str_has_prefix (uri, "/")) {
 		ret = zif_download_local_copy (uri, filename, state, error);
+		goto out;
+	}
+
+	/* FTP file */
+	if (g_str_has_prefix (uri, "ftp://")) {
+		ret = zif_download_file_ftp (download,
+					     uri,
+					     filename,
+					     state,
+					     error);
 		goto out;
 	}
 
