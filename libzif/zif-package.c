@@ -2254,6 +2254,7 @@ zif_package_add_files_internal (ZifPackage *package, const gchar *filename)
 void
 zif_package_add_file (ZifPackage *package, const gchar *filename)
 {
+	gchar *filename_copy;
 	g_return_if_fail (ZIF_IS_PACKAGE (package));
 	g_return_if_fail (filename != NULL);
 
@@ -2261,8 +2262,9 @@ zif_package_add_file (ZifPackage *package, const gchar *filename)
 	if (package->priv->files == NULL)
 		package->priv->files = g_ptr_array_new_with_free_func (g_free);
 
-	zif_package_add_files_internal (package, filename);
-	g_ptr_array_add (package->priv->files, g_strdup (filename));
+	filename_copy = g_strdup (filename);
+	zif_package_add_files_internal (package, filename_copy);
+	g_ptr_array_add (package->priv->files, filename_copy);
 }
 
 /**
