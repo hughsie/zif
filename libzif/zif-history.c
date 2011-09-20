@@ -89,8 +89,10 @@ zif_history_load (ZifHistory *history, GError **error)
 		history->priv->filename = zif_config_get_string (history->priv->config,
 								 "history_db",
 								 error);
-		if (history->priv->filename == NULL)
+		if (history->priv->filename == NULL) {
+			ret = FALSE;
 			goto out;
+		}
 	}
 
 	/* open db */
