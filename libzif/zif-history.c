@@ -106,6 +106,7 @@ zif_history_load (ZifHistory *history, GError **error)
 			     "Can't open history database: %s",
 			     sqlite3_errmsg (history->priv->db));
 		sqlite3_close (history->priv->db);
+		history->priv->db = NULL;
 		goto out;
 	}
 
