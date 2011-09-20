@@ -1586,6 +1586,7 @@ zif_release_get_mtab_entry (const gchar *mount_point, GError **error)
 	gchar **lines = NULL;
 	gchar **split;
 	guint i;
+	guint len;
 
 	/* get mtab contents */
 	ret = g_file_get_contents ("/etc/mtab", &data, NULL, error);
@@ -1596,8 +1597,14 @@ zif_release_get_mtab_entry (const gchar *mount_point, GError **error)
 	lines = g_strsplit (data, "\n", -1);
 	for (i=0; lines[i] != NULL && device == NULL; i++) {
 		split = g_strsplit (lines[i], " ", -1);
-		if (g_strcmp0 (split[1], mount_point) == 0)
-			device = g_strdup (split[0]);
+		len = g_strv_length (split);
+		if (len == 6) {
+			if (g_strcmp0 (split[1], mount_point) == 0)
+				device = g_strdup (split[0]);
+		} else {
+			g_warning ("unexpected mtab line: %s",
+				   lines[i]);
+		}
 		g_strfreev (split);
 	}
 
