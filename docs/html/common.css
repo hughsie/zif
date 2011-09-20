@@ -86,3 +86,11 @@ p.footer {
 	font-size: 9px;
 }
 
+/* Specific rules for zif's website */
+table {
+	border: 0;
+	width: 100%;
+}
+.center {
+	text-align: center;
+}
