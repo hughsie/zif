@@ -2248,7 +2248,6 @@ zif_repos_func (void)
 	gboolean ret;
 	gchar *filename;
 	gchar *pidfile;
-	gchar *basearch;
 
 	/* set this up as dummy */
 	config = zif_config_new ();
@@ -2305,15 +2304,11 @@ zif_repos_func (void)
 	/* get ref for next test */
 	store = g_object_ref (g_ptr_array_index (array, 0));
 	g_ptr_array_unref (array);
-	basearch = zif_config_get_string (config, "basearch", NULL);
 
+	/* ensure we expanded everything */
 	zif_state_reset (state);
-	if (g_strcmp0 (basearch, "i386") == 0)
-		g_assert_cmpstr (zif_store_remote_get_name (store, state, NULL), ==, "Fedora 13 - i386");
-	else
-		g_assert_cmpstr (zif_store_remote_get_name (store, state, NULL), ==, "Fedora 13 - x86_64");
+	g_assert (g_strstr_len (zif_store_remote_get_name (store, state, NULL), -1, "$") == NULL);
 	g_object_unref (store);
-	g_free (basearch);
 
 	g_object_unref (state);
 	g_object_unref (repos);

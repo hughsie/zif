@@ -36,6 +36,7 @@
 
 #include "zif-config.h"
 #include "zif-state.h"
+#include "zif-store-local.h"
 #include "zif-store-remote.h"
 #include "zif-repos.h"
 #include "zif-utils.h"
@@ -245,15 +246,16 @@ zif_repos_sort_store_cb (ZifStore **store1, ZifStore **store2)
 gboolean
 zif_repos_load (ZifRepos *repos, ZifState *state, GError **error)
 {
+	const gchar *filename;
 	gboolean ret = TRUE;
-	ZifStoreRemote *store;
+	GDir *dir;
+	GError *error_local = NULL;
+	GPtrArray *repofiles = NULL;
+	guint i;
 	ZifState *state_local;
 	ZifState *state_loop;
-	GError *error_local = NULL;
-	GDir *dir;
-	const gchar *filename;
-	guint i;
-	GPtrArray *repofiles = NULL;
+	ZifStore *local = NULL;
+	ZifStoreRemote *store;
 
 	g_return_val_if_fail (ZIF_IS_REPOS (repos), FALSE);
 	g_return_val_if_fail (zif_state_valid (state), FALSE);
@@ -272,15 +274,17 @@ zif_repos_load (ZifRepos *repos, ZifState *state, GError **error)
 					   error,
 					   5, /* set repodir */
 					   5, /* read the repo filenames */
+					   20, /* load the rpmdb */
 					   10, /* add each repo */
-					   80, /* get enabled */
+					   60, /* get enabled */
 					   -1);
 	} else {
 		ret = zif_state_set_steps (state,
 					   error,
 					   10, /* read the repo filenames */
+					   20, /* load the rpmdb */
 					   10, /* add each repo */
-					   80, /* get enabled */
+					   60, /* get enabled */
 					   -1);
 	}
 	if (!ret)
@@ -318,6 +322,19 @@ zif_repos_load (ZifRepos *repos, ZifState *state, GError **error)
 		filename = g_dir_read_name (dir);
 	}
 	g_dir_close (dir);
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* it might seem odd to open and load the local store here, but
+	 * we need to have set the releasever for the repo expansion */
+	local = zif_store_local_new ();
+	state_local = zif_state_get_child (state);
+	ret = zif_store_load (local, state_local, error);
+	if (!ret)
+		goto out;
 
 	/* this section done */
 	ret = zif_state_done (state, error);
@@ -424,6 +441,8 @@ zif_repos_load (ZifRepos *repos, ZifState *state, GError **error)
 	ret = TRUE;
 
 out:
+	if (local != NULL)
+		g_object_unref (local);
 	if (repofiles != NULL)
 		g_ptr_array_unref (repofiles);
 	return ret;
