@@ -3160,6 +3160,7 @@ zif_store_remote_func (void)
 	zif_config_set_filename (config, filename, NULL);
 	zif_config_set_uint (config, "metadata_expire", 0, NULL);
 	zif_config_set_uint (config, "mirrorlist_expire", 0, NULL);
+	zif_config_set_string (config, "history_db", "/tmp/history.db", NULL);
 	g_free (filename);
 
 	pidfile = g_build_filename (g_get_tmp_dir (), "zif.lock", NULL);
