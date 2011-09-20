@@ -2013,8 +2013,8 @@ zif_package_set_repo_id (ZifPackage *package, const gchar *repo_id)
 							  tmp[ZIF_PACKAGE_ID_VERSION],
 							  tmp[ZIF_PACKAGE_ID_ARCH],
 							  new_data);
-	package->priv->package_id_split = zif_package_id_split (package->priv->package_id);
-	g_free (new_data);
+	/* takes ownership of new_data */
+	tmp[ZIF_PACKAGE_ID_DATA] = new_data;
 }
 
 /**
@@ -2235,10 +2235,11 @@ zif_package_add_files_internal (ZifPackage *package, const gchar *filename)
 
 	g_hash_table_insert (package->priv->provides_any_hash,
 			     (gpointer) filename,
-			     depend_tmp);
+			     g_object_ref (depend_tmp));
 	g_ptr_array_add (package->priv->provides,
 			 g_object_ref (depend_tmp));
 	package->priv->any_file_provides = TRUE;
+	g_object_unref (depend_tmp);
 }
 
 /**
