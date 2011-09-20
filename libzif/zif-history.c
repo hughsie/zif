@@ -1034,7 +1034,8 @@ zif_history_finalize (GObject *object)
 	g_free (history->priv->filename);
 
 	/* close the database */
-	sqlite3_close (history->priv->db);
+	if (history->priv->db != NULL)
+		sqlite3_close (history->priv->db);
 	g_object_unref (history->priv->config);
 
 	G_OBJECT_CLASS (zif_history_parent_class)->finalize (object);
