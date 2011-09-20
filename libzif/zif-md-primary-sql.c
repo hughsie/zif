@@ -297,6 +297,7 @@ zif_md_primary_sql_get_statement_for_pred (const gchar *pred,
 		g_string_append (statement, ";\n");
 	}
 	g_string_append (statement, "END;");
+	g_free (pred_glob);
 	return g_string_free (statement, FALSE);
 }
 
