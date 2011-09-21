@@ -2586,7 +2586,7 @@ zif_cmd_local_install (ZifCmdPrivate *priv, gchar **values, GError **error)
 	}
 
 	/* TRANSLATORS: performing action */
-	zif_progress_bar_start (priv->progressbar, _("Installing a local file"));
+	zif_progress_bar_start (priv->progressbar, _("Installing file"));
 	/* setup state */
 	ret = zif_state_set_steps (priv->state,
 				   error,
@@ -2915,7 +2915,7 @@ zif_cmd_manifest_check (ZifCmdPrivate *priv, gchar **values, GError **error)
 	}
 
 	/* TRANSLATORS: performing action */
-	zif_progress_bar_start (priv->progressbar, _("Checking manifest files"));
+	zif_progress_bar_start (priv->progressbar, _("Checking manifests"));
 
 	/* setup state */
 	zif_state_set_number_steps (priv->state, g_strv_length (values));
@@ -2974,7 +2974,7 @@ zif_cmd_manifest_dump (ZifCmdPrivate *priv, gchar **values, GError **error)
 	}
 
 	/* TRANSLATORS: performing action */
-	zif_progress_bar_start (priv->progressbar, _("Dumping manifest to file"));
+	zif_progress_bar_start (priv->progressbar, _("Dumping manifest"));
 
 	/* setup state with the correct number of steps */
 	ret = zif_state_set_steps (priv->state,
@@ -3490,7 +3490,7 @@ zif_cmd_resolve (ZifCmdPrivate *priv, gchar **values, GError **error)
 	}
 
 	/* TRANSLATORS: finding packages from a name */
-	zif_progress_bar_start (priv->progressbar, _("Finding package name"));
+	zif_progress_bar_start (priv->progressbar, _("Finding package"));
 
 	/* setup state with the correct number of steps */
 	ret = zif_state_set_steps (priv->state,
@@ -3938,7 +3938,7 @@ zif_cmd_update_all (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 	/* TRANSLATORS: used when the user did not explicitly specify a
 	 * list of updates to install */
-	zif_progress_bar_start (priv->progressbar, _("Updating everything"));
+	zif_progress_bar_start (priv->progressbar, _("Updating system"));
 
 	/* setup state */
 	ret = zif_state_set_steps (priv->state,
@@ -5175,7 +5175,7 @@ zif_cmd_check (ZifCmdPrivate *priv, gchar **values, GError **error)
 	ZifStore *store_local = NULL;
 
 	/* TRANSLATORS: used when the install database is being checked */
-	zif_progress_bar_start (priv->progressbar, _("Checking installed database"));
+	zif_progress_bar_start (priv->progressbar, _("Checking database"));
 
 	/* setup state */
 	ret = zif_state_set_steps (priv->state,
@@ -5670,6 +5670,9 @@ out:
 	return ret;
 }
 
+#include <sys/ioctl.h>
+#include <stdio.h>
+
 /**
  * main:
  **/
@@ -5696,10 +5699,11 @@ main (int argc, char *argv[])
 	gchar *disablerepo = NULL;
 	GError *error = NULL;
 	gint retval = 0;
+	gint terminal_cols = 0;
 	guint age = 0;
+	struct winsize w;
 	ZifCmdPrivate *priv;
 	ZifState *state = NULL;
-
 	const GOptionEntry options[] = {
 		{ "verbose", 'v', 0, G_OPTION_ARG_NONE, &verbose,
 			_("Show extra debugging information"), NULL },
@@ -5757,8 +5761,19 @@ main (int argc, char *argv[])
 	zif_progress_bar_set_on_console (priv->progressbar,
 					 !verbose &&
 					 isatty (fileno (stdout)) == 1);
-	zif_progress_bar_set_padding (priv->progressbar, 30);
-	zif_progress_bar_set_size (priv->progressbar, 30);
+
+	/* 'Getting update details' is the longest title, so 22 chars */
+	zif_progress_bar_set_padding (priv->progressbar, 22);
+
+	/* set the progressbar to be something sane - longest is likely:
+	 * '615329...1a4dba-other.sqlite.bz2 [841.4 KB/sec]' so ~48 chars */
+	ioctl (0, TIOCGWINSZ, &w);
+	terminal_cols = w.ws_col;
+	terminal_cols -= 23; /* title padding */
+	terminal_cols -= 54; /* filename + speed */
+	if (terminal_cols < 0)
+		terminal_cols = 0;
+	zif_progress_bar_set_size (priv->progressbar, terminal_cols);
 
 	/* save in the private data */
 	priv->assume_no = assume_no;
