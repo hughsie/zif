@@ -483,6 +483,10 @@ zif_download_file (ZifDownload *download,
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
 	/* local file */
+	if (g_str_has_prefix (uri, "file://")) {
+		ret = zif_download_local_copy (uri + 7, filename, state, error);
+		goto out;
+	}
 	if (g_str_has_prefix (uri, "/")) {
 		ret = zif_download_local_copy (uri, filename, state, error);
 		goto out;
