@@ -3123,6 +3123,18 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 	/* get private */
 	priv = transaction->priv;
 
+	/* anything to do? */
+	if (priv->install->len == 0 &&
+	    priv->update->len == 0 &&
+	    priv->remove->len == 0) {
+		ret = FALSE;
+		g_set_error_literal (error,
+				     ZIF_TRANSACTION_ERROR,
+				     ZIF_TRANSACTION_ERROR_NOTHING_TO_DO,
+				     "no packages will be installed, removed or updated");
+		goto out;
+	}
+
 	g_debug ("starting resolve with %i to install, %i to update, and %i to remove",
 		 priv->install->len,
 		 priv->update->len,
