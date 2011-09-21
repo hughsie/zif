@@ -1858,11 +1858,34 @@ out:
 static gboolean
 zif_cmd_get_updates (ZifCmdPrivate *priv, gchar **values, GError **error)
 {
+	const guint metadata_expire_1day = 60 * 60 * 24; /* 24h */
 	gboolean ret = FALSE;
 	GPtrArray *array = NULL;
+	guint metadata_expire;
 
 	/* TRANSLATORS: getting the list of packages that can be updated */
 	zif_progress_bar_start (priv->progressbar, _("Getting updates"));
+
+	/* force the metadata timeout to be at most 24h */
+	metadata_expire = zif_config_get_uint (priv->config,
+					       "metadata_expire",
+					       error);
+	if (metadata_expire == G_MAXUINT)
+		goto out;
+	if (metadata_expire > metadata_expire_1day) {
+		g_debug ("overriding metadata_expire from %i to %i",
+			 metadata_expire,
+			 metadata_expire_1day);
+		zif_config_unset (priv->config,
+				  "metadata_expire",
+				  NULL);
+		ret = zif_config_set_uint (priv->config,
+					   "metadata_expire",
+					   metadata_expire_1day,
+					   error);
+		if (!ret)
+			goto out;
+	}
 
 	/* get the update list */
 	array = zif_get_update_array (priv, priv->state, error);
