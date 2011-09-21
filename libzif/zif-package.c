@@ -1939,6 +1939,9 @@ zif_package_set_trust_kind (ZifPackage *package, ZifPackageTrustKind trust_kind)
  * Gets the package trusted status. Packages that are trusted are
  * usually signed by a trusted private key.
  *
+ * The trust will not be set on a package until
+ * zif_transaction_prepare() has been called.
+ *
  * Return value: The #ZifPackageTrustKind enumerated type.
  *
  * Since: 0.1.3
