@@ -2,9 +2,9 @@ ACLOCAL_AMFLAGS = -I m4
 
 SUBDIRS = 						\
 	etc						\
+	data						\
 	libzif						\
 	docs						\
-	data						\
 	man						\
 	po						\
 	examples					\

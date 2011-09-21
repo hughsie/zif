@@ -1,6 +1,7 @@
 EXTRA_DIST =							\
 	compress.txt.bz2					\
 	compress.txt.gz						\
+	corrupt-repomd.repo.in					\
 	data.txt						\
 	test-0.1-1.fc13.noarch.rpm				\
 	test.spec						\
@@ -31,7 +32,12 @@ CLEANFILES =	\
 	fedora/prestodelta.xml					\
 	fedora/updateinfo.xml					\
 	corrupt-repomd						\
+	corrupt-repomd.repo					\
 	${NULL}
 
+corrupt-repomd.repo : corrupt-repomd.repo.in Makefile
+	$(AM_V_GEN) $(SED) "s|\@srcdir\@|$(abs_srcdir)|" $< >$@
+
+all : corrupt-repomd.repo
 
 -include $(top_srcdir)/git.mk

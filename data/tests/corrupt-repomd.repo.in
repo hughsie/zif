@@ -1,4 +1,4 @@
 [corrupt-repomd]
 name=Corrupt repomd
-baseurl=$homedir/Code/zif/data/tests
+baseurl=@srcdir@
 enabled=true

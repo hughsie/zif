@@ -428,7 +428,6 @@ zif_config_expand_substitutions (ZifConfig *config, const gchar *text, GError **
 	string = g_string_new (text);
 	zif_config_strreplace (string, "$releasever", releasever);
 	zif_config_strreplace (string, "$basearch", basearch);
-	zif_config_strreplace (string, "$homedir", g_get_home_dir ());
 	zif_config_strreplace (string, "$srcdir", TOP_SRCDIR);
 
 	/* success */
