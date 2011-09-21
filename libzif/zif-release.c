@@ -1596,6 +1596,8 @@ zif_release_get_mtab_entry (const gchar *mount_point, GError **error)
 	/* find the mountpoint, and get the device name */
 	lines = g_strsplit (data, "\n", -1);
 	for (i=0; lines[i] != NULL && device == NULL; i++) {
+		if (lines[i][0] == '\0')
+			continue;
 		split = g_strsplit (lines[i], " ", -1);
 		len = g_strv_length (split);
 		if (len == 6) {
