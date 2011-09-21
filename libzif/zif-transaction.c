@@ -817,7 +817,8 @@ zif_transaction_add_remove_internal (ZifTransaction *transaction,
 	protected_packages = zif_config_get_strv (transaction->priv->config,
 						  "protected_packages",
 						  NULL);
-	if (protected_packages != NULL) {
+	if (reason == ZIF_TRANSACTION_REASON_REMOVE_USER_ACTION &&
+	    protected_packages != NULL) {
 		for (i=0; protected_packages[i] != NULL; i++) {
 			if (g_strcmp0 (protected_packages[i],
 				       zif_package_get_name (package)) == 0) {
