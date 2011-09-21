@@ -23,6 +23,7 @@ BuildRequires: zlib-devel
 BuildRequires: gpgme-devel
 BuildRequires: intltool
 BuildRequires: gettext
+Requires: wget
 %if 0%{?fedora} > 14
 BuildRequires: gobject-introspection-devel
 %endif
