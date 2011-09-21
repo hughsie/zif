@@ -25,6 +25,7 @@
 #include <glib/gstdio.h>
 #include <glib.h>
 #include <locale.h>
+#include <sys/ioctl.h>
 #include <sys/types.h>
 #include <termios.h>
 #include <unistd.h>
@@ -5669,9 +5670,6 @@ out:
 	g_strfreev (repos);
 	return ret;
 }
-
-#include <sys/ioctl.h>
-#include <stdio.h>
 
 /**
  * main:
