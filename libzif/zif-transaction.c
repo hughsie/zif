@@ -210,6 +210,8 @@ zif_transaction_reason_to_string (ZifTransactionReason reason)
 		return "remove-for-dep";
 	if (reason == ZIF_TRANSACTION_REASON_UPDATE_SYSTEM)
 		return "update-system";
+	if (reason == ZIF_TRANSACTION_REASON_DOWNGRADE_USER_ACTION)
+		return "downgrade-user-action";
 	g_warning ("cannot convert reason %i to string", reason);
 	return NULL;
 }
@@ -251,6 +253,8 @@ zif_transaction_reason_from_string (const gchar *reason)
 		return ZIF_TRANSACTION_REASON_REMOVE_FOR_DEP;
 	if (g_strcmp0 (reason, "update-system") == 0)
 		return ZIF_TRANSACTION_REASON_UPDATE_SYSTEM;
+	if (g_strcmp0 (reason, "downgrade-user-action") == 0)
+		return ZIF_TRANSACTION_REASON_DOWNGRADE_USER_ACTION;
 	g_warning ("cannot convert reason %s to string", reason);
 	return ZIF_TRANSACTION_REASON_INVALID;
 }
@@ -719,6 +723,38 @@ zif_transaction_add_install_as_update (ZifTransaction *transaction,
 						    package,
 						    NULL,
 						    ZIF_TRANSACTION_REASON_UPDATE_SYSTEM,
+						    error);
+	return ret;
+}
+
+/**
+ * zif_transaction_add_install_as_downgrade:
+ * @transaction: A #ZifTransaction
+ * @package: The #ZifPackage object to add
+ * @error: A #GError, or %NULL
+ *
+ * Adds a downgraded package to be installed to the transaction.
+ *
+ * Return value: %TRUE for success
+ *
+ * Since: 0.2.4
+ **/
+gboolean
+zif_transaction_add_install_as_downgrade (ZifTransaction *transaction,
+					  ZifPackage *package,
+					  GError **error)
+{
+	gboolean ret;
+
+	g_return_val_if_fail (ZIF_IS_TRANSACTION (transaction), FALSE);
+	g_return_val_if_fail (ZIF_IS_PACKAGE (package), FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+	/* add to install */
+	ret = zif_transaction_add_install_internal (transaction,
+						    package,
+						    NULL,
+						    ZIF_TRANSACTION_REASON_DOWNGRADE_USER_ACTION,
 						    error);
 	return ret;
 }
@@ -4151,6 +4187,7 @@ zif_transaction_write_yumdb_install_item (ZifTransaction *transaction,
 	/* set the correct reason */
 	if (item->reason == ZIF_TRANSACTION_REASON_UPDATE_USER_ACTION ||
 	    item->reason == ZIF_TRANSACTION_REASON_INSTALL_USER_ACTION ||
+	    item->reason == ZIF_TRANSACTION_REASON_DOWNGRADE_USER_ACTION ||
 	    item->reason == ZIF_TRANSACTION_REASON_REMOVE_USER_ACTION) {
 		reason = "user";
 	} else {
@@ -4718,6 +4755,16 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 	/* filter diskspace */
 	if (!zif_config_get_boolean (priv->config, "diskspacecheck", NULL))
 		problems_filter += RPMPROB_FILTER_DISKSPACE;
+
+	/* any downgrades? */
+	for (i=0; i<priv->install->len; i++) {
+		package_tmp = g_ptr_array_index (priv->install, i);
+		item = zif_transaction_package_get_item (package_tmp);
+		if (item->reason == ZIF_TRANSACTION_REASON_DOWNGRADE_USER_ACTION) {
+			problems_filter += RPMPROB_FILTER_OLDPACKAGE;
+			break;
+		}
+	}
 
 	/* run the transaction */
 	commit->state = zif_state_get_child (state);

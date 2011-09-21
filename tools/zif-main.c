@@ -2094,6 +2094,10 @@ zif_transaction_reason_to_string_localized (ZifTransactionReason reason)
 		/* TRANSLATORS: this is the reason the action is to be taken */
 		str = _("Updating the system");
 		break;
+	case ZIF_TRANSACTION_REASON_DOWNGRADE_USER_ACTION:
+		/* TRANSLATORS: this is the reason the action is to be taken */
+		str = _("Downgrading");
+		break;
 	default:
 		/* TRANSLATORS: this is the reason the action is to be taken */
 		str = _("Unknown reason");
@@ -2113,6 +2117,7 @@ zif_main_show_transaction (ZifTransaction *transaction)
 		ZIF_TRANSACTION_REASON_INSTALL_USER_ACTION,
 		ZIF_TRANSACTION_REASON_INSTALL_FOR_UPDATE,
 		ZIF_TRANSACTION_REASON_INSTALL_DEPEND,
+		ZIF_TRANSACTION_REASON_DOWNGRADE_USER_ACTION,
 		ZIF_TRANSACTION_REASON_UPDATE_USER_ACTION,
 		ZIF_TRANSACTION_REASON_UPDATE_SYSTEM,
 		ZIF_TRANSACTION_REASON_UPDATE_DEPEND,
@@ -2558,6 +2563,194 @@ zif_cmd_install (ZifCmdPrivate *priv, gchar **values, GError **error)
 	/* success */
 	ret = TRUE;
 out:
+	if (transaction != NULL)
+		g_object_unref (transaction);
+	if (store_array_local != NULL)
+		g_ptr_array_unref (store_array_local);
+	if (store_array_remote != NULL)
+		g_ptr_array_unref (store_array_remote);
+	if (array != NULL)
+		g_ptr_array_unref (array);
+	return ret;
+}
+
+/**
+ * zif_cmd_downgrade:
+ **/
+static gboolean
+zif_cmd_downgrade (ZifCmdPrivate *priv, gchar **values, GError **error)
+{
+	gboolean ret = FALSE;
+	GError *error_local = NULL;
+	GPtrArray *array = NULL;
+	GPtrArray *store_array_local = NULL;
+	GPtrArray *store_array_remote = NULL;
+	guint i;
+	ZifPackage *package;
+	ZifPackage *package_installed = NULL;
+	ZifState *state_local;
+	ZifTransaction *transaction = NULL;
+
+	/* check we have a value */
+	if (values == NULL || values[0] == NULL) {
+		/* TRANSLATORS: error message: A user did not specify
+		 * a required value */
+		g_set_error_literal (error, 1, 0,
+				     _("Specify a package name"));
+		goto out;
+	}
+
+	/* TRANSLATORS: performing action */
+	zif_progress_bar_start (priv->progressbar, _("Downgrading"));
+
+	/* setup state */
+	ret = zif_state_set_steps (priv->state,
+				   error,
+				   1, /* add local */
+				   5, /* resolve */
+				   1, /* add remote */
+				   13, /* find remote */
+				   80, /* run transaction */
+				   -1);
+	if (!ret)
+		goto out;
+
+	/* add all stores */
+	store_array_local = zif_store_array_new ();
+	state_local = zif_state_get_child (priv->state);
+	ret = zif_store_array_add_local (store_array_local, state_local, error);
+	if (!ret)
+		goto out;
+
+	/* this section done */
+	ret = zif_state_done (priv->state, error);
+	if (!ret)
+		goto out;
+
+	/* check already installed */
+	state_local = zif_state_get_child (priv->state);
+	array = zif_store_array_resolve_full (store_array_local,
+					      values,
+					      ZIF_STORE_RESOLVE_FLAG_USE_ALL |
+					      ZIF_STORE_RESOLVE_FLAG_USE_GLOB,
+					      state_local,
+					      error);
+	if (array == NULL) {
+		ret = FALSE;
+		goto out;
+	}
+	if (array->len == 0) {
+		ret = FALSE;
+		/* TRANSLATORS: error message */
+		g_set_error (error, 1, 0, _("%s is not already installed"), values[0]);
+		goto out;
+	}
+	package_installed = g_object_ref (g_ptr_array_index (array, 0));
+
+	/* this section done */
+	ret = zif_state_done (priv->state, error);
+	if (!ret)
+		goto out;
+
+	/* check available */
+	store_array_remote = zif_store_array_new ();
+	state_local = zif_state_get_child (priv->state);
+	ret = zif_store_array_add_remote_enabled (store_array_remote, state_local, error);
+	if (!ret)
+		goto out;
+
+	/* this section done */
+	ret = zif_state_done (priv->state, error);
+	if (!ret)
+		goto out;
+
+	/* check we can find a package of this name */
+	state_local = zif_state_get_child (priv->state);
+	array = zif_store_array_resolve_full (store_array_remote,
+					      values,
+					      ZIF_STORE_RESOLVE_FLAG_USE_ALL |
+					      ZIF_STORE_RESOLVE_FLAG_USE_GLOB,
+					      state_local,
+					      error);
+	if (array == NULL) {
+		ret = FALSE;
+		goto out;
+	}
+
+	for (i=0; i<array->len; i++) {
+		package = g_ptr_array_index (array, i);
+		g_debug ("%i Prefilter %s", i,
+			 zif_package_get_printable (package));
+	}
+
+	/* remove any packages with the installed version */
+	for (i=0; i<array->len;) {
+		package = g_ptr_array_index (array, i);
+		if (g_strcmp0 (zif_package_get_version (package),
+			       zif_package_get_version (package_installed)) == 0) {
+			g_ptr_array_remove_index (array, i);
+		} else {
+			i++;
+		}
+	}
+
+	/* filter the results in a sane way */
+	ret = zif_filter_post_resolve (priv, array, error);
+	if (!ret)
+		goto out;
+
+	for (i=0; i<array->len; i++) {
+		package = g_ptr_array_index (array, i);
+		g_debug ("%i Postfilter %s", i,
+			 zif_package_get_printable (package));
+	}
+
+	/* this section done */
+	ret = zif_state_done (priv->state, error);
+	if (!ret)
+		goto out;
+
+	/* install these packages */
+	transaction = zif_transaction_new ();
+	zif_transaction_set_euid (transaction, priv->uid);
+	zif_transaction_set_cmdline (transaction, priv->cmdline);
+	for (i=0; i<array->len; i++) {
+		package = g_ptr_array_index (array, i);
+		g_debug ("Adding %s", zif_package_get_printable (package));
+		ret = zif_transaction_add_install_as_downgrade (transaction,
+								package,
+								&error_local);
+		if (!ret) {
+			g_set_error (error, 1, 0, "failed to add install %s: %s",
+				 zif_package_get_name (package),
+				 error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+	}
+
+	/* are we running super verbose? */
+	zif_transaction_set_verbose (transaction,
+				     g_getenv ("ZIF_DEPSOLVE_DEBUG") != NULL);
+
+	/* run what we've got */
+	state_local = zif_state_get_child (priv->state);
+	ret = zif_transaction_run (priv, transaction, state_local, error);
+	if (!ret)
+		goto out;
+
+	/* this section done */
+	ret = zif_state_done (priv->state, error);
+	if (!ret)
+		goto out;
+
+	zif_progress_bar_end (priv->progressbar);
+
+	/* success */
+	ret = TRUE;
+out:
+	if (package_installed != NULL)
+		g_object_unref (package_installed);
 	if (transaction != NULL)
 		g_object_unref (transaction);
 	if (store_array_local != NULL)
@@ -6025,6 +6218,11 @@ main (int argc, char *argv[])
 		     /* TRANSLATORS: command description */
 		     _("Install a package"),
 		     zif_cmd_install);
+	zif_cmd_add (priv->cmd_array,
+		     "downgrade",
+		     /* TRANSLATORS: command description */
+		     _("Downgrade a package to a previous version"),
+		     zif_cmd_downgrade);
 	zif_cmd_add (priv->cmd_array,
 		     "local-install,localinstall",
 		     /* TRANSLATORS: command description */

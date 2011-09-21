@@ -84,6 +84,7 @@ typedef enum {
 	ZIF_TRANSACTION_REASON_UPDATE_FOR_CONFLICT,
 	ZIF_TRANSACTION_REASON_UPDATE_USER_ACTION,
 	ZIF_TRANSACTION_REASON_UPDATE_SYSTEM,		/* Since: 0.2.4 */
+	ZIF_TRANSACTION_REASON_DOWNGRADE_USER_ACTION,	/* Since: 0.2.4 */
 	ZIF_TRANSACTION_REASON_LAST
 } ZifTransactionReason;
 
@@ -104,6 +105,9 @@ gboolean	 zif_transaction_add_install		(ZifTransaction	*transaction,
 							 ZifPackage	*package,
 							 GError		**error);
 gboolean	 zif_transaction_add_install_as_update	(ZifTransaction	*transaction,
+							 ZifPackage	*package,
+							 GError		**error);
+gboolean	 zif_transaction_add_install_as_downgrade (ZifTransaction *transaction,
 							 ZifPackage	*package,
 							 GError		**error);
 gboolean	 zif_transaction_add_update		(ZifTransaction	*transaction,
