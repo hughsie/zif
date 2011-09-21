@@ -5717,7 +5717,7 @@ main (int argc, char *argv[])
 		{ "enablerepo", '\0', 0, G_OPTION_ARG_STRING, &enablerepo,
 			_("Enable one or more repositories"), NULL },
 		{ "disablerepo", '\0', 0, G_OPTION_ARG_STRING, &disablerepo,
-			_("Enable one or more repositories"), NULL },
+			_("Disable one or more repositories"), NULL },
 		{ NULL}
 	};
 
