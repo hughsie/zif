@@ -1118,13 +1118,8 @@ zif_store_remote_parse_repomd (ZifStoreRemote *store,
 	/* set MD id and filename for each repo type */
 	for (i=1; i<ZIF_MD_KIND_LAST; i++) {
 		md = zif_store_remote_get_md_from_type (store, i);
-		if (md == NULL) {
-			/* TODO: until we've created ZifMdComps and
-			 * ZifMdOther we'll get warnings here */
-			g_debug ("failed to get local store for %s with %s",
-				 zif_md_kind_to_text (i), store->priv->id);
+		if (md == NULL)
 			continue;
-		}
 
 		/* no metalink? */
 		if (i == ZIF_MD_KIND_METALINK)
@@ -1143,11 +1138,8 @@ zif_store_remote_parse_repomd (ZifStoreRemote *store,
 		}
 
 		/* location not set */
-		if (location == NULL) {
-			g_debug ("no location set for %s with %s",
-				 zif_md_kind_to_text (i), store->priv->id);
+		if (location == NULL)
 			continue;
-		}
 
 		/* set MD id and filename */
 		basename = g_path_get_basename (location);
@@ -1967,9 +1959,7 @@ zif_store_remote_refresh (ZifStore *store, gboolean force, ZifState *state, GErr
 
 		/* get md */
 		md = zif_store_remote_get_md_from_type (remote, i);
-		if (md == NULL) {
-			g_debug ("failed to get local store for %s", zif_md_kind_to_text (i));
-		} else {
+		if (md != NULL) {
 			/* refresh this md object */
 			state_loop = zif_state_get_child (state_local);
 			ret = zif_store_remote_refresh_md (remote, md, force, state_loop, error);

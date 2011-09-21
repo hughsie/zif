@@ -223,10 +223,10 @@ zif_package_array_filter_newest (GPtrArray *packages)
 	GHashTable *hash_namearch;
 	gint retval;
 	gpointer tmp;
+	GPtrArray *array_new;
 	guint i;
 	ZifPackage *package;
 	ZifPackage *package_tmp;
-	GPtrArray *array_new;
 
 	/* first, filter out any duplicates */
 	zif_package_array_filter_duplicates (packages);
@@ -263,17 +263,11 @@ zif_package_array_filter_newest (GPtrArray *packages)
 
 		/* the new package is older */
 		if (retval < 0) {
-			g_debug ("%s is older than %s, so ignoring it",
-				 zif_package_get_id (package),
-				 zif_package_get_id (package_tmp));
 			ret = TRUE;
 			continue;
 		}
 
 		/* remove the old one */
-		g_debug ("replacing %s with %s in hash",
-			 zif_package_get_id (package),
-			 zif_package_get_id (package_tmp));
 		g_hash_table_remove (hash_namearch,
 				     zif_package_get_name_arch (package_tmp));
 		g_hash_table_insert (hash_namearch,

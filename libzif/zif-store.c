@@ -115,9 +115,6 @@ zif_store_add_package (ZifStore *store,
 	}
 
 	/* just add */
-	g_debug ("adding %s to %s",
-		 zif_package_get_id (package),
-		 zif_store_get_id (ZIF_STORE (store)));
 	zif_array_add (store->priv->packages, G_OBJECT (package));
 out:
 	return ret;
@@ -196,9 +193,6 @@ zif_store_remove_package (ZifStore *store,
 	}
 
 	/* just remove */
-	g_debug ("removing %s from %s",
-		 zif_package_get_id (ZIF_PACKAGE (package)),
-		 zif_store_get_id (ZIF_STORE (store)));
 	zif_array_remove (store->priv->packages, package_tmp);
 out:
 	return ret;
@@ -946,7 +940,6 @@ zif_store_search_file (ZifStore *store,
 				     "no packages in local sack");
 		goto out;
 	}
-	g_debug ("using %i local packages", store->priv->packages->len);
 
 	/* setup state with the correct number of steps */
 	state_local = zif_state_get_child (state);

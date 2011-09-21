@@ -377,7 +377,6 @@ zif_history_get_packages_sqlite_cb (void *data,
 				  package_id,
 				  NULL);
 	g_assert (ret);
-	g_debug ("add %s", package_id);
 	g_ptr_array_add (*array, package);
 	g_free (package_id);
 
@@ -946,7 +945,6 @@ zif_history_set_repo_for_store_sqlite_cb (void *data,
 		goto out;
 
 	/* set the repo it came from */
-	g_debug ("set %s on %s", argv[3], package_id);
 	zif_package_set_repo_id (package, argv[3]);
 out:
 	g_free (package_id);
