@@ -308,6 +308,8 @@ zif_main_sigint_cb (int sig)
 	/* cancel any tasks still running */
 	if (_state != NULL) {
 		cancellable = zif_state_get_cancellable (_state);
+		/* TRANSLATORS: the user just did ctrl-c */
+		g_print ("%s\n", _("Cancellation in progress..."));
 		g_cancellable_cancel (cancellable);
 	}
 }
