@@ -227,7 +227,7 @@ zif_state_action_changed_cb (ZifState *state,
 			     const gchar *action_hint,
 			     ZifProgressBar *progressbar)
 {
-	const guint hash_ends = 6; /* show this many chars between the "..." */
+	const guint hash_ends = 4; /* show this many chars between the "..." */
 	const guint hash_len = 64; /* sha1 */
 	gchar *pretty_hint = NULL;
 	guint len;
@@ -252,7 +252,7 @@ zif_state_action_changed_cb (ZifState *state,
 		/* if this is a sha1-has prefixed filename like:
 		 * c723889aaa8c330b63397982a0bf012b78ed1c94a907ff96a1a7ba16c08bcb1e-primary.sqlite.bz2
 		 * then reduce it down to something like:
-		 * c72388...8bcb1e-primary.sqlite.bz2 */
+		 * c723...cb1e-primary.sqlite.bz2 */
 		len = strlen (pretty_hint);
 		if (len > hash_len + 1 &&
 		    pretty_hint[hash_len] == '-') {
@@ -4462,7 +4462,7 @@ zif_cmd_update_details (ZifCmdPrivate *priv, gchar **values, GError **error)
 	}
 
 	/* TRANSLATORS: gettin details about an update */
-	zif_progress_bar_start (priv->progressbar, _("Getting update details"));
+	zif_progress_bar_start (priv->progressbar, _("Getting details"));
 
 	/* setup state */
 	ret = zif_state_set_steps (priv->state,
@@ -5978,15 +5978,15 @@ main (int argc, char *argv[])
 					 !verbose &&
 					 isatty (fileno (stdout)) == 1);
 
-	/* 'Getting update details' is the longest title, so 22 chars */
-	zif_progress_bar_set_padding (priv->progressbar, 22);
+	/* 'Checking manifests' is the longest title, so 18 chars */
+	zif_progress_bar_set_padding (priv->progressbar, 18);
 
 	/* set the progressbar to be something sane - longest is likely:
-	 * '615329...1a4dba-other.sqlite.bz2 [841.4 KB/sec]' so ~48 chars */
+	 * '6153...4dba-prestodelta.sqlite.bz2 [841.4 KB/sec]' so ~45 chars */
 	ioctl (0, TIOCGWINSZ, &w);
 	terminal_cols = w.ws_col;
-	terminal_cols -= 23; /* title padding */
-	terminal_cols -= 54; /* filename + speed */
+	terminal_cols -= 19; /* title padding plus space */
+	terminal_cols -= 57; /* filename + [speed] */
 	if (terminal_cols < 0)
 		terminal_cols = 0;
 	zif_progress_bar_set_size (priv->progressbar, terminal_cols);

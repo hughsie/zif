@@ -65,7 +65,7 @@ zif_progress_bar_redraw (ZifProgressBar *progress_bar)
 	} else {
 		section = 0;
 	}
-	for (i=section; i<30; i++)
+	for (i=section; i<priv->padding+1; i++)
 		g_print (" ");
 
 	section = (guint) ((gfloat) priv->size / (gfloat) 100.0 * (gfloat) priv->percentage);
@@ -76,12 +76,12 @@ zif_progress_bar_redraw (ZifProgressBar *progress_bar)
 		g_print (" ");
 	g_print ("] ");
 	if (priv->percentage != ZIF_PROGRESS_BAR_PERCENTAGE_INVALID)
-		g_print ("%c%i%%%c  ",
+		g_print ("%c%i%%%c ",
 			 priv->allow_cancel ? '(' : '<',
 			 priv->percentage,
 			 priv->allow_cancel ? ')' : '>');
 	else
-		g_print ("        ");
+		g_print ("       ");
 
 	/* print detail */
 	if (priv->detail != NULL) {
@@ -94,7 +94,7 @@ zif_progress_bar_redraw (ZifProgressBar *progress_bar)
 	/* print speed */
 	if (priv->speed != 0) {
 		speed_tmp = g_format_size_for_display (priv->speed);
-		g_print (" [%s/sec]", speed_tmp);
+		g_print (" [%s/s]", speed_tmp);
 		section += strlen (speed_tmp) + 6;
 		g_free (speed_tmp);
 	}
@@ -295,6 +295,9 @@ zif_progress_bar_end (ZifProgressBar *progress_bar)
 
 	progress_bar->priv->percentage = 100;
 	progress_bar->priv->started = FALSE;
+
+	/* don't clear */
+	zif_progress_bar_set_action (progress_bar, "Completed");
 
 	/* no console */
 	if (!progress_bar->priv->on_console)
