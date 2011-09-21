@@ -1935,6 +1935,17 @@ zif_cmd_get_config_value (ZifCmdPrivate *priv, gchar **values, GError **error)
 {
 	gboolean ret = FALSE;
 	gchar *value = NULL;
+	guint i;
+	ZifState *state_local;
+	ZifStore *local = NULL;
+
+	/* it might seem odd to open and load the local store here, but
+	 * we need to have set the releasever */
+	local = zif_store_local_new ();
+	state_local = zif_state_get_child (priv->state);
+	ret = zif_store_load (local, state_local, error);
+	if (!ret)
+		goto out;
 
 	/* check we have a value */
 	if (values == NULL || values[0] == NULL) {
@@ -1944,20 +1955,24 @@ zif_cmd_get_config_value (ZifCmdPrivate *priv, gchar **values, GError **error)
 	}
 
 	/* get value */
-	value = zif_config_get_string (priv->config, values[0], NULL);
-	if (value == NULL) {
-		/* TRANSLATORS: there was no value in the config files */
-		g_set_error (error, 1, 0, _("No value for %s"), values[0]);
-		goto out;
-	}
+	for (i=0; values[i] != NULL; i++) {
+		value = zif_config_get_string (priv->config, values[i], NULL);
+		if (value == NULL) {
+			/* TRANSLATORS: there was no value in the config files */
+			g_set_error (error, 1, 0, _("No value for %s"), values[i]);
+			goto out;
+		}
 
-	/* print the results */
-	g_print ("%s = '%s':\n", values[0], value);
+		/* print the results */
+		g_print ("%s = '%s'\n", values[i], value);
+		g_free (value);
+	}
 
 	/* success */
 	ret = TRUE;
 out:
-	g_free (value);
+	if (local != NULL)
+		g_object_unref (local);
 	return ret;
 }
 
