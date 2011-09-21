@@ -847,9 +847,11 @@ zif_package_array_depend (GPtrArray *array,
 
 	/* if we supplied an address for it, return it */
 	if (best_depend != NULL) {
-		*best_depend = NULL;
-		if (best_depend_tmp != NULL)
+		if (best_depend_tmp == NULL) {
+			*best_depend = NULL;
+		} else {
 			*best_depend = g_object_ref (best_depend_tmp);
+		}
 	}
 out:
 	if (best_depend_tmp != NULL)

@@ -988,7 +988,7 @@ out:
  **/
 static gboolean
 _zif_package_array_filter_best_provide (ZifTransaction *transaction,
-					GPtrArray *array,
+					GPtrArray *array, /* of ZifPackage */
 					ZifDepend *depend,
 					ZifPackage **package,
 					ZifState *state,
@@ -1031,7 +1031,7 @@ _zif_package_array_filter_best_provide (ZifTransaction *transaction,
 	}
 
 	/* if the depends are the same, choose the one with the biggest version */
-	if (array->len > 1) {
+	if (best_depend != NULL && array->len > 1) {
 		depend_array = zif_object_array_new ();
 		zif_object_array_add (depend_array, best_depend);
 		ret = zif_package_array_filter_provide (array,
