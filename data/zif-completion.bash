@@ -69,6 +69,16 @@ __zif_commandlist="
     db-get
     db-list
     db-remove
+    downgrade
+    makecache
+    deplist
+    info
+    list
+    localinstall
+    repolist
+    search
+    provides
+    resolvedep
     "
 
 __zifcomp ()
