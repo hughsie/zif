@@ -73,6 +73,7 @@
 #include "zif-manifest.h"
 
 static gboolean _has_network_access = TRUE;
+static gchar *zif_tmpdir = NULL;
 
 /**
  * zif_test_get_data_file:
@@ -270,6 +271,8 @@ zif_release_func (void)
 	ZifDownload *download;
 	gchar *filename;
 	ZifConfig *config;
+	gchar *filename_releases;
+	gchar *filename_treeinfo;
 
 	if (!_has_network_access)
 		return;
@@ -284,9 +287,9 @@ zif_release_func (void)
 	g_assert (ret);
 
 	/* dummy */
-	zif_config_set_string (config, "upgrade_cache_dir", "/tmp", NULL);
-	zif_config_set_string (config, "upgrade_boot_dir", "/tmp", NULL);
-	zif_config_set_string (config, "upgrade_repo_dir", "/tmp", NULL);
+	zif_config_set_string (config, "upgrade_cache_dir", zif_tmpdir, NULL);
+	zif_config_set_string (config, "upgrade_boot_dir", zif_tmpdir, NULL);
+	zif_config_set_string (config, "upgrade_repo_dir", zif_tmpdir, NULL);
 	zif_config_set_string (config, "basearch", "i386", NULL);
 	zif_config_set_string (config, "upgrade_releases_uri",
 			       "http://people.freedesktop.org/~hughsient/fedora/preupgrade/releases.txt", NULL);
@@ -296,8 +299,10 @@ zif_release_func (void)
 	release = zif_release_new ();
 
 	/* ensure file is not present */
-	g_unlink ("/tmp/releases.txt");
-	g_unlink ("/tmp/.treeinfo");
+	filename_releases = g_build_filename (zif_tmpdir, "releases.txt", NULL);
+	g_unlink (filename_releases);
+	filename_treeinfo = g_build_filename (zif_tmpdir, ".treeinfo", NULL);
+	g_unlink (filename_treeinfo);
 
 	/* get upgrades */
 	array = zif_release_get_upgrades (release, state, &error);
@@ -329,6 +334,8 @@ zif_release_func (void)
 	g_assert_no_error (error);
 	g_assert (ret);
 
+	g_free (filename_releases);
+	g_free (filename_treeinfo);
 	g_object_unref (config);
 	g_object_unref (release);
 	g_object_unref (download);
@@ -583,19 +590,19 @@ zif_config_func (void)
 	g_assert_no_error (error);
 	g_assert (!ret);
 
-	ret = zif_config_set_string (config, "cachedir", "/tmp/cache", &error);
+	ret = zif_config_set_string (config, "cachedir", "/etc/cache", &error);
 	g_assert_no_error (error);
 	g_assert (ret);
 
-	ret = zif_config_set_string (config, "cachedir", "/tmp/cache", NULL);
+	ret = zif_config_set_string (config, "cachedir", "/etc/cache", NULL);
 	g_assert (ret);
 
-	ret = zif_config_set_string (config, "cachedir", "/tmp/dave", NULL);
+	ret = zif_config_set_string (config, "cachedir", "/etc/dave", NULL);
 	g_assert (!ret);
 
 	value = zif_config_get_string (config, "cachedir", &error);
 	g_assert_no_error (error);
-	g_assert_cmpstr (value, ==, "/tmp/cache");
+	g_assert_cmpstr (value, ==, "/etc/cache");
 	g_free (value);
 
 	ret = zif_config_reset_default (config, &error);
@@ -649,7 +656,7 @@ zif_db_func (void)
 	db = zif_db_new ();
 
 	/* set the root */
-	ret = zif_db_set_root (db, "/tmp", &error);
+	ret = zif_db_set_root (db, zif_tmpdir, &error);
 	g_assert_no_error (error);
 	g_assert (ret);
 
@@ -670,9 +677,16 @@ zif_db_func (void)
 	g_assert (ret);
 
 	/* check it exists */
-	ret = g_file_test ("/tmp/P/8acc1b3457e3a5115ca2ad40cf0b3c121d2ab82d-PackageKit-0.1.2-14.fc13-i386/from_repo",
+	filename = g_build_filename (zif_tmpdir,
+				     "P",
+				     "8acc1b3457e3a5115ca2ad40cf0b3c121d2ab82d-"
+				     "PackageKit-0.1.2-14.fc13-i386",
+				     "from_repo",
+				     NULL);
+	ret = g_file_test (filename,
 			   G_FILE_TEST_EXISTS);
 	g_assert (ret);
+	g_free (filename);
 
 	/* read value */
 	data = zif_db_get_string (db, package, "from_repo", &error);
@@ -983,10 +997,10 @@ zif_download_func (void)
 
 	/* download using the pool of uris (only the second will work) */
 	zif_config_set_string (config, "failovermethod", "ordered", NULL);
-	g_unlink ("/tmp/releases.txt");
+	filename = g_build_filename (zif_tmpdir, "releases.txt", NULL);
 	ret = zif_download_location_full (download,
 					  "releases.txt",
-					  "/tmp/releases.txt",
+					  filename,
 					  397, /* size in bytes */
 					  "text/plain,application/x-gzip", /* content type */
 					  G_CHECKSUM_SHA256,
@@ -1013,21 +1027,23 @@ zif_download_func (void)
 	g_clear_error (&error);
 
 	/* this exists in no mirror */
-	g_unlink ("/tmp/releases.txt");
-	ret = zif_download_location (download, "releases.bad", "/tmp/releases.txt", state, &error);
+	g_unlink (filename);
+	ret = zif_download_location (download, "releases.bad", filename, state, &error);
 	g_assert_error (error,
 			ZIF_DOWNLOAD_ERROR,
 			ZIF_DOWNLOAD_ERROR_WRONG_STATUS);
 	g_assert (!ret);
 	g_clear_error (&error);
+	g_free (filename);
 
 	g_signal_connect (state, "percentage-changed", G_CALLBACK (zif_download_progress_changed), NULL);
 	cancellable = g_cancellable_new ();
 	zif_state_set_cancellable (state, cancellable);
 
+	filename = g_build_filename (zif_tmpdir, "Screenshot.png", NULL);
 	zif_state_reset (state);
 	ret = zif_download_file (download, "http://people.freedesktop.org/~hughsient/temp/Screenshot.png",
-				 "/tmp/Screenshot.png", state, &error);
+				 filename, state, &error);
 	g_assert_no_error (error);
 	g_assert (ret);
 	g_assert_cmpint (_updates, >, 5);
@@ -1037,19 +1053,21 @@ zif_download_func (void)
 
 	zif_state_reset (state);
 	ret = zif_download_file (download, "http://people.freedesktop.org/~hughsient/temp/Screenshot.png",
-				 "/tmp/Screenshot.png", state, &error);
+				 filename, state, &error);
 	g_assert_error (error, ZIF_STATE_ERROR, ZIF_STATE_ERROR_CANCELLED);
 	g_assert (!ret);
 	g_clear_error (&error);
+	g_free (filename);
 
 	/* try to download a file from FTP */
-	g_unlink ("/tmp/LATEST");
+	filename = g_build_filename (zif_tmpdir, "LATEST", NULL);
 	ret = zif_download_file (download,
 				 "ftp://ftp.gnome.org/pub/GNOME/sources/gnome-color-manager/2.29/LATEST-IS-2.29.4",
-				 "/tmp/LATEST", state, &error);
+				 filename, state, &error);
 	g_assert_no_error (error);
 	g_assert (ret);
-	g_assert (g_file_test ("/tmp/LATEST", G_FILE_TEST_EXISTS));
+	g_assert (g_file_test (filename, G_FILE_TEST_EXISTS));
+	g_free (filename);
 out:
 	if (cancellable != NULL)
 		g_object_unref (cancellable);
@@ -1173,12 +1191,8 @@ zif_lock_func (void)
 	g_assert (lock != NULL);
 
 	/* set this to somewhere we can write to */
-	pidfile = g_build_filename (g_get_tmp_dir (), "zif.lock", NULL);
+	pidfile = g_build_filename (zif_tmpdir, "zif.lock", NULL);
 	zif_config_set_string (config, "pidfile", pidfile, NULL);
-	g_assert_cmpstr (pidfile, ==, "/tmp/zif.lock");
-
-	/* remove file */
-	g_unlink (pidfile);
 
 	/* nothing yet! */
 	ret = zif_lock_release (lock, ZIF_LOCK_TYPE_RPMDB_WRITE, &error);
@@ -2107,7 +2121,7 @@ zif_package_remote_func (void)
 	zif_config_set_uint (config, "mirrorlist_expire", 0, NULL);
 	g_free (filename);
 
-	pidfile = g_build_filename (g_get_tmp_dir (), "zif.lock", NULL);
+	pidfile = g_build_filename (zif_tmpdir, "zif.lock", NULL);
 	zif_config_set_string (config, "pidfile", pidfile, NULL);
 	g_free (pidfile);
 
@@ -2255,7 +2269,7 @@ zif_repos_func (void)
 	zif_config_set_filename (config, filename, NULL);
 	g_free (filename);
 
-	pidfile = g_build_filename (g_get_tmp_dir (), "zif.lock", NULL);
+	pidfile = g_build_filename (zif_tmpdir, "zif.lock", NULL);
 	zif_config_set_string (config, "pidfile", pidfile, NULL);
 	g_free (pidfile);
 
@@ -2769,7 +2783,7 @@ zif_state_func (void)
 	zif_config_set_filename (config, filename, NULL);
 	g_free (filename);
 
-	pidfile = g_build_filename (g_get_tmp_dir (), "zif.lock", NULL);
+	pidfile = g_build_filename (zif_tmpdir, "zif.lock", NULL);
 	zif_config_set_string (config, "pidfile", pidfile, NULL);
 	g_free (pidfile);
 
@@ -2824,7 +2838,7 @@ zif_store_local_func (void)
 	zif_config_set_filename (config, filename, NULL);
 	g_free (filename);
 
-	pidfile = g_build_filename (g_get_tmp_dir (), "zif.lock", NULL);
+	pidfile = g_build_filename (zif_tmpdir, "zif.lock", NULL);
 	zif_config_set_string (config, "pidfile", pidfile, NULL);
 	g_free (pidfile);
 
@@ -3162,18 +3176,21 @@ zif_store_remote_func (void)
 	ZifCategory *category;
 	const gchar *in_array[] = { NULL, NULL };
 	gchar *filename;
+	gchar *filename_db;
 	gchar *pidfile;
 
 	/* set this up as dummy */
 	config = zif_config_new ();
 	filename = zif_test_get_data_file ("zif.conf");
+	filename_db = g_build_filename (zif_tmpdir, "history.db", NULL);
 	zif_config_set_filename (config, filename, NULL);
 	zif_config_set_uint (config, "metadata_expire", 0, NULL);
 	zif_config_set_uint (config, "mirrorlist_expire", 0, NULL);
-	zif_config_set_string (config, "history_db", "/tmp/history.db", NULL);
+	zif_config_set_string (config, "history_db", filename_db, NULL);
 	g_free (filename);
+	g_free (filename_db);
 
-	pidfile = g_build_filename (g_get_tmp_dir (), "zif.lock", NULL);
+	pidfile = g_build_filename (zif_tmpdir, "zif.lock", NULL);
 	zif_config_set_string (config, "pidfile", pidfile, NULL);
 	g_free (pidfile);
 
@@ -3325,6 +3342,8 @@ zif_store_remote_func (void)
 	store = ZIF_STORE_REMOTE (zif_store_remote_new ());
 	zif_state_reset (state);
 	filename = zif_test_get_data_file ("corrupt-repomd.repo");
+	g_assert (filename != NULL);
+
 	ret = zif_store_remote_set_from_file (store, filename, "corrupt-repomd", state, &error);
 	g_free (filename);
 	g_assert_no_error (error);
@@ -3443,7 +3462,7 @@ zif_store_rhn_func (void)
 	zif_config_set_uint (config, "mirrorlist_expire", 0, NULL);
 	g_free (filename);
 
-	pidfile = g_build_filename (g_get_tmp_dir (), "zif.lock", NULL);
+	pidfile = g_build_filename (zif_tmpdir, "zif.lock", NULL);
 	zif_config_set_string (config, "pidfile", pidfile, NULL);
 	g_free (pidfile);
 
@@ -3561,6 +3580,7 @@ zif_utils_func (void)
 	gboolean ret;
 	gchar *evr;
 	gchar *filename;
+	gchar *filename_tmp;
 	gchar *filename_gpg;
 	gchar *name;
 	gchar *package_id;
@@ -3652,28 +3672,36 @@ zif_utils_func (void)
 	g_free (filename);
 
 	filename = zif_test_get_data_file ("compress.txt.gz");
-	ret = zif_file_decompress (filename, "/tmp/comps-fedora.xml", state, &error);
+	filename_tmp = g_build_filename (zif_tmpdir, "comps-fedora.xml", NULL);
+	ret = zif_file_decompress (filename, filename_tmp, state, &error);
 	g_assert_no_error (error);
 	g_assert (ret);
 	g_free (filename);
+	g_free (filename_tmp);
 
 	filename = zif_test_get_data_file ("compress.txt.bz2");
-	ret = zif_file_decompress (filename, "/tmp/moo.sqlite", state, &error);
+	filename_tmp = g_build_filename (zif_tmpdir, "moo.sqlite", NULL);
+	ret = zif_file_decompress (filename, filename_tmp, state, &error);
 	g_assert_no_error (error);
 	g_assert (ret);
 	g_free (filename);
+	g_free (filename_tmp);
 
 	filename = zif_test_get_data_file ("compress.txt.lzma");
-	ret = zif_file_decompress (filename, "/tmp/comps-fedora.xml", state, &error);
+	filename_tmp = g_build_filename (zif_tmpdir, "comps-fedora.xml", NULL);
+	ret = zif_file_decompress (filename, filename_tmp, state, &error);
 	g_assert_no_error (error);
 	g_assert (ret);
 	g_free (filename);
+	g_free (filename_tmp);
 
 	filename = zif_test_get_data_file ("compress.txt.xz");
-	ret = zif_file_decompress (filename, "/tmp/comps-fedora.xml", state, &error);
+	filename_tmp = g_build_filename (zif_tmpdir, "comps-fedora.xml", NULL);
+	ret = zif_file_decompress (filename, filename_tmp, state, &error);
 	g_assert_no_error (error);
 	g_assert (ret);
 	g_free (filename);
+	g_free (filename_tmp);
 
 	g_assert_cmpint (zif_time_string_to_seconds (""), ==, 0);
 	g_assert_cmpint (zif_time_string_to_seconds ("10"), ==, 0);
@@ -3750,6 +3778,7 @@ zif_history_func (void)
 	GArray *transactions;
 	gboolean ret;
 	gchar *filename;
+	gchar *filename_db;
 	gchar *tmp;
 	GError *error = NULL;
 	GPtrArray *packages;
@@ -3766,14 +3795,15 @@ zif_history_func (void)
 	/* set this up as dummy */
 	config = zif_config_new ();
 	filename = zif_test_get_data_file ("zif.conf");
+	filename_db = g_build_filename (zif_tmpdir, "history.db", NULL);
 	zif_config_set_filename (config, filename, NULL);
 	zif_config_set_uint (config, "metadata_expire", 0, NULL);
 	zif_config_set_uint (config, "mirrorlist_expire", 0, NULL);
-	zif_config_set_string (config, "history_db", "/tmp/history.db", NULL);
+	zif_config_set_string (config, "history_db", filename_db, NULL);
 	g_free (filename);
+	g_free (filename_db);
 
 	/* create a new file */
-	g_unlink ("/tmp/history.db");
 	history = zif_history_new ();
 
 	/* add an entry */
@@ -3902,9 +3932,63 @@ zif_history_func (void)
 	g_object_unref (db);
 }
 
+static gboolean
+zif_self_test_remove_recursive (const gchar *directory)
+{
+	const gchar *filename;
+	gboolean ret = FALSE;
+	gchar *src;
+	GDir *dir;
+	GError *error = NULL;
+	gint retval;
+
+	/* try to open */
+	dir = g_dir_open (directory, 0, &error);
+	if (dir == NULL) {
+		g_warning ("cannot open directory: %s", error->message);
+		g_error_free (error);
+		goto out;
+	}
+
+	/* find each */
+	while ((filename = g_dir_read_name (dir))) {
+		src = g_build_filename (directory, filename, NULL);
+		ret = g_file_test (src, G_FILE_TEST_IS_DIR);
+		if (ret) {
+			zif_self_test_remove_recursive (src);
+			retval = g_remove (src);
+			if (retval != 0)
+				g_warning ("failed to delete %s", src);
+		} else {
+			retval = g_unlink (src);
+			if (retval != 0)
+				g_warning ("failed to delete %s", src);
+		}
+		g_free (src);
+	}
+	g_dir_close (dir);
+	ret = TRUE;
+out:
+	return ret;
+}
+
+static gchar *
+zif_self_test_get_tmpdir (void)
+{
+	gchar *tmpdir;
+	GError *error = NULL;
+	tmpdir = g_dir_make_tmp ("zif-self-test-XXXXXX", &error);
+	if (tmpdir == NULL) {
+		g_warning ("failed to get a tempdir: %s", error->message);
+		g_error_free (error);
+	}
+	return tmpdir;
+}
+
 int
 main (int argc, char **argv)
 {
+	gint retval;
 	g_type_init ();
 	g_thread_init (NULL);
 	g_test_init (&argc, &argv, NULL);
@@ -3913,6 +3997,10 @@ main (int argc, char **argv)
 
 	/* only critical and error are fatal */
 	g_log_set_fatal_mask (NULL, G_LOG_LEVEL_ERROR | G_LOG_LEVEL_CRITICAL);
+
+	/* create a new tempdir */
+	zif_tmpdir = zif_self_test_get_tmpdir ();
+	g_debug ("Created scratch area %s", zif_tmpdir);
 
 	/* tests go here */
 	g_test_add_func ("/zif/state", zif_state_func);
@@ -3955,6 +4043,14 @@ main (int argc, char **argv)
 	g_test_add_func ("/zif/update", zif_update_func);
 	g_test_add_func ("/zif/utils", zif_utils_func);
 
-	return g_test_run ();
+	/* go go go! */
+	retval = g_test_run ();
+
+	/* wipe the tempdir */
+	g_debug ("Removing scratch area %s", zif_tmpdir);
+	zif_self_test_remove_recursive (zif_tmpdir);
+	g_remove (zif_tmpdir);
+	g_free (zif_tmpdir);
+	return retval;
 }
 
