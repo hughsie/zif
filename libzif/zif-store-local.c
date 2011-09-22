@@ -297,6 +297,9 @@ zif_store_local_load (ZifStore *store, ZifState *state, GError **error)
 	}
 
 	zif_state_set_allow_cancel (state, FALSE);
+	zif_state_action_start (state,
+				ZIF_STATE_ACTION_LOADING_RPMDB,
+				local->priv->prefix);
 
 	/* lookup in yumdb */
 	yumdb_allow_read = zif_config_get_boolean (local->priv->config,
