@@ -215,6 +215,14 @@ zif_state_action_to_string_localized (ZifStateAction action)
 		 * conflicts after packages have been downloaded*/
 		return _("Testing");
 	}
+	if (action == ZIF_STATE_ACTION_LOADING_RPMDB) {
+		/* TRANSLATORS: loading the rpmdb */
+		return _("Loading installed");
+	}
+	if (action == ZIF_STATE_ACTION_CHECKING_UPDATES) {
+		/* TRANSLATORS: calculating the update set */
+		return _("Checking updates");
+	}
 	return zif_state_action_to_string (action);
 }
 
