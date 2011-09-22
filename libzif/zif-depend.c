@@ -620,7 +620,7 @@ out:
 }
 
 /**
- * zif_depend_new_from_data:
+ * zif_depend_new_from_values:
  * @name: The depend name
  * @flag: The depend flag
  * @version: The depend version

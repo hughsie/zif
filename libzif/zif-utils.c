@@ -1421,7 +1421,7 @@ zif_str_compare_equal (const gchar *a, const gchar *b)
 }
 
 /**
- * zif_load_multiline_key_file:
+ * zif_load_multiline_key_file: (skip):
  * @filename: The repo file to load
  * @error: A #GError, or %NULL
  *
