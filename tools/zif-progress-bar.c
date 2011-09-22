@@ -292,11 +292,12 @@ zif_progress_bar_end (ZifProgressBar *progress_bar)
 	if (!progress_bar->priv->started)
 		return;
 
-	progress_bar->priv->percentage = 100;
-	progress_bar->priv->started = FALSE;
-
 	/* don't clear */
 	zif_progress_bar_set_action (progress_bar, "Completed");
+	zif_progress_bar_set_detail (progress_bar, NULL);
+
+	progress_bar->priv->percentage = 100;
+	progress_bar->priv->started = FALSE;
 
 	/* no console */
 	if (!progress_bar->priv->on_console)

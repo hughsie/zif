@@ -289,13 +289,13 @@ zif_state_action_changed_cb (ZifState *state,
 							split[len-1],
 							NULL);
 		} else {
-			pretty_hint = zif_package_id_get_name (action_hint);
+			pretty_hint = g_strdup (action_hint);
 		}
 
 	/* show nice name for package */
 	} else if (zif_package_id_check (action_hint)) {
 
-		pretty_hint = zif_package_id_get_name (action_hint);
+		pretty_hint = zif_package_id_get_printable (action_hint);
 
 	/* fallback to just showing it */
 	} else {
@@ -2364,6 +2364,7 @@ zif_transaction_run (ZifCmdPrivate *priv, ZifTransaction *transaction, ZifState 
 	/* inform the user in case it's costing per megabyte */
 	if (size > 0) {
 		size_str = g_format_size (size);
+		zif_progress_bar_end (priv->progressbar);
 		/* TRANSLATORS: how much we have to download */
 		g_print ("%s: %s\n", _("Total download size"), size_str);
 		g_free (size_str);
