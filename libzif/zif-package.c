@@ -76,10 +76,6 @@ struct _ZifPackagePrivate
 	GHashTable		*provides_hash;
 	GHashTable		*obsoletes_hash;
 	GHashTable		*conflicts_hash;
-	GHashTable		*requires_any_hash;
-	GHashTable		*provides_any_hash;
-	GHashTable		*obsoletes_any_hash;
-	GHashTable		*conflicts_any_hash;
 	gboolean		 any_file_requires;
 	gboolean		 any_file_provides;
 	gboolean		 any_file_obsoletes;
@@ -593,7 +589,7 @@ zif_package_provides (ZifPackage *package,
 	/* search in the 'any' cache first */
 	if (zif_depend_get_flag (depend) == ZIF_DEPEND_FLAG_ANY) {
 		depend_id = zif_depend_get_name (depend);
-		ret = g_hash_table_lookup_extended (package->priv->provides_any_hash,
+		ret = g_hash_table_lookup_extended (package->priv->provides_hash,
 						    depend_id,
 						    NULL,
 						    (void **) &depend_tmp);
@@ -603,22 +599,6 @@ zif_package_provides (ZifPackage *package,
 		} else {
 			/* object is not in the cache, but we already added all entries */
 			ret = TRUE;
-			*satisfies = NULL;
-		}
-		goto out;
-	}
-
-	/* then the 'description' cache */
-	depend_id = zif_depend_get_description (depend);
-	ret = g_hash_table_lookup_extended (package->priv->provides_hash,
-					    depend_id,
-					    NULL,
-					    (void **) &depend_tmp);
-	if (ret) {
-		if (depend_tmp != NULL) {
-			*satisfies = g_object_ref (depend_tmp);
-		} else {
-			/* cache hit, but does not provide */
 			*satisfies = NULL;
 		}
 		goto out;
@@ -639,11 +619,6 @@ zif_package_provides (ZifPackage *package,
 
 	/* success either way */
 	ret = TRUE;
-
-	/* insert into cache */
-	g_hash_table_insert (package->priv->provides_hash,
-			     g_strdup (depend_id),
-			     *satisfies);
 out:
 	return ret;
 }
@@ -697,7 +672,7 @@ zif_package_requires (ZifPackage *package,
 	/* search in the 'any' cache first */
 	if (zif_depend_get_flag (depend) == ZIF_DEPEND_FLAG_ANY) {
 		depend_id = zif_depend_get_name (depend);
-		ret = g_hash_table_lookup_extended (package->priv->requires_any_hash,
+		ret = g_hash_table_lookup_extended (package->priv->requires_hash,
 						    depend_id,
 						    NULL,
 						    (void **) &depend_tmp);
@@ -707,22 +682,6 @@ zif_package_requires (ZifPackage *package,
 		} else {
 			/* object is not in the cache, but we already added all entries */
 			ret = TRUE;
-			*satisfies = NULL;
-		}
-		goto out;
-	}
-
-	/* then the 'description' cache */
-	depend_id = zif_depend_get_description (depend);
-	ret = g_hash_table_lookup_extended (package->priv->requires_hash,
-					    depend_id,
-					    NULL,
-					    (void **) &depend_tmp);
-	if (ret) {
-		if (depend_tmp != NULL) {
-			*satisfies = g_object_ref (depend_tmp);
-		} else {
-			/* cache hit, but does not provide */
 			*satisfies = NULL;
 		}
 		goto out;
@@ -745,11 +704,6 @@ zif_package_requires (ZifPackage *package,
 
 	/* success either way */
 	ret = TRUE;
-
-	/* insert into cache */
-	g_hash_table_insert (package->priv->requires_hash,
-			     g_strdup (depend_id),
-			     *satisfies);
 out:
 	return ret;
 }
@@ -803,7 +757,7 @@ zif_package_conflicts (ZifPackage *package,
 	/* search in the 'any' cache first */
 	if (zif_depend_get_flag (depend) == ZIF_DEPEND_FLAG_ANY) {
 		depend_id = zif_depend_get_name (depend);
-		ret = g_hash_table_lookup_extended (package->priv->conflicts_any_hash,
+		ret = g_hash_table_lookup_extended (package->priv->conflicts_hash,
 						    depend_id,
 						    NULL,
 						    (void **) &depend_tmp);
@@ -818,25 +772,6 @@ zif_package_conflicts (ZifPackage *package,
 		goto out;
 	}
 
-	/* then the 'description' cache */
-	depend_id = zif_depend_get_description (depend);
-	ret = g_hash_table_lookup_extended (package->priv->conflicts_hash,
-					    depend_id,
-					    NULL,
-					    (void **) &depend_tmp);
-	if (ret) {
-		if (depend_tmp != NULL) {
-			*satisfies = g_object_ref (depend_tmp);
-		} else {
-			/* cache hit, but does not provide */
-			*satisfies = NULL;
-		}
-		goto out;
-	}
-
-	/* set to unfound */
-	*satisfies = NULL;
-
 	/* find what we're looking for */
 	for (i=0; i<package->priv->conflicts->len; i++) {
 		depend_tmp = g_ptr_array_index (package->priv->conflicts, i);
@@ -849,11 +784,6 @@ zif_package_conflicts (ZifPackage *package,
 
 	/* success either way */
 	ret = TRUE;
-
-	/* insert into cache */
-	g_hash_table_insert (package->priv->conflicts_hash,
-			     g_strdup (depend_id),
-			     *satisfies);
 out:
 	return ret;
 }
@@ -907,7 +837,7 @@ zif_package_obsoletes (ZifPackage *package,
 	/* search in the 'any' cache first */
 	if (zif_depend_get_flag (depend) == ZIF_DEPEND_FLAG_ANY) {
 		depend_id = zif_depend_get_name (depend);
-		ret = g_hash_table_lookup_extended (package->priv->obsoletes_any_hash,
+		ret = g_hash_table_lookup_extended (package->priv->obsoletes_hash,
 						    depend_id,
 						    NULL,
 						    (void **) &depend_tmp);
@@ -918,22 +848,6 @@ zif_package_obsoletes (ZifPackage *package,
 			/* object is not in the cache, but we already
 			 * added all entries */
 			ret = TRUE;
-			*satisfies = NULL;
-		}
-		goto out;
-	}
-
-	/* then the 'description' cache */
-	depend_id = zif_depend_get_description (depend);
-	ret = g_hash_table_lookup_extended (package->priv->obsoletes_hash,
-					    depend_id,
-					    NULL,
-					    (void **) &depend_tmp);
-	if (ret) {
-		if (depend_tmp != NULL) {
-			*satisfies = g_object_ref (depend_tmp);
-		} else {
-			/* cache hit, but does not provide */
 			*satisfies = NULL;
 		}
 		goto out;
@@ -954,11 +868,6 @@ zif_package_obsoletes (ZifPackage *package,
 
 	/* success either way */
 	ret = TRUE;
-
-	/* insert into cache */
-	g_hash_table_insert (package->priv->obsoletes_hash,
-			     g_strdup (depend_id),
-			     *satisfies);
 out:
 	return ret;
 }
@@ -2244,12 +2153,13 @@ zif_package_add_files_internal (ZifPackage *package, const gchar *filename)
 	zif_depend_set_name_str (depend_tmp, string);
 	zif_string_unref (string);
 
-	g_hash_table_insert (package->priv->provides_any_hash,
+	g_hash_table_insert (package->priv->provides_hash,
 			     (gpointer) filename,
 			     g_object_ref (depend_tmp));
 	g_ptr_array_add (package->priv->provides,
 			 g_object_ref (depend_tmp));
 	package->priv->any_file_provides = TRUE;
+
 	g_object_unref (depend_tmp);
 }
 
@@ -2314,7 +2224,7 @@ zif_package_add_require_internal (ZifPackage *package, ZifDepend *depend)
 {
 	const gchar *name_tmp;
 	name_tmp = zif_depend_get_name (depend);
-	g_hash_table_insert (package->priv->requires_any_hash,
+	g_hash_table_insert (package->priv->requires_hash,
 			     (gpointer) name_tmp,
 			     g_object_ref (depend));
 
@@ -2383,7 +2293,7 @@ zif_package_add_provide_internal (ZifPackage *package, ZifDepend *depend)
 	const gchar *name_tmp;
 
 	name_tmp = zif_depend_get_name (depend);
-	g_hash_table_insert (package->priv->provides_any_hash,
+	g_hash_table_insert (package->priv->provides_hash,
 			     (gpointer) name_tmp,
 			     g_object_ref (depend));
 
@@ -2459,7 +2369,7 @@ zif_package_add_obsolete_internal (ZifPackage *package, ZifDepend *depend)
 {
 	const gchar *name_tmp;
 	name_tmp = zif_depend_get_name (depend);
-	g_hash_table_insert (package->priv->obsoletes_any_hash,
+	g_hash_table_insert (package->priv->obsoletes_hash,
 			     (gpointer) name_tmp,
 			     g_object_ref (depend));
 
@@ -2527,7 +2437,7 @@ zif_package_add_conflict_internal (ZifPackage *package, ZifDepend *depend)
 {
 	const gchar *name_tmp;
 	name_tmp = zif_depend_get_name (depend);
-	g_hash_table_insert (package->priv->conflicts_any_hash,
+	g_hash_table_insert (package->priv->conflicts_hash,
 			     (gpointer) name_tmp,
 			     g_object_ref (depend));
 
@@ -2638,10 +2548,6 @@ zif_package_finalize (GObject *object)
 	g_hash_table_destroy (package->priv->provides_hash);
 	g_hash_table_destroy (package->priv->obsoletes_hash);
 	g_hash_table_destroy (package->priv->conflicts_hash);
-	g_hash_table_destroy (package->priv->requires_any_hash);
-	g_hash_table_destroy (package->priv->provides_any_hash);
-	g_hash_table_destroy (package->priv->obsoletes_any_hash);
-	g_hash_table_destroy (package->priv->conflicts_any_hash);
 
 	G_OBJECT_CLASS (zif_package_parent_class)->finalize (object);
 }
@@ -2672,43 +2578,25 @@ zif_package_init (ZifPackage *package)
 	 * zif_package_set_files() before zif_package_set_provides() */
 	package->priv->provides = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 
-	/* this provides a O(1) lookup for the entire provide */
-	package->priv->requires_hash = g_hash_table_new_full (g_str_hash,
-							      g_str_equal,
-							      g_free,
-							      NULL);
-	package->priv->provides_hash = g_hash_table_new_full (g_str_hash,
-							      g_str_equal,
-							      g_free,
-							      NULL);
-	package->priv->obsoletes_hash = g_hash_table_new_full (g_str_hash,
-							      g_str_equal,
-							      g_free,
-							      NULL);
-	package->priv->conflicts_hash = g_hash_table_new_full (g_str_hash,
-							      g_str_equal,
-							      g_free,
-							      NULL);
-
 	/* this provides a O(1) lookup for the provide name, which
 	 * may seem odd, but it's required for the ZIF_DEPEND_FLAG_ANY
 	 * check, and 'any' happens 99.5% of the time in reality */
-	package->priv->requires_any_hash = g_hash_table_new_full (g_str_hash,
+	package->priv->requires_hash = g_hash_table_new_full (g_str_hash,
 							      g_str_equal,
 							      NULL,
 							      (GDestroyNotify) g_object_unref);
-	package->priv->provides_any_hash = g_hash_table_new_full (g_str_hash,
+	package->priv->provides_hash = g_hash_table_new_full (g_str_hash,
 							      g_str_equal,
 							      NULL,
 							      (GDestroyNotify) g_object_unref);
-	package->priv->obsoletes_any_hash = g_hash_table_new_full (g_str_hash,
-							      g_str_equal,
-							      NULL,
-							      (GDestroyNotify) g_object_unref);
-	package->priv->conflicts_any_hash = g_hash_table_new_full (g_str_hash,
-							      g_str_equal,
-							      NULL,
-							      (GDestroyNotify) g_object_unref);
+	package->priv->obsoletes_hash = g_hash_table_new_full (g_str_hash,
+							       g_str_equal,
+							       NULL,
+							       (GDestroyNotify) g_object_unref);
+	package->priv->conflicts_hash = g_hash_table_new_full (g_str_hash,
+							       g_str_equal,
+							       NULL,
+							       (GDestroyNotify) g_object_unref);
 }
 
 /**
