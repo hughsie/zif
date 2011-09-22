@@ -478,7 +478,7 @@ zif_package_convert_evr_full (gchar *evr,
 	g_return_val_if_fail (evr != NULL, FALSE);
 
 	/* split possible epoch and version */
-	find = strstr (evr, ":");
+	find = strchr (evr, ':');
 	if (find != NULL) {
 		*find = '\0';
 		*epoch = evr;
@@ -489,7 +489,7 @@ zif_package_convert_evr_full (gchar *evr,
 	}
 
 	/* split possible release */
-	find = g_strrstr (*version, "-");
+	find = strrchr (*version, '-');
 	if (find != NULL) {
 		*find = '\0';
 		*release = find+1;
@@ -500,7 +500,7 @@ zif_package_convert_evr_full (gchar *evr,
 	/* split possible and optional distro */
 	if (distro != NULL) {
 		if (*release != NULL) {
-			find = g_strrstr (*release, ".");
+			find = strrchr (*release, '.');
 			if (find != NULL) {
 				*find = '\0';
 				*distro = find+1;
@@ -598,10 +598,10 @@ zif_compare_evr_full (const gchar *a, const gchar *b,
 		val = rpmvercmp (ae, be);
 		if (val != 0)
 			goto out;
-	} else if (ae != NULL && atol (ae) > 0) {
+	} else if (ae != NULL && atoi (ae) > 0) {
 		val = 1;
 		goto out;
-	} else if (be != NULL && atol (be) > 0) {
+	} else if (be != NULL && atoi (be) > 0) {
 		val = -1;
 		goto out;
 	}
