@@ -825,6 +825,8 @@ zif_state_action_to_string (ZifStateAction action)
 		return "test-commit";
 	if (action == ZIF_STATE_ACTION_LOADING_RPMDB)
 		return "loading-rpmdb";
+	if (action == ZIF_STATE_ACTION_CHECKING_UPDATES)
+		return "checking-updates";
 	if (action == ZIF_STATE_ACTION_UNKNOWN)
 		return "unknown";
 	return NULL;

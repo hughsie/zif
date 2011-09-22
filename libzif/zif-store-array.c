@@ -1057,6 +1057,11 @@ zif_store_array_get_updates (GPtrArray *store_array,
 	if (!ret)
 		goto out;
 
+	/* set state */
+	zif_state_action_start (state,
+				ZIF_STATE_ACTION_CHECKING_UPDATES,
+				NULL);
+
 	/* get installed packages */
 	state_local = zif_state_get_child (state);
 	array_installed = zif_store_get_packages (store_local,
