@@ -420,6 +420,7 @@ typedef struct {
 	ZifProgressBar		*progressbar;
 	ZifRepos		*repos;
 	ZifState		*state;
+	ZifStore		*store_local;
 	guint			 uid;
 	gchar			*cmdline;
 } ZifCmdPrivate;
@@ -1834,7 +1835,6 @@ zif_get_update_array (ZifCmdPrivate *priv, ZifState *state, GError **error)
 	GPtrArray *store_array = NULL;
 	GPtrArray *updates = NULL;
 	ZifState *state_local;
-	ZifStore *store_local = NULL;
 
 	/* setup state with the correct number of steps */
 	ret = zif_state_set_steps (state,
@@ -1861,9 +1861,8 @@ zif_get_update_array (ZifCmdPrivate *priv, ZifState *state, GError **error)
 
 	/* get the updates list */
 	state_local = zif_state_get_child (state);
-	store_local = zif_store_local_new ();
 	updates = zif_store_array_get_updates (store_array,
-					       store_local,
+					       priv->store_local,
 					       state_local,
 					       error);
 	if (updates == NULL)
@@ -1874,8 +1873,6 @@ zif_get_update_array (ZifCmdPrivate *priv, ZifState *state, GError **error)
 	if (!ret)
 		goto out;
 out:
-	if (store_local != NULL)
-		g_object_unref (store_local);
 	if (store_array != NULL)
 		g_ptr_array_unref (store_array);
 	return updates;
@@ -1992,13 +1989,11 @@ zif_cmd_get_config_value (ZifCmdPrivate *priv, gchar **values, GError **error)
 	gchar *value = NULL;
 	guint i;
 	ZifState *state_local;
-	ZifStore *local = NULL;
 
 	/* it might seem odd to open and load the local store here, but
 	 * we need to have set the releasever */
-	local = zif_store_local_new ();
 	state_local = zif_state_get_child (priv->state);
-	ret = zif_store_load (local, state_local, error);
+	ret = zif_store_load (priv->store_local, state_local, error);
 	if (!ret)
 		goto out;
 
@@ -2026,8 +2021,6 @@ zif_cmd_get_config_value (ZifCmdPrivate *priv, gchar **values, GError **error)
 	/* success */
 	ret = TRUE;
 out:
-	if (local != NULL)
-		g_object_unref (local);
 	return ret;
 }
 
@@ -2305,7 +2298,6 @@ zif_transaction_run (ZifCmdPrivate *priv, ZifTransaction *transaction, ZifState 
 	guint i;
 	ZifPackage *package_tmp;
 	ZifState *state_local;
-	ZifStore *store_local = NULL;
 
 	/* setup steps */
 	ret = zif_state_set_steps (state,
@@ -2327,8 +2319,7 @@ zif_transaction_run (ZifCmdPrivate *priv, ZifTransaction *transaction, ZifState 
 		goto out;
 
 	/* set local store */
-	store_local = zif_store_local_new ();
-	zif_transaction_set_store_local (transaction, store_local);
+	zif_transaction_set_store_local (transaction, priv->store_local);
 
 	/* add remote stores */
 	zif_transaction_set_stores_remote (transaction, store_array_remote);
@@ -2449,8 +2440,6 @@ zif_transaction_run (ZifCmdPrivate *priv, ZifTransaction *transaction, ZifState 
 	/* TRANSLATORS: tell the user everything went okay */
 	g_print ("%s\n", _("Transaction success!"));
 out:
-	if (store_local != NULL)
-		g_object_unref (store_local);
 	if (store_array_remote != NULL)
 		g_ptr_array_unref (store_array_remote);
 	if (install != NULL)
@@ -3208,7 +3197,6 @@ zif_cmd_manifest_dump (ZifCmdPrivate *priv, gchar **values, GError **error)
 	guint i;
 	ZifPackage *package;
 	ZifState *state_local;
-	ZifStore *store_local = NULL;
 
 	/* check we have a value */
 	if (values == NULL || values[0] == NULL) {
@@ -3270,9 +3258,8 @@ zif_cmd_manifest_dump (ZifCmdPrivate *priv, gchar **values, GError **error)
 	if (!ret)
 		goto out;
 
-	store_local = zif_store_local_new ();
 	state_local = zif_state_get_child (priv->state);
-	array_local = zif_store_get_packages (store_local, state_local, error);
+	array_local = zif_store_get_packages (priv->store_local, state_local, error);
 	if (array_local == NULL) {
 		ret = FALSE;
 		goto out;
@@ -3312,8 +3299,6 @@ zif_cmd_manifest_dump (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 	zif_progress_bar_end (priv->progressbar);
 out:
-	if (store_local != NULL)
-		g_object_unref (store_local);
 	if (store_array != NULL)
 		g_ptr_array_unref (store_array);
 	if (array_local != NULL)
@@ -5165,7 +5150,6 @@ zif_cmd_shell (ZifCmdPrivate *priv, gchar **values, GError **error)
 	guint i;
 	ZifPackage *package;
 	ZifState *state_local;
-	ZifStore *store_local = NULL;
 	ZifTransaction *transaction = NULL;
 
 	/* use a timer to tell how long each thing took */
@@ -5189,11 +5173,10 @@ zif_cmd_shell (ZifCmdPrivate *priv, gchar **values, GError **error)
 		goto out;
 
 	/* setup transaction */
-	store_local = zif_store_local_new ();
 	transaction = zif_transaction_new ();
 	zif_transaction_set_euid (transaction, priv->uid);
 	zif_transaction_set_cmdline (transaction, priv->cmdline);
-	zif_transaction_set_store_local (transaction, store_local);
+	zif_transaction_set_store_local (transaction, priv->store_local);
 	zif_transaction_set_stores_remote (transaction, stores_remote);
 
 	/* are we running super verbose? */
@@ -5320,7 +5303,7 @@ zif_cmd_shell (ZifCmdPrivate *priv, gchar **values, GError **error)
 		if (g_strcmp0 (split[0], "remove") == 0) {
 			zif_state_reset (priv->state);
 			if (zif_package_id_check (split[1])) {
-				package = zif_store_find_package (store_local, split[1], priv->state, &error_local);
+				package = zif_store_find_package (priv->store_local, split[1], priv->state, &error_local);
 				if (package == NULL) {
 					g_print ("%s\n", error_local->message);
 					g_clear_error (&error_local);
@@ -5333,7 +5316,7 @@ zif_cmd_shell (ZifCmdPrivate *priv, gchar **values, GError **error)
 					g_object_unref (package);
 				}
 			} else {
-				array = zif_store_resolve (store_local, &split[1], priv->state, &error_local);
+				array = zif_store_resolve (priv->store_local, &split[1], priv->state, &error_local);
 				if (array == NULL) {
 					g_print ("%s\n", error_local->message);
 					g_clear_error (&error_local);
@@ -5356,7 +5339,7 @@ zif_cmd_shell (ZifCmdPrivate *priv, gchar **values, GError **error)
 		if (g_strcmp0 (split[0], "update") == 0) {
 			zif_state_reset (priv->state);
 			if (zif_package_id_check (split[1])) {
-				package = zif_store_find_package (store_local, split[1], priv->state, &error_local);
+				package = zif_store_find_package (priv->store_local, split[1], priv->state, &error_local);
 				if (package == NULL) {
 					g_print ("%s\n", error_local->message);
 					g_clear_error (&error_local);
@@ -5369,7 +5352,7 @@ zif_cmd_shell (ZifCmdPrivate *priv, gchar **values, GError **error)
 					g_object_unref (package);
 				}
 			} else {
-				array = zif_store_resolve (store_local, &split[1], priv->state, &error_local);
+				array = zif_store_resolve (priv->store_local, &split[1], priv->state, &error_local);
 				if (array == NULL) {
 					g_print ("%s\n", error_local->message);
 					g_clear_error (&error_local);
@@ -5398,8 +5381,6 @@ zif_cmd_shell (ZifCmdPrivate *priv, gchar **values, GError **error)
 		}
 	} while (TRUE);
 out:
-	if (store_local != NULL)
-		g_object_unref (store_local);
 	if (transaction != NULL)
 		g_object_unref (transaction);
 	if (stores_remote != NULL)
@@ -5421,7 +5402,6 @@ zif_cmd_check (ZifCmdPrivate *priv, gchar **values, GError **error)
 	ZifPackage *package;
 	ZifState *state_local;
 	ZifTransaction *transaction = NULL;
-	ZifStore *store_local = NULL;
 
 	/* TRANSLATORS: used when the install database is being checked */
 	zif_progress_bar_start (priv->progressbar, _("Checking database"));
@@ -5437,9 +5417,8 @@ zif_cmd_check (ZifCmdPrivate *priv, gchar **values, GError **error)
 		goto out;
 
 	/* get installed array */
-	store_local = zif_store_local_new ();
 	state_local = zif_state_get_child (priv->state);
-	array = zif_store_get_packages (store_local, state_local, error);
+	array = zif_store_get_packages (priv->store_local, state_local, error);
 	if (array == NULL) {
 		ret = FALSE;
 		goto out;
@@ -5454,7 +5433,7 @@ zif_cmd_check (ZifCmdPrivate *priv, gchar **values, GError **error)
 	transaction = zif_transaction_new ();
 	zif_transaction_set_euid (transaction, priv->uid);
 	zif_transaction_set_cmdline (transaction, priv->cmdline);
-	zif_transaction_set_store_local (transaction, store_local);
+	zif_transaction_set_store_local (transaction, priv->store_local);
 	for (i=0; i<array->len; i++) {
 		package = g_ptr_array_index (array, i);
 		ret = zif_transaction_add_install (transaction, package, error);
@@ -5484,8 +5463,6 @@ zif_cmd_check (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 	zif_progress_bar_end (priv->progressbar);
 out:
-	if (store_local != NULL)
-		g_object_unref (store_local);
 	if (transaction != NULL)
 		g_object_unref (transaction);
 	if (array != NULL)
@@ -6168,6 +6145,9 @@ main (int argc, char *argv[])
 				     pk_error_handler_cb,
 				     priv);
 
+	/* reference this as a singleton */
+	priv->store_local = zif_store_local_new ();
+
 	/* process the repo add and disables */
 	if (enablerepo != NULL ||
 	    disablerepo != NULL) {
@@ -6694,6 +6674,8 @@ error:
 out:
 	if (priv != NULL) {
 		g_object_unref (priv->progressbar);
+		if (priv->store_local != NULL)
+			g_object_unref (priv->store_local);
 		if (priv->config != NULL)
 			g_object_unref (priv->config);
 		if (priv->state != NULL)
