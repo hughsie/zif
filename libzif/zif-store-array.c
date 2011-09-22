@@ -1151,10 +1151,9 @@ zif_store_array_get_updates (GPtrArray *store_array,
 	depend_array = zif_object_array_new ();
 	for (i=0; i<array_installed->len; i++) {
 		package = ZIF_PACKAGE (g_ptr_array_index (array_installed, i));
-		depend = zif_depend_new ();
-		zif_depend_set_flag (depend, ZIF_DEPEND_FLAG_EQUAL);
-		zif_depend_set_name (depend, zif_package_get_name (package));
-		zif_depend_set_version (depend, zif_package_get_version (package));
+		depend = zif_depend_new_from_values (zif_package_get_name (package),
+						     ZIF_DEPEND_FLAG_EQUAL,
+						     zif_package_get_version (package));
 		zif_object_array_add (depend_array, depend);
 		g_object_unref (depend);
 	}

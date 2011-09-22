@@ -204,10 +204,9 @@ zif_package_meta_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, ZifSta
 		}
 
 		/* a package has to provide itself */
-		depend = zif_depend_new ();
-		zif_depend_set_flag (depend, ZIF_DEPEND_FLAG_EQUAL);
-		zif_depend_set_name (depend, zif_package_get_name (pkg));
-		zif_depend_set_version (depend, zif_package_get_version (pkg));
+		depend = zif_depend_new_from_values (zif_package_get_name (pkg),
+						     ZIF_DEPEND_FLAG_EQUAL,
+						     zif_package_get_version (pkg));
 		g_ptr_array_add (depends, depend);
 		zif_package_set_provides (pkg, depends);
 

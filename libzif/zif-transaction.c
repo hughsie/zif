@@ -2278,10 +2278,9 @@ zif_transaction_resolve_update_item (ZifTransactionResolve *data,
 	g_return_val_if_fail (data->transaction->priv->stores_remote != NULL, FALSE);
 
 	/* does anything obsolete this package */
-	depend = zif_depend_new ();
-	zif_depend_set_name (depend, zif_package_get_name (item->package));
-	zif_depend_set_flag (depend, ZIF_DEPEND_FLAG_GREATER | ZIF_DEPEND_FLAG_EQUAL);
-	zif_depend_set_version (depend, zif_package_get_version (item->package));
+	depend = zif_depend_new_from_values (zif_package_get_name (item->package),
+					     ZIF_DEPEND_FLAG_GREATER | ZIF_DEPEND_FLAG_EQUAL,
+					     zif_package_get_version (item->package));
 
 	/* make a list of all the packages to revert if this item fails */
 	related_packages = g_ptr_array_new ();

@@ -238,10 +238,9 @@ zif_package_local_get_depends_from_name_flags_version (GPtrArray *names, GPtrArr
 		}
 
 		version = g_ptr_array_index (versions, i);
-		depend = zif_depend_new ();
-		zif_depend_set_flag (depend, flag);
-		zif_depend_set_name (depend, name);
-		zif_depend_set_version (depend, version);
+		depend = zif_depend_new_from_values (name,
+						     flag,
+						     version);
 		g_ptr_array_add (array, depend);
 	}
 	return array;

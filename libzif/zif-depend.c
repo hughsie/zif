@@ -620,6 +620,35 @@ out:
 }
 
 /**
+ * zif_depend_new_from_data:
+ * @name: The depend name
+ * @flag: The depend flag
+ * @version: The depend version
+ *
+ * Return value: A new #ZifDepend instance, or %NULL for error
+ *
+ * Since: 0.2.4
+ **/
+ZifDepend *
+zif_depend_new_from_values (const gchar *name,
+			    ZifDependFlag flag,
+			    const gchar *version)
+{
+	ZifDepend *depend;
+
+	g_assert (name != NULL);
+	g_assert (version != NULL);
+
+	/* create the new object */
+	depend = g_object_new (ZIF_TYPE_DEPEND,
+			       "name", name,
+			       "flag", flag,
+			       "version", version,
+			       NULL);
+	return depend;
+}
+
+/**
  * zif_depend_get_property:
  **/
 static void
