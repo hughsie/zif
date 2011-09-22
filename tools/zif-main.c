@@ -6002,6 +6002,9 @@ main (int argc, char *argv[])
 	/* do stuff on ctrl-c */
 	signal (SIGINT, zif_main_sigint_cb);
 
+	/* don't let GIO start it's own session bus */
+	g_unsetenv ("DBUS_SESSION_BUS_ADDRESS");
+
 	/* verbose? */
 	if (verbose) {
 		g_log_set_fatal_mask (NULL, G_LOG_LEVEL_ERROR | G_LOG_LEVEL_CRITICAL);
