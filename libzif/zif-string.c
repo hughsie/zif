@@ -57,7 +57,7 @@ ZifString *
 zif_string_new (const gchar *value)
 {
 	ZifStringInternal *string;
-	string = g_new0 (ZifStringInternal, 1);
+	string = g_slice_new (ZifStringInternal);
 	string->count = 1;
 	string->value = g_strdup (value);
 	return (ZifString *) string;
@@ -78,7 +78,7 @@ ZifString *
 zif_string_new_value (gchar *value)
 {
 	ZifStringInternal *string;
-	string = g_new0 (ZifStringInternal, 1);
+	string = g_slice_new (ZifStringInternal);
 	string->count = 1;
 	string->value = value;
 	return (ZifString *) string;
@@ -100,7 +100,7 @@ ZifString *
 zif_string_new_static (const gchar *value)
 {
 	ZifStringInternal *string;
-	string = g_new0 (ZifStringInternal, 1);
+	string = g_slice_new (ZifStringInternal);
 	string->count = 1;
 	string->value = (gchar*) value;
 	string->is_static = TRUE;
@@ -146,7 +146,7 @@ zif_string_unref (ZifString *string)
 	if (internal->count == 0) {
 		if (!internal->is_static)
 			g_free (internal->value);
-		g_free (internal);
+		g_slice_free (ZifStringInternal, internal);
 		internal = NULL;
 	}
 	return (ZifString *) internal;
