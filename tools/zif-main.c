@@ -4133,6 +4133,7 @@ zif_cmd_search_name (ZifCmdPrivate *priv, gchar **values, GError **error)
 	if (!ret)
 		goto out;
 
+	zif_progress_bar_end (priv->progressbar);
 	zif_print_packages (array);
 out:
 	if (store_array != NULL)
