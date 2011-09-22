@@ -2072,15 +2072,18 @@ static gboolean
 zif_cmd_prompt (const gchar *title)
 {
 	gchar input;
+	while (TRUE) {
+		g_print ("%s [y/N] ", title);
 
-	g_print ("%s [y/N] ", title);
-
-	fflush (stdin);
-	input = zif_cmd_getchar_unbuffered ();
-	g_print ("%c\n", input);
-	if (input == 'y' || input == 'Y')
-		return TRUE;
-	return FALSE;
+		fflush (stdin);
+		input = zif_cmd_getchar_unbuffered ();
+		g_print ("%c\n", input);
+	
+		if (input == 'y' || input == 'Y')
+			return TRUE;
+		else if (input == 'n' || input == 'N')
+			return FALSE;
+	}
 }
 
 /**
