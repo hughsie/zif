@@ -310,14 +310,32 @@ out:
  * Sets the store used to create this package, which we may need of we ever
  * need to ensure() data at runtime.
  *
+ * This also sets the package to have a trust of
+ * %ZIF_PACKAGE_TRUST_KIND_PUBKEY_UNVERIFIED if the repo claims to
+ * support GPG signing or %ZIF_PACKAGE_TRUST_KIND_NONE otherwise.
+ *
  * Since: 0.1.0
  **/
 void
-zif_package_remote_set_store_remote (ZifPackageRemote *pkg, ZifStoreRemote *store)
+zif_package_remote_set_store_remote (ZifPackageRemote *pkg,
+				     ZifStoreRemote *store)
 {
+	const gchar *pubkey;
+
 	g_return_if_fail (ZIF_IS_PACKAGE_REMOTE (pkg));
 	g_return_if_fail (ZIF_IS_STORE_REMOTE (store));
 	g_return_if_fail (pkg->priv->store_remote == NULL);
+
+	/* is the remote store protected with public keys */
+	pubkey = zif_store_remote_get_pubkey (store);
+	if (pubkey == NULL) {
+		zif_package_set_trust_kind (ZIF_PACKAGE (pkg),
+					    ZIF_PACKAGE_TRUST_KIND_NONE);
+	} else {
+		zif_package_set_trust_kind (ZIF_PACKAGE (pkg),
+					    ZIF_PACKAGE_TRUST_KIND_PUBKEY_UNVERIFIED);
+	}
+
 	pkg->priv->store_remote = g_object_ref (store);
 }
 

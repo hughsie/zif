@@ -67,9 +67,10 @@ typedef enum {
 } ZifPackageEnsureType;
 
 typedef enum {
-	ZIF_PACKAGE_TRUST_KIND_UNKNOWN, /* must be first */
+	ZIF_PACKAGE_TRUST_KIND_UNKNOWN,			/* must be first */
 	ZIF_PACKAGE_TRUST_KIND_NONE,
 	ZIF_PACKAGE_TRUST_KIND_PUBKEY,
+	ZIF_PACKAGE_TRUST_KIND_PUBKEY_UNVERIFIED,	/* Since: 0.2.4 */
 	ZIF_PACKAGE_TRUST_KIND_LAST
 } ZifPackageTrustKind;
 

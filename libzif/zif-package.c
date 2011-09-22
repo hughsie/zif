@@ -1243,6 +1243,8 @@ zif_package_trust_kind_to_string (ZifPackageTrustKind trust_kind)
 		return "none";
 	if (trust_kind == ZIF_PACKAGE_TRUST_KIND_PUBKEY)
 		return "pubkey";
+	if (trust_kind == ZIF_PACKAGE_TRUST_KIND_PUBKEY_UNVERIFIED)
+		return "pubkey-unverified";
 	return "unknown";
 }
 
@@ -1939,8 +1941,14 @@ zif_package_set_trust_kind (ZifPackage *package, ZifPackageTrustKind trust_kind)
  * Gets the package trusted status. Packages that are trusted are
  * usually signed by a trusted private key.
  *
- * The trust will not be set on a package until
- * zif_transaction_prepare() has been called.
+ * The trust value %ZIF_PACKAGE_TRUST_KIND_PUBKEY will not be set on a
+ * package until zif_transaction_prepare() has been called and the
+ * actual package has been downloaded and verified.
+ *
+ * Packages that are supposed to be trusted but cannot be verified have
+ * the trust value %ZIF_PACKAGE_TRUST_KIND_PUBKEY_UNVERIFIED. This is
+ * _only_ an indication that the repository that the package is supposed
+ * to come from has public key signing enabled.
  *
  * Return value: The #ZifPackageTrustKind enumerated type.
  *

@@ -2015,6 +2015,10 @@ zif_package_local_func (void)
 	g_assert (g_str_has_prefix (id, "RSA/SHA256"));
 	g_assert (g_str_has_suffix (id, "Key ID 421caddb97a1071f"));
 
+	/* check trust */
+	g_assert_cmpint (zif_package_get_trust_kind (pkg), ==,
+			 ZIF_PACKAGE_TRUST_KIND_UNKNOWN);
+
 	g_object_unref (pkg);
 
 	zif_check_singletons ();
@@ -2033,6 +2037,10 @@ zif_package_meta_func (void)
 	state = zif_state_new ();
 	pkg = zif_package_meta_new ();
 	g_assert (pkg != NULL);
+
+	/* check trust */
+	g_assert_cmpint (zif_package_get_trust_kind (pkg), ==,
+			 ZIF_PACKAGE_TRUST_KIND_UNKNOWN);
 
 	filename = zif_test_get_data_file ("test.spec");
 	ret = zif_package_meta_set_from_filename (ZIF_PACKAGE_META(pkg), filename, &error);
@@ -2163,8 +2171,16 @@ zif_package_remote_func (void)
 	g_assert_no_error (error);
 	g_assert (ret);
 
+	/* check trust */
+	g_assert_cmpint (zif_package_get_trust_kind (pkg), ==,
+			 ZIF_PACKAGE_TRUST_KIND_UNKNOWN);
+
 	/* set remote store */
 	zif_package_remote_set_store_remote (ZIF_PACKAGE_REMOTE (package), store_remote);
+
+	/* check trust */
+	g_assert_cmpint (zif_package_get_trust_kind (package), ==,
+			 ZIF_PACKAGE_TRUST_KIND_PUBKEY_UNVERIFIED);
 
 	/* get the update detail */
 	zif_state_reset (state);
@@ -3168,20 +3184,21 @@ zif_store_meta_func (void)
 static void
 zif_store_remote_func (void)
 {
-	ZifGroups *groups;
-	ZifStoreRemote *store;
-	ZifStoreLocal *store_local;
-	ZifConfig *config;
-	ZifState *state;
-	ZifDownload *download;
-	GPtrArray *array;
-	gboolean ret;
-	GError *error = NULL;
-	ZifCategory *category;
 	const gchar *in_array[] = { NULL, NULL };
+	gboolean ret;
 	gchar *filename;
 	gchar *filename_db;
 	gchar *pidfile;
+	GError *error = NULL;
+	GPtrArray *array;
+	ZifCategory *category;
+	ZifConfig *config;
+	ZifDownload *download;
+	ZifGroups *groups;
+	ZifPackage *package_tmp;
+	ZifState *state;
+	ZifStoreLocal *store_local;
+	ZifStoreRemote *store;
 
 	/* set this up as dummy */
 	config = zif_config_new ();
@@ -3269,6 +3286,13 @@ zif_store_remote_func (void)
 	g_assert_no_error (error);
 	g_assert (array != NULL);
 	g_assert_cmpint (array->len, ==, 1);
+
+	/* check the package */
+	package_tmp = g_ptr_array_index (array, 0);
+	g_assert_cmpstr (zif_package_get_name (package_tmp), ==,
+			 "gnome-power-manager");
+	g_assert_cmpint (zif_package_get_trust_kind (package_tmp), ==,
+			 ZIF_PACKAGE_TRUST_KIND_PUBKEY_UNVERIFIED);
 
 	g_ptr_array_unref (array);
 
