@@ -227,6 +227,32 @@ zif_state_action_to_string_localized (ZifStateAction action)
 }
 
 /**
+ * zif_main_elipsize_middle_sha1:
+ **/
+static void
+zif_main_elipsize_middle_sha1 (gchar *filename)
+{
+	const guint hash_ends = 6; /* show this many chars between the "..." */
+	const guint hash_len = 64; /* sha1 */
+	guint len;
+
+	/* if this is a sha1-has prefixed filename like:
+	 * c723889aaa8c330b63397982a0bf012b78ed1c94a907ff96a1a7ba16c08bcb1e-primary.sqlite.bz2
+	 * then reduce it down to something like:
+	 * c723...cb1e-primary.sqlite.bz2 */
+	len = strlen (filename);
+	if (len > hash_len + 1 &&
+	    filename[hash_len] == '-') {
+		g_strlcpy (filename + hash_ends,
+			   "...",
+			   len);
+		g_strlcpy (filename + hash_ends + 3,
+			   filename + hash_len - hash_ends,
+			   len);
+	}
+}
+
+/**
  * zif_state_action_changed_cb:
  **/
 static void
@@ -235,9 +261,8 @@ zif_state_action_changed_cb (ZifState *state,
 			     const gchar *action_hint,
 			     ZifProgressBar *progressbar)
 {
-	const guint hash_ends = 4; /* show this many chars between the "..." */
-	const guint hash_len = 64; /* sha1 */
 	gchar *pretty_hint = NULL;
+	gchar **split = NULL;
 	guint len;
 
 	/* show nothing for hint cancel */
@@ -256,20 +281,15 @@ zif_state_action_changed_cb (ZifState *state,
 	/* only show basename for filenames */
 	} else if (action_hint[0] == '/') {
 
-		pretty_hint = g_path_get_basename (action_hint);
-		/* if this is a sha1-has prefixed filename like:
-		 * c723889aaa8c330b63397982a0bf012b78ed1c94a907ff96a1a7ba16c08bcb1e-primary.sqlite.bz2
-		 * then reduce it down to something like:
-		 * c723...cb1e-primary.sqlite.bz2 */
-		len = strlen (pretty_hint);
-		if (len > hash_len + 1 &&
-		    pretty_hint[hash_len] == '-') {
-			g_strlcpy (pretty_hint + hash_ends,
-				   "...",
-				   len);
-			g_strlcpy (pretty_hint + hash_ends + 3,
-				   pretty_hint + hash_len - hash_ends,
-				   len);
+		split = g_strsplit (action_hint, "/", -1);
+		len = g_strv_length (split);
+		if (len > 2) {
+			zif_main_elipsize_middle_sha1 (split[len-1]);
+			pretty_hint = g_build_filename (split[len-2],
+							split[len-1],
+							NULL);
+		} else {
+			pretty_hint = zif_package_id_get_name (action_hint);
 		}
 
 	/* show nice name for package */
@@ -283,6 +303,7 @@ zif_state_action_changed_cb (ZifState *state,
 	}
 	zif_progress_bar_set_detail (progressbar, pretty_hint);
 out:
+	g_strfreev (split);
 	g_free (pretty_hint);
 }
 
@@ -5990,12 +6011,10 @@ main (int argc, char *argv[])
 	/* 'Checking manifests' is the longest title, so 18 chars */
 	zif_progress_bar_set_padding (priv->progressbar, 18);
 
-	/* set the progressbar to be something sane - longest is likely:
-	 * '6153...4dba-prestodelta.sqlite.bz2 [841.4 KB/sec]' so ~45 chars */
 	ioctl (0, TIOCGWINSZ, &w);
 	terminal_cols = w.ws_col;
 	terminal_cols -= 19; /* title padding plus space */
-	terminal_cols -= 57; /* filename + [speed] */
+	terminal_cols -= 11; /* percentage */
 	if (terminal_cols < 0)
 		terminal_cols = 0;
 	zif_progress_bar_set_size (priv->progressbar, terminal_cols);

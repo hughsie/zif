@@ -55,8 +55,9 @@ zif_progress_bar_redraw (ZifProgressBar *progress_bar)
 	gchar *speed_tmp = NULL;
 	ZifProgressBarPrivate *priv = progress_bar->priv;
 
-	/* save cursor */
-	g_print ("%c7", 0x1B);
+	/* back up two lines */
+	if (priv->started)
+		g_print ("\033[2A");
 
 	/* print action */
 	if (priv->action != NULL) {
@@ -76,12 +77,12 @@ zif_progress_bar_redraw (ZifProgressBar *progress_bar)
 		g_print (" ");
 	g_print ("] ");
 	if (priv->percentage != ZIF_PROGRESS_BAR_PERCENTAGE_INVALID)
-		g_print ("%c%i%%%c ",
+		g_print ("%c%i%%%c\n",
 			 priv->allow_cancel ? '(' : '<',
 			 priv->percentage,
 			 priv->allow_cancel ? ')' : '>');
 	else
-		g_print ("       ");
+		g_print ("       \n");
 
 	/* print detail */
 	if (priv->detail != NULL) {
@@ -101,10 +102,8 @@ zif_progress_bar_redraw (ZifProgressBar *progress_bar)
 
 	for (i=section; i<priv->last_strlen_detail; i++)
 		g_print (" ");
+	g_print ("\n");
 	priv->last_strlen_detail = section + 1;
-
-	/* restore cursor */
-	g_print ("%c8", 0x1B);
 
 	/* started */
 	priv->started = TRUE;
@@ -125,7 +124,7 @@ zif_progress_bar_set_on_console (ZifProgressBar *progress_bar, gboolean on_conso
  * zif_progress_bar_set_padding:
  *
  *                          /----(percentage)
- *  Action         [========        ] <51%>  Detail text
+ *  Action         [========        ] <51%>  Detail text [Speed]
  *  \--(padding)--/\-----(size)----/  \---/
  *                                      (allow cancel)
  **/
@@ -302,8 +301,6 @@ zif_progress_bar_end (ZifProgressBar *progress_bar)
 	/* no console */
 	if (!progress_bar->priv->on_console)
 		return;
-
-	g_print ("\n");
 }
 
 /**
