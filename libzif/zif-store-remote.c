@@ -4221,16 +4221,6 @@ zif_store_remote_init (ZifStoreRemote *store)
 	ZifMd *md;
 
 	store->priv = ZIF_STORE_REMOTE_GET_PRIVATE (store);
-	store->priv->loaded = FALSE;
-	store->priv->loaded_metadata = FALSE;
-	store->priv->id = NULL;
-	store->priv->name = NULL;
-	store->priv->directory = NULL;
-	store->priv->name_expanded = NULL;
-	store->priv->enabled = FALSE;
-	store->priv->repo_filename = NULL;
-	store->priv->mirrorlist = NULL;
-	store->priv->metalink = NULL;
 	store->priv->config = zif_config_new ();
 	store->priv->monitor = zif_monitor_new ();
 	store->priv->lock = zif_lock_new ();
