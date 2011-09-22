@@ -83,6 +83,7 @@ struct _ZifStoreRemotePrivate
 	gchar			*cache_dir;		/* /var/cache/yum */
 	gchar			*repo_filename;		/* /etc/yum.repos.d/fedora.repo */
 	gchar			*media_id;		/* 1273587559.563492 */
+	gchar			*pubkey;		/* file:///etc/pki/rpm-gpg/RPM-GPG-KEY */
 	guint			 metadata_expire;	/* in seconds */
 	guint			 download_retries;
 	gboolean		 enabled;
@@ -1995,6 +1996,7 @@ zif_store_remote_load (ZifStore *store, ZifState *state, GError **error)
 {
 	gboolean got_baseurl = FALSE;
 	gboolean ret = TRUE;
+	gboolean gpgcheck;
 	gchar *baseurl_temp;
 	gchar *enabled = NULL;
 	gchar *filename;
@@ -2117,6 +2119,16 @@ zif_store_remote_load (ZifStore *store, ZifState *state, GError **error)
 	if (temp != NULL && temp[0] != '\0')
 		remote->priv->metalink = zif_config_expand_substitutions (remote->priv->config,
 									  temp, NULL);
+	g_free (temp);
+
+	/* get public key for repo */
+	gpgcheck = g_key_file_get_boolean (file, remote->priv->id, "gpgcheck", NULL);
+	temp = g_key_file_get_string (file, remote->priv->id, "gpgkey", NULL);
+	if (gpgcheck && temp != NULL) {
+		remote->priv->pubkey = zif_config_expand_substitutions (remote->priv->config,
+									temp,
+									NULL);
+	}
 	g_free (temp);
 
 	/* urgh.. yum allows mirrorlist= to be used as well as metalink= for metalink URLs */
@@ -3918,6 +3930,24 @@ out:
 }
 
 /**
+ * zif_store_remote_get_pubkey:
+ * @store: A #ZifStoreRemote
+ *
+ * Get the public key URL for this repository.
+ *
+ * Return value: The key URL, or %NULL.
+ *
+ * Since: 0.2.4
+ **/
+const gchar *
+zif_store_remote_get_pubkey (ZifStoreRemote *store)
+{
+	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), NULL);
+	g_return_val_if_fail (store->priv->id != NULL, NULL);
+	return store->priv->pubkey;
+}
+
+/**
  * zif_store_remote_get_enabled:
  * @store: A #ZifStoreRemote
  * @state: A #ZifState to use for progress reporting
@@ -4086,6 +4116,7 @@ zif_store_remote_file_monitor_cb (ZifMonitor *monitor, ZifStoreRemote *store)
 	g_free (store->priv->mirrorlist);
 	g_strfreev (store->priv->baseurl);
 	g_free (store->priv->metalink);
+	g_free (store->priv->pubkey);
 
 	store->priv->loaded = FALSE;
 	store->priv->loaded_metadata = FALSE;
@@ -4096,6 +4127,7 @@ zif_store_remote_file_monitor_cb (ZifMonitor *monitor, ZifStoreRemote *store)
 	store->priv->repo_filename = NULL;
 	store->priv->mirrorlist = NULL;
 	store->priv->metalink = NULL;
+	store->priv->pubkey = NULL;
 
 	g_debug ("store file changed");
 }
@@ -4119,6 +4151,7 @@ zif_store_remote_finalize (GObject *object)
 	g_strfreev (store->priv->baseurl);
 	g_free (store->priv->mirrorlist);
 	g_free (store->priv->metalink);
+	g_free (store->priv->pubkey);
 	g_free (store->priv->cache_dir);
 	g_free (store->priv->repomd_filename);
 	g_free (store->priv->directory);

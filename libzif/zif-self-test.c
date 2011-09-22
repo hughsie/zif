@@ -2324,6 +2324,10 @@ zif_repos_func (void)
 	g_assert (g_strstr_len (zif_store_remote_get_name (store, state, NULL), -1, "$") == NULL);
 	g_object_unref (store);
 
+	/* ensure we got the pubkey */
+	g_assert (g_str_has_prefix (zif_store_remote_get_pubkey (store),
+		  "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-"));
+
 	g_object_unref (state);
 	g_object_unref (repos);
 	g_object_unref (config);
