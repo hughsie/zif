@@ -1098,6 +1098,49 @@ out:
 }
 
 /**
+ * zif_md_primary_xml_what_requires_cb:
+ **/
+static gboolean
+zif_md_primary_xml_what_requires_cb (ZifPackage *package,
+				     gpointer user_data,
+				     ZifStrCompareFunc compare_func)
+{
+	guint i, j;
+	gboolean ret = FALSE;
+	GPtrArray *array = NULL;
+	ZifState *state_tmp;
+	ZifDepend *depend_tmp;
+	ZifDepend *depend;
+	GError *error = NULL;
+	GPtrArray *depends = (GPtrArray *) user_data;
+
+	state_tmp = zif_state_new ();
+	array = zif_package_get_requires (package, state_tmp, &error);
+	if (array == NULL) {
+		g_warning ("failed to get requires: %s", error->message);
+		g_error_free (error);
+		goto out;
+	}
+
+	/* find a depends string */
+	for (i=0; i<array->len; i++) {
+		depend_tmp = g_ptr_array_index (array, i);
+		for (j=0; j<depends->len; j++) {
+			depend = g_ptr_array_index (depends, j);
+			if (zif_depend_compare (depend_tmp, depend) == 0) {
+				ret = TRUE;
+				goto out;
+			}
+		}
+	}
+out:
+	g_object_unref (state_tmp);
+	if (array != NULL)
+		g_ptr_array_unref (array);
+	return ret;
+}
+
+/**
  * zif_md_primary_xml_what_obsoletes_cb:
  **/
 static gboolean
@@ -1193,6 +1236,22 @@ zif_md_primary_xml_what_provides (ZifMd *md, GPtrArray *depends,
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	return zif_md_primary_xml_filter (md,
 					  zif_md_primary_xml_what_provides_cb,
+					  (gpointer) depends,
+					  NULL,
+					  state,
+					  error);
+}
+
+/**
+ * zif_md_primary_xml_what_requires:
+ **/
+static GPtrArray *
+zif_md_primary_xml_what_requires (ZifMd *md, GPtrArray *depends,
+				  ZifState *state, GError **error)
+{
+	g_return_val_if_fail (zif_state_valid (state), NULL);
+	return zif_md_primary_xml_filter (md,
+					  zif_md_primary_xml_what_requires_cb,
 					  (gpointer) depends,
 					  NULL,
 					  state,
@@ -1416,6 +1475,7 @@ zif_md_primary_xml_class_init (ZifMdPrimaryXmlClass *klass)
 	md_class->search_group = zif_md_primary_xml_search_group;
 	md_class->search_pkgid = zif_md_primary_xml_search_pkgid;
 	md_class->what_provides = zif_md_primary_xml_what_provides;
+	md_class->what_requires = zif_md_primary_xml_what_requires;
 	md_class->what_obsoletes = zif_md_primary_xml_what_obsoletes;
 	md_class->what_conflicts = zif_md_primary_xml_what_conflicts;
 	md_class->resolve = zif_md_primary_xml_resolve;
