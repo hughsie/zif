@@ -1269,8 +1269,21 @@ zif_md_primary_xml_find_package (ZifMd *md,
 static GPtrArray *
 zif_md_primary_xml_get_packages (ZifMd *md, ZifState *state, GError **error)
 {
+	gboolean ret;
+	GPtrArray *array = NULL;
 	ZifMdPrimaryXml *primary_xml = ZIF_MD_PRIMARY_XML (md);
-	return g_ptr_array_ref (primary_xml->priv->array);
+
+	/* if not already loaded, load */
+	if (!primary_xml->priv->loaded) {
+		ret = zif_md_load (ZIF_MD (md), state, error);
+		if (!ret)
+			goto out;
+	}
+
+	/* just return a ref to the ZifPackage array */
+	array = g_ptr_array_ref (primary_xml->priv->array);
+out:
+	return array;
 }
 
 /**
