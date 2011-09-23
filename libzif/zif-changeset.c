@@ -33,6 +33,7 @@
 #include <stdlib.h>
 
 #include "zif-changeset.h"
+#include "zif-utils.h"
 
 #define ZIF_CHANGESET_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_CHANGESET, ZifChangesetPrivate))
 
@@ -140,28 +141,6 @@ zif_changeset_set_date (ZifChangeset *changeset, guint64 date)
 }
 
 /**
- * zif_changeset_strreplace:
- **/
-static gboolean
-zif_changeset_strreplace (GString *string, const gchar *find, const gchar *replace)
-{
-	gchar **array;
-	gchar *value;
-
-	/* common case, not found */
-	if (g_strstr_len (string->str, -1, find) == NULL)
-		return FALSE;
-
-	/* split apart and rejoin with new delimiter */
-	array = g_strsplit (string->str, find, 0);
-	value = g_strjoinv (replace, array);
-	g_strfreev (array);
-	g_string_assign (string, value);
-	g_free (value);
-	return TRUE;
-}
-
-/**
  * zif_changeset_set_author:
  * @changeset: A #ZifChangeset
  * @author: The changeset author
@@ -182,17 +161,17 @@ zif_changeset_set_author (ZifChangeset *changeset, const gchar *author)
 
 	/* try to unmangle */
 	temp = g_string_new (author);
-	zif_changeset_strreplace (temp, " at ", "@");
-	zif_changeset_strreplace (temp, "[at]", "@");
-	zif_changeset_strreplace (temp, " AT ", "@");
-	zif_changeset_strreplace (temp, "[AT]", "@");
-	zif_changeset_strreplace (temp, " dot ", ".");
-	zif_changeset_strreplace (temp, "[dot]", ".");
-	zif_changeset_strreplace (temp, " DOT ", ".");
-	zif_changeset_strreplace (temp, "[DOT]", ".");
-	zif_changeset_strreplace (temp, " gmail com", "@gmail.com");
-	zif_changeset_strreplace (temp, " googlemail com", "@googlemail.com");
-	zif_changeset_strreplace (temp, " redhat com", "@redhat.com");
+	zif_string_replace (temp, " at ", "@");
+	zif_string_replace (temp, "[at]", "@");
+	zif_string_replace (temp, " AT ", "@");
+	zif_string_replace (temp, "[AT]", "@");
+	zif_string_replace (temp, " dot ", ".");
+	zif_string_replace (temp, "[dot]", ".");
+	zif_string_replace (temp, " DOT ", ".");
+	zif_string_replace (temp, "[DOT]", ".");
+	zif_string_replace (temp, " gmail com", "@gmail.com");
+	zif_string_replace (temp, " googlemail com", "@googlemail.com");
+	zif_string_replace (temp, " redhat com", "@redhat.com");
 
 	changeset->priv->author = g_string_free (temp, FALSE);
 }

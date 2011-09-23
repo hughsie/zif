@@ -1497,3 +1497,84 @@ out:
 	g_strfreev (lines);
 	return file;
 }
+
+/**
+ * zif_string_replace: (skip):
+ * @string: A GString
+ * @search: The string to search for
+ * @replace: The string to replace with
+ *
+ * Replaces all instances of @search with @replace trying to be as fast
+ * as possible and only reallocating the string when @replace is larger
+ * than @search.
+ *
+ * Return value: The number of replacements that were done.
+ *
+ * Since: 0.2.4
+ **/
+guint
+zif_string_replace (GString *string,
+		    const gchar *search,
+		    const gchar *replace)
+{
+	guint s_len = strlen (search);
+	guint r_len = strlen (replace);
+	gchar *tmp;
+	guint replacements = 0;
+	guint extra_size;
+
+	g_return_val_if_fail (string != NULL, 0);
+	g_return_val_if_fail (search != NULL, 0);
+	g_return_val_if_fail (replace != NULL, 0);
+
+	/* trivial */
+	if (string->len == 0)
+		goto out;
+
+	/* get the first found */
+	tmp = strstr (string->str, search);
+	if (tmp == NULL)
+		goto out;
+
+	/* CASE 1: no need to realloc, no need to shunt */
+	if (r_len == s_len) {
+		while (tmp != NULL)  {
+			memmove (tmp, replace, r_len);
+			replacements++;
+			tmp = strstr (tmp + r_len, search);
+		};
+		goto out;
+	}
+
+	/* CASE 2: no need to realloc, but need to shunt */
+	if (r_len < s_len) {
+		while (tmp != NULL)  {
+			memmove (tmp, replace, r_len);
+			memmove (tmp + r_len,
+				 tmp + s_len,
+				 strlen (tmp + s_len) + 1);
+			string->len -= (s_len - r_len);
+			replacements++;
+			tmp = strstr (tmp + r_len, search);
+		};
+		goto out;
+	}
+
+	/* CASE 3: need to realloc, need to shunt */
+	while (tmp != NULL)  {
+		replacements++;
+		tmp = strstr (tmp + s_len, search);
+	};
+	extra_size = (r_len - s_len) * replacements;
+	g_string_set_size (string, string->len + extra_size);
+
+	/* now we've re-alloc'd the string, shunt */
+	tmp = strstr (string->str, search);
+	while (tmp != NULL)  {
+		memmove (tmp + r_len, tmp + s_len, strlen (tmp));
+		memmove (tmp, replace, r_len);
+		tmp = strstr (tmp + r_len, search);
+	};
+out:
+	return replacements;
+}

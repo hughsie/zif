@@ -115,6 +115,9 @@ gboolean	 zif_str_compare_glob		(const gchar	*a,
 						 const gchar	*b);
 gboolean	 zif_str_compare_equal		(const gchar	*a,
 						 const gchar	*b);
+guint		 zif_string_replace		(GString	*string,
+						 const gchar	*search,
+						 const gchar	*replace);
 
 G_END_DECLS
 

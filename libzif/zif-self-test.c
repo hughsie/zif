@@ -1059,6 +1059,7 @@ zif_download_func (void)
 	g_clear_error (&error);
 	g_free (filename);
 
+#if 0
 	/* try to download a file from FTP */
 	filename = g_build_filename (zif_tmpdir, "LATEST", NULL);
 	ret = zif_download_file (download,
@@ -1068,6 +1069,7 @@ zif_download_func (void)
 	g_assert (ret);
 	g_assert (g_file_test (filename, G_FILE_TEST_EXISTS));
 	g_free (filename);
+#endif
 out:
 	if (cancellable != NULL)
 		g_object_unref (cancellable);
@@ -3643,6 +3645,7 @@ zif_utils_func (void)
 	gdouble time_iter;
 	gdouble time_split;
 	GError *error = NULL;
+	GString *str;
 	GTimer *timer;
 	guint i;
 	guint se;
@@ -3822,6 +3825,41 @@ zif_utils_func (void)
 	/* verify with invalid version */
 	ret = zif_package_id_to_nevra ("kernel;0.1;i386;fedora", &sn, &se, &sv, &sr, &sa);
 	g_assert (!ret);
+
+	/* test string replacement */
+	str = g_string_new ("We would like to go to go!");
+
+	/* nothing */
+	zif_string_replace (str, "tree", "want");
+	g_assert_cmpstr (str->str, ==, "We would like to go to go!");
+	g_assert_cmpint (str->len, ==, strlen (str->str));
+
+	/* no replacement text */
+	zif_string_replace (str, "We ", "");
+	g_assert_cmpstr (str->str, ==, "would like to go to go!");
+	g_assert_cmpint (str->len, ==, strlen (str->str));
+
+	/* same */
+	zif_string_replace (str, "like", "want");
+	g_assert_cmpstr (str->str, ==, "would want to go to go!");
+	g_assert_cmpint (str->len, ==, strlen (str->str));
+
+	/* shorter */
+	zif_string_replace (str, "to go", "it");
+	g_assert_cmpstr (str->str, ==, "would want it it!");
+	g_assert_cmpint (str->len, ==, strlen (str->str));
+
+	/* longer */
+	zif_string_replace (str, "would", "should not");
+	g_assert_cmpstr (str->str, ==, "should not want it it!");
+	g_assert_cmpint (str->len, ==, strlen (str->str));
+
+	/* multiple */
+	zif_string_replace (str, " ", "_");
+	g_assert_cmpstr (str->str, ==, "should_not_want_it_it!");
+	g_assert_cmpint (str->len, ==, strlen (str->str));
+
+	g_string_free (str, TRUE);
 
 	zif_check_singletons ();
 }
@@ -4057,6 +4095,7 @@ main (int argc, char **argv)
 	g_debug ("Created scratch area %s", zif_tmpdir);
 
 	/* tests go here */
+	g_test_add_func ("/zif/utils", zif_utils_func);
 	g_test_add_func ("/zif/state", zif_state_func);
 	g_test_add_func ("/zif/changeset", zif_changeset_func);
 	g_test_add_func ("/zif/config", zif_config_func);
@@ -4095,7 +4134,6 @@ main (int argc, char **argv)
 	g_test_add_func ("/zif/transaction", zif_transaction_func);
 	g_test_add_func ("/zif/update-info", zif_update_info_func);
 	g_test_add_func ("/zif/update", zif_update_func);
-	g_test_add_func ("/zif/utils", zif_utils_func);
 
 	/* go go go! */
 	retval = g_test_run ();

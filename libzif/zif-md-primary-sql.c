@@ -237,22 +237,6 @@ out:
 }
 
 /**
- * zif_md_primary_sql_strreplace:
- **/
-static gchar *
-zif_md_primary_sql_strreplace (const gchar *text, const gchar *find, const gchar *replace)
-{
-	gchar **array;
-	gchar *retval;
-
-	/* split apart and rejoin with new delimiter */
-	array = g_strsplit (text, find, 0);
-	retval = g_strjoinv (replace, array);
-	g_strfreev (array);
-	return retval;
-}
-
-/**
  * zif_md_primary_sql_get_statement_for_pred:
  **/
 static gchar *
@@ -260,32 +244,34 @@ zif_md_primary_sql_get_statement_for_pred (const gchar *pred,
 					   gchar **search,
 					   gboolean use_glob)
 {
-	guint i;
 	const guint max_items = 20;
-	GString *statement;
-	gchar *temp;
-	gchar *pred_glob;
 	gchar **search_noarch = NULL;
+	gchar *tmp;
+	GString *pred_glob;
+	GString *statement;
+	GString *temp;
+	guint i;
 
 	/* use stripped arch? */
 	if (g_strstr_len (pred, -1, "$NOARCH") != NULL) {
 		search_noarch = g_strdupv (search);
 		for (i=0; search[i] != NULL; i++) {
-			temp = strrchr (search_noarch[i], '.');
-			if (temp != NULL)
-				*temp = '\0';
+			tmp = strrchr (search_noarch[i], '.');
+			if (tmp != NULL)
+				*tmp = '\0';
 		}
 	}
 
 	/* glob? */
+	pred_glob = g_string_new (pred);
 	if (use_glob) {
-		pred_glob = zif_md_primary_sql_strreplace (pred,
-							   " $MATCH ",
-							   " GLOB ");
+		zif_string_replace (pred_glob,
+				    "$MATCH",
+				    "GLOB");
 	} else {
-		pred_glob = zif_md_primary_sql_strreplace (pred,
-							   " $MATCH ",
-							   " = ");
+		zif_string_replace (pred_glob,
+				    "$MATCH",
+				    "=");
 	}
 
 	/* search with predicate */
@@ -293,20 +279,21 @@ zif_md_primary_sql_get_statement_for_pred (const gchar *pred,
 	for (i=0; search[i] != NULL; i++) {
 		if (i % max_items == 0)
 			g_string_append (statement, ZIF_MD_PRIMARY_SQL_HEADER " WHERE ");
-		temp = zif_md_primary_sql_strreplace (pred_glob,
-						      "$SEARCH",
-						      search[i]);
+		temp = g_string_new (pred_glob->str);
+		zif_string_replace (temp,
+				    "$SEARCH",
+				    search[i]);
 		if (search_noarch != NULL) {
-			temp = zif_md_primary_sql_strreplace (temp,
-							      "$NOARCH",
-							      search_noarch[i]);
+			zif_string_replace (temp,
+					    "$NOARCH",
+					    search_noarch[i]);
 		}
-		g_string_append (statement, temp);
+		g_string_append (statement, temp->str);
 		if (i % max_items == max_items - 1)
 			g_string_append (statement, ";\n");
 		else
 			g_string_append (statement, " OR ");
-		g_free (temp);
+		g_string_free (temp, TRUE);
 	}
 
 	/* remove trailing OR entry */
@@ -315,7 +302,7 @@ zif_md_primary_sql_get_statement_for_pred (const gchar *pred,
 		g_string_append (statement, ";\n");
 	}
 	g_string_append (statement, "END;");
-	g_free (pred_glob);
+	g_string_free (pred_glob, TRUE);
 	g_strfreev (search_noarch);
 	return g_string_free (statement, FALSE);
 }

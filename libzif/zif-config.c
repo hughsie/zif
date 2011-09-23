@@ -370,28 +370,6 @@ out:
 }
 
 /**
- * zif_config_strreplace:
- **/
-static gboolean
-zif_config_strreplace (GString *string, const gchar *find, const gchar *replace)
-{
-	gchar **array;
-	gchar *value;
-
-	/* common case, not found */
-	if (g_strstr_len (string->str, -1, find) == NULL)
-		return FALSE;
-
-	/* split apart and rejoin with new delimiter */
-	array = g_strsplit (string->str, find, 0);
-	value = g_strjoinv (replace, array);
-	g_strfreev (array);
-	g_string_assign (string, value);
-	g_free (value);
-	return TRUE;
-}
-
-/**
  * zif_config_expand_substitutions:
  * @config: A #ZifConfig
  * @text: The string to scan, e.g. "http://fedora/$releasever/$basearch/moo.rpm"
@@ -426,9 +404,9 @@ zif_config_expand_substitutions (ZifConfig *config, const gchar *text, GError **
 
 	/* do the replacements */
 	string = g_string_new (text);
-	zif_config_strreplace (string, "$releasever", releasever);
-	zif_config_strreplace (string, "$basearch", basearch);
-	zif_config_strreplace (string, "$srcdir", TOP_SRCDIR);
+	zif_string_replace (string, "$releasever", releasever);
+	zif_string_replace (string, "$basearch", basearch);
+	zif_string_replace (string, "$srcdir", TOP_SRCDIR);
 
 	/* success */
 	retval = g_string_free (string, FALSE);
