@@ -55,7 +55,6 @@ main (int argc, char **argv)
 	state = zif_state_new ();
 
 	/* get all the packages in the store */
-	zif_state_reset (state);
 	packages = zif_store_get_packages (store, state, &error);
 	g_assert_no_error (error);
 	g_assert (packages != NULL);

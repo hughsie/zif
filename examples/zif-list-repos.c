@@ -55,7 +55,6 @@ main (int argc, char **argv)
 	state = zif_state_new ();
 
 	/* get all the enabled repos */
-	zif_state_reset (state);
 	stores = zif_repos_get_stores_enabled (repos, state, &error);
 	g_assert_no_error (error);
 	g_assert (stores != NULL);
