@@ -1,3 +1,73 @@
+Version 0.2.4
+~~~~~~~~~~~~~
+Released: 2011-09-23
+
+Notes:
+ - Lots of new functionality to the 'zif' command line tool
+ - 65% less memory required when depsolving
+ - 25% faster when starting up from cold
+ - Lots of issues fixed reported from many people -- thanks!
+
+New Features:
+ - Add a new zif command 'build-depends' (Richard Hughes)
+ - Add a new zif command 'downgrade' (Richard Hughes)
+ - Add a new zif command 'history' (Richard Hughes)
+ - Add a new ZifStateAction of ZIF_STATE_ACTION_CHECKING_UPDATES (Richard Hughes)
+ - Add a new ZifStateAction of ZIF_STATE_ACTION_LOADING_RPMDB (Richard Hughes)
+ - Add architecture and version resolve filtering (Richard Hughes)
+ - Add a simple website with a single page (Richard Hughes)
+ - Add lzma decompress support (Anders F Bjorklund)
+ - Add missing commands to the bash completion script (Elad Alfassa)
+ - Add missing test config (Anders F Bjorklund)
+ - Add the environment variable ZIF_SQL_DEBUG for debugging queries (Richard Hughes)
+ - Add zif_depend_new_from_values() as it's more efficient (Richard Hughes)
+ - Add zif_package_get_name_version() to get the cached string (Richard Hughes)
+ - Add zif_package_set_repo_id() to allow us to set the repo_id (Richard Hughes)
+ - Add zif_store_remote_get_pubkey() to get the gpgkey for the repo (Richard Hughes)
+ - Add zif_store_resolve_full() to resolve with lookup flags (Richard Hughes)
+ - Add zif_string_replace() to make replacing substrings efficient (Richard Hughes)
+ - Allow the user to use globs or regular expressions (Richard Hughes)
+ - Enable GObject introspection support (Richard Hughes)
+ - Initial work on improving the website (Elad Alfassa)
+ - Scale the progressbar depending on the width of the terminal (Richard Hughes)
+ - Set the effective UID and command line for the transaction (Richard Hughes)
+ - Set the pakage trust to UNVERIFIED if it's supposed to be signed (Richard Hughes)
+ - Show the user the total download size before the transaction (Richard Hughes)
+ - Support non-standard multiline repo files (Richard Hughes)
+ - Support repo URLs that start with file:// (Richard Hughes)
+ - Track transactions to provide a history feature (Richard Hughes)
+ - Use wget to download files from FTP servers (Richard Hughes)
+
+Bugfixes:
+ - Alias makecache to refresh-cache for yum compatibility (Richard Hughes)
+ - Allow Resolve(zif.i386) to match zif.noarch (Richard Hughes)
+ - Do not abort the transaction when a pubkey is already been added (Richard Hughes)
+ - Do not crash if a repo file is empty (Richard Hughes)
+ - Do not fail 'make check' if ~/Code/zif does not exist (Richard Hughes)
+ - Don't assume a provide array has a best depend (Richard Hughes)
+ - Don't let GIO start it's own session bus (Richard Hughes)
+ - Don't scatter the progressbar when doing 'zif info zif\*' (Richard Hughes)
+ - Elipsize filenames prefixed with a SHA1 hash (Richard Hughes)
+ - Ensure all the packages are downloaded on the command line (Richard Hughes)
+ - Ensure that packages from the yumdb are marked as installed (Richard Hughes)
+ - Ensure the rpmdb is only loaded once in the command line (Richard Hughes)
+ - Ensure the ZifMdPrimaryXml is loaded before we get the package list (Richard Hughes)
+ - Ensure we set the 'upgrade' flag when adding updates (Richard Hughes)
+ - Fix building on RHEL6 (Farkas Levente)
+ - Fix up the provides filtering to be a bit more sane (Richard Hughes)
+ - Get the releasever correctly (Richard Hughes)
+ - If using skip-broken then don't cancel the install item (Richard Hughes)
+ - Ignore metalink if a baseurl is specified (Richard Hughes)
+ - Make zif_store_find_package() much quicker on a ZifStoreLocal (Richard Hughes)
+ - Mark the config file %config(noreplace) in the spec file example (Richard Hughes)
+ - Only prevent 'protected_packages' if it's a user action (Richard Hughes)
+ - Prefer the native arch when resolving if the flag is set (Richard Hughes)
+ - Put the zif command line tool into a subpackage (Richard Hughes)
+ - Remove the ZifDepend per-depend hash in ZifPackage (Richard Hughes)
+ - Require wget in zif.spec.in (Elad Alfassa)
+ - Set the installed package for new updates (Richard Hughes)
+ - When getting updates set the maximum metadata timeout to be 24h (Richard Hughes)
+
 Version 0.2.3
 ~~~~~~~~~~~~~
 Released: 2011-09-05
