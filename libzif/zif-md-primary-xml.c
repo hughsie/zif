@@ -651,6 +651,35 @@ zif_md_primary_xml_resolve_name_cb (ZifPackage *package,
 }
 
 /**
+ * zif_md_primary_xml_resolve_name_arch_kill_arch:
+ **/
+static gboolean
+zif_md_primary_xml_resolve_name_arch_kill_arch (ZifPackage *package,
+						gpointer user_data,
+						ZifStrCompareFunc compare_func)
+{
+	guint i;
+	const gchar *value;
+	gchar *tmp;
+	gchar **search = g_strdupv (user_data);
+
+	/* we don't use this code path for non-noarch packages as it
+	 * means copying the search GStrv each time */
+	for (i=0; search[i] != NULL; i++) {
+		tmp = strrchr (search[i], '.');
+		if (tmp != NULL)
+			*tmp = '\0';
+	}
+	value = zif_package_get_name (package);
+	for (i=0; search[i] != NULL; i++) {
+		if (compare_func (value, search[i]))
+			return TRUE;
+	}
+	g_strfreev (search);
+	return FALSE;
+}
+
+/**
  * zif_md_primary_xml_resolve_name_arch_cb:
  **/
 static gboolean
@@ -661,6 +690,15 @@ zif_md_primary_xml_resolve_name_arch_cb (ZifPackage *package,
 	guint i;
 	const gchar *value;
 	gchar **search = (gchar **) user_data;
+
+	/* a noarch package has to be handled specially */
+	value = zif_package_get_arch (package);
+	if (g_strcmp0 (value, "noarch") == 0) {
+		return zif_md_primary_xml_resolve_name_arch_kill_arch (package,
+								       user_data,
+								       compare_func);
+	}
+
 	value = zif_package_get_name_arch (package);
 	for (i=0; search[i] != NULL; i++) {
 		if (compare_func (value, search[i]))

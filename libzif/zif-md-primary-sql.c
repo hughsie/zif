@@ -265,14 +265,27 @@ zif_md_primary_sql_get_statement_for_pred (const gchar *pred,
 	GString *statement;
 	gchar *temp;
 	gchar *pred_glob;
+	gchar **search_noarch = NULL;
+
+	/* use stripped arch? */
+	if (g_strstr_len (pred, -1, "$NOARCH") != NULL) {
+		search_noarch = g_strdupv (search);
+		for (i=0; search[i] != NULL; i++) {
+			temp = strrchr (search_noarch[i], '.');
+			if (temp != NULL)
+				*temp = '\0';
+		}
+	}
 
 	/* glob? */
 	if (use_glob) {
 		pred_glob = zif_md_primary_sql_strreplace (pred,
-							   " = ",
+							   " $MATCH ",
 							   " GLOB ");
 	} else {
-		pred_glob = g_strdup (pred);
+		pred_glob = zif_md_primary_sql_strreplace (pred,
+							   " $MATCH ",
+							   " = ");
 	}
 
 	/* search with predicate */
@@ -281,8 +294,13 @@ zif_md_primary_sql_get_statement_for_pred (const gchar *pred,
 		if (i % max_items == 0)
 			g_string_append (statement, ZIF_MD_PRIMARY_SQL_HEADER " WHERE ");
 		temp = zif_md_primary_sql_strreplace (pred_glob,
-						      "###",
+						      "$SEARCH",
 						      search[i]);
+		if (search_noarch != NULL) {
+			temp = zif_md_primary_sql_strreplace (temp,
+							      "$NOARCH",
+							      search_noarch[i]);
+		}
 		g_string_append (statement, temp);
 		if (i % max_items == max_items - 1)
 			g_string_append (statement, ";\n");
@@ -298,6 +316,7 @@ zif_md_primary_sql_get_statement_for_pred (const gchar *pred,
 	}
 	g_string_append (statement, "END;");
 	g_free (pred_glob);
+	g_strfreev (search_noarch);
 	return g_string_free (statement, FALSE);
 }
 
@@ -350,7 +369,7 @@ zif_md_primary_sql_resolve (ZifMd *md,
 
 	/* name */
 	if ((flags & ZIF_STORE_RESOLVE_FLAG_USE_NAME) > 0) {
-		statement = zif_md_primary_sql_get_statement_for_pred ("p.name = '###'",
+		statement = zif_md_primary_sql_get_statement_for_pred ("p.name $MATCH '$SEARCH'",
 								       search,
 								       use_glob);
 		state_local = zif_state_get_child (state);
@@ -373,8 +392,11 @@ zif_md_primary_sql_resolve (ZifMd *md,
 
 	/* name.arch */
 	if ((flags & ZIF_STORE_RESOLVE_FLAG_USE_NAME_ARCH) > 0) {
-		statement = zif_md_primary_sql_get_statement_for_pred ("p.name||'.'||"
-								       "p.arch = '###'",
+		statement = zif_md_primary_sql_get_statement_for_pred ("(p.name||'.'||"
+								       "p.arch $MATCH '$SEARCH')"
+								       " OR "
+								       "(p.name $MATCH '$NOARCH' AND "
+								       "p.arch $MATCH 'noarch')",
 								       search,
 								       use_glob);
 		state_local = zif_state_get_child (state);
@@ -399,7 +421,7 @@ zif_md_primary_sql_resolve (ZifMd *md,
 	if ((flags & ZIF_STORE_RESOLVE_FLAG_USE_NAME_VERSION) > 0) {
 		statement = zif_md_primary_sql_get_statement_for_pred ("p.name||'-'||"
 								       "p.version||'-'||"
-								       "p.release = '###'",
+								       "p.release $MATCH '$SEARCH'",
 								       search,
 								       use_glob);
 		state_local = zif_state_get_child (state);
@@ -425,7 +447,7 @@ zif_md_primary_sql_resolve (ZifMd *md,
 		statement = zif_md_primary_sql_get_statement_for_pred ("p.name||'-'||"
 								       "p.version||'-'||"
 								       "p.release||'.'||"
-								       "p.arch = '###'",
+								       "p.arch $MATCH '$SEARCH'",
 								       search,
 								       use_glob);
 		state_local = zif_state_get_child (state);
@@ -469,7 +491,7 @@ zif_md_primary_sql_search_name (ZifMd *md, gchar **search, ZifState *state, GErr
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* fuzzy name match */
-	statement = zif_md_primary_sql_get_statement_for_pred ("p.name LIKE '%%###%%'",
+	statement = zif_md_primary_sql_get_statement_for_pred ("p.name LIKE '%%$SEARCH%%'",
 							       search,
 							       FALSE);
 	array = zif_md_primary_sql_search (md_primary_sql, statement, state, error);
@@ -493,9 +515,9 @@ zif_md_primary_sql_search_details (ZifMd *md, gchar **search, ZifState *state, G
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* fuzzy details match */
-	statement = zif_md_primary_sql_get_statement_for_pred ("p.name LIKE '%%###%%' OR "
-							       "p.summary LIKE '%%###%%' OR "
-							       "p.description LIKE '%%###%%'",
+	statement = zif_md_primary_sql_get_statement_for_pred ("p.name LIKE '%%$SEARCH%%' OR "
+							       "p.summary LIKE '%%$SEARCH%%' OR "
+							       "p.description LIKE '%%$SEARCH%%'",
 							       search,
 							       FALSE);
 	array = zif_md_primary_sql_search (md_primary_sql, statement, state, error);
@@ -519,7 +541,7 @@ zif_md_primary_sql_search_group (ZifMd *md, gchar **search, ZifState *state, GEr
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* simple group match */
-	statement = zif_md_primary_sql_get_statement_for_pred ("p.rpm_group = '###'",
+	statement = zif_md_primary_sql_get_statement_for_pred ("p.rpm_group = '$SEARCH'",
 							       search,
 							       FALSE);
 	array = zif_md_primary_sql_search (md_primary_sql, statement, state, error);
@@ -543,7 +565,7 @@ zif_md_primary_sql_search_pkgid (ZifMd *md, gchar **search, ZifState *state, GEr
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* simple pkgid match */
-	statement = zif_md_primary_sql_get_statement_for_pred ("p.pkgid = '###'",
+	statement = zif_md_primary_sql_get_statement_for_pred ("p.pkgid = '$SEARCH'",
 							       search,
 							       FALSE);
 	array = zif_md_primary_sql_search (md_primary_sql, statement, state, error);

@@ -1613,6 +1613,7 @@ zif_md_primary_sql_func (void)
 	ZifConfig *config;
 	const gchar *data[] = { "gnome-power-manager.i686", "gnome-color-manager.i686", NULL };
 	const gchar *data_glob[] = { "gnome-*", NULL };
+	const gchar *data_noarch[] = { "perl-Log-Message-Simple.i686", NULL };
 	gchar *filename;
 
 	state = zif_state_new ();
@@ -1628,8 +1629,8 @@ zif_md_primary_sql_func (void)
 
 	zif_md_set_id (md, "fedora");
 	zif_md_set_checksum_type (md, G_CHECKSUM_SHA256);
-	zif_md_set_checksum (md, "5fc0d46554ca677568efdb601181f45e348c969e2aa1fcaf559f6597304a90b0");
-	zif_md_set_checksum_uncompressed (md, "463c0279007959629293cdeda33ad30faf4d8c4ed0124c7c29cf895e4d07476d");
+	zif_md_set_checksum (md, "3b7612fe14a6fbc06e3484e738edd08ca30ac14c2d86ea72feef8a39cfee757a");
+	zif_md_set_checksum_uncompressed (md, "4981bf8b555f84f392455b5e91f09954b9f9e187f43c33921bce9cd911917210");
 	filename = zif_test_get_data_file ("fedora/primary.sqlite.bz2");
 	zif_md_set_filename (md, filename);
 	g_free (filename);
@@ -1666,6 +1667,18 @@ zif_md_primary_sql_func (void)
 	g_assert_cmpint (array->len, ==, 1);
 	g_ptr_array_unref (array);
 
+	/* resolving by name.arch for a noarch package */
+	zif_state_reset (state);
+	array = zif_md_resolve_full (md,
+				     (gchar**)data_noarch,
+				     ZIF_STORE_RESOLVE_FLAG_USE_NAME_ARCH,
+				     state,
+				     &error);
+	g_assert_no_error (error);
+	g_assert (array != NULL);
+	g_assert_cmpint (array->len, ==, 1);
+	g_ptr_array_unref (array);
+
 	g_object_unref (state);
 	g_object_unref (config);
 	g_object_unref (md);
@@ -1678,6 +1691,7 @@ zif_md_primary_xml_func (void)
 {
 	const gchar *data[] = { "gnome-power-manager.i686", NULL };
 	const gchar *data_glob[] = { "gnome-power*", NULL };
+	const gchar *data_noarch[] = { "PackageKit-docs.i686", NULL };
 	gboolean ret;
 	gchar *filename;
 	GError *error = NULL;
@@ -1727,6 +1741,18 @@ zif_md_primary_xml_func (void)
 	g_assert_no_error (error);
 	g_assert (array != NULL);
 	g_assert_cmpint (array->len, ==, 3);
+	g_ptr_array_unref (array);
+
+	/* resolving by name.arch for a noarch package */
+	zif_state_reset (state);
+	array = zif_md_resolve_full (md,
+				     (gchar**)data_noarch,
+				     ZIF_STORE_RESOLVE_FLAG_USE_NAME_ARCH,
+				     state,
+				     &error);
+	g_assert_no_error (error);
+	g_assert (array != NULL);
+	g_assert_cmpint (array->len, ==, 1);
 	g_ptr_array_unref (array);
 
 	/* resolving by name.arch */
@@ -3314,7 +3340,7 @@ zif_store_remote_func (void)
 	array = zif_store_get_packages (ZIF_STORE (store), state, &error);
 	g_assert_no_error (error);
 	g_assert (array != NULL);
-	g_assert_cmpint (array->len, ==, 1);
+	g_assert_cmpint (array->len, ==, 2);
 
 	g_ptr_array_unref (array);
 
