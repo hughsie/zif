@@ -603,8 +603,6 @@ zif_filter_post_resolve (ZifCmdPrivate *priv,
 		goto out;
 	if (exactarch)
 		zif_package_array_filter_arch (array, archinfo);
-	else
-		zif_package_array_filter_best_arch (array, archinfo);
 
 	/* we only want the newest version */
 	zif_package_array_filter_newest (array);
