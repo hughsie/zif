@@ -2344,6 +2344,7 @@ zif_transaction_run (ZifCmdPrivate *priv, ZifTransaction *transaction, ZifState 
 		goto out;
 
 	/* show */
+	zif_progress_bar_end (priv->progressbar);
 	zif_main_show_transaction (transaction);
 
 	/* confirm */
@@ -2367,7 +2368,6 @@ zif_transaction_run (ZifCmdPrivate *priv, ZifTransaction *transaction, ZifState 
 	/* inform the user in case it's costing per megabyte */
 	if (size > 0) {
 		size_str = g_format_size (size);
-		zif_progress_bar_end (priv->progressbar);
 		/* TRANSLATORS: how much we have to download */
 		g_print ("%s: %s\n", _("Total download size"), size_str);
 		g_free (size_str);
@@ -2376,7 +2376,6 @@ zif_transaction_run (ZifCmdPrivate *priv, ZifTransaction *transaction, ZifState 
 	/* ask the question */
 	assume_yes = zif_config_get_boolean (priv->config, "assumeyes", NULL);
 	if (!assume_yes) {
-		zif_progress_bar_end (priv->progressbar);
 		if (!zif_cmd_prompt (_("Run transaction?"))) {
 			ret = FALSE;
 			/* TRANSLATORS: error message */
@@ -2431,15 +2430,15 @@ zif_transaction_run (ZifCmdPrivate *priv, ZifTransaction *transaction, ZifState 
 	if (!ret)
 		goto out;
 
-	/* print the output of the transaction, if any */
-	zif_main_report_transaction_warnings (transaction);
-
 	/* this section done */
 	ret = zif_state_done (state, error);
 	if (!ret)
 		goto out;
 
 	zif_progress_bar_end (priv->progressbar);
+
+	/* print the output of the transaction, if any */
+	zif_main_report_transaction_warnings (transaction);
 
 	/* TRANSLATORS: tell the user everything went okay */
 	g_print ("%s\n", _("Transaction success!"));
