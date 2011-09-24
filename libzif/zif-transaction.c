@@ -932,8 +932,9 @@ zif_transaction_add_remove (ZifTransaction *transaction, ZifPackage *package, GE
  * _zif_package_array_filter_best_provide:
  *
  * @array: ZifPackage's that provide @depend
+ * @package_reason: The package we're trying to install
  * @depend: The thing we're looking for
- * @package: (out): The best package that provides this dep
+ * @package_dep: (out): The best package that provides this dep
  *
  * This  is how yum does it:
  * Taken from: http://yum.baseurl.org/wiki/CompareProviders
@@ -949,12 +950,14 @@ zif_transaction_add_remove (ZifTransaction *transaction, ZifPackage *package, GE
 static gboolean
 _zif_package_array_filter_best_provide (ZifTransaction *transaction,
 					GPtrArray *array,
+					ZifPackage *package_reason,
 					ZifDepend *depend,
-					ZifPackage **package,
+					ZifPackage **package_dep,
 					ZifState *state,
 					GError **error)
 {
 	const gchar *arch_tmp;
+	const gchar *arch_reason;
 	gboolean exactarch;
 	gboolean ret = TRUE;
 	gchar *archinfo = NULL;
@@ -1011,9 +1014,12 @@ _zif_package_array_filter_best_provide (ZifTransaction *transaction,
 
 	/* shortcut */
 	if (array->len == 1) {
-		*package = g_object_ref (g_ptr_array_index (array, 0));
+		*package_dep = g_object_ref (g_ptr_array_index (array, 0));
 		goto out;
 	}
+
+	/* the architecture of the package that we want to install */
+	arch_reason = zif_package_get_arch (package_reason);
 
 	/* make up scores */
 	scores = g_new0 (gint, array->len);
@@ -1021,9 +1027,8 @@ _zif_package_array_filter_best_provide (ZifTransaction *transaction,
 		package_tmp = g_ptr_array_index (array, i);
 		arch_tmp = zif_package_get_arch (package_tmp);
 
-		/* any package not native arch gets lowered */
-		//TODO: the arch of the item_package, not the system arch!
-		if (!zif_arch_is_native (arch_tmp, archinfo))
+		/* any package not native arch to reason gets lowered */
+		if (!zif_arch_is_native (arch_tmp, arch_reason))
 			scores[i] -= 1000;
 
 		/* same srpm as item_package gets raised */
@@ -1058,8 +1063,8 @@ _zif_package_array_filter_best_provide (ZifTransaction *transaction,
 
 #if 0
 		/* return the newest */
-		*package = zif_package_array_get_newest (array, &error_local);
-		if (*package == NULL) {
+		*package_dep = zif_package_array_get_newest (array, &error_local);
+		if (*package_dep == NULL) {
 			ret = FALSE;
 			g_set_error (error,
 				     ZIF_TRANSACTION_ERROR,
@@ -1079,7 +1084,7 @@ _zif_package_array_filter_best_provide (ZifTransaction *transaction,
 	}
 
 	/* print the scores */
-	g_debug ("the scores on the doors:");
+	g_debug ("multiple provides scores:");
 	for (i = 0; i < array->len; i++) {
 		package_tmp = g_ptr_array_index (array, i);
 		g_debug ("%i\t%s",
@@ -1092,7 +1097,7 @@ _zif_package_array_filter_best_provide (ZifTransaction *transaction,
 	/* get the best package */
 	for (i = 0; i < array->len; i++) {
 		if (best_score == scores[i]) {
-			*package = g_object_ref (g_ptr_array_index (array, i));
+			*package_dep = g_object_ref (g_ptr_array_index (array, i));
 			break;
 		}
 	}
@@ -1150,6 +1155,7 @@ out:
  **/
 static gboolean
 zif_transaction_get_package_provide_from_local (ZifTransaction *transaction,
+						ZifPackage *package_reason,
 						ZifDepend *depend,
 						ZifPackage **package,
 						ZifState *state,
@@ -1205,6 +1211,7 @@ zif_transaction_get_package_provide_from_local (ZifTransaction *transaction,
 		state_local = zif_state_get_child (state);
 		ret = _zif_package_array_filter_best_provide (transaction,
 							      array,
+							      package_reason,
 							      depend,
 							      package,
 							      state_local,
@@ -1328,6 +1335,7 @@ out:
  **/
 static gboolean
 zif_transaction_get_package_provide_from_remote (ZifTransaction *transaction,
+						 ZifPackage *package_reason,
 						 ZifDepend *depend,
 						 ZifPackage **package,
 						 ZifState *state,
@@ -1438,6 +1446,7 @@ zif_transaction_get_package_provide_from_remote (ZifTransaction *transaction,
 	state_local = zif_state_get_child (state);
 	ret = _zif_package_array_filter_best_provide (transaction,
 						      array,
+						      package_reason,
 						      depend,
 						      package,
 						      state_local,
@@ -1503,6 +1512,7 @@ zif_transaction_resolve_install_depend (ZifTransactionResolve *data,
 	g_debug ("searching for %s in local",
 		 zif_depend_get_description (depend));
 	ret = zif_transaction_get_package_provide_from_local (data->transaction,
+							      item->package,
 							      depend,
 							      &package_provide,
 							      data->state,
@@ -1521,6 +1531,7 @@ zif_transaction_resolve_install_depend (ZifTransactionResolve *data,
 	/* provided by something to be installed */
 	g_debug ("searching in remote");
 	ret = zif_transaction_get_package_provide_from_remote (data->transaction,
+							       item->package,
 							       depend,
 							       &package_provide,
 							       data->state,
@@ -1675,6 +1686,7 @@ zif_transaction_resolve_remove_depend (ZifTransactionResolve *data,
 	g_debug ("searching for %s in local",
 		 zif_depend_get_description (depend));
 	ret = zif_transaction_get_package_provide_from_local (data->transaction,
+							      item->package,
 							      depend,
 							      &package_obsolete,
 							      data->state,

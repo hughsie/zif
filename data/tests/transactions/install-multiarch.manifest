@@ -1,0 +1,28 @@
+# Install a i386 package that needs other i386 depends when we have x64
+# versions already installed.
+#
+# The i386 dep should be chosen as it's closer to the arch of the
+# package we're trying to install
+
+local
+
+remote
+	libxml2;0:0.1.0-1;i386;meta
+		Provides
+			libxml2.so
+	libxml2;0:0.1.0-1;x86_64;meta
+		Provides
+			libxml2.so
+	adobeair;0:0.1.0-1;i386;meta
+		Requires
+			libxml2.so
+transaction
+	install
+		adobeair
+
+result
+	libxml2;0:0.1.0-1;i386;meta
+	adobeair;0:0.1.0-1;i386;meta
+
+config
+	archinfo=x86_64
