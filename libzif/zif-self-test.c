@@ -1716,10 +1716,19 @@ zif_md_primary_xml_func (void)
 
 	state = zif_state_new ();
 
+	/* get remote store */
+	store_remote = ZIF_STORE_REMOTE (zif_store_remote_new ());
+	filename = zif_test_get_data_file ("repos/fedora.repo");
+	ret = zif_store_remote_set_from_file (store_remote, filename, "fedora", state, &error);
+	g_free (filename);
+	g_assert_no_error (error);
+	g_assert (ret);
+
 	md = zif_md_primary_xml_new ();
 	g_assert (md != NULL);
 	g_assert (!zif_md_get_is_loaded (md));
 
+	zif_md_set_store (md, ZIF_STORE (store_remote));
 	zif_md_set_id (md, "fedora");
 	zif_md_set_checksum_type (md, G_CHECKSUM_SHA256);
 	zif_md_set_checksum (md, "33a0eed8e12f445618756b18aa49d05ee30069d280d37b03a7a15d1ec954f833");
@@ -1727,6 +1736,7 @@ zif_md_primary_xml_func (void)
 	filename = zif_test_get_data_file ("fedora/primary.xml.gz");
 	zif_md_set_filename (md, filename);
 	g_free (filename);
+	zif_state_reset (state);
 	ret = zif_md_load (md, state, &error);
 	g_assert_no_error (error);
 	g_assert (ret);
@@ -1768,19 +1778,8 @@ zif_md_primary_xml_func (void)
 	g_assert (array != NULL);
 	g_assert_cmpint (array->len, ==, 1);
 
-	/* get remote store */
-	store_remote = ZIF_STORE_REMOTE (zif_store_remote_new ());
-	zif_state_reset (state);
-	filename = zif_test_get_data_file ("repos/fedora.repo");
-	ret = zif_store_remote_set_from_file (store_remote, filename, "fedora", state, &error);
-	g_free (filename);
-	g_assert_no_error (error);
-	g_assert (ret);
-
 	/* check the provides array */
 	package = g_ptr_array_index (array, 0);
-	zif_package_remote_set_store_remote (ZIF_PACKAGE_REMOTE (package),
-					     store_remote);
 	zif_state_reset (state);
 	depends = zif_package_get_provides (package, state, &error);
 	g_assert_no_error (error);
@@ -1799,9 +1798,66 @@ zif_md_primary_xml_func (void)
 	g_assert (depends != NULL);
 	g_assert_cmpint (depends->len, ==, 66);
 	depend = g_ptr_array_index (depends, 0);
-	g_assert_cmpstr (zif_depend_get_description (depend), ==, "[libbonobo-activation.so.4 ~ ]");
+	g_assert_cmpstr (zif_depend_get_description (depend), ==,
+			 "[libbonobo-activation.so.4 ~ ]");
 	g_ptr_array_unref (depends);
 
+	/* get provides */
+	zif_state_reset (state);
+	depends = zif_package_get_provides (package, state, &error);
+	g_assert_no_error (error);
+	g_assert (depends != NULL);
+	g_assert_cmpint (depends->len, ==, 2);
+	depend = g_ptr_array_index (depends, 0);
+	g_assert_cmpstr (zif_depend_get_description (depend), ==,
+			 "[gnome-power-manager = 2.31.1-1.258.20100330git.fc13]");
+	g_ptr_array_unref (depends);
+
+	g_ptr_array_unref (array);
+
+	/* what provides a non-existant depend */
+	depends = zif_object_array_new ();
+	depend = zif_depend_new ();
+	ret = zif_depend_parse_description (depend,
+					    "nothing",
+					    &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+	zif_object_array_add (depends, depend);
+	zif_state_reset (state);
+	array = zif_md_what_provides (md,
+				      depends,
+				      state,
+				      &error);
+	g_assert_no_error (error);
+	g_assert (array != NULL);
+	g_assert_cmpint (array->len, ==, 0);
+	g_object_unref (depend);
+	g_ptr_array_unref (depends);
+	g_ptr_array_unref (array);
+
+	/* what provides g-p-m */
+	depends = zif_object_array_new ();
+	depend = zif_depend_new ();
+	ret = zif_depend_parse_description (depend,
+					    "gnome-power-manager",
+					    &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+	zif_object_array_add (depends, depend);
+	zif_state_reset (state);
+	array = zif_md_what_provides (md,
+				      depends,
+				      state,
+				      &error);
+	g_assert_no_error (error);
+	g_assert (array != NULL);
+	g_assert_cmpint (array->len, ==, 1);
+	package = g_ptr_array_index (array, 0);
+	g_assert_cmpstr (zif_package_get_id (package), ==,
+			 "gnome-power-manager;2.31.1-1.258.20100330git.fc13;i686;fedora");
+	g_object_unref (depend);
+	g_ptr_array_unref (depends);
 	g_ptr_array_unref (array);
 
 	g_object_unref (store_remote);

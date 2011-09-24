@@ -1084,7 +1084,7 @@ zif_md_primary_xml_what_provides_cb (ZifPackage *package,
 		depend_tmp = g_ptr_array_index (array, i);
 		for (j=0; j<depends->len; j++) {
 			depend = g_ptr_array_index (depends, j);
-			if (zif_depend_compare (depend_tmp, depend) == 0) {
+			if (zif_depend_satisfies (depend_tmp, depend)) {
 				ret = TRUE;
 				goto out;
 			}
@@ -1127,7 +1127,7 @@ zif_md_primary_xml_what_requires_cb (ZifPackage *package,
 		depend_tmp = g_ptr_array_index (array, i);
 		for (j=0; j<depends->len; j++) {
 			depend = g_ptr_array_index (depends, j);
-			if (zif_depend_compare (depend_tmp, depend) == 0) {
+			if (zif_depend_satisfies (depend_tmp, depend)) {
 				ret = TRUE;
 				goto out;
 			}
@@ -1170,7 +1170,7 @@ zif_md_primary_xml_what_obsoletes_cb (ZifPackage *package,
 		depend_tmp = g_ptr_array_index (array, i);
 		for (j=0; j<depends->len; j++) {
 			depend = g_ptr_array_index (depends, j);
-			if (zif_depend_compare (depend_tmp, depend) == 0) {
+			if (zif_depend_satisfies (depend_tmp, depend)) {
 				ret = TRUE;
 				goto out;
 			}
@@ -1213,7 +1213,7 @@ zif_md_primary_xml_what_conflicts_cb (ZifPackage *package,
 		depend_tmp = g_ptr_array_index (array, i);
 		for (j=0; j<depends->len; j++) {
 			depend = g_ptr_array_index (depends, j);
-			if (zif_depend_compare (depend_tmp, depend) == 0) {
+			if (zif_depend_satisfies (depend_tmp, depend)) {
 				ret = TRUE;
 				goto out;
 			}
