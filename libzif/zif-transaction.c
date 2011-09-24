@@ -73,6 +73,7 @@
 #include "zif-store-local.h"
 #include "zif-store-meta.h"
 #include "zif-transaction.h"
+#include "zif-utils.h"
 
 #define ZIF_TRANSACTION_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_TRANSACTION, ZifTransactionPrivate))
 
@@ -931,6 +932,7 @@ zif_transaction_add_remove (ZifTransaction *transaction, ZifPackage *package, GE
  * _zif_package_array_filter_best_provide:
  *
  * @array: ZifPackage's that provide @depend
+ * @depend: The thing we're looking for
  * @package: (out): The best package that provides this dep
  *
  * This  is how yum does it:
@@ -952,14 +954,18 @@ _zif_package_array_filter_best_provide (ZifTransaction *transaction,
 					ZifState *state,
 					GError **error)
 {
+	const gchar *arch_tmp;
 	gboolean exactarch;
 	gboolean ret = TRUE;
 	gchar *archinfo = NULL;
-	GError *error_local = NULL;
+	gint best_score = G_MININT;
+	gint *scores = NULL;
 	GPtrArray *depend_array = NULL;
 	guint i;
 	ZifDepend *best_depend = NULL;
+	ZifDepend *satisfies = NULL;
 	ZifPackage *package_tmp;
+	ZifState *state_tmp;
 
 	/* get the best depend for the results */
 	ret = zif_package_array_provide (array, depend, &best_depend,
@@ -992,28 +998,6 @@ _zif_package_array_filter_best_provide (ZifTransaction *transaction,
 	if (exactarch)
 		zif_package_array_filter_arch (array, archinfo);
 
-	/* filter these down so we get best architectures listed first */
-	if (array->len > 1) {
-		zif_package_array_filter_best_arch (array, archinfo);
-		g_debug ("after filtering by arch, array now %i packages", array->len);
-	}
-
-	/* if the depends are the same, choose the one with the biggest version */
-	if (best_depend != NULL && array->len > 1) {
-		depend_array = zif_object_array_new ();
-		zif_object_array_add (depend_array, best_depend);
-		ret = zif_package_array_filter_provide (array,
-							depend_array,
-							state, error);
-		if (!ret)
-			goto out;
-		g_debug ("after filtering by depend, array now %i packages", array->len);
-	}
-
-	/* we cannot find the newest entry for non-native packages */
-	if (array->len > 1)
-		zif_package_array_filter_arch (array, archinfo);
-
 	/* we didn't provide any packages of the correct arch */
 	if (array->len == 0) {
 		ret = FALSE;
@@ -1025,31 +1009,95 @@ _zif_package_array_filter_best_provide (ZifTransaction *transaction,
 		goto out;
 	}
 
-	/* filter these down so we get smallest names listed first */
-	if (array->len > 1) {
-		zif_package_array_filter_smallest_name (array);
-		g_debug ("after filtering by name length, array now %i packages", array->len);
-	}
-
-	/* success, but no results */
-	if (array->len == 0) {
-		*package = NULL;
+	/* shortcut */
+	if (array->len == 1) {
+		*package = g_object_ref (g_ptr_array_index (array, 0));
 		goto out;
 	}
 
-	/* return the newest */
-	*package = zif_package_array_get_newest (array, &error_local);
-	if (*package == NULL) {
-		ret = FALSE;
-		g_set_error (error,
-			     ZIF_TRANSACTION_ERROR,
-			     ZIF_TRANSACTION_ERROR_FAILED,
-			     "failed to get newest provide: %s",
-			     error_local->message);
-		g_error_free (error_local);
-		goto out;
+	/* make up scores */
+	scores = g_new0 (gint, array->len);
+	for (i = 0; i < array->len; i++) {
+		package_tmp = g_ptr_array_index (array, i);
+		arch_tmp = zif_package_get_arch (package_tmp);
+
+		/* any package not native arch gets lowered */
+		//TODO: the arch of the item_package, not the system arch!
+		if (!zif_arch_is_native (arch_tmp, archinfo))
+			scores[i] -= 1000;
+
+		/* same srpm as item_package gets raised */
+		//TODO
+
+		/* same base-name as item_package gets raised */
+		//TODO
+
+		/* give higher weight to i686 than i386 */
+		if (g_strcmp0 (archinfo, "i386") == 0 &&
+		    arch_tmp[0] == 'i') {
+			scores[i] += atoi (arch_tmp + 1) / 100;
+		}
+
+		/* any package providing the best depend gets raised */
+		state_tmp = zif_state_new ();
+		ret = zif_package_provides (package_tmp,
+					    best_depend,
+					    &satisfies,
+					    state_tmp,
+					    error);
+		g_object_unref (state_tmp);
+		if (!ret)
+			goto out;
+		if (satisfies != NULL) {
+			scores[i] += 500;
+			g_object_unref (satisfies);
+		}
+
+		/* newer packages get preference */
+		//TODO
+
+#if 0
+		/* return the newest */
+		*package = zif_package_array_get_newest (array, &error_local);
+		if (*package == NULL) {
+			ret = FALSE;
+			g_set_error (error,
+				     ZIF_TRANSACTION_ERROR,
+				     ZIF_TRANSACTION_ERROR_FAILED,
+				     "failed to get newest provide: %s",
+				     error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+#endif
+
+		/* sort alphabetically */
+		//TODO
+
+		/* shorter names have preference */
+		scores[i] -= strlen (zif_package_get_name (package_tmp));
+	}
+
+	/* print the scores */
+	g_debug ("the scores on the doors:");
+	for (i = 0; i < array->len; i++) {
+		package_tmp = g_ptr_array_index (array, i);
+		g_debug ("%i\t%s",
+			 scores[i],
+			 zif_package_get_printable (package_tmp));
+		if (scores[i] > best_score)
+			best_score = scores[i];
+	}
+
+	/* get the best package */
+	for (i = 0; i < array->len; i++) {
+		if (best_score == scores[i]) {
+			*package = g_object_ref (g_ptr_array_index (array, i));
+			break;
+		}
 	}
 out:
+	g_free (scores);
 	g_free (archinfo);
 	if (best_depend != NULL)
 		g_object_unref (best_depend);
