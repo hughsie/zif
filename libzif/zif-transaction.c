@@ -956,13 +956,15 @@ _zif_package_array_filter_best_provide (ZifTransaction *transaction,
 					ZifState *state,
 					GError **error)
 {
-	const gchar *arch_tmp;
 	const gchar *arch_reason;
+	const gchar *arch_tmp;
 	gboolean exactarch;
 	gboolean ret = TRUE;
 	gchar *archinfo = NULL;
+	GError *error_local = NULL;
 	gint best_score = G_MININT;
 	gint *scores = NULL;
+	GPtrArray *array_best = NULL;
 	GPtrArray *depend_array = NULL;
 	guint i;
 	ZifDepend *best_depend = NULL;
@@ -1061,27 +1063,6 @@ _zif_package_array_filter_best_provide (ZifTransaction *transaction,
 			g_object_unref (satisfies);
 		}
 
-		/* newer packages get preference */
-		//TODO
-
-#if 0
-		/* return the newest */
-		*package_dep = zif_package_array_get_newest (array, &error_local);
-		if (*package_dep == NULL) {
-			ret = FALSE;
-			g_set_error (error,
-				     ZIF_TRANSACTION_ERROR,
-				     ZIF_TRANSACTION_ERROR_FAILED,
-				     "failed to get newest provide: %s",
-				     error_local->message);
-			g_error_free (error_local);
-			goto out;
-		}
-#endif
-
-		/* sort alphabetically */
-		//TODO
-
 		/* shorter names have preference */
 		scores[i] -= strlen (zif_package_get_name (package_tmp));
 	}
@@ -1097,16 +1078,32 @@ _zif_package_array_filter_best_provide (ZifTransaction *transaction,
 			best_score = scores[i];
 	}
 
-	/* get the best package */
+	/* get an array of the best packages */
+	array_best = g_ptr_array_new ();
 	for (i = 0; i < array->len; i++) {
-		if (best_score == scores[i]) {
-			*package_dep = g_object_ref (g_ptr_array_index (array, i));
-			break;
-		}
+		package_tmp = g_ptr_array_index (array, i);
+		if (best_score == scores[i])
+			g_ptr_array_add (array_best, package_tmp);
+	}
+
+	/* return the newest */
+	*package_dep = zif_package_array_get_newest (array_best,
+						     &error_local);
+	if (*package_dep == NULL) {
+		ret = FALSE;
+		g_set_error (error,
+			     ZIF_TRANSACTION_ERROR,
+			     ZIF_TRANSACTION_ERROR_FAILED,
+			     "failed to get newest provide: %s",
+			     error_local->message);
+		g_error_free (error_local);
+		goto out;
 	}
 out:
 	g_free (scores);
 	g_free (archinfo);
+	if (array_best != NULL)
+		g_ptr_array_unref (array_best);
 	if (best_depend != NULL)
 		g_object_unref (best_depend);
 	if (depend_array != NULL)
