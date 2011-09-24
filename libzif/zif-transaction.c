@@ -1687,11 +1687,13 @@ zif_transaction_resolve_install_item (ZifTransactionResolve *data,
 	ZifTransactionPrivate *priv = data->transaction->priv;
 
 	/* is already installed and we are not already removing it */
-	to_array[0] = zif_package_get_name (item->package);
+	to_array[0] = zif_package_get_name_arch (item->package);
 	zif_state_reset (data->state);
-	array = zif_store_resolve (data->transaction->priv->store_local,
-				   (gchar**)to_array,
-				   data->state, &error_local);
+	array = zif_store_resolve_full (data->transaction->priv->store_local,
+					(gchar**)to_array,
+					ZIF_STORE_RESOLVE_FLAG_USE_NAME_ARCH,
+					data->state,
+					&error_local);
 	if (array == NULL) {
 		/* this is special */
 		if (error_local->domain == ZIF_STORE_ERROR &&
