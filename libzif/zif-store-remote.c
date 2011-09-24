@@ -53,6 +53,7 @@
 #include "zif-md-updateinfo.h"
 #include "zif-media.h"
 #include "zif-monitor.h"
+#include "zif-object-array.h"
 #include "zif-package.h"
 #include "zif-package-array.h"
 #include "zif-package-remote.h"
@@ -3706,6 +3707,58 @@ out:
 }
 
 /**
+ * zif_store_remote_convert_pkgids_to_packages:
+ *
+ * Converts from an array of pkgid's (gchar *) and converts to an
+ * array of packages (ZifPackage *).
+ **/
+static GPtrArray *
+zif_store_remote_convert_pkgids_to_packages (ZifMd *primary,
+					     GPtrArray *pkgids,
+					     ZifState *state,
+					     GError **error)
+{
+	const gchar *pkgid;
+	const gchar *to_array[] = { NULL, NULL };
+	GError *error_local = NULL;
+	GPtrArray *array = NULL;
+	GPtrArray *array_tmp;
+	GPtrArray *tmp;
+	guint i;
+
+	array_tmp = zif_object_array_new ();
+	for (i=0; i<pkgids->len; i++) {
+		pkgid = g_ptr_array_index (pkgids, i);
+
+		/* get the results (should just be one) */
+		to_array[0] = pkgid;
+		tmp = zif_md_search_pkgid (primary,
+					   (gchar **) to_array,
+					   state,
+					   &error_local);
+		if (tmp == NULL) {
+			g_set_error (error,
+				     ZIF_STORE_ERROR,
+				     ZIF_STORE_ERROR_FAILED_TO_FIND,
+				     "failed to resolve pkgId to package: %s",
+				     error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+
+		/* add to main array */
+		zif_object_array_add_array (array_tmp, tmp);
+		g_ptr_array_unref (tmp);
+	}
+
+	/* success */
+	array = g_ptr_array_ref (array_tmp);
+out:
+	g_ptr_array_unref (array_tmp);
+	return array;
+}
+
+/**
  * zif_store_remote_search_file:
  **/
 static GPtrArray *
@@ -3715,15 +3768,10 @@ zif_store_remote_search_file (ZifStore *store, gchar **search, ZifState *state, 
 	GError *error_local = NULL;
 	GPtrArray *pkgids;
 	GPtrArray *array = NULL;
-	GPtrArray *tmp;
-	ZifPackage *package;
 	ZifState *state_local;
-	const gchar *pkgid;
-	guint i, j;
 	ZifStoreRemote *remote = ZIF_STORE_REMOTE (store);
 	ZifMd *primary;
 	ZifMd *filelists;
-	const gchar *to_array[] = { NULL, NULL };
 
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 
@@ -3791,33 +3839,13 @@ zif_store_remote_search_file (ZifStore *store, gchar **search, ZifState *state, 
 		goto out;
 
 	/* resolve the pkgId to a set of packages */
-	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
-	for (i=0; i<pkgids->len; i++) {
-		pkgid = g_ptr_array_index (pkgids, i);
-
-		/* get the results (should just be one) */
-		state_local = zif_state_get_child (state);
-		to_array[0] = pkgid;
-		tmp = zif_md_search_pkgid (primary, (gchar **) to_array, state_local, &error_local);
-		if (tmp == NULL) {
-			g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED_TO_FIND,
-				     "failed to resolve pkgId to package: %s", error_local->message);
-			g_error_free (error_local);
-			/* free what we've collected already */
-			g_ptr_array_unref (array);
-			array = NULL;
-			goto out;
-		}
-
-		/* add to main array */
-		for (j=0; j<tmp->len; j++) {
-			package = g_ptr_array_index (tmp, j);
-			g_ptr_array_add (array, g_object_ref (package));
-		}
-
-		/* free temp array */
-		g_ptr_array_unref (tmp);
-	}
+	state_local = zif_state_get_child (state);
+	array = zif_store_remote_convert_pkgids_to_packages (primary,
+							     pkgids,
+							     state_local,
+							     error);
+	if (array == NULL)
+		goto out;
 
 	/* this section done */
 	ret = zif_state_done (state, error);
