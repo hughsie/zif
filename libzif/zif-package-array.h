@@ -43,7 +43,6 @@ void		 zif_package_array_filter_best_arch	(GPtrArray	*array,
 							 const gchar	*arch);
 void		 zif_package_array_filter_arch		(GPtrArray	*array,
 							 const gchar	*arch);
-void		 zif_package_array_filter_smallest_name	(GPtrArray	*array);
 void		 zif_package_array_filter_duplicates	(GPtrArray	*packages);
 gboolean	 zif_package_array_filter_provide	(GPtrArray	*array,
 							 GPtrArray	*depends,

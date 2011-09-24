@@ -465,51 +465,6 @@ zif_package_array_filter_arch (GPtrArray *array, const gchar *arch)
 }
 
 /**
- * zif_package_array_filter_smallest_name:
- * @array: Array of %ZifPackage's
- *
- * Filters the array so that only the smallest name of a package remains.
- *
- * If we have the following packages:
- *  - glibc.i386
- *  - hal.i386
- *
- * Then we output:
- *  - hal.i686
- *
- * As it has the smallest name. I know it's insane, but it's what yum does.
- *
- * Since: 0.1.3
- **/
-void
-zif_package_array_filter_smallest_name (GPtrArray *array)
-{
-	ZifPackage *package;
-	guint i;
-	guint length;
-	guint shortest = G_MAXUINT;
-
-	/* find the smallest name */
-	for (i=0; i<array->len; i++) {
-		package = g_ptr_array_index (array, i);
-		length = strlen (zif_package_get_name (package));
-		if (length < shortest)
-			shortest = length;
-	}
-
-	/* remove entries that are longer than the shortest name */
-	for (i=0; i<array->len;) {
-		package = g_ptr_array_index (array, i);
-		length = strlen (zif_package_get_name (package));
-		if (length != shortest) {
-			g_ptr_array_remove_index_fast (array, i);
-			continue;
-		}
-		i++;
-	}
-}
-
-/**
  * zif_package_array_filter_provide:
  * @array: Array of %ZifPackage's
  * @depends: an array of #ZifDepend's
