@@ -1035,7 +1035,10 @@ _zif_package_array_filter_best_provide (ZifTransaction *transaction,
 		//TODO
 
 		/* same base-name as item_package gets raised */
-		//TODO
+		if (g_str_has_prefix (zif_package_get_name (package_tmp),
+				      zif_package_get_name (package_reason))) {
+			scores[i] += 20;
+		}
 
 		/* give higher weight to i686 than i386 */
 		if (g_strcmp0 (archinfo, "i386") == 0 &&
