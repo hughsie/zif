@@ -3442,11 +3442,19 @@ zif_store_remote_what_provides (ZifStore *store, GPtrArray *depends,
 				ZifState *state, GError **error)
 {
 	gboolean ret;
+	gchar **search = NULL;
 	GError *error_local = NULL;
+	GPtrArray *array_filelists = NULL;
 	GPtrArray *array = NULL;
+	GPtrArray *array_primary = NULL;
+	GPtrArray *pkgids = NULL;
+	guint i;
+	guint idx = 0;
+	ZifDepend *depend_tmp;
+	ZifMd *filelists;
+	ZifMd *primary;
 	ZifState *state_local;
 	ZifStoreRemote *remote = ZIF_STORE_REMOTE (store);
-	ZifMd *primary;
 
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 
@@ -3456,8 +3464,9 @@ zif_store_remote_what_provides (ZifStore *store, GPtrArray *depends,
 	} else {
 		ret = zif_state_set_steps (state,
 					   error,
-					   80, /* load */
-					   20, /* what provides */
+					   60, /* load */
+					   20, /* what provides (primary) */
+					   20, /* what provides (filelists) */
 					   -1);
 		if (!ret)
 			goto out;
@@ -3484,21 +3493,69 @@ zif_store_remote_what_provides (ZifStore *store, GPtrArray *depends,
 			goto out;
 	}
 
-	/* get details */
-	state_local = zif_state_get_child (state);
+	/* get provides from primary */
 	primary = zif_store_remote_get_primary (remote, error);
 	if (primary == NULL)
 		goto out;
-	array = zif_md_what_provides (primary, depends,
-				      state_local, error);
-	if (array == NULL)
+	state_local = zif_state_get_child (state);
+	array_primary = zif_md_what_provides (primary,
+					      depends,
+					      state_local,
+					      error);
+	if (array_primary == NULL)
 		goto out;
 
 	/* this section done */
 	ret = zif_state_done (state, error);
 	if (!ret)
 		goto out;
+
+	/* get provides from filelists for SQL */
+	filelists = zif_store_remote_get_filelists (remote, NULL);
+	if (filelists != NULL &&
+	    ZIF_IS_MD_FILELISTS_SQL (filelists)) {
+		/* convert the depends that look like file paths into a GStrv */
+		search = g_new0 (gchar *, depends->len + 1);
+		for (i = 0; i < depends->len; i++) {
+			depend_tmp = g_ptr_array_index (depends, i);
+			if (zif_depend_get_flag (depend_tmp) != ZIF_DEPEND_FLAG_ANY)
+				continue;
+			if (zif_depend_get_name (depend_tmp)[0] != '/')
+				continue;
+			search[idx++] = g_strdup (zif_depend_get_name (depend_tmp));
+		}
+		if (idx > 0) {
+			state_local = zif_state_get_child (state);
+			array_filelists = zif_store_search_file (store,
+								 search,
+								 state_local,
+								 error);
+			if (array_filelists == NULL)
+				goto out;
+		}
+	}
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* success */
+	array = zif_object_array_new ();
+	zif_object_array_add_array (array, array_primary);
+	if (array_filelists != NULL)
+		zif_object_array_add_array (array, array_filelists);
+
+	/* filter duplicates */
+	zif_package_array_filter_duplicates (array);
 out:
+	g_strfreev (search);
+	if (pkgids != NULL)
+		g_ptr_array_unref (pkgids);
+	if (array_primary != NULL)
+		g_ptr_array_unref (array_primary);
+	if (array_filelists != NULL)
+		g_ptr_array_unref (array_filelists);
 	return array;
 }
 
