@@ -1421,6 +1421,7 @@ zif_transaction_resolve_install_depend (ZifTransactionResolve *data,
 					ZifTransactionItem *item,
 					GError **error)
 {
+	gboolean arch_compat;
 	gboolean ret = TRUE;
 	ZifPackage *package_provide = NULL;
 	GPtrArray *already_installed = NULL;
@@ -1523,6 +1524,12 @@ zif_transaction_resolve_install_depend (ZifTransactionResolve *data,
 			g_debug ("%s is already installed, and we want %s, so removing installed version",
 				 zif_package_get_id (package),
 				 zif_package_get_id (package_provide));
+
+			/* do not remove different arches */
+			arch_compat = zif_package_is_compatible_arch (package,
+								      package_provide);
+			if (!arch_compat)
+				continue;
 
 			/* add this */
 			g_ptr_array_add (related_packages, package);
