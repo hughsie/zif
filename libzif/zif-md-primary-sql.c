@@ -166,7 +166,8 @@ zif_md_primary_sql_sqlite_create_package_cb (void *data, gint argc, gchar **argv
 
 #define ZIF_MD_PRIMARY_SQL_HEADER "SELECT p.pkgId, p.name, p.arch, p.version, " \
 				  "p.epoch, p.release, p.summary, p.description, p.url, " \
-				  "p.rpm_license, p.rpm_group, p.size_package, p.location_href, "\
+				  "p.rpm_license, p.rpm_group, p.size_package, " \
+				  "p.location_href, p.rpm_sourcerpm, "\
 				  "p.time_file FROM packages p"
 
 /**

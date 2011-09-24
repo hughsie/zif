@@ -48,6 +48,7 @@ typedef enum {
 	ZIF_MD_PRIMARY_XML_SECTION_PACKAGE_REQUIRES,
 	ZIF_MD_PRIMARY_XML_SECTION_PACKAGE_OBSOLETES,
 	ZIF_MD_PRIMARY_XML_SECTION_PACKAGE_CONFLICTS,
+	ZIF_MD_PRIMARY_XML_SECTION_PACKAGE_SOURCERPM,
 	ZIF_MD_PRIMARY_XML_SECTION_PACKAGE_UNKNOWN
 } ZifMdPrimaryXmlSectionPackage;
 
@@ -157,9 +158,12 @@ zif_md_primary_xml_parser_start_element (GMarkupParseContext *context, const gch
 			    g_strcmp0 (element_name, "file") == 0 ||
 			    g_strcmp0 (element_name, "rpm:vendor") == 0 ||
 			    g_strcmp0 (element_name, "rpm:buildhost") == 0 ||
-			    g_strcmp0 (element_name, "rpm:header-range") == 0 ||
-			    g_strcmp0 (element_name, "rpm:sourcerpm") == 0) {
+			    g_strcmp0 (element_name, "rpm:header-range") == 0) {
 				primary_xml->priv->section_package = ZIF_MD_PRIMARY_XML_SECTION_PACKAGE_UNKNOWN;
+				goto out;
+			}
+			if (g_strcmp0 (element_name, "rpm:sourcerpm") == 0) {
+				primary_xml->priv->section_package = ZIF_MD_PRIMARY_XML_SECTION_PACKAGE_SOURCERPM;
 				goto out;
 			}
 			if (g_strcmp0 (element_name, "name") == 0) {
@@ -467,6 +471,11 @@ zif_md_primary_xml_parser_text (GMarkupParseContext *context, const gchar *text,
 		if (primary_xml->priv->section_package == ZIF_MD_PRIMARY_XML_SECTION_PACKAGE_GROUP) {
 			string = zif_string_new (text);
 			zif_package_set_category (primary_xml->priv->package_temp, string);
+			goto out;
+		}
+		if (primary_xml->priv->section_package == ZIF_MD_PRIMARY_XML_SECTION_PACKAGE_SOURCERPM) {
+			string = zif_string_new (text);
+			zif_package_set_source_filename (primary_xml->priv->package_temp, string);
 			goto out;
 		}
 		if (primary_xml->priv->section_package == ZIF_MD_PRIMARY_XML_SECTION_PACKAGE_LICENCE) {

@@ -379,6 +379,13 @@ zif_package_local_ensure_data (ZifPackage *pkg,
 		zif_package_set_category (pkg, tmp);
 		zif_string_unref (tmp);
 
+	} else if (type == ZIF_PACKAGE_ENSURE_TYPE_SOURCE_FILENAME) {
+
+		/* source rpm */
+		tmp = zif_get_header_string (header, RPMTAG_SOURCERPM);
+		zif_package_set_source_filename (pkg, tmp);
+		zif_string_unref (tmp);
+
 	} else if (type == ZIF_PACKAGE_ENSURE_TYPE_GROUP) {
 		/* group */
 		text = zif_package_get_category (pkg, state, error);

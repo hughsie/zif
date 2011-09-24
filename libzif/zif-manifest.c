@@ -90,6 +90,7 @@ typedef enum {
 	ZIF_MANIFEST_RESOURCE_CONFLICTS,
 	ZIF_MANIFEST_RESOURCE_OBSOLETES,
 	ZIF_MANIFEST_RESOURCE_FILES,
+	ZIF_MANIFEST_RESOURCE_SRPM,
 	ZIF_MANIFEST_RESOURCE_UNKNOWN
 } ZifManifestResource;
 
@@ -155,6 +156,8 @@ zif_manifest_resource_from_string (const gchar *section)
 		return ZIF_MANIFEST_RESOURCE_OBSOLETES;
 	if (g_strcmp0 (section, "Files") == 0)
 		return ZIF_MANIFEST_RESOURCE_FILES;
+	if (g_strcmp0 (section, "Srpm") == 0)
+		return ZIF_MANIFEST_RESOURCE_SRPM;
 	return ZIF_MANIFEST_RESOURCE_UNKNOWN;
 }
 
@@ -418,6 +421,7 @@ zif_manifest_add_resource_to_package (ZifPackage *package,
 {
 	gboolean ret = FALSE;
 	ZifDepend *depend = NULL;
+	ZifString *str = NULL;
 
 	/* not yet set */
 	if (package == NULL) {
@@ -468,10 +472,15 @@ zif_manifest_add_resource_to_package (ZifPackage *package,
 	} else if (resource == ZIF_MANIFEST_RESOURCE_FILES) {
 		zif_package_add_file (package,
 				      resource_description);
+	} else if (resource == ZIF_MANIFEST_RESOURCE_SRPM) {
+		str = zif_string_new (resource_description);
+		zif_package_set_source_filename (package, str);
 	} else {
 		g_assert_not_reached ();
 	}
 out:
+	if (str != NULL)
+		zif_string_unref (str);
 	if (depend != NULL)
 		g_object_unref (depend);
 	return ret;

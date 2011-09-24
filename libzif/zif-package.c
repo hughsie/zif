@@ -62,6 +62,7 @@ struct _ZifPackagePrivate
 	ZifString		*url;
 	ZifString		*category;
 	ZifString		*location_href;
+	ZifString		*source_filename;
 	ZifString		*group;
 	ZifString		*pkgid;
 	guint64			 size;
@@ -1132,6 +1133,8 @@ zif_package_ensure_type_to_string (ZifPackageEnsureType type)
 		return "category";
 	if (type == ZIF_PACKAGE_ENSURE_TYPE_CACHE_FILENAME)
 		return "cache-filename";
+	if (type == ZIF_PACKAGE_ENSURE_TYPE_SOURCE_FILENAME)
+		return "source-filename";
 	return "unknown";
 }
 
@@ -1500,6 +1503,40 @@ zif_package_get_cache_filename (ZifPackage *package, ZifState *state, GError **e
 	}
 
 	return package->priv->cache_filename;
+}
+
+/**
+ * zif_package_get_source_filename:
+ * @package: A #ZifPackage
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
+ *
+ * Gets the source RPM filename.
+ *
+ * Return value: The source RPM filename, or %NULL
+ *
+ * Since: 0.2.5
+ **/
+const gchar *
+zif_package_get_source_filename (ZifPackage *package, ZifState *state, GError **error)
+{
+	gboolean ret;
+
+	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
+	g_return_val_if_fail (package->priv->package_id_split != NULL, NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+	/* not exists */
+	if (package->priv->source_filename == NULL) {
+		ret = zif_package_ensure_data (package,
+					       ZIF_PACKAGE_ENSURE_TYPE_SOURCE_FILENAME,
+					       state,
+					       error);
+		if (!ret)
+			return NULL;
+	}
+
+	return zif_string_get_value (package->priv->source_filename);
 }
 
 /**
@@ -2033,6 +2070,25 @@ zif_package_set_location_href (ZifPackage *package, ZifString *location_href)
 }
 
 /**
+ * zif_package_set_source_filename:
+ * @package: A #ZifPackage
+ * @source_filename: The source filename
+ *
+ * Sets the package source RPM.
+ *
+ * Since: 0.2.5
+ **/
+void
+zif_package_set_source_filename (ZifPackage *package, ZifString *source_filename)
+{
+	g_return_if_fail (ZIF_IS_PACKAGE (package));
+	g_return_if_fail (source_filename != NULL);
+	g_return_if_fail (package->priv->source_filename == NULL);
+
+	package->priv->source_filename = zif_string_ref (source_filename);
+}
+
+/**
  * zif_package_set_category:
  * @package: A #ZifPackage
  * @category: category
@@ -2534,6 +2590,8 @@ zif_package_finalize (GObject *object)
 		zif_string_unref (package->priv->pkgid);
 	if (package->priv->location_href != NULL)
 		zif_string_unref (package->priv->location_href);
+	if (package->priv->source_filename != NULL)
+		zif_string_unref (package->priv->source_filename);
 	if (package->priv->files != NULL)
 		g_ptr_array_unref (package->priv->files);
 	if (package->priv->requires != NULL)

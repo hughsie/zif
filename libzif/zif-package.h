@@ -63,6 +63,7 @@ typedef enum {
 	ZIF_PACKAGE_ENSURE_TYPE_CONFLICTS,
 	ZIF_PACKAGE_ENSURE_TYPE_OBSOLETES,
 	ZIF_PACKAGE_ENSURE_TYPE_CACHE_FILENAME,
+	ZIF_PACKAGE_ENSURE_TYPE_SOURCE_FILENAME, /* Since: 0.2.5 */
 	ZIF_PACKAGE_ENSURE_TYPE_LAST
 } ZifPackageEnsureType;
 
@@ -148,6 +149,9 @@ const gchar		*zif_package_get_pkgid		(ZifPackage	*package);
 const gchar		*zif_package_get_cache_filename	(ZifPackage	*package,
 							 ZifState	*state,
 							 GError		**error);
+const gchar		*zif_package_get_source_filename (ZifPackage	*package,
+							 ZifState	*state,
+							 GError		**error);
 GFile			*zif_package_get_cache_file	(ZifPackage	*package,
 							 ZifState	*state,
 							 GError		**error);
@@ -213,6 +217,8 @@ void			 zif_package_set_url		(ZifPackage	*package,
 							 ZifString	*url);
 void			 zif_package_set_location_href	(ZifPackage	*package,
 							 ZifString	*location_href);
+void			 zif_package_set_source_filename (ZifPackage	*package,
+							 ZifString	*source_filename);
 void			 zif_package_set_category	(ZifPackage	*package,
 							 ZifString	*category);
 void			 zif_package_set_group		(ZifPackage	*package,

@@ -958,6 +958,8 @@ _zif_package_array_filter_best_provide (ZifTransaction *transaction,
 {
 	const gchar *arch_reason;
 	const gchar *arch_tmp;
+	const gchar *srpm_reason;
+	const gchar *srpm_tmp;
 	gboolean exactarch;
 	gboolean ret = TRUE;
 	gchar *archinfo = NULL;
@@ -970,7 +972,7 @@ _zif_package_array_filter_best_provide (ZifTransaction *transaction,
 	ZifDepend *best_depend = NULL;
 	ZifDepend *satisfies = NULL;
 	ZifPackage *package_tmp;
-	ZifState *state_tmp;
+	ZifState *state_tmp = NULL;
 
 	/* get the best depend for the results */
 	ret = zif_package_array_provide (array, depend, &best_depend,
@@ -1020,8 +1022,20 @@ _zif_package_array_filter_best_provide (ZifTransaction *transaction,
 		goto out;
 	}
 
+	// XXX: FIXME
+	state_tmp = zif_state_new ();
+
 	/* the architecture of the package that we want to install */
 	arch_reason = zif_package_get_arch (package_reason);
+
+	/* the source package */
+	srpm_reason = zif_package_get_source_filename (package_reason,
+						       state_tmp,
+						       error);
+	if (srpm_reason == NULL) {
+		ret = FALSE;
+		goto out;
+	}
 
 	/* make up scores */
 	scores = g_new0 (gint, array->len);
@@ -1034,7 +1048,16 @@ _zif_package_array_filter_best_provide (ZifTransaction *transaction,
 			scores[i] -= 1000;
 
 		/* same srpm as item_package gets raised */
-		//TODO
+		zif_state_reset (state_tmp);
+		srpm_tmp = zif_package_get_source_filename (package_tmp,
+							    state_tmp,
+							    error);
+		if (srpm_tmp == NULL) {
+			ret = FALSE;
+			goto out;
+		}
+		if (g_strcmp0 (srpm_tmp, srpm_reason) == 0)
+			scores[i] += 100;
 
 		/* same base-name as item_package gets raised */
 		if (g_str_has_prefix (zif_package_get_name (package_tmp),
@@ -1049,13 +1072,12 @@ _zif_package_array_filter_best_provide (ZifTransaction *transaction,
 		}
 
 		/* any package providing the best depend gets raised */
-		state_tmp = zif_state_new ();
+		zif_state_reset (state_tmp);
 		ret = zif_package_provides (package_tmp,
 					    best_depend,
 					    &satisfies,
 					    state_tmp,
 					    error);
-		g_object_unref (state_tmp);
 		if (!ret)
 			goto out;
 		if (satisfies != NULL) {
@@ -1100,6 +1122,8 @@ _zif_package_array_filter_best_provide (ZifTransaction *transaction,
 		goto out;
 	}
 out:
+	if (state_tmp != NULL)
+		g_object_unref (state_tmp);
 	g_free (scores);
 	g_free (archinfo);
 	if (array_best != NULL)

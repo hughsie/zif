@@ -1653,7 +1653,11 @@ zif_md_primary_sql_func (void)
 	g_assert_cmpint (array->len, ==, 1);
 	package = g_ptr_array_index (array, 0);
 	zif_state_reset (state);
-	g_assert_cmpstr (zif_package_get_summary (package, state, NULL), ==, "GNOME power management service");
+	g_assert_cmpstr (zif_package_get_summary (package, state, NULL), ==,
+			 "GNOME power management service");
+	zif_state_reset (state);
+	g_assert_cmpstr (zif_package_get_source_filename (package, state, NULL), ==,
+			 "gnome-power-manager-2.30.1-1.fc13.src.rpm");
 	g_ptr_array_unref (array);
 
 	/* resolving by name and globbing */
@@ -1812,6 +1816,11 @@ zif_md_primary_xml_func (void)
 	g_assert_cmpstr (zif_depend_get_description (depend), ==,
 			 "[gnome-power-manager = 2.31.1-1.258.20100330git.fc13]");
 	g_ptr_array_unref (depends);
+
+	/* check the source rpm filename */
+	zif_state_reset (state);
+	g_assert_cmpstr (zif_package_get_source_filename (package, state, NULL), ==,
+			 "gnome-power-manager-2.31.1-1.258.20100330git.fc13.src.rpm");
 
 	g_ptr_array_unref (array);
 

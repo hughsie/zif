@@ -136,6 +136,10 @@ zif_package_remote_set_from_repo (ZifPackageRemote *pkg, guint length, gchar **t
 			string = zif_string_new (data[i]);
 			zif_package_set_location_href (ZIF_PACKAGE (pkg), string);
 			zif_string_unref (string);
+		} else if (g_strcmp0 (type[i], "rpm_sourcerpm") == 0) {
+			string = zif_string_new (data[i]);
+			zif_package_set_source_filename (ZIF_PACKAGE (pkg), string);
+			zif_string_unref (string);
 		} else if (g_strcmp0 (type[i], "time_file") == 0) {
 			time_file = g_ascii_strtoull (data[i], &endptr, 10);
 			if (data[i] == endptr)

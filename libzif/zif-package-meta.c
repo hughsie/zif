@@ -229,6 +229,10 @@ zif_package_meta_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, ZifSta
 		}
 		zif_package_set_obsoletes (pkg, depends);
 		g_ptr_array_unref (depends);
+	} else if (type == ZIF_PACKAGE_ENSURE_TYPE_SOURCE_FILENAME) {
+		tmp = zif_string_new ("meta.src.rpm");
+		zif_package_set_source_filename (pkg, tmp);
+		zif_string_unref (tmp);
 	} else {
 		ret = FALSE;
 		g_set_error (error,
