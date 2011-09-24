@@ -1059,22 +1059,21 @@ out:
 }
 
 /**
- * zif_transaction_get_package_provide_from_array:
+ * zif_transaction_get_package_provide_from_install:
  **/
 static gboolean
-zif_transaction_get_package_provide_from_array (GPtrArray *array,
-						ZifDepend *depend,
-						ZifPackage **package,
-						ZifState *state,
-						GError **error)
+zif_transaction_get_package_provide_from_install (ZifTransaction *transaction,
+						  ZifDepend *depend,
+						  ZifPackage **package,
+						  ZifState *state,
+						  GError **error)
 {
 	gboolean ret;
 	GPtrArray *array_tmp = NULL;
-	guint i;
-	ZifPackage *package_tmp;
 
-	/* condense down to one package */
-	ret = zif_package_array_provide (array,
+	/* does anything provide this depend that's already set to
+	 * be installed? */
+	ret = zif_package_array_provide (transaction->priv->install,
 					 depend,
 					 NULL,
 					 &array_tmp,
@@ -1086,16 +1085,9 @@ zif_transaction_get_package_provide_from_array (GPtrArray *array,
 		*package = NULL;
 		goto out;
 	}
-	if (array_tmp->len > 1) {
-		g_warning ("found multiple provides for %s:",
-			   zif_depend_to_string (depend));
-		for (i=0; i<array_tmp->len; i++) {
-			package_tmp = g_ptr_array_index (array_tmp, i);
-			g_warning ("%i.\t%s", i+1,
-				   zif_package_get_printable (package_tmp));
-		}
 
-	}
+	/* we don't actually care which depend is the best, as long
+	 * as at least one exists */
 	*package = g_object_ref (g_ptr_array_index (array_tmp, 0));
 out:
 	if (array_tmp != NULL)
@@ -1442,9 +1434,11 @@ zif_transaction_resolve_install_depend (ZifTransactionResolve *data,
 
 	/* already provided by something in the install set */
 	g_debug ("searching in install");
-	ret = zif_transaction_get_package_provide_from_array (data->transaction->priv->install,
-							      depend, &package_provide,
-							      data->state, error);
+	ret = zif_transaction_get_package_provide_from_install (data->transaction,
+								depend,
+								&package_provide,
+								data->state,
+								error);
 	if (!ret) {
 		g_assert (error == NULL || *error != NULL);
 		goto out;
@@ -1601,17 +1595,16 @@ zif_transaction_resolve_remove_depend (ZifTransactionResolve *data,
 	gboolean ret = TRUE;
 	ZifPackage *package_obsolete = NULL;
 	GPtrArray *related_packages = NULL;
-	GPtrArray *packages = NULL;
 
 	g_return_val_if_fail (data->transaction->priv->stores_remote != NULL, FALSE);
 
 	/* already provided by something in the install set */
 	g_debug ("searching in install");
-	ret = zif_transaction_get_package_provide_from_array (data->transaction->priv->install,
-							      depend,
-							      &package_obsolete,
-							      data->state,
-							      error);
+	ret = zif_transaction_get_package_provide_from_install (data->transaction,
+								depend,
+								&package_obsolete,
+								data->state,
+								error);
 	if (!ret) {
 		g_assert (error == NULL || *error != NULL);
 		goto out;
@@ -1626,13 +1619,7 @@ zif_transaction_resolve_remove_depend (ZifTransactionResolve *data,
 	/* already provided in the rpmdb */
 	g_debug ("searching for %s in local",
 		 zif_depend_get_description (depend));
-	packages = zif_store_get_packages (data->transaction->priv->store_local,
-					   data->state, error);
-	if (packages == NULL) {
-		ret = FALSE;
-		goto out;
-	}
-	ret = zif_transaction_get_package_provide_from_array (packages,
+	ret = zif_transaction_get_package_provide_from_local (data->transaction,
 							      depend,
 							      &package_obsolete,
 							      data->state,
@@ -1669,8 +1656,6 @@ skip:
 						   ZIF_TRANSACTION_REASON_REMOVE_OBSOLETE,
 						   error);
 out:
-	if (packages != NULL)
-		g_ptr_array_unref (packages);
 	if (related_packages != NULL)
 		g_ptr_array_unref (related_packages);
 	if (package_obsolete != NULL)
@@ -2047,7 +2032,7 @@ zif_transaction_resolve_remove_require (ZifTransactionResolve *data,
 				g_debug ("find out if %s is provided in the install queue",
 					 zif_depend_get_description (satisfies));
 			}
-			ret = zif_transaction_get_package_provide_from_array (data->transaction->priv->install,
+			ret = zif_transaction_get_package_provide_from_install (data->transaction,
 									      satisfies,
 									      &package_in_install,
 									      data->state,
