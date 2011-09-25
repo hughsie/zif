@@ -1,0 +1,31 @@
+# Don't downgrade packages by default
+#
+# We should prefer the non downgraded package
+
+local
+	cogl;0:0.3.0-1;i386;meta
+		Provides
+			cogl.so = 3
+
+remote
+	cogl;0:0.2.0-1;i386;meta
+		Provides
+			cogl.so = 2
+	cogl-compat;0:0.2.0-1;i386;meta
+		Provides
+			cogl.so = 2
+	eog;0:0.1.0-1;i386;meta
+		Requires
+			cogl.so = 2
+
+transaction
+	install
+		eog
+
+result
+	cogl;0:0.3.0-1;i386;meta
+	cogl-compat;0:0.2.0-1;i386;meta
+	eog;0:0.1.0-1;i386;meta
+
+config
+	archinfo=i386

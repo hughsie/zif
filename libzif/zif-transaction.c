@@ -953,8 +953,12 @@ zif_transaction_filter_get_score (ZifTransaction *transaction,
 {
 	const gchar *arch_tmp;
 	const gchar *srpm_tmp;
+	const gchar *to_array[] = {NULL, NULL};
 	gboolean ret;
+	GError *error_local = NULL;
+	GPtrArray *array_installed = NULL;
 	ZifDepend *satisfies = NULL;
+	ZifPackage *package_installed = NULL;
 	ZifState *state_local;
 
 	arch_tmp = zif_package_get_arch (package);
@@ -962,11 +966,41 @@ zif_transaction_filter_get_score (ZifTransaction *transaction,
 	/* set steps */
 	ret = zif_state_set_steps (state,
 				   error,
+				   40, /* resolve local */
 				   10, /* get srpm name */
-				   90, /* get provide */
+				   50, /* get provide */
 				   -1);
 	if (!ret)
 		goto out;
+
+	/* if we downgrade packages it get lowered */
+	state_local = zif_state_get_child (state);
+	to_array[0] = zif_package_get_name_arch (package);
+	array_installed = zif_store_resolve_full (transaction->priv->store_local,
+						  (gchar**) to_array,
+						  ZIF_STORE_RESOLVE_FLAG_USE_NAME_ARCH,
+						  state_local,
+						  &error_local);
+	if (array_installed == NULL) {
+		if (g_error_matches (error_local,
+				     ZIF_STORE_ERROR,
+				     ZIF_STORE_ERROR_ARRAY_IS_EMPTY)) {
+			g_clear_error (&error_local);
+		} else {
+			ret = FALSE;
+			g_propagate_error (error, error_local);
+			goto out;
+		}
+	} else if (array_installed->len > 0) {
+		package_installed = zif_package_array_get_newest (array_installed,
+								  error);
+		if (package_installed == NULL) {
+			ret = FALSE;
+			goto out;
+		}
+		if (zif_package_compare (package_installed, package) > 0)
+			*score -= 1000;
+	}
 
 	/* any package not native arch to reason gets lowered */
 	if (!zif_arch_is_native (arch_tmp, provide_data->arch_reason))
@@ -1021,6 +1055,10 @@ zif_transaction_filter_get_score (ZifTransaction *transaction,
 	/* shorter names have preference */
 	*score -= strlen (zif_package_get_name (package));
 out:
+	if (package_installed != NULL)
+		g_object_unref (package_installed);
+	if (array_installed != NULL)
+		g_ptr_array_unref (array_installed);
 	if (satisfies != NULL)
 		g_object_unref (satisfies);
 	return ret;
