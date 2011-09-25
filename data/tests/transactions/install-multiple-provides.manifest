@@ -1,0 +1,33 @@
+# Update an installed package where the newer package is noarch, and the
+# old was not.
+
+local
+	bash;0:0.3.0-1;i386;meta
+		Provides
+			shell
+	ksh;0:0.3.0-1;i386;meta
+		Provides
+			shell
+
+remote
+	csh;0:0.3.0-1;noarch;meta
+		Requires
+			shell
+		Provides
+			c-runtime
+	csh-completion;0:0.3.0-1;noarch;meta
+		Requires
+			c-runtime
+transaction
+	install
+		csh
+		csh-completion
+
+result
+	bash;0:0.3.0-1;i386;meta
+	ksh;0:0.3.0-1;i386;meta
+	csh;0:0.3.0-1;noarch;meta
+	csh-completion;0:0.3.0-1;noarch;meta
+
+config
+	archinfo=i386

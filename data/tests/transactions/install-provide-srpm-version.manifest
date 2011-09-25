@@ -1,0 +1,33 @@
+# Install a package that needs other depend.
+#
+# We should prefer the package that matches the srpm of the parent
+
+local
+
+remote
+	libxml2;0:0.2.0-1;i386;meta
+		Provides
+			libxml2.so
+		Srpm
+			libxml2-0.2.0-1.i386.src.rpm
+	libxml-adobeair;0:0.2.0-1;i386;meta
+		Provides
+			libxml2.so
+		Srpm
+			adobeair-0.1.0-1.i386.src.rpm
+	adobeair;0:0.1.0-1;i386;meta
+		Requires
+			libxml2.so
+		Srpm
+			adobeair-0.1.0-1.i386.src.rpm
+
+transaction
+	install
+		adobeair
+
+result
+	libxml-adobeair;0:0.2.0-1;i386;meta
+	adobeair;0:0.1.0-1;i386;meta
+
+config
+	archinfo=i386
