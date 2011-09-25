@@ -928,8 +928,102 @@ zif_transaction_add_remove (ZifTransaction *transaction, ZifPackage *package, GE
 	return ret;
 }
 
+typedef struct {
+	const gchar	*arch_reason;
+	const gchar	*srpm_reason;
+	gchar		*archinfo;
+	ZifDepend	*best_depend;
+	ZifPackage	*package_reason;
+} ZifTransactionProvideData;
+
 /**
- * _zif_package_array_filter_best_provide:
+ * zif_transaction_filter_get_score:
+ **/
+static gboolean
+zif_transaction_filter_get_score (ZifTransaction *transaction,
+				  ZifTransactionProvideData *provide_data,
+				  ZifPackage *package,
+				  gint *score,
+				  ZifState *state,
+				  GError **error)
+{
+	const gchar *arch_tmp;
+	const gchar *srpm_tmp;
+	gboolean ret;
+	ZifDepend *satisfies = NULL;
+	ZifState *state_local;
+
+	arch_tmp = zif_package_get_arch (package);
+
+	/* set steps */
+	ret = zif_state_set_steps (state,
+				   error,
+				   10, /* get srpm name */
+				   90, /* get provide */
+				   -1);
+	if (!ret)
+		goto out;
+
+	/* any package not native arch to reason gets lowered */
+	if (!zif_arch_is_native (arch_tmp, provide_data->arch_reason))
+		*score -= 1000;
+
+	/* same srpm as item_package gets raised */
+	state_local = zif_state_get_child (state);
+	srpm_tmp = zif_package_get_source_filename (package,
+						    state_local,
+						    error);
+	if (srpm_tmp == NULL) {
+		ret = FALSE;
+		goto out;
+	}
+	if (g_strcmp0 (srpm_tmp, provide_data->srpm_reason) == 0)
+		*score += 100;
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* same base-name as item_package gets raised */
+	if (g_str_has_prefix (zif_package_get_name (package),
+			      zif_package_get_name (provide_data->package_reason))) {
+		*score += 20;
+	}
+
+	/* give higher weight to i686 than i386 */
+	if (g_strcmp0 (provide_data->archinfo, "i386") == 0 &&
+	    arch_tmp[0] == 'i') {
+		*score += atoi (arch_tmp + 1) / 100;
+	}
+
+	/* any package providing the best depend gets raised */
+	state_local = zif_state_get_child (state);
+	ret = zif_package_provides (package,
+				    provide_data->best_depend,
+				    &satisfies,
+				    state_local,
+				    error);
+	if (!ret)
+		goto out;
+	if (satisfies != NULL)
+		*score += 500;
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* shorter names have preference */
+	*score -= strlen (zif_package_get_name (package));
+out:
+	if (satisfies != NULL)
+		g_object_unref (satisfies);
+	return ret;
+}
+
+/**
+ * zif_transaction_filter_best_provide:
  *
  * @array: ZifPackage's that provide @depend
  * @package_reason: The package we're trying to install
@@ -948,35 +1042,54 @@ zif_transaction_add_remove (ZifTransaction *transaction, ZifPackage *package, GE
  * 5) Filter by highest alphabetically wins
  **/
 static gboolean
-_zif_package_array_filter_best_provide (ZifTransaction *transaction,
-					GPtrArray *array,
-					ZifPackage *package_reason,
-					ZifDepend *depend,
-					ZifPackage **package_dep,
-					ZifState *state,
-					GError **error)
+zif_transaction_filter_best_provide (ZifTransaction *transaction,
+				     GPtrArray *array,
+				     ZifPackage *package_reason,
+				     ZifDepend *depend,
+				     ZifPackage **package_dep,
+				     ZifState *state,
+				     GError **error)
 {
-	const gchar *arch_reason;
-	const gchar *arch_tmp;
-	const gchar *srpm_reason;
-	const gchar *srpm_tmp;
 	gboolean exactarch;
 	gboolean ret = TRUE;
-	gchar *archinfo = NULL;
 	GError *error_local = NULL;
 	gint best_score = G_MININT;
 	gint *scores = NULL;
 	GPtrArray *array_best = NULL;
 	GPtrArray *depend_array = NULL;
 	guint i;
-	ZifDepend *best_depend = NULL;
-	ZifDepend *satisfies = NULL;
 	ZifPackage *package_tmp;
-	ZifState *state_tmp = NULL;
+	ZifState *state_local;
+	ZifState *state_loop;
+	ZifTransactionProvideData *provide_data = NULL;
+
+	/* set steps */
+	ret = zif_state_set_steps (state,
+				   error,
+				   30, /* get provides for array */
+				   30, /* get source filename */
+				   40, /* score depends */
+				   -1);
+	if (!ret)
+		goto out;
+
+	/* create struct for convenience */
+	provide_data = g_new0 (ZifTransactionProvideData, 1);
+	provide_data->package_reason = g_object_ref (package_reason);
 
 	/* get the best depend for the results */
-	ret = zif_package_array_provide (array, depend, &best_depend,
-					 NULL, state, error);
+	state_local = zif_state_get_child (state);
+	ret = zif_package_array_provide (array,
+					 depend,
+					 &provide_data->best_depend,
+					 NULL,
+					 state_local,
+					 error);
+	if (!ret)
+		goto out;
+
+	/* this section done */
+	ret = zif_state_done (state, error);
 	if (!ret)
 		goto out;
 
@@ -992,18 +1105,20 @@ _zif_package_array_filter_best_provide (ZifTransaction *transaction,
 				 zif_package_get_printable (package_tmp));
 		}
 	}
-	if (best_depend != NULL) {
+	if (provide_data->best_depend != NULL) {
 		g_debug ("best depend was %s",
-			 zif_depend_get_description (best_depend));
+			 zif_depend_get_description (provide_data->best_depend));
 	}
 
 	/* is the exact arch required? */
 	exactarch = zif_config_get_boolean (transaction->priv->config,
 					    "exactarch", NULL);
-	archinfo = zif_config_get_string (transaction->priv->config,
-					  "archinfo", NULL);
-	if (exactarch)
-		zif_package_array_filter_arch (array, archinfo);
+	provide_data->archinfo = zif_config_get_string (transaction->priv->config,
+							"archinfo", NULL);
+	if (exactarch) {
+		zif_package_array_filter_arch (array,
+					       provide_data->archinfo);
+	}
 
 	/* we didn't provide any packages of the correct arch */
 	if (array->len == 0) {
@@ -1012,82 +1127,67 @@ _zif_package_array_filter_best_provide (ZifTransaction *transaction,
 			     ZIF_TRANSACTION_ERROR,
 			     ZIF_TRANSACTION_ERROR_FAILED,
 			     "no packages compatible with %s",
-			     archinfo);
+			     provide_data->archinfo);
 		goto out;
 	}
 
 	/* shortcut */
 	if (array->len == 1) {
+		ret = zif_state_finished (state, error);
+		if (!ret)
+			goto out;
 		*package_dep = g_object_ref (g_ptr_array_index (array, 0));
 		goto out;
 	}
 
-	// XXX: FIXME
-	state_tmp = zif_state_new ();
-
 	/* the architecture of the package that we want to install */
-	arch_reason = zif_package_get_arch (package_reason);
+	provide_data->arch_reason = zif_package_get_arch (package_reason);
 
 	/* the source package */
-	srpm_reason = zif_package_get_source_filename (package_reason,
-						       state_tmp,
-						       error);
-	if (srpm_reason == NULL) {
+	state_local = zif_state_get_child (state);
+	provide_data->srpm_reason = zif_package_get_source_filename (package_reason,
+								     state_local,
+								     error);
+	if (provide_data->srpm_reason == NULL) {
 		ret = FALSE;
 		goto out;
 	}
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* set steps */
+	state_local = zif_state_get_child (state);
+	zif_state_set_number_steps (state_local, array->len);
 
 	/* make up scores */
 	scores = g_new0 (gint, array->len);
 	for (i = 0; i < array->len; i++) {
 		package_tmp = g_ptr_array_index (array, i);
-		arch_tmp = zif_package_get_arch (package_tmp);
 
-		/* any package not native arch to reason gets lowered */
-		if (!zif_arch_is_native (arch_tmp, arch_reason))
-			scores[i] -= 1000;
-
-		/* same srpm as item_package gets raised */
-		zif_state_reset (state_tmp);
-		srpm_tmp = zif_package_get_source_filename (package_tmp,
-							    state_tmp,
-							    error);
-		if (srpm_tmp == NULL) {
-			ret = FALSE;
-			goto out;
-		}
-		if (g_strcmp0 (srpm_tmp, srpm_reason) == 0)
-			scores[i] += 100;
-
-		/* same base-name as item_package gets raised */
-		if (g_str_has_prefix (zif_package_get_name (package_tmp),
-				      zif_package_get_name (package_reason))) {
-			scores[i] += 20;
-		}
-
-		/* give higher weight to i686 than i386 */
-		if (g_strcmp0 (archinfo, "i386") == 0 &&
-		    arch_tmp[0] == 'i') {
-			scores[i] += atoi (arch_tmp + 1) / 100;
-		}
-
-		/* any package providing the best depend gets raised */
-		zif_state_reset (state_tmp);
-		ret = zif_package_provides (package_tmp,
-					    best_depend,
-					    &satisfies,
-					    state_tmp,
-					    error);
+		/* get store for the package */
+		state_loop = zif_state_get_child (state_local);
+		ret = zif_transaction_filter_get_score (transaction,
+							provide_data,
+							package_tmp,
+							&scores[i],
+							state_loop,
+							error);
 		if (!ret)
 			goto out;
-		if (satisfies != NULL) {
-			scores[i] += 500;
-			g_object_unref (satisfies);
-		}
 
-		/* shorter names have preference */
-		scores[i] -= strlen (zif_package_get_name (package_tmp));
+		/* this section done */
+		ret = zif_state_done (state_local, error);
+		if (!ret)
+			goto out;
 	}
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 
 	/* print the scores */
 	g_debug ("multiple provides scores:");
@@ -1122,14 +1222,16 @@ _zif_package_array_filter_best_provide (ZifTransaction *transaction,
 		goto out;
 	}
 out:
-	if (state_tmp != NULL)
-		g_object_unref (state_tmp);
 	g_free (scores);
-	g_free (archinfo);
 	if (array_best != NULL)
 		g_ptr_array_unref (array_best);
-	if (best_depend != NULL)
-		g_object_unref (best_depend);
+	if (provide_data != NULL) {
+		g_free (provide_data->archinfo);
+		g_object_unref (provide_data->package_reason);
+		if (provide_data->best_depend != NULL)
+			g_object_unref (provide_data->best_depend);
+		g_free (provide_data);
+	}
 	if (depend_array != NULL)
 		g_ptr_array_unref (depend_array);
 	return ret;
@@ -1233,13 +1335,13 @@ zif_transaction_get_package_provide_from_local (ZifTransaction *transaction,
 
 		/* get an array of packages that provide this */
 		state_local = zif_state_get_child (state);
-		ret = _zif_package_array_filter_best_provide (transaction,
-							      array,
-							      package_reason,
-							      depend,
-							      package,
-							      state_local,
-							      error);
+		ret = zif_transaction_filter_best_provide (transaction,
+							   array,
+							   package_reason,
+							   depend,
+							   package,
+							   state_local,
+							   error);
 		if (!ret)
 			goto out;
 	} else {
@@ -1468,13 +1570,13 @@ zif_transaction_get_package_provide_from_remote (ZifTransaction *transaction,
 
 	/* filter by best depend */
 	state_local = zif_state_get_child (state);
-	ret = _zif_package_array_filter_best_provide (transaction,
-						      array,
-						      package_reason,
-						      depend,
-						      package,
-						      state_local,
-						      error);
+	ret = zif_transaction_filter_best_provide (transaction,
+						   array,
+						   package_reason,
+						   depend,
+						   package,
+						   state_local,
+						   error);
 	if (!ret)
 		goto out;
 
