@@ -2144,6 +2144,10 @@ zif_transaction_reason_to_string_localized (ZifTransactionReason reason)
 		/* TRANSLATORS: this is the reason the action is to be taken */
 		str = _("Downgrading");
 		break;
+	case ZIF_TRANSACTION_REASON_DOWNGRADE_FOR_DEP:
+		/* TRANSLATORS: this is the reason the action is to be taken */
+		str = _("Downgrading for dependencies");
+		break;
 	default:
 		/* TRANSLATORS: this is the reason the action is to be taken */
 		str = _("Unknown reason");
@@ -2164,6 +2168,7 @@ zif_main_show_transaction (ZifTransaction *transaction)
 		ZIF_TRANSACTION_REASON_INSTALL_FOR_UPDATE,
 		ZIF_TRANSACTION_REASON_INSTALL_DEPEND,
 		ZIF_TRANSACTION_REASON_DOWNGRADE_USER_ACTION,
+		ZIF_TRANSACTION_REASON_DOWNGRADE_FOR_DEP,
 		ZIF_TRANSACTION_REASON_UPDATE_USER_ACTION,
 		ZIF_TRANSACTION_REASON_UPDATE_SYSTEM,
 		ZIF_TRANSACTION_REASON_UPDATE_DEPEND,

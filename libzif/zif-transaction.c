@@ -213,6 +213,8 @@ zif_transaction_reason_to_string (ZifTransactionReason reason)
 		return "update-system";
 	if (reason == ZIF_TRANSACTION_REASON_DOWNGRADE_USER_ACTION)
 		return "downgrade-user-action";
+	if (reason == ZIF_TRANSACTION_REASON_DOWNGRADE_FOR_DEP)
+		return "downgrade-for-dep";
 	g_warning ("cannot convert reason %i to string", reason);
 	return NULL;
 }
@@ -256,6 +258,8 @@ zif_transaction_reason_from_string (const gchar *reason)
 		return ZIF_TRANSACTION_REASON_UPDATE_SYSTEM;
 	if (g_strcmp0 (reason, "downgrade-user-action") == 0)
 		return ZIF_TRANSACTION_REASON_DOWNGRADE_USER_ACTION;
+	if (g_strcmp0 (reason, "downgrade-for-dep") == 0)
+		return ZIF_TRANSACTION_REASON_DOWNGRADE_FOR_DEP;
 	g_warning ("cannot convert reason %s to string", reason);
 	return ZIF_TRANSACTION_REASON_INVALID;
 }
@@ -1604,15 +1608,17 @@ zif_transaction_resolve_install_depend (ZifTransactionResolve *data,
 					ZifTransactionItem *item,
 					GError **error)
 {
+	const gchar *to_array[] = {NULL, NULL};
 	gboolean arch_compat;
+	gboolean is_downgrade;
 	gboolean ret = TRUE;
-	ZifPackage *package_provide = NULL;
+	GError *error_local = NULL;
 	GPtrArray *already_installed = NULL;
 	GPtrArray *related_packages = NULL;
-	GError *error_local = NULL;
-	const gchar *to_array[] = {NULL, NULL};
-	ZifPackage *package;
 	guint i;
+	ZifPackage *package;
+	ZifPackage *package_provide = NULL;
+	ZifTransactionReason reason;
 
 	g_return_val_if_fail (data->transaction->priv->stores_remote != NULL, FALSE);
 
@@ -1716,12 +1722,20 @@ zif_transaction_resolve_install_depend (ZifTransactionResolve *data,
 			if (!arch_compat)
 				continue;
 
+			/* are we downgrading the package */
+			is_downgrade = zif_package_compare (package_provide,
+							    package) < 0;
+			if (is_downgrade)
+				reason = ZIF_TRANSACTION_REASON_DOWNGRADE_FOR_DEP;
+			else
+				reason = ZIF_TRANSACTION_REASON_REMOVE_FOR_UPDATE;
+
 			/* add this */
 			g_ptr_array_add (related_packages, package);
 			ret = zif_transaction_add_remove_internal (data->transaction,
 								   package,
 								   related_packages,
-								   ZIF_TRANSACTION_REASON_REMOVE_FOR_UPDATE,
+								   reason,
 								   error);
 			if (!ret)
 				goto out;
@@ -2253,7 +2267,8 @@ zif_transaction_resolve_remove_require (ZifTransactionResolve *data,
 			g_ptr_array_add (related_packages, package);
 
 			/* package is being updated, so try to update deps too */
-			if (item->reason == ZIF_TRANSACTION_REASON_REMOVE_FOR_UPDATE) {
+			if (item->reason == ZIF_TRANSACTION_REASON_REMOVE_FOR_UPDATE ||
+			    item->reason == ZIF_TRANSACTION_REASON_DOWNGRADE_FOR_DEP) {
 				ret = zif_transaction_add_update_internal (data->transaction,
 									   package,
 									   related_packages,
@@ -4982,7 +4997,8 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 	for (i=0; i<priv->install->len; i++) {
 		package_tmp = g_ptr_array_index (priv->install, i);
 		item = zif_transaction_package_get_item (package_tmp);
-		if (item->reason == ZIF_TRANSACTION_REASON_DOWNGRADE_USER_ACTION) {
+		if (item->reason == ZIF_TRANSACTION_REASON_DOWNGRADE_USER_ACTION ||
+		    item->reason == ZIF_TRANSACTION_REASON_DOWNGRADE_FOR_DEP) {
 			problems_filter += RPMPROB_FILTER_OLDPACKAGE;
 			break;
 		}
