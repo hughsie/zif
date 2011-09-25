@@ -2160,6 +2160,7 @@ zif_transaction_reason_to_string_localized (ZifTransactionReason reason)
 static void
 zif_main_show_transaction (ZifTransaction *transaction)
 {
+	gboolean has_downgrade = FALSE;
 	GPtrArray *array;
 	guint i, j;
 	ZifPackage *package;
@@ -2183,15 +2184,23 @@ zif_main_show_transaction (ZifTransaction *transaction)
 	g_print ("%s\n", _("Transaction summary:"));
 	for (i=0; order[i] != -1; i++) {
 		array = zif_transaction_get_array_for_reason (transaction, order[i]);
-		if (array->len > 0)
+		if (array->len > 0) {
 			g_print ("  %s:\n", zif_transaction_reason_to_string_localized (order[i]));
-		for (j=0; j<array->len; j++) {
-			package = g_ptr_array_index (array, j);
-			g_print ("  %i.\t%s\n",
-				 j+1,
-				 zif_package_get_printable (package));
+			for (j=0; j<array->len; j++) {
+				package = g_ptr_array_index (array, j);
+				g_print ("  %i.\t%s\n",
+					 j+1,
+					 zif_package_get_printable (package));
+			}
+			if (order[i] == ZIF_TRANSACTION_REASON_DOWNGRADE_USER_ACTION ||
+			    order[i] == ZIF_TRANSACTION_REASON_DOWNGRADE_FOR_DEP)
+				has_downgrade = TRUE;
 		}
 		g_ptr_array_unref (array);
+	}
+	if (has_downgrade) {
+		/* TRANSLATOR: downgrades are bad and not supported */
+		g_print ("\n%s\n\n", _("WARNING: Downgrading packages is not supported or tested."));
 	}
 }
 
