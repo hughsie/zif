@@ -3924,6 +3924,16 @@ zif_utils_func (void)
 	g_assert_cmpstr (str->str, ==, "should_not_want_it_it!");
 	g_assert_cmpint (str->len, ==, strlen (str->str));
 
+	/* less, on the end */
+	zif_string_replace (str, "it_it!", "it!");
+	g_assert_cmpstr (str->str, ==, "should_not_want_it!");
+	g_assert_cmpint (str->len, ==, strlen (str->str));
+
+	/* more, on the end */
+	zif_string_replace (str, "it!", "it_it_it!");
+	g_assert_cmpstr (str->str, ==, "should_not_want_it_it_it!");
+	g_assert_cmpint (str->len, ==, strlen (str->str));
+
 	g_string_free (str, TRUE);
 
 	zif_check_singletons ();

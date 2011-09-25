@@ -1571,7 +1571,9 @@ zif_string_replace (GString *string,
 	/* now we've re-alloc'd the string, shunt */
 	tmp = strstr (string->str, search);
 	while (tmp != NULL)  {
-		memmove (tmp + r_len, tmp + s_len, strlen (tmp));
+		memmove (tmp + r_len,
+			 tmp + s_len,
+			 strlen (tmp) - s_len + 1);
 		memmove (tmp, replace, r_len);
 		tmp = strstr (tmp + r_len, search);
 	};
