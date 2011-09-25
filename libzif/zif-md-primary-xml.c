@@ -118,7 +118,7 @@ zif_md_primary_xml_parser_start_element (GMarkupParseContext *context, const gch
 					gpointer user_data, GError **error)
 {
 	guint i;
-	ZifDepend *depend;
+	ZifDepend *depend = NULL;
 	ZifString *tmp;
 	ZifMdPrimaryXml *primary_xml = user_data;
 
@@ -264,9 +264,10 @@ zif_md_primary_xml_parser_start_element (GMarkupParseContext *context, const gch
 			if (g_strcmp0 (element_name, "rpm:entry") == 0) {
 				depend = zif_depend_new_from_data (attribute_names,
 								   attribute_values);
-				if (depend != NULL) {
+				/* some repos are broken */
+				if (!g_str_has_prefix (zif_depend_get_name (depend), "rpmlib(")) {
 					g_ptr_array_add (primary_xml->priv->package_requires_temp,
-							 depend);
+							 g_object_ref (depend));
 				}
 				goto out;
 			}
@@ -274,29 +275,26 @@ zif_md_primary_xml_parser_start_element (GMarkupParseContext *context, const gch
 			if (g_strcmp0 (element_name, "rpm:entry") == 0) {
 				depend = zif_depend_new_from_data (attribute_names,
 								   attribute_values);
-				if (depend != NULL) {
-					g_ptr_array_add (primary_xml->priv->package_obsoletes_temp,
-							 depend);
-				}
+				g_ptr_array_add (primary_xml->priv->package_obsoletes_temp,
+						 g_object_ref (depend));
 				goto out;
 			}
 		} else if (primary_xml->priv->section_package == ZIF_MD_PRIMARY_XML_SECTION_PACKAGE_CONFLICTS) {
 			if (g_strcmp0 (element_name, "rpm:entry") == 0) {
 				depend = zif_depend_new_from_data (attribute_names,
 								   attribute_values);
-				if (depend != NULL) {
-					g_ptr_array_add (primary_xml->priv->package_conflicts_temp,
-							 depend);
-				}
+				g_ptr_array_add (primary_xml->priv->package_conflicts_temp,
+						 g_object_ref (depend));
 				goto out;
 			}
 		} else if (primary_xml->priv->section_package == ZIF_MD_PRIMARY_XML_SECTION_PACKAGE_PROVIDES) {
 			if (g_strcmp0 (element_name, "rpm:entry") == 0) {
 				depend = zif_depend_new_from_data (attribute_names,
 								   attribute_values);
-				if (depend != NULL) {
+				/* some repos are broken */
+				if (!g_str_has_prefix (zif_depend_get_name (depend), "rpmlib(")) {
 					g_ptr_array_add (primary_xml->priv->package_provides_temp,
-							 depend);
+							 g_object_ref (depend));
 				}
 				goto out;
 			}
@@ -306,8 +304,9 @@ zif_md_primary_xml_parser_start_element (GMarkupParseContext *context, const gch
 	}
 
 	g_warning ("unhandled base tag: %s", element_name);
-
 out:
+	if (depend != NULL)
+		g_object_unref (depend);
 	return;
 }
 
