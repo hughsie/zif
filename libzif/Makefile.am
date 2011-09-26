@@ -42,20 +42,15 @@ libzif_include_HEADERS =					\
 	zif-db.h						\
 	zif-delta.h						\
 	zif-depend.h						\
-	zif-depend-private.h					\
 	zif-download.h						\
 	zif-groups.h						\
 	zif-history.h						\
 	zif-lock.h						\
 	zif-manifest.h						\
-	zif-md.h						\
-	zif-md-metalink.h					\
-	zif-md-mirrorlist.h					\
 	zif-monitor.h						\
 	zif-object-array.h					\
-	zif-package.h						\
 	zif-package-array.h					\
-	zif-package-array-private.h				\
+	zif-package.h						\
 	zif-package-local.h					\
 	zif-package-private.h					\
 	zif-package-remote.h					\
@@ -94,6 +89,7 @@ libzif_la_SOURCES =						\
 	zif-depend-private.h					\
 	zif-download.c						\
 	zif-download.h						\
+	zif-download-private.h					\
 	zif-groups.c						\
 	zif-groups.h						\
 	zif-history.c						\
@@ -164,6 +160,7 @@ libzif_la_SOURCES =						\
 	zif-store-meta.h					\
 	zif-store-remote.c					\
 	zif-store-remote.h					\
+	zif-store-remote-private.h				\
 	zif-store-rhn.c						\
 	zif-store-rhn.h						\
 	zif-string.c						\

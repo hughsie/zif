@@ -34,7 +34,6 @@
 #include <zif-history.h>
 #include <zif-lock.h>
 #include <zif-manifest.h>
-#include <zif-md.h>
 #include <zif-package.h>
 #include <zif-package-array.h>
 #include <zif-package-local.h>

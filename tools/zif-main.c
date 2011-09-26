@@ -6618,44 +6618,6 @@ error:
 				/* TRANSLATORS: error message */
 				message = _("Unhandled download error");
 			}
-		} else if (error->domain == ZIF_MD_ERROR) {
-			switch (error->code) {
-			case ZIF_MD_ERROR_FAILED:
-				/* TRANSLATORS: error message */
-				message = _("Failed");
-				break;
-			case ZIF_MD_ERROR_NO_SUPPORT:
-				/* TRANSLATORS: error message */
-				message = _("No support");
-				break;
-			case ZIF_MD_ERROR_FAILED_TO_LOAD:
-				/* TRANSLATORS: error message */
-				message = _("Failed to load");
-				break;
-			case ZIF_MD_ERROR_FAILED_AS_OFFLINE:
-				/* TRANSLATORS: error message */
-				message = _("Failed as offline");
-				break;
-			case ZIF_MD_ERROR_FAILED_DOWNLOAD:
-				/* TRANSLATORS: error message */
-				message = _("Failed to download");
-				break;
-			case ZIF_MD_ERROR_BAD_SQL:
-				/* TRANSLATORS: error message */
-				message = _("Bad SQL");
-				break;
-			case ZIF_MD_ERROR_FILE_TOO_OLD:
-				/* TRANSLATORS: error message */
-				message = _("File is too old");
-				break;
-			case ZIF_MD_ERROR_NO_FILENAME:
-				/* TRANSLATORS: error message */
-				message = _("No filename");
-				break;
-			default:
-				/* TRANSLATORS: error message */
-				message = _("Unhandled metadata error");
-			}
 		} else if (error->domain == ZIF_LOCK_ERROR) {
 			switch (error->code) {
 			case ZIF_LOCK_ERROR_FAILED:

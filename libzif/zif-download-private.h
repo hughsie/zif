@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*-
  *
- * Copyright (C) 2008-2011 Richard Hughes <richard@hughsie.com>
+ * Copyright (C) 2009-2010 Richard Hughes <richard@hughsie.com>
  *
  * Licensed under the GNU General Public License Version 2
  *
@@ -19,19 +19,27 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef __ZIF_PRIVATE_H
-#define __ZIF_PRIVATE_H
+#if !defined (__ZIF_H_INSIDE__) && !defined (ZIF_COMPILATION)
+#error "Only <zif.h> can be included directly."
+#endif
 
-#include <zif.h>
+#ifndef __ZIF_DOWNLOAD_PRIVATE_H
+#define __ZIF_DOWNLOAD_PRIVATE_H
 
-/* not really, but close enough */
-#define __ZIF_H_INSIDE__
+#include <glib-object.h>
+#include <gio/gio.h>
 
-#include <zif-object-array.h>
-#include <zif-package-private.h>
-#include <zif-string.h>
+#include "zif-download.h"
+#include "zif-md.h"
 
-#undef __ZIF_PRIVATE_H_INSIDE__
+G_BEGIN_DECLS
 
-#endif /* __ZIF_PRIVATE_H */
+gboolean	 zif_download_location_add_md		(ZifDownload		*download,
+							 ZifMd			*md,
+							 ZifState		*state,
+							 GError			**error);
+
+G_END_DECLS
+
+#endif /* __ZIF_DOWNLOAD_PRIVATE_H */
 

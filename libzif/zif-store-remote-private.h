@@ -19,19 +19,22 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef __ZIF_PRIVATE_H
-#define __ZIF_PRIVATE_H
+#if !defined (__ZIF_H_INSIDE__) && !defined (ZIF_COMPILATION)
+#error "Only <zif.h> can be included directly."
+#endif
 
-#include <zif.h>
+#ifndef __ZIF_STORE_REMOTE_PRIVATE_H
+#define __ZIF_STORE_REMOTE_PRIVATE_H
 
-/* not really, but close enough */
-#define __ZIF_H_INSIDE__
+#include "zif-md.h"
+#include "zif-store-remote.h"
 
-#include <zif-object-array.h>
-#include <zif-package-private.h>
-#include <zif-string.h>
+G_BEGIN_DECLS
 
-#undef __ZIF_PRIVATE_H_INSIDE__
+ZifMd		*zif_store_remote_get_md_from_type	(ZifStoreRemote		*store,
+							 ZifMdKind		 type);
 
-#endif /* __ZIF_PRIVATE_H */
+G_END_DECLS
+
+#endif /* __ZIF_STORE_REMOTE_PRIVATE_H */
 

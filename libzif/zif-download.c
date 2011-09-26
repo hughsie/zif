@@ -35,7 +35,7 @@
 #include <libsoup/soup.h>
 
 #include "zif-config.h"
-#include "zif-download.h"
+#include "zif-download-private.h"
 #include "zif-state.h"
 #include "zif-md-metalink.h"
 #include "zif-md-mirrorlist.h"

@@ -30,7 +30,6 @@
 #include <gio/gio.h>
 
 #include "zif-state.h"
-#include "zif-md.h"
 
 G_BEGIN_DECLS
 
@@ -97,10 +96,6 @@ gboolean	 zif_download_location_add_uri		(ZifDownload		*download,
 							 GError			**error);
 gboolean	 zif_download_location_add_array	(ZifDownload		*download,
 							 GPtrArray		*array,
-							 GError			**error);
-gboolean	 zif_download_location_add_md		(ZifDownload		*download,
-							 ZifMd			*md,
-							 ZifState		*state,
 							 GError			**error);
 gboolean	 zif_download_location_remove_uri	(ZifDownload		*download,
 							 const gchar		*uri,

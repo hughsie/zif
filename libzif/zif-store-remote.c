@@ -38,7 +38,7 @@
 
 #include "zif-category.h"
 #include "zif-config.h"
-#include "zif-download.h"
+#include "zif-download-private.h"
 #include "zif-groups.h"
 #include "zif-lock.h"
 #include "zif-md-comps.h"
@@ -59,7 +59,7 @@
 #include "zif-package-remote.h"
 #include "zif-store.h"
 #include "zif-store-local.h"
-#include "zif-store-remote.h"
+#include "zif-store-remote-private.h"
 #include "zif-utils.h"
 
 #define ZIF_STORE_REMOTE_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_STORE_REMOTE, ZifStoreRemotePrivate))

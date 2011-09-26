@@ -39,7 +39,7 @@
 #include <glib/gstdio.h>
 
 #include "zif-config.h"
-#include "zif-download.h"
+#include "zif-download-private.h"
 #include "zif-md-mirrorlist.h"
 #include "zif-monitor.h"
 #include "zif-package-remote.h"
@@ -47,6 +47,7 @@
 #include "zif-repos.h"
 #include "zif-store-array.h"
 #include "zif-store-local.h"
+#include "zif-store-remote-private.h"
 
 #define ZIF_RELEASE_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_RELEASE, ZifReleasePrivate))
 
@@ -1819,7 +1820,10 @@ zif_release_upgrade_version (ZifRelease *release,
 	zif_md_set_filename (md_mirrorlist, installmirrorlist_filename);
 	zif_md_set_id (md_mirrorlist, "preupgrade-temp");
 	state_local = zif_state_get_child (state);
-	ret = zif_download_location_add_md (priv->download, md_mirrorlist, state_local, &error_local);
+	ret = zif_download_location_add_md (priv->download,
+					    md_mirrorlist,
+					    state_local,
+					    &error_local);
 	if (!ret) {
 		g_set_error (error,
 			     ZIF_RELEASE_ERROR,
