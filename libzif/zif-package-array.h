@@ -38,6 +38,10 @@ ZifPackage	*zif_package_array_get_newest		(GPtrArray	*array,
 							 GError		**error);
 ZifPackage	*zif_package_array_get_oldest		(GPtrArray	*array,
 							 GError		**error);
+gboolean	 zif_package_array_download		(GPtrArray	*packages,
+							 const gchar	*directory,
+							 ZifState	*state,
+							 GError		**error);
 gboolean	 zif_package_array_filter_newest	(GPtrArray	*packages);
 void		 zif_package_array_filter_best_arch	(GPtrArray	*array,
 							 const gchar	*arch);

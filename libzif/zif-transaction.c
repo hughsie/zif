@@ -3783,7 +3783,6 @@ zif_transaction_prepare (ZifTransaction *transaction, ZifState *state, GError **
 	GPtrArray *download = NULL;
 	guint i;
 	rpmKeyring keyring = NULL;
-	ZifPackage *package;
 	ZifPackage *package_tmp;
 	ZifState *state_local;
 	ZifState *state_loop;
@@ -3887,31 +3886,10 @@ skip:
 	/* download files */
 	if (download->len > 0) {
 		state_local = zif_state_get_child (state);
-		zif_state_set_number_steps (state_local, download->len);
-		for (i=0; i<download->len; i++) {
-			package = g_ptr_array_index (download, i);
-			state_loop = zif_state_get_child (state_local);
-			g_debug ("downloading %s",
-				 zif_package_get_id (package));
-			zif_state_action_start (state_local,
-						ZIF_STATE_ACTION_DOWNLOADING,
-						zif_package_get_id (package));
-			ret = zif_package_remote_download (ZIF_PACKAGE_REMOTE (package),
-							   NULL,
-							   state_loop,
-							   &error_local);
-			if (!ret) {
-				g_propagate_prefixed_error (error, error_local,
-							    "cannot download %s: ",
-							    zif_package_get_printable (package));
-				goto out;
-			}
-
-			/* done */
-			ret = zif_state_done (state_local, error);
-			if (!ret)
-				goto out;
-		}
+		ret = zif_package_array_download (download,
+						  NULL,
+						  state_local,
+						  error);
 	}
 
 	/* done */

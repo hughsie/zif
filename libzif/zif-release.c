@@ -42,6 +42,7 @@
 #include "zif-download-private.h"
 #include "zif-md-mirrorlist.h"
 #include "zif-monitor.h"
+#include "zif-package-array.h"
 #include "zif-package-remote.h"
 #include "zif-release.h"
 #include "zif-repos.h"
@@ -1294,13 +1295,10 @@ zif_release_get_package_data (ZifRelease *release,
 	GFile *file = NULL;
 	GPtrArray *array = NULL;
 	GPtrArray *updates = NULL;
-	guint i;
 	guint old_release;
 	ZifMd *md_tmp;
-	ZifPackage *package;
 	ZifRepos *repos = NULL;
 	ZifState *state_local;
-	ZifState *state_loop;
 	ZifStore *store_local = NULL;
 	ZifStoreRemote *store;
 	ZifReleasePrivate *priv = release->priv;
@@ -1413,28 +1411,20 @@ zif_release_get_package_data (ZifRelease *release,
 	if (!ret)
 		goto out;
 
-	/* set number of download files */
-	state_local = zif_state_get_child (state);
-	zif_state_set_number_steps (state_local, updates->len);
-
 	/* download each update to /var/cache/preupgrade/packages*/
+	state_local = zif_state_get_child (state);
 	repo_packages = g_build_filename (repo_dir, "packages", NULL);
-	for (i=0; i<updates->len; i++) {
-		package = g_ptr_array_index (updates, i);
-		g_debug ("download %s", zif_package_get_printable (package));
-		state_loop = zif_state_get_child (state_local);
-		ret = zif_package_remote_download (ZIF_PACKAGE_REMOTE (package),
-						   repo_packages,
-						   state_loop,
-						   error);
-		if (!ret)
-			goto out;
+	ret = zif_package_array_download (updates,
+	                                  repo_packages,
+	                                  state_local,
+	                                  error);
+	if (!ret)
+		goto out;
 
-		/* this section done */
-		ret = zif_state_done (state_local, error);
-		if (!ret)
-			goto out;
-	}
+	/* this section done */
+	ret = zif_state_done (state_local, error);
+	if (!ret)
+		goto out;
 
 	/* this section done */
 	ret = zif_state_done (state, error);

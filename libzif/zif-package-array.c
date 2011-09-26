@@ -32,6 +32,7 @@
 #include <string.h>
 
 #include "zif-package-array-private.h"
+#include "zif-package-remote.h"
 #include "zif-utils.h"
 
 /**
@@ -208,6 +209,68 @@ zif_package_array_get_oldest (GPtrArray *array, GError **error)
 	package = g_object_ref (package_oldest);
 out:
 	return package;
+}
+
+/**
+ * zif_package_array_download:
+ * @packages: array of %ZifPackage's
+ * @directory: A local directory to save to, or %NULL to use the package cache
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
+ *
+ * Downloads a list of packages.
+ *
+ * Return value: %TRUE for success, %FALSE otherwise
+ *
+ * Since: 0.2.5
+ **/
+gboolean
+zif_package_array_download (GPtrArray *packages,
+                            const gchar *directory,
+                            ZifState *state,
+                            GError **error)
+{
+	gboolean ret = TRUE;
+	GError *error_local = NULL;
+	guint i;
+	ZifPackage *package;
+	ZifState *state_loop;
+
+	g_return_val_if_fail (packages != NULL, FALSE);
+	g_return_val_if_fail (state != NULL, FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+	/* shortcut */
+	if (packages->len == 0)
+		goto out;
+
+	zif_state_set_number_steps (state, packages->len);
+	for (i=0; i<packages->len; i++) {
+		package = g_ptr_array_index (packages, i);
+		state_loop = zif_state_get_child (state);
+		g_debug ("downloading %s",
+			 zif_package_get_id (package));
+		zif_state_action_start (state,
+					ZIF_STATE_ACTION_DOWNLOADING,
+					zif_package_get_id (package));
+		ret = zif_package_remote_download (ZIF_PACKAGE_REMOTE (package),
+						   directory,
+						   state_loop,
+						   &error_local);
+		if (!ret) {
+			g_propagate_prefixed_error (error, error_local,
+						    "cannot download %s: ",
+						    zif_package_get_printable (package));
+			goto out;
+		}
+
+		/* done */
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
+	}
+out:
+	return ret;
 }
 
 /**
