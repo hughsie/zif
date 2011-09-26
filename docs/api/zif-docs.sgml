@@ -88,6 +88,7 @@
         This part documents helper funtions in libzif.
       </para>
     </partintro>
+    <xi:include href="xml/zif-package-array.xml"/>
     <xi:include href="xml/zif-store-array.xml"/>
     <xi:include href="xml/zif-string.xml"/>
     <xi:include href="xml/zif-utils.xml"/>
