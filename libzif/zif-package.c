@@ -34,14 +34,13 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "zif-depend.h"
-#include "zif-utils.h"
 #include "zif-config.h"
-#include "zif-package.h"
-#include "zif-repos.h"
-#include "zif-string.h"
+#include "zif-depend-private.h"
 #include "zif-legal.h"
 #include "zif-object-array.h"
+#include "zif-package-private.h"
+#include "zif-repos.h"
+#include "zif-string.h"
 #include "zif-utils.h"
 
 #define ZIF_PACKAGE_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_PACKAGE, ZifPackagePrivate))

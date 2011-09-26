@@ -31,7 +31,7 @@
 #include <glib.h>
 #include <string.h>
 
-#include "zif-package-array.h"
+#include "zif-package-array-private.h"
 #include "zif-utils.h"
 
 /**

@@ -40,9 +40,10 @@
 #include <fcntl.h>
 
 #include "zif-config.h"
-#include "zif-monitor.h"
 #include "zif-history.h"
+#include "zif-monitor.h"
 #include "zif-package-local.h"
+#include "zif-package-private.h"
 #include "zif-store-local.h"
 
 #define ZIF_STORE_LOCAL_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_STORE_LOCAL, ZifStoreLocalPrivate))

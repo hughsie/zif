@@ -37,6 +37,8 @@
 #include "zif-config.h"
 #include "zif-md.h"
 #include "zif-md-updateinfo.h"
+#include "zif-package-private.h"
+#include "zif-string.h"
 #include "zif-update.h"
 #include "zif-update-info.h"
 #include "zif-utils.h"

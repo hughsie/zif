@@ -34,7 +34,7 @@
 #include <libsoup/soup.h>
 #include <stdlib.h>
 
-#include "zif-package.h"
+#include "zif-package-private.h"
 #include "zif-package-rhn.h"
 
 #define ZIF_PACKAGE_RHN_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_PACKAGE_RHN, ZifPackageRhnPrivate))

@@ -53,15 +53,16 @@
 #include <libsoup/soup.h>
 
 #include "zif-config.h"
-#include "zif-package-meta.h"
+#include "zif-manifest.h"
+#include "zif-object-array.h"
 #include "zif-package-array.h"
+#include "zif-package-meta.h"
+#include "zif-package-private.h"
 #include "zif-state.h"
 #include "zif-store-array.h"
 #include "zif-store-meta.h"
 #include "zif-transaction.h"
-#include "zif-manifest.h"
 #include "zif-utils.h"
-#include "zif-object-array.h"
 
 #define ZIF_MANIFEST_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_MANIFEST, ZifManifestPrivate))
 

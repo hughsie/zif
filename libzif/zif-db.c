@@ -47,6 +47,7 @@
 #include "zif-config.h"
 #include "zif-db.h"
 #include "zif-object-array.h"
+#include "zif-package-private.h"
 #include "zif-package-remote.h"
 #include "zif-utils.h"
 

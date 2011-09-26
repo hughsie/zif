@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*-
  *
- * Copyright (C) 2010 Richard Hughes <richard@hughsie.com>
+ * Copyright (C) 2009-2011 Richard Hughes <richard@hughsie.com>
  *
  * Licensed under the GNU General Public License Version 2
  *
@@ -23,32 +23,31 @@
 #error "Only <zif.h> can be included directly."
 #endif
 
-#ifndef __ZIF_PACKAGE_ARRAY_H
-#define __ZIF_PACKAGE_ARRAY_H
+#ifndef __ZIF_DEPEND_PRIVATE_H
+#define __ZIF_DEPEND_PRIVATE_H
 
-#include <glib.h>
+#include <glib-object.h>
+#include <gio/gio.h>
 
-#include "zif-package.h"
 #include "zif-depend.h"
+#include "zif-string.h"
 
 G_BEGIN_DECLS
 
-GPtrArray	*zif_package_array_new			(void);
-ZifPackage	*zif_package_array_get_newest		(GPtrArray	*array,
-							 GError		**error);
-ZifPackage	*zif_package_array_get_oldest		(GPtrArray	*array,
-							 GError		**error);
-gboolean	 zif_package_array_filter_newest	(GPtrArray	*packages);
-void		 zif_package_array_filter_best_arch	(GPtrArray	*array,
-							 const gchar	*arch);
-void		 zif_package_array_filter_arch		(GPtrArray	*array,
-							 const gchar	*arch);
-void		 zif_package_array_filter_duplicates	(GPtrArray	*packages);
-ZifPackage	*zif_package_array_find			(GPtrArray	*array,
-							 const gchar	*package_id,
-							 GError		**error);
+ZifDepend		*zif_depend_new_from_data	(const gchar		**keys,
+							 const gchar		**values);
+void			 zif_depend_set_flag		(ZifDepend		*depend,
+							 ZifDependFlag		 flag);
+void			 zif_depend_set_name		(ZifDepend		*depend,
+							 const gchar		*name);
+void			 zif_depend_set_version		(ZifDepend		*depend,
+							 const gchar		*version);
+void			 zif_depend_set_name_str	(ZifDepend		*depend,
+							 ZifString		*name);
+void			 zif_depend_set_version_str	(ZifDepend		*depend,
+							 ZifString		*version);
 
 G_END_DECLS
 
-#endif /* __ZIF_PACKAGE_ARRAY_H */
+#endif /* __ZIF_DEPEND_PRIVATE_H */
 

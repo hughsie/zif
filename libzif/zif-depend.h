@@ -53,7 +53,6 @@ typedef enum {
 
 #include "zif-package.h"
 #include "zif-changeset.h"
-#include "zif-string.h"
 
 struct _ZifDepend
 {
@@ -68,8 +67,6 @@ struct _ZifDependClass
 
 GType			 zif_depend_get_type		(void);
 ZifDepend		*zif_depend_new			(void);
-ZifDepend		*zif_depend_new_from_data	(const gchar		**keys,
-							 const gchar		**values);
 ZifDepend		*zif_depend_new_from_values	(const gchar		*name,
 							 ZifDependFlag		 flag,
 							 const gchar		*version);
@@ -90,18 +87,6 @@ ZifDependFlag		 zif_depend_get_flag		(ZifDepend		*depend);
 const gchar		*zif_depend_get_name		(ZifDepend		*depend);
 const gchar		*zif_depend_get_version		(ZifDepend		*depend);
 const gchar		*zif_depend_get_description	(ZifDepend		*depend);
-
-/* internal setters */
-void			 zif_depend_set_flag		(ZifDepend		*depend,
-							 ZifDependFlag		 flag);
-void			 zif_depend_set_name		(ZifDepend		*depend,
-							 const gchar		*name);
-void			 zif_depend_set_name_str	(ZifDepend		*depend,
-							 ZifString		*name);
-void			 zif_depend_set_version		(ZifDepend		*depend,
-							 const gchar		*version);
-void			 zif_depend_set_version_str	(ZifDepend		*depend,
-							 ZifString		*version);
 
 G_END_DECLS
 

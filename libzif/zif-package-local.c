@@ -36,13 +36,13 @@
 #include <rpm/rpmts.h>
 
 #include "zif-db.h"
-#include "zif-history.h"
-#include "zif-utils.h"
-#include "zif-package.h"
-#include "zif-package-local.h"
-#include "zif-groups.h"
-#include "zif-string.h"
 #include "zif-depend.h"
+#include "zif-groups.h"
+#include "zif-history.h"
+#include "zif-package-local.h"
+#include "zif-package-private.h"
+#include "zif-string.h"
+#include "zif-utils.h"
 
 #define ZIF_PACKAGE_LOCAL_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_PACKAGE_LOCAL, ZifPackageLocalPrivate))
 

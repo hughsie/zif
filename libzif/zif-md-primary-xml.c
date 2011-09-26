@@ -63,12 +63,14 @@ typedef enum {
 #include <gio/gio.h>
 
 #include "zif-config.h"
+#include "zif-depend-private.h"
 #include "zif-md.h"
-#include "zif-utils.h"
-#include "zif-depend.h"
 #include "zif-md-primary-xml.h"
-#include "zif-package-remote.h"
 #include "zif-object-array.h"
+#include "zif-package-private.h"
+#include "zif-package-remote.h"
+#include "zif-string.h"
+#include "zif-utils.h"
 
 #define ZIF_MD_PRIMARY_XML_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_MD_PRIMARY_XML, ZifMdPrimaryXmlPrivate))
 

@@ -31,7 +31,6 @@
 
 #include "zif-depend.h"
 #include "zif-state.h"
-#include "zif-string.h"
 
 G_BEGIN_DECLS
 
@@ -196,61 +195,6 @@ gboolean		 zif_package_obsoletes		(ZifPackage	*package,
 							 ZifState	*state,
 							 GError		**error);
 
-/* internal setters */
-gboolean		 zif_package_set_id		(ZifPackage	*package,
-							 const gchar	*package_id,
-							 GError		**error)
-							 G_GNUC_WARN_UNUSED_RESULT;
-void			 zif_package_set_repo_id	(ZifPackage	*package,
-							 const gchar	*repo_id);
-void			 zif_package_set_installed	(ZifPackage	*package,
-							 gboolean	 installed);
-void			 zif_package_set_trust_kind	(ZifPackage	*package,
-							 ZifPackageTrustKind trust_kind);
-void			 zif_package_set_summary	(ZifPackage	*package,
-							 ZifString	*summary);
-void			 zif_package_set_description	(ZifPackage	*package,
-							 ZifString	*description);
-void			 zif_package_set_license	(ZifPackage	*package,
-							 ZifString	*license);
-void			 zif_package_set_url		(ZifPackage	*package,
-							 ZifString	*url);
-void			 zif_package_set_location_href	(ZifPackage	*package,
-							 ZifString	*location_href);
-void			 zif_package_set_source_filename (ZifPackage	*package,
-							 ZifString	*source_filename);
-void			 zif_package_set_category	(ZifPackage	*package,
-							 ZifString	*category);
-void			 zif_package_set_group		(ZifPackage	*package,
-							 ZifString	*group);
-void			 zif_package_set_pkgid		(ZifPackage	*package,
-							 ZifString	*pkgid);
-void			 zif_package_set_cache_filename	(ZifPackage	*package,
-							 const gchar	*cache_filename);
-void			 zif_package_set_size		(ZifPackage	*package,
-							 guint64	 size);
-void			 zif_package_add_file		(ZifPackage	*package,
-							 const gchar	*filename);
-void			 zif_package_set_files		(ZifPackage	*package,
-							 GPtrArray	*files);
-void			 zif_package_add_require	(ZifPackage	*package,
-							 ZifDepend	*depend);
-void			 zif_package_add_provide	(ZifPackage	*package,
-							 ZifDepend	*depend);
-void			 zif_package_add_obsolete	(ZifPackage	*package,
-							 ZifDepend	*depend);
-void			 zif_package_add_conflict	(ZifPackage	*package,
-							 ZifDepend	*depend);
-void			 zif_package_set_requires	(ZifPackage	*package,
-							 GPtrArray	*requires);
-void			 zif_package_set_provides	(ZifPackage	*package,
-							 GPtrArray	*provides);
-void			 zif_package_set_obsoletes	(ZifPackage	*package,
-							 GPtrArray	*obsoletes);
-void			 zif_package_set_conflicts	(ZifPackage	*package,
-							 GPtrArray	*conflicts);
-void			 zif_package_set_time_file	(ZifPackage	*package,
-							 guint64	 time_file);
 const gchar		*zif_package_get_package_id	(ZifPackage	*package);
 void			 zif_package_print		(ZifPackage	*package);
 gboolean		 zif_package_is_devel		(ZifPackage	*package);

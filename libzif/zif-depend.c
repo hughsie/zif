@@ -33,7 +33,7 @@
 
 #include <glib.h>
 
-#include "zif-depend.h"
+#include "zif-depend-private.h"
 #include "zif-utils.h"
 #include "zif-string.h"
 

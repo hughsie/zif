@@ -38,6 +38,7 @@
 #include "zif-config.h"
 #include "zif-history.h"
 #include "zif-monitor.h"
+#include "zif-package-private.h"
 #include "zif-utils.h"
 
 #define ZIF_HISTORY_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_HISTORY, ZifHistoryPrivate))

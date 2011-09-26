@@ -38,7 +38,7 @@
 
 #include "zif-array.h"
 #include "zif-object-array.h"
-#include "zif-package-array.h"
+#include "zif-package-array-private.h"
 #include "zif-package.h"
 #include "zif-store.h"
 #include "zif-utils.h"

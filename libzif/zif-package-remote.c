@@ -34,12 +34,13 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "zif-utils.h"
-#include "zif-package-local.h"
-#include "zif-package-remote.h"
 #include "zif-groups.h"
-#include "zif-string.h"
+#include "zif-package-local.h"
+#include "zif-package-private.h"
+#include "zif-package-remote.h"
 #include "zif-store-remote.h"
+#include "zif-string.h"
+#include "zif-utils.h"
 
 #define ZIF_PACKAGE_REMOTE_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_PACKAGE_REMOTE, ZifPackageRemotePrivate))
 

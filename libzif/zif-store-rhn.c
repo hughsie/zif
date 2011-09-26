@@ -35,6 +35,7 @@
 #include <libsoup/soup.h>
 
 #include "zif-config.h"
+#include "zif-package-private.h"
 #include "zif-package-rhn.h"
 #include "zif-store-rhn.h"
 #include "zif-utils.h"

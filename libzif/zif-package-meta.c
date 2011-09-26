@@ -36,8 +36,8 @@
 #include <stdlib.h>
 
 #include "zif-depend.h"
-#include "zif-package.h"
 #include "zif-package-meta.h"
+#include "zif-package-private.h"
 #include "zif-string.h"
 #include "zif-utils.h"
 

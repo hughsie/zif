@@ -35,12 +35,14 @@ libzif_includedir = $(includedir)/libzif
 
 libzif_include_HEADERS =					\
 	zif.h							\
+	zif-private.h						\
 	zif-category.h						\
 	zif-changeset.h						\
 	zif-config.h						\
 	zif-db.h						\
 	zif-delta.h						\
 	zif-depend.h						\
+	zif-depend-private.h					\
 	zif-download.h						\
 	zif-groups.h						\
 	zif-history.h						\
@@ -53,7 +55,9 @@ libzif_include_HEADERS =					\
 	zif-object-array.h					\
 	zif-package.h						\
 	zif-package-array.h					\
+	zif-package-array-private.h				\
 	zif-package-local.h					\
+	zif-package-private.h					\
 	zif-package-remote.h					\
 	zif-package-rhn.h					\
 	zif-release.h						\
@@ -87,6 +91,7 @@ libzif_la_SOURCES =						\
 	zif-delta.h						\
 	zif-depend.c						\
 	zif-depend.h						\
+	zif-depend-private.h					\
 	zif-download.c						\
 	zif-download.h						\
 	zif-groups.c						\
@@ -131,8 +136,10 @@ libzif_la_SOURCES =						\
 	zif-object-array.h					\
 	zif-package.c						\
 	zif-package.h						\
+	zif-package-private.h					\
 	zif-package-array.c					\
 	zif-package-array.h					\
+	zif-package-array-private.h				\
 	zif-package-local.c					\
 	zif-package-local.h					\
 	zif-package-meta.c					\
@@ -268,7 +275,7 @@ Zif_1_0_gir_SCANNERFLAGS = --identifier-prefix=Zif \
 				--symbol-prefix=zif_ \
 				--warn-all \
 				--add-include-path=$(srcdir) \
-				--c-include="zif.h"
+				--c-include="zif-private.h"
 Zif_1_0_gir_EXPORT_PACKAGES = zif
 Zif_1_0_gir_LIBS = libzif.la
 Zif_1_0_gir_FILES = $(introspection_sources)

@@ -4777,7 +4777,7 @@ zif_cmd_parse_depends (gchar **values, GError **error)
 	ZifDepend *depend;
 
 	/* parse the depends */
-	depend_array_tmp = zif_object_array_new ();
+	depend_array_tmp = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	for (i=0; values[i] != NULL; i++) {
 		depend = zif_depend_new ();
 		ret = zif_depend_parse_description (depend, values[i], error);
@@ -4791,8 +4791,7 @@ zif_cmd_parse_depends (gchar **values, GError **error)
 	/* success */
 	depend_array = g_ptr_array_ref (depend_array_tmp);
 out:
-	if (depend_array_tmp != NULL)
-		g_ptr_array_unref (depend_array_tmp);
+	g_ptr_array_unref (depend_array_tmp);
 	return depend_array;
 }
 

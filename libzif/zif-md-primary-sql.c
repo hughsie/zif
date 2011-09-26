@@ -38,9 +38,10 @@
 #include <gio/gio.h>
 
 #include "zif-config.h"
+#include "zif-depend-private.h"
 #include "zif-md.h"
 #include "zif-md-primary-sql.h"
-#include "zif-package-array.h"
+#include "zif-package-array-private.h"
 #include "zif-package-remote.h"
 #include "zif-utils.h"
 
