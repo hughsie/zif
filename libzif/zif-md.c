@@ -39,7 +39,7 @@
 
 #include "zif-config.h"
 #include "zif-md.h"
-#include "zif-store-remote.h"
+#include "zif-store-remote-private.h"
 #include "zif-utils.h"
 
 #define ZIF_MD_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_MD, ZifMdPrivate))

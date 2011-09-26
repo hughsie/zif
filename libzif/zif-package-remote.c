@@ -38,7 +38,7 @@
 #include "zif-package-local.h"
 #include "zif-package-private.h"
 #include "zif-package-remote.h"
-#include "zif-store-remote.h"
+#include "zif-store-remote-private.h"
 #include "zif-string.h"
 #include "zif-utils.h"
 

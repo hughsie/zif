@@ -71,26 +71,6 @@ const gchar	*zif_store_remote_get_name		(ZifStoreRemote		*store,
 							 ZifState		*state,
 							 GError			**error);
 const gchar	*zif_store_remote_get_pubkey		(ZifStoreRemote		*store);
-GPtrArray	*zif_store_remote_get_files		(ZifStoreRemote		*store,
-							 ZifPackage		*package,
-							 ZifState		*state,
-							 GError			**error);
-GPtrArray	*zif_store_remote_get_provides		(ZifStoreRemote		*store,
-							 ZifPackage		*package,
-							 ZifState		*state,
-							 GError			**error);
-GPtrArray	*zif_store_remote_get_requires		(ZifStoreRemote		*store,
-							 ZifPackage		*package,
-							 ZifState		*state,
-							 GError			**error);
-GPtrArray	*zif_store_remote_get_conflicts		(ZifStoreRemote		*store,
-							 ZifPackage		*package,
-							 ZifState		*state,
-							 GError			**error);
-GPtrArray	*zif_store_remote_get_obsoletes		(ZifStoreRemote		*store,
-							 ZifPackage		*package,
-							 ZifState		*state,
-							 GError			**error);
 gboolean	 zif_store_remote_get_enabled		(ZifStoreRemote		*store,
 							 ZifState		*state,
 							 GError			**error);
@@ -112,19 +92,12 @@ gboolean	 zif_store_remote_download_full		(ZifStoreRemote		*store,
 							 const gchar		*checksum,
 							 ZifState		*state,
 							 GError			**error);
-gboolean	 zif_store_remote_download_repomd	(ZifStoreRemote		*store,
-							 ZifState		*state,
-							 GError			**error);
 ZifUpdate	*zif_store_remote_get_update_detail	(ZifStoreRemote		*store,
 							 const gchar		*package_id,
 							 ZifState		*state,
 							 GError			**error);
-gboolean	 zif_store_remote_check			(ZifStoreRemote		*store,
-							 ZifState		*state,
-							 GError			**error);
 void		 zif_store_remote_set_id		(ZifStoreRemote		*store,
 							 const gchar		*id);
-const gchar	*zif_store_remote_get_local_directory	(ZifStoreRemote		*store);
 ZifDelta	*zif_store_remote_find_delta	 	(ZifStoreRemote		*store,
 							 ZifPackage		*update,
 							 ZifPackage		*installed,

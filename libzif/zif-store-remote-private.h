@@ -31,6 +31,30 @@
 
 G_BEGIN_DECLS
 
+GPtrArray	*zif_store_remote_get_files		(ZifStoreRemote		*store,
+							 ZifPackage		*package,
+							 ZifState		*state,
+							 GError			**error);
+GPtrArray	*zif_store_remote_get_provides		(ZifStoreRemote		*store,
+							 ZifPackage		*package,
+							 ZifState		*state,
+							 GError			**error);
+GPtrArray	*zif_store_remote_get_requires		(ZifStoreRemote		*store,
+							 ZifPackage		*package,
+							 ZifState		*state,
+							 GError			**error);
+GPtrArray	*zif_store_remote_get_conflicts		(ZifStoreRemote		*store,
+							 ZifPackage		*package,
+							 ZifState		*state,
+							 GError			**error);
+GPtrArray	*zif_store_remote_get_obsoletes		(ZifStoreRemote		*store,
+							 ZifPackage		*package,
+							 ZifState		*state,
+							 GError			**error);
+gboolean	 zif_store_remote_download_repomd	(ZifStoreRemote		*store,
+							 ZifState		*state,
+							 GError			**error);
+const gchar	*zif_store_remote_get_local_directory	(ZifStoreRemote		*store);
 ZifMd		*zif_store_remote_get_md_from_type	(ZifStoreRemote		*store,
 							 ZifMdKind		 type);
 
