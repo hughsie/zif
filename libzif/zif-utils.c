@@ -389,6 +389,40 @@ zif_package_id_from_nevra (const gchar *name,
 }
 
 /**
+ * zif_package_id_compare_nevra:
+ * @package_id1: The package ID, e.g. "hal;1:1.01-3;i386;fedora"
+ * @package_id2: The package ID, e.g. "hal;1:1.01-3;i386;updates-testing"
+ *
+ * Compares the NEVRA sections in two package ID strings, ignoring the fourth
+ * data section.
+ *
+ * Return value: %TRUE if the NEVRA are equal
+ *
+ * Since: 0.2.5
+ **/
+gboolean
+zif_package_id_compare_nevra (const gchar *package_id1,
+			      const gchar *package_id2)
+{
+	gboolean ret = FALSE;
+	gchar **split1;
+	gchar **split2;
+
+	/* split up into 4 usable sections */
+	split1 = zif_package_id_split (package_id1);
+	split2 = zif_package_id_split (package_id2);
+
+	if (g_strcmp0 (split1[ZIF_PACKAGE_ID_NAME],    split2[ZIF_PACKAGE_ID_NAME]) == 0 &&
+	    g_strcmp0 (split1[ZIF_PACKAGE_ID_VERSION], split2[ZIF_PACKAGE_ID_VERSION]) == 0 &&
+	    g_strcmp0 (split1[ZIF_PACKAGE_ID_ARCH],    split2[ZIF_PACKAGE_ID_ARCH]) == 0)
+		ret = TRUE;
+
+	g_strfreev (split1);
+	g_strfreev (split2);
+	return ret;
+}
+
+/**
  * zif_package_id_to_nevra:
  * @package_id: The package ID, e.g. "hal;1:1.01-3;i386;fedora"
  * @name: The returned package name, e.g. "hal"

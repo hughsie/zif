@@ -97,6 +97,8 @@ gboolean	 zif_package_convert_evr_full	(gchar		*evr,
 gboolean	 zif_utils_gpg_verify		(const gchar	*filename,
 						 const gchar	*filename_gpg,
 						 GError		**error);
+gboolean	 zif_package_id_compare_nevra	(const gchar	*package_id1,
+						 const gchar	*package_id2);
 gboolean	 zif_package_id_to_nevra	(const gchar	 *package_id,
 						 gchar		**name,
 						 guint		*epoch,

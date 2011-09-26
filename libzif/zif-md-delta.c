@@ -501,7 +501,8 @@ zif_md_delta_search_for_package (ZifMdDelta *md,
 	/* find the installed package */
 	for (i=0; i<array->len; i++) {
 		delta_tmp = g_ptr_array_index (array, i);
-		if (g_strcmp0 (zif_delta_get_id (delta_tmp), package_id_installed) == 0) {
+		if (zif_package_id_compare_nevra (zif_delta_get_id (delta_tmp),
+		                                  package_id_installed)) {
 			delta = g_object_ref (delta_tmp);
 			break;
 		}
