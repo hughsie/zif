@@ -195,7 +195,6 @@ gboolean		 zif_package_obsoletes		(ZifPackage	*package,
 							 ZifState	*state,
 							 GError		**error);
 
-const gchar		*zif_package_get_package_id	(ZifPackage	*package);
 void			 zif_package_print		(ZifPackage	*package);
 gboolean		 zif_package_is_devel		(ZifPackage	*package);
 gboolean		 zif_package_is_gui		(ZifPackage	*package);

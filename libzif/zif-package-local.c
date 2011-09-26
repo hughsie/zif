@@ -312,7 +312,7 @@ zif_package_local_ensure_data (ZifPackage *pkg,
 				idx = GPOINTER_TO_UINT (g_ptr_array_index (fileindex, i));
 				if (idx > dirnames->len) {
 					g_warning ("index bigger than dirnames (%i > %i) for package %s [%s], i=%i, dn=%i, bn=%i, fi=%i",
-						     idx, dirnames->len, zif_package_get_package_id (pkg),
+						     idx, dirnames->len, zif_package_get_id (pkg),
 						     (const gchar *) g_ptr_array_index (basenames, i),
 						     i, dirnames->len, basenames->len, fileindex->len);
 					continue;

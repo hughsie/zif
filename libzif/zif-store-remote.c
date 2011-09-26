@@ -743,7 +743,7 @@ zif_store_remote_add_changelog (ZifStoreRemote *store, ZifUpdate *update,
 			g_error_free (error_local);
 			goto out;
 		}
-		split_installed = zif_package_id_split (zif_package_get_package_id (package_installed));
+		split_installed = zif_package_id_split (zif_package_get_id (package_installed));
 	}
 
 	/* add the changesets (the changelog) to the update */

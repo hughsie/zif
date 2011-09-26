@@ -3178,7 +3178,7 @@ zif_store_local_func (void)
 	g_assert_cmpstr (split[ZIF_PACKAGE_ID_NAME], ==, "test");
 	g_strfreev (split);
 
-	g_assert (g_str_has_suffix (zif_package_get_package_id (package), ";installed"));
+	g_assert (g_str_has_suffix (zif_package_get_id (package), ";installed"));
 
 	zif_state_reset (state);
 	g_assert_cmpstr (zif_package_get_summary (package, state, NULL), ==, "Test package");
