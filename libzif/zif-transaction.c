@@ -58,7 +58,6 @@
 #include <rpm/rpmts.h>
 #include <rpm/rpmkeyring.h>
 
-#include "zif-array.h"
 #include "zif-config.h"
 #include "zif-db.h"
 #include "zif-depend.h"

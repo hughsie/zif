@@ -72,8 +72,6 @@ libzif_include_HEADERS =					\
 	zif-version.h
 
 libzif_la_SOURCES =						\
-	zif-array.c						\
-	zif-array.h						\
 	zif-category.c						\
 	zif-category.h						\
 	zif-changeset.c						\
