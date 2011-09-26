@@ -70,6 +70,10 @@ zif_package_array_find (GPtrArray *array,
 	ZifPackage *package = NULL;
 	ZifPackage *package_tmp;
 
+	g_return_val_if_fail (array != NULL, NULL);
+	g_return_val_if_fail (package_id != NULL, NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
 	for (i=0; i<array->len; i++) {
 		package_tmp = g_ptr_array_index (array, i);
 		if (g_strcmp0 (zif_package_get_id (package_tmp), package_id) == 0) {
@@ -109,6 +113,7 @@ zif_package_array_get_newest (GPtrArray *array, GError **error)
 	guint i;
 	gint retval;
 
+	g_return_val_if_fail (array != NULL, NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* no results */
@@ -178,6 +183,7 @@ zif_package_array_get_oldest (GPtrArray *array, GError **error)
 	guint i;
 	gint retval;
 
+	g_return_val_if_fail (array != NULL, NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* no results */
@@ -227,6 +233,8 @@ zif_package_array_filter_newest (GPtrArray *packages)
 	guint i;
 	ZifPackage *package;
 	ZifPackage *package_tmp;
+
+	g_return_val_if_fail (packages != NULL, FALSE);
 
 	/* first, filter out any duplicates */
 	zif_package_array_filter_duplicates (packages);
@@ -323,6 +331,8 @@ zif_package_array_filter_duplicates (GPtrArray *packages)
 	guint i;
 	ZifPackage *package;
 	GPtrArray *array_new;
+
+	g_return_if_fail (packages != NULL);
 
 	/* use a hash so it's O(n) not O(n^2) */
 	array_new = g_ptr_array_sized_new (packages->len);
@@ -422,6 +432,9 @@ zif_package_array_filter_best_arch32 (GPtrArray *array)
 void
 zif_package_array_filter_best_arch (GPtrArray *array, const gchar *arch)
 {
+	g_return_if_fail (array != NULL);
+	g_return_if_fail (arch != NULL);
+
 	/* only x86_64 can be installed on x86_64 */
 	if (g_strcmp0 (arch, "x86_64") == 0) {
 		zif_package_array_filter_arch (array, arch);
@@ -490,6 +503,11 @@ zif_package_array_filter_provide (GPtrArray *array,
 	ZifDepend *depend_tmp;
 	ZifState *state_local;
 
+	g_return_val_if_fail (array != NULL, FALSE);
+	g_return_val_if_fail (depends != NULL, FALSE);
+	g_return_val_if_fail (state != NULL, FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
 	/* shortcut */
 	if (array->len == 0)
 		goto out;
@@ -553,6 +571,11 @@ zif_package_array_filter_require (GPtrArray *array,
 	ZifDepend *satisfies = NULL;
 	ZifDepend *depend_tmp;
 	ZifState *state_local;
+
+	g_return_val_if_fail (array != NULL, FALSE);
+	g_return_val_if_fail (depends != NULL, FALSE);
+	g_return_val_if_fail (state != NULL, FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
 	/* shortcut */
 	if (array->len == 0)
@@ -618,6 +641,11 @@ zif_package_array_filter_conflict (GPtrArray *array,
 	ZifDepend *depend_tmp;
 	ZifState *state_local;
 
+	g_return_val_if_fail (array != NULL, FALSE);
+	g_return_val_if_fail (depends != NULL, FALSE);
+	g_return_val_if_fail (state != NULL, FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
 	/* shortcut */
 	if (array->len == 0)
 		goto out;
@@ -682,6 +710,11 @@ zif_package_array_filter_obsolete (GPtrArray *array,
 	ZifDepend *depend_tmp;
 	ZifState *state_local;
 
+	g_return_val_if_fail (array != NULL, FALSE);
+	g_return_val_if_fail (depends != NULL, FALSE);
+	g_return_val_if_fail (state != NULL, FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
 	/* shortcut */
 	if (array->len == 0)
 		goto out;
@@ -737,6 +770,11 @@ zif_package_array_depend (GPtrArray *array,
 	ZifPackage *package_tmp;
 	ZifDepend *satisfies = NULL;
 	ZifDepend *best_depend_tmp = NULL;
+
+	g_return_val_if_fail (array != NULL, FALSE);
+	g_return_val_if_fail (depend != NULL, FALSE);
+	g_return_val_if_fail (state != NULL, FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
 	/* create results array */
 	if (provides != NULL)
