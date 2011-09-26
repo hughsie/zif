@@ -102,6 +102,12 @@ zif_print_packages (GPtrArray *array)
 	const gchar *printable;
 	ZifPackage *package;
 
+	if (array->len == 0) {
+		/* TRANSLATORS: there are no packages that match */
+		g_print ("%s\n", _("There are no packages to show."));
+		return;
+	}
+
 	/* sort the array */
 	g_ptr_array_sort (array, zif_package_sort_cb);
 
@@ -5015,7 +5021,10 @@ zif_cmd_what_provides (ZifCmdPrivate *priv, gchar **values, GError **error)
 		goto out;
 	}
 	state_local = zif_state_get_child (priv->state);
-	array = zif_store_array_what_provides (store_array, depend_array, state_local, error);
+	array = zif_store_array_what_provides (store_array,
+					       depend_array,
+					       state_local,
+					       error);
 	if (array == NULL) {
 		ret = FALSE;
 		goto out;
