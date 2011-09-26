@@ -267,7 +267,7 @@ zif_package_remote_download (ZifPackageRemote *pkg,
 	if (!ret)
 		goto out;
 
-	/* get filename */
+	/* get size */
 	state_local = zif_state_get_child (state);
 	size = zif_package_get_size (ZIF_PACKAGE (pkg), state_local, error);
 	if (size == 0)
