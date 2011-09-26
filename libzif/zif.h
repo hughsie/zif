@@ -44,6 +44,7 @@
 #include <zif-state.h>
 #include <zif-store-array.h>
 #include <zif-store-local.h>
+#include <zif-store-meta.h>
 #include <zif-store-remote.h>
 #include <zif-store-rhn.h>
 #include <zif-transaction.h>
