@@ -1226,9 +1226,10 @@ zif_cmd_dep_common (ZifCmdPrivate *priv, ZifPackageEnsureType type,
 	GPtrArray *array = NULL;
 	GPtrArray *depends = NULL;
 	GPtrArray *store_array = NULL;
+	GString *string = NULL;
 	guint i, j;
-	ZifPackage *package;
 	ZifDepend *depend;
+	ZifPackage *package;
 	ZifState *state_local;
 	ZifState *state_loop;
 
@@ -1308,8 +1309,11 @@ zif_cmd_dep_common (ZifCmdPrivate *priv, ZifPackageEnsureType type,
 	state_local = zif_state_get_child (priv->state);
 	zif_state_set_number_steps (state_local, array->len);
 
+	string = g_string_new ("");
 	for (i=0; i<array->len; i++) {
 		package = g_ptr_array_index (array, i);
+		g_string_append_printf (string, "%s\n",
+					zif_package_get_printable (package));
 
 		state_loop = zif_state_get_child (state_local);
 		if (type == ZIF_PACKAGE_ENSURE_TYPE_PROVIDES) {
@@ -1341,7 +1345,8 @@ zif_cmd_dep_common (ZifCmdPrivate *priv, ZifPackageEnsureType type,
 			depend = g_ptr_array_index (depends, j);
 			if (g_str_has_prefix (zif_depend_get_name (depend), "/"))
 				continue;
-			g_print ("%s\n", zif_depend_get_description (depend));
+			g_string_append_printf (string, "\t%s\n",
+						zif_depend_get_description (depend));
 		}
 
 		g_ptr_array_unref (depends);
@@ -1357,10 +1362,13 @@ zif_cmd_dep_common (ZifCmdPrivate *priv, ZifPackageEnsureType type,
 		goto out;
 
 	zif_progress_bar_end (priv->progressbar);
+	g_print ("%s\n", string->str);
 
 	/* success */
 	ret = TRUE;
 out:
+	if (string != NULL)
+		g_string_free (string, TRUE);
 	if (store_array != NULL)
 		g_ptr_array_unref (store_array);
 	if (array != NULL)
