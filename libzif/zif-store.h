@@ -235,6 +235,7 @@ GPtrArray	*zif_store_get_categories	(ZifStore		*store,
 						 ZifState		*state,
 						 GError			**error);
 const gchar	*zif_store_get_id		(ZifStore		*store);
+guint		 zif_store_get_size		(ZifStore		*store);
 void		 zif_store_print		(ZifStore		*store);
 gboolean	 zif_store_get_enabled		(ZifStore		*store);
 void		 zif_store_set_enabled		(ZifStore		*store,

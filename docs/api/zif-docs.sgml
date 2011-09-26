@@ -74,6 +74,7 @@
     <xi:include href="xml/zif-repos.xml"/>
     <xi:include href="xml/zif-state.xml"/>
     <xi:include href="xml/zif-store-local.xml"/>
+    <xi:include href="xml/zif-store-meta.xml"/>
     <xi:include href="xml/zif-store-remote.xml"/>
     <xi:include href="xml/zif-store-rhn.xml"/>
     <xi:include href="xml/zif-store.xml"/>

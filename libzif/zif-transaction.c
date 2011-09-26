@@ -104,7 +104,7 @@ typedef struct {
 	ZifState		*state;
 	ZifTransaction		*transaction;
 	gboolean		 unresolved_dependencies;
-	ZifArray		*post_resolve_package_array;
+	ZifStore		*post_resolve_package_array;
 	guint			 resolve_count;
 	gboolean		 skip_broken;
 } ZifTransactionResolve;
@@ -1780,7 +1780,9 @@ zif_transaction_resolve_install_depend (ZifTransactionResolve *data,
 				goto out;
 
 			/* remove from the planned local store */
-			zif_array_remove (data->post_resolve_package_array, package_provide);
+			zif_store_remove_package (data->post_resolve_package_array,
+						  package_provide,
+						  NULL);
 		}
 skip_resolve:
 
@@ -1805,7 +1807,9 @@ skip_resolve:
 			goto out;
 
 		/* add to the planned local store */
-		zif_array_add (data->post_resolve_package_array, package_provide);
+		zif_store_add_package (data->post_resolve_package_array,
+				       package_provide,
+				       NULL);
 		goto out;
 	}
 
@@ -2032,7 +2036,9 @@ zif_transaction_resolve_install_item (ZifTransactionResolve *data,
 			}
 
 			/* remove from the planned local store */
-			zif_array_remove (data->post_resolve_package_array, package_oldest);
+			zif_store_remove_package (data->post_resolve_package_array,
+						  package_oldest,
+						  NULL);
 		}
 	}
 
@@ -2335,7 +2341,9 @@ zif_transaction_resolve_remove_require (ZifTransactionResolve *data,
 					goto out;
 
 				/* remove from the planned local store */
-				zif_array_remove (data->post_resolve_package_array, package);
+				zif_store_remove_package (data->post_resolve_package_array,
+							  package,
+							  NULL);
 			}
 		}
 	}
@@ -2604,7 +2612,9 @@ zif_transaction_resolve_update_item (ZifTransactionResolve *data,
 			goto out;
 
 		/* remove from the planned local store */
-		zif_array_remove (data->post_resolve_package_array, item->package);
+		zif_store_remove_package (data->post_resolve_package_array,
+					  item->package,
+					  NULL);
 
 		/* is already installed */
 		if (zif_transaction_get_item_from_hash (data->transaction->priv->install_hash,
@@ -2622,7 +2632,9 @@ zif_transaction_resolve_update_item (ZifTransactionResolve *data,
 			goto out;
 
 		/* add to the planned local store */
-		zif_array_add (data->post_resolve_package_array, package);
+		zif_store_add_package (data->post_resolve_package_array,
+				       package,
+				       NULL);
 
 		/* ignore all the other update checks */
 		goto out;
@@ -2694,7 +2706,9 @@ skip:
 		goto out;
 
 	/* remove from the planned local store */
-	zif_array_remove (data->post_resolve_package_array, item->package);
+	zif_store_remove_package (data->post_resolve_package_array,
+				  item->package,
+				  NULL);
 
 	/* add the new package */
 	ret = zif_transaction_add_install_internal (data->transaction,
@@ -2706,7 +2720,9 @@ skip:
 		goto out;
 
 	/* add to the planned local store */
-	zif_array_add (data->post_resolve_package_array, package);
+	zif_store_add_package (data->post_resolve_package_array,
+			       package,
+			       NULL);
 out:
 	if (depend_array != NULL)
 		g_ptr_array_unref (depend_array);
@@ -2819,7 +2835,10 @@ zif_transaction_resolve_conflicts_item (ZifTransactionResolve *data,
 	}
 
 	/* get local base copy */
-	post_resolve_package_array = zif_array_get_array (data->post_resolve_package_array);
+	zif_state_reset (data->state);
+	post_resolve_package_array = zif_store_get_packages (data->post_resolve_package_array,
+							     data->state,
+							     NULL);
 
 	g_debug ("checking %i provides for %s",
 		 provides->len,
@@ -3112,22 +3131,29 @@ zif_transaction_setup_post_resolve_package_array (ZifTransactionResolve *data,
 
 	for (i=0; i<packages->len; i++) {
 		package_tmp = g_ptr_array_index (packages, i);
-		zif_array_add (data->post_resolve_package_array, package_tmp);
+		zif_store_add_package (data->post_resolve_package_array,
+				       package_tmp,
+				       NULL);
 	}
 
 	/* coldplug */
 	for (i=0; i<priv->install->len; i++) {
 		package_tmp = g_ptr_array_index (priv->install, i);
-		zif_array_add (data->post_resolve_package_array, package_tmp);
+		zif_store_add_package (data->post_resolve_package_array,
+				       package_tmp,
+				       NULL);
 	}
 	for (i=0; i<priv->remove->len; i++) {
 		package_tmp = g_ptr_array_index (priv->remove, i);
-		zif_array_remove (data->post_resolve_package_array, package_tmp);
+		zif_store_remove_package (data->post_resolve_package_array,
+					  package_tmp,
+					  NULL);
 	}
 
 	/* success */
 	ret = TRUE;
-	g_debug ("%i already in world state", data->post_resolve_package_array->len);
+	g_debug ("%i already in world state",
+		 zif_store_get_size (data->post_resolve_package_array));
 out:
 	if (packages != NULL)
 		g_ptr_array_unref (packages);
@@ -3407,9 +3433,8 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 	data = g_new0 (ZifTransactionResolve, 1);
 	zif_state_set_number_steps (state, 1);
 	data->state = zif_state_get_child (state);
-	data->post_resolve_package_array = zif_array_new ();
-	zif_array_set_mapping_func (data->post_resolve_package_array,
-				    (ZifArrayMappingFuncCb) zif_package_get_id);
+	data->post_resolve_package_array = zif_store_meta_new ();
+
 	/* we can't do child progress in a sane way */
 	zif_state_set_report_progress (data->state, FALSE);
 	data->transaction = transaction;

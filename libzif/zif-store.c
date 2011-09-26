@@ -1766,6 +1766,23 @@ zif_store_get_id (ZifStore *store)
 }
 
 /**
+ * zif_store_get_size:
+ * @store: A #ZifStore
+ *
+ * Gets the number of packages in the store.
+ *
+ * Return value: the number of packages
+ *
+ * Since: 0.2.5
+ **/
+guint
+zif_store_get_size (ZifStore *store)
+{
+	g_return_val_if_fail (ZIF_IS_STORE (store), 0);
+	return store->priv->packages->len;
+}
+
+/**
  * zif_store_print:
  * @store: A #ZifStore
  *
