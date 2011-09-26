@@ -2520,7 +2520,8 @@ zif_cmd_install (ZifCmdPrivate *priv, gchar **values, GError **error)
 	array = zif_store_array_resolve_full (store_array_local,
 					      values,
 					      ZIF_STORE_RESOLVE_FLAG_USE_ALL |
-					      ZIF_STORE_RESOLVE_FLAG_USE_GLOB,
+					      ZIF_STORE_RESOLVE_FLAG_USE_GLOB |
+					      ZIF_STORE_RESOLVE_FLAG_PREFER_NATIVE,
 					      state_local,
 					      error);
 	if (array == NULL) {
@@ -2556,7 +2557,8 @@ zif_cmd_install (ZifCmdPrivate *priv, gchar **values, GError **error)
 	array = zif_store_array_resolve_full (store_array_remote,
 					      values,
 					      ZIF_STORE_RESOLVE_FLAG_USE_ALL |
-					      ZIF_STORE_RESOLVE_FLAG_USE_GLOB,
+					      ZIF_STORE_RESOLVE_FLAG_USE_GLOB |
+					      ZIF_STORE_RESOLVE_FLAG_PREFER_NATIVE,
 					      state_local,
 					      error);
 	if (array == NULL) {
