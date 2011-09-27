@@ -34,6 +34,7 @@
 #include <string.h>
 
 #include <glib.h>
+#include <glib-unix.h>
 #include <rpm/rpmlib.h>
 #include <rpm/rpmdb.h>
 #include <rpm/rpmts.h>
@@ -241,6 +242,7 @@ out:
 		g_ptr_array_unref (packages);
 	return ret;
 }
+
 /**
  * zif_store_local_load:
  **/
@@ -339,6 +341,16 @@ zif_store_local_load (ZifStore *store, ZifState *state, GError **error)
 	mi = rpmtsInitIterator (ts, RPMDBI_PACKAGES, NULL, 0);
 	if (mi == NULL)
 		g_warning ("failed to get iterator");
+
+	/* undo librpms attempt to steal SIGINT, and instead fail
+	 * the transaction in a nice way */
+	zif_state_cancel_on_signal (state, SIGINT);
+
+	/* we don't know how many packages there are */
+	state_local = zif_state_get_child (state);
+	zif_state_set_report_progress (state_local, FALSE);
+
+	/* add each package from the rpmdb */
 	do {
 		header = rpmdbNextIterator (mi);
 		if (header == NULL)
@@ -357,10 +369,10 @@ zif_store_local_load (ZifStore *store, ZifState *state, GError **error)
 				g_object_unref (package);
 			} else {
 				g_set_error (error,
-				     ZIF_STORE_ERROR,
-				     ZIF_STORE_ERROR_FAILED,
-					     "failed to set from header: %s",
-				     error_local->message);
+					     ZIF_STORE_ERROR,
+					     ZIF_STORE_ERROR_FAILED,
+						     "failed to set from header: %s",
+					     error_local->message);
 				g_error_free (error_local);
 				g_object_unref (package);
 				goto out;
@@ -371,7 +383,16 @@ zif_store_local_load (ZifStore *store, ZifState *state, GError **error)
 			zif_store_add_package (store, package, NULL);
 			g_object_unref (package);
 		}
+
+		/* check cancelled (okay to reuse as we called
+		 * zif_state_set_report_progress before)*/
+		ret = zif_state_done (state_local, error);
+		if (!ret)
+			goto out;
 	} while (TRUE);
+
+	/* turn checks back on */
+	zif_state_set_report_progress (state, TRUE);
 
 	/* lookup in history database */
 	use_installed_history = zif_config_get_boolean (local->priv->config,
@@ -429,6 +450,10 @@ out:
 		rpmdbFreeIterator (mi);
 	if (ts != NULL)
 		rpmtsFree(ts);
+
+	/* cleanup, and make SIGINT do something sane */
+	zif_state_cancel_on_signal (state, SIGINT);
+
 	return ret;
 }
 

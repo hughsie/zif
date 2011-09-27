@@ -79,6 +79,8 @@
 #endif
 
 #include <glib.h>
+#include <glib-unix.h>
+#include <rpm/rpmsq.h>
 
 #include "zif-marshal.h"
 #include "zif-utils.h"
@@ -1129,6 +1131,43 @@ zif_state_get_child (ZifState *state)
 out:
 	return child;
 }
+
+static gboolean
+zif_state_cancel_on_signal_cb (gpointer user_data)
+{
+	GCancellable *cancellable = G_CANCELLABLE (user_data);
+
+	g_debug ("signal fired so cancelling");
+	g_cancellable_cancel (cancellable);
+	return FALSE;
+}
+
+/**
+ * zif_state_cancel_on_signal:
+ * @state: A #ZifState
+ * @signum: A signal number, e.g. %SIGINT
+ *
+ * Call this when the default signal handlers have been messed up
+ * (thanks to librpm, typically) and we just want a signal to cancel
+ * the #ZifState.
+ *
+ * Since: 0.2.5
+ **/
+void
+zif_state_cancel_on_signal (ZifState *state, gint signum)
+{
+	/* we assume GCancellable is shared between the ZifState's */
+	/* so we can't create this */
+	g_assert (state->priv->cancellable != NULL);
+
+	/* undo librpms attempt to steal SIGINT, and instead fail
+	 * the transaction in a nice way */
+	rpmsqEnable (-SIGINT, NULL);
+	g_unix_signal_add (signum,
+			   zif_state_cancel_on_signal_cb,
+			   state->priv->cancellable);
+}
+
 
 /**
  * zif_state_set_number_steps_real:

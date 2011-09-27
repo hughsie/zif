@@ -2929,23 +2929,24 @@ zif_state_func (void)
 static void
 zif_store_local_func (void)
 {
-	ZifStoreLocal *store;
-	gboolean ret;
-	GPtrArray *array;
-	ZifPackage *package;
-	ZifGroups *groups;
-	ZifLegal *legal;
-	ZifConfig *config;
-	ZifState *state;
-	GError *error = NULL;
-	guint elapsed;
 	const gchar *package_id;
-	gchar **split;
 	const gchar *to_array[] = { NULL, NULL, NULL };
+	gboolean ret;
+	GCancellable *cancellable;
 	gchar *filename;
 	gchar *pidfile;
-	ZifDepend *depend;
+	gchar **split;
+	GError *error = NULL;
+	GPtrArray *array;
 	GPtrArray *depend_array;
+	guint elapsed;
+	ZifConfig *config;
+	ZifDepend *depend;
+	ZifGroups *groups;
+	ZifLegal *legal;
+	ZifPackage *package;
+	ZifState *state;
+	ZifStoreLocal *store;
 
 	/* set these up as dummy */
 	config = zif_config_new ();
@@ -2967,6 +2968,11 @@ zif_store_local_func (void)
 
 	/* use state object */
 	state = zif_state_new ();
+
+	/* set a cancellable, as we're using the store directly */
+	cancellable = g_cancellable_new ();
+	zif_state_set_cancellable (state, cancellable);
+	g_object_unref (cancellable);
 
 	groups = zif_groups_new ();
 	filename = zif_test_get_data_file ("yum-comps-groups.conf");
