@@ -1,6 +1,7 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*-
  *
- * Copyright (C) 2008-2010 Richard Hughes <richard@hughsie.com>
+ * Copyright (C) 2008-2010 Richard Hughes <richard@hughsie.com>, Elad Alfassa <elad@fedoraproject.org>
+.* Copyright (C) 2011 Elad Alfassa <elad@fedoraproject.org>
  *
  * Licensed under the GNU General Public License Version 2
  *
@@ -5824,6 +5825,183 @@ out:
 	return ret;
 }
 
+/*
+* zif_cmd_print_deptree
+* Prints a tree of all packages that depends (directly or indirectly)
+* on the provided ZifPackage. Evil recursive function.
+*/
+static void
+zif_create_deptree (ZifPackage *package, ZifState *state,
+				  ZifStore *store, ZifStore *store_processed,
+				  guint depth, GString *str, GError *error)
+{
+
+	ZifPackage *current_package;
+	guint i;
+	guint our_depth;
+	GPtrArray *packages;
+	GPtrArray *provides;
+	/* pkg is the package we pull from the store */
+	ZifPackage *pkg; 
+	const gchar *pkg_id; /* the package_id of pkg */
+	ZifState *state_local;
+	guint x;
+	gboolean ret;
+
+
+	zif_state_set_number_steps (state, 2);
+	state_local = zif_state_get_child (state);
+
+	/* Find out what "package" provides */
+	provides = zif_package_get_provides (package, state_local,
+									 &error);
+	ret = zif_state_done (state, &error);
+	if (!ret)
+		goto out;
+
+	/*
+	* Get all packages which require what "package" provides
+	* TODO: Filter out (or mark in a special way) packages which
+	* requires provides that other packages can supply.
+	*/
+	state_local = zif_state_get_child (state);
+	packages = zif_store_what_requires (store, provides,
+	 state_local, &error);
+	g_ptr_array_unref (provides);
+	zif_package_array_filter_duplicates (packages);
+	ret = zif_state_done (state, &error);
+	if (!ret)
+		goto out;
+
+	/*
+	* Add "package" to the store. We already showed it 
+	* before this function was called.
+	* It's possible that it's in the store already, so don't use GError.
+	* We actually don't care if this function failed.
+	*/
+	zif_store_add_package (store_processed, package, NULL);
+
+	/* Process all packages we got before */
+	for (i = 0; i<packages->len; i++) {
+		
+		zif_state_reset(state);
+		state_local = zif_state_get_child (state);
+		
+		/* Figure out if we processed this package already */
+		current_package = g_ptr_array_index (packages, i);
+		pkg_id = zif_package_get_id (current_package);
+		/* (Not using a GError here, package might 
+		* not exist in the store and this is a valid case) */
+		pkg = zif_store_find_package (store_processed, pkg_id,
+								   state_local, NULL);
+
+		/* And if we didn't */
+		if (pkg == NULL) {
+
+			zif_state_reset (state);
+			g_string_append (str, "\n");
+
+			/* Draw tree */
+			for (x=0; x<depth; x++) {
+				g_string_append (str, "| ");
+				if (depth > 0)
+					g_string_append (str, " ");
+			}
+			if (i == packages->len-1)
+				g_string_append (str, "`");
+			else
+				g_string_append (str, "|");
+
+			/* And print the package name and arch */
+			g_string_append_printf (str, "--%s",
+			 zif_package_get_name_arch (current_package));
+
+			/* Now add it to the store so we'd know we already processed it */
+			ret = zif_store_add_package (store_processed,
+									  current_package, &error);
+			if (!ret)
+				goto out;
+			/* 
+			* Limit recursion 
+			* TODO: Should be a command line option,
+			* something like --depth=[number]
+			*/
+			if (depth < 1000) {
+				our_depth = depth + 1;
+				state_local = zif_state_get_child (state);
+
+				zif_create_deptree(current_package,
+								 state_local, store,
+								 store_processed, our_depth,
+								 str, error);
+			}
+
+		} else {
+			if (pkg != NULL)
+				g_object_unref (pkg);
+		}
+	}
+	g_ptr_array_unref (packages);
+out:
+	return;
+
+}
+
+
+static gboolean
+zif_cmd_deptree (ZifCmdPrivate *priv, gchar **values, GError **error)
+{
+	gboolean ret = FALSE;
+	ZifStore *store_processed;
+	ZifStore *store;
+	ZifPackage *resolved_package;
+	GPtrArray *resolved_packages;
+	GString *tree;
+	ZifState *state_local;
+	ZifState *state; /* I don't want zif's progress bar here */
+	guint i;
+
+	/* enough arguments */
+	if (g_strv_length (values) < 1) {
+		g_set_error_literal (error,
+				     1, 0,
+				     /* TRANSLATORS: error code */
+				     "Invalid argument, need '<package>'");
+		goto out;
+	}
+
+	state = zif_state_new ();
+	zif_state_set_number_steps (state, 2);
+	store = zif_store_local_new ();
+	store_processed = zif_store_meta_new ();
+
+	state_local = zif_state_get_child (state);
+	resolved_packages = zif_store_resolve (store, values,
+	 state_local, error);
+	ret = zif_state_done(state, error);
+	for (i = 0; i<resolved_packages->len; i++) {
+		/* I'm using zif_state_reset here. It's ugly, but I don't 
+		* See any other option  */
+		zif_state_reset (state);
+		zif_state_set_number_steps (state, 2);
+		resolved_package = g_ptr_array_index (resolved_packages, i);
+		if (!ret)
+			goto out;
+
+		g_print ("\n%s", zif_package_get_printable (resolved_package));
+		tree = g_string_new ("");
+		state_local = zif_state_get_child (state);
+		zif_create_deptree (resolved_package, state_local,
+						  store,store_processed ,0, tree, *error);
+		g_print ("%s\n", tree->str);
+		g_string_free (tree, TRUE);
+		ret = zif_state_done (state, error);
+	}
+
+out:
+	return ret;
+}
+
 /**
  * zif_take_lock_cb:
  **/
@@ -6472,6 +6650,11 @@ main (int argc, char *argv[])
 		     /* TRANSLATORS: command description */
 		     _("Imports the history data from a legacy database"),
 		     zif_cmd_history_import);
+	zif_cmd_add (priv->cmd_array,
+		     "deptree",
+		     /* TRANSLATORS: command description */
+		     _("Shows a list of packages that depend on a specified package"),
+		     zif_cmd_deptree);
 
 	/* sort by command name */
 	g_ptr_array_sort (priv->cmd_array,

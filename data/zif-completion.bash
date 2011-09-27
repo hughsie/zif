@@ -79,6 +79,7 @@ __zif_commandlist="
     search
     provides
     resolvedep
+    deptree
     "
 
 __zifcomp ()
