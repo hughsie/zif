@@ -1087,7 +1087,7 @@ zif_package_get_data (ZifPackage *package)
 const gchar *
 zif_package_get_package_id (ZifPackage *package)
 {
-	return zif_package_get_id (package;
+	return zif_package_get_id (package);
 }
 
 /**
