@@ -44,7 +44,7 @@
 #include <gpgme.h>
 #endif
 
-#include "zif-utils.h"
+#include "zif-utils-private.h"
 #include "zif-package.h"
 
 #ifdef USE_GPGME

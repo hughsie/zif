@@ -48,6 +48,7 @@
 #include "zif-store-array.h"
 #include "zif-store-local.h"
 #include "zif-store-remote-private.h"
+#include "zif-upgrade-private.h"
 
 #define ZIF_RELEASE_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_RELEASE, ZifReleasePrivate))
 

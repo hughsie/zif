@@ -54,13 +54,14 @@
 #include "zif-media.h"
 #include "zif-monitor.h"
 #include "zif-object-array.h"
-#include "zif-package.h"
 #include "zif-package-array.h"
+#include "zif-package.h"
 #include "zif-package-remote.h"
 #include "zif-store.h"
 #include "zif-store-local.h"
 #include "zif-store-remote-private.h"
-#include "zif-utils.h"
+#include "zif-update-private.h"
+#include "zif-utils-private.h"
 
 #define ZIF_STORE_REMOTE_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_STORE_REMOTE, ZifStoreRemotePrivate))
 

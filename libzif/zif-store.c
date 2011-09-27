@@ -40,7 +40,7 @@
 #include "zif-package-array-private.h"
 #include "zif-package.h"
 #include "zif-store.h"
-#include "zif-utils.h"
+#include "zif-utils-private.h"
 
 #define ZIF_STORE_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_STORE, ZifStorePrivate))
 

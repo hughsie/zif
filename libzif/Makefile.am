@@ -75,14 +75,17 @@ libzif_include_HEADERS =					\
 libzif_la_SOURCES =						\
 	zif-category.c						\
 	zif-category.h						\
+	zif-category-private.h					\
 	zif-changeset.c						\
 	zif-changeset.h						\
+	zif-changeset-private.h					\
 	zif-config.c						\
 	zif-config.h						\
 	zif-db.c						\
 	zif-db.h						\
 	zif-delta.c						\
 	zif-delta.h						\
+	zif-delta-private.h					\
 	zif-depend.c						\
 	zif-depend.h						\
 	zif-depend-private.h					\
@@ -129,16 +132,16 @@ libzif_la_SOURCES =						\
 	zif-monitor.h						\
 	zif-object-array.c					\
 	zif-object-array.h					\
-	zif-package.c						\
-	zif-package.h						\
-	zif-package-private.h					\
 	zif-package-array.c					\
 	zif-package-array.h					\
 	zif-package-array-private.h				\
+	zif-package.c						\
+	zif-package.h						\
 	zif-package-local.c					\
 	zif-package-local.h					\
 	zif-package-meta.c					\
 	zif-package-meta.h					\
+	zif-package-private.h					\
 	zif-package-remote.c					\
 	zif-package-remote.h					\
 	zif-package-rhn.c					\
@@ -170,10 +173,14 @@ libzif_la_SOURCES =						\
 	zif-update.h						\
 	zif-update-info.c					\
 	zif-update-info.h					\
+	zif-update-info-private.h				\
+	zif-update-private.h					\
 	zif-upgrade.c						\
 	zif-upgrade.h						\
+	zif-upgrade-private.h					\
 	zif-utils.c						\
 	zif-utils.h						\
+	zif-utils-private.h					\
 	zif-version.h
 
 zif-marshal.c: zif-marshal.list

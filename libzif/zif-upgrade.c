@@ -32,7 +32,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "zif-upgrade.h"
+#include "zif-upgrade-private.h"
 
 #define ZIF_UPGRADE_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_UPGRADE, ZifUpgradePrivate))
 

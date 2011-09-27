@@ -70,7 +70,7 @@ typedef enum {
 #include "zif-package-private.h"
 #include "zif-package-remote.h"
 #include "zif-string.h"
-#include "zif-utils.h"
+#include "zif-utils-private.h"
 
 #define ZIF_MD_PRIMARY_XML_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_MD_PRIMARY_XML, ZifMdPrimaryXmlPrivate))
 

@@ -59,24 +59,10 @@ struct _ZifChangesetClass
 GType			 zif_changeset_get_type		(void);
 ZifChangeset		*zif_changeset_new		(void);
 
-/* public getters */
 guint64			 zif_changeset_get_date		(ZifChangeset		*changeset);
 const gchar		*zif_changeset_get_author	(ZifChangeset		*changeset);
 const gchar		*zif_changeset_get_description	(ZifChangeset		*changeset);
 const gchar		*zif_changeset_get_version	(ZifChangeset		*changeset);
-
-/* internal setters: TODO, in separate -internal header file */
-void			 zif_changeset_set_date		(ZifChangeset		*changeset,
-							 guint64		 date);
-void			 zif_changeset_set_author	(ZifChangeset		*changeset,
-							 const gchar		*author);
-void			 zif_changeset_set_description	(ZifChangeset		*changeset,
-							 const gchar		*description);
-void			 zif_changeset_set_version	(ZifChangeset		*changeset,
-							 const gchar		*version);
-gboolean		 zif_changeset_parse_header	(ZifChangeset		*changeset,
-							 const gchar		*header,
-							 GError			**error);
 
 G_END_DECLS
 

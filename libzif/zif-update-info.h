@@ -64,20 +64,10 @@ struct _ZifUpdateInfoClass
 GType			 zif_update_info_get_type		(void);
 ZifUpdateInfo		*zif_update_info_new		(void);
 
-/* public getters */
 ZifUpdateInfoKind	 zif_update_info_get_kind	(ZifUpdateInfo		*update_info);
 const gchar		*zif_update_info_get_url	(ZifUpdateInfo		*update_info);
 const gchar		*zif_update_info_get_title	(ZifUpdateInfo		*update_info);
 
-/* internal setters */
-void			 zif_update_info_set_kind	(ZifUpdateInfo		*update_info,
-							 ZifUpdateInfoKind	 kind);
-void			 zif_update_info_set_url	(ZifUpdateInfo		*update_info,
-							 const gchar		*url);
-void			 zif_update_info_set_title	(ZifUpdateInfo		*update_info,
-							 const gchar		*title);
-
-/* utility functions */
 const gchar		*zif_update_info_kind_to_string	(ZifUpdateInfoKind	 type);
 ZifUpdateInfoKind	 zif_update_info_kind_from_string	(const gchar	*type);
 
