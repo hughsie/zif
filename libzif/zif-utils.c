@@ -1580,3 +1580,45 @@ zif_string_replace (GString *string,
 out:
 	return replacements;
 }
+
+/**
+ * zif_package_id_convert_basic:
+ * @package_id: A package ID
+ *
+ * Returns a "basic" package-id that does not have the repo appended.
+ * For instance, "hal;0.1.2;i386;installed:fedora" would be converted
+ * to "hal;0.1.2;i386;installed".
+ *
+ * Return value: The basic package-id.
+ *
+ * Since: 0.2.5
+ **/
+gchar *
+zif_package_id_convert_basic (const gchar *package_id)
+{
+	gchar *package_id_new;
+	gchar **split = NULL;
+	gchar *tmp;
+
+	/* can we shortcut? */
+	tmp = g_strstr_len (package_id, -1, ":");
+	if (tmp == NULL) {
+		package_id_new = g_strdup (package_id);
+		goto out;
+	}
+
+	/* remove the :repo_id suffix */
+	split = zif_package_id_split (package_id);
+	tmp = g_strstr_len (split[ZIF_PACKAGE_ID_DATA], -1, ":");
+	if (tmp != NULL)
+		*tmp = '\0';
+
+	/* rebuild the package ID */
+	package_id_new = zif_package_id_build (split[ZIF_PACKAGE_ID_NAME],
+					       split[ZIF_PACKAGE_ID_VERSION],
+					       split[ZIF_PACKAGE_ID_ARCH],
+					       split[ZIF_PACKAGE_ID_DATA]);
+out:
+	g_strfreev (split);
+	return package_id_new;
+}

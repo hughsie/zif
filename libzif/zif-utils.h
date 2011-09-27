@@ -119,6 +119,8 @@ guint		 zif_string_replace		(GString	*string,
 						 const gchar	*search,
 						 const gchar	*replace);
 
+gchar		*zif_package_id_convert_basic	(const gchar	*package_id);
+
 G_END_DECLS
 
 #endif /* __ZIF_UTILS_H */

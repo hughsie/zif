@@ -114,6 +114,7 @@ ZifPackage		*zif_package_new		(void);
 
 /* public getters */
 const gchar		*zif_package_get_id		(ZifPackage	*package);
+const gchar		*zif_package_get_id_basic	(ZifPackage	*package);
 const gchar		*zif_package_get_printable	(ZifPackage	*package);
 const gchar		*zif_package_get_name_arch	(ZifPackage	*package);
 const gchar		*zif_package_get_name_version	(ZifPackage	*package);

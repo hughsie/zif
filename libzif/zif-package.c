@@ -49,6 +49,7 @@ struct _ZifPackagePrivate
 {
 	gchar			**package_id_split;
 	gchar			*package_id;
+	gchar			*package_id_basic;
 	gchar			*printable;
 	gchar			*name_arch;
 	gchar			*name_version;
@@ -933,6 +934,32 @@ zif_package_get_printable (ZifPackage *package)
 		zif_package_id_get_printable (package->priv->package_id);
 out:
 	return package->priv->printable;
+}
+
+/**
+ * zif_package_get_id_basic:
+ * @package: A #ZifPackage
+ *
+ * Gets the package ID without the ":repo" suffix.
+ *
+ * Return value: A PackageId representing the package.
+ *
+ * Since: 0.2.5
+ **/
+const gchar *
+zif_package_get_id_basic (ZifPackage *package)
+{
+	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
+
+	/* already got */
+	if (package->priv->package_id_basic != NULL)
+		goto out;
+
+	/* format */
+	package->priv->package_id_basic =
+		zif_package_id_convert_basic (package->priv->package_id);
+out:
+	return package->priv->package_id_basic;
 }
 
 /**
@@ -2591,6 +2618,7 @@ zif_package_finalize (GObject *object)
 	if (package->priv->cache_file != NULL)
 		g_object_unref (package->priv->cache_file);
 	g_free (package->priv->package_id);
+	g_free (package->priv->package_id_basic);
 	g_strfreev (package->priv->package_id_split);
 	if (package->priv->summary != NULL)
 		zif_string_unref (package->priv->summary);
