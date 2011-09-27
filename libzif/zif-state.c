@@ -1284,7 +1284,7 @@ out:
 static void
 zif_state_show_profile (ZifState *state)
 {
-	gdouble div;
+	gdouble division;
 	gdouble total_time = 0.0f;
 	GString *result;
 	guint i;
@@ -1293,7 +1293,7 @@ zif_state_show_profile (ZifState *state)
 	/* get the total time so we can work out the divisor */
 	for (i=0; i<state->priv->steps; i++)
 		total_time += state->priv->step_profile[i];
-	div = total_time / 100.0f;
+	division = total_time / 100.0f;
 
 	/* what we set */
 	result = g_string_new ("steps were set as [ ");
@@ -1307,7 +1307,7 @@ zif_state_show_profile (ZifState *state)
 	g_string_append_printf (result, "-1 ] but should have been: [ ");
 	for (i=0; i<state->priv->steps; i++) {
 		g_string_append_printf (result, "%.0f, ",
-					state->priv->step_profile[i] / div);
+					state->priv->step_profile[i] / division);
 	}
 	g_printerr ("%s-1 ] at %s\n", result->str, state->priv->id);
 	g_string_free (result, TRUE);
