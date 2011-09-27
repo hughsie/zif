@@ -1074,6 +1074,23 @@ zif_package_get_data (ZifPackage *package)
 }
 
 /**
+ * zif_package_get_package_id:
+ * @package: A #ZifPackage
+ *
+ * Gets the id (as text) uniquely identifying the package in all repos.
+ * DO NOT USE THIS FUNCTION. Use zif_package_get_id() instead.
+ *
+ * Return value: A package-id representing the package.
+ *
+ * Since: 0.1.0
+ **/
+const gchar *
+zif_package_get_package_id (ZifPackage *package)
+{
+	return zif_package_get_id (package;
+}
+
+/**
  * zif_package_ensure_type_to_string:
  * @type: A #ZifPackageEnsureType enumerated value
  *
