@@ -54,8 +54,18 @@ struct _ZifDeltaClass
 	GObjectClass		 parent_class;
 };
 
+typedef enum {
+	ZIF_DELTA_ERROR_REBUILD_FAILED,
+	ZIF_DELTA_ERROR_LAST
+} ZifDeltaError;
+
+GQuark			 zif_delta_error_quark		(void);
 GType			 zif_delta_get_type		(void);
 ZifDelta		*zif_delta_new			(void);
+gboolean		 zif_delta_rebuild		(ZifDelta		*delta,
+							 const gchar		*directory,
+							 const gchar		*filename,
+							 GError			**error);
 
 const gchar		*zif_delta_get_id		(ZifDelta		*delta);
 guint64			 zif_delta_get_size		(ZifDelta		*delta);

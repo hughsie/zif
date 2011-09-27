@@ -75,6 +75,15 @@ gboolean		 zif_package_remote_download		(ZifPackageRemote *pkg,
 								 const gchar	*directory,
 								 ZifState	*state,
 								 GError		**error);
+ZifDelta		*zif_package_remote_download_delta	(ZifPackageRemote *pkg,
+								 const gchar *directory,
+								 ZifState *state,
+								 GError **error);
+gboolean		 zif_package_remote_rebuild_delta	(ZifPackageRemote *pkg,
+								 ZifDelta *delta,
+								 const gchar *directory,
+								 ZifState *state,
+								 GError **error);
 ZifUpdate		*zif_package_remote_get_update_detail	(ZifPackageRemote *package,
 								 ZifState	*state,
 								 GError		**error);

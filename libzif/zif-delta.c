@@ -29,10 +29,13 @@
 #endif
 
 #include <glib.h>
+#include <glib/gstdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <sys/wait.h>
 
 #include "zif-delta-private.h"
+#include "zif-utils.h"
 
 #define ZIF_DELTA_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_DELTA, ZifDeltaPrivate))
 
@@ -56,6 +59,22 @@ enum {
 };
 
 G_DEFINE_TYPE (ZifDelta, zif_delta, G_TYPE_OBJECT)
+
+/**
+ * zif_delta_error_quark:
+ *
+ * Return value: An error quark.
+ *
+ * Since: 0.2.5
+ **/
+GQuark
+zif_delta_error_quark (void)
+{
+	static GQuark quark = 0;
+	if (!quark)
+		quark = g_quark_from_static_string ("zif_delta_error");
+	return quark;
+}
 
 /**
  * zif_delta_get_id:
@@ -232,6 +251,110 @@ zif_delta_set_checksum (ZifDelta *delta, const gchar *checksum)
 	g_return_if_fail (delta->priv->checksum == NULL);
 
 	delta->priv->checksum = g_strdup (checksum);
+}
+
+/**
+ * zif_build_filename_from_basename:
+ **/
+static gchar *
+zif_build_filename_from_basename (const gchar *directory,
+				  const gchar *filename)
+{
+	gchar *basename;
+	gchar *filename_local;
+
+	g_return_val_if_fail (directory != NULL, NULL);
+	g_return_val_if_fail (filename != NULL, NULL);
+
+	basename = g_path_get_basename (filename);
+	filename_local = g_build_filename (directory, basename, NULL);
+
+	g_free (basename);
+	return filename_local;
+}
+
+/**
+ * zif_delta_rebuild:
+ * @delta: A #ZifDelta
+ * @directory: A local directory to save to
+ * @filename: Filename to save the constructed rpm
+ * @error: A #GError, or %NULL
+ *
+ * Rebuilds an rpm from delta.
+ *
+ * Return value: %TRUE for success, %FALSE otherwise
+ *
+ * Since: 0.2.5
+ **/
+gboolean
+zif_delta_rebuild (ZifDelta *delta,
+		   const gchar *directory,
+		   const gchar *filename,
+		   GError **error)
+{
+	gboolean ret;
+	gchar *applydeltarpm_cmd = NULL;
+	gchar *arch = NULL;
+	gchar *drpm_filename = NULL;
+	gchar *rpm_filename = NULL;
+	gchar *std_error = NULL;
+	gint exit_status;
+
+	g_return_val_if_fail (ZIF_IS_DELTA (delta), FALSE);
+	g_return_val_if_fail (directory != NULL, FALSE);
+	g_return_val_if_fail (filename != NULL, FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+	/* get delta rpm local filename */
+	drpm_filename = zif_build_filename_from_basename (directory,
+	                                                  zif_delta_get_filename (delta));
+	if (drpm_filename == NULL) {
+		ret = FALSE;
+		goto out;
+	}
+
+	/* get rpm local filename */
+	rpm_filename = zif_build_filename_from_basename (directory,
+	                                                 filename);
+	if (rpm_filename == NULL) {
+		ret = FALSE;
+		goto out;
+	}
+
+	/* get the package arch */
+	ret = zif_package_id_to_nevra (zif_delta_get_id (delta),
+				       NULL, NULL, NULL, NULL,
+				       &arch);
+	if (!ret)
+		goto out;
+
+	applydeltarpm_cmd = g_strdup_printf ("applydeltarpm -a %s %s %s", arch, drpm_filename, rpm_filename);
+	g_debug ("executing: %s", applydeltarpm_cmd);
+	ret = g_spawn_command_line_sync (applydeltarpm_cmd,
+	                                 NULL /* stdout */,
+	                                 &std_error,
+	                                 &exit_status,
+	                                 error);
+	if (!ret) {
+		goto out;
+	} else if (!WIFEXITED (exit_status) || WEXITSTATUS (exit_status) != 0) {
+		ret = FALSE;
+		g_set_error (error,
+			     ZIF_DELTA_ERROR,
+			     ZIF_DELTA_ERROR_REBUILD_FAILED,
+			     "applydeltarpm failed: %s",
+			     std_error);
+		goto out;
+	}
+	g_unlink (drpm_filename);
+
+out:
+	g_free (applydeltarpm_cmd);
+	g_free (std_error);
+	g_free (arch);
+	g_free (drpm_filename);
+	g_free (rpm_filename);
+	return ret;
 }
 
 /**

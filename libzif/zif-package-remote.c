@@ -201,6 +201,183 @@ out:
 }
 
 /**
+ * zif_package_remote_rebuild_delta:
+ * @pkg: A #ZifPackageRemote
+ * @delta: A #ZifDelta
+ * @directory: A local directory to save to, or %NULL to use the package cache
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
+ *
+ * Rebuilds an rpm from delta.
+ *
+ * Return value: %TRUE for success, %FALSE otherwise
+ *
+ * Since: 0.2.5
+ **/
+gboolean
+zif_package_remote_rebuild_delta (ZifPackageRemote *pkg,
+				  ZifDelta *delta,
+				  const gchar *directory,
+				  ZifState *state,
+				  GError **error)
+{
+	gboolean ret;
+	gchar *directory_new = NULL;
+	const gchar *filename = NULL;
+	ZifState *state_local = NULL;
+
+	g_return_val_if_fail (ZIF_IS_PACKAGE_REMOTE (pkg), FALSE);
+	g_return_val_if_fail (ZIF_IS_DELTA (delta), FALSE);
+	g_return_val_if_fail (zif_state_valid (state), FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+	/* setup steps */
+	ret = zif_state_set_steps (state,
+				   error,
+				   5, /* get filename */
+				   95, /* download */
+				   -1);
+	if (!ret)
+		goto out;
+
+	/* directory is optional */
+	if (directory == NULL) {
+		directory = zif_store_remote_get_local_directory (pkg->priv->store_remote);
+		if (directory == NULL) {
+			g_set_error (error,
+				     ZIF_PACKAGE_ERROR,
+				     ZIF_PACKAGE_ERROR_FAILED,
+				     "failed to get local directory for %s",
+				     zif_package_get_printable (ZIF_PACKAGE (pkg)));
+			goto out;
+		}
+		directory_new = g_build_filename (directory, "packages", NULL);
+	} else {
+		directory_new = g_strdup (directory);
+	}
+
+	/* get rpm local filename */
+	state_local = zif_state_get_child (state);
+	filename = zif_package_get_filename (ZIF_PACKAGE (pkg), state_local, error);
+	if (filename == NULL)
+		goto out;
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* rebuild rpm from delta */
+	ret = zif_delta_rebuild (delta, directory_new, filename, error);
+	if (!ret)
+		goto out;
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+out:
+	g_free (directory_new);
+	return ret;
+}
+
+/**
+ * zif_package_remote_download_delta:
+ * @pkg: A #ZifPackageRemote
+ * @directory: A local directory to save to, or %NULL to use the package cache
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
+ *
+ * Downloads a delta rpm if it exists.
+ *
+ * Return value: (transfer full): A %ZifDelta, or %NULL for failure
+ *
+ * Since: 0.2.5
+ **/
+ZifDelta *
+zif_package_remote_download_delta (ZifPackageRemote *pkg,
+				   const gchar *directory,
+				   ZifState *state,
+				   GError **error)
+{
+	gboolean ret;
+	GError *error_local = NULL;
+	ZifState *state_local = NULL;
+	gchar *directory_new = NULL;
+	ZifDelta *delta = NULL;
+
+	g_return_val_if_fail (ZIF_IS_PACKAGE_REMOTE (pkg), FALSE);
+	g_return_val_if_fail (zif_state_valid (state), FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+	/* setup steps */
+	ret = zif_state_set_steps (state,
+				   error,
+				   10, /* parse metadata */
+				   90, /* download */
+				   -1);
+	if (!ret)
+		goto out;
+
+	/* directory is optional */
+	if (directory == NULL) {
+		directory = zif_store_remote_get_local_directory (pkg->priv->store_remote);
+		if (directory == NULL) {
+			g_set_error (error,
+				     ZIF_PACKAGE_ERROR,
+				     ZIF_PACKAGE_ERROR_FAILED,
+				     "failed to get local directory for %s",
+				     zif_package_get_printable (ZIF_PACKAGE (pkg)));
+			goto out;
+		}
+		directory_new = g_build_filename (directory, "packages", NULL);
+	} else {
+		directory_new = g_strdup (directory);
+	}
+
+	/* parse delta metadata */
+	state_local = zif_state_get_child (state);
+	delta = zif_package_remote_get_delta (pkg, state_local, error);
+	if (delta == NULL)
+		goto out;
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* create a chain of states */
+	state_local = zif_state_get_child (state);
+
+	/* download from the store */
+	ret = zif_store_remote_download_full (pkg->priv->store_remote,
+					      zif_delta_get_filename (delta),
+					      directory_new,
+					      zif_delta_get_size (delta),
+					      "application/x-rpm",
+					      G_CHECKSUM_MD5,
+					      NULL,
+					      state_local,
+					      &error_local);
+	if (!ret) {
+		g_set_error (error, ZIF_PACKAGE_ERROR, ZIF_PACKAGE_ERROR_FAILED,
+			     "cannot download delta from store: %s", error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+out:
+	g_free (directory_new);
+	return delta;
+}
+
+/**
  * zif_package_remote_download:
  * @pkg: A #ZifPackageRemote
  * @directory: A local directory to save to, or %NULL to use the package cache
