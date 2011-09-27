@@ -331,6 +331,7 @@ zif_md_primary_sql_resolve (ZifMd *md,
 	ZifMdPrimarySql *md_primary_sql = ZIF_MD_PRIMARY_SQL (md);
 
 	g_return_val_if_fail (ZIF_IS_MD_PRIMARY_SQL (md), NULL);
+	g_return_val_if_fail (flags != 0, NULL);
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 

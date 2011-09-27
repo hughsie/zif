@@ -775,6 +775,7 @@ zif_md_primary_xml_resolve (ZifMd *md,
 	ZifStrCompareFunc compare_func;
 
 	g_return_val_if_fail (zif_state_valid (state), NULL);
+	g_return_val_if_fail (flags != 0, NULL);
 
 	/* find out how many steps we need to do */
 	cnt += ((flags & ZIF_STORE_RESOLVE_FLAG_USE_NAME) > 0);

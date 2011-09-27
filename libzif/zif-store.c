@@ -1073,6 +1073,9 @@ zif_store_resolve_full (ZifStore *store,
 		search_native = g_strdupv (search);
 	}
 
+	/* remove the prefer-native flag if set */
+	flags &= ~ZIF_STORE_RESOLVE_FLAG_PREFER_NATIVE;
+
 	/* superclass */
 	if (klass->resolve != NULL) {
 		array = klass->resolve (store,
