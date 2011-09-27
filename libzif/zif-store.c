@@ -1014,25 +1014,14 @@ zif_store_has_search_arch_suffix (const gchar *search)
 }
 
 /**
- * zif_store_resolve_full:
- * @store: A #ZifStore
- * @search: A search term, e.g. "gnome-power-manager.i386"
- * @flags: A bitfield of %ZifStoreResolveFlags, e.g. %ZIF_STORE_RESOLVE_FLAG_USE_NAME_ARCH
- * @state: A #ZifState to use for progress reporting
- * @error: A #GError, or %NULL
- *
- * Finds packages matching the package name exactly.
- *
- * Return value: (transfer full): An array of #ZifPackage's
- *
- * Since: 0.2.4
+ * zif_store_resolve_full_try:
  **/
-GPtrArray *
-zif_store_resolve_full (ZifStore *store,
-			gchar **search,
-			ZifStoreResolveFlags flags,
-			ZifState *state,
-			GError **error)
+static GPtrArray *
+zif_store_resolve_full_try (ZifStore *store,
+			    gchar **search,
+			    ZifStoreResolveFlags flags,
+			    ZifState *state,
+			    GError **error)
 {
 	const gchar *tmp;
 	gboolean ret;
@@ -1045,10 +1034,6 @@ zif_store_resolve_full (ZifStore *store,
 	ZifStrCompareFunc compare_func;
 	ZifStoreClass *klass = ZIF_STORE_GET_CLASS (store);
 
-	g_return_val_if_fail (ZIF_IS_STORE (store), NULL);
-	g_return_val_if_fail (search != NULL, NULL);
-	g_return_val_if_fail (zif_state_valid (state), NULL);
-	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 	g_return_val_if_fail (klass != NULL, NULL);
 
 	/* do we want to prefer the native arch */
@@ -1196,6 +1181,107 @@ zif_store_resolve_full (ZifStore *store,
 		goto out;
 out:
 	g_strfreev (search_native);
+	return array;
+}
+
+/**
+ * zif_store_resolve_full:
+ * @store: A #ZifStore
+ * @search: A search term, e.g. "gnome-power-manager.i386"
+ * @flags: A bitfield of %ZifStoreResolveFlags, e.g. %ZIF_STORE_RESOLVE_FLAG_USE_NAME_ARCH
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
+ *
+ * Finds packages matching the package name exactly.
+ *
+ * If %ZIF_STORE_RESOLVE_FLAG_PREFER_NATIVE is specified in the @flags
+ * bitmask and the @search terms do not include architecture suffixes
+ * (e.g. ".i686") then the store is first searched using the machine
+ * native arch.
+ * If no native packages are found, then the store is searched again,
+ * this time matching any package regardless of architecture.
+ *
+ * Return value: (transfer full): An array of #ZifPackage's
+ *
+ * Since: 0.2.4
+ **/
+GPtrArray *
+zif_store_resolve_full (ZifStore *store,
+			gchar **search,
+			ZifStoreResolveFlags flags,
+			ZifState *state,
+			GError **error)
+{
+	gboolean prefer_native;
+	gboolean ret;
+	GPtrArray *array = NULL;
+	GPtrArray *array_tmp = NULL;
+	ZifState *state_local;
+	ZifStoreResolveFlags flags_new;
+
+	g_return_val_if_fail (ZIF_IS_STORE (store), NULL);
+	g_return_val_if_fail (search != NULL, NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+	/* if we searched with prefer native and found no results, then
+	 * research without the flag set */
+	prefer_native = (flags & ZIF_STORE_RESOLVE_FLAG_PREFER_NATIVE) > 0;
+
+	/* setup steps */
+	if (!prefer_native) {
+		zif_state_set_number_steps (state, 1);
+	} else {
+		ret = zif_state_set_steps (state,
+					   error,
+					   80, /* prefer-native */
+					   20, /* prefer nothing */
+					   -1);
+		if (!ret)
+			goto out;
+	}
+
+	/* try first with prefer-native */
+	state_local = zif_state_get_child (state);
+	array_tmp = zif_store_resolve_full_try (store,
+						search,
+						flags,
+						state_local,
+						error);
+	if (array_tmp == NULL)
+		goto out;
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* nothing, so try harder */
+	if (prefer_native && array_tmp->len == 0) {
+		g_ptr_array_unref (array_tmp);
+		state_local = zif_state_get_child (state);
+		flags_new = flags & ~ZIF_STORE_RESOLVE_FLAG_PREFER_NATIVE;
+		array_tmp = zif_store_resolve_full_try (store,
+							search,
+							flags_new,
+							state_local,
+							error);
+		if (array_tmp == NULL)
+			goto out;
+	}
+
+	/* this section done */
+	if (prefer_native) {
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
+	}
+
+	/* success */
+	array = g_ptr_array_ref (array_tmp);
+out:
+	if (array_tmp != NULL)
+		g_ptr_array_unref (array_tmp);
 	return array;
 }
 
