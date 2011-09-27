@@ -292,14 +292,34 @@ zif_package_print (ZifPackage *package)
 	g_return_if_fail (package->priv->package_id_split != NULL);
 
 	g_print ("id=%s\n", package->priv->package_id);
-	g_print ("summary=%s\n", zif_string_get_value (package->priv->summary));
-	g_print ("description=%s\n", zif_string_get_value (package->priv->description));
-	g_print ("license=%s\n", zif_string_get_value (package->priv->license));
-	g_print ("group=%s\n", zif_string_get_value (package->priv->group));
-	g_print ("pkgid=%s\n", zif_string_get_value (package->priv->pkgid));
-	g_print ("category=%s\n", zif_string_get_value (package->priv->category));
-	if (package->priv->url != NULL)
-		g_print ("url=%s\n", zif_string_get_value (package->priv->url));
+	if (package->priv->summary != NULL) {
+		g_print ("summary=%s\n",
+			 zif_string_get_value (package->priv->summary));
+	}
+	if (package->priv->description != NULL) {
+		g_print ("description=%s\n",
+			 zif_string_get_value (package->priv->description));
+	}
+	if (package->priv->license != NULL) {
+		g_print ("license=%s\n",
+			 zif_string_get_value (package->priv->license));
+	}
+	if (package->priv->group != NULL) {
+		g_print ("group=%s\n",
+			 zif_string_get_value (package->priv->group));
+	}
+	if (package->priv->pkgid != NULL) {
+		g_print ("pkgid=%s\n",
+			 zif_string_get_value (package->priv->pkgid));
+	}
+	if (package->priv->category != NULL) {
+		g_print ("category=%s\n",
+			 zif_string_get_value (package->priv->category));
+	}
+	if (package->priv->url != NULL) {
+		g_print ("url=%s\n",
+			 zif_string_get_value (package->priv->url));
+	}
 	g_print ("size=%"G_GUINT64_FORMAT"\n", package->priv->size);
 
 	if (package->priv->files != NULL) {
