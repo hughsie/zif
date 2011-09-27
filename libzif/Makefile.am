@@ -61,6 +61,7 @@ libzif_include_HEADERS =					\
 	zif-store-array.h					\
 	zif-store.h						\
 	zif-store-local.h					\
+	zif-store-meta.h					\
 	zif-store-remote.h					\
 	zif-store-rhn.h						\
 	zif-string.h						\
