@@ -255,7 +255,7 @@ zif_package_array_filter_newest (GPtrArray *packages)
 					     g_strdup (key),
 					     g_object_ref (package));
 			g_hash_table_insert (hash_keep,
-					     (gchar*)zif_package_get_id (package),
+					     (gchar*)zif_package_get_id_basic (package),
 					     (gchar*)"<keep>");
 			continue;
 		}
@@ -264,8 +264,8 @@ zif_package_array_filter_newest (GPtrArray *packages)
 		retval = zif_package_compare (package, package_tmp);
 		if (retval == G_MAXINT) {
 			g_warning ("failed to compare %s:%s",
-				   zif_package_get_id (package),
-				   zif_package_get_id (package_tmp));
+				   zif_package_get_id_basic (package),
+				   zif_package_get_id_basic (package_tmp));
 			continue;
 		}
 
@@ -284,9 +284,9 @@ zif_package_array_filter_newest (GPtrArray *packages)
 
 		/* track packages */
 		g_hash_table_remove (hash_keep,
-				     zif_package_get_id (package_tmp));
+				     zif_package_get_id_basic (package_tmp));
 		g_hash_table_insert (hash_keep,
-				     (gchar*)zif_package_get_id (package),
+				     (gchar*)zif_package_get_id_basic (package),
 				     (gchar*)"<keep>");
 	}
 
@@ -294,7 +294,7 @@ zif_package_array_filter_newest (GPtrArray *packages)
 	array_new = g_ptr_array_sized_new (packages->len);
 	for (i=0; i<packages->len; i++) {
 		package = ZIF_PACKAGE (g_ptr_array_index (packages, i));
-		key = zif_package_get_id (package);
+		key = zif_package_get_id_basic (package);
 		tmp = g_hash_table_lookup (hash_keep, key);
 		if (tmp != NULL) {
 			g_ptr_array_add (array_new,
@@ -340,7 +340,7 @@ zif_package_array_filter_duplicates (GPtrArray *packages)
 					   NULL, NULL);
 	for (i=0; i<packages->len; i++) {
 		package = ZIF_PACKAGE (g_ptr_array_index (packages, i));
-		key = zif_package_get_id (package);
+		key = zif_package_get_id_basic (package);
 		tmp = g_hash_table_lookup (hash_keep, key);
 		if (tmp == NULL) {
 			g_hash_table_insert (hash_keep,
