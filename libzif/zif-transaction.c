@@ -61,6 +61,7 @@
 #include "zif-config.h"
 #include "zif-db.h"
 #include "zif-depend.h"
+#include "zif-download.h"
 #include "zif-history.h"
 #include "zif-object-array.h"
 #include "zif-package-array-private.h"
@@ -73,6 +74,7 @@
 #include "zif-store.h"
 #include "zif-store-local.h"
 #include "zif-store-meta.h"
+#include "zif-store-remote-private.h"
 #include "zif-transaction.h"
 #include "zif-utils.h"
 
@@ -3635,17 +3637,99 @@ out:
 }
 
 /**
+ * zif_transaction_obtain_key_for_package:
+ **/
+static gboolean
+zif_transaction_obtain_key_for_package (ZifTransaction *transaction,
+				        ZifPackage *package,
+				        ZifState *state,
+				        GError **error)
+{
+	const gchar *pubkey;
+	const gchar *store_dir;
+	gboolean ret;
+	gchar *filename_tmp = NULL;
+	rpmKeyring keyring = NULL;
+	ZifDownload *download = NULL;
+	ZifStoreRemote *remote;
+
+	/* get the remote store for the package */
+	remote = zif_package_remote_get_store_remote (ZIF_PACKAGE_REMOTE (package));
+	if (remote == NULL) {
+		ret = FALSE;
+		g_set_error (error,
+			     ZIF_TRANSACTION_ERROR,
+			     ZIF_TRANSACTION_ERROR_NOT_SUPPORTED,
+			     "failed to get remote store for %s",
+			     zif_package_get_printable (package));
+		goto out;
+	}
+
+	/* find repo pubkey */
+	pubkey = zif_store_remote_get_pubkey (remote);
+	if (pubkey == NULL) {
+		ret = FALSE;
+		g_set_error (error,
+			     ZIF_TRANSACTION_ERROR,
+			     ZIF_TRANSACTION_ERROR_NOT_SUPPORTED,
+			     "no pubkey available for %s",
+			     zif_package_get_printable (package));
+		goto out;
+	}
+
+	/* create key location */
+	store_dir = zif_store_remote_get_local_directory (remote);
+	filename_tmp = g_build_filename (store_dir,
+					 "RPM-GPG-KEY",
+					 NULL);
+
+	/* download pubkey to temp location */
+	g_debug ("importing %s for %s",
+		 pubkey,
+		 zif_package_get_printable (package));
+	download = zif_download_new ();
+	ret = zif_download_file_full (download,
+				      pubkey,
+				      filename_tmp,
+				      0,
+				      "application/pgp-keys",
+				      G_CHECKSUM_MD5,
+				      NULL,
+				      state,
+				      error);
+	if (!ret)
+		goto out;
+
+	/* import it */
+	keyring = rpmtsGetKeyring (transaction->priv->ts, 1);
+	ret = zif_transaction_add_public_key_to_rpmdb (keyring,
+						       filename_tmp,
+						       error);
+	if (!ret)
+		goto out;
+out:
+	g_free (filename_tmp);
+	if (keyring != NULL)
+		rpmKeyringFree (keyring);
+	if (download != NULL)
+		g_object_unref (download);
+	return ret;
+}
+
+/**
  * zif_transaction_prepare_ensure_trusted:
  **/
 static gboolean
 zif_transaction_prepare_ensure_trusted (ZifTransaction *transaction,
 					rpmKeyring keyring,
 					ZifPackage *package,
+					ZifState *state,
 					GError **error)
 {
 	const gchar *cache_filename;
 	const gchar *tmp;
 	gboolean ret = FALSE;
+	GError *error_local = NULL;
 	Header h;
 	int rc;
 	pgpDig dig = NULL;
@@ -3733,6 +3817,29 @@ zif_transaction_prepare_ensure_trusted (ZifTransaction *transaction,
 		ret = zif_transaction_add_public_keys_to_rpmdb (keyring, error);
 		if (!ret)
 			goto out;
+
+		/* try again, as we might have the key now */
+		rc = rpmKeyringLookup (keyring, dig);
+	}
+
+	/* obtain repo keys automatically */
+	if (rc == RPMRC_NOKEY) {
+		ret = zif_transaction_obtain_key_for_package (transaction,
+							      package,
+							      state,
+							      &error_local);
+		if (!ret) {
+			if (g_error_matches (error_local,
+					     ZIF_TRANSACTION_ERROR,
+					     ZIF_TRANSACTION_ERROR_NOTHING_TO_DO)) {
+				g_debug ("cannot import key: %s",
+					 error_local->message);
+				g_error_free (error_local);
+			} else {
+				g_propagate_error (error, error_local);
+				goto out;
+			}
+		}
 
 		/* try again, as we might have the key now */
 		rc = rpmKeyringLookup (keyring, dig);
@@ -3912,6 +4019,8 @@ skip:
 	localpkg_gpgcheck = zif_config_get_boolean (priv->config,
 						    "localpkg_gpgcheck", NULL);
 	keyring = rpmtsGetKeyring (transaction->priv->ts, 1);
+	state_local = zif_state_get_child (state);
+	zif_state_set_number_steps (state_local, priv->install->len);
 	for (i=0; i<priv->install->len; i++) {
 		package_tmp = g_ptr_array_index (priv->install, i);
 
@@ -3926,10 +4035,17 @@ skip:
 			continue;
 
 		/* do the check */
+		state_loop = zif_state_get_child (state_local);
 		ret = zif_transaction_prepare_ensure_trusted (transaction,
 							      keyring,
 							      package_tmp,
+							      state_loop,
 							      error);
+		if (!ret)
+			goto out;
+
+		/* done */
+		ret = zif_state_done (state_local, error);
 		if (!ret)
 			goto out;
 	}
