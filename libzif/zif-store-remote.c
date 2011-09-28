@@ -1479,6 +1479,7 @@ zif_store_remote_process_repomd (ZifStoreRemote *store,
 			if (error_local->domain == ZIF_MD_ERROR &&
 			    (error_local->code == ZIF_MD_ERROR_CHECKSUM_INVALID ||
 			     error_local->code == ZIF_MD_ERROR_FILE_TOO_OLD ||
+			     error_local->code == ZIF_MD_ERROR_FAILED_TO_LOAD ||
 			     error_local->code == ZIF_MD_ERROR_FILE_NOT_EXISTS)) {
 				g_unlink (store->priv->repomd_filename);
 				g_unlink (zif_md_get_filename (store->priv->md_mirrorlist));
