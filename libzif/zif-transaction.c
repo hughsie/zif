@@ -3890,6 +3890,8 @@ skip:
 						  NULL,
 						  state_local,
 						  error);
+		if (!ret)
+			goto out;
 	}
 
 	/* done */
