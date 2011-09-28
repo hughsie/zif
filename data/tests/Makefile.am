@@ -1,3 +1,6 @@
+SUBDIRS = 							\
+	transactions
+
 EXTRA_DIST =							\
 	compress.txt.bz2					\
 	compress.txt.gz						\

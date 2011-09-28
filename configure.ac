@@ -262,6 +262,7 @@ docs/api/version.xml
 man/Makefile
 data/Makefile
 data/tests/Makefile
+data/tests/transactions/Makefile
 ])
 AC_OUTPUT
 
