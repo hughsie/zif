@@ -24,6 +24,8 @@
 #include <glib/gi18n.h>
 #include <glib/gstdio.h>
 #include <glib.h>
+#include <glib-unix.h>
+
 #include <locale.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
@@ -324,29 +326,6 @@ zif_state_speed_changed_cb (ZifState *state,
 {
 	zif_progress_bar_set_speed (progressbar,
 				    zif_state_get_speed (state));
-}
-
-static ZifState *_state = NULL;
-
-/**
- * zif_main_sigint_cb:
- **/
-static void
-zif_main_sigint_cb (int sig)
-{
-	GCancellable *cancellable;
-	g_debug ("Handling SIGINT");
-
-	/* restore default ASAP, as the cancels might hang */
-	signal (SIGINT, SIG_DFL);
-
-	/* cancel any tasks still running */
-	if (_state != NULL) {
-		cancellable = zif_state_get_cancellable (_state);
-		/* TRANSLATORS: the user just did ctrl-c */
-		g_print ("%s\n", _("Cancellation in progress..."));
-		g_cancellable_cancel (cancellable);
-	}
 }
 
 /**
@@ -5998,6 +5977,58 @@ out:
 	return ret;
 }
 
+#if GLIB_CHECK_VERSION(2,29,19)
+
+/**
+ * zif_main_sigint_cb:
+ **/
+static gboolean
+zif_main_sigint_cb (gpointer user_data)
+{
+	GCancellable *cancellable;
+	ZifCmdPrivate *priv = (ZifCmdPrivate *) user_data;
+
+	g_debug ("Handling SIGINT");
+
+	/* TRANSLATORS: the user just did ctrl-c */
+	zif_progress_bar_set_action (priv->progressbar, _("Cancellation in progress..."));
+
+	/* cancel any tasks still running */
+	if (priv->state != NULL) {
+		cancellable = zif_state_get_cancellable (priv->state);
+		g_cancellable_cancel (cancellable);
+	}
+
+	return FALSE;
+}
+
+#else
+
+static ZifState *_state = NULL;
+
+/**
+ * zif_main_sigint_cb:
+ **/
+static void
+zif_main_sigint_cb (int sig)
+{
+	GCancellable *cancellable;
+	g_debug ("Handling SIGINT");
+
+	/* restore default ASAP, as the cancels might hang */
+	signal (SIGINT, SIG_DFL);
+
+	/* cancel any tasks still running */
+	if (_state != NULL) {
+		cancellable = zif_state_get_cancellable (_state);
+		/* TRANSLATORS: the user just did ctrl-c */
+		g_print ("%s\n", _("Cancellation in progress..."));
+		g_cancellable_cancel (cancellable);
+	}
+}
+
+#endif
+
 /**
  * main:
  **/
@@ -6028,7 +6059,6 @@ main (int argc, char *argv[])
 	guint age = 0;
 	struct winsize w;
 	ZifCmdPrivate *priv;
-	ZifState *state = NULL;
 	const GOptionEntry options[] = {
 		{ "verbose", 'v', 0, G_OPTION_ARG_NONE, &verbose,
 			_("Show extra debugging information"), NULL },
@@ -6101,8 +6131,14 @@ main (int argc, char *argv[])
 	/* save in the private data */
 	priv->assume_no = assume_no;
 
+#if GLIB_CHECK_VERSION(2,29,19)
 	/* do stuff on ctrl-c */
+	g_unix_signal_add (SIGINT,
+			   zif_main_sigint_cb,
+			   priv);
+#else
 	signal (SIGINT, zif_main_sigint_cb);
+#endif
 
 	/* don't let GIO start it's own session bus */
 	g_unsetenv ("DBUS_SESSION_BUS_ADDRESS");
@@ -6274,8 +6310,10 @@ main (int argc, char *argv[])
 		zif_state_reset (priv->state);
 	}
 
+#if !GLIB_CHECK_VERSION(2,29,19)
 	/* for the signal handler */
-	_state = state;
+	_state = priv->state;
+#endif
 
 	/* add commands */
 	priv->cmd_array = g_ptr_array_new_with_free_func ((GDestroyNotify) zif_cmd_item_free);
