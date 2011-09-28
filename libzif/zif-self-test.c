@@ -28,7 +28,7 @@
 #include <utime.h>
 
 #include "zif-category.h"
-#include "zif-changeset.h"
+#include "zif-changeset-private.h"
 #include "zif-config.h"
 #include "zif-delta.h"
 #include "zif-depend.h"
@@ -72,7 +72,7 @@
 #include "zif-transaction.h"
 #include "zif-update.h"
 #include "zif-update-info.h"
-#include "zif-utils.h"
+#include "zif-utils-private.h"
 
 static gboolean _has_network_access = TRUE;
 static gchar *zif_tmpdir = NULL;
