@@ -1334,6 +1334,10 @@ zif_state_done_real (ZifState *state, GError **error, const gchar *strloc)
 	g_return_val_if_fail (state != NULL, FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
+	/* clear queue */
+	while (g_main_context_pending (NULL))
+		g_main_context_iteration (NULL, FALSE);
+
 	/* are we cancelled */
 	if (g_cancellable_is_cancelled (state->priv->cancellable)) {
 		g_set_error_literal (error, ZIF_STATE_ERROR, ZIF_STATE_ERROR_CANCELLED,
@@ -1441,6 +1445,10 @@ zif_state_finished_real (ZifState *state, GError **error, const gchar *strloc)
 
 	g_return_val_if_fail (state != NULL, FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+	/* clear queue */
+	while (g_main_context_pending (NULL))
+		g_main_context_iteration (NULL, FALSE);
 
 	/* are we cancelled */
 	if (g_cancellable_is_cancelled (state->priv->cancellable)) {
