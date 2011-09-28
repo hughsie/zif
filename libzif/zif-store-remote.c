@@ -4212,6 +4212,7 @@ zif_store_remote_file_monitor_cb (ZifMonitor *monitor, ZifStoreRemote *store)
 	store->priv->name = NULL;
 	store->priv->name_expanded = NULL;
 	store->priv->repo_filename = NULL;
+	store->priv->baseurl = NULL;
 	store->priv->mirrorlist = NULL;
 	store->priv->metalink = NULL;
 	store->priv->pubkey = NULL;
