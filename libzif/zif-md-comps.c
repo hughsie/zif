@@ -34,9 +34,10 @@
 #include <stdlib.h>
 #include <glib.h>
 
-#include "zif-md.h"
-#include "zif-md-comps.h"
 #include "zif-category-private.h"
+#include "zif-md-comps.h"
+#include "zif-md.h"
+#include "zif-state-private.h"
 
 #define ZIF_MD_COMPS_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_MD_COMPS, ZifMdCompsPrivate))
 

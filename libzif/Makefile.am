@@ -152,6 +152,7 @@ libzif_la_SOURCES =						\
 	zif-repos.h						\
 	zif-state.c						\
 	zif-state.h						\
+	zif-state-private.h					\
 	zif-store-array.c					\
 	zif-store-array.h					\
 	zif-store.c						\

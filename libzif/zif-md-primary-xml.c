@@ -69,6 +69,7 @@ typedef enum {
 #include "zif-object-array.h"
 #include "zif-package-private.h"
 #include "zif-package-remote.h"
+#include "zif-state-private.h"
 #include "zif-string.h"
 #include "zif-utils-private.h"
 

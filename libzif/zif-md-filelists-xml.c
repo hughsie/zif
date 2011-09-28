@@ -57,6 +57,7 @@ typedef enum {
 #include "zif-md.h"
 #include "zif-package-private.h"
 #include "zif-package-remote.h"
+#include "zif-state-private.h"
 #include "zif-string.h"
 
 #define ZIF_MD_FILELISTS_XML_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_MD_FILELISTS_XML, ZifMdFilelistsXmlPrivate))

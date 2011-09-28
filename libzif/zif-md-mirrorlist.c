@@ -34,9 +34,10 @@
 #include <stdlib.h>
 #include <glib.h>
 
+#include "zif-config.h"
 #include "zif-md.h"
 #include "zif-md-mirrorlist.h"
-#include "zif-config.h"
+#include "zif-state-private.h"
 
 #define ZIF_MD_MIRRORLIST_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_MD_MIRRORLIST, ZifMdMirrorlistPrivate))
 

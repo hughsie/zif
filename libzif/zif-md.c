@@ -39,6 +39,7 @@
 
 #include "zif-config.h"
 #include "zif-md.h"
+#include "zif-state-private.h"
 #include "zif-store-remote-private.h"
 #include "zif-utils.h"
 

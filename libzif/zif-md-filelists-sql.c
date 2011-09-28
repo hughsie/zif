@@ -37,9 +37,10 @@
 #include <sqlite3.h>
 #include <gio/gio.h>
 
-#include "zif-md.h"
 #include "zif-md-filelists-sql.h"
+#include "zif-md.h"
 #include "zif-package-remote.h"
+#include "zif-state-private.h"
 
 #define ZIF_MD_FILELISTS_SQL_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_MD_FILELISTS_SQL, ZifMdFilelistsSqlPrivate))
 

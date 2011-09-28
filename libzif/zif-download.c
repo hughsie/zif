@@ -36,7 +36,7 @@
 
 #include "zif-config.h"
 #include "zif-download-private.h"
-#include "zif-state.h"
+#include "zif-state-private.h"
 #include "zif-md-metalink.h"
 #include "zif-md-mirrorlist.h"
 

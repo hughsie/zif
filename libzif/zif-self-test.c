@@ -61,7 +61,7 @@
 #include "zif-package-remote.h"
 #include "zif-release.h"
 #include "zif-repos.h"
-#include "zif-state.h"
+#include "zif-state-private.h"
 #include "zif-store-array.h"
 #include "zif-store.h"
 #include "zif-store-local.h"

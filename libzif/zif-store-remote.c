@@ -57,6 +57,7 @@
 #include "zif-package-array.h"
 #include "zif-package.h"
 #include "zif-package-remote.h"
+#include "zif-state-private.h"
 #include "zif-store.h"
 #include "zif-store-local.h"
 #include "zif-store-remote-private.h"

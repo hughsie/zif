@@ -68,6 +68,7 @@
 #include "zif-package-meta.h"
 #include "zif-package-private.h"
 #include "zif-package-remote.h"
+#include "zif-state-private.h"
 #include "zif-store-array.h"
 #include "zif-store.h"
 #include "zif-store-local.h"

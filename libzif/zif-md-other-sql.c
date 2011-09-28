@@ -37,10 +37,11 @@
 #include <sqlite3.h>
 #include <gio/gio.h>
 
-#include "zif-md.h"
 #include "zif-changeset-private.h"
+#include "zif-md.h"
 #include "zif-md-other-sql.h"
 #include "zif-package-remote.h"
+#include "zif-state-private.h"
 
 #define ZIF_MD_OTHER_SQL_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_MD_OTHER_SQL, ZifMdOtherSqlPrivate))
 

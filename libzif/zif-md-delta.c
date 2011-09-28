@@ -34,9 +34,10 @@
 #include <stdlib.h>
 #include <glib.h>
 
-#include "zif-md.h"
-#include "zif-md-delta.h"
 #include "zif-delta-private.h"
+#include "zif-md-delta.h"
+#include "zif-md.h"
+#include "zif-state-private.h"
 #include "zif-utils.h"
 
 #define ZIF_MD_DELTA_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_MD_DELTA, ZifMdDeltaPrivate))

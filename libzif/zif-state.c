@@ -84,7 +84,7 @@
 
 #include "zif-marshal.h"
 #include "zif-utils.h"
-#include "zif-state.h"
+#include "zif-state-private.h"
 
 #define ZIF_STATE_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_STATE, ZifStatePrivate))
 

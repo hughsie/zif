@@ -43,6 +43,7 @@
 #include "zif-md-primary-sql.h"
 #include "zif-package-array-private.h"
 #include "zif-package-remote.h"
+#include "zif-state-private.h"
 #include "zif-utils-private.h"
 
 #define ZIF_MD_PRIMARY_SQL_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_MD_PRIMARY_SQL, ZifMdPrimarySqlPrivate))
