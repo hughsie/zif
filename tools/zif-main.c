@@ -25,7 +25,9 @@
 #include <glib/gi18n.h>
 #include <glib/gstdio.h>
 #include <glib.h>
+#if GLIB_CHECK_VERSION(2,29,19)
 #include <glib-unix.h>
+#endif
 
 #include <locale.h>
 #include <sys/ioctl.h>

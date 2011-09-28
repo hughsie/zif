@@ -34,7 +34,7 @@
 #include <string.h>
 
 #include <glib.h>
-#include <glib-unix.h>
+#include <signal.h>
 #include <rpm/rpmlib.h>
 #include <rpm/rpmdb.h>
 #include <rpm/rpmts.h>
