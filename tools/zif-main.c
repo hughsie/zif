@@ -3919,6 +3919,7 @@ zif_cmd_search_category (ZifCmdPrivate *priv, gchar **values, GError **error)
 		goto out;
 
 	zif_progress_bar_end (priv->progressbar);
+	zif_package_array_filter_newest (array);
 	zif_print_packages (array);
 out:
 	if (store_array != NULL)
@@ -3995,6 +3996,7 @@ zif_cmd_search_details (ZifCmdPrivate *priv, gchar **values, GError **error)
 		goto out;
 
 	zif_progress_bar_end (priv->progressbar);
+	zif_package_array_filter_newest (array);
 	zif_print_packages (array);
 out:
 	if (store_array != NULL)
@@ -4072,6 +4074,7 @@ zif_cmd_search_file (ZifCmdPrivate *priv, gchar **values, GError **error)
 		goto out;
 
 	zif_progress_bar_end (priv->progressbar);
+	zif_package_array_filter_newest (array);
 	zif_print_packages (array);
 
 	/* success */
@@ -4225,6 +4228,7 @@ zif_cmd_search_name (ZifCmdPrivate *priv, gchar **values, GError **error)
 		goto out;
 
 	zif_progress_bar_end (priv->progressbar);
+	zif_package_array_filter_newest (array);
 	zif_print_packages (array);
 out:
 	if (store_array != NULL)
