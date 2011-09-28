@@ -2485,14 +2485,19 @@ out:
 static gboolean
 zif_cmd_install (ZifCmdPrivate *priv, gchar **values, GError **error)
 {
+	gboolean enable_debuginfo;
+	gboolean has_debuginfo = FALSE;
 	gboolean ret = FALSE;
 	GError *error_local = NULL;
 	GPtrArray *array = NULL;
 	GPtrArray *store_array_local = NULL;
 	GPtrArray *store_array_remote = NULL;
+	GPtrArray *store_array_all = NULL;
 	guint i;
 	ZifPackage *package;
+	ZifRepos *repos = NULL;
 	ZifState *state_local;
+	ZifStore *store_tmp;
 	ZifTransaction *transaction = NULL;
 
 	/* check we have a value */
@@ -2513,7 +2518,8 @@ zif_cmd_install (ZifCmdPrivate *priv, gchar **values, GError **error)
 				   1, /* add local */
 				   5, /* resolve */
 				   1, /* add remote */
-				   13, /* find remote */
+				   1, /* possibly enable -debuginfo */
+				   12, /* find remote */
 				   80, /* run transaction */
 				   -1);
 	if (!ret)
@@ -2556,12 +2562,63 @@ zif_cmd_install (ZifCmdPrivate *priv, gchar **values, GError **error)
 	if (!ret)
 		goto out;
 
+	/* are there any debuginfo packages */
+	for (i=0; values[i] != NULL; i++) {
+		if (g_str_has_suffix (values[i], "-debuginfo")) {
+			has_debuginfo = TRUE;
+			break;
+		}
+	}
+
 	/* check available */
 	store_array_remote = zif_store_array_new ();
 	state_local = zif_state_get_child (priv->state);
 	ret = zif_store_array_add_remote_enabled (store_array_remote, state_local, error);
 	if (!ret)
 		goto out;
+
+	/* this section done */
+	ret = zif_state_done (priv->state, error);
+	if (!ret)
+		goto out;
+
+	/* the yum-plugin-auto-update-debug-info code "helpfully"
+	 * enables debuginfo repos when we try to install -debuginfo
+	 * packages, so we should probably copy that behaviour */
+	enable_debuginfo = zif_config_get_boolean (priv->config,
+						   "auto_enable_debuginfo",
+						   NULL);
+	if (enable_debuginfo && has_debuginfo) {
+		repos = zif_repos_new ();
+
+		/* enable any repos that have suffix -debuginfo */
+		state_local = zif_state_get_child (priv->state);
+		store_array_all = zif_repos_get_stores (repos, state_local, error);
+		if (store_array_all == NULL)
+			goto out;
+		for (i=0; i<store_array_all->len; i++) {
+			store_tmp = g_ptr_array_index (store_array_all, i);
+			if (g_str_has_suffix (zif_store_get_id (store_tmp),
+					      "-debuginfo")) {
+				zif_store_array_add_store (store_array_remote,
+							   store_tmp);
+			}
+		}
+
+		/* force this on, as some source repos don't provide the
+		 * right distro version */
+		ret = zif_config_unset (priv->config,
+					"skip_broken",
+					error);
+		if (!ret)
+			goto out;
+		ret = zif_config_set_boolean (priv->config,
+					      "skip_broken",
+					      TRUE,
+					      error);
+		if (!ret)
+			goto out;
+	}
 
 	/* this section done */
 	ret = zif_state_done (priv->state, error);
@@ -2638,6 +2695,10 @@ zif_cmd_install (ZifCmdPrivate *priv, gchar **values, GError **error)
 	/* success */
 	ret = TRUE;
 out:
+	if (store_array_all != NULL)
+		g_ptr_array_unref (store_array_all);
+	if (repos != NULL)
+		g_object_unref (repos);
 	if (transaction != NULL)
 		g_object_unref (transaction);
 	if (store_array_local != NULL)
