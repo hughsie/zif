@@ -1104,9 +1104,10 @@ zif_state_get_child (ZifState *state)
 	/* set the global share on the new child */
 	zif_state_set_global_share (child, state->priv->global_share);
 
-	/* set cancellable */
-	if (state->priv->cancellable != NULL)
-		zif_state_set_cancellable (child, state->priv->cancellable);
+	/* set cancellable, creating if required */
+	if (state->priv->cancellable == NULL)
+		state->priv->cancellable = g_cancellable_new ();
+	zif_state_set_cancellable (child, state->priv->cancellable);
 
 	/* set the error handler if one exists on the child */
 	if (state->priv->error_handler_cb != NULL) {
