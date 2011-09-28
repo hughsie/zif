@@ -386,22 +386,6 @@ zif_store_remote_parser_text (GMarkupParseContext *context, const gchar *text, g
 }
 
 /**
- * zif_store_remote_ensure_parent_dir_exists:
- **/
-static gboolean
-zif_store_remote_ensure_parent_dir_exists (const gchar *filename, GError **error)
-{
-	gchar *dirname = NULL;
-	dirname = g_path_get_dirname (filename);
-	if (!g_file_test (dirname, G_FILE_TEST_EXISTS)) {
-		g_debug ("creating directory %s", dirname);
-		g_mkdir_with_parents (dirname, 0777);
-	}
-	g_free (dirname);
-	return TRUE;
-}
-
-/**
  * zif_store_remote_find_delta:
  * @store: A #ZifStoreRemote
  * @update: New package to update to
@@ -478,9 +462,10 @@ zif_store_remote_download_full (ZifStoreRemote *store,
 				GError **error)
 {
 	gboolean ret = FALSE;
-	GError *error_local = NULL;
-	gchar *filename_local = NULL;
+	GCancellable *cancellable;
 	gchar *basename = NULL;
+	gchar *filename_local = NULL;
+	GError *error_local = NULL;
 	ZifState *state_local;
 
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), FALSE);
@@ -553,7 +538,10 @@ repomd_confirm:
 	filename_local = g_build_filename (directory, basename, NULL);
 
 	/* ensure path is valid */
-	ret = zif_store_remote_ensure_parent_dir_exists (filename_local, error);
+	cancellable = zif_state_get_cancellable (state);
+	ret = zif_ensure_parent_dir_exists (filename_local,
+					    cancellable,
+					    error);
 	if (!ret)
 		goto out;
 
@@ -1185,12 +1173,13 @@ zif_store_remote_get_repomd (ZifStoreRemote *store,
 			     ZifState *state,
 			     GError **error)
 {
-	ZifStoreRemotePrivate *priv = store->priv;
-	ZifState *state_local;
 	gboolean ret = TRUE;
-	GError *error_local = NULL;
+	GCancellable *cancellable;
 	gchar *tmp;
+	GError *error_local = NULL;
 	guint i;
+	ZifState *state_local;
+	ZifStoreRemotePrivate *priv = store->priv;
 
 	/* clear download locations that will not be valid anymore */
 	zif_download_location_clear (store->priv->download);
@@ -1219,8 +1208,10 @@ zif_store_remote_get_repomd (ZifStoreRemote *store,
 	}
 
 	/* ensure path is valid */
-	ret = zif_store_remote_ensure_parent_dir_exists (store->priv->repomd_filename,
-							 error);
+	cancellable = zif_state_get_cancellable (state);
+	ret = zif_ensure_parent_dir_exists (store->priv->repomd_filename,
+					    cancellable,
+					    error);
 	if (!ret)
 		goto out;
 

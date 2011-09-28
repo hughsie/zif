@@ -47,6 +47,9 @@ gboolean	 zif_str_compare_equal		(const gchar	*a,
 guint		 zif_string_replace		(GString	*string,
 						 const gchar	*search,
 						 const gchar	*replace);
+gboolean	 zif_ensure_parent_dir_exists	(const gchar	*filename,
+						 GCancellable	*cancellable,
+						 GError		**error);
 
 G_END_DECLS
 

@@ -1656,3 +1656,40 @@ out:
 	g_strfreev (split);
 	return package_id_new;
 }
+
+/**
+ * zif_ensure_parent_dir_exists:
+ * @filename: A full path
+ * @cancellable: a #GCancellable, or %NULL
+ * @error: A #GError, or %NULL
+ *
+ * Creates the parent dir for a file if it does not already exist.
+ *
+ * Return value: %TRUE for already exists or created okay.
+ *
+ * Since: 0.2.5
+ **/
+gboolean
+zif_ensure_parent_dir_exists (const gchar *filename,
+			      GCancellable *cancellable,
+			      GError **error)
+{
+	gboolean ret = TRUE;
+	gchar *dirname = NULL;
+	GFile *file;
+
+	/* does already exist */
+	dirname = g_path_get_dirname (filename);
+	file = g_file_new_for_path (dirname);
+	if (g_file_query_exists (file, cancellable))
+		goto out;
+
+	/* no, so create */
+	ret = g_file_make_directory_with_parents (file,
+						  cancellable,
+						  error);
+out:
+	g_free (dirname);
+	g_object_unref (file);
+	return ret;
+}

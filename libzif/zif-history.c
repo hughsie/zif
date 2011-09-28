@@ -39,7 +39,7 @@
 #include "zif-history.h"
 #include "zif-monitor.h"
 #include "zif-package-private.h"
-#include "zif-utils.h"
+#include "zif-utils-private.h"
 
 #define ZIF_HISTORY_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_HISTORY, ZifHistoryPrivate))
 
@@ -96,6 +96,13 @@ zif_history_load (ZifHistory *history, GError **error)
 		}
 	}
 
+	/* ensure the basename exists */
+	ret = zif_ensure_parent_dir_exists (history->priv->filename,
+					    NULL,
+					    error);
+	if (!ret)
+		goto out;
+
 	/* open db */
 	g_debug ("trying to open database '%s'", history->priv->filename);
 	rc = sqlite3_open (history->priv->filename, &history->priv->db);
@@ -104,7 +111,8 @@ zif_history_load (ZifHistory *history, GError **error)
 		g_set_error (error,
 			     ZIF_HISTORY_ERROR,
 			     ZIF_HISTORY_ERROR_FAILED_TO_OPEN,
-			     "Can't open history database: %s",
+			     "Can't open history database %s: %s",
+			     history->priv->filename,
 			     sqlite3_errmsg (history->priv->db));
 		sqlite3_close (history->priv->db);
 		history->priv->db = NULL;
