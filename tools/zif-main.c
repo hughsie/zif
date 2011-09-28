@@ -2144,6 +2144,10 @@ zif_transaction_reason_to_string_localized (ZifTransactionReason reason)
 		/* TRANSLATORS: this is the reason the action is to be taken */
 		str = _("Downgrading for dependencies");
 		break;
+	case ZIF_TRANSACTION_REASON_DOWNGRADE_INSTALLED:
+		/* TRANSLATORS: this is the reason the action is to be taken */
+		str = _("Removing current version");
+		break;
 	default:
 		/* TRANSLATORS: this is the reason the action is to be taken */
 		str = _("Unknown reason");
@@ -2188,6 +2192,7 @@ zif_main_show_transaction (ZifTransaction *transaction)
 					 zif_package_get_printable (package));
 			}
 			if (order[i] == ZIF_TRANSACTION_REASON_DOWNGRADE_USER_ACTION ||
+			    order[i] == ZIF_TRANSACTION_REASON_DOWNGRADE_INSTALLED ||
 			    order[i] == ZIF_TRANSACTION_REASON_DOWNGRADE_FOR_DEP)
 				has_downgrade = TRUE;
 		}

@@ -218,6 +218,8 @@ zif_transaction_reason_to_string (ZifTransactionReason reason)
 		return "downgrade-user-action";
 	if (reason == ZIF_TRANSACTION_REASON_DOWNGRADE_FOR_DEP)
 		return "downgrade-for-dep";
+	if (reason == ZIF_TRANSACTION_REASON_DOWNGRADE_INSTALLED)
+		return "downgrade-installed";
 	g_warning ("cannot convert reason %i to string", reason);
 	return NULL;
 }
@@ -2024,6 +2026,12 @@ zif_transaction_resolve_install_item (ZifTransactionResolve *data,
 									   package_oldest,
 									   related_packages,
 									   ZIF_TRANSACTION_REASON_REMOVE_FOR_UPDATE,
+									   error);
+			} else if (item->reason == ZIF_TRANSACTION_REASON_DOWNGRADE_USER_ACTION) {
+				ret = zif_transaction_add_remove_internal (data->transaction,
+									   package_oldest,
+									   related_packages,
+									   ZIF_TRANSACTION_REASON_DOWNGRADE_INSTALLED,
 									   error);
 			} else {
 				ret = zif_transaction_add_remove_internal (data->transaction,
