@@ -39,8 +39,8 @@
 #include "zif-md-updateinfo.h"
 #include "zif-package-private.h"
 #include "zif-string.h"
-#include "zif-update.h"
-#include "zif-update-info.h"
+#include "zif-update-private.h"
+#include "zif-update-info-private.h"
 #include "zif-utils.h"
 
 #define ZIF_MD_UPDATEINFO_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_MD_UPDATEINFO, ZifMdUpdateinfoPrivate))

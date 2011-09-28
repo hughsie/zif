@@ -30,7 +30,7 @@
 
 #include <glib-object.h>
 
-#include "zif-category.h"
+#include "zif-category-private.h"
 
 static void     zif_category_finalize	(GObject     *object);
 

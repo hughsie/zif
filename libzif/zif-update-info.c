@@ -32,7 +32,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "zif-update-info.h"
+#include "zif-update-info-private.h"
 
 #define ZIF_UPDATE_INFO_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_UPDATE_INFO, ZifUpdateInfoPrivate))
 

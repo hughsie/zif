@@ -32,8 +32,8 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "zif-changeset.h"
-#include "zif-utils.h"
+#include "zif-changeset-private.h"
+#include "zif-utils-private.h"
 
 #define ZIF_CHANGESET_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_CHANGESET, ZifChangesetPrivate))
 

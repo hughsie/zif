@@ -98,6 +98,10 @@ typedef enum {
 	ZIF_TRANSACTION_STATE_LAST
 } ZifTransactionState;
 
+typedef enum {
+	ZIF_TRANSACTION_FLAG_ALLOW_UNTRUSTED		= 1<<0,
+} ZifTransactionFlags;
+
 GQuark		 zif_transaction_error_quark		(void);
 GType		 zif_transaction_get_type		(void);
 
@@ -124,6 +128,10 @@ gboolean	 zif_transaction_prepare		(ZifTransaction	*transaction,
 							 ZifState	*state,
 							 GError		**error);
 gboolean	 zif_transaction_commit			(ZifTransaction	*transaction,
+							 ZifState	*state,
+							 GError		**error);
+gboolean	 zif_transaction_commit_full		(ZifTransaction	*transaction,
+							 ZifTransactionFlags flags,
 							 ZifState	*state,
 							 GError		**error);
 void		 zif_transaction_set_euid		(ZifTransaction	*transaction,

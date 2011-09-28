@@ -79,6 +79,8 @@
 #endif
 
 #include <glib.h>
+#include <glib-unix.h>
+#include <rpm/rpmsq.h>
 
 #include "zif-marshal.h"
 #include "zif-utils.h"
@@ -1104,9 +1106,10 @@ zif_state_get_child (ZifState *state)
 	/* set the global share on the new child */
 	zif_state_set_global_share (child, state->priv->global_share);
 
-	/* set cancellable */
-	if (state->priv->cancellable != NULL)
-		zif_state_set_cancellable (child, state->priv->cancellable);
+	/* set cancellable, creating if required */
+	if (state->priv->cancellable == NULL)
+		state->priv->cancellable = g_cancellable_new ();
+	zif_state_set_cancellable (child, state->priv->cancellable);
 
 	/* set the error handler if one exists on the child */
 	if (state->priv->error_handler_cb != NULL) {
@@ -1128,6 +1131,43 @@ zif_state_get_child (ZifState *state)
 out:
 	return child;
 }
+
+static gboolean
+zif_state_cancel_on_signal_cb (gpointer user_data)
+{
+	GCancellable *cancellable = G_CANCELLABLE (user_data);
+
+	g_debug ("signal fired so cancelling");
+	g_cancellable_cancel (cancellable);
+	return FALSE;
+}
+
+/**
+ * zif_state_cancel_on_signal:
+ * @state: A #ZifState
+ * @signum: A signal number, e.g. %SIGINT
+ *
+ * Call this when the default signal handlers have been messed up
+ * (thanks to librpm, typically) and we just want a signal to cancel
+ * the #ZifState.
+ *
+ * Since: 0.2.5
+ **/
+void
+zif_state_cancel_on_signal (ZifState *state, gint signum)
+{
+	/* we assume GCancellable is shared between the ZifState's */
+	/* so we can't create this */
+	g_assert (state->priv->cancellable != NULL);
+
+	/* undo librpms attempt to steal SIGINT, and instead fail
+	 * the transaction in a nice way */
+	rpmsqEnable (-SIGINT, NULL);
+	g_unix_signal_add (signum,
+			   zif_state_cancel_on_signal_cb,
+			   state->priv->cancellable);
+}
+
 
 /**
  * zif_state_set_number_steps_real:
@@ -1334,6 +1374,10 @@ zif_state_done_real (ZifState *state, GError **error, const gchar *strloc)
 	g_return_val_if_fail (state != NULL, FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
+	/* clear queue */
+	while (g_main_context_pending (NULL))
+		g_main_context_iteration (NULL, FALSE);
+
 	/* are we cancelled */
 	if (g_cancellable_is_cancelled (state->priv->cancellable)) {
 		g_set_error_literal (error, ZIF_STATE_ERROR, ZIF_STATE_ERROR_CANCELLED,
@@ -1441,6 +1485,10 @@ zif_state_finished_real (ZifState *state, GError **error, const gchar *strloc)
 
 	g_return_val_if_fail (state != NULL, FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+	/* clear queue */
+	while (g_main_context_pending (NULL))
+		g_main_context_iteration (NULL, FALSE);
 
 	/* are we cancelled */
 	if (g_cancellable_is_cancelled (state->priv->cancellable)) {

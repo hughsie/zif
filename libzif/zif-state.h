@@ -174,6 +174,10 @@ gboolean	 zif_state_take_lock			(ZifState		*state,
 							 ZifLockType		 lock_type,
 							 GError			**error);
 
+/* signals */
+void		 zif_state_cancel_on_signal		(ZifState		*state,
+							 gint			 signum);
+
 G_END_DECLS
 
 #endif /* __ZIF_STATE_H */

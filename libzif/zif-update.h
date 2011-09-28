@@ -76,13 +76,11 @@ struct _ZifUpdateClass
 GType			 zif_update_get_type		(void);
 ZifUpdate		*zif_update_new			(void);
 
-/* utility functions */
 ZifUpdateState		 zif_update_state_from_string	(const gchar		*state);
 ZifUpdateKind		 zif_update_kind_from_string	(const gchar		*kind);
 const gchar		*zif_update_state_to_string	(ZifUpdateState		 state);
 const gchar		*zif_update_kind_to_string	(ZifUpdateKind		 kind);
 
-/* public getters */
 ZifUpdateState		 zif_update_get_state		(ZifUpdate		*update);
 ZifUpdateKind		 zif_update_get_kind		(ZifUpdate		*update);
 const gchar		*zif_update_get_id		(ZifUpdate		*update);
@@ -94,30 +92,6 @@ gboolean		 zif_update_get_reboot		(ZifUpdate		*update);
 GPtrArray		*zif_update_get_update_infos	(ZifUpdate		*update);
 GPtrArray		*zif_update_get_packages	(ZifUpdate		*update);
 GPtrArray		*zif_update_get_changelog	(ZifUpdate		*update);
-
-/* internal setters */
-void			 zif_update_set_state		(ZifUpdate		*update,
-							 ZifUpdateState	 state);
-void			 zif_update_set_kind		(ZifUpdate		*update,
-							 ZifUpdateKind		 kind);
-void			 zif_update_set_id		(ZifUpdate		*update,
-							 const gchar		*id);
-void			 zif_update_set_title		(ZifUpdate		*update,
-							 const gchar		*title);
-void			 zif_update_set_description	(ZifUpdate		*update,
-							 const gchar		*description);
-void			 zif_update_set_issued		(ZifUpdate		*update,
-							 const gchar		*issued);
-void			 zif_update_set_source		(ZifUpdate		*update,
-							 const gchar		*source);
-void			 zif_update_set_reboot		(ZifUpdate		*update,
-							 gboolean		 reboot);
-void			 zif_update_add_update_info	(ZifUpdate		*update,
-							 ZifUpdateInfo		*update_info);
-void			 zif_update_add_package		(ZifUpdate		*update,
-							 ZifPackage		*package);
-void			 zif_update_add_changeset	(ZifUpdate		*update,
-							 ZifChangeset		*changeset);
 
 G_END_DECLS
 

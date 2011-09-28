@@ -58,7 +58,6 @@ struct _ZifUpgradeClass
 GType			 zif_upgrade_get_type			(void);
 ZifUpgrade		*zif_upgrade_new			(void);
 
-/* public getters */
 const gchar		*zif_upgrade_get_id			(ZifUpgrade		*upgrade);
 gboolean		 zif_upgrade_get_stable			(ZifUpgrade		*upgrade);
 gboolean		 zif_upgrade_get_enabled		(ZifUpgrade		*upgrade);
@@ -66,22 +65,6 @@ guint			 zif_upgrade_get_version		(ZifUpgrade		*upgrade);
 const gchar		*zif_upgrade_get_baseurl		(ZifUpgrade		*upgrade);
 const gchar		*zif_upgrade_get_mirrorlist		(ZifUpgrade		*upgrade);
 const gchar		*zif_upgrade_get_install_mirrorlist	(ZifUpgrade		*upgrade);
-
-/* internal setters */
-void			 zif_upgrade_set_id			(ZifUpgrade		*upgrade,
-								 const gchar		*id);
-void			 zif_upgrade_set_stable			(ZifUpgrade		*upgrade,
-								 gboolean		 stable);
-void			 zif_upgrade_set_enabled		(ZifUpgrade		*upgrade,
-								 gboolean		 enabled);
-void			 zif_upgrade_set_version		(ZifUpgrade		*upgrade,
-								 guint			 version);
-void			 zif_upgrade_set_baseurl		(ZifUpgrade		*upgrade,
-								 const gchar		*baseurl);
-void			 zif_upgrade_set_mirrorlist		(ZifUpgrade		*upgrade,
-								 const gchar		*mirrorlist);
-void			 zif_upgrade_set_install_mirrorlist	(ZifUpgrade		*upgrade,
-								 const gchar		*install_mirrorlist);
 
 G_END_DECLS
 

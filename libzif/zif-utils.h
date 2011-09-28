@@ -103,22 +103,6 @@ gboolean	 zif_package_id_to_nevra	(const gchar	 *package_id,
 						 gchar		**version,
 						 gchar		**release,
 						 gchar		**arch);
-GKeyFile	*zif_load_multiline_key_file	(const gchar	*filename,
-						 GError		**error);
-
-/* string comparison */
-typedef gboolean (*ZifStrCompareFunc)		(const gchar	*a,
-						 const gchar	*b);
-gboolean	 zif_str_compare_regex		(const gchar	*a,
-						 const gchar	*b);
-gboolean	 zif_str_compare_glob		(const gchar	*a,
-						 const gchar	*b);
-gboolean	 zif_str_compare_equal		(const gchar	*a,
-						 const gchar	*b);
-guint		 zif_string_replace		(GString	*string,
-						 const gchar	*search,
-						 const gchar	*replace);
-
 gchar		*zif_package_id_convert_basic	(const gchar	*package_id);
 
 G_END_DECLS

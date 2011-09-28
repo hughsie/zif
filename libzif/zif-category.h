@@ -55,22 +55,11 @@ struct _ZifCategoryClass
 GType		 zif_category_get_type		  	(void);
 ZifCategory	*zif_category_new			(void);
 
-/* accessors */
 const gchar	*zif_category_get_parent_id		(ZifCategory	*category);
-void		 zif_category_set_parent_id		(ZifCategory	*category,
-							 const gchar	*parent_id);
 const gchar	*zif_category_get_id			(ZifCategory	*category);
-void		 zif_category_set_id			(ZifCategory	*category,
-							 const gchar	*cat_id);
 const gchar	*zif_category_get_name			(ZifCategory	*category);
-void		 zif_category_set_name			(ZifCategory	*category,
-							 const gchar	*name);
 const gchar	*zif_category_get_summary		(ZifCategory	*category);
-void		 zif_category_set_summary		(ZifCategory	*category,
-							 const gchar	*summary);
 const gchar	*zif_category_get_icon			(ZifCategory	*category);
-void		 zif_category_set_icon			(ZifCategory	*category,
-							 const gchar	*icon);
 
 G_END_DECLS
 

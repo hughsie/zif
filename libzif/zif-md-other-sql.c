@@ -38,7 +38,7 @@
 #include <gio/gio.h>
 
 #include "zif-md.h"
-#include "zif-changeset.h"
+#include "zif-changeset-private.h"
 #include "zif-md-other-sql.h"
 #include "zif-package-remote.h"
 

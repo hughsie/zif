@@ -87,6 +87,7 @@ zif_md_mirrorlist_load (ZifMd *md, ZifState *state, GError **error)
 	/* get filename */
 	filename = zif_md_get_filename_uncompressed (md);
 	if (filename == NULL) {
+		ret = FALSE;
 		g_set_error_literal (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED,
 				     "failed to get filename for mirrorlist");
 		goto out;
@@ -109,6 +110,17 @@ zif_md_mirrorlist_load (ZifMd *md, ZifState *state, GError **error)
 			continue;
 		if (g_str_has_prefix (lines[i], "http://"))
 			g_ptr_array_add (mirrorlist->priv->array, g_strdup (lines[i]));
+	}
+
+	/* nothing found! */
+	if (mirrorlist->priv->array->len == 0) {
+		ret = FALSE;
+		g_set_error (error,
+			     ZIF_MD_ERROR,
+			     ZIF_MD_ERROR_FAILED_TO_LOAD,
+			     "failed to get any urls for mirrorlist: %s",
+			     lines[0]);
+		goto out;
 	}
 
 	mirrorlist->priv->loaded = TRUE;

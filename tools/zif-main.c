@@ -25,6 +25,8 @@
 #include <glib/gi18n.h>
 #include <glib/gstdio.h>
 #include <glib.h>
+#include <glib-unix.h>
+
 #include <locale.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
@@ -325,29 +327,6 @@ zif_state_speed_changed_cb (ZifState *state,
 {
 	zif_progress_bar_set_speed (progressbar,
 				    zif_state_get_speed (state));
-}
-
-static ZifState *_state = NULL;
-
-/**
- * zif_main_sigint_cb:
- **/
-static void
-zif_main_sigint_cb (int sig)
-{
-	GCancellable *cancellable;
-	g_debug ("Handling SIGINT");
-
-	/* restore default ASAP, as the cancels might hang */
-	signal (SIGINT, SIG_DFL);
-
-	/* cancel any tasks still running */
-	if (_state != NULL) {
-		cancellable = zif_state_get_cancellable (_state);
-		/* TRANSLATORS: the user just did ctrl-c */
-		g_print ("%s\n", _("Cancellation in progress..."));
-		g_cancellable_cancel (cancellable);
-	}
 }
 
 /**
@@ -2453,7 +2432,10 @@ zif_transaction_run (ZifCmdPrivate *priv, ZifTransaction *transaction, ZifState 
 
 	/* commit */
 	state_local = zif_state_get_child (state);
-	ret = zif_transaction_commit (transaction, state_local, error);
+	ret = zif_transaction_commit_full (transaction,
+					   ZIF_TRANSACTION_FLAG_ALLOW_UNTRUSTED,
+					   state_local,
+					   error);
 	if (!ret)
 		goto out;
 
@@ -2483,14 +2465,19 @@ out:
 static gboolean
 zif_cmd_install (ZifCmdPrivate *priv, gchar **values, GError **error)
 {
+	gboolean enable_debuginfo;
+	gboolean has_debuginfo = FALSE;
 	gboolean ret = FALSE;
 	GError *error_local = NULL;
 	GPtrArray *array = NULL;
 	GPtrArray *store_array_local = NULL;
 	GPtrArray *store_array_remote = NULL;
+	GPtrArray *store_array_all = NULL;
 	guint i;
 	ZifPackage *package;
+	ZifRepos *repos = NULL;
 	ZifState *state_local;
+	ZifStore *store_tmp;
 	ZifTransaction *transaction = NULL;
 
 	/* check we have a value */
@@ -2511,7 +2498,8 @@ zif_cmd_install (ZifCmdPrivate *priv, gchar **values, GError **error)
 				   1, /* add local */
 				   5, /* resolve */
 				   1, /* add remote */
-				   13, /* find remote */
+				   1, /* possibly enable -debuginfo */
+				   12, /* find remote */
 				   80, /* run transaction */
 				   -1);
 	if (!ret)
@@ -2554,12 +2542,63 @@ zif_cmd_install (ZifCmdPrivate *priv, gchar **values, GError **error)
 	if (!ret)
 		goto out;
 
+	/* are there any debuginfo packages */
+	for (i=0; values[i] != NULL; i++) {
+		if (g_str_has_suffix (values[i], "-debuginfo")) {
+			has_debuginfo = TRUE;
+			break;
+		}
+	}
+
 	/* check available */
 	store_array_remote = zif_store_array_new ();
 	state_local = zif_state_get_child (priv->state);
 	ret = zif_store_array_add_remote_enabled (store_array_remote, state_local, error);
 	if (!ret)
 		goto out;
+
+	/* this section done */
+	ret = zif_state_done (priv->state, error);
+	if (!ret)
+		goto out;
+
+	/* the yum-plugin-auto-update-debug-info code "helpfully"
+	 * enables debuginfo repos when we try to install -debuginfo
+	 * packages, so we should probably copy that behaviour */
+	enable_debuginfo = zif_config_get_boolean (priv->config,
+						   "auto_enable_debuginfo",
+						   NULL);
+	if (enable_debuginfo && has_debuginfo) {
+		repos = zif_repos_new ();
+
+		/* enable any repos that have suffix -debuginfo */
+		state_local = zif_state_get_child (priv->state);
+		store_array_all = zif_repos_get_stores (repos, state_local, error);
+		if (store_array_all == NULL)
+			goto out;
+		for (i=0; i<store_array_all->len; i++) {
+			store_tmp = g_ptr_array_index (store_array_all, i);
+			if (g_str_has_suffix (zif_store_get_id (store_tmp),
+					      "-debuginfo")) {
+				zif_store_array_add_store (store_array_remote,
+							   store_tmp);
+			}
+		}
+
+		/* force this on, as some source repos don't provide the
+		 * right distro version */
+		ret = zif_config_unset (priv->config,
+					"skip_broken",
+					error);
+		if (!ret)
+			goto out;
+		ret = zif_config_set_boolean (priv->config,
+					      "skip_broken",
+					      TRUE,
+					      error);
+		if (!ret)
+			goto out;
+	}
 
 	/* this section done */
 	ret = zif_state_done (priv->state, error);
@@ -2636,6 +2675,10 @@ zif_cmd_install (ZifCmdPrivate *priv, gchar **values, GError **error)
 	/* success */
 	ret = TRUE;
 out:
+	if (store_array_all != NULL)
+		g_ptr_array_unref (store_array_all);
+	if (repos != NULL)
+		g_object_unref (repos);
 	if (transaction != NULL)
 		g_object_unref (transaction);
 	if (store_array_local != NULL)
@@ -5285,7 +5328,10 @@ zif_cmd_shell (ZifCmdPrivate *priv, gchar **values, GError **error)
 		/* commit the transaction */
 		if (g_strcmp0 (split[0], "commit") == 0) {
 			zif_state_reset (priv->state);
-			ret = zif_transaction_commit (transaction, priv->state, &error_local);
+			ret = zif_transaction_commit_full (transaction,
+							   0,
+							   priv->state,
+							   &error_local);
 			if (!ret) {
 				g_print ("%s\n", error_local->message);
 				g_clear_error (&error_local);
@@ -6109,6 +6155,58 @@ out:
 	return ret;
 }
 
+#if GLIB_CHECK_VERSION(2,29,19)
+
+/**
+ * zif_main_sigint_cb:
+ **/
+static gboolean
+zif_main_sigint_cb (gpointer user_data)
+{
+	GCancellable *cancellable;
+	ZifCmdPrivate *priv = (ZifCmdPrivate *) user_data;
+
+	g_debug ("Handling SIGINT");
+
+	/* TRANSLATORS: the user just did ctrl-c */
+	zif_progress_bar_set_action (priv->progressbar, _("Cancellation in progress..."));
+
+	/* cancel any tasks still running */
+	if (priv->state != NULL) {
+		cancellable = zif_state_get_cancellable (priv->state);
+		g_cancellable_cancel (cancellable);
+	}
+
+	return FALSE;
+}
+
+#else
+
+static ZifState *_state = NULL;
+
+/**
+ * zif_main_sigint_cb:
+ **/
+static void
+zif_main_sigint_cb (int sig)
+{
+	GCancellable *cancellable;
+	g_debug ("Handling SIGINT");
+
+	/* restore default ASAP, as the cancels might hang */
+	signal (SIGINT, SIG_DFL);
+
+	/* cancel any tasks still running */
+	if (_state != NULL) {
+		cancellable = zif_state_get_cancellable (_state);
+		/* TRANSLATORS: the user just did ctrl-c */
+		g_print ("%s\n", _("Cancellation in progress..."));
+		g_cancellable_cancel (cancellable);
+	}
+}
+
+#endif
+
 /**
  * main:
  **/
@@ -6139,7 +6237,6 @@ main (int argc, char *argv[])
 	guint age = 0;
 	struct winsize w;
 	ZifCmdPrivate *priv;
-	ZifState *state = NULL;
 	const GOptionEntry options[] = {
 		{ "verbose", 'v', 0, G_OPTION_ARG_NONE, &verbose,
 			_("Show extra debugging information"), NULL },
@@ -6212,8 +6309,14 @@ main (int argc, char *argv[])
 	/* save in the private data */
 	priv->assume_no = assume_no;
 
+#if GLIB_CHECK_VERSION(2,29,19)
 	/* do stuff on ctrl-c */
+	g_unix_signal_add (SIGINT,
+			   zif_main_sigint_cb,
+			   priv);
+#else
 	signal (SIGINT, zif_main_sigint_cb);
+#endif
 
 	/* don't let GIO start it's own session bus */
 	g_unsetenv ("DBUS_SESSION_BUS_ADDRESS");
@@ -6385,8 +6488,10 @@ main (int argc, char *argv[])
 		zif_state_reset (priv->state);
 	}
 
+#if !GLIB_CHECK_VERSION(2,29,19)
 	/* for the signal handler */
-	_state = state;
+	_state = priv->state;
+#endif
 
 	/* add commands */
 	priv->cmd_array = g_ptr_array_new_with_free_func ((GDestroyNotify) zif_cmd_item_free);

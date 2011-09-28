@@ -35,13 +35,13 @@
 #include <string.h>
 
 #include "zif-config.h"
+#include "zif-monitor.h"
+#include "zif-object-array.h"
+#include "zif-repos.h"
 #include "zif-state.h"
 #include "zif-store-local.h"
 #include "zif-store-remote.h"
-#include "zif-repos.h"
-#include "zif-utils.h"
-#include "zif-monitor.h"
-#include "zif-object-array.h"
+#include "zif-utils-private.h"
 
 #define ZIF_REPOS_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_REPOS, ZifReposPrivate))
 

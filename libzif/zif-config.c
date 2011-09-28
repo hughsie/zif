@@ -44,7 +44,7 @@
 #include <rpm/rpmlib.h>
 
 #include "zif-config.h"
-#include "zif-utils.h"
+#include "zif-utils-private.h"
 #include "zif-monitor.h"
 
 #define ZIF_CONFIG_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_CONFIG, ZifConfigPrivate))
