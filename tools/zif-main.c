@@ -2452,7 +2452,10 @@ zif_transaction_run (ZifCmdPrivate *priv, ZifTransaction *transaction, ZifState 
 
 	/* commit */
 	state_local = zif_state_get_child (state);
-	ret = zif_transaction_commit (transaction, state_local, error);
+	ret = zif_transaction_commit_full (transaction,
+					   ZIF_TRANSACTION_FLAG_ALLOW_UNTRUSTED,
+					   state_local,
+					   error);
 	if (!ret)
 		goto out;
 
@@ -5284,7 +5287,10 @@ zif_cmd_shell (ZifCmdPrivate *priv, gchar **values, GError **error)
 		/* commit the transaction */
 		if (g_strcmp0 (split[0], "commit") == 0) {
 			zif_state_reset (priv->state);
-			ret = zif_transaction_commit (transaction, priv->state, &error_local);
+			ret = zif_transaction_commit_full (transaction,
+							   0,
+							   priv->state,
+							   &error_local);
 			if (!ret) {
 				g_print ("%s\n", error_local->message);
 				g_clear_error (&error_local);

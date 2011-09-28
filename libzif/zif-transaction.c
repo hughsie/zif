@@ -4208,6 +4208,7 @@ zif_transaction_ts_progress_cb (const void *arg,
 static gboolean
 zif_transaction_add_install_to_ts (ZifTransaction *transaction,
 				   ZifTransactionItem *item,
+				   ZifTransactionFlags flags,
 				   ZifState *state,
 				   GError **error)
 {
@@ -4232,48 +4233,71 @@ zif_transaction_add_install_to_ts (ZifTransaction *transaction,
 				  cache_filename,
 				  &hdr);
 	Fclose (fd);
-	switch (res) {
-	case RPMRC_OK:
-		/* nothing */
-		break;
-	case RPMRC_NOTTRUSTED:
-		g_set_error (error,
-			     ZIF_TRANSACTION_ERROR,
-			     ZIF_TRANSACTION_ERROR_FAILED,
-			     "failed to verify key for %s",
-			     cache_filename);
-		break;
-	case RPMRC_NOKEY:
-		g_set_error (error,
-			     ZIF_TRANSACTION_ERROR,
-			     ZIF_TRANSACTION_ERROR_FAILED,
-			     "public key unavailable for %s",
-			     cache_filename);
-		break;
-	case RPMRC_NOTFOUND:
-		g_set_error (error,
-			     ZIF_TRANSACTION_ERROR,
-			     ZIF_TRANSACTION_ERROR_FAILED,
-			     "signature not found for %s",
-			     cache_filename);
-		break;
-	case RPMRC_FAIL:
-		g_set_error (error,
-			     ZIF_TRANSACTION_ERROR,
-			     ZIF_TRANSACTION_ERROR_FAILED,
-			     "signature does not verify for %s",
-			     cache_filename);
-		break;
-	default:
-		g_set_error (error,
-			     ZIF_TRANSACTION_ERROR,
-			     ZIF_TRANSACTION_ERROR_FAILED,
-			     "failed to open (generic error): %s",
-			     cache_filename);
-		break;
+
+	/* be less strict when we're allowing untrusted transactions */
+	if ((flags & ZIF_TRANSACTION_FLAG_ALLOW_UNTRUSTED) > 0) {
+		switch (res) {
+		case RPMRC_NOKEY:
+		case RPMRC_NOTFOUND:
+		case RPMRC_NOTTRUSTED:
+		case RPMRC_OK:
+			break;
+		case RPMRC_FAIL:
+			g_set_error (error,
+				     ZIF_TRANSACTION_ERROR,
+				     ZIF_TRANSACTION_ERROR_FAILED,
+				     "signature does not verify for %s",
+				     cache_filename);
+			goto out;
+		default:
+			g_set_error (error,
+				     ZIF_TRANSACTION_ERROR,
+				     ZIF_TRANSACTION_ERROR_FAILED,
+				     "failed to open (generic error): %s",
+				     cache_filename);
+			goto out;
+		}
+	} else {
+		switch (res) {
+		case RPMRC_OK:
+			break;
+		case RPMRC_NOTTRUSTED:
+			g_set_error (error,
+				     ZIF_TRANSACTION_ERROR,
+				     ZIF_TRANSACTION_ERROR_FAILED,
+				     "failed to verify key for %s",
+				     cache_filename);
+			goto out;
+		case RPMRC_NOKEY:
+			g_set_error (error,
+				     ZIF_TRANSACTION_ERROR,
+				     ZIF_TRANSACTION_ERROR_FAILED,
+				     "public key unavailable for %s",
+				     cache_filename);
+			goto out;
+		case RPMRC_NOTFOUND:
+			g_set_error (error,
+				     ZIF_TRANSACTION_ERROR,
+				     ZIF_TRANSACTION_ERROR_FAILED,
+				     "signature not found for %s",
+				     cache_filename);
+			goto out;
+		case RPMRC_FAIL:
+			g_set_error (error,
+				     ZIF_TRANSACTION_ERROR,
+				     ZIF_TRANSACTION_ERROR_FAILED,
+				     "signature does not verify for %s",
+				     cache_filename);
+			goto out;
+		default:
+			g_set_error (error,
+				     ZIF_TRANSACTION_ERROR,
+				     ZIF_TRANSACTION_ERROR_FAILED,
+				     "failed to open (generic error): %s",
+				     cache_filename);
+			goto out;
+		}
 	}
-	if (res != RPMRC_OK)
-		goto out;
 
 	/* is this an upgrade */
 	switch (item->reason) {
@@ -4866,8 +4890,9 @@ out:
 }
 
 /**
- * zif_transaction_commit:
+ * zif_transaction_commit_full:
  * @transaction: A #ZifTransaction
+ * @flags: #ZifTransactionFlags, e.g. %ZIF_TRANSACTION_FLAG_ALLOW_UNTRUSTED
  * @state: A #ZifState to use for progress reporting
  * @error: A #GError, or %NULL
  *
@@ -4875,17 +4900,20 @@ out:
  *
  * Return value: %TRUE for success
  *
- * Since: 0.1.3
+ * Since: 0.2.5
  **/
 gboolean
-zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **error)
+zif_transaction_commit_full (ZifTransaction *transaction,
+			     ZifTransactionFlags flags,
+			     ZifState *state,
+			     GError **error)
 {
 	const gchar *prefix;
 	gboolean keep_cache;
 	gboolean yumdb_allow_write;
 	gboolean ret = FALSE;
 	gchar *verbosity_string = NULL;
-	gint flags;
+	gint vs_flags;
 	gint rc;
 	gint retval;
 	gint verbosity;
@@ -4980,6 +5008,7 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 		state_loop = zif_state_get_child (state_local);
 		ret = zif_transaction_add_install_to_ts (transaction,
 							 item,
+							 flags,
 							 state_loop,
 							 error);
 		if (!ret)
@@ -5051,9 +5080,9 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
 		goto out;
 
 	/* no signature checking, we've handled that already */
-	flags = rpmtsSetVSFlags (transaction->priv->ts,
-				 _RPMVSF_NOSIGNATURES | _RPMVSF_NODIGESTS);
-	rpmtsSetVSFlags (transaction->priv->ts, flags);
+	vs_flags = rpmtsSetVSFlags (transaction->priv->ts,
+				    _RPMVSF_NOSIGNATURES | _RPMVSF_NODIGESTS);
+	rpmtsSetVSFlags (transaction->priv->ts, vs_flags);
 
 	/* filter diskspace */
 	if (!zif_config_get_boolean (priv->config, "diskspacecheck", NULL))
@@ -5180,6 +5209,24 @@ out:
 		g_free (commit);
 	}
 	return ret;
+}
+
+/**
+ * zif_transaction_commit:
+ * @transaction: A #ZifTransaction
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
+ *
+ * Commits all the changes to disk.
+ *
+ * Return value: %TRUE for success
+ *
+ * Since: 0.1.3
+ **/
+gboolean
+zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **error)
+{
+	return zif_transaction_commit_full (transaction, 0, state, error);
 }
 
 /**
