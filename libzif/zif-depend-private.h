@@ -36,6 +36,9 @@ G_BEGIN_DECLS
 
 ZifDepend		*zif_depend_new_from_data	(const gchar		**keys,
 							 const gchar		**values);
+ZifDepend		*zif_depend_new_from_data_full	(const gchar		**keys,
+							 const gchar		**values,
+							 guint			 len);
 void			 zif_depend_set_flag		(ZifDepend		*depend,
 							 ZifDependFlag		 flag);
 void			 zif_depend_set_name		(ZifDepend		*depend,

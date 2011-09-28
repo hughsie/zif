@@ -539,19 +539,21 @@ zif_depend_flag_desc_to_flag (const gchar *flags)
 }
 
 /**
- * zif_depend_new_from_data:
- * @keys: Data keys
- * @values: Data values
+ * zif_depend_new_from_data_full:
+ * @keys: Data keys, that do not have to be NULL terminated
+ * @values: Data values, that do not have to be NULL terminated
+ * @len: the number of values in the array
  *
  * Return value: A new #ZifDepend instance, or %NULL for error
  *
- * Since: 0.2.1
+ * Since: 0.2.5
  **/
 ZifDepend *
-zif_depend_new_from_data (const gchar **keys,
-			  const gchar **values)
+zif_depend_new_from_data_full (const gchar **keys,
+			       const gchar **values,
+			       guint len)
 {
-	gint i;
+	guint i;
 	GString *version_tmp;
 	const gchar *name = NULL;
 	const gchar *version = NULL;
@@ -563,7 +565,7 @@ zif_depend_new_from_data (const gchar **keys,
 
 	/* parse the data */
 	version_tmp = g_string_new ("");
-	for (i=0; keys[i] != NULL && values[i] != NULL; i++) {
+	for (i = 0; i < len; i++) {
 		if (g_strcmp0 (keys[i], "name") == 0) {
 			name = values[i];
 		} else if (g_strcmp0 (keys[i], "epoch") == 0) {
@@ -609,6 +611,39 @@ zif_depend_new_from_data (const gchar **keys,
 			       "version", version,
 			       NULL);
 	g_string_free (version_tmp, TRUE);
+	return depend;
+}
+
+/**
+ * zif_depend_new_from_data:
+ * @keys: Data keys, that have to be NULL terminated
+ * @values: Data values, that have to be NULL terminated
+ *
+ * Return value: A new #ZifDepend instance, or %NULL for error
+ *
+ * Since: 0.2.1
+ **/
+ZifDepend *
+zif_depend_new_from_data (const gchar **keys,
+			  const gchar **values)
+{
+	guint len_keys;
+	guint len_values;
+	ZifDepend *depend = NULL;
+
+	/* check these match */
+	len_keys = g_strv_length ((gchar **) keys);
+	len_values = g_strv_length ((gchar **) values);
+	if (len_keys != len_values) {
+		g_critical ("cannot agree on depend data length, "
+			    "perhaps you should be using "
+			    "zif_depend_new_from_data_full() instead?");
+		goto out;
+	}
+
+	/* parse */
+	depend = zif_depend_new_from_data_full (keys, values, len_keys);
+out:
 	return depend;
 }
 
