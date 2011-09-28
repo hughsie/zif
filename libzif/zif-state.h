@@ -116,6 +116,8 @@ ZifState	*zif_state_new				(void);
 ZifState	*zif_state_get_child			(ZifState		*state);
 
 /* percentage changed */
+void		 zif_state_set_report_progress		(ZifState		*state,
+							 gboolean		 report_progress);
 gboolean	 zif_state_set_number_steps_real	(ZifState		*state,
 							 guint			 steps,
 							 const gchar		*strloc);
@@ -143,13 +145,19 @@ gboolean	 zif_state_finished_real		(ZifState		*state,
 							 G_GNUC_WARN_UNUSED_RESULT;
 gboolean	 zif_state_reset			(ZifState		*state);
 gboolean	 zif_state_valid			(ZifState		*state);
+void		 zif_state_set_enable_profile		(ZifState		*state,
+							 gboolean		 enable_profile);
 
 /* cancellation */
 GCancellable	*zif_state_get_cancellable		(ZifState		*state);
 void		 zif_state_set_cancellable		(ZifState		*state,
 							 GCancellable		*cancellable);
 gboolean	 zif_state_get_allow_cancel		(ZifState		*state);
+void		 zif_state_set_allow_cancel		(ZifState		*state,
+							 gboolean		 allow_cancel);
 guint64		 zif_state_get_speed			(ZifState		*state);
+void		 zif_state_set_speed			(ZifState		*state,
+							 guint64		 speed);
 
 /* error handling */
 void		 zif_state_set_error_handler		(ZifState		*state,

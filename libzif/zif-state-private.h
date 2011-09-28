@@ -33,14 +33,6 @@
 
 G_BEGIN_DECLS
 
-void		 zif_state_set_report_progress		(ZifState		*state,
-							 gboolean		 report_progress);
-void		 zif_state_set_enable_profile		(ZifState		*state,
-							 gboolean		 enable_profile);
-void		 zif_state_set_allow_cancel		(ZifState		*state,
-							 gboolean		 allow_cancel);
-void		 zif_state_set_speed			(ZifState		*state,
-							 guint64		 speed);
 void		 zif_state_cancel_on_signal		(ZifState		*state,
 							 gint			 signum);
 
