@@ -4227,7 +4227,10 @@ zif_transaction_add_install_to_ts (ZifTransaction *transaction,
 
 	/* open this */
 	fd = Fopen (cache_filename, "r.ufdio");
-	res = rpmReadPackageFile (transaction->priv->ts, fd, NULL, &hdr);
+	res = rpmReadPackageFile (transaction->priv->ts,
+				  fd,
+				  cache_filename,
+				  &hdr);
 	Fclose (fd);
 	switch (res) {
 	case RPMRC_OK:
@@ -4258,7 +4261,7 @@ zif_transaction_add_install_to_ts (ZifTransaction *transaction,
 		g_set_error (error,
 			     ZIF_TRANSACTION_ERROR,
 			     ZIF_TRANSACTION_ERROR_FAILED,
-			     "signature does ot verify for %s",
+			     "signature does not verify for %s",
 			     cache_filename);
 		break;
 	default:
