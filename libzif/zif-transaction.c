@@ -4995,6 +4995,109 @@ out:
 }
 
 /**
+ * zif_transaction_runtime_version_check_selinux:
+ **/
+static gboolean
+zif_transaction_runtime_version_check_selinux (ZifTransaction *transaction,
+					       ZifDepend **depend,
+					       GError **error)
+{
+	gboolean ret;
+	gchar *get_stdout = NULL;
+
+	/* don't test versions if we're not enforcing */
+	ret = g_spawn_command_line_sync ("/usr/sbin/getenforce",
+					 &get_stdout,
+					 NULL,
+					 NULL,
+					 error);
+	if (!ret)
+		goto out;
+	if (!g_str_has_prefix (get_stdout, "Enforcing")) {
+		g_debug ("SELinux not enforcing, so skipping checks");
+		*depend = NULL;
+		goto out;
+	}
+	*depend = zif_depend_new_from_values ("selinux-policy",
+					      ZIF_DEPEND_FLAG_LESS,
+					      "3.10.0-33");
+out:
+	g_free (get_stdout);
+	return ret;
+}
+
+/**
+ * zif_transaction_runtime_version_checks:
+ **/
+static gboolean
+zif_transaction_runtime_version_checks (ZifTransaction *transaction,
+					ZifState *state,
+					GError **error)
+{
+	gboolean ret = TRUE;
+	gboolean run_tests;
+	GPtrArray *array = NULL;
+	GPtrArray *depend_array = NULL;
+	ZifDepend *depend;
+	ZifPackage *package_tmp;
+	ZifTransactionPrivate *priv = transaction->priv;
+
+	/* check if we want to do the tests at all */
+	run_tests = zif_config_get_boolean (priv->config,
+					    "runtime_version_checks",
+					    NULL);
+	if (!run_tests) {
+		g_debug ("skipping runtime version check test");
+		goto out;
+	}
+
+	depend_array = zif_object_array_new ();
+
+	/* old versions of selinux do not let zif run some scriplets */
+	ret = zif_transaction_runtime_version_check_selinux (transaction,
+							     &depend,
+							     error);
+	if (!ret)
+		goto out;
+	if (depend != NULL)
+		g_ptr_array_add (depend_array, depend);
+
+	/* nothing to do? */
+	if (depend_array->len == 0) {
+		g_debug ("skipping runtime tests as nothing to do");
+		goto out;
+	}
+
+	/* search for all the different provides */
+	array = zif_store_what_provides (priv->store_local,
+					 depend_array,
+					 state,
+					 error);
+	if (array == NULL) {
+		ret = FALSE;
+		goto out;
+	}
+
+	/* eek, we've got trouble ahead */
+	if (array->len > 0) {
+		package_tmp = g_ptr_array_index (array, 0);
+		ret = FALSE;
+		g_set_error (error,
+			     ZIF_TRANSACTION_ERROR,
+			     ZIF_TRANSACTION_ERROR_FAILED,
+			     "The version of %s is too old to run the transaction",
+			     zif_package_get_name (package_tmp));
+		goto out;
+	}
+out:
+	if (array != NULL)
+		g_ptr_array_unref (array);
+	if (depend_array != NULL)
+		g_ptr_array_unref (depend_array);
+	return ret;
+}
+
+/**
  * zif_transaction_commit_full:
  * @transaction: A #ZifTransaction
  * @flags: #ZifTransactionFlags, e.g. %ZIF_TRANSACTION_FLAG_ALLOW_UNTRUSTED
@@ -5059,7 +5162,8 @@ zif_transaction_commit_full (ZifTransaction *transaction,
 	/* set state */
 	ret = zif_state_set_steps (state,
 				   error,
-				   2, /* install */
+				   1, /* check runtime versions */
+				   1, /* install */
 				   2, /* remove */
 				   10, /* test-commit */
 				   81, /* commit */
@@ -5069,6 +5173,21 @@ zif_transaction_commit_full (ZifTransaction *transaction,
 				   -1);
 	if (!ret)
 		goto out;
+
+	/* check we've got new enough versions of things */
+	zif_state_action_start (state, ZIF_STATE_ACTION_CHECKING, NULL);
+	state_local = zif_state_get_child (state);
+	ret = zif_transaction_runtime_version_checks (transaction,
+						      state_local,
+						      error);
+	if (!ret)
+		goto out;
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
 	zif_state_action_start (state, ZIF_STATE_ACTION_PREPARING, NULL);
 
 	/* get verbosity from the config file */
