@@ -1034,7 +1034,12 @@ zif_transaction_filter_get_score (ZifTransaction *transaction,
 	/* any package not native arch to reason gets lowered */
 	arch_tmp = zif_package_get_arch (package);
 	if (!zif_arch_is_native (arch_tmp, provide_data->arch_reason))
-		*score -= 1000;
+		*score -= 300;
+
+	/* any package not native arch to system gets lowered */
+	arch_tmp = zif_package_get_arch (package);
+	if (!zif_arch_is_native (arch_tmp, provide_data->archinfo))
+		*score -= 80;
 
 	/* same srpm as item_package gets raised */
 	state_local = zif_state_get_child (state);
