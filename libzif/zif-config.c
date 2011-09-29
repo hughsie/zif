@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*-
  *
- * Copyright (C) 2008-2010 Richard Hughes <richard@hughsie.com>
+ * Copyright (C) 2008-2011 Richard Hughes <richard@hughsie.com>
  *
  * Licensed under the GNU General Public License Version 2
  *
@@ -145,7 +145,9 @@ out:
  * Since: 0.1.0
  **/
 gchar *
-zif_config_get_string (ZifConfig *config, const gchar *key, GError **error)
+zif_config_get_string (ZifConfig *config,
+		       const gchar *key,
+		       GError **error)
 {
 	gchar *value = NULL;
 	const gchar *value_tmp;
@@ -156,7 +158,9 @@ zif_config_get_string (ZifConfig *config, const gchar *key, GError **error)
 
 	/* not loaded yet */
 	if (!config->priv->loaded) {
-		g_set_error_literal (error, ZIF_CONFIG_ERROR, ZIF_CONFIG_ERROR_FAILED,
+		g_set_error_literal (error,
+				     ZIF_CONFIG_ERROR,
+				     ZIF_CONFIG_ERROR_FAILED,
 				     "config not loaded");
 		goto out;
 	}
@@ -169,10 +173,12 @@ zif_config_get_string (ZifConfig *config, const gchar *key, GError **error)
 	}
 
 	/* exists in either config file */
-	value = g_key_file_get_string (config->priv->file_override, "main", key, NULL);
+	value = g_key_file_get_string (config->priv->file_override,
+				       "main", key, NULL);
 	if (value != NULL)
 		goto out;
-	value = g_key_file_get_string (config->priv->file_default, "main", key, NULL);
+	value = g_key_file_get_string (config->priv->file_default,
+				       "main", key, NULL);
 	if (value != NULL)
 		goto out;
 
@@ -203,7 +209,9 @@ out:
  * Since: 0.1.0
  **/
 gboolean
-zif_config_get_boolean (ZifConfig *config, const gchar *key, GError **error)
+zif_config_get_boolean (ZifConfig *config,
+			const gchar *key,
+			GError **error)
 {
 	gchar *value;
 	gboolean ret = FALSE;
@@ -238,7 +246,9 @@ out:
  * Since: 0.1.3
  **/
 gchar **
-zif_config_get_strv (ZifConfig *config, const gchar *key, GError **error)
+zif_config_get_strv (ZifConfig *config,
+		     const gchar *key,
+		     GError **error)
 {
 	gchar *value;
 	gchar **split = NULL;
@@ -272,7 +282,9 @@ out:
  * Since: 0.1.0
  **/
 guint
-zif_config_get_uint (ZifConfig *config, const gchar *key, GError **error)
+zif_config_get_uint (ZifConfig *config,
+		     const gchar *key,
+		     GError **error)
 {
 	gchar *value;
 	guint retval = G_MAXUINT;
@@ -290,7 +302,9 @@ zif_config_get_uint (ZifConfig *config, const gchar *key, GError **error)
 	/* convert to int */
 	retval = g_ascii_strtoull (value, &endptr, 10);
 	if (value == endptr) {
-		g_set_error (error, ZIF_CONFIG_ERROR, ZIF_CONFIG_ERROR_FAILED,
+		g_set_error (error,
+			     ZIF_CONFIG_ERROR,
+			     ZIF_CONFIG_ERROR_FAILED,
 			     "failed to convert '%s' to unsigned integer", value);
 		goto out;
 	}
@@ -313,7 +327,9 @@ out:
  * Since: 0.1.0
  **/
 guint
-zif_config_get_time (ZifConfig *config, const gchar *key, GError **error)
+zif_config_get_time (ZifConfig *config,
+		     const gchar *key,
+		     GError **error)
 {
 	gchar *value;
 	guint timeval = 0;
@@ -387,7 +403,9 @@ out:
  * Since: 0.1.0
  **/
 gchar *
-zif_config_expand_substitutions (ZifConfig *config, const gchar *text, GError **error)
+zif_config_expand_substitutions (ZifConfig *config,
+				 const gchar *text,
+				 GError **error)
 {
 	gchar *basearch = NULL;
 	gchar *releasever = NULL;
@@ -454,7 +472,9 @@ zif_config_get_basearch_array (ZifConfig *config)
  * Since: 0.1.0
  **/
 gboolean
-zif_config_set_filename (ZifConfig *config, const gchar *filename, GError **error)
+zif_config_set_filename (ZifConfig *config,
+			 const gchar *filename,
+			 GError **error)
 {
 	gboolean ret = FALSE;
 	GError *error_local = NULL;
@@ -535,7 +555,9 @@ zif_config_set_filename (ZifConfig *config, const gchar *filename, GError **erro
 	/* calculate the valid basearchs */
 	basearch = zif_config_get_string (config, "basearch", &error_local);
 	if (basearch == NULL) {
-		g_set_error (error, ZIF_CONFIG_ERROR, ZIF_CONFIG_ERROR_FAILED,
+		g_set_error (error,
+			     ZIF_CONFIG_ERROR,
+			     ZIF_CONFIG_ERROR_FAILED,
 			     "failed to get basearch: %s", error_local->message);
 		g_error_free (error_local);
 		ret = FALSE;
@@ -641,7 +663,10 @@ zif_config_reset_default (ZifConfig *config, GError **error)
  * Since: 0.1.0
  **/
 gboolean
-zif_config_set_local (ZifConfig *config, const gchar *key, const gchar *value, GError **error)
+zif_config_set_local (ZifConfig *config,
+		      const gchar *key,
+		      const gchar *value,
+		      GError **error)
 {
 	g_warning ("This is deprecated. Use zif_config_set_[string|uint|bool] instead");
 	return zif_config_set_string (config, key, value, error);
@@ -661,7 +686,10 @@ zif_config_set_local (ZifConfig *config, const gchar *key, const gchar *value, G
  * Since: 0.1.2
  **/
 gboolean
-zif_config_set_string (ZifConfig *config, const gchar *key, const gchar *value, GError **error)
+zif_config_set_string (ZifConfig *config,
+		       const gchar *key,
+		       const gchar *value,
+		       GError **error)
 {
 	const gchar *value_tmp;
 	gboolean ret = TRUE;
@@ -676,7 +704,9 @@ zif_config_set_string (ZifConfig *config, const gchar *key, const gchar *value, 
 		/* already set to the same value */
 		if (g_strcmp0 (value_tmp, value) == 0)
 			goto out;
-		g_set_error (error, ZIF_CONFIG_ERROR, ZIF_CONFIG_ERROR_FAILED,
+		g_set_error (error,
+			     ZIF_CONFIG_ERROR,
+			     ZIF_CONFIG_ERROR_FAILED,
 			     "already set key %s to %s, cannot overwrite with %s",
 			     key, value_tmp, value);
 		ret = FALSE;
@@ -684,7 +714,9 @@ zif_config_set_string (ZifConfig *config, const gchar *key, const gchar *value, 
 	}
 
 	/* insert into table */
-	g_hash_table_insert (config->priv->hash_override, g_strdup (key), g_strdup (value));
+	g_hash_table_insert (config->priv->hash_override,
+			     g_strdup (key),
+			     g_strdup (value));
 out:
 	return ret;
 }
@@ -693,7 +725,9 @@ out:
  * zif_config_set_default:
  **/
 static void
-zif_config_set_default (ZifConfig *config, const gchar *key, const gchar *value)
+zif_config_set_default (ZifConfig *config,
+			const gchar *key,
+			const gchar *value)
 {
 	/* just insert into table */
 	g_hash_table_insert (config->priv->hash_default,
@@ -716,9 +750,15 @@ zif_config_set_default (ZifConfig *config, const gchar *key, const gchar *value)
  * Since: 0.1.2
  **/
 gboolean
-zif_config_set_boolean (ZifConfig *config, const gchar *key, gboolean value, GError **error)
+zif_config_set_boolean (ZifConfig *config,
+			const gchar *key,
+			gboolean value,
+			GError **error)
 {
-	return zif_config_set_string (config, key, value ? "true" : "false", error);
+	return zif_config_set_string (config,
+				      key,
+				      value ? "true" : "false",
+				      error);
 }
 
 /**
@@ -735,7 +775,10 @@ zif_config_set_boolean (ZifConfig *config, const gchar *key, gboolean value, GEr
  * Since: 0.1.2
  **/
 gboolean
-zif_config_set_uint (ZifConfig *config, const gchar *key, guint value, GError **error)
+zif_config_set_uint (ZifConfig *config,
+		     const gchar *key,
+		     guint value,
+		     GError **error)
 {
 	gboolean ret;
 	gchar *temp;
@@ -800,15 +843,20 @@ zif_config_init (ZifConfig *config)
 	config->priv->file_override = g_key_file_new ();
 	config->priv->file_default = g_key_file_new ();
 	config->priv->loaded = FALSE;
-	config->priv->hash_override = g_hash_table_new_full (g_str_hash, g_str_equal,
-							     g_free, g_free);
-	config->priv->hash_default = g_hash_table_new_full (g_str_hash, g_str_equal,
-							    g_free, g_free);
+	config->priv->hash_override = g_hash_table_new_full (g_str_hash,
+							     g_str_equal,
+							     g_free,
+							     g_free);
+	config->priv->hash_default = g_hash_table_new_full (g_str_hash,
+							    g_str_equal,
+							    g_free,
+							    g_free);
 	config->priv->basearch_list = NULL;
 	config->priv->monitor = zif_monitor_new ();
 	config->priv->monitor_changed_id =
 		g_signal_connect (config->priv->monitor, "changed",
-				  G_CALLBACK (zif_config_file_monitor_cb), config);
+				  G_CALLBACK (zif_config_file_monitor_cb),
+				  config);
 
 	/* get info from RPM */
 	rpmGetOsInfo (&value, NULL);
@@ -837,7 +885,8 @@ zif_config_new (void)
 		g_object_ref (zif_config_object);
 	} else {
 		zif_config_object = g_object_new (ZIF_TYPE_CONFIG, NULL);
-		g_object_add_weak_pointer (zif_config_object, &zif_config_object);
+		g_object_add_weak_pointer (zif_config_object,
+					   &zif_config_object);
 	}
 	return ZIF_CONFIG (zif_config_object);
 }
