@@ -1023,8 +1023,14 @@ zif_transaction_filter_get_score (ZifTransaction *transaction,
 			ret = FALSE;
 			goto out;
 		}
-		if (zif_package_compare (package_installed, package) > 0)
-			*score -= 1000;
+		/* it's good if the new package is newer than the one
+		 * we have installed, and super bad if we have to
+		 * downgrade */
+		rc = zif_package_compare (package_installed, package);
+		if (rc < 0)
+			*score += 5;
+		else if (rc > 0)
+			*score -= 1024;
 	}
 
 	/* any package not native arch to reason gets lowered */
