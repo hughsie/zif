@@ -986,8 +986,6 @@ zif_transaction_filter_get_score (ZifTransaction *transaction,
 	ZifPackage *package_installed = NULL;
 	ZifState *state_local;
 
-	arch_tmp = zif_package_get_arch (package);
-
 	/* set steps */
 	ret = zif_state_set_steps (state,
 				   error,
@@ -1034,6 +1032,7 @@ zif_transaction_filter_get_score (ZifTransaction *transaction,
 	}
 
 	/* any package not native arch to reason gets lowered */
+	arch_tmp = zif_package_get_arch (package);
 	if (!zif_arch_is_native (arch_tmp, provide_data->arch_reason))
 		*score -= 1000;
 
@@ -1047,7 +1046,7 @@ zif_transaction_filter_get_score (ZifTransaction *transaction,
 		goto out;
 	}
 	if (g_strcmp0 (srpm_tmp, provide_data->srpm_reason) == 0)
-		*score += 100;
+		*score += 20;
 
 	/* this section done */
 	ret = zif_state_done (state, error);
