@@ -946,6 +946,25 @@ typedef struct {
 } ZifTransactionProvideData;
 
 /**
+ * zif_str_prefix_length:
+ **/
+static guint
+zif_str_prefix_length (const gchar *name1,
+		       const gchar *name2)
+{
+	guint i;
+	guint cnt = 0;
+
+	/* return the length of the matching prefix */
+	for (i = 0; name1[i] != '\0' && name2[i] != '\0'; i++) {
+		if (name1[i] != name2[i])
+			break;
+		cnt++;
+	}
+	return cnt;
+}
+
+/**
  * zif_transaction_filter_get_score:
  **/
 static gboolean
@@ -960,6 +979,7 @@ zif_transaction_filter_get_score (ZifTransaction *transaction,
 	const gchar *srpm_tmp;
 	const gchar *to_array[] = {NULL, NULL};
 	gboolean ret;
+	gint rc;
 	GError *error_local = NULL;
 	GPtrArray *array_installed = NULL;
 	ZifDepend *satisfies = NULL;
@@ -1029,10 +1049,9 @@ zif_transaction_filter_get_score (ZifTransaction *transaction,
 		goto out;
 
 	/* same base-name as item_package gets raised */
-	if (g_str_has_prefix (zif_package_get_name (package),
-			      zif_package_get_name (provide_data->package_reason))) {
-		*score += 20;
-	}
+	rc = zif_str_prefix_length (zif_package_get_name (package),
+				    zif_package_get_name (provide_data->package_reason));
+	*score += rc * 2;
 
 	/* give higher weight to i686 than i386 */
 	if (g_strcmp0 (provide_data->archinfo, "i386") == 0 &&
