@@ -971,6 +971,9 @@ zif_download_func (void)
 	g_assert_no_error (error);
 	g_assert (ret);
 
+	/* turn off slow mirror detection */
+	zif_config_set_uint (config, "slow_server_speed", 0, NULL);
+
 	/* add something sensible, but it won't resolve later on */
 	ret = zif_download_location_add_uri (download, "http://www.bbc.co.uk/pub/", &error);
 	g_assert_no_error (error);
