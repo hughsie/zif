@@ -255,6 +255,7 @@ zif_store_local_load (ZifStore *store, ZifState *state, GError **error)
 	gboolean yumdb_allow_read;
 	GError *error_local = NULL;
 	gint rc;
+	guint existing_releasever;
 	Header header;
 	rpmdbMatchIterator mi = NULL;
 	rpmts ts = NULL;
@@ -431,14 +432,19 @@ zif_store_local_load (ZifStore *store, ZifState *state, GError **error)
 	if (!ret)
 		goto out;
 
-	/* set releasever */
-	g_object_set (store, "loaded", TRUE, NULL);
-	state_local = zif_state_get_child (state);
-	ret = zif_store_local_set_releasever (local,
-					      state_local,
-					      error);
-	if (!ret)
-		goto out;
+	/* set releasever if not already set */
+	existing_releasever = zif_config_get_uint (local->priv->config,
+						   "releasever",
+						   NULL);
+	if (existing_releasever == G_MAXUINT) {
+		g_object_set (store, "loaded", TRUE, NULL);
+		state_local = zif_state_get_child (state);
+		ret = zif_store_local_set_releasever (local,
+						      state_local,
+						      error);
+		if (!ret)
+			goto out;
+	}
 
 	/* this section done */
 	ret = zif_state_done (state, error);
