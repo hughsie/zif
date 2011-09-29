@@ -63,6 +63,8 @@ typedef struct {
 	gchar			*uri;
 	GTimer			*timer;
 	guint			 last_percentage;
+	guint			 slow_server_speed;
+	guint			 slow_updates_cnt;
 	goffset			 last_body_length;
 	SoupMessage		*msg;
 	ZifDownload		*download;
@@ -164,6 +166,23 @@ zif_download_file_got_chunk_cb (SoupMessage *msg, SoupBuffer *chunk,
 		/* save for next time */
 		flight->last_body_length = body_length;
 		g_timer_reset (flight->timer);
+
+		/* is this a slow mirror? */
+		if (speed < flight->slow_server_speed)
+			flight->slow_updates_cnt++;
+
+		/* too many chances, you *are* the weakest link */
+		if (flight->slow_updates_cnt > 2) {
+			g_debug ("downloading at %" G_GUINT64_FORMAT "kb/sec "
+				 "(less that %ikb/sec), "
+				 "so kicking mirror",
+				 speed / 1024,
+				 flight->slow_server_speed / 1024);
+			soup_session_cancel_message (flight->download->priv->session,
+						     msg,
+						     SOUP_STATUS_TRY_AGAIN);
+			goto out;
+		}
 	}
 out:
 	return;
@@ -516,6 +535,11 @@ zif_download_file (ZifDownload *download,
 	flight->uri = g_path_get_basename (uri);
 	flight->timer = g_timer_new ();
 
+	/* load the slow server speed from the config file */
+	flight->slow_server_speed = zif_config_get_uint (download->priv->config,
+							 "slow_server_speed",
+							 NULL);
+
 	base_uri = soup_uri_new (uri);
 	if (base_uri == NULL) {
 		ret = FALSE;
@@ -559,6 +583,13 @@ zif_download_file (ZifDownload *download,
 				     ZIF_STATE_ERROR,
 				     ZIF_STATE_ERROR_CANCELLED,
 				     soup_status_get_phrase (flight->msg->status_code));
+		goto out;
+	} else if (flight->msg->status_code == SOUP_STATUS_TRY_AGAIN) {
+		ret = FALSE;
+		g_set_error_literal (error,
+				     ZIF_DOWNLOAD_ERROR,
+				     ZIF_DOWNLOAD_ERROR_FAILED,
+				     "kicked mirror");
 		goto out;
 	} else if (!SOUP_STATUS_IS_SUCCESSFUL (flight->msg->status_code)) {
 		ret = FALSE;
