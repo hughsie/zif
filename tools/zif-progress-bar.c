@@ -55,6 +55,9 @@ zif_progress_bar_redraw (ZifProgressBar *progress_bar)
 	gchar *speed_tmp = NULL;
 	ZifProgressBarPrivate *priv = progress_bar->priv;
 
+	/* hide cursor */
+	g_print ("\033[?25l");
+
 	/* back up two lines */
 	if (priv->started)
 		g_print ("\033[2A");
@@ -104,6 +107,9 @@ zif_progress_bar_redraw (ZifProgressBar *progress_bar)
 		g_print (" ");
 	g_print ("\n");
 	priv->last_strlen_detail = section + 1;
+
+	/* show cursor */
+	g_print ("\033[?25h");
 
 	/* started */
 	priv->started = TRUE;
