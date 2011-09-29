@@ -1021,14 +1021,17 @@ zif_transaction_filter_get_score (ZifTransaction *transaction,
 			ret = FALSE;
 			goto out;
 		}
-		/* it's good if the new package is newer than the one
-		 * we have installed, and super bad if we have to
-		 * downgrade */
 		rc = zif_package_compare (package_installed, package);
-		if (rc < 0)
+		if (rc < 0) {
+			/* a tiny bit better if we upgrade the package */
 			*score += 5;
-		else if (rc > 0)
+		} else if (rc == 0) {
+			/* super good if we don't have to change anything */
+			*score += 1000;
+		} else if (rc > 0) {
+			/* super bad if we have to downgrade */
 			*score -= 1024;
+		}
 	}
 
 	/* any package not native arch to reason gets lowered */
