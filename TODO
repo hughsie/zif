@@ -1,0 +1,39 @@
+Things TODO, in no particular order:
+
+* Checking of signed repodata (code is in place, but waiting for Fedora)
+ - Time:       [*    ]
+ - Difficulty: [***  ]
+
+* Implement ZifMdOtherXml for old style metadata
+ - Time:       [**   ]
+ - Difficulty: [**   ]
+
+* Review the Zif.gir file for incomplete annotations, e.g. we probably
+  need to sprinkle lots of "(element-type ZifPackage)" in the C.
+ - Time:       [**** ]
+ - Difficulty: [*    ]
+
+* Write an anaconda backend so that it can use Zif to depsolve
+ - Time:       [**   ]
+ - Difficulty: [**** ]
+
+* Try to find a better --skip-broken algorithm to ignore broken deps
+ - Time:       [***  ]
+ - Difficulty: [*****]
+
+* Add padding to all the class objects and break API
+ - Time:       [***  ]
+ - Difficulty: [*    ]
+
+* Fix upgrade-distro to generate group data acceptable to anaconda
+ - Time:       [*    ]
+ - Difficulty: [***  ]
+
+* Do a complete security review of all the XML parsing and database
+  code.
+ - Time:       [*****]
+ - Difficulty: [***  ]
+
+* Add some simple python programs using the Zif.gir data in examples/
+ - Time:       [***  ]
+ - Difficulty: [**   ]
