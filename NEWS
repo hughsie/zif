@@ -1,3 +1,39 @@
+Version 0.2.5
+~~~~~~~~~~~~~
+Released: 2011-10-03
+
+New Features:
+ - Add a deptree command to zif's CLI (Elad Alfassa)
+ - Add a new transaction reason downgrade-installed (Richard Hughes)
+ - Add a transaction reason of downgrade-for-dep (Richard Hughes)
+ - Add functions for downloading and rebuilding delta rpms (Kalev Lember)
+ - Do not allow the transaction commit if selinux is enabled and old (Richard Hughes)
+ - Enable -debuginfo repos when we try to install -debuginfo packages (Richard Hughes)
+ - Kick mirrors if the download speed is less than 10kb/sec (Richard Hughes)
+ - Score the best provide in a similar way that yum does it (Richard Hughes)
+ - Show a warning in the CLI tool when downgrading packages (Richard Hughes)
+ - When a repo specifies 'gpgkey=' add to the keyring before verifying (Richard Hughes)
+
+Bugfixes:
+ - Allow a transaction commit to install untrusted files (Richard Hughes)
+ - Correctly parse local file >= or <= depends (Richard Hughes)
+ - Do not assume that the char** arrays from SQLite are NULL terminated (Richard Hughes)
+ - Don't add includes in zif.h that are not supposed to be exported (Richard Hughes)
+ - Don't print 'Can't open history database' when installed from source (Richard Hughes)
+ - Ensure the main loop has no pending actions when processing state (Richard Hughes)
+ - Ensure we can find file provides in SQL metadata (Richard Hughes)
+ - Ensure we match a basic package_id when checking in a ZifStore (Richard Hughes)
+ - Fix a buffer over-run when replacing strings (Richard Hughes)
+ - Fix crash in zif upgrade-distro-live (Richard Hughes)
+ - Include the missing remove-for-update summary in the CLI tool (Richard Hughes)
+ - Only return depends from ZifMdPrimaryXml if they are satisfied (Richard Hughes)
+ - Prefer already installed provides over upgrades where possible (Richard Hughes)
+ - Remove the warning when we have multiple provides (Richard Hughes)
+ - Remove ZifArray, nothing actually uses it (Richard Hughes)
+ - Try to make the signal handling in libzif somewhat sane (Richard Hughes)
+ - Use the results from all repos when calculating the 'best' provide (Richard Hughes)
+ - When specifying resolving with prefer-native, re-search non-native (Richard Hughes)
+
 Version 0.2.4
 ~~~~~~~~~~~~~
 Released: 2011-09-23

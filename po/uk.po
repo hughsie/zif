@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Zif\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-09-05 11:56+0100\n"
-"PO-Revision-Date: 2011-09-16 16:33+0000\n"
+"POT-Creation-Date: 2011-09-23 16:05+0100\n"
+"PO-Revision-Date: 2011-09-23 16:48+0000\n"
 "Last-Translator: yurchor <yurchor@ukr.net>\n"
 "Language-Team: Ukrainian <trans-uk@lists.fedoraproject.org>\n"
 "MIME-Version: 1.0\n"
@@ -18,531 +18,587 @@ msgstr ""
 "Language: uk\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\n"
 
-#: ../tools/zif-main.c:58
+#: ../tools/zif-main.c:60
 msgid "[⚐]"
 msgstr "[⚐]"
 
-#: ../tools/zif-main.c:60
+#: ../tools/zif-main.c:62
 msgid "[⚑]"
 msgstr "[⚑]"
 
+#: ../tools/zif-main.c:75
+msgid "Updates installed package"
+msgstr "Оновлює встановлений пакунок"
+
 #. TRANSLATORS: this is when files, usually metadata or
 #. * package files are being checked for consitency
-#: ../tools/zif-main.c:138
+#: ../tools/zif-main.c:151
 msgid "Checking"
 msgstr "Перевірка"
 
 #. TRANSLATORS: A file is currently downloading
 #. TRANSLATORS: downloading packages
-#: ../tools/zif-main.c:142 ../tools/zif-main.c:619
+#: ../tools/zif-main.c:155 ../tools/zif-main.c:693
 msgid "Downloading"
 msgstr "Звантаження"
 
 #. TRANSLATORS: A repository file is being read, and
 #. * the packages created internally
-#: ../tools/zif-main.c:147
+#: ../tools/zif-main.c:160
 msgid "Loading repository"
 msgstr "Завантаження даних сховища"
 
 #. TRANSLATORS: when a compressed metadata file is
 #. * being uncompressed onto the disk
-#: ../tools/zif-main.c:152
+#: ../tools/zif-main.c:165
 msgid "Decompressing"
 msgstr "Розпакування"
 
 #. TRANSLATORS: when the transaction is being resolved,
 #. * and we make sure that it makes sense by adding
 #. * dependencies where required
-#: ../tools/zif-main.c:158
+#: ../tools/zif-main.c:171
 msgid "Calculating install"
 msgstr "Обчислення параметрів встановлення"
 
 #. TRANSLATORS: when the transaction is being resolved,
 #. * and we make sure that it makes sense by removing
 #. * dependencies where required
-#: ../tools/zif-main.c:164
+#: ../tools/zif-main.c:177
 msgid "Calculating removal"
 msgstr "Обчислення параметрів вилучення"
 
 #. TRANSLATORS: when the transaction is being resolved,
 #. * and we make sure that it makes sense by adding and
 #. * removing dependencies where required
-#: ../tools/zif-main.c:170
+#: ../tools/zif-main.c:183
 msgid "Calculating update"
 msgstr "Обчислення параметрів оновлення"
 
 #. TRANSLATORS: when the transaction is being checked
 #. * for conflicting packages
-#: ../tools/zif-main.c:175
+#: ../tools/zif-main.c:188
 msgid "Checking conflicts"
 msgstr "Перевірка конфліктності"
 
 #. TRANSLATORS: installing a package to the local system
 #. TRANSLATORS: this is the reason the action is to be taken
 #. TRANSLATORS: performing action
-#: ../tools/zif-main.c:179 ../tools/zif-main.c:1829 ../tools/zif-main.c:2077
+#: ../tools/zif-main.c:192 ../tools/zif-main.c:2107 ../tools/zif-main.c:2480
 msgid "Installing"
 msgstr "Встановлення"
 
 #. TRANSLATORS: removing (deleting) a package
 #. TRANSLATORS: this is the reason the action is to be taken
 #. TRANSLATORS: performing action
-#: ../tools/zif-main.c:183 ../tools/zif-main.c:1849 ../tools/zif-main.c:2557
+#: ../tools/zif-main.c:196 ../tools/zif-main.c:2127 ../tools/zif-main.c:3398
 msgid "Removing"
 msgstr "Вилучення"
 
 #. TRANSLATORS: updating an old version to a new version
 #. TRANSLATORS: this is the reason the action is to be taken
 #. TRANSLATORS: updating several packages
-#: ../tools/zif-main.c:187 ../tools/zif-main.c:1853 ../tools/zif-main.c:3486
+#: ../tools/zif-main.c:200 ../tools/zif-main.c:2131 ../tools/zif-main.c:4343
 msgid "Updating"
 msgstr "Оновлення"
 
 #. TRANSLATORS: Cleaning up after an update, where we
 #. * remove the old version
 #. TRANSLATORS: we're cleaning the repo, deleting old files
-#: ../tools/zif-main.c:192 ../tools/zif-main.c:464
+#: ../tools/zif-main.c:205 ../tools/zif-main.c:531
 msgid "Cleaning"
 msgstr "Спорожнення"
 
 #. TRANSLATORS: getting ready to do run the transaction,
 #. * doing things like checking the database and checking
 #. * for file conflicts
-#: ../tools/zif-main.c:198
+#: ../tools/zif-main.c:211
 msgid "Preparing"
 msgstr "Приготування"
 
 #. TRANSLATORS: checking the transaction for file
 #. * conflicts after packages have been downloaded
-#: ../tools/zif-main.c:203
+#: ../tools/zif-main.c:216
 msgid "Testing"
 msgstr "Перевірка"
 
-#: ../tools/zif-main.c:522
+#. TRANSLATORS: loading the rpmdb
+#: ../tools/zif-main.c:220
+msgid "Loading installed"
+msgstr "Завантаження списку встановлених"
+
+#. TRANSLATORS: calculating the update set
+#: ../tools/zif-main.c:224
+msgid "Checking updates"
+msgstr "Пошук оновлень"
+
+#. TRANSLATORS: the user just did ctrl-c
+#: ../tools/zif-main.c:341
+msgid "Cancellation in progress..."
+msgstr "Скасування дії…"
+
+#: ../tools/zif-main.c:589
 msgid "No packages found"
 msgstr "Не знайдено жодного пакунка"
 
-#: ../tools/zif-main.c:549
+#: ../tools/zif-main.c:616
 msgid "No packages found (after filter)"
 msgstr "Не знайдено жодного пакунка (після фільтрування)"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:604
+#: ../tools/zif-main.c:678
 #, c-format
 msgid "No %s package was found"
 msgstr "Пакунка %s не знайдено"
 
 #. TRANSLATORS: finding packages in local and remote repos
-#: ../tools/zif-main.c:662
+#. TRANSLATORS: finding packages from a name
+#: ../tools/zif-main.c:745 ../tools/zif-main.c:3730
 msgid "Finding package"
 msgstr "Пошук пакунка"
 
 #. TRANSLATORS: getting the hierarchical groups from the server
-#: ../tools/zif-main.c:748
+#: ../tools/zif-main.c:831
 msgid "Getting categories"
 msgstr "Отримання списку категорій"
 
 #. TRANSLATORS: error message: user needs to specify a value
-#: ../tools/zif-main.c:858 ../tools/zif-main.c:1047 ../tools/zif-main.c:1179
-#: ../tools/zif-main.c:1347 ../tools/zif-main.c:2072 ../tools/zif-main.c:2552
-#: ../tools/zif-main.c:2877
+#: ../tools/zif-main.c:941 ../tools/zif-main.c:1136 ../tools/zif-main.c:1278
+#: ../tools/zif-main.c:1587 ../tools/zif-main.c:2475 ../tools/zif-main.c:2644
+#: ../tools/zif-main.c:3393 ../tools/zif-main.c:3725
 #, c-format
 msgid "Specify a package name"
 msgstr "Вкажіть назву пакунка"
 
 #. TRANSLATORS: getting the list pf package dependencies for a package
 #. TRANSLATORS: getting the depends of a package
-#: ../tools/zif-main.c:863 ../tools/zif-main.c:1139
+#: ../tools/zif-main.c:946 ../tools/zif-main.c:1238
 msgid "Getting depends"
 msgstr "Отримання списку залежностей"
 
 #. TRANSLATORS: this is a item prefix
-#: ../tools/zif-main.c:942
+#: ../tools/zif-main.c:1030
 msgid "Dependency:"
 msgstr "Залежність:"
 
-#: ../tools/zif-main.c:958
+#: ../tools/zif-main.c:1046
 msgid "Provider:"
 msgstr "Джерело:"
 
 #. TRANSLATORS: getting the details (summary, size, etc) of a package
-#: ../tools/zif-main.c:1007
+#. TRANSLATORS: gettin details about an update
+#: ../tools/zif-main.c:1096 ../tools/zif-main.c:4484
 msgid "Getting details"
 msgstr "Отримання параметрів"
 
-#: ../tools/zif-main.c:1070 ../tools/zif-main.c:1202
+#: ../tools/zif-main.c:1164 ../tools/zif-main.c:1306
 msgid "No package was found"
 msgstr "Пакунків не знайдено"
 
 #. TRANSLATORS: these are headers for the package data
-#: ../tools/zif-main.c:1090
+#: ../tools/zif-main.c:1183
 msgid "Name"
 msgstr "Назва"
 
-#: ../tools/zif-main.c:1091
+#: ../tools/zif-main.c:1184
 msgid "Version"
 msgstr "Версія"
 
-#: ../tools/zif-main.c:1092
+#: ../tools/zif-main.c:1185
 msgid "Arch"
 msgstr "Архітектура"
 
-#: ../tools/zif-main.c:1093
+#: ../tools/zif-main.c:1186
 msgid "Size"
 msgstr "Розмір"
 
-#: ../tools/zif-main.c:1094
+#: ../tools/zif-main.c:1187
 msgid "Repo"
 msgstr "Сховище"
 
-#: ../tools/zif-main.c:1095
+#: ../tools/zif-main.c:1188
 msgid "Summary"
 msgstr "Резюме"
 
-#: ../tools/zif-main.c:1096
+#: ../tools/zif-main.c:1189
 msgid "URL"
 msgstr "Адреса"
 
-#: ../tools/zif-main.c:1097
+#: ../tools/zif-main.c:1190
 msgid "License"
 msgstr "Ліцензія"
 
-#: ../tools/zif-main.c:1098
+#: ../tools/zif-main.c:1191
 msgid "Description"
 msgstr "Опис"
 
+#. TRANSLATORS: strftime formatted please
+#: ../tools/zif-main.c:1435
+msgid "%F %R"
+msgstr "%d-%m-%Y %R"
+
+#: ../tools/zif-main.c:1470
+msgid "The history database is empty"
+msgstr "Журнал бази даних є порожнім"
+
+#: ../tools/zif-main.c:1501
+msgid "Transaction"
+msgstr "Операція"
+
+#. TRANSLATORS: we've imported the yumdb into the history database
+#: ../tools/zif-main.c:1550
+msgid "All database entries imported into history"
+msgstr "Всі записи бази даних імпортовано до журналу"
+
 #. TRANSLATORS: getting file lists for a package
-#: ../tools/zif-main.c:1352
+#: ../tools/zif-main.c:1592
 msgid "Getting files"
 msgstr "Отримання файлів"
 
-#: ../tools/zif-main.c:1409
+#: ../tools/zif-main.c:1654
 msgid "Failed to match any packages for :"
 msgstr "Не вдалося знайти пакунко-відповідник:"
 
-#: ../tools/zif-main.c:1431
+#: ../tools/zif-main.c:1676
 msgid "Package contains no files"
 msgstr "У пакунку не міститься файлів"
 
 #. TRANSLATORS: getting all the packages
-#: ../tools/zif-main.c:1527
+#: ../tools/zif-main.c:1772
 msgid "Getting packages"
 msgstr "Отримання пакунків"
 
 #. TRANSLATORS: getting the list of packages that can be updated
-#: ../tools/zif-main.c:1650
+#: ../tools/zif-main.c:1893
 msgid "Getting updates"
 msgstr "Отримання оновлень"
 
 #. TRANSLATORS: getting details of any distro upgrades
-#: ../tools/zif-main.c:1681
+#: ../tools/zif-main.c:1945
 msgid "Getting upgrades"
 msgstr "Отримання нових версій"
 
-#: ../tools/zif-main.c:1695
+#: ../tools/zif-main.c:1959
 msgid "No distribution upgrades are available."
 msgstr "Нових версій дистрибутива не знайдено."
 
-#: ../tools/zif-main.c:1697
+#: ../tools/zif-main.c:1961
 msgid "Distribution upgrades available:"
 msgstr "Доступні нові версії дистрибутива:"
 
-#: ../tools/zif-main.c:1704
+#: ../tools/zif-main.c:1968
 msgid "stable"
 msgstr "стабільний"
 
-#: ../tools/zif-main.c:1704
+#: ../tools/zif-main.c:1968
 msgid "unstable"
 msgstr "нестабільний"
 
 #. TRANSLATORS: A user didn't specify a required value
-#: ../tools/zif-main.c:1730
+#: ../tools/zif-main.c:2003
 msgid "Specify a config key"
 msgstr "Вкажіть ключ налаштування"
 
 #. TRANSLATORS: there was no value in the config files
-#: ../tools/zif-main.c:1738
+#: ../tools/zif-main.c:2012
 #, c-format
 msgid "No value for %s"
 msgstr "Немає значення %s"
 
 #. TRANSLATORS: this is the reason the action is to be taken
-#: ../tools/zif-main.c:1821
+#: ../tools/zif-main.c:2099
 msgid "Installing for dependencies"
 msgstr "Встановлення для залежностей"
 
 #. TRANSLATORS: this is the reason the action is to be taken
-#: ../tools/zif-main.c:1825
+#: ../tools/zif-main.c:2103
 msgid "Updating to new versions"
 msgstr "Оновлення до нових версій"
 
 #. TRANSLATORS: this is the reason the action is to be taken
-#: ../tools/zif-main.c:1833
+#: ../tools/zif-main.c:2111
 msgid "Removing due to multiple versions"
 msgstr "Вилучення через використання декількох версій"
 
 #. TRANSLATORS: this is the reason the action is to be taken
-#: ../tools/zif-main.c:1837
+#: ../tools/zif-main.c:2115
 msgid "Removing for dependencies"
 msgstr "Вилучення через залежності"
 
 #. TRANSLATORS: this is the reason the action is to be taken
-#: ../tools/zif-main.c:1841
+#: ../tools/zif-main.c:2119
 msgid "Removing old versions"
 msgstr "Вилучення застарілих версій"
 
 #. TRANSLATORS: this is the reason the action is to be taken
-#: ../tools/zif-main.c:1845
+#: ../tools/zif-main.c:2123
 msgid "Removing as obsolete"
 msgstr "Вилучення через застарівання"
 
 #. TRANSLATORS: this is the reason the action is to be taken
-#: ../tools/zif-main.c:1857
+#: ../tools/zif-main.c:2135
 msgid "Updating for conflict"
 msgstr "Оновлення через конфлікт"
 
 #. TRANSLATORS: this is the reason the action is to be taken
-#: ../tools/zif-main.c:1861
+#: ../tools/zif-main.c:2139
 msgid "Updating for dependencies"
 msgstr "Оновлення для залежностей"
 
 #. TRANSLATORS: this is the reason the action is to be taken
-#: ../tools/zif-main.c:1865
+#: ../tools/zif-main.c:2143
+msgid "Updating the system"
+msgstr "Оновлення системи"
+
+#. TRANSLATORS: this is the reason the action is to be taken
+#. TRANSLATORS: performing action
+#: ../tools/zif-main.c:2147 ../tools/zif-main.c:2649
+msgid "Downgrading"
+msgstr "Зниження версії"
+
+#. TRANSLATORS: this is the reason the action is to be taken
+#: ../tools/zif-main.c:2151
 msgid "Unknown reason"
 msgstr "Невідома причина"
 
-#: ../tools/zif-main.c:1891
+#: ../tools/zif-main.c:2179
 msgid "Transaction summary:"
 msgstr "Резюме операції:"
 
+#. TRANSLATORS: this is the stdout and stderr output
+#. * from the transaction, that may indicate something
+#. * went wrong
+#: ../tools/zif-main.c:2219
+msgid "Transaction warning:"
+msgstr "Попередження щодо операції:"
+
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:1966
+#: ../tools/zif-main.c:2353
 msgid "Automatically declined action"
 msgstr "Дію скасовано у автоматичному режимі"
 
-#: ../tools/zif-main.c:1974 ../tools/zif-main.c:2009
+#. TRANSLATORS: how much we have to download
+#: ../tools/zif-main.c:2372
+msgid "Total download size"
+msgstr "Загальний обсяг звантаження"
+
+#: ../tools/zif-main.c:2380 ../tools/zif-main.c:2415
 msgid "Run transaction?"
 msgstr "Виконати операцію?"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:1977 ../tools/zif-main.c:2012
+#: ../tools/zif-main.c:2383 ../tools/zif-main.c:2418
 msgid "User declined action"
 msgstr "Дію скасовано користувачем"
 
-#: ../tools/zif-main.c:2005
+#: ../tools/zif-main.c:2411
 msgid "There are untrusted packages:"
 msgstr "Виявлено ненадійні пакунки:"
 
-#. TRANSLATORS: this is the stdout and stderr output
-#. * from the transaction, that may indicate something
-#. * went horribly wrong
-#: ../tools/zif-main.c:2034
-msgid "Transaction error:"
-msgstr "Помилка під час операції:"
+#. TRANSLATORS: tell the user everything went okay
+#: ../tools/zif-main.c:2445
+msgid "Transaction success!"
+msgstr "Операцію виконано успішно!"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:2113
+#: ../tools/zif-main.c:2521
 #, c-format
 msgid "%s is already installed"
 msgstr "%s вже встановлено"
 
-#. TRANSLATORS: performing action
-#: ../tools/zif-main.c:2227
-msgid "Installing a local file"
-msgstr "Встановлення локального файла"
+#. TRANSLATORS: error message
+#: ../tools/zif-main.c:2690
+#, c-format
+msgid "%s is not already installed"
+msgstr "%s ще не встановлено"
 
 #. TRANSLATORS: performing action
-#: ../tools/zif-main.c:2314
-msgid "Checking manifest files"
-msgstr "Перевірка файлів маніфестів"
+#: ../tools/zif-main.c:2830
+msgid "Installing file"
+msgstr "Встановлення файла"
 
-#: ../tools/zif-main.c:2335
+#. TRANSLATORS: performing action
+#: ../tools/zif-main.c:3159
+msgid "Checking manifests"
+msgstr "Перевірка маніфестів"
+
+#: ../tools/zif-main.c:3180
 msgid "All manifest files were checked successfully"
 msgstr "Всі файли маніфестів було перевірено"
 
 #. TRANSLATORS: performing action
-#: ../tools/zif-main.c:2373
-msgid "Dumping manifest to file"
-msgstr "Збереження маніфесту до файла"
+#: ../tools/zif-main.c:3217
+msgid "Dumping manifest"
+msgstr "Збереження маніфесту"
 
 #. TRANSLATORS: performing action
-#: ../tools/zif-main.c:2487
+#: ../tools/zif-main.c:3328
 msgid "Refreshing cache"
 msgstr "Освіження кешу"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:2591
+#: ../tools/zif-main.c:3437
 #, c-format
 msgid "The package is not installed"
 msgstr "Пакунок не встановлено"
 
 #. TRANSLATORS: performing action
-#: ../tools/zif-main.c:2667
+#: ../tools/zif-main.c:3515
 msgid "Disabling repo"
 msgstr "Вимикання сховища"
 
 #. TRANSLATORS: performing action
-#: ../tools/zif-main.c:2738
+#: ../tools/zif-main.c:3586
 msgid "Enabling repo"
 msgstr "Вмикання сховища"
 
 #. TRANSLATORS: performing action
-#: ../tools/zif-main.c:2803
+#: ../tools/zif-main.c:3651
 msgid "Getting repo list"
 msgstr "Отримання списку сховищ"
 
-#. TRANSLATORS: finding packages from a name
-#: ../tools/zif-main.c:2882
-msgid "Finding package name"
-msgstr "Пошук назви пакунка"
-
-#: ../tools/zif-main.c:2954
+#: ../tools/zif-main.c:3808
 msgid "Specify a category"
 msgstr "Вкажіть категорію"
 
 #. TRANSLATORS: returning all packages that match a category
-#: ../tools/zif-main.c:2959
+#: ../tools/zif-main.c:3813
 msgid "Search category"
 msgstr "Шукати за категорією"
 
 #. TRANSLATORS: user needs to specify something
-#: ../tools/zif-main.c:3018 ../tools/zif-main.c:3174 ../tools/zif-main.c:3249
-#: ../tools/zif-main.c:3917 ../tools/zif-main.c:3999 ../tools/zif-main.c:4081
-#: ../tools/zif-main.c:4163
+#: ../tools/zif-main.c:3872 ../tools/zif-main.c:4028 ../tools/zif-main.c:4103
+#: ../tools/zif-main.c:4786 ../tools/zif-main.c:4868 ../tools/zif-main.c:4950
+#: ../tools/zif-main.c:5032
 #, c-format
 msgid "No search term specified"
 msgstr "Не вказано ключа пошуку"
 
 #. TRANSLATORS: searching by package details, not just name
-#: ../tools/zif-main.c:3023
+#: ../tools/zif-main.c:3877
 msgid "Searching details"
 msgstr "Пошук подробиць"
 
 #. TRANSLATORS: user needs to specify something
-#: ../tools/zif-main.c:3094
+#: ../tools/zif-main.c:3948
 msgid "Specify a filename"
 msgstr "Вкажіть назву файла"
 
 #. TRANSLATORS: searching for a specific file
-#: ../tools/zif-main.c:3099
+#: ../tools/zif-main.c:3953
 msgid "Searching file"
 msgstr "Пошук за файлом"
 
 #. TRANSLATORS: searching by a specific group
-#: ../tools/zif-main.c:3179
+#: ../tools/zif-main.c:4033
 msgid "Search group"
 msgstr "Пошук за групою"
 
 #. TRANSLATORS: search, based on the package name only
-#: ../tools/zif-main.c:3254
+#: ../tools/zif-main.c:4108
 msgid "Searching name"
 msgstr "Пошук за назвою"
 
 #. TRANSLATORS: used when the user did not explicitly specify a
 #. * list of updates to install
-#: ../tools/zif-main.c:3324
-msgid "Updating everything"
-msgstr "Повне оновлення"
+#: ../tools/zif-main.c:4179
+msgid "Updating system"
+msgstr "Оновлення системи"
 
-#: ../tools/zif-main.c:3402 ../tools/zif-main.c:3797
+#: ../tools/zif-main.c:4259 ../tools/zif-main.c:4666
 msgid "Specify a distro name, e.g."
 msgstr "Вкажіть назву дистрибутива, наприклад"
 
 #. TRANSLATORS: upgrading to a new distro release, *not*
 #. * updating to a new package version
-#: ../tools/zif-main.c:3408 ../tools/zif-main.c:3823
+#: ../tools/zif-main.c:4265 ../tools/zif-main.c:4692
 msgid "Upgrading"
 msgstr "Оновлення"
 
 #. TRANSLATORS: error message, invalid value
-#: ../tools/zif-main.c:3414 ../tools/zif-main.c:3829
+#: ../tools/zif-main.c:4271 ../tools/zif-main.c:4698
 msgid "Distribution name invalid"
 msgstr "Некоректна назва дистрибутива"
 
 #. TRANSLATORS: error message, invalid value
-#: ../tools/zif-main.c:3421 ../tools/zif-main.c:3836
+#: ../tools/zif-main.c:4278 ../tools/zif-main.c:4705
 msgid "Only 'fedora' is supported"
 msgstr "Передбачено підтримку лише «fedora»"
 
 #. TRANSLATORS: error message, invalid value
-#: ../tools/zif-main.c:3429 ../tools/zif-main.c:3844
+#: ../tools/zif-main.c:4286 ../tools/zif-main.c:4713
 #, c-format
 msgid "Version number %i is invalid"
 msgstr "Некоректний номер версії %i"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:3520
+#: ../tools/zif-main.c:4382
 #, c-format
 msgid "The %s package is not installed"
 msgstr "Пакунок %s не встановлено"
 
-#. TRANSLATORS: gettin details about an update
-#: ../tools/zif-main.c:3620
-msgid "Getting update details"
-msgstr "Отримання подробиць оновлення"
-
-#: ../tools/zif-main.c:3696
+#: ../tools/zif-main.c:4565
 msgid "No update detail"
 msgstr "Немає подробиць щодо оновлення"
 
-#: ../tools/zif-main.c:3711
+#: ../tools/zif-main.c:4580
 msgid "Kind:"
 msgstr "Тип:"
 
-#: ../tools/zif-main.c:3715
+#: ../tools/zif-main.c:4584
 msgid "State:"
 msgstr "Стан:"
 
-#: ../tools/zif-main.c:3719
+#: ../tools/zif-main.c:4588
 msgid "ID:"
 msgstr "Ідентифікатор:"
 
-#: ../tools/zif-main.c:3723
+#: ../tools/zif-main.c:4592
 msgid "Title:"
 msgstr "Заголовок:"
 
-#: ../tools/zif-main.c:3727
+#: ../tools/zif-main.c:4596
 msgid "Description:"
 msgstr "Опис:"
 
-#: ../tools/zif-main.c:3731
+#: ../tools/zif-main.c:4600
 msgid "Issued:"
 msgstr "Дата випуску:"
 
-#: ../tools/zif-main.c:3804
+#: ../tools/zif-main.c:4673
 msgid "Specify a update type, e.g."
 msgstr "Вкажіть тип оновлення, наприклад"
 
-#: ../tools/zif-main.c:3817
+#: ../tools/zif-main.c:4686
 msgid "Invalid update type, only these types are supported:"
 msgstr "Некоректний тип оновлення, передбачено підтримку лише таких типів:"
 
 #. TRANSLATORS: find out what package conflicts
-#: ../tools/zif-main.c:3922
+#: ../tools/zif-main.c:4791
 msgid "Conflicts"
 msgstr "Конфлікти"
 
 #. TRANSLATORS: find out what package obsoletes
-#: ../tools/zif-main.c:4004
+#: ../tools/zif-main.c:4873
 msgid "Obsoletes"
 msgstr "Робить застарілим"
 
 #. TRANSLATORS: find out what package provides
-#: ../tools/zif-main.c:4086
+#: ../tools/zif-main.c:4955
 msgid "Provides"
 msgstr "Містить"
 
 #. TRANSLATORS: find out what package requires
-#: ../tools/zif-main.c:4168
+#: ../tools/zif-main.c:5037
 msgid "Requires"
 msgstr "Потребує"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:4260
+#: ../tools/zif-main.c:5129
 msgid "Command not found, valid commands are:"
 msgstr "Невідома команда, відомі команди:"
 
-#: ../tools/zif-main.c:4322
+#: ../tools/zif-main.c:5191
 #, c-format
 msgid "Welcome to the shell. Type '%s' to finish."
 msgstr ""
@@ -550,525 +606,564 @@ msgstr ""
 "команди «%s»."
 
 #. TRANSLATORS: used when the install database is being checked
-#: ../tools/zif-main.c:4540
-msgid "Checking installed database"
-msgstr "Перевірка бази даних встановленого"
+#: ../tools/zif-main.c:5411
+msgid "Checking database"
+msgstr "Перевірка бази даних"
 
 #. TRANSLATORS: used when the install database is being set
-#: ../tools/zif-main.c:4629
+#: ../tools/zif-main.c:5499
 msgid "Setting key"
 msgstr "Встановлення ключа"
 
 #. TRANSLATORS: used when the install database is being set
-#: ../tools/zif-main.c:4700
+#: ../tools/zif-main.c:5570
 msgid "Getting key"
 msgstr "Отримання ключа"
 
 #. TRANSLATORS: used when the install database is being set
-#: ../tools/zif-main.c:4772
+#: ../tools/zif-main.c:5642
 msgid "Deleting key"
 msgstr "Вилучення ключа"
 
 #. TRANSLATORS: this is when the database key is deleted, e.g.
 #. * "from_repo deleted");
-#: ../tools/zif-main.c:4813
+#: ../tools/zif-main.c:5683
 msgid "deleted"
 msgstr "вилучено"
 
 #. TRANSLATORS: used when the install database is listed
-#: ../tools/zif-main.c:4849
+#: ../tools/zif-main.c:5719
 msgid "Listing keys"
 msgstr "Список ключів"
 
-#: ../tools/zif-main.c:5056
+#: ../tools/zif-main.c:5936
 msgid "Show extra debugging information"
 msgstr "Показувати додаткові дані для усування вад"
 
-#: ../tools/zif-main.c:5058
+#: ../tools/zif-main.c:5938
 msgid "Enable low level profiling of Zif"
 msgstr "Увімкнути низькорівневе профілювання Zif"
 
-#: ../tools/zif-main.c:5060
+#: ../tools/zif-main.c:5940
 msgid "Enable background mode to run using less CPU"
 msgstr ""
 "Увімкнути режим роботи у тлі з метою зменшення навантаження на процесор"
 
-#: ../tools/zif-main.c:5062
+#: ../tools/zif-main.c:5942
 msgid "Work offline when possible"
 msgstr "Працювати у автономному режимі, якщо можливо"
 
-#: ../tools/zif-main.c:5064
+#: ../tools/zif-main.c:5944
 msgid "Take into account distribution versions when calculating updates"
 msgstr ""
 "Брати до уваги версії дистрибутива під час визначення пакунків для оновлення"
 
-#: ../tools/zif-main.c:5066
+#: ../tools/zif-main.c:5946
 msgid "Use different config file"
 msgstr "Використовувати інший файл налаштувань"
 
-#: ../tools/zif-main.c:5068
+#: ../tools/zif-main.c:5948
 msgid "Exclude certain packages"
 msgstr "Виключити певні пакунки"
 
-#: ../tools/zif-main.c:5070
+#: ../tools/zif-main.c:5950
 msgid "Use different rpm database root"
 msgstr "Використовувати іншу кореневу теку бази даних rpm"
 
-#: ../tools/zif-main.c:5072
+#: ../tools/zif-main.c:5952
 msgid "Proxy server setting"
 msgstr "Проксі-сервер"
 
-#: ../tools/zif-main.c:5074
+#: ../tools/zif-main.c:5954
 msgid "Permitted age of the cache in seconds, 0 for never (default)"
 msgstr ""
 "Дозволений вік кешу у секундах, 0 — не брати до уваги (типова поведінка)"
 
-#: ../tools/zif-main.c:5076
+#: ../tools/zif-main.c:5956
 msgid "Skip broken dependencies and repos rather than failing"
 msgstr "Пропускати помилкові залежності і сховища замість завершення роботи"
 
-#: ../tools/zif-main.c:5078
+#: ../tools/zif-main.c:5958
 msgid "Only use the exact architecture packages for this machine"
 msgstr "Використовувати у цій системі лише пакунки вказаної архітектури"
 
-#: ../tools/zif-main.c:5080
+#: ../tools/zif-main.c:5960
 msgid "Assume yes to all questions"
 msgstr "Вважати відповіддю на всі питання «так»"
 
-#: ../tools/zif-main.c:5082
+#: ../tools/zif-main.c:5962
 msgid "Assume no to all questions"
 msgstr "Вважати відповіддю на всі питання «ні»"
 
-#: ../tools/zif-main.c:5084 ../tools/zif-main.c:5086
+#: ../tools/zif-main.c:5964
 msgid "Enable one or more repositories"
 msgstr "Увімкнути одне або декілька сховищ"
 
+#: ../tools/zif-main.c:5966
+msgid "Disable one or more repositories"
+msgstr "Вимкнути одне або декілька сховищ"
+
 #. TRANSLATORS: we can't run as the user
-#: ../tools/zif-main.c:5211
+#: ../tools/zif-main.c:6112
 msgid "Cannot specify age when not a privileged user."
 msgstr "Не можна вказувати вік від імені непривілейованого користувача."
 
 #. TRANSLATORS: we can't download new stuff as a user
-#: ../tools/zif-main.c:5216
+#: ../tools/zif-main.c:6117
 msgid "Enabling offline mode as user unprivileged."
 msgstr "Вмикання автономного режиму, оскільки користувач не є привілейованим."
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:5282
+#: ../tools/zif-main.c:6187
 msgid "Remove cached data"
 msgstr "Вилучення кешованих даних"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:5287
+#: ../tools/zif-main.c:6192
 msgid "Download a package"
 msgstr "Звантажити пакунок"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:5292
+#: ../tools/zif-main.c:6197
 msgid "Find a given package given the ID"
 msgstr "Знайти пакунок за вказаним ідентифікатором"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:5297
+#: ../tools/zif-main.c:6202
 msgid "Returns the list of categories"
 msgstr "Показати список категорій"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:5302
+#: ../tools/zif-main.c:6207
 msgid "List a package's dependencies"
 msgstr "Показ списку залежностей пакунків"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:5307
+#: ../tools/zif-main.c:6212
 msgid "Display details about a package or group of packages"
 msgstr "Показати подробиці щодо пакунка або групи пакунків"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:5312
+#: ../tools/zif-main.c:6217
 msgid "List the files in a package"
 msgstr "Показати список файлів у пакунку"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:5317
+#: ../tools/zif-main.c:6222
 msgid "Get the groups the system supports"
 msgstr "Отримати групи, які підтримуються системою"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:5322
+#: ../tools/zif-main.c:6227
 msgid "List all packages"
 msgstr "Показати список всіх пакунків"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:5327
+#: ../tools/zif-main.c:6232
 msgid "Check for available package updates"
 msgstr "Перевірка доступності оновлень пакунків"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:5332
+#: ../tools/zif-main.c:6237
 msgid "Check for newer operating system versions"
 msgstr "Виконати пошук нових версій операційної системи"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:5337
+#: ../tools/zif-main.c:6242
 msgid "Get an expanded value from the config file"
 msgstr "Отримати розгорнути значення з файла налаштувань"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:5342
+#: ../tools/zif-main.c:6247
+msgid "Installs the build dependencies for a given package"
+msgstr "Встановлює залежності збирання для вказаного пакунка"
+
+#. TRANSLATORS: command description
+#: ../tools/zif-main.c:6252
 msgid "Display a helpful usage message"
 msgstr "Показати корисну підказку щодо використання"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:5347
+#: ../tools/zif-main.c:6257
 msgid "Install a package"
 msgstr "Встановити пакунок"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:5352
+#: ../tools/zif-main.c:6262
+msgid "Downgrade a package to a previous version"
+msgstr "Встановити попередню версію пакунка"
+
+#. TRANSLATORS: command description
+#: ../tools/zif-main.c:6267
 msgid "Install a local package"
 msgstr "Встановити локальний пакунок"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:5357
+#: ../tools/zif-main.c:6272
 msgid "Check a transaction manifest"
 msgstr "Перевірити маніфест операції"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:5362
+#: ../tools/zif-main.c:6277
 msgid "Dump a transaction manifest to a file"
 msgstr "Зберегти маніфест операції до файла"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:5367
+#: ../tools/zif-main.c:6282
 msgid "Generate the metadata cache"
 msgstr "Створення кешу метаданих"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:5372
+#: ../tools/zif-main.c:6287
 msgid "Remove a package"
 msgstr "Вилучити пакунок"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:5377
+#: ../tools/zif-main.c:6292
 msgid "Disable a specific software repository"
 msgstr "Вимкнути певне сховище програмного забезпечення"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:5382
+#: ../tools/zif-main.c:6297
 msgid "Enable a specific software repository"
 msgstr "Увімкнути певне сховище програмного забезпечення"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:5387
+#: ../tools/zif-main.c:6302
 msgid "Display the configured software repositories"
 msgstr "Показ списку увімкнених сховищ програмного забезпечення"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:5392
+#: ../tools/zif-main.c:6307
 msgid "Find a given package name"
 msgstr "Знайти пакунок з вказаною назвою"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:5397
+#: ../tools/zif-main.c:6312
 msgid "Search package details for the given category"
 msgstr "Знайти у даних пакунків вказану категорію"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:5402
+#: ../tools/zif-main.c:6317
 msgid "Search package details for the given string"
 msgstr "Пошук подробиць щодо пакунка за вказаним рядком"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:5407
+#: ../tools/zif-main.c:6322
 msgid "Search packages for the given filename"
 msgstr "Знайти пакунки, які містять файл з вказаною назвою"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:5412
+#: ../tools/zif-main.c:6327
 msgid "Search packages in the given group"
 msgstr "Знайти пакунки з вказаної групи"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:5417
+#: ../tools/zif-main.c:6332
 msgid "Search package name for the given string"
 msgstr "Знайти у назвах пакунків вказаний рядок"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:5422
+#: ../tools/zif-main.c:6337
 msgid "Run an interactive shell"
 msgstr "Запустити інтерактивну оболонку"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:5427
+#: ../tools/zif-main.c:6342
 msgid "Update a package to the newest available version"
 msgstr "Оновити пакунок до найновішої доступної версії"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:5432
+#: ../tools/zif-main.c:6347
 msgid "Update a package taking into account distribution version"
 msgstr "Оновити пакунок з врахуванням версії дистрибутива"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:5437
+#: ../tools/zif-main.c:6352
 msgid "Display details about an update"
 msgstr "Показати параметри оновлення"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:5442
+#: ../tools/zif-main.c:6357
 msgid "Upgrade the operating system to a newer version"
 msgstr "Оновлення операційної системи до нової версії"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:5447
+#: ../tools/zif-main.c:6362
 msgid "Live-upgrade the operating system to a newer version"
 msgstr "Оновлення операційної системи без переривання роботи"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:5452
+#: ../tools/zif-main.c:6367
 msgid "Find what package conflicts with the given value"
 msgstr "Знайти пакунок за конфліктом з вказаним значенням"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:5457
+#: ../tools/zif-main.c:6372
 msgid "Find what package obsoletes the given value"
 msgstr "Знайти пакунок за застаріванням для вказаного значення"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:5462
+#: ../tools/zif-main.c:6377
 msgid "Find what package provides the given value"
 msgstr "Пошук пакунка за вказаним ключем"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:5467
+#: ../tools/zif-main.c:6382
 msgid "Find what package requires the given value"
 msgstr "Знайти пакунок за потребою у вказаному значенні"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:5472
+#: ../tools/zif-main.c:6387
 msgid "Check for problems in the installed database"
 msgstr "Виконати пошук проблем у базі даних встановлених пакунків"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:5477
+#: ../tools/zif-main.c:6392
 msgid "Get a value in the package database"
 msgstr "Отримати значення з бази даних пакунків"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:5482
+#: ../tools/zif-main.c:6397
 msgid "Set a value in the installed package database"
 msgstr "Встановити значення у базі значень встановлених пакунків"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:5487
+#: ../tools/zif-main.c:6402
 msgid "Remove a value from the installed package database"
 msgstr "Вилучити значення з бази значень встановлених пакунків"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:5492
+#: ../tools/zif-main.c:6407
 msgid "List values from the installed package database"
 msgstr "Показати список значень з бази значень встановлених пакунків"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:5497
+#: ../tools/zif-main.c:6412
 msgid "Gets the provides for a given package"
 msgstr "Отримати список пакунків, які залежать від вказаного пакунка"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:5502
+#: ../tools/zif-main.c:6417
 msgid "Gets the requires for a given package"
 msgstr "Отримати список потрібних для встановлення вказаного пакунка пакунків"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:5507
+#: ../tools/zif-main.c:6422
 msgid "Gets the conflicts for a given package"
 msgstr ""
 "Отримати список конфліктних пакунків після встановлення вказаного пакунка"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:5512
+#: ../tools/zif-main.c:6427
 msgid "Gets the obsoletes for a given package"
 msgstr ""
 "Отримати список застарілих пакунків після встановлення вказаного пакунка"
 
+#. TRANSLATORS: command description
+#: ../tools/zif-main.c:6432
+msgid "Gets the transaction history list"
+msgstr "Отримати список операцій з журналу"
+
+#. TRANSLATORS: command description
+#: ../tools/zif-main.c:6437
+msgid "Gets the transaction history for a specified package"
+msgstr "Отримати список операцій з журналу для вказаного пакунка"
+
+#. TRANSLATORS: command description
+#: ../tools/zif-main.c:6442
+msgid "Imports the history data from a legacy database"
+msgstr "Імпортувати дані журналу з застарілої бази даних"
+
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5540
+#: ../tools/zif-main.c:6470
 msgid "Cancelled"
 msgstr "Скасовано"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5544
+#: ../tools/zif-main.c:6474
 msgid "The system state was invalid"
 msgstr "Стан системи є некоректним"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5548
+#: ../tools/zif-main.c:6478
 msgid "Unhandled state error"
 msgstr "Критична помилка стану"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5554
+#: ../tools/zif-main.c:6484
 msgid "The transaction failed"
 msgstr "Спроба виконання операції зазнала невдачі"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5558
+#: ../tools/zif-main.c:6488
 msgid "Nothing to do"
 msgstr "Нічого виконувати"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5562
+#: ../tools/zif-main.c:6492
 msgid "No supported"
 msgstr "Не підтримується"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5566
+#: ../tools/zif-main.c:6496
 msgid "The transaction conflicts"
 msgstr "Конфлікт операцій"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5570
+#: ../tools/zif-main.c:6500
 msgid "Unhandled transaction error"
 msgstr "Критична помилка під час спроби виконати операцію"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5576
+#: ../tools/zif-main.c:6506
 msgid "Failed to store"
 msgstr "Не вдалося зберегти"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5580 ../tools/zif-main.c:5668
+#: ../tools/zif-main.c:6510 ../tools/zif-main.c:6608
 msgid "Failed as offline"
 msgstr "Помилка через роботу у автономному режимі"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5584
+#: ../tools/zif-main.c:6514
 msgid "Failed to find"
 msgstr "Не вдалося знайти"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5588 ../tools/zif-main.c:5672
+#: ../tools/zif-main.c:6518 ../tools/zif-main.c:6612
 msgid "Failed to download"
 msgstr "Не вдалося звантажити"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5592
+#: ../tools/zif-main.c:6522
 msgid "Store array is empty"
 msgstr "Масив збереження порожній"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5596
+#: ../tools/zif-main.c:6526
 msgid "Not supported"
 msgstr "Не підтримується"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5600 ../tools/zif-main.c:5702
+#: ../tools/zif-main.c:6530 ../tools/zif-main.c:6642
 msgid "Not locked"
 msgstr "Не заблоковано"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5604
+#: ../tools/zif-main.c:6534
 msgid "There are multiple matches"
 msgstr "Виявлено декілька відповідників"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5608
+#: ../tools/zif-main.c:6538
 msgid "Unhandled store error"
 msgstr "Критична помилка під час виконання завдання зі збереження"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5614
+#: ../tools/zif-main.c:6544
 msgid "Package operation failed"
 msgstr "Помилка під час виконання дії над пакунком"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5618
+#: ../tools/zif-main.c:6548
 msgid "Unhandled package error"
 msgstr "Критична помилка під час роботи з пакунком"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5624
+#: ../tools/zif-main.c:6554
+msgid "History operation failed"
+msgstr "Помилка під час дії з журналом"
+
+#. TRANSLATORS: error message
+#: ../tools/zif-main.c:6558
+msgid "Unhandled history error"
+msgstr "Критична помилка під час дії з журналом"
+
+#. TRANSLATORS: error message
+#: ../tools/zif-main.c:6564
 msgid "Settings operation failed"
 msgstr "Помилка під час спроби виконання дії над параметрами"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5628
+#: ../tools/zif-main.c:6568
 msgid "Unhandled config error"
 msgstr "Критична помилка налаштування"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5634
+#: ../tools/zif-main.c:6574
 msgid "Download failed"
 msgstr "Спроба звантаження зазнала невдачі"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5638
+#: ../tools/zif-main.c:6578
 msgid "Download failed as permission denied"
 msgstr "Помилка звантаження через заборону доступу"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5642
+#: ../tools/zif-main.c:6582
 msgid "No space left on device"
 msgstr "Немає місця на пристрої"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5646
+#: ../tools/zif-main.c:6586
 msgid "Download was cancelled"
 msgstr "Звантаження скасовано"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5650
+#: ../tools/zif-main.c:6590
 msgid "Unhandled download error"
 msgstr "Критична помилка під час звантаження"
 
 #. TRANSLATORS: error message
 #. TRANSLATORS: we suck
-#: ../tools/zif-main.c:5656 ../tools/zif-main.c:5694 ../tools/zif-main.c:5716
-#: ../tools/zif-main.c:5727
+#: ../tools/zif-main.c:6596 ../tools/zif-main.c:6634 ../tools/zif-main.c:6656
+#: ../tools/zif-main.c:6667
 msgid "Failed"
 msgstr "Помилка"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5660
+#: ../tools/zif-main.c:6600
 msgid "No support"
 msgstr "Немає підтримки"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5664
+#: ../tools/zif-main.c:6604
 msgid "Failed to load"
 msgstr "Не вдалося завантажити"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5676
+#: ../tools/zif-main.c:6616
 msgid "Bad SQL"
 msgstr "Помилка у SQL"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5680
+#: ../tools/zif-main.c:6620
 msgid "File is too old"
 msgstr "Файл є застарілим"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5684
+#: ../tools/zif-main.c:6624
 msgid "No filename"
 msgstr "Не вказано назви файла"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5688 ../tools/zif-main.c:5710
+#: ../tools/zif-main.c:6628 ../tools/zif-main.c:6650
 msgid "Unhandled metadata error"
 msgstr "Критична помилка під час роботи з метаданими"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5698
+#: ../tools/zif-main.c:6638
 msgid "Already locked"
 msgstr "Вже заблоковано"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5706
+#: ../tools/zif-main.c:6646
 msgid "No permissions"
 msgstr "Доступ заборонено"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5720
+#: ../tools/zif-main.c:6660
 msgid "Unhandled repos error"
 msgstr "Критична помилка під час роботи зі сховищем"
 
