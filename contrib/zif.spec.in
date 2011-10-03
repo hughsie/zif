@@ -8,6 +8,8 @@ License:   GPLv2+
 URL:       http://people.freedesktop.org/~hughsient/zif/
 Source0:   http://people.freedesktop.org/~hughsient/zif/releases/%{name}-%{version}.tar.xz
 
+Requires: wget
+
 BuildRequires: glib2-devel >= 2.16.1
 BuildRequires: rpm-devel
 BuildRequires: sqlite-devel
