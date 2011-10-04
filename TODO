@@ -37,3 +37,7 @@ Things TODO, in no particular order:
 * Add some simple python programs using the Zif.gir data in examples/
  - Time:       [***  ]
  - Difficulty: [**   ]
+
+* Write a complete manpage for Zif CLI
+ - Time:       [***  ]
+ - Difficulty: [*    ]
