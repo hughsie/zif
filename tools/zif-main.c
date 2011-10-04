@@ -5895,6 +5895,7 @@ zif_create_deptree (ZifPackage *package,
 		    ZifStore *store_processed,
 		    guint depth,
 		    GString *str,
+		    gboolean *tree_array,
 		    GError **error)
 {
 	const gchar *pkg_id; /* the package_id of pkg */
@@ -5947,7 +5948,6 @@ zif_create_deptree (ZifPackage *package,
 
 		zif_state_reset(state);
 		state_local = zif_state_get_child (state);
-
 		/* Figure out if we processed this package already */
 		current_package = g_ptr_array_index (packages, i);
 		pkg_id = zif_package_get_id (current_package);
@@ -5960,9 +5960,17 @@ zif_create_deptree (ZifPackage *package,
 			zif_state_reset (state);
 			g_string_append (str, "\n");
 
+			if (i == packages->len-1)
+	 			tree_array[depth] = TRUE;
+			else
+				tree_array[depth] = FALSE;
+
 			/* draw tree */
 			for (x=0; x<depth; x++) {
-				g_string_append (str, "| ");
+				if (tree_array[x] == FALSE)
+					g_string_append (str, "| ");
+				else
+					g_string_append (str, "  ");
 				if (depth > 0)
 					g_string_append (str, " ");
 			}
@@ -5983,7 +5991,7 @@ zif_create_deptree (ZifPackage *package,
 				goto out;
 
 			/* limit recursion */
-			if (depth < 1000) {
+			if (depth < 50) {
 				our_depth = depth + 1;
 				state_local = zif_state_get_child (state);
 				ret = zif_create_deptree (current_package,
@@ -5992,6 +6000,7 @@ zif_create_deptree (ZifPackage *package,
 							  store_processed,
 							  our_depth,
 							  str,
+							  tree_array,
 							  error);
 				if (!ret)
 					goto out;
@@ -6014,9 +6023,10 @@ static gboolean
 zif_cmd_deptree (ZifCmdPrivate *priv, gchar **values, GError **error)
 {
 	gboolean ret = FALSE;
+	gboolean tree_array[50];
+	guint i;
 	GPtrArray *resolved_packages;
 	GString *tree = NULL;
-	guint i;
 	ZifPackage *package_tmp;
 	ZifState *state_local;
 	ZifState *state_loop;
@@ -6091,6 +6101,7 @@ zif_cmd_deptree (ZifCmdPrivate *priv, gchar **values, GError **error)
 					  store_processed,
 					  0,
 					  tree,
+					  tree_array,
 					  error);
 		if (!ret)
 			goto out;
