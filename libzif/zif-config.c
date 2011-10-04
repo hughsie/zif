@@ -51,6 +51,7 @@
 
 struct _ZifConfigPrivate
 {
+	gchar			*filename;
 	GKeyFile		*file_override;
 	GKeyFile		*file_default;
 	gboolean		 loaded;
@@ -94,6 +95,74 @@ zif_config_is_instance_valid (void)
 }
 
 /**
+ * zif_config_load:
+ **/
+static gboolean
+zif_config_load (ZifConfig *config,
+		 GError **error)
+{
+	gboolean ret = TRUE;
+	GError *error_local = NULL;
+
+	/* already loaded */
+	if (config->priv->loaded)
+		goto out;
+
+	/* nothing set */
+	if (config->priv->filename == NULL) {
+		ret = FALSE;
+		g_set_error_literal (error,
+				     ZIF_CONFIG_ERROR,
+				     ZIF_CONFIG_ERROR_FAILED,
+				     "no filename set, you need to use "
+				     "zif_config_set_filename()!");
+		goto out;
+	}
+
+	/* load files */
+	g_debug ("loading config file %s", config->priv->filename);
+	ret = g_key_file_load_from_file (config->priv->file_default,
+					 config->priv->filename,
+					 G_KEY_FILE_NONE,
+					 &error_local);
+	if (!ret) {
+		g_set_error (error,
+			     ZIF_CONFIG_ERROR,
+			     ZIF_CONFIG_ERROR_FAILED,
+			     "failed to load config file %s: %s",
+			     config->priv->filename,
+			     error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* done */
+	config->priv->loaded = TRUE;
+out:
+	return ret;
+}
+
+/**
+ * zif_config_unload:
+ **/
+static gboolean
+zif_config_unload (ZifConfig *config,
+		   GError **error)
+{
+	gboolean ret = TRUE;
+
+	/* already unloaded */
+	if (!config->priv->loaded)
+		goto out;
+
+	/* done */
+	g_debug ("unloading config");
+	config->priv->loaded = FALSE;
+out:
+	return ret;
+}
+
+/**
  * zif_config_unset:
  * @config: A #ZifConfig
  * @key: A key name to unset, e.g. "cachedir"
@@ -117,14 +186,9 @@ zif_config_unset (ZifConfig *config, const gchar *key, GError **error)
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
 	/* not loaded yet */
-	if (!config->priv->loaded) {
-		ret = FALSE;
-		g_set_error_literal (error,
-				     ZIF_CONFIG_ERROR,
-				     ZIF_CONFIG_ERROR_FAILED,
-				     "config not loaded");
+	ret = zif_config_load (config, error);
+	if (!ret)
 		goto out;
-	}
 
 	/* remove */
 	g_hash_table_remove (config->priv->hash_override, key);
@@ -149,21 +213,18 @@ zif_config_get_string (ZifConfig *config,
 		       const gchar *key,
 		       GError **error)
 {
-	gchar *value = NULL;
 	const gchar *value_tmp;
+	gboolean ret;
+	gchar *value = NULL;
 
 	g_return_val_if_fail (ZIF_IS_CONFIG (config), NULL);
 	g_return_val_if_fail (key != NULL, NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* not loaded yet */
-	if (!config->priv->loaded) {
-		g_set_error_literal (error,
-				     ZIF_CONFIG_ERROR,
-				     ZIF_CONFIG_ERROR_FAILED,
-				     "config not loaded");
+	ret = zif_config_load (config, error);
+	if (!ret)
 		goto out;
-	}
 
 	/* exists as local override */
 	value_tmp = g_hash_table_lookup (config->priv->hash_override, key);
@@ -481,7 +542,6 @@ zif_config_set_filename (ZifConfig *config,
 	gchar *basearch = NULL;
 	const gchar *text;
 	GPtrArray *array;
-	gchar *filename_default = NULL;
 	gchar *filename_override = NULL;
 	gchar *filename_override_sub = NULL;
 	guint i;
@@ -500,29 +560,29 @@ zif_config_set_filename (ZifConfig *config,
 
 	/* do we use te default? */
 	if (filename == NULL) {
-		filename_default = g_build_filename (SYSCONFDIR,
-						     "zif",
-						     "zif.conf",
-						     NULL);
+		config->priv->filename = g_build_filename (SYSCONFDIR,
+							   "zif",
+							   "zif.conf",
+							   NULL);
 	} else {
-		filename_default = g_strdup (filename);
+		config->priv->filename = g_strdup (filename);
 	}
 
 	/* check file exists */
-	g_debug ("using config %s", filename_default);
-	ret = g_file_test (filename_default, G_FILE_TEST_IS_REGULAR);
+	g_debug ("using config %s", config->priv->filename);
+	ret = g_file_test (config->priv->filename, G_FILE_TEST_IS_REGULAR);
 	if (!ret) {
 		g_set_error (error,
 			     ZIF_CONFIG_ERROR,
 			     ZIF_CONFIG_ERROR_FAILED,
 			     "config file %s does not exist",
-			     filename_default);
+			     config->priv->filename);
 		goto out;
 	}
 
 	/* setup watch */
 	ret = zif_monitor_add_watch (config->priv->monitor,
-				     filename_default,
+				     config->priv->filename,
 				     &error_local);
 	if (!ret) {
 		g_set_error (error, ZIF_CONFIG_ERROR,
@@ -533,32 +593,14 @@ zif_config_set_filename (ZifConfig *config,
 		goto out;
 	}
 
-	/* load files */
-	g_debug ("loading config file %s", filename_default);
-	ret = g_key_file_load_from_file (config->priv->file_default,
-					 filename_default,
-					 G_KEY_FILE_NONE,
-					 &error_local);
-	if (!ret) {
-		g_set_error (error,
-			     ZIF_CONFIG_ERROR,
-			     ZIF_CONFIG_ERROR_FAILED,
-			     "failed to load config file: %s",
-			     error_local->message);
-		g_error_free (error_local);
-		goto out;
-	}
-
-	/* done */
-	config->priv->loaded = TRUE;
-
 	/* calculate the valid basearchs */
 	basearch = zif_config_get_string (config, "basearch", &error_local);
 	if (basearch == NULL) {
 		g_set_error (error,
 			     ZIF_CONFIG_ERROR,
 			     ZIF_CONFIG_ERROR_FAILED,
-			     "failed to get basearch: %s", error_local->message);
+			     "failed to get basearch: %s",
+			     error_local->message);
 		g_error_free (error_local);
 		ret = FALSE;
 		goto out;
@@ -620,7 +662,6 @@ zif_config_set_filename (ZifConfig *config,
 	}
 	g_ptr_array_unref (array);
 out:
-	g_free (filename_default);
 	g_free (filename_override);
 	g_free (filename_override_sub);
 	g_free (basearch);
@@ -794,8 +835,8 @@ zif_config_set_uint (ZifConfig *config,
 static void
 zif_config_file_monitor_cb (ZifMonitor *monitor, ZifConfig *config)
 {
-	g_debug ("config file changed, marking !loaded");
-	config->priv->loaded = FALSE;
+	g_debug ("config file changed");
+	zif_config_unload (config, NULL);
 }
 
 /**
@@ -816,6 +857,7 @@ zif_config_finalize (GObject *object)
 				     config->priv->monitor_changed_id);
 	g_object_unref (config->priv->monitor);
 	g_strfreev (config->priv->basearch_list);
+	g_free (config->priv->filename);
 
 	G_OBJECT_CLASS (zif_config_parent_class)->finalize (object);
 }

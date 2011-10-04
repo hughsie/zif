@@ -77,6 +77,31 @@
 static gboolean _has_network_access = TRUE;
 static gchar *zif_tmpdir = NULL;
 
+/** ver:1.0 ***********************************************************/
+static GMainLoop *_test_loop = NULL;
+static guint _test_loop_timeout_id = 0;
+
+static gboolean
+_g_test_hang_check_cb (gpointer user_data)
+{
+	g_main_loop_quit (_test_loop);
+	_test_loop_timeout_id = 0;
+	return FALSE;
+}
+
+/**
+ * _g_test_loop_run_with_timeout:
+ **/
+static void
+_g_test_loop_run_with_timeout (guint timeout_ms)
+{
+	g_assert (_test_loop_timeout_id == 0);
+	g_assert (_test_loop == NULL);
+	_test_loop = g_main_loop_new (NULL, FALSE);
+	_test_loop_timeout_id = g_timeout_add (timeout_ms, _g_test_hang_check_cb, NULL);
+	g_main_loop_run (_test_loop);
+}
+
 /**
  * zif_test_get_data_file:
  **/
@@ -638,7 +663,71 @@ zif_config_func (void)
 		g_free (value);
 	}
 	g_free (basearch);
+
 	g_object_unref (config);
+
+	zif_check_singletons ();
+}
+
+/**
+ * zif_config_changed_func:
+ *
+ * Tests replacing the config file, for instance what happens when a
+ * user upgrades zif using zif.
+ * In this instance we want to preserve overridden state and use new
+ * values from the config file
+ **/
+static void
+zif_config_changed_func (void)
+{
+	gboolean ret;
+	gchar *filename;
+	gchar *value;
+	GError *error = NULL;
+	ZifConfig *config;
+
+	config = zif_config_new ();
+	g_assert (config != NULL);
+
+	filename = g_build_filename (zif_tmpdir, "zif.conf", NULL);
+	ret = g_file_set_contents (filename, "[main]\n", -1, &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+	ret = zif_config_set_filename (config, filename, &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	value = zif_config_get_string (config, "key", NULL);
+	g_assert_cmpstr (value, ==, NULL);
+	g_free (value);
+
+	/* set override */
+	ret = zif_config_set_string (config, "cachedir", "/etc/cache", &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	/* touch file, and ensure file is autoloaded */
+	ret = g_file_set_contents (filename, "[main]\nkey=value\n", -1, &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	/* spin, and wait for GIO */
+	_g_test_loop_run_with_timeout (2000);
+
+	/* get a value from the new config */
+	value = zif_config_get_string (config, "key", &error);
+	g_assert_no_error (error);
+	g_assert_cmpstr (value, ==, "value");
+	g_free (value);
+
+	/* get override */
+	value = zif_config_get_string (config, "cachedir", &error);
+	g_assert_no_error (error);
+	g_assert_cmpstr (value, ==, "/etc/cache");
+	g_free (value);
+
+	g_object_unref (config);
+	g_free (filename);
 
 	zif_check_singletons ();
 }
@@ -4185,6 +4274,7 @@ main (int argc, char **argv)
 	g_test_add_func ("/zif/state", zif_state_func);
 	g_test_add_func ("/zif/changeset", zif_changeset_func);
 	g_test_add_func ("/zif/config", zif_config_func);
+	g_test_add_func ("/zif/config[changed]", zif_config_changed_func);
 	g_test_add_func ("/zif/db", zif_db_func);
 	g_test_add_func ("/zif/depend", zif_depend_func);
 	g_test_add_func ("/zif/download", zif_download_func);
