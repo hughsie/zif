@@ -1178,10 +1178,13 @@ zif_state_cancel_on_signal (ZifState *state, gint signum)
 /**
  * zif_state_set_number_steps_real:
  * @state: A #ZifState
- * @steps: The number of sub-tasks in this transaction
+ * @steps: The number of sub-tasks in this transaction, can be 0
  *
  * Sets the number of sub-tasks, i.e. how many times the zif_state_done()
  * function will be called in the loop.
+ *
+ * The function will immediately return with TRUE when the number of steps is 0
+ * or if zif_state_set_report_progress(FALSE) was previously called.
  *
  * Return value: %TRUE for success, %FALSE otherwise
  *
@@ -1193,7 +1196,12 @@ zif_state_set_number_steps_real (ZifState *state, guint steps, const gchar *strl
 	gboolean ret = FALSE;
 
 	g_return_val_if_fail (state != NULL, FALSE);
-	g_return_val_if_fail (steps != 0, FALSE);
+
+	/* nothing to do for 0 steps */
+	if (steps == 0) {
+		ret = TRUE;
+		goto out;
+	}
 
 	/* do we care */
 	if (!state->priv->report_progress) {

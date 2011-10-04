@@ -240,10 +240,6 @@ zif_package_array_download (GPtrArray *packages,
 	g_return_val_if_fail (state != NULL, FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
-	/* shortcut */
-	if (packages->len == 0)
-		goto out;
-
 	zif_state_set_number_steps (state, packages->len);
 	for (i=0; i<packages->len; i++) {
 		package = g_ptr_array_index (packages, i);
@@ -571,10 +567,6 @@ zif_package_array_filter_provide (GPtrArray *array,
 	g_return_val_if_fail (state != NULL, FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
-	/* shortcut */
-	if (array->len == 0)
-		goto out;
-
 	/* remove entries that do not satisfy the dep */
 	zif_state_set_number_steps (state, array->len);
 	for (i=0; i<array->len;) {
@@ -639,10 +631,6 @@ zif_package_array_filter_require (GPtrArray *array,
 	g_return_val_if_fail (depends != NULL, FALSE);
 	g_return_val_if_fail (state != NULL, FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
-
-	/* shortcut */
-	if (array->len == 0)
-		goto out;
 
 	/* remove entries that do not satisfy the dep */
 	zif_state_set_number_steps (state, array->len);
@@ -709,10 +697,6 @@ zif_package_array_filter_conflict (GPtrArray *array,
 	g_return_val_if_fail (state != NULL, FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
-	/* shortcut */
-	if (array->len == 0)
-		goto out;
-
 	/* remove entries that do not satisfy the dep */
 	zif_state_set_number_steps (state, array->len);
 	for (i=0; i<array->len;) {
@@ -777,10 +761,6 @@ zif_package_array_filter_obsolete (GPtrArray *array,
 	g_return_val_if_fail (depends != NULL, FALSE);
 	g_return_val_if_fail (state != NULL, FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
-
-	/* shortcut */
-	if (array->len == 0)
-		goto out;
 
 	/* remove entries that do not satisfy the dep */
 	zif_state_set_number_steps (state, array->len);
