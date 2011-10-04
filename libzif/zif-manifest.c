@@ -101,6 +101,7 @@ typedef enum {
 	ZIF_MANIFEST_ACTION_UPDATE,
 	ZIF_MANIFEST_ACTION_REMOVE,
 	ZIF_MANIFEST_ACTION_GET_UPDATES,
+	ZIF_MANIFEST_ACTION_DOWNGRADE,
 	ZIF_MANIFEST_ACTION_UNKNOWN
 } ZifManifestAction;
 
@@ -178,6 +179,8 @@ zif_manifest_action_from_string (const gchar *section)
 		return ZIF_MANIFEST_ACTION_REMOVE;
 	if (g_strcmp0 (section, "get-updates") == 0)
 		return ZIF_MANIFEST_ACTION_GET_UPDATES;
+	if (g_strcmp0 (section, "downgrade") == 0)
+		return ZIF_MANIFEST_ACTION_DOWNGRADE;
 	return ZIF_MANIFEST_ACTION_UNKNOWN;
 }
 
@@ -290,6 +293,8 @@ zif_manifest_add_package_to_transaction (ZifManifest *manifest,
 		ret = zif_transaction_add_update (transaction, package, &error_local);
 	else if (action == ZIF_MANIFEST_ACTION_INSTALL_AS_UPDATE)
 		ret = zif_transaction_add_install_as_update (transaction, package, &error_local);
+	else if (action == ZIF_MANIFEST_ACTION_DOWNGRADE)
+		ret = zif_transaction_add_install_as_downgrade (transaction, package, &error_local);
 	else
 		g_assert_not_reached ();
 	if (!ret) {
