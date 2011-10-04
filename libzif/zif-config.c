@@ -794,7 +794,7 @@ zif_config_set_uint (ZifConfig *config,
 static void
 zif_config_file_monitor_cb (ZifMonitor *monitor, ZifConfig *config)
 {
-	g_warning ("config file changed");
+	g_debug ("config file changed, marking !loaded");
 	config->priv->loaded = FALSE;
 }
 
