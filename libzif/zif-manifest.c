@@ -688,6 +688,7 @@ zif_manifest_check (ZifManifest *manifest,
 				}
 			} else if (section == ZIF_MANIFEST_SECTION_TRANSACTION) {
 				if (action == ZIF_MANIFEST_ACTION_INSTALL ||
+				    action == ZIF_MANIFEST_ACTION_DOWNGRADE ||
 				    action == ZIF_MANIFEST_ACTION_INSTALL_AS_UPDATE) {
 					store_hint = remote;
 				} else {

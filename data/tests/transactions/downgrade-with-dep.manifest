@@ -1,27 +1,27 @@
-# Downgrade a package
+# Downgrade a package from a dep, which causes the dep'd gphotos
+# to be also removed (is this a bug?)
 
 local
-	package;1.0-2;i386;meta
+	gphoto;1.0-2;i386;meta
 		Requires
-			package-libs = 1.0-2
-	package-libs;1.0-2;i386;meta
+			libexif = 1.0-2
+	libexif;1.0-2;i386;meta
 remote
-	package;1.0-2;i386;meta
+	gphoto;1.0-2;i386;meta
 		Requires
-			package-libs = 1.0-2
-	package;1.0-1;i386;meta
+			libexif = 1.0-2
+	gphoto;1.0-1;i386;meta
 		Requires
-			package-libs = 1.0-1
-	package-libs;1.0-1;i386;meta
-	package-libs;1.0-2;i386;meta
+			libexif = 1.0-1
+	libexif;1.0-1;i386;meta
+	libexif;1.0-2;i386;meta
 
 transaction
 	downgrade
-		package-libs
+		libexif;1.0-1;i386;meta
 
 result
-	package-libs;1.0-1;i386;meta
-	package;1.0-1;i386;meta
+	libexif;1.0-1;i386;meta
 
 config
 	archinfo=i386

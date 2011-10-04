@@ -2354,8 +2354,7 @@ zif_transaction_resolve_remove_require (ZifTransactionResolve *data,
 			g_ptr_array_add (related_packages, package);
 
 			/* package is being updated, so try to update deps too */
-			if (item->reason == ZIF_TRANSACTION_REASON_REMOVE_FOR_UPDATE ||
-			    item->reason == ZIF_TRANSACTION_REASON_DOWNGRADE_FOR_DEP) {
+			if (item->reason == ZIF_TRANSACTION_REASON_REMOVE_FOR_UPDATE) {
 				ret = zif_transaction_add_update_internal (data->transaction,
 									   package,
 									   related_packages,
@@ -2372,6 +2371,24 @@ zif_transaction_resolve_remove_require (ZifTransactionResolve *data,
 						goto out;
 					}
 				}
+
+			/* package i being downgraded */
+			} else if (item->reason == ZIF_TRANSACTION_REASON_DOWNGRADE_INSTALLED ||
+				   item->reason == ZIF_TRANSACTION_REASON_DOWNGRADE_FOR_DEP) {
+				/* remove the package */
+				ret = zif_transaction_add_remove_internal (data->transaction,
+									   package,
+									   related_packages,
+									   ZIF_TRANSACTION_REASON_DOWNGRADE_FOR_DEP,
+									   error);
+				if (!ret)
+					goto out;
+
+				/* remove from the planned local store */
+				zif_store_remove_package (data->post_resolve_package_array,
+							  package,
+							  NULL);
+
 			} else {
 				/* remove the package */
 				ret = zif_transaction_add_remove_internal (data->transaction,
