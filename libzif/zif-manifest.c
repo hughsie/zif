@@ -595,6 +595,8 @@ zif_manifest_check (ZifManifest *manifest,
 
 		/* parse the tree */
 		tmp = lines[i] + level;
+		if (tmp[0] == '\0')
+			continue;
 		g_debug ("ln %i, level=%i, data=%s", i, level, tmp);
 		if (level == 0) {
 			section = zif_manifest_section_from_string (tmp);

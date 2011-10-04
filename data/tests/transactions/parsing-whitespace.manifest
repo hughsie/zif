@@ -1,0 +1,6 @@
+# Parsing a file with extra whitespace
+
+remote
+	package-libs;1.0-2;i386;meta
+		Requires
+			
