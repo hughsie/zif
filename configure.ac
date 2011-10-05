@@ -140,20 +140,9 @@ dnl ---------------------------------------------------------------------------
 dnl - Check library dependencies
 dnl ---------------------------------------------------------------------------
 PKG_CHECK_MODULES(GLIB, glib-2.0 >= $GLIB_REQUIRED gobject-2.0 gthread-2.0)
-AC_SUBST(GLIB_CFLAGS)
-AC_SUBST(GLIB_LIBS)
-
 PKG_CHECK_MODULES(SQLITE, sqlite3)
-AC_SUBST(SQLITE_CFLAGS)
-AC_SUBST(SQLITE_LIBS)
-
 PKG_CHECK_MODULES(RPM, rpm)
-AC_SUBST(RPM_CFLAGS)
-AC_SUBST(RPM_LIBS)
-
 PKG_CHECK_MODULES(SOUP, libsoup-2.4)
-AC_SUBST(SOUP_CFLAGS)
-AC_SUBST(SOUP_LIBS)
 
 dnl ---------------------------------------------------------------------------
 dnl - new RPM?
