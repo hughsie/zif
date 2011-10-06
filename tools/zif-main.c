@@ -29,6 +29,7 @@
 #include <glib-unix.h>
 #endif
 
+#include <errno.h>
 #include <locale.h>
 #include <stdio.h>
 #include <sys/ioctl.h>
