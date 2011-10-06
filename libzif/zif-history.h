@@ -76,6 +76,9 @@ gboolean	 zif_history_add_entry			(ZifHistory	*history,
 							 GError		**error);
 GArray		*zif_history_list_transactions		(ZifHistory	*history,
 							 GError		**error);
+GArray		*zif_history_get_transactions_for_package (ZifHistory *history,
+									  ZifPackage *package,
+									  GError **error);
 GPtrArray	*zif_history_get_packages		(ZifHistory	*history,
 							 guint		 timestamp,
 							 GError		**error);

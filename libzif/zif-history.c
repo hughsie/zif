@@ -364,6 +364,72 @@ out:
 }
 
 /**
+ * zif_history_get_transactions_for_package:
+ * @history: A #ZifHistory
+ * @package: A ZifPackage
+ * @error: A #GError, or %NULL
+ *
+ * Returns an array of transaction timestamps.
+ * Each timestamp may correspond to a number of modified packages.
+ *
+ * Return value: (transfer full): an #GArray of guint
+ *
+ * Since: 0.2.6
+ **/
+GArray *
+zif_history_get_transactions_for_package (ZifHistory *history,
+									  ZifPackage *package,
+									  GError **error)
+{
+	const gchar *statement;
+	const gchar *name;
+	const gchar *arch;
+	GArray *array = NULL;
+	GArray *array_tmp = NULL;
+	gboolean ret = TRUE;
+	gchar *error_msg = NULL;
+	gint rc;
+
+
+	g_return_val_if_fail (ZIF_IS_HISTORY (history), NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+	/* ensure database is loaded */
+	ret = zif_history_load (history, error);
+	if (!ret)
+		goto out;
+	
+	name = zif_package_get_name (package);
+	arch = zif_package_get_arch (package);
+	/* return all the different transaction timestamps */
+	array_tmp = g_array_new (FALSE, FALSE, sizeof (guint));
+	statement = g_strdup_printf ("SELECT DISTINCT timestamp, "
+				     "FROM packages WHERE name = %s AND arch = %s",
+				     name, arch);
+	rc = sqlite3_exec (history->priv->db,
+			   statement,
+			   zif_history_get_transactions_sqlite_cb,
+			   &array_tmp,
+			   &error_msg);
+	if (rc != SQLITE_OK) {
+		g_set_error (error,
+			     ZIF_HISTORY_ERROR,
+			     ZIF_HISTORY_ERROR_FAILED,
+			     "SQL error: %s", error_msg);
+		sqlite3_free (error_msg);
+		goto out;
+	}
+
+	/* success */
+	array = g_array_ref (array_tmp);
+out:
+	if (array_tmp != NULL)
+		g_array_unref (array_tmp);
+	return array;
+}
+
+
+/**
  * zif_history_get_packages_sqlite_cb:
  **/
 static gint
