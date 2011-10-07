@@ -403,8 +403,8 @@ zif_history_get_transactions_for_package (ZifHistory *history,
 	arch = zif_package_get_arch (package);
 	/* return all the different transaction timestamps */
 	array_tmp = g_array_new (FALSE, FALSE, sizeof (guint));
-	statement = g_strdup_printf ("SELECT DISTINCT timestamp, "
-				     "FROM packages WHERE name = %s AND arch = %s",
+	statement = g_strdup_printf ("SELECT DISTINCT timestamp "
+				     "FROM packages WHERE name = \'%s\' AND arch = \'%s\'",
 				     name, arch);
 	rc = sqlite3_exec (history->priv->db,
 			   statement,
