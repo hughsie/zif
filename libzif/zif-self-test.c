@@ -3382,6 +3382,7 @@ zif_store_remote_func (void)
 	gchar *filename;
 	gchar *filename_db;
 	gchar *pidfile;
+	gchar *tmp;
 	GError *error = NULL;
 	GPtrArray *array;
 	ZifCategory *category;
@@ -3534,6 +3535,18 @@ zif_store_remote_func (void)
 	g_assert_cmpint (array->len, >, 0);
 
 	g_ptr_array_unref (array);
+
+	/* check reading config from the repo file */
+	ret = zif_store_remote_get_boolean (store, "skip_if_unavailable", &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	/* check falling back to config file */
+	tmp = zif_store_remote_get_string (store, "releasever", &error);
+	g_assert_no_error (error);
+	g_assert_cmpstr (tmp, ==, "13");
+	g_free (tmp);
+
 	g_object_unref (store);
 
 	/* location does not exist */

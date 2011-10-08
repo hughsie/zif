@@ -103,6 +103,12 @@ ZifDelta	*zif_store_remote_find_delta	 	(ZifStoreRemote		*store,
 							 ZifPackage		*installed,
 							 ZifState		*state,
 							 GError			**error);
+gchar		*zif_store_remote_get_string		(ZifStoreRemote		*store,
+							 const gchar		*key,
+							 GError			**error);
+gboolean	 zif_store_remote_get_boolean		(ZifStoreRemote		*store,
+							 const gchar		*key,
+							 GError			**error);
 
 G_END_DECLS
 

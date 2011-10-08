@@ -112,6 +112,7 @@ struct _ZifStoreRemotePrivate
 	ZifMdKind		 parser_type;
 	/* temp data for the xml parser */
 	ZifStoreRemoteParserSection parser_section;
+	GKeyFile		*file;
 };
 
 G_DEFINE_TYPE (ZifStoreRemote, zif_store_remote, ZIF_TYPE_STORE)
@@ -1999,7 +2000,6 @@ zif_store_remote_load (ZifStore *store, ZifState *state, GError **error)
 	gchar *metadata_expire = NULL;
 	gchar *temp;
 	GError *error_local = NULL;
-	GKeyFile *file = NULL;
 	guint i;
 	guint mirrorlist_expire;
 	ZifStoreRemote *remote = ZIF_STORE_REMOTE (store);
@@ -2023,8 +2023,8 @@ zif_store_remote_load (ZifStore *store, ZifState *state, GError **error)
 		goto out;
 
 	/* load repo file */
-	file = zif_load_multiline_key_file (remote->priv->repo_filename,
-					    &error_local);
+	remote->priv->file = zif_load_multiline_key_file (remote->priv->repo_filename,
+							 &error_local);
 	if (!ret) {
 		g_set_error (error,
 			     ZIF_STORE_ERROR,
@@ -2042,7 +2042,10 @@ zif_store_remote_load (ZifStore *store, ZifState *state, GError **error)
 		goto out;
 
 	/* name */
-	remote->priv->name = g_key_file_get_string (file, remote->priv->id, "name", &error_local);
+	remote->priv->name = g_key_file_get_string (remote->priv->file,
+						    remote->priv->id,
+						    "name",
+						    &error_local);
 	if (error_local != NULL) {
 		g_set_error (error, ZIF_STORE_ERROR, ZIF_STORE_ERROR_FAILED,
 			     "failed to get name: %s", error_local->message);
@@ -2052,15 +2055,24 @@ zif_store_remote_load (ZifStore *store, ZifState *state, GError **error)
 	}
 
 	/* media id, for matching in .discinfo */
-	remote->priv->media_id = g_key_file_get_string (file, remote->priv->id, "mediaid", NULL);
+	remote->priv->media_id = g_key_file_get_string (remote->priv->file,
+							remote->priv->id,
+							"mediaid",
+							NULL);
 
 	/* the value to expire the cache by */
-	metadata_expire = g_key_file_get_string (file, remote->priv->id, "metadata_expire", NULL);
+	metadata_expire = g_key_file_get_string (remote->priv->file,
+						 remote->priv->id,
+						 "metadata_expire",
+						 NULL);
 	if (metadata_expire != NULL)
 		remote->priv->metadata_expire = zif_time_string_to_seconds (metadata_expire);
 
 	/* enabled is not a required key */
-	enabled = g_key_file_get_string (file, remote->priv->id, "enabled", NULL);
+	enabled = g_key_file_get_string (remote->priv->file,
+					 remote->priv->id,
+					 "enabled",
+					 NULL);
 
 	/* convert to bool, otherwise assume valid */
 	if (enabled != NULL)
@@ -2084,10 +2096,15 @@ zif_store_remote_load (ZifStore *store, ZifState *state, GError **error)
 	}
 
 	/* expand out */
-	remote->priv->name_expanded = zif_config_expand_substitutions (remote->priv->config, remote->priv->name, NULL);
+	remote->priv->name_expanded = zif_config_expand_substitutions (remote->priv->config,
+								       remote->priv->name,
+								       NULL);
 
 	/* get base url array (allowed to be blank) */
-	temp = g_key_file_get_string (file, remote->priv->id, "baseurl", NULL);
+	temp = g_key_file_get_string (remote->priv->file,
+				      remote->priv->id,
+				      "baseurl",
+				      NULL);
 	if (temp != NULL && temp[0] != '\0') {
 		baseurl_temp = zif_config_expand_substitutions (remote->priv->config,
 								temp, NULL);
@@ -2103,22 +2120,34 @@ zif_store_remote_load (ZifStore *store, ZifState *state, GError **error)
 	g_free (temp);
 
 	/* get mirror list (allowed to be blank) */
-	temp = g_key_file_get_string (file, remote->priv->id, "mirrorlist", NULL);
+	temp = g_key_file_get_string (remote->priv->file,
+				      remote->priv->id,
+				      "mirrorlist",
+				      NULL);
 	if (temp != NULL && temp[0] != '\0')
 		remote->priv->mirrorlist = zif_config_expand_substitutions (remote->priv->config,
 									    temp, NULL);
 	g_free (temp);
 
 	/* get metalink (allowed to be blank) */
-	temp = g_key_file_get_string (file, remote->priv->id, "metalink", NULL);
+	temp = g_key_file_get_string (remote->priv->file,
+				      remote->priv->id,
+				      "metalink",
+				      NULL);
 	if (temp != NULL && temp[0] != '\0')
 		remote->priv->metalink = zif_config_expand_substitutions (remote->priv->config,
 									  temp, NULL);
 	g_free (temp);
 
 	/* get public key for repo */
-	gpgcheck = g_key_file_get_boolean (file, remote->priv->id, "gpgcheck", NULL);
-	temp = g_key_file_get_string (file, remote->priv->id, "gpgkey", NULL);
+	gpgcheck = g_key_file_get_boolean (remote->priv->file,
+					   remote->priv->id,
+					   "gpgcheck",
+					   NULL);
+	temp = g_key_file_get_string (remote->priv->file,
+				      remote->priv->id,
+				      "gpgkey",
+				      NULL);
 	if (gpgcheck && temp != NULL) {
 		remote->priv->pubkey = zif_config_expand_substitutions (remote->priv->config,
 									temp,
@@ -2189,8 +2218,74 @@ zif_store_remote_load (ZifStore *store, ZifState *state, GError **error)
 out:
 	g_free (metadata_expire);
 	g_free (enabled);
-	if (file != NULL)
-		g_key_file_free (file);
+	return ret;
+}
+
+/**
+ * zif_store_remote_get_string:
+ * @store: A #ZifStoreRemote
+ * @key: A key name to retrieve, e.g. "keepcache"
+ * @error: A #GError, or %NULL
+ *
+ * Gets a string value from the repo, falling back to the config file
+ * if not found.
+ *
+ * Return value: An allocated value, or %NULL
+ *
+ * Since: 0.2.6
+ **/
+gchar *
+zif_store_remote_get_string (ZifStoreRemote *store,
+			     const gchar *key,
+			     GError **error)
+{
+	gchar *tmp;
+
+	/* get from config first */
+	tmp = g_key_file_get_string (store->priv->file,
+				     store->priv->id,
+				     key,
+				     NULL);
+	if (tmp != NULL)
+		goto out;
+	tmp = zif_config_get_string (store->priv->config,
+				     key,
+				     error);
+out:
+	return tmp;
+}
+
+/**
+ * zif_store_remote_get_boolean:
+ * @store: A #ZifStoreRemote
+ * @key: A key name to retrieve, e.g. "keepcache"
+ * @error: A #GError, or %NULL
+ *
+ * Gets a boolean value from the repo, falling back to the config file
+ * if not found.
+ *
+ * Return value: %TRUE or %FALSE
+ *
+ * Since: 0.2.6
+ **/
+gboolean
+zif_store_remote_get_boolean (ZifStoreRemote *store,
+			      const gchar *key,
+			      GError **error)
+{
+	gboolean ret = FALSE;
+	gchar *tmp;
+
+	/* get from config first */
+	tmp = zif_store_remote_get_string (store,
+					   key,
+					   error);
+	if (tmp != NULL) {
+		ret = zif_boolean_from_text (tmp);
+		goto out;
+	}
+out:
+	g_free (tmp);
 	return ret;
 }
 
@@ -4235,6 +4330,9 @@ zif_store_remote_finalize (GObject *object)
 	g_free (store->priv->cache_dir);
 	g_free (store->priv->repomd_filename);
 	g_free (store->priv->directory);
+
+	if (store->priv->file != NULL)
+		g_key_file_free (store->priv->file);
 
 	g_object_unref (store->priv->md_other_sql);
 	g_object_unref (store->priv->md_primary_sql);
