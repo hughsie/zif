@@ -58,6 +58,7 @@ libzif_include_HEADERS =					\
 	zif-release.h						\
 	zif-repos.h						\
 	zif-state.h						\
+	zif-state-private.h					\
 	zif-store-array.h					\
 	zif-store.h						\
 	zif-store-local.h					\
