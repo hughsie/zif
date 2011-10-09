@@ -35,6 +35,8 @@ G_BEGIN_DECLS
 
 void		 zif_state_cancel_on_signal		(ZifState		*state,
 							 gint			 signum);
+void		 zif_state_set_process_event_sources	(ZifState		*state,
+							 gboolean		 run);
 
 G_END_DECLS
 

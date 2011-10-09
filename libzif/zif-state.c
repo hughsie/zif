@@ -98,6 +98,7 @@ struct _ZifStatePrivate
 	gboolean		 allow_cancel_child;
 	gboolean		 enable_profile;
 	gboolean		 report_progress;
+	gboolean		 process_event_sources;
 	GCancellable		*cancellable;
 	gchar			*action_hint;
 	gchar			*id;
@@ -1131,6 +1132,10 @@ zif_state_get_child (ZifState *state)
 	/* set the profile state */
 	zif_state_set_enable_profile (child,
 				      state->priv->enable_profile);
+
+	/* set the mainloop clearing */
+	zif_state_set_process_event_sources (child,
+				         state->priv->process_event_sources);
 out:
 	return child;
 }
@@ -1155,6 +1160,9 @@ zif_state_cancel_on_signal_cb (gpointer user_data)
  * Call this when the default signal handlers have been messed up
  * (thanks to librpm, typically) and we just want a signal to cancel
  * the #ZifState.
+ *
+ * You probably want to use zif_state_set_process_event_sources() if you're
+ * relying on this functionality and have no mainloop.
  *
  * Since: 0.2.5
  **/
@@ -1368,6 +1376,31 @@ zif_state_show_profile (ZifState *state)
 }
 
 /**
+ * zif_state_set_process_event_sources:
+ * @state: A #ZifState
+ * @run: %TRUE if g_main_context_iteration() should be run on pending sources.
+ *
+ * Process any pending events when the ZifState is checked.
+ *
+ * This method needs to be used when there is no running mainloop in the
+ * program that's using libzif, as UNIX signals such as SIGINT are
+ * emitted in an idle handler.
+ *
+ * It's probably not a good idea to set @run to %TRUE when the calling
+ * program has a mainloop, or unexpected things might happen.
+ *
+ * Return value: %TRUE for success, %FALSE otherwise
+ *
+ * Since: 0.2.6
+ **/
+void
+zif_state_set_process_event_sources (ZifState *state, gboolean run)
+{
+	g_return_if_fail (ZIF_IS_STATE (state));
+	state->priv->process_event_sources = run;
+}
+
+/**
  * zif_state_done_real:
  * @state: A #ZifState
  * @error: A #GError or %NULL
@@ -1389,8 +1422,10 @@ zif_state_done_real (ZifState *state, GError **error, const gchar *strloc)
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
 	/* clear queue */
-	while (g_main_context_pending (NULL))
-		g_main_context_iteration (NULL, FALSE);
+	if (state->priv->process_event_sources) {
+		while (g_main_context_pending (NULL))
+			g_main_context_iteration (NULL, FALSE);
+	}
 
 	/* are we cancelled */
 	if (g_cancellable_is_cancelled (state->priv->cancellable)) {
@@ -1501,8 +1536,10 @@ zif_state_finished_real (ZifState *state, GError **error, const gchar *strloc)
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
 	/* clear queue */
-	while (g_main_context_pending (NULL))
-		g_main_context_iteration (NULL, FALSE);
+	if (state->priv->process_event_sources) {
+		while (g_main_context_pending (NULL))
+			g_main_context_iteration (NULL, FALSE);
+	}
 
 	/* are we cancelled */
 	if (g_cancellable_is_cancelled (state->priv->cancellable)) {

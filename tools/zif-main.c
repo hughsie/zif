@@ -37,6 +37,7 @@
 #include <termios.h>
 #include <unistd.h>
 #include <zif.h>
+#include <zif-private.h>
 
 #include "zif-progress-bar.h"
 
@@ -6566,6 +6567,7 @@ main (int argc, char *argv[])
 	/* ZifState */
 	priv->state = zif_state_new ();
 	zif_state_set_enable_profile (priv->state, profile);
+	zif_state_set_process_event_sources (priv->state, TRUE);
 	g_signal_connect (priv->state, "percentage-changed",
 			  G_CALLBACK (zif_state_percentage_changed_cb),
 			  priv->progressbar);

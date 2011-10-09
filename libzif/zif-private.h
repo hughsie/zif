@@ -29,6 +29,7 @@
 
 #include <zif-object-array.h>
 #include <zif-package-private.h>
+#include <zif-state-private.h>
 #include <zif-string.h>
 
 #undef __ZIF_PRIVATE_H_INSIDE__
