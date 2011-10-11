@@ -2520,14 +2520,18 @@ static gboolean
 zif_cmd_install (ZifCmdPrivate *priv, gchar **values, GError **error)
 {
 	gboolean enable_debuginfo;
+	gboolean found;
 	gboolean has_debuginfo = FALSE;
 	gboolean ret = FALSE;
+	gchar **values_new = NULL;
 	GError *error_local = NULL;
 	GPtrArray *array = NULL;
+	GPtrArray *store_array_all = NULL;
 	GPtrArray *store_array_local = NULL;
 	GPtrArray *store_array_remote = NULL;
-	GPtrArray *store_array_all = NULL;
-	guint i;
+	GString *string = NULL;
+	guint idx = 0;
+	guint i, j;
 	ZifPackage *package;
 	ZifRepos *repos = NULL;
 	ZifState *state_local;
@@ -2584,11 +2588,45 @@ zif_cmd_install (ZifCmdPrivate *priv, gchar **values, GError **error)
 		ret = FALSE;
 		goto out;
 	}
+
+	/* add any found to the problems string */
 	if (array->len > 0) {
+		string = g_string_new ("");
+		for (i = 0; i < array->len; i++) {
+			/* TRANSLATORS: warning message */
+			g_string_append_printf (string,
+						_("The %s package is already installed"),
+						values[i]);
+			g_string_append (string, "\n");
+		}
+	}
+
+	/* nothing to do */
+	if (array->len == g_strv_length (values)) {
 		ret = FALSE;
 		/* TRANSLATORS: error message */
-		g_set_error (error, 1, 0, _("%s is already installed"), values[0]);
+		g_set_error_literal (error, 1, 0, _("All packages are already installed"));
 		goto out;
+	}
+
+	/* create a new resolve string with only the missing values */
+	if (array->len > 0) {
+		values_new = g_new0 (gchar *, g_strv_length (values) + 1);
+		for (i = 0; values[i] != NULL; i++) {
+			found = FALSE;
+			for (j = 0; j < array->len; j++) {
+				package = g_ptr_array_index (array, j);
+				if (g_strcmp0 (values[i],
+					       zif_package_get_name (package)) == 0) {
+					found = TRUE;
+					break;
+				}
+			}
+			if (!found)
+				values_new[idx++] = g_strdup (values[i]);
+		}
+	} else {
+		values_new = g_strdupv (values);
 	}
 
 	/* this section done */
@@ -2662,7 +2700,7 @@ zif_cmd_install (ZifCmdPrivate *priv, gchar **values, GError **error)
 	/* check we can find a package of this name */
 	state_local = zif_state_get_child (priv->state);
 	array = zif_store_array_resolve_full (store_array_remote,
-					      values,
+					      values_new,
 					      ZIF_STORE_RESOLVE_FLAG_USE_ALL |
 					      ZIF_STORE_RESOLVE_FLAG_USE_GLOB |
 					      ZIF_STORE_RESOLVE_FLAG_PREFER_NATIVE,
@@ -2726,9 +2764,16 @@ zif_cmd_install (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 	zif_progress_bar_end (priv->progressbar);
 
+	/* any warnings? */
+	if (string != NULL)
+		g_print ("%s", string->str);
+
 	/* success */
 	ret = TRUE;
 out:
+	g_strfreev (values_new);
+	if (string != NULL)
+		g_string_free (string, TRUE);
 	if (store_array_all != NULL)
 		g_ptr_array_unref (store_array_all);
 	if (repos != NULL)
