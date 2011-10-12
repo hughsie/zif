@@ -2098,7 +2098,11 @@ zif_store_remote_load (ZifStore *store, ZifState *state, GError **error)
 	/* expand out */
 	remote->priv->name_expanded = zif_config_expand_substitutions (remote->priv->config,
 								       remote->priv->name,
-								       NULL);
+								       error);
+	if (remote->priv->name_expanded == NULL) {
+		ret = FALSE;
+		goto out;
+	}
 
 	/* get base url array (allowed to be blank) */
 	temp = g_key_file_get_string (remote->priv->file,
@@ -2107,7 +2111,12 @@ zif_store_remote_load (ZifStore *store, ZifState *state, GError **error)
 				      NULL);
 	if (temp != NULL && temp[0] != '\0') {
 		baseurl_temp = zif_config_expand_substitutions (remote->priv->config,
-								temp, NULL);
+								temp,
+								error);
+		if (baseurl_temp == NULL) {
+			ret = FALSE;
+			goto out;
+		}
 		remote->priv->baseurl = g_strsplit (baseurl_temp, ";", -1);
 		for (i=0; remote->priv->baseurl[i] != NULL; i++) {
 			zif_download_location_add_uri (remote->priv->download,
@@ -2124,9 +2133,15 @@ zif_store_remote_load (ZifStore *store, ZifState *state, GError **error)
 				      remote->priv->id,
 				      "mirrorlist",
 				      NULL);
-	if (temp != NULL && temp[0] != '\0')
+	if (temp != NULL && temp[0] != '\0') {
 		remote->priv->mirrorlist = zif_config_expand_substitutions (remote->priv->config,
-									    temp, NULL);
+									    temp,
+									    error);
+		if (remote->priv->mirrorlist == NULL) {
+			ret = FALSE;
+			goto out;
+		}
+	}
 	g_free (temp);
 
 	/* get metalink (allowed to be blank) */
@@ -2134,9 +2149,15 @@ zif_store_remote_load (ZifStore *store, ZifState *state, GError **error)
 				      remote->priv->id,
 				      "metalink",
 				      NULL);
-	if (temp != NULL && temp[0] != '\0')
+	if (temp != NULL && temp[0] != '\0') {
 		remote->priv->metalink = zif_config_expand_substitutions (remote->priv->config,
-									  temp, NULL);
+									  temp,
+									  error);
+		if (remote->priv->metalink == NULL) {
+			ret = FALSE;
+			goto out;
+		}
+	}
 	g_free (temp);
 
 	/* get public key for repo */
@@ -2151,7 +2172,11 @@ zif_store_remote_load (ZifStore *store, ZifState *state, GError **error)
 	if (gpgcheck && temp != NULL) {
 		remote->priv->pubkey = zif_config_expand_substitutions (remote->priv->config,
 									temp,
-									NULL);
+									error);
+		if (remote->priv->pubkey == NULL) {
+			ret = FALSE;
+			goto out;
+		}
 	}
 	g_free (temp);
 
