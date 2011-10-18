@@ -5170,6 +5170,7 @@ zif_transaction_commit_full (ZifTransaction *transaction,
 	gboolean yumdb_allow_write;
 	gboolean ret = FALSE;
 	gchar *verbosity_string = NULL;
+	gchar *scriptlet_filename = NULL;
 	gint vs_flags;
 	gint rc;
 	gint retval;
@@ -5264,7 +5265,12 @@ zif_transaction_commit_full (ZifTransaction *transaction,
 				commit);
 
 	/* capture scriptlet output */
-	commit->scriptlet_fd = Fopen ("/tmp/scriptlet.log", "w.ufdio");
+	scriptlet_filename = g_strdup_printf ("/tmp/zif-scriptlet-%c%c%c%c.log",
+					      g_random_int_range ('a', 'z'),
+					      g_random_int_range ('a', 'z'),
+					      g_random_int_range ('a', 'z'),
+					      g_random_int_range ('a', 'z'));
+	commit->scriptlet_fd = Fopen (scriptlet_filename, "w.ufdio");
 	rpmtsSetScriptFd (transaction->priv->ts,
 			  commit->scriptlet_fd);
 
@@ -5463,18 +5469,19 @@ zif_transaction_commit_full (ZifTransaction *transaction,
 		goto out;
 
 	/* copy the scriptlet data out */
-	ret = g_file_get_contents ("/tmp/scriptlet.log",
+	ret = g_file_get_contents (scriptlet_filename,
 				   &priv->script_stdout,
 				   NULL,
 				   error);
 	if (!ret)
 		goto out;
-	g_unlink ("/tmp/scriptlet.log");
+	g_unlink (scriptlet_filename);
 
 	/* success */
 	priv->state = ZIF_TRANSACTION_STATE_COMMITTED;
 	g_debug ("Done!");
 out:
+	g_free (scriptlet_filename);
 	g_free (verbosity_string);
 	if (commit != NULL) {
 		Fclose (commit->scriptlet_fd);
