@@ -2568,36 +2568,11 @@ zif_state_test_action_changed_cb (ZifState *state, ZifStateAction action, gpoint
 	_action_updates++;
 }
 
-static gboolean
-zif_state_error_handler_cb (const GError *error, gpointer user_data)
-{
-	/* emit a warning, this isn't fatal */
-	g_debug ("ignoring errors: %s", error->message);
-	return TRUE;
-}
-
-static gboolean
-zif_state_take_lock_cb (ZifState *state,
-			ZifLock *lock,
-			ZifLockType lock_type,
-			GError **error,
-			gpointer user_data)
-{
-	/* just return success without asking or writing any files */
-	return TRUE;
-}
-
 static void
 zif_state_func (void)
 {
 	gboolean ret;
-	gchar *filename;
-	gchar *pidfile;
-	GError *error = NULL;
 	guint i;
-	ZifConfig *config;
-	ZifState *child;
-	ZifState *child_child;
 	ZifState *state;
 
 	for (i=0; i<ZIF_STATE_ACTION_UNKNOWN ;i++)
@@ -2660,6 +2635,14 @@ zif_state_func (void)
 
 	/* check we've not leaked anything */
 	zif_check_singletons ();
+}
+
+static void
+zif_state_child_func (void)
+{
+	gboolean ret;
+	ZifState *state;
+	ZifState *child;
 
 	/* reset */
 	_updates = 0;
@@ -2678,14 +2661,25 @@ zif_state_func (void)
 	// child:                         |-------------|---------|
 
 	/* PARENT UPDATE */
+	g_debug ("parent update #1");
 	ret = zif_state_done (state, NULL);
 
 	g_assert ((_updates == 1));
 	g_assert ((_last_percent == 50));
 
+	/* set parent state */
+	g_debug ("setting: depsolving-conflicts");
+	zif_state_action_start (state,
+				ZIF_STATE_ACTION_DEPSOLVING_CONFLICTS,
+				"hal;0.1.0-1;i386;fedora");
+
 	/* now test with a child */
 	child = zif_state_get_child (state);
 	zif_state_set_number_steps (child, 2);
+
+	/* check child inherits parents action */
+	g_assert_cmpint (zif_state_get_action (child), ==,
+			 ZIF_STATE_ACTION_DEPSOLVING_CONFLICTS);
 
 	/* set child non-cancellable */
 	zif_state_set_allow_cancel (child, FALSE);
@@ -2695,20 +2689,36 @@ zif_state_func (void)
 	g_assert (!zif_state_get_allow_cancel (state));
 
 	/* CHILD UPDATE */
+	g_debug ("setting: loading-rpmdb");
+	g_assert (zif_state_action_start (child, ZIF_STATE_ACTION_LOADING_RPMDB, NULL));
+	g_assert_cmpint (zif_state_get_action (child), ==,
+			 ZIF_STATE_ACTION_LOADING_RPMDB);
+
+	g_debug ("child update #1");
 	ret = zif_state_done (child, NULL);
 
 	g_assert ((_updates == 2));
 	g_assert ((_last_percent == 75));
 
 	/* child action */
-	g_assert (zif_state_action_start (state, ZIF_STATE_ACTION_DOWNLOADING, NULL));
+	g_debug ("setting: downloading");
+	g_assert (zif_state_action_start (child,
+					  ZIF_STATE_ACTION_DOWNLOADING,
+					  NULL));
+	g_assert_cmpint (zif_state_get_action (child), ==,
+			 ZIF_STATE_ACTION_DOWNLOADING);
 
 	/* CHILD UPDATE */
+	g_debug ("child update #2");
 	ret = zif_state_done (child, NULL);
 
+	g_assert_cmpint (zif_state_get_action (state), ==,
+			 ZIF_STATE_ACTION_DEPSOLVING_CONFLICTS);
+	g_assert (zif_state_action_stop (state));
 	g_assert (!zif_state_action_stop (state));
-	g_assert_cmpint (zif_state_get_action (state), ==, ZIF_STATE_ACTION_UNKNOWN);
-	g_assert_cmpint (_action_updates, ==, 2);
+	g_assert_cmpint (zif_state_get_action (state), ==,
+			 ZIF_STATE_ACTION_UNKNOWN);
+	g_assert_cmpint (_action_updates, ==, 6);
 
 	g_assert_cmpint (_updates, ==, 3);
 	g_assert ((_last_percent == 100));
@@ -2718,7 +2728,9 @@ zif_state_func (void)
 	g_assert (ret);
 
 	/* PARENT UPDATE */
+	g_debug ("parent update #2");
 	ret = zif_state_done (state, NULL);
+	g_assert (ret);
 
 	/* ensure we ignored the duplicate */
 	g_assert_cmpint (_updates, ==, 3);
@@ -2728,6 +2740,13 @@ zif_state_func (void)
 
 	/* check we've not leaked anything */
 	zif_check_singletons ();
+}
+
+static void
+zif_state_parent_one_step_proxy_func (void)
+{
+	ZifState *state;
+	ZifState *child;
 
 	/* reset */
 	_updates = 0;
@@ -2752,66 +2771,16 @@ zif_state_func (void)
 
 	/* check we've not leaked anything */
 	zif_check_singletons ();
+}
 
-	/* test error ignoring */
-	state = zif_state_new ();
-	error = g_error_new (1, 0, "this is error: %i", 999);
-	ret = zif_state_error_handler (state, error);
-	g_assert (!ret);
-
-	/* ensure child also fails */
-	child = zif_state_get_child (state);
-	ret = zif_state_error_handler (child, error);
-	g_assert (!ret);
-
-	/* pass all errors */
-	zif_state_set_error_handler (state, zif_state_error_handler_cb, NULL);
-	ret = zif_state_error_handler (state, error);
-	g_assert (ret);
-
-	/* ensure existing child also gets error handler passed down to it */
-	ret = zif_state_error_handler (child, error);
-	g_assert (ret);
-
-	g_object_unref (state);
-	g_clear_error (&error);
-
-	/* check we've not leaked anything */
-	zif_check_singletons ();
-
-	/* test new child gets error handler passed to it */
-	state = zif_state_new ();
-	error = g_error_new (1, 0, "this is error: %i", 999);
-	zif_state_set_error_handler (state, zif_state_error_handler_cb, NULL);
-	child = zif_state_get_child (state);
-	ret = zif_state_error_handler (child, error);
-	g_assert (ret);
-
-	g_object_unref (state);
-	g_clear_error (&error);
-
-	/* check we've not leaked anything */
-	zif_check_singletons ();
-
-	/* check straight finish */
-	state = zif_state_new ();
-	zif_state_set_number_steps (state, 3);
-
-	child = zif_state_get_child (state);
-	zif_state_set_number_steps (child, 3);
-	ret = zif_state_finished (child, &error);
-	g_assert_no_error (error);
-	g_assert (ret);
-
-	/* parent step done after child finish */
-	ret = zif_state_done (state, &error);
-	g_assert_no_error (error);
-	g_assert (ret);
-
-	g_object_unref (state);
-
-	/* check we've not leaked anything */
-	zif_check_singletons ();
+static void
+zif_state_non_equal_steps_func (void)
+{
+	gboolean ret;
+	GError *error = NULL;
+	ZifState *state;
+	ZifState *child;
+	ZifState *child_child;
 
 	/* test non-equal steps */
 	state = zif_state_new ();
@@ -2931,6 +2900,15 @@ zif_state_func (void)
 
 	/* check we've not leaked anything */
 	zif_check_singletons ();
+}
+
+static void
+zif_state_no_progress_func (void)
+{
+	gboolean ret;
+	GError *error = NULL;
+	ZifState *state;
+	ZifState *child;
 
 	/* test a state where we don't care about progress */
 	state = zif_state_new ();
@@ -2963,6 +2941,98 @@ zif_state_func (void)
 
 	/* check we've not leaked anything */
 	zif_check_singletons ();
+}
+
+static void
+zif_state_finish_func (void)
+{
+	gboolean ret;
+	GError *error = NULL;
+	ZifState *state;
+	ZifState *child;
+
+	/* check straight finish */
+	state = zif_state_new ();
+	zif_state_set_number_steps (state, 3);
+
+	child = zif_state_get_child (state);
+	zif_state_set_number_steps (child, 3);
+	ret = zif_state_finished (child, &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	/* parent step done after child finish */
+	ret = zif_state_done (state, &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	g_object_unref (state);
+
+	/* check we've not leaked anything */
+	zif_check_singletons ();
+}
+
+static gboolean
+zif_state_error_handler_cb (const GError *error, gpointer user_data)
+{
+	/* emit a warning, this isn't fatal */
+	g_debug ("ignoring errors: %s", error->message);
+	return TRUE;
+}
+
+static void
+zif_state_error_handler_func (void)
+{
+	gboolean ret;
+	GError *error = NULL;
+	ZifState *state;
+	ZifState *child;
+
+	/* test error ignoring */
+	state = zif_state_new ();
+	error = g_error_new (1, 0, "this is error: %i", 999);
+	ret = zif_state_error_handler (state, error);
+	g_assert (!ret);
+
+	/* ensure child also fails */
+	child = zif_state_get_child (state);
+	ret = zif_state_error_handler (child, error);
+	g_assert (!ret);
+
+	/* pass all errors */
+	zif_state_set_error_handler (state, zif_state_error_handler_cb, NULL);
+	ret = zif_state_error_handler (state, error);
+	g_assert (ret);
+
+	/* ensure existing child also gets error handler passed down to it */
+	ret = zif_state_error_handler (child, error);
+	g_assert (ret);
+
+	g_object_unref (state);
+	g_clear_error (&error);
+
+	/* check we've not leaked anything */
+	zif_check_singletons ();
+
+	/* test new child gets error handler passed to it */
+	state = zif_state_new ();
+	error = g_error_new (1, 0, "this is error: %i", 999);
+	zif_state_set_error_handler (state, zif_state_error_handler_cb, NULL);
+	child = zif_state_get_child (state);
+	ret = zif_state_error_handler (child, error);
+	g_assert (ret);
+
+	g_object_unref (state);
+	g_clear_error (&error);
+
+	/* check we've not leaked anything */
+	zif_check_singletons ();
+}
+
+static void
+zif_state_speed_func (void)
+{
+	ZifState *state;
 
 	/* speed averaging test */
 	state = zif_state_new ();
@@ -2983,6 +3053,28 @@ zif_state_func (void)
 
 	/* check we've not leaked anything */
 	zif_check_singletons ();
+}
+
+static gboolean
+zif_state_take_lock_cb (ZifState *state,
+			ZifLock *lock,
+			ZifLockType lock_type,
+			GError **error,
+			gpointer user_data)
+{
+	/* just return success without asking or writing any files */
+	return TRUE;
+}
+
+static void
+zif_state_locking_func (void)
+{
+	gboolean ret;
+	gchar *filename;
+	gchar *pidfile;
+	GError *error = NULL;
+	ZifConfig *config;
+	ZifState *state;
 
 	/* locking test */
 	config = zif_config_new ();
@@ -4285,6 +4377,14 @@ main (int argc, char **argv)
 	/* tests go here */
 	g_test_add_func ("/zif/utils", zif_utils_func);
 	g_test_add_func ("/zif/state", zif_state_func);
+	g_test_add_func ("/zif/state[child]", zif_state_child_func);
+	g_test_add_func ("/zif/state[parent-1-step]", zif_state_parent_one_step_proxy_func);
+	g_test_add_func ("/zif/state[no-equal]", zif_state_non_equal_steps_func);
+	g_test_add_func ("/zif/state[no-progress]", zif_state_no_progress_func);
+	g_test_add_func ("/zif/state[finish]", zif_state_finish_func);
+	g_test_add_func ("/zif/state[error-handler]", zif_state_error_handler_func);
+	g_test_add_func ("/zif/state[speed]", zif_state_speed_func);
+	g_test_add_func ("/zif/state[locking]", zif_state_locking_func);
 	g_test_add_func ("/zif/changeset", zif_changeset_func);
 	g_test_add_func ("/zif/config", zif_config_func);
 	g_test_add_func ("/zif/config[changed]", zif_config_changed_func);

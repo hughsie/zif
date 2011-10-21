@@ -120,6 +120,7 @@ struct _ZifStatePrivate
 	gulong			 subpercentage_child_id;
 	ZifStateAction		 action;
 	ZifStateAction		 last_action;
+	ZifStateAction		 child_action;
 	ZifState		*child;
 	ZifStateErrorHandlerCb	 error_handler_cb;
 	ZifStateLockHandlerCb	 lock_handler_cb;
@@ -891,6 +892,13 @@ zif_state_child_percentage_changed_cb (ZifState *child, guint percentage, ZifSta
 		return;
 	}
 
+	/* restore the pre-child action */
+	if (percentage == 100) {
+		state->priv->last_action = state->priv->child_action;
+		g_debug ("restoring last action %s",
+			 zif_state_action_to_string (state->priv->child_action));
+	}
+
 	/* get the extra contributed by the child */
 	extra = ((gfloat) percentage / 100.0f) * range;
 
@@ -1106,6 +1114,10 @@ zif_state_get_child (ZifState *state)
 	/* reset child */
 	child->priv->current = 0;
 	child->priv->last_percentage = 0;
+
+	/* save so we can recover after child has done */
+	child->priv->action = state->priv->action;
+	state->priv->child_action = state->priv->action;
 
 	/* set the global share on the new child */
 	zif_state_set_global_share (child, state->priv->global_share);
