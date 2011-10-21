@@ -623,11 +623,6 @@ zif_state_valid (ZifState *state)
 {
 	if (state == NULL)
 		return FALSE;
-	if (state->priv->steps != 0) {
-		zif_state_print_parent_chain (state, 0);
-		g_warning ("steps not zero");
-		return FALSE;
-	}
 	if (state->priv->current != 0) {
 		zif_state_print_parent_chain (state, 0);
 		g_warning ("current not zero");
