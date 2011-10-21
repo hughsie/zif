@@ -3805,6 +3805,8 @@ static gboolean
 zif_cmd_repo_list (ZifCmdPrivate *priv, gchar **values, GError **error)
 {
 	gboolean ret;
+	gboolean show_disabled = FALSE;
+	gboolean show_enabled = TRUE;
 	gchar *id_pad;
 	GPtrArray *array;
 	GString *string = NULL;
@@ -3815,6 +3817,18 @@ zif_cmd_repo_list (ZifCmdPrivate *priv, gchar **values, GError **error)
 	ZifStore *store_tmp;
 	gboolean enabled;
 	const gchar *name;
+
+	/* show all? */
+	if (values != NULL) {
+		if (g_strcmp0 (values[0], "disabled") == 0) {
+			show_enabled = FALSE;
+			show_disabled = TRUE;
+		}
+		if (g_strcmp0 (values[0], "all") == 0) {
+			show_enabled = TRUE;
+			show_disabled = TRUE;
+		}
+	}
 
 	/* ZifRepos */
 	repos = zif_repos_new ();
@@ -3855,11 +3869,15 @@ zif_cmd_repo_list (ZifCmdPrivate *priv, gchar **values, GError **error)
 		zif_state_reset (priv->state);
 		enabled = zif_store_remote_get_enabled (ZIF_STORE_REMOTE (store_tmp),
 							priv->state, NULL);
-		g_string_append (string, id_pad);
-		g_string_append (string, enabled ? " enabled   " : " disabled  ");
-		g_string_append (string, name);
-		g_string_append (string, "\n");
-		g_free (id_pad);
+		if ((enabled && show_enabled) ||
+		    (!enabled && show_disabled)) {
+			g_string_append (string, id_pad);
+			if (show_enabled && show_disabled)
+				g_string_append (string, enabled ? " enabled   " : " disabled  ");
+			g_string_append (string, name);
+			g_string_append (string, "\n");
+			g_free (id_pad);
+		}
 	}
 
 	zif_progress_bar_end (priv->progressbar);
