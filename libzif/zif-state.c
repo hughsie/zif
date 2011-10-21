@@ -1466,7 +1466,7 @@ zif_state_done_real (ZifState *state, GError **error, const gchar *strloc)
 	}
 
 	/* is already at 100%? */
-	if (state->priv->current == state->priv->steps) {
+	if (state->priv->current >= state->priv->steps) {
 		g_set_error (error, ZIF_STATE_ERROR, ZIF_STATE_ERROR_INVALID,
 			     "already at 100%% state [%s]", strloc);
 		zif_state_print_parent_chain (state, 0);
