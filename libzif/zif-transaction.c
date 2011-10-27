@@ -481,7 +481,8 @@ zif_transaction_get_reason (ZifTransaction *transaction,
  * Since: 0.1.3
  **/
 GPtrArray *
-zif_transaction_get_array_for_reason (ZifTransaction *transaction, ZifTransactionReason reason)
+zif_transaction_get_array_for_reason (ZifTransaction *transaction,
+				      ZifTransactionReason reason)
 {
 	GPtrArray *array;
 	guint i;
@@ -3562,7 +3563,9 @@ out:
  * zif_transaction_add_public_key_to_rpmdb:
  **/
 static gboolean
-zif_transaction_add_public_key_to_rpmdb (rpmKeyring keyring, const gchar *filename, GError **error)
+zif_transaction_add_public_key_to_rpmdb (rpmKeyring keyring,
+					 const gchar *filename,
+					 GError **error)
 {
 	gboolean ret = TRUE;
 	gchar *data = NULL;
@@ -3663,7 +3666,8 @@ out:
  * zif_transaction_add_public_keys_to_rpmdb:
  **/
 static gboolean
-zif_transaction_add_public_keys_to_rpmdb (rpmKeyring keyring, GError **error)
+zif_transaction_add_public_keys_to_rpmdb (rpmKeyring keyring,
+					  GError **error)
 {
 	GDir *dir;
 	const gchar *filename;
@@ -4789,7 +4793,9 @@ out:
  * zif_transaction_delete_packages:
  **/
 static gboolean
-zif_transaction_delete_packages (ZifTransaction *transaction, ZifState *state, GError **error)
+zif_transaction_delete_packages (ZifTransaction *transaction,
+				 ZifState *state,
+				 GError **error)
 {
 	gboolean in_repo_cache;
 	gchar *cachedir = NULL;
@@ -5504,7 +5510,9 @@ out:
  * Since: 0.1.3
  **/
 gboolean
-zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **error)
+zif_transaction_commit (ZifTransaction *transaction,
+			ZifState *state,
+			GError **error)
 {
 	return zif_transaction_commit_full (transaction, 0, state, error);
 }
@@ -5519,7 +5527,8 @@ zif_transaction_commit (ZifTransaction *transaction, ZifState *state, GError **e
  * Since: 0.1.3
  **/
 void
-zif_transaction_set_store_local (ZifTransaction *transaction, ZifStore *store)
+zif_transaction_set_store_local (ZifTransaction *transaction,
+				 ZifStore *store)
 {
 	g_return_if_fail (ZIF_IS_TRANSACTION (transaction));
 	g_return_if_fail (ZIF_IS_STORE (store));
@@ -5540,7 +5549,8 @@ zif_transaction_set_store_local (ZifTransaction *transaction, ZifStore *store)
  * Since: 0.1.3
  **/
 void
-zif_transaction_set_stores_remote (ZifTransaction *transaction, GPtrArray *stores)
+zif_transaction_set_stores_remote (ZifTransaction *transaction,
+				   GPtrArray *stores)
 {
 	g_return_if_fail (ZIF_IS_TRANSACTION (transaction));
 	g_return_if_fail (stores != NULL);
@@ -5562,7 +5572,8 @@ zif_transaction_set_stores_remote (ZifTransaction *transaction, GPtrArray *store
  * Since: 0.1.3
  **/
 void
-zif_transaction_set_verbose (ZifTransaction *transaction, gboolean verbose)
+zif_transaction_set_verbose (ZifTransaction *transaction,
+			     gboolean verbose)
 {
 	g_return_if_fail (ZIF_IS_TRANSACTION (transaction));
 	transaction->priv->verbose = verbose;

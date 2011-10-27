@@ -632,7 +632,9 @@ out:
  * Since: 0.1.0
  **/
 gboolean
-zif_package_local_set_from_filename (ZifPackageLocal *pkg, const gchar *filename, GError **error)
+zif_package_local_set_from_filename (ZifPackageLocal *pkg,
+				     const gchar *filename,
+				     GError **error)
 {
 	rpmRC rc;
 	FD_t fd = NULL;
