@@ -157,9 +157,9 @@ main (int argc, char **argv)
 	zif_store_rhn_set_channel (ZIF_STORE_RHN (store),
 				   "rhel-i386-client-6");
 	zif_store_rhn_set_precache (ZIF_STORE_RHN (store),
-				     ZIF_PACKAGE_RHN_PRECACHE_GET_DETAILS |
-				     ZIF_PACKAGE_RHN_PRECACHE_LIST_FILES |
-				     ZIF_PACKAGE_RHN_PRECACHE_LIST_DEPS);
+				    ZIF_PACKAGE_RHN_PRECACHE_GET_DETAILS |
+				    ZIF_PACKAGE_RHN_PRECACHE_LIST_FILES |
+				    ZIF_PACKAGE_RHN_PRECACHE_LIST_DEPS);
 	username =  zif_config_get_string (config, "username", NULL);
 	password =  zif_config_get_string (config, "password", NULL);
 	ret = zif_store_rhn_login (ZIF_STORE_RHN (store),

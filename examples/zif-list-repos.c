@@ -45,11 +45,10 @@ main (int argc, char **argv)
 	g_assert_no_error (error);
 	g_assert (ret);
 
-	/* create a local store -- we don't have to set the prefix as
-	 * we're using the default value in the config file */
+	/* create a repo reporting object */
 	repos = zif_repos_new ();
 
-	/* use progress reporting -- noo need to set the number of steps
+	/* use progress reporting -- no need to set the number of steps
 	 * as we're only using one method that needs the state */
 	state = zif_state_new ();
 

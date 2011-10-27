@@ -49,7 +49,7 @@ main (int argc, char **argv)
 	 * we're using the default value in the config file */
 	store = zif_store_local_new ();
 
-	/* use progress reporting -- noo need to set the number of steps
+	/* use progress reporting -- no need to set the number of steps
 	 * as we're only using one method that needs the state */
 	state = zif_state_new ();
 
