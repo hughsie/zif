@@ -881,6 +881,9 @@ zif_config_init (ZifConfig *config)
 {
 	const gchar *value;
 
+	/* make sure initialized */
+	zif_init ();
+
 	config->priv = ZIF_CONFIG_GET_PRIVATE (config);
 	config->priv->file_override = g_key_file_new ();
 	config->priv->file_default = g_key_file_new ();

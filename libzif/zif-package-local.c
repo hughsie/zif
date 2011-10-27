@@ -42,7 +42,7 @@
 #include "zif-package-local.h"
 #include "zif-package-private.h"
 #include "zif-string.h"
-#include "zif-utils.h"
+#include "zif-utils-private.h"
 
 #define ZIF_PACKAGE_LOCAL_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_PACKAGE_LOCAL, ZifPackageLocalPrivate))
 
@@ -793,6 +793,9 @@ zif_package_local_init (ZifPackageLocal *pkg)
 	pkg->priv->db = zif_db_new ();
 	pkg->priv->history = zif_history_new ();
 	pkg->priv->header = NULL;
+
+	/* make sure initialized */
+	zif_init ();
 }
 
 /**

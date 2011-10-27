@@ -4365,8 +4365,6 @@ main (int argc, char **argv)
 	g_thread_init (NULL);
 	g_test_init (&argc, &argv, NULL);
 
-	zif_init ();
-
 	/* only critical and error are fatal */
 	g_log_set_fatal_mask (NULL, G_LOG_LEVEL_ERROR | G_LOG_LEVEL_CRITICAL);
 

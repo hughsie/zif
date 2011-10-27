@@ -6472,7 +6472,6 @@ main (int argc, char *argv[])
 	if (! g_thread_supported ())
 		g_thread_init (NULL);
 	g_type_init ();
-	zif_init ();
 
 	priv->context = g_option_context_new ("ZIF Console Program");
 	g_option_context_add_main_entries (priv->context, options, NULL);

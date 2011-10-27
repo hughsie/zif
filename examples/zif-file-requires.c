@@ -43,7 +43,6 @@ main (int argc, char **argv)
 
 	g_type_init ();
 	g_thread_init (NULL);
-	zif_init ();
 
 	hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
 	config = zif_config_new ();

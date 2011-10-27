@@ -238,9 +238,25 @@ zif_utils_error_quark (void)
 }
 
 /**
+ * zif_init_once_cb:
+ **/
+static gpointer
+zif_init_once_cb (gpointer user_data)
+{
+	gint retval;
+	retval = rpmReadConfigFiles (NULL, NULL);
+	if (retval != 0) {
+		g_warning ("failed to read config files");
+		return NULL;
+	}
+	return GINT_TO_POINTER (1);
+}
+
+/**
  * zif_init:
  *
- * This must be called before any of the zif_* functions are called.
+ * This is called automatically to initialize libzif.
+ * You normally don't have to call this function manually.
  *
  * Return value: %TRUE if we initialised correctly
  *
@@ -249,15 +265,9 @@ zif_utils_error_quark (void)
 gboolean
 zif_init (void)
 {
-	gint retval;
-
-	retval = rpmReadConfigFiles (NULL, NULL);
-	if (retval != 0) {
-		g_warning ("failed to read config files");
-		return FALSE;
-	}
-
-	return TRUE;
+	static GOnce init_once = G_ONCE_INIT;
+	g_once (&init_once, zif_init_once_cb, NULL);
+	return GPOINTER_TO_INT (init_once.retval);
 }
 
 /**

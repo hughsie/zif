@@ -143,7 +143,6 @@ main (int argc, char **argv)
 
 	g_type_init ();
 	g_thread_init (NULL);
-	zif_init ();
 
 	/* the config file provides defaults */
 	config = zif_config_new ();

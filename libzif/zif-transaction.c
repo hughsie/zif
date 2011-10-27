@@ -76,7 +76,7 @@
 #include "zif-store-meta.h"
 #include "zif-store-remote-private.h"
 #include "zif-transaction.h"
-#include "zif-utils.h"
+#include "zif-utils-private.h"
 
 #define ZIF_TRANSACTION_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_TRANSACTION, ZifTransactionPrivate))
 
@@ -5690,6 +5690,9 @@ static void
 zif_transaction_init (ZifTransaction *transaction)
 {
 	transaction->priv = ZIF_TRANSACTION_GET_PRIVATE (transaction);
+
+	/* make sure initialized */
+	zif_init ();
 
 	transaction->priv->config = zif_config_new ();
 	transaction->priv->db = zif_db_new ();

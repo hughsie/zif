@@ -49,7 +49,6 @@ typedef enum {
 #define ZIF_PACKAGE_ID_ARCH	2
 #define ZIF_PACKAGE_ID_DATA	3
 
-gboolean	 zif_init			(void);
 GQuark		 zif_utils_error_quark		(void);
 void		 zif_list_print_array		(GPtrArray	*array);
 const gchar	*zif_guess_content_type		(const gchar	*filename);

@@ -33,6 +33,7 @@
 
 G_BEGIN_DECLS
 
+gboolean	 zif_init			(void);
 GKeyFile	*zif_load_multiline_key_file	(const gchar	*filename,
 						 GError		**error);
 

@@ -47,6 +47,7 @@
 #include "zif-package-private.h"
 #include "zif-state-private.h"
 #include "zif-store-local.h"
+#include "zif-utils-private.h"
 
 #define ZIF_STORE_LOCAL_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_STORE_LOCAL, ZifStoreLocalPrivate))
 
@@ -533,6 +534,9 @@ zif_store_local_init (ZifStoreLocal *store)
 	store->priv->monitor_changed_id =
 		g_signal_connect (store->priv->monitor, "changed",
 				  G_CALLBACK (zif_store_local_file_monitor_cb), store);
+
+	/* make sure initialized */
+	zif_init ();
 }
 
 /**
