@@ -411,9 +411,8 @@ zif_store_search_name (ZifStore *store,
 		       ZifState *state,
 		       GError **error)
 {
-	const gchar *package_id;
+	const gchar *name;
 	gboolean ret;
-	gchar *split_name;
 	GError *error_local = NULL;
 	GPtrArray *array = NULL;
 	GPtrArray *array_tmp = NULL;
@@ -482,15 +481,13 @@ zif_store_search_name (ZifStore *store,
 	array_tmp = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	for (i=0;i<store->priv->packages->len;i++) {
 		package = g_ptr_array_index (store->priv->packages, i);
-		package_id = zif_package_get_id (package);
-		split_name = zif_package_id_get_name (package_id);
+		name = zif_package_get_name (package);
 		for (j=0; search[j] != NULL; j++) {
-			if (strcasestr (split_name, search[j]) != NULL) {
+			if (strcasestr (name, search[j]) != NULL) {
 				g_ptr_array_add (array_tmp, g_object_ref (package));
 				break;
 			}
 		}
-		g_free (split_name);
 
 		/* this section done */
 		ret = zif_state_done (state_local, error);
@@ -645,9 +642,8 @@ zif_store_search_details (ZifStore *store,
 			  GError **error)
 {
 	const gchar *description;
-	const gchar *package_id;
+	const gchar *name;
 	gboolean ret;
-	gchar *split_name;
 	GError *error_local = NULL;
 	GPtrArray *array = NULL;
 	guint i, j;
@@ -718,12 +714,11 @@ zif_store_search_details (ZifStore *store,
 	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	for (i=0;i<store->priv->packages->len;i++) {
 		package = g_ptr_array_index (store->priv->packages, i);
-		package_id = zif_package_get_id (package);
 		state_loop = zif_state_get_child (state_local);
 		description = zif_package_get_description (package, state_loop, NULL);
-		split_name = zif_package_id_get_name (package_id);
+		name = zif_package_get_name (package);
 		for (j=0; search[j] != NULL; j++) {
-			if (strcasestr (split_name, search[j]) != NULL) {
+			if (strcasestr (name, search[j]) != NULL) {
 				g_ptr_array_add (array, g_object_ref (package));
 				break;
 			} else if (strcasestr (description, search[j]) != NULL) {
@@ -731,7 +726,6 @@ zif_store_search_details (ZifStore *store,
 				break;
 			}
 		}
-		g_free (split_name);
 
 		/* this section done */
 		ret = zif_state_done (state_local, error);
