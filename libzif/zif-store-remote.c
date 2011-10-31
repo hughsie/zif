@@ -4063,8 +4063,6 @@ zif_store_remote_is_devel (ZifStoreRemote *store, ZifState *state, GError **erro
 	/* do tests */
 	if (g_str_has_suffix (store->priv->id, "-debuginfo"))
 		return TRUE;
-	if (g_str_has_suffix (store->priv->id, "-testing"))
-		return TRUE;
 	if (g_str_has_suffix (store->priv->id, "-debug"))
 		return TRUE;
 	if (g_str_has_suffix (store->priv->id, "-development"))
