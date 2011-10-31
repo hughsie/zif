@@ -1937,16 +1937,44 @@ zif_cmd_get_upgrades (ZifCmdPrivate *priv, gchar **values, GError **error)
 	guint i;
 	ZifRelease *release = NULL;
 	ZifUpgrade *upgrade;
+	ZifState *state_local;
 
 	/* TRANSLATORS: getting details of any distro upgrades */
 	zif_progress_bar_start (priv->progressbar, _("Getting upgrades"));
 
+	/* set steps */
+	ret = zif_state_set_steps (priv->state,
+				   error,
+				   80,
+				   20,
+				   -1);
+	if (!ret)
+		goto out;
+
+	/* it might seem odd to open and load the local store here, but
+	 * we need to have set the releasever */
+	state_local = zif_state_get_child (priv->state);
+	ret = zif_store_load (priv->store_local, state_local, error);
+	if (!ret)
+		goto out;
+
+	/* this section done */
+	ret = zif_state_done (priv->state, error);
+	if (!ret)
+		goto out;
+
 	release = zif_release_new ();
-	array = zif_release_get_upgrades_new (release, priv->state, error);
+	state_local = zif_state_get_child (priv->state);
+	array = zif_release_get_upgrades_new (release, state_local, error);
 	if (array == NULL) {
 		ret = FALSE;
 		goto out;
 	}
+
+	/* this section done */
+	ret = zif_state_done (priv->state, error);
+	if (!ret)
+		goto out;
 
 	/* done with the bar */
 	zif_progress_bar_end (priv->progressbar);
