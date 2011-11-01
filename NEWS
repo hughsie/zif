@@ -1,3 +1,29 @@
+Version 0.2.6
+~~~~~~~~~~~~~
+Released: 2011-11-01
+
+New Features:
+ - Add zif_state_set_process_event_sources() for non-mainloop programs to use (Richard Hughes)
+ - Allow getting per-source config keys from .repo files (Richard Hughes)
+ - Automatically call zif_init() so client programs don't have to (Richard Hughes)
+ - Implement zif_history_get_transactions_for_package (Elad Alfassa)
+ - Use a random name for the scriptlet file saved in /tmp (Richard Hughes)
+ - When the Zif.conf file is changed, reload the config data on next access (Richard Hughes)
+
+Bugfixes:
+ - Do not consider a repo-id ending with '-testing' a development repo (Richard Hughes)
+ - Don't print a warning if the number of steps is zero (Richard Hughes)
+ - Fix the deptree output (Elad Alfassa)
+ - Fix the transaction reason for downgraded packages (Richard Hughes)
+ - Fix 'zif get-upgrades' by loading the local store (Richard Hughes)
+ - Ignore packages that are already installed when doing 'zif install foo bar baz' (Richard Hughes)
+ - Only print the enabled repos by default when doing 'zif repo-list' (Richard Hughes)
+ - Optimise resolving in ZifStore by not splitting the string (Richard Hughes)
+ - Require exactly 'y<enter>' or 'yes<enter>' before running a transaction (Richard Hughes)
+ - Restore the parent ZifStateAction after the child has completed (Richard Hughes)
+ - Return errors from zif_config_expand_substitutions() rather than ignoring them (Richard Hughes)
+ - zif_state_set_number_steps_real: return TRUE if steps is 0 (Kalev Lember)
+
 Version 0.2.5
 ~~~~~~~~~~~~~
 Released: 2011-10-03

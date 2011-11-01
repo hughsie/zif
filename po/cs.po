@@ -1,1165 +1,1163 @@
+# SOME DESCRIPTIVE TITLE.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
-#
+# 
 # Translators:
 # fri <pavelfric@seznam.cz>, 2011.
 #   <pavelfric@seznam.cz>, 2011.
-# Pavel Fric <fripohled.blogspot.com>, 2011.
 msgid ""
 msgstr ""
 "Project-Id-Version: Zif\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-09-23 16:05+0100\n"
-"PO-Revision-Date: 2011-10-02 14:37+0200\n"
-"Last-Translator: Pavel Fric <fripohled.blogspot.com>\n"
-"Language-Team: German <kde-i18n-doc@kde.org>\n"
+"POT-Creation-Date: 2011-10-03 10:55+0100\n"
+"PO-Revision-Date: 2011-10-03 10:05+0000\n"
+"Last-Translator: hughsie <richard@hughsie.com>\n"
+"Language-Team: Czech (http://www.transifex.net/projects/p/freedesktop/team/cs/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Language: cs\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2\n"
-"X-Generator: Lokalize 1.2\n"
 
-#: ../tools/zif-main.c:60
+#: ../tools/zif-main.c:65
 msgid "[⚐]"
 msgstr "[⚐]"
 
-#: ../tools/zif-main.c:62
+#: ../tools/zif-main.c:67
 msgid "[⚑]"
 msgstr "[⚑]"
 
-#: ../tools/zif-main.c:75
+#: ../tools/zif-main.c:80
 msgid "Updates installed package"
-msgstr "Zaktualizuje nainstalovaný balíček"
+msgstr ""
+
+#. TRANSLATORS: there are no packages that match
+#: ../tools/zif-main.c:112
+msgid "There are no packages to show."
+msgstr ""
 
 #. TRANSLATORS: this is when files, usually metadata or
 #. * package files are being checked for consitency
-#: ../tools/zif-main.c:151
+#: ../tools/zif-main.c:162
 msgid "Checking"
 msgstr "Ověřuje se"
 
 #. TRANSLATORS: A file is currently downloading
 #. TRANSLATORS: downloading packages
-#: ../tools/zif-main.c:155 ../tools/zif-main.c:693
+#: ../tools/zif-main.c:166 ../tools/zif-main.c:679
 msgid "Downloading"
 msgstr "Stahuje se"
 
 #. TRANSLATORS: A repository file is being read, and
 #. * the packages created internally
-#: ../tools/zif-main.c:160
+#: ../tools/zif-main.c:171
 msgid "Loading repository"
 msgstr "Nahrává se skladiště"
 
 #. TRANSLATORS: when a compressed metadata file is
 #. * being uncompressed onto the disk
-#: ../tools/zif-main.c:165
+#: ../tools/zif-main.c:176
 msgid "Decompressing"
 msgstr "Rozbaluje se"
 
 #. TRANSLATORS: when the transaction is being resolved,
 #. * and we make sure that it makes sense by adding
 #. * dependencies where required
-#: ../tools/zif-main.c:171
+#: ../tools/zif-main.c:182
 msgid "Calculating install"
 msgstr "Probíhá výpočet instalace"
 
 #. TRANSLATORS: when the transaction is being resolved,
 #. * and we make sure that it makes sense by removing
 #. * dependencies where required
-#: ../tools/zif-main.c:177
+#: ../tools/zif-main.c:188
 msgid "Calculating removal"
 msgstr "Probíhá výpočet odstranění"
 
 #. TRANSLATORS: when the transaction is being resolved,
 #. * and we make sure that it makes sense by adding and
 #. * removing dependencies where required
-#: ../tools/zif-main.c:183
+#: ../tools/zif-main.c:194
 msgid "Calculating update"
 msgstr "Probíhá výpočet aktualizace"
 
 #. TRANSLATORS: when the transaction is being checked
 #. * for conflicting packages
-#: ../tools/zif-main.c:188
+#: ../tools/zif-main.c:199
 msgid "Checking conflicts"
 msgstr "Ověřují se střety"
 
 #. TRANSLATORS: installing a package to the local system
 #. TRANSLATORS: this is the reason the action is to be taken
 #. TRANSLATORS: performing action
-#: ../tools/zif-main.c:192 ../tools/zif-main.c:2107 ../tools/zif-main.c:2480
+#: ../tools/zif-main.c:203 ../tools/zif-main.c:2101 ../tools/zif-main.c:2500
 msgid "Installing"
 msgstr "Instaluje se"
 
 #. TRANSLATORS: removing (deleting) a package
 #. TRANSLATORS: this is the reason the action is to be taken
 #. TRANSLATORS: performing action
-#: ../tools/zif-main.c:196 ../tools/zif-main.c:2127 ../tools/zif-main.c:3398
+#: ../tools/zif-main.c:207 ../tools/zif-main.c:2121 ../tools/zif-main.c:3478
 msgid "Removing"
 msgstr "Odstraňuje se"
 
 #. TRANSLATORS: updating an old version to a new version
 #. TRANSLATORS: this is the reason the action is to be taken
 #. TRANSLATORS: updating several packages
-#: ../tools/zif-main.c:200 ../tools/zif-main.c:2131 ../tools/zif-main.c:4343
+#: ../tools/zif-main.c:211 ../tools/zif-main.c:2125 ../tools/zif-main.c:4427
 msgid "Updating"
 msgstr "Aktualizuje se"
 
 #. TRANSLATORS: Cleaning up after an update, where we
 #. * remove the old version
 #. TRANSLATORS: we're cleaning the repo, deleting old files
-#: ../tools/zif-main.c:205 ../tools/zif-main.c:531
+#: ../tools/zif-main.c:216 ../tools/zif-main.c:519
 msgid "Cleaning"
 msgstr "Čistí se"
 
 #. TRANSLATORS: getting ready to do run the transaction,
 #. * doing things like checking the database and checking
 #. * for file conflicts
-#: ../tools/zif-main.c:211
+#: ../tools/zif-main.c:222
 msgid "Preparing"
 msgstr "Připravuje se"
 
 #. TRANSLATORS: checking the transaction for file
 #. * conflicts after packages have been downloaded
-#: ../tools/zif-main.c:216
+#: ../tools/zif-main.c:227
 msgid "Testing"
 msgstr "Zkouší se"
 
 #. TRANSLATORS: loading the rpmdb
-#: ../tools/zif-main.c:220
+#: ../tools/zif-main.c:231
 msgid "Loading installed"
-msgstr "Nahrávají se nainstalované"
+msgstr ""
 
 #. TRANSLATORS: calculating the update set
-#: ../tools/zif-main.c:224
+#: ../tools/zif-main.c:235
 msgid "Checking updates"
-msgstr "Přezkušují se aktualizace"
+msgstr ""
 
-#. TRANSLATORS: the user just did ctrl-c
-#: ../tools/zif-main.c:341
-msgid "Cancellation in progress..."
-msgstr "Probíhá rušení..."
-
-#: ../tools/zif-main.c:589
+#: ../tools/zif-main.c:577
 msgid "No packages found"
-msgstr "Nenalezeny žádné balíčky"
+msgstr ""
 
-#: ../tools/zif-main.c:616
+#: ../tools/zif-main.c:602
 msgid "No packages found (after filter)"
-msgstr "Nenalezeny žádné balíčky (po filtru)"
+msgstr ""
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:678
+#: ../tools/zif-main.c:664
 #, c-format
 msgid "No %s package was found"
 msgstr "Nebyl nalezen žádný balíček %s"
 
 #. TRANSLATORS: finding packages in local and remote repos
 #. TRANSLATORS: finding packages from a name
-#: ../tools/zif-main.c:745 ../tools/zif-main.c:3730
+#: ../tools/zif-main.c:731 ../tools/zif-main.c:3810
 msgid "Finding package"
 msgstr "Hledá se balíček"
 
 #. TRANSLATORS: getting the hierarchical groups from the server
-#: ../tools/zif-main.c:831
+#: ../tools/zif-main.c:817
 msgid "Getting categories"
 msgstr "Získávají se skupiny"
 
 #. TRANSLATORS: error message: user needs to specify a value
-#: ../tools/zif-main.c:941 ../tools/zif-main.c:1136 ../tools/zif-main.c:1278
-#: ../tools/zif-main.c:1587 ../tools/zif-main.c:2475 ../tools/zif-main.c:2644
-#: ../tools/zif-main.c:3393 ../tools/zif-main.c:3725
+#: ../tools/zif-main.c:927 ../tools/zif-main.c:1122 ../tools/zif-main.c:1265
+#: ../tools/zif-main.c:1581 ../tools/zif-main.c:2495 ../tools/zif-main.c:2722
+#: ../tools/zif-main.c:3473 ../tools/zif-main.c:3805
 #, c-format
 msgid "Specify a package name"
 msgstr "Zadejte název balíčku"
 
 #. TRANSLATORS: getting the list pf package dependencies for a package
 #. TRANSLATORS: getting the depends of a package
-#: ../tools/zif-main.c:946 ../tools/zif-main.c:1238
+#: ../tools/zif-main.c:932 ../tools/zif-main.c:1225
 msgid "Getting depends"
 msgstr "Získávají se závislosti"
 
 #. TRANSLATORS: this is a item prefix
-#: ../tools/zif-main.c:1030
+#: ../tools/zif-main.c:1016
 msgid "Dependency:"
 msgstr "Závislost:"
 
-#: ../tools/zif-main.c:1046
+#: ../tools/zif-main.c:1032
 msgid "Provider:"
 msgstr "Poskytovatel:"
 
 #. TRANSLATORS: getting the details (summary, size, etc) of a package
 #. TRANSLATORS: gettin details about an update
-#: ../tools/zif-main.c:1096 ../tools/zif-main.c:4484
+#: ../tools/zif-main.c:1082 ../tools/zif-main.c:4568
 msgid "Getting details"
 msgstr "Získávají se podrobnosti"
 
-#: ../tools/zif-main.c:1164 ../tools/zif-main.c:1306
+#: ../tools/zif-main.c:1150 ../tools/zif-main.c:1293
 msgid "No package was found"
 msgstr "Nebyl nalezen žádný balíček"
 
 #. TRANSLATORS: these are headers for the package data
-#: ../tools/zif-main.c:1183
+#: ../tools/zif-main.c:1169
 msgid "Name"
 msgstr "Název"
 
-#: ../tools/zif-main.c:1184
+#: ../tools/zif-main.c:1170
 msgid "Version"
 msgstr "Verze"
 
-#: ../tools/zif-main.c:1185
+#: ../tools/zif-main.c:1171
 msgid "Arch"
 msgstr "Architektura"
 
-#: ../tools/zif-main.c:1186
+#: ../tools/zif-main.c:1172
 msgid "Size"
 msgstr "Velikost"
 
-#: ../tools/zif-main.c:1187
+#: ../tools/zif-main.c:1173
 msgid "Repo"
 msgstr "Skladiště"
 
-#: ../tools/zif-main.c:1188
+#: ../tools/zif-main.c:1174
 msgid "Summary"
 msgstr "Shrnutí"
 
-#: ../tools/zif-main.c:1189
+#: ../tools/zif-main.c:1175
 msgid "URL"
 msgstr "Adresa (URL)"
 
-#: ../tools/zif-main.c:1190
+#: ../tools/zif-main.c:1176
 msgid "License"
 msgstr "Povolení"
 
-#: ../tools/zif-main.c:1191
+#: ../tools/zif-main.c:1177
 msgid "Description"
 msgstr "Popis"
 
 #. TRANSLATORS: strftime formatted please
-#: ../tools/zif-main.c:1435
+#: ../tools/zif-main.c:1429
 msgid "%F %R"
-msgstr "%F %R"
+msgstr ""
 
-#: ../tools/zif-main.c:1470
+#: ../tools/zif-main.c:1464
 msgid "The history database is empty"
-msgstr "Databáze s historií je prázdná"
+msgstr ""
 
-#: ../tools/zif-main.c:1501
+#: ../tools/zif-main.c:1495
 msgid "Transaction"
-msgstr "Transakce"
+msgstr ""
 
 #. TRANSLATORS: we've imported the yumdb into the history database
-#: ../tools/zif-main.c:1550
+#: ../tools/zif-main.c:1544
 msgid "All database entries imported into history"
-msgstr "Všechny záznamy v databázi zavedeny do historie"
+msgstr ""
 
 #. TRANSLATORS: getting file lists for a package
-#: ../tools/zif-main.c:1592
+#: ../tools/zif-main.c:1586
 msgid "Getting files"
 msgstr "Získávají se soubory"
 
-#: ../tools/zif-main.c:1654
+#: ../tools/zif-main.c:1648
 msgid "Failed to match any packages for :"
 msgstr "Nepodařilo se dát dohromady žádné balíčky pro:"
 
-#: ../tools/zif-main.c:1676
+#: ../tools/zif-main.c:1670
 msgid "Package contains no files"
 msgstr "Balíček neobsahuje žádné soubory"
 
 #. TRANSLATORS: getting all the packages
-#: ../tools/zif-main.c:1772
+#: ../tools/zif-main.c:1766
 msgid "Getting packages"
 msgstr "Získávají se balíčky"
 
 #. TRANSLATORS: getting the list of packages that can be updated
-#: ../tools/zif-main.c:1893
+#: ../tools/zif-main.c:1887
 msgid "Getting updates"
 msgstr "Získávají se nejnovější balíčky"
 
 #. TRANSLATORS: getting details of any distro upgrades
-#: ../tools/zif-main.c:1945
+#: ../tools/zif-main.c:1939
 msgid "Getting upgrades"
 msgstr "Získávají se vylepšení"
 
-#: ../tools/zif-main.c:1959
+#: ../tools/zif-main.c:1953
 msgid "No distribution upgrades are available."
 msgstr "Pro distribuci nejsou dostupné žádné aktualizace"
 
-#: ../tools/zif-main.c:1961
+#: ../tools/zif-main.c:1955
 msgid "Distribution upgrades available:"
 msgstr "Vydáno:"
 
-#: ../tools/zif-main.c:1968
+#: ../tools/zif-main.c:1962
 msgid "stable"
 msgstr "Stálá"
 
-#: ../tools/zif-main.c:1968
+#: ../tools/zif-main.c:1962
 msgid "unstable"
 msgstr "Nestálá"
 
 #. TRANSLATORS: A user didn't specify a required value
-#: ../tools/zif-main.c:2003
+#: ../tools/zif-main.c:1997
 msgid "Specify a config key"
 msgstr "Zadejte nastavovací klíč"
 
 #. TRANSLATORS: there was no value in the config files
-#: ../tools/zif-main.c:2012
+#: ../tools/zif-main.c:2006
 #, c-format
 msgid "No value for %s"
 msgstr "Žádná hodnota pro %s"
 
 #. TRANSLATORS: this is the reason the action is to be taken
-#: ../tools/zif-main.c:2099
+#: ../tools/zif-main.c:2093
 msgid "Installing for dependencies"
 msgstr "Instaluje se kvůli závislostem"
 
 #. TRANSLATORS: this is the reason the action is to be taken
-#: ../tools/zif-main.c:2103
+#: ../tools/zif-main.c:2097
 msgid "Updating to new versions"
 msgstr "Aktualizuje se na nové verze"
 
 #. TRANSLATORS: this is the reason the action is to be taken
-#: ../tools/zif-main.c:2111
+#: ../tools/zif-main.c:2105
 msgid "Removing due to multiple versions"
 msgstr "Odstraňuje se kvůli více verzím"
 
 #. TRANSLATORS: this is the reason the action is to be taken
-#: ../tools/zif-main.c:2115
+#: ../tools/zif-main.c:2109
 msgid "Removing for dependencies"
 msgstr "Odstraňuje se kvůli závislostem"
 
 #. TRANSLATORS: this is the reason the action is to be taken
-#: ../tools/zif-main.c:2119
+#: ../tools/zif-main.c:2113
 msgid "Removing old versions"
 msgstr "Odstraňují se staré verze"
 
 #. TRANSLATORS: this is the reason the action is to be taken
-#: ../tools/zif-main.c:2123
+#: ../tools/zif-main.c:2117
 msgid "Removing as obsolete"
 msgstr "Odstraňuje se jako zastaralé"
 
 #. TRANSLATORS: this is the reason the action is to be taken
-#: ../tools/zif-main.c:2135
+#: ../tools/zif-main.c:2129
 msgid "Updating for conflict"
 msgstr "Obnovuje se kvůli střetu"
 
 #. TRANSLATORS: this is the reason the action is to be taken
-#: ../tools/zif-main.c:2139
+#: ../tools/zif-main.c:2133
 msgid "Updating for dependencies"
 msgstr "Obnovuje se kvůli závislostem"
 
 #. TRANSLATORS: this is the reason the action is to be taken
-#: ../tools/zif-main.c:2143
+#: ../tools/zif-main.c:2137
 msgid "Updating the system"
-msgstr "Obnovuje se systém"
+msgstr ""
 
 #. TRANSLATORS: this is the reason the action is to be taken
 #. TRANSLATORS: performing action
-#: ../tools/zif-main.c:2147 ../tools/zif-main.c:2649
+#: ../tools/zif-main.c:2141 ../tools/zif-main.c:2727
 msgid "Downgrading"
-msgstr "Ponižuje se"
+msgstr ""
 
 #. TRANSLATORS: this is the reason the action is to be taken
-#: ../tools/zif-main.c:2151
+#: ../tools/zif-main.c:2145
+msgid "Downgrading for dependencies"
+msgstr ""
+
+#. TRANSLATORS: this is the reason the action is to be taken
+#: ../tools/zif-main.c:2149
+msgid "Removing current version"
+msgstr ""
+
+#. TRANSLATORS: this is the reason the action is to be taken
+#: ../tools/zif-main.c:2153
 msgid "Unknown reason"
 msgstr "Neznámý důvod"
 
-#: ../tools/zif-main.c:2179
+#: ../tools/zif-main.c:2183
 msgid "Transaction summary:"
 msgstr "Přehled k provádění:"
+
+#. TRANSLATOR: downgrades are bad and not supported
+#: ../tools/zif-main.c:2203
+msgid "WARNING: Downgrading packages is not supported or tested."
+msgstr ""
 
 #. TRANSLATORS: this is the stdout and stderr output
 #. * from the transaction, that may indicate something
 #. * went wrong
-#: ../tools/zif-main.c:2219
+#: ../tools/zif-main.c:2232
 msgid "Transaction warning:"
-msgstr "Varování týkající se transakce:"
+msgstr ""
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:2353
+#: ../tools/zif-main.c:2367
 msgid "Automatically declined action"
 msgstr "Automaticky odmítnutá činnost"
 
 #. TRANSLATORS: how much we have to download
-#: ../tools/zif-main.c:2372
+#: ../tools/zif-main.c:2385
 msgid "Total download size"
-msgstr "Celková velikost stažení"
+msgstr ""
 
-#: ../tools/zif-main.c:2380 ../tools/zif-main.c:2415
+#: ../tools/zif-main.c:2392 ../tools/zif-main.c:2427
 msgid "Run transaction?"
 msgstr "Spustit provádění?"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:2383 ../tools/zif-main.c:2418
+#: ../tools/zif-main.c:2395 ../tools/zif-main.c:2430
 msgid "User declined action"
 msgstr "Uživatelem odmítnutá činnost"
 
-#: ../tools/zif-main.c:2411
+#: ../tools/zif-main.c:2423
 msgid "There are untrusted packages:"
 msgstr "Jsou tu nedůvěryhodné balíčky:"
 
 #. TRANSLATORS: tell the user everything went okay
-#: ../tools/zif-main.c:2445
+#: ../tools/zif-main.c:2460
 msgid "Transaction success!"
-msgstr "Zdar transakce!"
+msgstr ""
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:2521
+#: ../tools/zif-main.c:2543
 #, c-format
 msgid "%s is already installed"
 msgstr "%s je již nainstalován"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:2690
+#: ../tools/zif-main.c:2769
 #, c-format
 msgid "%s is not already installed"
-msgstr "%s již není nainstalován"
+msgstr ""
 
 #. TRANSLATORS: performing action
-#: ../tools/zif-main.c:2830
+#: ../tools/zif-main.c:2910
 msgid "Installing file"
-msgstr "Instaluje se soubor"
+msgstr ""
 
 #. TRANSLATORS: performing action
-#: ../tools/zif-main.c:3159
+#: ../tools/zif-main.c:3239
 msgid "Checking manifests"
-msgstr "Přezkušují se seznamy nákladu (manifesty)"
+msgstr ""
 
-#: ../tools/zif-main.c:3180
+#: ../tools/zif-main.c:3260
 msgid "All manifest files were checked successfully"
-msgstr "Všechny soubory se seznamy nákladu (manifest) byly úspěšně ověřeny"
+msgstr "Všechny soubory s provoláním byly úspěšně ověřeny"
 
 #. TRANSLATORS: performing action
-#: ../tools/zif-main.c:3217
+#: ../tools/zif-main.c:3297
 msgid "Dumping manifest"
-msgstr "Vypisuje se seznam nákladu (manifest)"
+msgstr ""
 
 #. TRANSLATORS: performing action
-#: ../tools/zif-main.c:3328
+#: ../tools/zif-main.c:3408
 msgid "Refreshing cache"
 msgstr "Obnovuje se vyrovnávací paměť"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:3437
+#: ../tools/zif-main.c:3517
 #, c-format
 msgid "The package is not installed"
 msgstr "Balíček není nainstalován"
 
 #. TRANSLATORS: performing action
-#: ../tools/zif-main.c:3515
+#: ../tools/zif-main.c:3595
 msgid "Disabling repo"
 msgstr "Zakazuje se skladiště"
 
 #. TRANSLATORS: performing action
-#: ../tools/zif-main.c:3586
+#: ../tools/zif-main.c:3666
 msgid "Enabling repo"
 msgstr "Povoluje se skladiště"
 
 #. TRANSLATORS: performing action
-#: ../tools/zif-main.c:3651
+#: ../tools/zif-main.c:3731
 msgid "Getting repo list"
 msgstr "Získává se seznam skladišť"
 
-#: ../tools/zif-main.c:3808
+#: ../tools/zif-main.c:3888
 msgid "Specify a category"
 msgstr "Zadejte skupinu"
 
 #. TRANSLATORS: returning all packages that match a category
-#: ../tools/zif-main.c:3813
+#: ../tools/zif-main.c:3893
 msgid "Search category"
 msgstr "Prohledat skupinu"
 
 #. TRANSLATORS: user needs to specify something
-#: ../tools/zif-main.c:3872 ../tools/zif-main.c:4028 ../tools/zif-main.c:4103
-#: ../tools/zif-main.c:4786 ../tools/zif-main.c:4868 ../tools/zif-main.c:4950
-#: ../tools/zif-main.c:5032
+#: ../tools/zif-main.c:3953 ../tools/zif-main.c:4111 ../tools/zif-main.c:4186
+#: ../tools/zif-main.c:4869 ../tools/zif-main.c:4951 ../tools/zif-main.c:5033
+#: ../tools/zif-main.c:5118
 #, c-format
 msgid "No search term specified"
 msgstr "Nebyl zadán hledaný pojem"
 
 #. TRANSLATORS: searching by package details, not just name
-#: ../tools/zif-main.c:3877
+#: ../tools/zif-main.c:3958
 msgid "Searching details"
 msgstr "Vyhledávají se podrobnosti"
 
 #. TRANSLATORS: user needs to specify something
-#: ../tools/zif-main.c:3948
+#: ../tools/zif-main.c:4030
 msgid "Specify a filename"
 msgstr "Zadejte název souboru"
 
 #. TRANSLATORS: searching for a specific file
-#: ../tools/zif-main.c:3953
+#: ../tools/zif-main.c:4035
 msgid "Searching file"
 msgstr "Hledá se soubor"
 
 #. TRANSLATORS: searching by a specific group
-#: ../tools/zif-main.c:4033
+#: ../tools/zif-main.c:4116
 msgid "Search group"
 msgstr "Hledat skupinu"
 
 #. TRANSLATORS: search, based on the package name only
-#: ../tools/zif-main.c:4108
+#: ../tools/zif-main.c:4191
 msgid "Searching name"
 msgstr "Hledá se název"
 
 #. TRANSLATORS: used when the user did not explicitly specify a
 #. * list of updates to install
-#: ../tools/zif-main.c:4179
+#: ../tools/zif-main.c:4263
 msgid "Updating system"
-msgstr "Obnovuje se systém"
+msgstr ""
 
-#: ../tools/zif-main.c:4259 ../tools/zif-main.c:4666
+#: ../tools/zif-main.c:4343 ../tools/zif-main.c:4750
 msgid "Specify a distro name, e.g."
 msgstr "Zadejte název distribuce, např."
 
 #. TRANSLATORS: upgrading to a new distro release, *not*
 #. * updating to a new package version
-#: ../tools/zif-main.c:4265 ../tools/zif-main.c:4692
+#: ../tools/zif-main.c:4349 ../tools/zif-main.c:4776
 msgid "Upgrading"
 msgstr "Vylepšuje se"
 
 #. TRANSLATORS: error message, invalid value
-#: ../tools/zif-main.c:4271 ../tools/zif-main.c:4698
+#: ../tools/zif-main.c:4355 ../tools/zif-main.c:4782
 msgid "Distribution name invalid"
 msgstr "Název distribuce je neplatný"
 
 #. TRANSLATORS: error message, invalid value
-#: ../tools/zif-main.c:4278 ../tools/zif-main.c:4705
+#: ../tools/zif-main.c:4362 ../tools/zif-main.c:4789
 msgid "Only 'fedora' is supported"
 msgstr "Podporována je pouze Fedora"
 
 #. TRANSLATORS: error message, invalid value
-#: ../tools/zif-main.c:4286 ../tools/zif-main.c:4713
+#: ../tools/zif-main.c:4370 ../tools/zif-main.c:4797
 #, c-format
 msgid "Version number %i is invalid"
 msgstr "Číslo verze %i je neplatné"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:4382
+#: ../tools/zif-main.c:4466
 #, c-format
 msgid "The %s package is not installed"
 msgstr "Balíček  %s není nainstalován"
 
-#: ../tools/zif-main.c:4565
+#: ../tools/zif-main.c:4649
 msgid "No update detail"
 msgstr "Žádné podrobnosti k obnově"
 
-#: ../tools/zif-main.c:4580
+#: ../tools/zif-main.c:4664
 msgid "Kind:"
 msgstr "Druh:"
 
-#: ../tools/zif-main.c:4584
+#: ../tools/zif-main.c:4668
 msgid "State:"
 msgstr "Stav:"
 
-#: ../tools/zif-main.c:4588
+#: ../tools/zif-main.c:4672
 msgid "ID:"
 msgstr "ID:"
 
-#: ../tools/zif-main.c:4592
+#: ../tools/zif-main.c:4676
 msgid "Title:"
 msgstr "Název:"
 
-#: ../tools/zif-main.c:4596
+#: ../tools/zif-main.c:4680
 msgid "Description:"
 msgstr "Popis:"
 
-#: ../tools/zif-main.c:4600
+#: ../tools/zif-main.c:4684
 msgid "Issued:"
 msgstr "Vydáno:"
 
-#: ../tools/zif-main.c:4673
+#: ../tools/zif-main.c:4757
 msgid "Specify a update type, e.g."
 msgstr "Zadejte typ aktualizace, např."
 
-#: ../tools/zif-main.c:4686
+#: ../tools/zif-main.c:4770
 msgid "Invalid update type, only these types are supported:"
 msgstr "Neplatný typ aktualizace. Jsou podporovány pouze tyto typy:"
 
 #. TRANSLATORS: find out what package conflicts
-#: ../tools/zif-main.c:4791
+#: ../tools/zif-main.c:4874
 msgid "Conflicts"
 msgstr "Střety"
 
 #. TRANSLATORS: find out what package obsoletes
-#: ../tools/zif-main.c:4873
+#: ../tools/zif-main.c:4956
 msgid "Obsoletes"
 msgstr "Zastaralé balíčky"
 
 #. TRANSLATORS: find out what package provides
-#: ../tools/zif-main.c:4955
+#: ../tools/zif-main.c:5038
 msgid "Provides"
 msgstr "Poskytuje"
 
 #. TRANSLATORS: find out what package requires
-#: ../tools/zif-main.c:5037
+#: ../tools/zif-main.c:5123
 msgid "Requires"
 msgstr "Vyžaduje"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5129
+#: ../tools/zif-main.c:5215
 msgid "Command not found, valid commands are:"
 msgstr "Příkaz nebyl nenalezen, platnými příkazy jsou:"
 
-#: ../tools/zif-main.c:5191
+#: ../tools/zif-main.c:5277
 #, c-format
 msgid "Welcome to the shell. Type '%s' to finish."
 msgstr "Vítejte v příkazovém řádku. Pro ukončení napište '%s' ."
 
 #. TRANSLATORS: used when the install database is being checked
-#: ../tools/zif-main.c:5411
+#: ../tools/zif-main.c:5500
 msgid "Checking database"
-msgstr "Přezkušuje se databáze"
+msgstr ""
 
 #. TRANSLATORS: used when the install database is being set
-#: ../tools/zif-main.c:5499
+#: ../tools/zif-main.c:5588
 msgid "Setting key"
 msgstr "Nastavuje se klíč"
 
 #. TRANSLATORS: used when the install database is being set
-#: ../tools/zif-main.c:5570
+#: ../tools/zif-main.c:5659
 msgid "Getting key"
 msgstr "Získává se klíč"
 
 #. TRANSLATORS: used when the install database is being set
-#: ../tools/zif-main.c:5642
+#: ../tools/zif-main.c:5731
 msgid "Deleting key"
 msgstr "Maže se klíč"
 
 #. TRANSLATORS: this is when the database key is deleted, e.g.
 #. * "from_repo deleted");
-#: ../tools/zif-main.c:5683
+#: ../tools/zif-main.c:5772
 msgid "deleted"
 msgstr "Smazán"
 
 #. TRANSLATORS: used when the install database is listed
-#: ../tools/zif-main.c:5719
+#: ../tools/zif-main.c:5808
 msgid "Listing keys"
 msgstr "Sestavuje se seznam klíčů"
 
-#: ../tools/zif-main.c:5936
+#. TRANSLATORS: the user just did ctrl-c
+#: ../tools/zif-main.c:6239 ../tools/zif-main.c:6270
+msgid "Cancellation in progress..."
+msgstr ""
+
+#: ../tools/zif-main.c:6309
 msgid "Show extra debugging information"
 msgstr "Ukázat další ladicí informace"
 
-#: ../tools/zif-main.c:5938
+#: ../tools/zif-main.c:6311
 msgid "Enable low level profiling of Zif"
 msgstr "Povolit nízkoúrovňové přiblížení Zifu"
 
-#: ../tools/zif-main.c:5940
+#: ../tools/zif-main.c:6313
 msgid "Enable background mode to run using less CPU"
 msgstr "Povolit režimu na pozadí pro běh za použití menšího výkonu CPU"
 
-#: ../tools/zif-main.c:5942
+#: ../tools/zif-main.c:6315
 msgid "Work offline when possible"
 msgstr "Pracovat v režimu nepřipojený k internetu, je-li to možné"
 
-#: ../tools/zif-main.c:5944
+#: ../tools/zif-main.c:6317
 msgid "Take into account distribution versions when calculating updates"
-msgstr "Při počítání aktualizací vzít v úvahu verze distribuce"
+msgstr ""
 
-#: ../tools/zif-main.c:5946
+#: ../tools/zif-main.c:6319
 msgid "Use different config file"
 msgstr "Používat různý soubor s nastavením"
 
-#: ../tools/zif-main.c:5948
+#: ../tools/zif-main.c:6321
 msgid "Exclude certain packages"
 msgstr "Vyloučit určité balíčky"
 
-#: ../tools/zif-main.c:5950
+#: ../tools/zif-main.c:6323
 msgid "Use different rpm database root"
 msgstr "Používat různého správce pro databázi s balíčky rpm"
 
-#: ../tools/zif-main.c:5952
+#: ../tools/zif-main.c:6325
 msgid "Proxy server setting"
 msgstr "Nastavení proxy serveru"
 
-#: ../tools/zif-main.c:5954
+#: ../tools/zif-main.c:6327
 msgid "Permitted age of the cache in seconds, 0 for never (default)"
 msgstr "Dovolené stáří vyrovnávací paměti v sekundách, 0 pro nikdy (výchozí)"
 
-#: ../tools/zif-main.c:5956
+#: ../tools/zif-main.c:6329
 msgid "Skip broken dependencies and repos rather than failing"
 msgstr "Přeskočit poškozené závislosti a skladiště spíše než selhání"
 
-#: ../tools/zif-main.c:5958
+#: ../tools/zif-main.c:6331
 msgid "Only use the exact architecture packages for this machine"
 msgstr "U tohoto stroje použít jen balíčky pro tuto architekturu"
 
-#: ../tools/zif-main.c:5960
+#: ../tools/zif-main.c:6333
 msgid "Assume yes to all questions"
 msgstr "Předpokládat odpověď ANO na všechny otázky"
 
-#: ../tools/zif-main.c:5962
+#: ../tools/zif-main.c:6335
 msgid "Assume no to all questions"
 msgstr "Předpokládat odpověď NE na všechny otázky"
 
-#: ../tools/zif-main.c:5964
+#: ../tools/zif-main.c:6337
 msgid "Enable one or more repositories"
-msgstr "Povolit jedno nebo více skladišť"
+msgstr ""
 
-#: ../tools/zif-main.c:5966
+#: ../tools/zif-main.c:6339
 msgid "Disable one or more repositories"
-msgstr "Zakázat jedno nebo více skladišť"
+msgstr ""
 
 #. TRANSLATORS: we can't run as the user
-#: ../tools/zif-main.c:6112
+#: ../tools/zif-main.c:6491
 msgid "Cannot specify age when not a privileged user."
 msgstr "Nelze určit stáří, když není privilegovaným uživatelem."
 
 #. TRANSLATORS: we can't download new stuff as a user
-#: ../tools/zif-main.c:6117
+#: ../tools/zif-main.c:6496
 msgid "Enabling offline mode as user unprivileged."
 msgstr "Povolení nepřipojeného režimu, když uživatel není privilegovaný."
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6187
+#: ../tools/zif-main.c:6568
 msgid "Remove cached data"
 msgstr "Odstranit data ve vyrovnávací paměti"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6192
+#: ../tools/zif-main.c:6573
 msgid "Download a package"
 msgstr "Stáhnout balíček"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6197
+#: ../tools/zif-main.c:6578
 msgid "Find a given package given the ID"
 msgstr "Najít balíček s daným ID"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6202
+#: ../tools/zif-main.c:6583
 msgid "Returns the list of categories"
 msgstr "Vrací seznam skupin"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6207
+#: ../tools/zif-main.c:6588
 msgid "List a package's dependencies"
 msgstr "Vypsat závislosti balíčku"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6212
+#: ../tools/zif-main.c:6593
 msgid "Display details about a package or group of packages"
 msgstr "Zobrazit podrobnosti o balíčku nebo skupinu balíčků"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6217
+#: ../tools/zif-main.c:6598
 msgid "List the files in a package"
 msgstr "Vypsat soubory v balíčku"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6222
+#: ../tools/zif-main.c:6603
 msgid "Get the groups the system supports"
 msgstr "Dostat skupiny podporované systémem"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6227
+#: ../tools/zif-main.c:6608
 msgid "List all packages"
 msgstr "Vypsat všechny balíčky"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6232
+#: ../tools/zif-main.c:6613
 msgid "Check for available package updates"
 msgstr "Ověřit dostupnost nejnovějších balíčků"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6237
+#: ../tools/zif-main.c:6618
 msgid "Check for newer operating system versions"
 msgstr "Ověřit dostupnost novějších verzí operačního systému"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6242
+#: ../tools/zif-main.c:6623
 msgid "Get an expanded value from the config file"
 msgstr "Dostat rozšířenou hodnotu ze souboru s nastavením"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6247
+#: ../tools/zif-main.c:6628
 msgid "Installs the build dependencies for a given package"
-msgstr "Pro daný balíček instaluje sestavovací závislosti"
+msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6252
+#: ../tools/zif-main.c:6633
 msgid "Display a helpful usage message"
 msgstr "Zobrazit nápomocnou zprávu k používání"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6257
+#: ../tools/zif-main.c:6638
 msgid "Install a package"
 msgstr "Nainstalovat balíček"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6262
+#: ../tools/zif-main.c:6643
 msgid "Downgrade a package to a previous version"
-msgstr "Ponížit balíček na předchozí verzi"
+msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6267
+#: ../tools/zif-main.c:6648
 msgid "Install a local package"
 msgstr "Nainstalovat místní balíček"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6272
+#: ../tools/zif-main.c:6653
 msgid "Check a transaction manifest"
 msgstr "Ověřit provolání o provádění"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6277
+#: ../tools/zif-main.c:6658
 msgid "Dump a transaction manifest to a file"
-msgstr "Vypsat seznam nákladu transakce (manifest) do souboru"
+msgstr "Vyklopit provolání o provádění do souboru"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6282
+#: ../tools/zif-main.c:6663
 msgid "Generate the metadata cache"
 msgstr "Vytvořit vyrovnávací paměť metadat"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6287
+#: ../tools/zif-main.c:6668
 msgid "Remove a package"
 msgstr "Odstranit balíček"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6292
+#: ../tools/zif-main.c:6673
 msgid "Disable a specific software repository"
 msgstr "Zakázat určité skladiště s programy"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6297
+#: ../tools/zif-main.c:6678
 msgid "Enable a specific software repository"
 msgstr "Povolit určité skladiště s programy"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6302
+#: ../tools/zif-main.c:6683
 msgid "Display the configured software repositories"
 msgstr "Zobrazit nastavená skladiště s programy"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6307
+#: ../tools/zif-main.c:6688
 msgid "Find a given package name"
 msgstr "Najít balíček s daným názvem"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6312
+#: ../tools/zif-main.c:6693
 msgid "Search package details for the given category"
 msgstr "Hledat podrobnosti k balíčkům pro danou skupinu"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6317
+#: ../tools/zif-main.c:6698
 msgid "Search package details for the given string"
 msgstr "Hledat podrobnosti k balíčkům pro daný řetězec"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6322
+#: ../tools/zif-main.c:6703
 msgid "Search packages for the given filename"
 msgstr "Hledat balíčky pro daný název souboru"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6327
+#: ../tools/zif-main.c:6708
 msgid "Search packages in the given group"
 msgstr "Hledat balíčky v dané skupině"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6332
+#: ../tools/zif-main.c:6713
 msgid "Search package name for the given string"
 msgstr "Hledat název balíčku pro daný řetězec"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6337
+#: ../tools/zif-main.c:6718
 msgid "Run an interactive shell"
 msgstr "Spustit v interaktivním shellu"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6342
+#: ../tools/zif-main.c:6723
 msgid "Update a package to the newest available version"
 msgstr "Aktualizovat balíček na nejnovější dostupnou verzi"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6347
+#: ../tools/zif-main.c:6728
 msgid "Update a package taking into account distribution version"
-msgstr "Aktualizovat balíček s přihlédnutím k verzi distribuce"
+msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6352
+#: ../tools/zif-main.c:6733
 msgid "Display details about an update"
 msgstr "Zobrazit podrobnosti o aktualizaci"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6357
+#: ../tools/zif-main.c:6738
 msgid "Upgrade the operating system to a newer version"
 msgstr "Povýšit operační systém na novější verzi"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6362
+#: ../tools/zif-main.c:6743
 msgid "Live-upgrade the operating system to a newer version"
-msgstr "Živě-Povýšit operační systém na novější verzi"
+msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6367
+#: ../tools/zif-main.c:6748
 msgid "Find what package conflicts with the given value"
 msgstr "Najít čím se balíček střetává s danou hodnotou"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6372
+#: ../tools/zif-main.c:6753
 msgid "Find what package obsoletes the given value"
 msgstr "Najít co v balíčku zastarává na dané hodnotě"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6377
+#: ../tools/zif-main.c:6758
 msgid "Find what package provides the given value"
 msgstr "Najít co balíček poskytuje dané hodnotě"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6382
+#: ../tools/zif-main.c:6763
 msgid "Find what package requires the given value"
 msgstr "Najít co balíček vyžaduje na dané hodnotě"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6387
+#: ../tools/zif-main.c:6768
 msgid "Check for problems in the installed database"
 msgstr "Ověřit kvůli potížím v nainstalované databázi"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6392
+#: ../tools/zif-main.c:6773
 msgid "Get a value in the package database"
 msgstr "Dostat hodnotu v databázi balíčků"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6397
+#: ../tools/zif-main.c:6778
 msgid "Set a value in the installed package database"
 msgstr "Nastavit hodnotu v nainstalované databázi balíčků"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6402
+#: ../tools/zif-main.c:6783
 msgid "Remove a value from the installed package database"
 msgstr "Odstranit hodnotu z nainstalované databáze balíčků"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6407
+#: ../tools/zif-main.c:6788
 msgid "List values from the installed package database"
 msgstr "Vypsat hodnoty z nainstalované databáze balíčků"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6412
+#: ../tools/zif-main.c:6793
 msgid "Gets the provides for a given package"
-msgstr "Dostane pro daný balíček to, co poskytuje"
+msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6417
+#: ../tools/zif-main.c:6798
 msgid "Gets the requires for a given package"
-msgstr "Dostane pro daný balíček to, co požaduje"
+msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6422
+#: ../tools/zif-main.c:6803
 msgid "Gets the conflicts for a given package"
-msgstr "Dostane pro daný balíček to, s čím se střetává"
+msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6427
+#: ../tools/zif-main.c:6808
 msgid "Gets the obsoletes for a given package"
-msgstr "Dostane pro daný balíček to, co už je zastaralé"
+msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6432
+#: ../tools/zif-main.c:6813
 msgid "Gets the transaction history list"
-msgstr "Dostane seznam s historií transakce"
+msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6437
+#: ../tools/zif-main.c:6818
 msgid "Gets the transaction history for a specified package"
-msgstr "Dostane pro daný balíček historii transakce"
+msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6442
+#: ../tools/zif-main.c:6823
 msgid "Imports the history data from a legacy database"
-msgstr "Zavede z databáze starých údajů data historie"
+msgstr ""
+
+#. TRANSLATORS: command description
+#: ../tools/zif-main.c:6828
+msgid "Shows a list of packages that depend on a specified package"
+msgstr ""
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:6470
+#: ../tools/zif-main.c:6856
 msgid "Cancelled"
 msgstr "Zrušeno"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:6474
+#: ../tools/zif-main.c:6860
 msgid "The system state was invalid"
 msgstr "Stav systému byl neplatný"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:6478
+#: ../tools/zif-main.c:6864
 msgid "Unhandled state error"
 msgstr "Nezvládnutá stavová chyba"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:6484
+#: ../tools/zif-main.c:6870
 msgid "The transaction failed"
 msgstr "Provedení se nezdařilo"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:6488
+#: ../tools/zif-main.c:6874
 msgid "Nothing to do"
 msgstr "Není co dělat"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:6492
+#: ../tools/zif-main.c:6878
 msgid "No supported"
 msgstr "Nepodporováno"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:6496
+#: ../tools/zif-main.c:6882
 msgid "The transaction conflicts"
 msgstr "Střety při provádění"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:6500
+#: ../tools/zif-main.c:6886
 msgid "Unhandled transaction error"
 msgstr "Nezvládnutá chyba při provádění"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:6506
+#: ../tools/zif-main.c:6892
 msgid "Failed to store"
 msgstr "Uložení se nezdařilo"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:6510 ../tools/zif-main.c:6608
+#: ../tools/zif-main.c:6896
 msgid "Failed as offline"
 msgstr "Nezdařilo se, protože odpojeno od internetu"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:6514
+#: ../tools/zif-main.c:6900
 msgid "Failed to find"
 msgstr "Nalezení se nezdařilo"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:6518 ../tools/zif-main.c:6612
+#: ../tools/zif-main.c:6904
 msgid "Failed to download"
 msgstr "Stažení se nezdařilo"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:6522
+#: ../tools/zif-main.c:6908
 msgid "Store array is empty"
 msgstr "Ukládací řada je prázdná"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:6526
+#: ../tools/zif-main.c:6912
 msgid "Not supported"
 msgstr "Nepodporováno"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:6530 ../tools/zif-main.c:6642
+#: ../tools/zif-main.c:6916 ../tools/zif-main.c:6990
 msgid "Not locked"
 msgstr "Nezamknuto"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:6534
+#: ../tools/zif-main.c:6920
 msgid "There are multiple matches"
 msgstr "Je tu více shod"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:6538
+#: ../tools/zif-main.c:6924
 msgid "Unhandled store error"
 msgstr "Nezvládnutá chyba při ukládání"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:6544
+#: ../tools/zif-main.c:6930
 msgid "Package operation failed"
 msgstr "Operace s balíčkem se nezdařila"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:6548
+#: ../tools/zif-main.c:6934
 msgid "Unhandled package error"
-msgstr "Nezvládnutá chyba vztahující se k balíčku"
+msgstr "Nezvládnutá chyba u balíčku"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:6554
+#: ../tools/zif-main.c:6940
 msgid "History operation failed"
-msgstr "Operace s historií se nezdařila"
+msgstr ""
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:6558
+#: ../tools/zif-main.c:6944
 msgid "Unhandled history error"
-msgstr "Nezvládnutá chyba vztahující se k historii"
+msgstr ""
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:6564
+#: ../tools/zif-main.c:6950
 msgid "Settings operation failed"
 msgstr "Operace nastavení se nezdařila"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:6568
+#: ../tools/zif-main.c:6954
 msgid "Unhandled config error"
 msgstr "Nezvládnutá chyba při nastavování"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:6574
+#: ../tools/zif-main.c:6960
 msgid "Download failed"
 msgstr "Stažení se nezdařilo"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:6578
+#: ../tools/zif-main.c:6964
 msgid "Download failed as permission denied"
 msgstr "Stažení se nezdařilo, jelikož oprávnění bylo odepřeno"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:6582
+#: ../tools/zif-main.c:6968
 msgid "No space left on device"
 msgstr "Na zařízení už nezůstalo žádné místo"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:6586
+#: ../tools/zif-main.c:6972
 msgid "Download was cancelled"
 msgstr "Stahování bylo zrušeno"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:6590
+#: ../tools/zif-main.c:6976
 msgid "Unhandled download error"
 msgstr "Nezvládnutá chyba při stahování"
 
 #. TRANSLATORS: error message
 #. TRANSLATORS: we suck
-#: ../tools/zif-main.c:6596 ../tools/zif-main.c:6634 ../tools/zif-main.c:6656
-#: ../tools/zif-main.c:6667
+#: ../tools/zif-main.c:6982 ../tools/zif-main.c:7004 ../tools/zif-main.c:7015
 msgid "Failed"
 msgstr "Nepodařilo se"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:6600
-msgid "No support"
-msgstr "Žádná podpora"
-
-#. TRANSLATORS: error message
-#: ../tools/zif-main.c:6604
-msgid "Failed to load"
-msgstr "Nepodařilo se nahrát"
-
-#. TRANSLATORS: error message
-#: ../tools/zif-main.c:6616
-msgid "Bad SQL"
-msgstr "Špatné SQL"
-
-#. TRANSLATORS: error message
-#: ../tools/zif-main.c:6620
-msgid "File is too old"
-msgstr "Soubor je příliš starý"
-
-#. TRANSLATORS: error message
-#: ../tools/zif-main.c:6624
-msgid "No filename"
-msgstr "Žádný název souboru"
-
-#. TRANSLATORS: error message
-#: ../tools/zif-main.c:6628 ../tools/zif-main.c:6650
-msgid "Unhandled metadata error"
-msgstr "Nezvládnutá chyba u metadat"
-
-#. TRANSLATORS: error message
-#: ../tools/zif-main.c:6638
+#: ../tools/zif-main.c:6986
 msgid "Already locked"
 msgstr "Již zamknuto"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:6646
+#: ../tools/zif-main.c:6994
 msgid "No permissions"
 msgstr "Žádná oprávnění"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:6660
+#: ../tools/zif-main.c:6998
+msgid "Unhandled metadata error"
+msgstr "Nezvládnutá chyba u metadat"
+
+#. TRANSLATORS: error message
+#: ../tools/zif-main.c:7008
 msgid "Unhandled repos error"
-msgstr "Nezvládnutá chyba vztahující se ke skladišti"
+msgstr ""
 
 
