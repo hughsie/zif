@@ -1951,6 +1951,36 @@ out:
 }
 
 /**
+ * zif_transaction_get_package_onlyn:
+ **/
+static gboolean
+zif_transaction_get_package_onlyn (ZifTransaction *transaction,
+				   ZifPackage *package)
+{
+	gchar **installonlypkgs = NULL;
+	guint only_n = 1;
+	guint i;
+
+	installonlypkgs = zif_config_get_strv (transaction->priv->config,
+					       "installonlypkgs",
+					       NULL);
+	if (installonlypkgs == NULL)
+		goto out;
+	for (i=0; installonlypkgs[i] != NULL; i++) {
+		if (g_strcmp0 (zif_package_get_name (package),
+			       installonlypkgs[i]) == 0) {
+			only_n = zif_config_get_uint (transaction->priv->config,
+						      "installonly_limit",
+						      NULL);
+			break;
+		}
+	}
+out:
+	g_strfreev (installonlypkgs);
+	return only_n;
+}
+
+/**
  * zif_transaction_resolve_install_item:
  **/
 static gboolean
@@ -1970,8 +2000,6 @@ zif_transaction_resolve_install_item (ZifTransactionResolve *data,
 	ZifPackage *package_oldest = NULL;
 	ZifTransactionItem *item_tmp;
 	guint installonlyn = 1;
-	gchar **installonlypkgs = NULL;
-	ZifTransactionPrivate *priv = data->transaction->priv;
 
 	/* is already installed and we are not already removing it */
 	to_array[0] = zif_package_get_name_arch (item->package);
@@ -1999,20 +2027,8 @@ zif_transaction_resolve_install_item (ZifTransactionResolve *data,
 	}
 
 	/* some packages are special */
-	installonlypkgs = zif_config_get_strv (priv->config, "installonlypkgs", error);
-	if (installonlypkgs == NULL) {
-		ret = FALSE;
-		goto out;
-	}
-	for (i=0; installonlypkgs[i] != NULL; i++) {
-		if (g_strcmp0 (zif_package_get_name (item->package),
-			       installonlypkgs[i]) == 0) {
-			installonlyn = zif_config_get_uint (priv->config,
-							    "installonly_limit",
-							    NULL);
-			break;
-		}
-	}
+	installonlyn = zif_transaction_get_package_onlyn (data->transaction,
+							  item->package);
 
 	/* make a list of all the packages to revert if this item fails */
 	related_packages = g_ptr_array_new ();
@@ -2163,7 +2179,6 @@ out:
 	if (!ret) {
 		g_assert (error == NULL || *error != NULL);
 	}
-	g_strfreev (installonlypkgs);
 	if (related_packages != NULL)
 		g_ptr_array_unref (related_packages);
 	if (package_oldest != NULL)
@@ -2604,7 +2619,8 @@ zif_transaction_resolve_update_item (ZifTransactionResolve *data,
 	GPtrArray *depend_array = NULL;
 	GPtrArray *related_packages = NULL;
 	guint i;
-	ZifDepend *depend;
+	guint onlyn;
+	ZifDepend *depend = NULL;
 	ZifPackage *package = NULL;
 
 	g_return_val_if_fail (data->transaction->priv->stores_remote != NULL, FALSE);
@@ -2756,19 +2772,25 @@ skip:
 	/* add this package */
 	g_ptr_array_add (related_packages, package);
 
-	/* remove the installed package */
-	ret = zif_transaction_add_remove_internal (data->transaction,
-						   item->package,
-						   related_packages,
-						   ZIF_TRANSACTION_REASON_REMOVE_FOR_UPDATE,
-						   error);
-	if (!ret)
-		goto out;
+	/* is this package allowed to be installed multiple times */
+	onlyn = zif_transaction_get_package_onlyn (data->transaction,
+						   item->package);
 
-	/* remove from the planned local store */
-	zif_store_remove_package (data->post_resolve_package_array,
-				  item->package,
-				  NULL);
+	/* trivial case, remove the installed package */
+	if (onlyn == 1) {
+		ret = zif_transaction_add_remove_internal (data->transaction,
+							   item->package,
+							   related_packages,
+							   ZIF_TRANSACTION_REASON_REMOVE_FOR_UPDATE,
+							   error);
+		if (!ret)
+			goto out;
+
+		/* remove from the planned local store */
+		zif_store_remove_package (data->post_resolve_package_array,
+					  item->package,
+					  NULL);
+	}
 
 	/* add the new package */
 	ret = zif_transaction_add_install_internal (data->transaction,

@@ -2,18 +2,19 @@
 local
 	kernel;0:3.0-1;i386;meta
 	kernel;0:3.1-1;i386;meta
+	kernel;0:3.2-1;i386;meta
 
 remote
-	kernel;0:3.2-1;i386;meta
+	kernel;0:3.3-1;i386;meta
 
 transaction
 	update
 		kernel
 
 result
-	kernel;0:3.0-1;i386;meta
 	kernel;0:3.1-1;i386;meta
 	kernel;0:3.2-1;i386;meta
+	kernel;0:3.3-1;i386;meta
 
 config
 	archinfo=i386

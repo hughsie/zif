@@ -271,17 +271,18 @@ zif_manifest_add_package_to_transaction (ZifManifest *manifest,
 
 		/* ambiguous */
 		if (package_array->len > 1) {
-			g_set_error (error,
-				     ZIF_MANIFEST_ERROR,
-				     ZIF_MANIFEST_ERROR_POST_INSTALL,
-				     "more than one item %s found in %s",
-				     package_id,
-				     zif_store_get_id (store));
-			goto out;
+			g_debug ("more than one item %s found in %s, "
+				 "so choosing newest",
+				 package_id,
+				 zif_store_get_id (store));
+			package = zif_package_array_get_newest (package_array,
+								error);
+			if (package == NULL)
+				goto out;
+		} else {
+			/* one item, yay */
+			package = g_object_ref (g_ptr_array_index (package_array, 0));
 		}
-
-		/* one item, yay */
-		package = g_object_ref (g_ptr_array_index (package_array, 0));
 	}
 
 	/* add it to the transaction */
