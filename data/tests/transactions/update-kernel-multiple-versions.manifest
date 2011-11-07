@@ -1,0 +1,18 @@
+
+local
+	kernel;0:3.0-1;i386;meta-local
+	kernel;0:3.1-1;i386;meta-local
+
+remote
+	kernel;0:3.2-1;i386;
+
+transaction
+	update
+		kernel
+
+result
+	kernel;0:3.1-1;i386;
+	kernel;0:3.2-1;i386;
+
+config
+	archinfo=i386
