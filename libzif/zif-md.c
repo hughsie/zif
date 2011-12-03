@@ -1903,15 +1903,17 @@ out:
 gboolean
 zif_md_check_uncompressed (ZifMd *md, ZifState *state, GError **error)
 {
-	gboolean ret = FALSE;
-	GFile *file = NULL;
-	GError *error_local = NULL;
-	gchar *data = NULL;
-	gchar *checksum = NULL;
-	const gchar *filename;
 	const gchar *checksum_wanted;
-	gsize length;
+	const gchar *filename;
+	gboolean ret = FALSE;
 	GCancellable *cancellable;
+	gchar *checksum = NULL;
+	gchar *data = NULL;
+	gchar **lines = NULL;
+	GError *error_local = NULL;
+	GFile *file = NULL;
+	gsize length;
+	guint i;
 
 	g_return_val_if_fail (ZIF_IS_MD (md), FALSE);
 	g_return_val_if_fail (zif_state_valid (state), FALSE);
@@ -1993,6 +1995,26 @@ zif_md_check_uncompressed (ZifMd *md, ZifState *state, GError **error)
 
 	/* mirrorlist has no checksum... */
 	if (md->priv->kind == ZIF_MD_KIND_MIRRORLIST) {
+
+		/* check the mirrorlist contains at least
+		 * one non-comment or empty line */
+		ret = FALSE;
+		lines = g_strsplit (data, "\n", -1);
+		for (i = 0; lines[i] != NULL; i++) {
+			if (lines[i][0] != '#' &&
+			    lines[i][0] != '\0') {
+				ret = TRUE;
+			}
+		}
+		if (!ret) {
+			g_set_error (error,
+				     ZIF_MD_ERROR,
+				     ZIF_MD_ERROR_FAILED_TO_LOAD,
+				     "mirrorlist file was not well formed: %s",
+				     lines[0]);
+			goto out;
+		}
+
 		g_debug ("skipping checksum check on mirrorlist");
 		ret = zif_state_finished (state, error);
 		goto out;
@@ -2037,6 +2059,7 @@ out:
 		g_object_unref (file);
 	g_free (data);
 	g_free (checksum);
+	g_strfreev (lines);
 	return ret;
 }
 

@@ -163,8 +163,11 @@ zif_md_mirrorlist_get_uris (ZifMdMirrorlist *md, ZifState *state, GError **error
 	if (!mirrorlist->priv->loaded) {
 		ret = zif_md_load (ZIF_MD (md), state, &error_local);
 		if (!ret) {
-			g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_FAILED_TO_LOAD,
-				     "failed to get uris from mirrorlist: %s", error_local->message);
+			g_set_error (error,
+				     ZIF_MD_ERROR,
+				     ZIF_MD_ERROR_FAILED_TO_LOAD,
+				     "failed to get uris from mirrorlist: %s",
+				     error_local->message);
 			g_error_free (error_local);
 			goto out;
 		}
