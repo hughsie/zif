@@ -697,12 +697,15 @@ zif_store_remote_add_changelog (ZifStoreRemote *store, ZifUpdate *update,
 	if (!ret)
 		goto out;
 
-	/* get the newest installed package with this name */
+	/* get the newest installed package with this name and arch */
 	state_local = zif_state_get_child (state);
 	store_local = zif_store_local_new ();
-	to_array[0] = (gchar *) zif_package_get_name (ZIF_PACKAGE (package_remote));
-	array_installed = zif_store_resolve (store_local, to_array,
-					     state_local, &error_local);
+	to_array[0] = (gchar *) zif_package_get_name_arch (ZIF_PACKAGE (package_remote));
+	array_installed = zif_store_resolve_full (store_local,
+						  to_array,
+						  ZIF_STORE_RESOLVE_FLAG_USE_NAME_ARCH,
+						  state_local,
+						  &error_local);
 	if (array_installed == NULL) {
 		ret = FALSE;
 		g_set_error (error,
