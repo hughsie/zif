@@ -7,7 +7,7 @@ git shortlog zif_0_2_6.. | grep -i -v trivial | grep -v Merge > NEWS.new
 --------------------------------------------------------------------------------
 Version 0.2.7
 ~~~~~~~~~~~~~
-Released: 2011-xx-xx
+Released: 2012-xx-xx
 
 Notes:
 

@@ -1,3 +1,14 @@
+Version 0.2.7
+~~~~~~~~~~~~~
+Released: 2012-02-03
+
+Bugfixes:
+ - Add a kernel update test transaction (Elad Alfassa)
+ - Add a test transaction for removing an older version (Elad Alfassa)
+ - Check the mirrorlist contains at least one non-comment or empty line (Richard Hughes)
+ - Fix getting the update details for packages that installed multiarch (Richard Hughes)
+ - Fix 'zif update kernel' as we want to install newer versions, not remove the current running version (Richard Hughes)
+
 Version 0.2.6
 ~~~~~~~~~~~~~
 Released: 2011-11-01
