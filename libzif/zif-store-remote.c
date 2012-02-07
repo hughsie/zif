@@ -3894,11 +3894,16 @@ zif_store_remote_convert_pkgids_to_packages (ZifMd *primary,
 {
 	const gchar *pkgid;
 	const gchar *to_array[] = { NULL, NULL };
+	gboolean ret;
 	GError *error_local = NULL;
 	GPtrArray *array = NULL;
 	GPtrArray *array_tmp;
 	GPtrArray *tmp;
 	guint i;
+	ZifState *state_local;
+
+	/* setup state */
+	zif_state_set_number_steps (state, pkgids->len);
 
 	array_tmp = zif_object_array_new ();
 	for (i=0; i<pkgids->len; i++) {
@@ -3906,9 +3911,10 @@ zif_store_remote_convert_pkgids_to_packages (ZifMd *primary,
 
 		/* get the results (should just be one) */
 		to_array[0] = pkgid;
+		state_local = zif_state_get_child (state);
 		tmp = zif_md_search_pkgid (primary,
 					   (gchar **) to_array,
-					   state,
+					   state_local,
 					   &error_local);
 		if (tmp == NULL) {
 			g_set_error (error,
@@ -3923,6 +3929,11 @@ zif_store_remote_convert_pkgids_to_packages (ZifMd *primary,
 		/* add to main array */
 		zif_object_array_add_array (array_tmp, tmp);
 		g_ptr_array_unref (tmp);
+
+		/* this section done */
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
 	}
 
 	/* success */
