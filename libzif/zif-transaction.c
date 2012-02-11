@@ -1622,8 +1622,10 @@ zif_transaction_get_package_provide_from_remote (ZifTransaction *transaction,
 		}
 
 		/* add to master list */
-		zif_object_array_add_array (array, array_tmp);
-		g_ptr_array_unref (array_tmp);
+		if (array_tmp != NULL) {
+			zif_object_array_add_array (array, array_tmp);
+			g_ptr_array_unref (array_tmp);
+		}
 
 		/* done */
 		ret = zif_state_done (state_local, error);
