@@ -1223,7 +1223,7 @@ zif_package_ensure_data (ZifPackage *package, ZifPackageEnsureType type,
 	/* no support */
 	if (klass->ensure_data == NULL) {
 		g_set_error (error, ZIF_PACKAGE_ERROR, ZIF_PACKAGE_ERROR_FAILED,
-			     "cannot get %s data from %s",
+			     "cannot get %s data from %s as no provider",
 			     zif_package_ensure_type_to_string (type),
 			     zif_package_get_id (package));
 		goto out;

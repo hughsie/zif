@@ -378,8 +378,8 @@ out:
  **/
 GArray *
 zif_history_get_transactions_for_package (ZifHistory *history,
-									  ZifPackage *package,
-									  GError **error)
+					  ZifPackage *package,
+					  GError **error)
 {
 	const gchar *statement;
 	const gchar *name;
