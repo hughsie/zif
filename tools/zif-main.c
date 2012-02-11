@@ -412,6 +412,7 @@ typedef struct {
 	ZifRepos		*repos;
 	ZifState		*state;
 	ZifStore		*store_local;
+	ZifHistory		*history;
 	guint			 uid;
 	gchar			*cmdline;
 } ZifCmdPrivate;
@@ -1449,15 +1450,11 @@ zif_cmd_history_list (ZifCmdPrivate *priv, gchar **values, GError **error)
 	guint i, j;
 	guint timestamp;
 	guint uid;
-	ZifHistory *history;
 	ZifPackage *package;
 	ZifTransactionReason reason;
 
-	/* open the history */
-	history = zif_history_new ();
-
 	/* get all transactions */
-	transactions = zif_history_list_transactions (history, error);
+	transactions = zif_history_list_transactions (priv->history, error);
 	if (transactions == NULL)
 		goto out;
 
@@ -1473,7 +1470,7 @@ zif_cmd_history_list (ZifCmdPrivate *priv, gchar **values, GError **error)
 		timestamp = g_array_index (transactions, guint, i);
 
 		/* get packages */
-		packages = zif_history_get_packages (history,
+		packages = zif_history_get_packages (priv->history,
 						     timestamp,
 						     error);
 		if (packages == NULL)
@@ -1499,9 +1496,9 @@ zif_cmd_history_list (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 		for (j = 0; j < packages->len; j++) {
 			package = g_ptr_array_index (packages, j);
-			uid = zif_history_get_uid (history, package, timestamp, NULL);
-			cmdline = zif_history_get_cmdline (history, package, timestamp, NULL);
-			reason = zif_history_get_reason (history, package, timestamp, NULL);
+			uid = zif_history_get_uid (priv->history, package, timestamp, NULL);
+			cmdline = zif_history_get_cmdline (priv->history, package, timestamp, NULL);
+			reason = zif_history_get_reason (priv->history, package, timestamp, NULL);
 			reason_pad = zif_strpad (zif_transaction_reason_to_string (reason), 20);
 			g_print ("\t%s\t%s (user %i with %s)\n",
 				 reason_pad,
@@ -1520,7 +1517,6 @@ zif_cmd_history_list (ZifCmdPrivate *priv, gchar **values, GError **error)
 out:
 	if (transactions != NULL)
 		g_array_unref (transactions);
-	g_object_unref (history);
 	return ret;
 }
 
@@ -1532,21 +1528,18 @@ zif_cmd_history_import (ZifCmdPrivate *priv, gchar **values, GError **error)
 {
 	gboolean ret;
 	ZifDb *db;
-	ZifHistory *history;
 
-	/* open the history and database */
-	history = zif_history_new ();
+	/* open the database */
 	db = zif_db_new ();
 
 	/* import entries */
-	ret = zif_history_import (history, db, error);
+	ret = zif_history_import (priv->history, db, error);
 	if (!ret)
 		goto out;
 
 	/* TRANSLATORS: we've imported the yumdb into the history database */
 	g_print ("%s\n", _("All database entries imported into history"));
 out:
-	g_object_unref (history);
 	g_object_unref (db);
 	return ret;
 }
@@ -6683,6 +6676,9 @@ main (int argc, char *argv[])
 	/* reference this as a singleton */
 	priv->store_local = zif_store_local_new ();
 
+	/* open the history */
+	priv->history = zif_history_new ();
+
 	/* process the repo add and disables */
 	if (enablerepo != NULL ||
 	    disablerepo != NULL) {
@@ -7178,6 +7174,8 @@ error:
 out:
 	if (priv != NULL) {
 		g_object_unref (priv->progressbar);
+		if (priv->history != NULL)
+			g_object_unref (priv->history);
 		if (priv->store_local != NULL)
 			g_object_unref (priv->store_local);
 		if (priv->config != NULL)
