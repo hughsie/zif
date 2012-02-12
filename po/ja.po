@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Zif\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-11-01 10:04+0000\n"
-"PO-Revision-Date: 2012-02-07 15:14+0900\n"
+"PO-Revision-Date: 2012-02-12 17:03+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Japanese (http://www.transifex.net/projects/p/freedesktop/team/ja/)\n"
 "MIME-Version: 1.0\n"
@@ -32,7 +32,7 @@ msgstr ""
 #. TRANSLATORS: there are no packages that match
 #: ../tools/zif-main.c:115
 msgid "There are no packages to show."
-msgstr "表示するパッケージはありません"
+msgstr ""
 
 #. TRANSLATORS: this is when files, usually metadata or
 #. * package files are being checked for consitency
@@ -56,34 +56,34 @@ msgstr "リポジトリーを読み込んでいます"
 #. * being uncompressed onto the disk
 #: ../tools/zif-main.c:179
 msgid "Decompressing"
-msgstr ""
+msgstr "展開しています"
 
 #. TRANSLATORS: when the transaction is being resolved,
 #. * and we make sure that it makes sense by adding
 #. * dependencies where required
 #: ../tools/zif-main.c:185
 msgid "Calculating install"
-msgstr "インストールを計算しています"
+msgstr "インストールの計算をしています"
 
 #. TRANSLATORS: when the transaction is being resolved,
 #. * and we make sure that it makes sense by removing
 #. * dependencies where required
 #: ../tools/zif-main.c:191
 msgid "Calculating removal"
-msgstr "削除を計算しています"
+msgstr "削除の計算をしています"
 
 #. TRANSLATORS: when the transaction is being resolved,
 #. * and we make sure that it makes sense by adding and
 #. * removing dependencies where required
 #: ../tools/zif-main.c:197
 msgid "Calculating update"
-msgstr "更新を計算しています"
+msgstr "更新の計算をしています"
 
 #. TRANSLATORS: when the transaction is being checked
 #. * for conflicting packages
 #: ../tools/zif-main.c:202
 msgid "Checking conflicts"
-msgstr "衝突を確認しています"
+msgstr "コンフリクトの計算をしています"
 
 #. TRANSLATORS: installing a package to the local system
 #. TRANSLATORS: this is the reason the action is to be taken
@@ -111,7 +111,7 @@ msgstr "更新しています"
 #. TRANSLATORS: we're cleaning the repo, deleting old files
 #: ../tools/zif-main.c:219 ../tools/zif-main.c:522
 msgid "Cleaning"
-msgstr ""
+msgstr "整理しています"
 
 #. TRANSLATORS: getting ready to do run the transaction,
 #. * doing things like checking the database and checking
@@ -138,11 +138,11 @@ msgstr "更新を確認しています"
 
 #: ../tools/zif-main.c:580
 msgid "No packages found"
-msgstr ""
+msgstr "パッケージが見つかりません"
 
 #: ../tools/zif-main.c:605
 msgid "No packages found (after filter)"
-msgstr ""
+msgstr "パッケージが見つかりません (フィルター処理後)"
 
 #. TRANSLATORS: error message
 #: ../tools/zif-main.c:667
@@ -173,7 +173,7 @@ msgstr "パッケージ名の指定"
 #. TRANSLATORS: getting the depends of a package
 #: ../tools/zif-main.c:935 ../tools/zif-main.c:1228
 msgid "Getting depends"
-msgstr ""
+msgstr "依存情報を取得しています"
 
 #. TRANSLATORS: this is a item prefix
 #: ../tools/zif-main.c:1019
@@ -260,7 +260,7 @@ msgstr ""
 
 #: ../tools/zif-main.c:1673
 msgid "Package contains no files"
-msgstr ""
+msgstr "パッケージはファイルを含んでいません"
 
 #. TRANSLATORS: getting all the packages
 #: ../tools/zif-main.c:1769
@@ -275,28 +275,28 @@ msgstr "更新を取得しています"
 #. TRANSLATORS: getting details of any distro upgrades
 #: ../tools/zif-main.c:1943
 msgid "Getting upgrades"
-msgstr ""
+msgstr "アップグレードを取得しています"
 
 #: ../tools/zif-main.c:1984
 msgid "No distribution upgrades are available."
-msgstr ""
+msgstr "利用できるディストリビューションのアップグレードはありません。"
 
 #: ../tools/zif-main.c:1986
 msgid "Distribution upgrades available:"
-msgstr ""
+msgstr "利用できるディストリビューションのアップグレード:"
 
 #: ../tools/zif-main.c:1993
 msgid "stable"
-msgstr ""
+msgstr "安定版"
 
 #: ../tools/zif-main.c:1993
 msgid "unstable"
-msgstr ""
+msgstr "非安定版"
 
 #. TRANSLATORS: A user didn't specify a required value
 #: ../tools/zif-main.c:2028
 msgid "Specify a config key"
-msgstr ""
+msgstr "設定鍵の指定"
 
 #. TRANSLATORS: there was no value in the config files
 #: ../tools/zif-main.c:2037
@@ -307,12 +307,12 @@ msgstr "%s の値がありません"
 #. TRANSLATORS: this is the reason the action is to be taken
 #: ../tools/zif-main.c:2168
 msgid "Installing for dependencies"
-msgstr ""
+msgstr "依存情報からインストールしています"
 
 #. TRANSLATORS: this is the reason the action is to be taken
 #: ../tools/zif-main.c:2172
 msgid "Updating to new versions"
-msgstr ""
+msgstr "新しいバージョンを更新しています"
 
 #. TRANSLATORS: this is the reason the action is to be taken
 #: ../tools/zif-main.c:2180
@@ -322,32 +322,32 @@ msgstr ""
 #. TRANSLATORS: this is the reason the action is to be taken
 #: ../tools/zif-main.c:2184
 msgid "Removing for dependencies"
-msgstr ""
+msgstr "依存情報から削除しています"
 
 #. TRANSLATORS: this is the reason the action is to be taken
 #: ../tools/zif-main.c:2188
 msgid "Removing old versions"
-msgstr ""
+msgstr "古いバージョンを削除しています"
 
 #. TRANSLATORS: this is the reason the action is to be taken
 #: ../tools/zif-main.c:2192
 msgid "Removing as obsolete"
-msgstr ""
+msgstr "不要なものを削除しています"
 
 #. TRANSLATORS: this is the reason the action is to be taken
 #: ../tools/zif-main.c:2204
 msgid "Updating for conflict"
-msgstr ""
+msgstr "衝突情報を更新しています"
 
 #. TRANSLATORS: this is the reason the action is to be taken
 #: ../tools/zif-main.c:2208
 msgid "Updating for dependencies"
-msgstr ""
+msgstr "依存情報を更新しています"
 
 #. TRANSLATORS: this is the reason the action is to be taken
 #: ../tools/zif-main.c:2212
 msgid "Updating the system"
-msgstr ""
+msgstr "システムを更新しています"
 
 #. TRANSLATORS: this is the reason the action is to be taken
 #. TRANSLATORS: performing action
@@ -358,7 +358,7 @@ msgstr "ダウングレードしています"
 #. TRANSLATORS: this is the reason the action is to be taken
 #: ../tools/zif-main.c:2220
 msgid "Downgrading for dependencies"
-msgstr "依存性をダウングレードしています"
+msgstr "依存情報からダウングレードしています"
 
 #. TRANSLATORS: this is the reason the action is to be taken
 #: ../tools/zif-main.c:2224
@@ -377,7 +377,7 @@ msgstr "トランザクションの要約:"
 #. TRANSLATOR: downgrades are bad and not supported
 #: ../tools/zif-main.c:2278
 msgid "WARNING: Downgrading packages is not supported or tested."
-msgstr ""
+msgstr "警告: パッケージのダウングレードはサポートしていないかテストしていません。"
 
 #. TRANSLATORS: this is the stdout and stderr output
 #. * from the transaction, that may indicate something
@@ -407,7 +407,7 @@ msgstr ""
 
 #: ../tools/zif-main.c:2498
 msgid "There are untrusted packages:"
-msgstr ""
+msgstr "これらは信頼できないパッケージです:"
 
 #. TRANSLATORS: tell the user everything went okay
 #: ../tools/zif-main.c:2535
@@ -422,13 +422,13 @@ msgstr "パッケージ %s は既にインストール済みです"
 #. TRANSLATORS: error message
 #: ../tools/zif-main.c:2636
 msgid "All packages are already installed"
-msgstr "全パッケージはすでにインストール済みです"
+msgstr "全パッケージが既にインストール済みです"
 
 #. TRANSLATORS: error message
 #: ../tools/zif-main.c:2889
 #, c-format
 msgid "%s is not already installed"
-msgstr "%s はインストールされていません"
+msgstr "%s はまだインストールされていません"
 
 #. TRANSLATORS: performing action
 #: ../tools/zif-main.c:3030
@@ -452,37 +452,37 @@ msgstr ""
 #. TRANSLATORS: performing action
 #: ../tools/zif-main.c:3528
 msgid "Refreshing cache"
-msgstr "キャッシュを再生成しています"
+msgstr ""
 
 #. TRANSLATORS: error message
 #: ../tools/zif-main.c:3637
 #, c-format
 msgid "The package is not installed"
-msgstr "パッケージが見つかりません"
+msgstr "パッケージはインストールされていません"
 
 #. TRANSLATORS: performing action
 #: ../tools/zif-main.c:3715
 msgid "Disabling repo"
-msgstr "リポジトリーを無効にしています"
+msgstr ""
 
 #. TRANSLATORS: performing action
 #: ../tools/zif-main.c:3786
 msgid "Enabling repo"
-msgstr "リポジトリーを有効にしています"
+msgstr ""
 
 #. TRANSLATORS: performing action
 #: ../tools/zif-main.c:3865
 msgid "Getting repo list"
-msgstr "リポジトリー一覧を取得しています"
+msgstr ""
 
 #: ../tools/zif-main.c:4026
 msgid "Specify a category"
-msgstr "カテゴリーの指定"
+msgstr "カテゴリーを指定する"
 
 #. TRANSLATORS: returning all packages that match a category
 #: ../tools/zif-main.c:4031
 msgid "Search category"
-msgstr "カテゴリーの検索"
+msgstr "カテゴリーを検索する"
 
 #. TRANSLATORS: user needs to specify something
 #: ../tools/zif-main.c:4091 ../tools/zif-main.c:4249 ../tools/zif-main.c:4324
@@ -521,39 +521,39 @@ msgstr ""
 #. * list of updates to install
 #: ../tools/zif-main.c:4401
 msgid "Updating system"
-msgstr ""
+msgstr "システムをアップグレードしています"
 
 #: ../tools/zif-main.c:4481 ../tools/zif-main.c:4888
 msgid "Specify a distro name, e.g."
-msgstr ""
+msgstr "ディストリビューション名の指定です。例: "
 
 #. TRANSLATORS: upgrading to a new distro release, *not*
 #. * updating to a new package version
 #: ../tools/zif-main.c:4487 ../tools/zif-main.c:4914
 msgid "Upgrading"
-msgstr ""
+msgstr "アップグレードしています"
 
 #. TRANSLATORS: error message, invalid value
 #: ../tools/zif-main.c:4493 ../tools/zif-main.c:4920
 msgid "Distribution name invalid"
-msgstr ""
+msgstr "ディストリビューション名が正しくありません"
 
 #. TRANSLATORS: error message, invalid value
 #: ../tools/zif-main.c:4500 ../tools/zif-main.c:4927
 msgid "Only 'fedora' is supported"
-msgstr ""
+msgstr "「fedora」のみサポートしています"
 
 #. TRANSLATORS: error message, invalid value
 #: ../tools/zif-main.c:4508 ../tools/zif-main.c:4935
 #, c-format
 msgid "Version number %i is invalid"
-msgstr ""
+msgstr "バージョン番号 %i は正しくありません"
 
 #. TRANSLATORS: error message
 #: ../tools/zif-main.c:4604
 #, c-format
 msgid "The %s package is not installed"
-msgstr ""
+msgstr "パッケージ %s はインストールされていません"
 
 #: ../tools/zif-main.c:4787
 msgid "No update detail"
@@ -561,19 +561,19 @@ msgstr ""
 
 #: ../tools/zif-main.c:4802
 msgid "Kind:"
-msgstr ""
+msgstr "種類:"
 
 #: ../tools/zif-main.c:4806
 msgid "State:"
-msgstr ""
+msgstr "状態:"
 
 #: ../tools/zif-main.c:4810
 msgid "ID:"
-msgstr ""
+msgstr "ID:"
 
 #: ../tools/zif-main.c:4814
 msgid "Title:"
-msgstr ""
+msgstr "件名:"
 
 #: ../tools/zif-main.c:4818
 msgid "Description:"
@@ -585,11 +585,11 @@ msgstr ""
 
 #: ../tools/zif-main.c:4895
 msgid "Specify a update type, e.g."
-msgstr ""
+msgstr "更新の種類を指定します。例: "
 
 #: ../tools/zif-main.c:4908
 msgid "Invalid update type, only these types are supported:"
-msgstr ""
+msgstr "更新の種類が正しくありません。サポートする種類は下記のみです:"
 
 #. TRANSLATORS: find out what package conflicts
 #: ../tools/zif-main.c:5012
@@ -599,7 +599,7 @@ msgstr "衝突"
 #. TRANSLATORS: find out what package obsoletes
 #: ../tools/zif-main.c:5094
 msgid "Obsoletes"
-msgstr ""
+msgstr "不要"
 
 #. TRANSLATORS: find out what package provides
 #: ../tools/zif-main.c:5176
@@ -609,12 +609,12 @@ msgstr "提供元"
 #. TRANSLATORS: find out what package requires
 #: ../tools/zif-main.c:5261
 msgid "Requires"
-msgstr ""
+msgstr "必須"
 
 #. TRANSLATORS: error message
 #: ../tools/zif-main.c:5353
 msgid "Command not found, valid commands are:"
-msgstr ""
+msgstr "コマンドが見つかりません。正しいコマンドは下記の通り:"
 
 #: ../tools/zif-main.c:5415
 #, c-format
@@ -645,7 +645,7 @@ msgstr "鍵を削除しています"
 #. * "from_repo deleted");
 #: ../tools/zif-main.c:5910
 msgid "deleted"
-msgstr ""
+msgstr "削除済み"
 
 #. TRANSLATORS: used when the install database is listed
 #: ../tools/zif-main.c:5946
@@ -707,19 +707,19 @@ msgstr ""
 
 #: ../tools/zif-main.c:6482
 msgid "Assume yes to all questions"
-msgstr ""
+msgstr "すべての質問に「はい」と回答する"
 
 #: ../tools/zif-main.c:6484
 msgid "Assume no to all questions"
-msgstr ""
+msgstr "すべての質問で「いいえ」と回答する"
 
 #: ../tools/zif-main.c:6486
 msgid "Enable one or more repositories"
-msgstr ""
+msgstr "1 つ以上のリポジトリーを有効にする"
 
 #: ../tools/zif-main.c:6488
 msgid "Disable one or more repositories"
-msgstr ""
+msgstr "1 つ以上のリポジトリーを無効にする"
 
 #. TRANSLATORS: we can't run as the user
 #: ../tools/zif-main.c:6639
@@ -734,47 +734,47 @@ msgstr ""
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6717
 msgid "Remove cached data"
-msgstr ""
+msgstr "キャッシュ済みデータを削除する"
 
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6722
 msgid "Download a package"
-msgstr ""
+msgstr "パッケージをダウンロードする"
 
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6727
 msgid "Find a given package given the ID"
-msgstr ""
+msgstr "ID でパッケージを検索する"
 
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6732
 msgid "Returns the list of categories"
-msgstr ""
+msgstr "カテゴリーの一覧を返す"
 
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6737
 msgid "List a package's dependencies"
-msgstr ""
+msgstr "パッケージの依存情報の一覧を表示する"
 
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6742
 msgid "Display details about a package or group of packages"
-msgstr ""
+msgstr "パッケージ、あるいはパッケージ グループの詳細を表示する"
 
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6747
 msgid "List the files in a package"
-msgstr ""
+msgstr "パッケージに含まれるファイルの一覧を表示する"
 
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6752
 msgid "Get the groups the system supports"
-msgstr ""
+msgstr "システムがサポートするグループを取得する"
 
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6757
 msgid "List all packages"
-msgstr ""
+msgstr "全パッケージの一覧を表示する"
 
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6762
@@ -814,7 +814,7 @@ msgstr ""
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6797
 msgid "Install a local package"
-msgstr ""
+msgstr "ローカルのパッケージをインストールする"
 
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6802
@@ -829,7 +829,7 @@ msgstr ""
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6812
 msgid "Generate the metadata cache"
-msgstr ""
+msgstr "メタデータのキャッシュを生成する"
 
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6817
@@ -839,57 +839,57 @@ msgstr "パッケージの削除"
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6822
 msgid "Disable a specific software repository"
-msgstr ""
+msgstr "指定のソフトウェア リポジトリーを無効にする"
 
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6827
 msgid "Enable a specific software repository"
-msgstr ""
+msgstr "指定のソフトウェア リポジトリーを有効にする"
 
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6832
 msgid "Display the configured software repositories"
-msgstr ""
+msgstr "設定済みソフトウェア リポジトリーを表示する"
 
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6837
 msgid "Find a given package name"
-msgstr ""
+msgstr "パッケージ名で検索する"
 
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6842
 msgid "Search package details for the given category"
-msgstr ""
+msgstr "カテゴリーでパッケージの詳細を検索する"
 
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6847
 msgid "Search package details for the given string"
-msgstr ""
+msgstr "文字列でパッケージの詳細を検索する"
 
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6852
 msgid "Search packages for the given filename"
-msgstr ""
+msgstr "ファイル名でパッケージを検索する"
 
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6857
 msgid "Search packages in the given group"
-msgstr ""
+msgstr "グループでパッケージを検索する"
 
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6862
 msgid "Search package name for the given string"
-msgstr ""
+msgstr "文字列でパッケージ名を検索する"
 
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6867
 msgid "Run an interactive shell"
-msgstr ""
+msgstr "対話式のシェルを実行する"
 
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6872
 msgid "Update a package to the newest available version"
-msgstr ""
+msgstr "利用可能な最新のバージョンでパッケージを更新する"
 
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6877
@@ -899,12 +899,12 @@ msgstr ""
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6882
 msgid "Display details about an update"
-msgstr ""
+msgstr "更新についての詳細を表示する"
 
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6887
 msgid "Upgrade the operating system to a newer version"
-msgstr ""
+msgstr "最新のバージョンにオペレーション 視すt目うをアップグレードする"
 
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6892
@@ -934,62 +934,62 @@ msgstr ""
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6917
 msgid "Check for problems in the installed database"
-msgstr ""
+msgstr "インストール済みデータベースの問題を確認する"
 
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6922
 msgid "Get a value in the package database"
-msgstr ""
+msgstr "パッケージのデータベースから値を取得する"
 
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6927
 msgid "Set a value in the installed package database"
-msgstr ""
+msgstr "インストール済みパッケージのデータベースから値を設定する"
 
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6932
 msgid "Remove a value from the installed package database"
-msgstr ""
+msgstr "インストール済みパッケージのデータベースから値を削除する"
 
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6937
 msgid "List values from the installed package database"
-msgstr ""
+msgstr "インストール済みパッケージのデータベースから値の一覧を取得する"
 
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6942
 msgid "Gets the provides for a given package"
-msgstr ""
+msgstr "パッケージ指定で提供情報を取得する"
 
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6947
 msgid "Gets the requires for a given package"
-msgstr ""
+msgstr "パッケージ指定で必須情報を取得する"
 
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6952
 msgid "Gets the conflicts for a given package"
-msgstr ""
+msgstr "パッケージ指定で衝突情報を取得する"
 
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6957
 msgid "Gets the obsoletes for a given package"
-msgstr ""
+msgstr "パッケージ指定で不要情報を取得する"
 
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6962
 msgid "Gets the transaction history list"
-msgstr ""
+msgstr "トランザクションの履歴の一覧を取得する"
 
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6967
 msgid "Gets the transaction history for a specified package"
-msgstr ""
+msgstr "指定したパッケージのトランザクション履歴を取得する"
 
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6972
 msgid "Imports the history data from a legacy database"
-msgstr ""
+msgstr "古いデータベースから履歴データをインポートする"
 
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6977
@@ -1004,7 +1004,7 @@ msgstr "キャンセルしました"
 #. TRANSLATORS: error message
 #: ../tools/zif-main.c:7009
 msgid "The system state was invalid"
-msgstr ""
+msgstr "システムの状態が正しくありません"
 
 #. TRANSLATORS: error message
 #: ../tools/zif-main.c:7013
