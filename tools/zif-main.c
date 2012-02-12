@@ -2216,6 +2216,10 @@ zif_transaction_reason_to_string_localized (ZifTransactionReason reason)
 		/* TRANSLATORS: this is the reason the action is to be taken */
 		str = _("Removing current version");
 		break;
+	case ZIF_TRANSACTION_REASON_REMOVE_AUTO_DEP:
+		/* TRANSLATORS: this is the reason the action is to be taken */
+		str = _("Removing automatic dependency");
+		break;
 	default:
 		/* TRANSLATORS: this is the reason the action is to be taken */
 		str = _("Unknown reason");
@@ -2246,6 +2250,7 @@ zif_main_show_transaction (ZifTransaction *transaction)
 		ZIF_TRANSACTION_REASON_REMOVE_FOR_DEP,
 		ZIF_TRANSACTION_REASON_REMOVE_AS_ONLYN,
 		ZIF_TRANSACTION_REASON_REMOVE_OBSOLETE,
+		ZIF_TRANSACTION_REASON_REMOVE_AUTO_DEP,
 		-1 };
 
 	g_print ("%s\n", _("Transaction summary:"));
@@ -3681,6 +3686,25 @@ out:
 	if (array != NULL)
 		g_ptr_array_unref (array);
 	return ret;
+}
+
+/**
+ * zif_cmd_remove_with_deps:
+ **/
+static gboolean
+zif_cmd_remove_with_deps (ZifCmdPrivate *priv, gchar **values, GError **error)
+{
+	gboolean ret;
+	ret = zif_config_set_boolean (priv->config,
+				      "clean_requirements_on_remove",
+				      TRUE,
+				      error);
+	if (!ret)
+		goto out;
+	ret = zif_cmd_remove (priv, values, error);
+out:
+	return ret;
+
 }
 
 /**
@@ -6812,6 +6836,11 @@ main (int argc, char *argv[])
 		     /* TRANSLATORS: command description */
 		     _("Remove a package"),
 		     zif_cmd_remove);
+	zif_cmd_add (priv->cmd_array,
+		     "remove-with-deps",
+		     /* TRANSLATORS: command description */
+		     _("Remove a package with dependencies"),
+		     zif_cmd_remove_with_deps);
 	zif_cmd_add (priv->cmd_array,
 		     "repo-disable",
 		     /* TRANSLATORS: command description */

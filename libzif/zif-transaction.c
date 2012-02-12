@@ -220,6 +220,8 @@ zif_transaction_reason_to_string (ZifTransactionReason reason)
 		return "downgrade-for-dep";
 	if (reason == ZIF_TRANSACTION_REASON_DOWNGRADE_INSTALLED)
 		return "downgrade-installed";
+	if (reason == ZIF_TRANSACTION_REASON_REMOVE_AUTO_DEP)
+		return "remove-auto-dep";
 	g_warning ("cannot convert reason %i to string", reason);
 	return NULL;
 }
@@ -3468,6 +3470,376 @@ out:
 }
 
 /**
+ * _zif_store_can_auto_remove:
+ **/
+static gboolean
+_zif_store_can_auto_remove (ZifStore *store,
+			    ZifPackage *package,
+			    gboolean *auto_remove,
+			    ZifState *state,
+			    GError **error)
+{
+	gboolean ret;
+	GPtrArray *packages_provides = NULL;
+	GPtrArray *packages_req = NULL;
+	GPtrArray *provides = NULL;
+	guint i;
+	ZifPackage *package_tmp;
+	ZifState *state_local;
+
+	/* setup state */
+	ret = zif_state_set_steps (state,
+				   error,
+				   50, /* get provides */
+				   25, /* what requires */
+				   25, /* what provides */
+				   -1);
+	if (!ret)
+		goto out;
+
+	/* what does this package provide */
+	state_local = zif_state_get_child (state);
+	provides = zif_package_get_provides (package,
+					     state_local,
+					     error);
+	if (provides == NULL) {
+		ret = FALSE;
+		goto out;
+	}
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* do any packages require this? */
+	state_local = zif_state_get_child (state);
+	packages_req = zif_store_what_requires (store,
+						provides,
+						state_local,
+						error);
+	if (packages_req == NULL) {
+		ret = FALSE;
+		goto out;
+	}
+
+	/* shortcut */
+	if (packages_req->len == 0) {
+		ret = zif_state_finished (state, error);
+		if (!ret)
+			goto out;
+		*auto_remove = TRUE;
+		goto out;
+	}
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* does anything else in the store provide this dependency */
+	state_local = zif_state_get_child (state);
+	packages_provides = zif_store_what_provides (store,
+						     provides,
+						     state_local,
+						     error);
+	if (packages_provides == NULL) {
+		ret = FALSE;
+		goto out;
+	}
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	for (i = 0; i < packages_provides->len; i++) {
+		package_tmp = g_ptr_array_index (packages_provides, i);
+		if (zif_package_compare (package_tmp, package) == 0)
+			continue;
+		g_debug ("%s provides the dep, so okay to remove",
+			 zif_package_get_printable (package_tmp));
+		*auto_remove = TRUE;
+	}
+out:
+	if (provides != NULL)
+		g_ptr_array_unref (provides);
+	if (packages_req != NULL)
+		g_ptr_array_unref (packages_req);
+	if (packages_provides != NULL)
+		g_ptr_array_unref (packages_provides);
+	return ret;
+}
+
+/**
+ * zif_transaction_auto_remove_pkg:
+ *
+ * Find the package in the store, and check if we can autoremove it.
+ **/
+static gboolean
+zif_transaction_auto_remove_pkg (ZifTransaction *transaction,
+				 ZifPackage *package,
+				 ZifState *state,
+				 GError **error)
+{
+	gboolean auto_remove;
+	gboolean ret = TRUE;
+	GError *error_local = NULL;
+	GPtrArray *related_packages = NULL;
+	ZifPackage *package_local = NULL;
+	ZifState *state_local;
+	ZifTransactionPrivate *priv = transaction->priv;
+
+	/* setup state */
+	ret = zif_state_set_steps (state,
+				   error,
+				   49, /* resolve */
+				   50, /* search store */
+				   1, /* add to transaction */
+				   -1);
+	if (!ret)
+		goto out;
+
+	/* convert a ZifPackage into a ZifPackageLocal */
+	state_local = zif_state_get_child (state);
+	package_local = zif_store_resolve_package (priv->store_local,
+						   package,
+						   ZIF_STORE_RESOLVE_FLAG_USE_NAME_VERSION_ARCH,
+						   state_local,
+						   error);
+	if (package_local == NULL) {
+		ret = FALSE;
+		goto out;
+	}
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* can we autoremove this package? */
+	state_local = zif_state_get_child (state);
+	ret = _zif_store_can_auto_remove (priv->store_local,
+					  package_local,
+					  &auto_remove,
+					  state_local,
+					  &error_local);
+	if (!ret) {
+		/* FIXME: should this be fatal to the transaction? */
+		ret = TRUE;
+		g_warning ("failed to get autoremove state: %s",
+			   error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* add this to the auto-remove list */
+	if (auto_remove) {
+		g_debug ("remove auto-dep %s",
+			 zif_package_get_printable (package_local));
+		related_packages = zif_object_array_new ();
+		zif_object_array_add (related_packages,
+				      package);
+
+		/* pass in the ZifPackageLocal, not the bare ZifPackage */
+		ret = zif_transaction_add_remove_internal (transaction,
+							   package_local,
+							   related_packages,
+							   ZIF_TRANSACTION_REASON_REMOVE_AUTO_DEP,
+							   error);
+		if (!ret)
+			goto out;
+
+	}
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+out:
+	if (related_packages != NULL)
+		g_ptr_array_unref (related_packages);
+	if (package_local != NULL)
+		g_object_unref (package_local);
+	return ret;
+}
+
+/**
+ * zif_transaction_auto_remove_user_pkg:
+ *
+ * Try and find the remove-user-action package in the history database
+ * and if found then get the latest install transaction and find the
+ * deps that were installed with the original transaction.
+ **/
+static gboolean
+zif_transaction_auto_remove_user_pkg (ZifTransaction *transaction,
+				      ZifPackage *package,
+				      ZifState *state,
+				      GError **error)
+{
+	GArray *array;
+	gboolean ret = TRUE;
+	GError *error_local = NULL;
+	GPtrArray *packages = NULL;
+	guint i;
+	guint timestamp;
+	ZifPackage *package_tmp;
+	ZifState *state_local;
+	ZifTransactionReason reason;
+	ZifTransactionPrivate *priv = transaction->priv;
+
+	/* find the transactions involving this package */
+	array = zif_history_get_transactions_for_package (priv->history,
+							  package,
+							  &error_local);
+	if (array == NULL) {
+		g_debug ("Did not find %s in the history DB: %s",
+			 zif_package_get_printable (package),
+			 error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* get the latest transaction */
+	timestamp = g_array_index (array, guint, 0);
+	g_debug ("timestamp=%i", timestamp);
+
+	/* check the reason was user-action */
+	reason = zif_history_get_reason (priv->history,
+					 package,
+					 timestamp,
+					 &error_local);
+	if (reason == ZIF_TRANSACTION_REASON_INVALID) {
+		g_debug ("did not get the transaction reason: %s",
+			 error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+	if (reason != ZIF_TRANSACTION_REASON_INSTALL_USER_ACTION) {
+		g_debug ("not user action: %s",
+			 zif_transaction_reason_to_string (reason));
+		goto out;
+	}
+
+	/* get the packages in this transaction */
+	packages = zif_history_get_packages (priv->history,
+					     timestamp,
+					     &error_local);
+	if (packages == NULL) {
+		g_warning ("failed to get packages for timestamp %i: %s",
+			   timestamp, error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* find any packages that were installed as deps */
+	zif_state_set_number_steps (state, packages->len * 2);
+	for (i = 0; i < packages->len; i++) {
+		package_tmp = g_ptr_array_index (packages, i);
+		if (zif_package_compare (package, package_tmp) == 0)
+			goto skip;
+
+		/* get the reason */
+		reason = zif_history_get_reason (priv->history,
+						 package_tmp,
+						 timestamp,
+						 &error_local);
+		if (reason == ZIF_TRANSACTION_REASON_INVALID) {
+			g_warning ("failed to get reason for %s: %s",
+				   zif_package_get_printable (package),
+				   error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+		if (reason != ZIF_TRANSACTION_REASON_INSTALL_DEPEND) {
+			g_debug ("ignore %s as reason %s",
+				 zif_package_get_printable (package_tmp),
+				 zif_transaction_reason_to_string (reason));
+			goto skip;
+		}
+
+		/* check if we can autoremove this */
+		g_debug ("check %s for deps",
+			 zif_package_get_printable (package_tmp));
+		state_local = zif_state_get_child (state);
+		ret = zif_transaction_auto_remove_pkg (transaction,
+						       package_tmp,
+						       state_local,
+						       error);
+		if (!ret)
+			goto out;
+skip:
+		/* this section done */
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
+	}
+out:
+	if (array != NULL)
+		g_array_unref (array);
+	if (packages != NULL)
+		g_ptr_array_unref (packages);
+	return ret;
+}
+
+/**
+ * zif_transaction_auto_remove:
+ *
+ * Go through the packages in the remove list, and if any are
+ * user-action then process the package.
+ **/
+static gboolean
+zif_transaction_auto_remove (ZifTransaction *transaction,
+			     ZifState *state,
+			     GError **error)
+{
+	gboolean ret = TRUE;
+	guint i;
+	ZifPackage *package;
+	ZifState *state_local;
+	ZifTransactionReason reason;
+	ZifTransactionPrivate *priv = transaction->priv;
+
+	/* search through each package in the remove list */
+	zif_state_set_number_steps (state, priv->remove->len);
+	for (i = 0; i < priv->remove->len; i++) {
+
+		/* remove this package */
+		package = g_ptr_array_index (priv->remove, i);
+
+		/* is important? */
+		reason = zif_transaction_get_reason (transaction, package, error);
+		if (reason == ZIF_TRANSACTION_REASON_INVALID) {
+			ret = FALSE;
+			goto out;
+		}
+		if (reason != ZIF_TRANSACTION_REASON_REMOVE_USER_ACTION)
+			continue;
+
+		/* remove this package */
+		state_local = zif_state_get_child (state);
+		ret = zif_transaction_auto_remove_user_pkg (transaction,
+							    package,
+							    state_local,
+							    error);
+		if (!ret)
+			goto out;
+
+		/* done */
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
+	}
+out:
+	return ret;
+}
+
+/**
  * zif_transaction_resolve:
  * @transaction: A #ZifTransaction
  * @state: A #ZifState to use for progress reporting
@@ -3484,7 +3856,9 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 {
 	gboolean ret = FALSE;
 	guint items_success;
+	gboolean autoremove;
 	gboolean background;
+	ZifState *state_local;
 	ZifTransactionPrivate *priv;
 	ZifTransactionResolve *data = NULL;
 
@@ -3513,9 +3887,33 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 		 priv->update->len,
 		 priv->remove->len);
 
-	/* whilst there are unresolved dependencies, keep trying */
+	/* setup state */
+	ret = zif_state_set_steps (state,
+				   error,
+				   10, /* clear requires */
+				   90, /* resolves dep */
+				   -1);
+	if (!ret)
+		goto out;
+
+	/* check for packages to autoremove */
+	autoremove = zif_config_get_boolean (priv->config,
+					     "clean_requirements_on_remove", NULL);
+	if (autoremove && priv->remove->len > 0) {
+		state_local = zif_state_get_child (state);
+		ret = zif_transaction_auto_remove (transaction,
+						   state_local,
+						   error);
+		if (!ret)
+			goto out;
+	}
+
+	/* done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
 	data = g_new0 (ZifTransactionResolve, 1);
-	zif_state_set_number_steps (state, 1);
 	data->state = zif_state_get_child (state);
 	data->post_resolve_package_array = zif_store_meta_new ();
 

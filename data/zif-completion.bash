@@ -48,6 +48,7 @@ __zif_commandlist="
     manifest-dump
     refresh-cache
     remove
+    remove-with-deps
     repo-disable
     repo-enable
     repo-list
