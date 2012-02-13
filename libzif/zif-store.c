@@ -1306,6 +1306,75 @@ zif_store_resolve (ZifStore *store,
 }
 
 /**
+ * zif_store_resolve_package:
+ * @store: A #ZifStore
+ * @package: A #ZifPackage
+ * @flags: A bitfield of %ZifStoreResolveFlags, e.g. %ZIF_STORE_RESOLVE_FLAG_USE_NAME_ARCH
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
+ *
+ * Finds a package matching in the store.
+ * Note, this uses the ->resolve interface, rather than the
+ * ->find_package interface. This allows the user to match on any
+ * of the specified @flags.
+ *
+ * This function may be useful if you want to convert a #ZifPackage
+ * to a ZifPackageRemote or ZifPackageLocal. An error will be returned
+ * if more than one item matches in the store.
+ *
+ * Return value: (transfer full): A #ZifPackage, or NULL for an error
+ *
+ * Since: 0.2.7
+ **/
+ZifPackage *
+zif_store_resolve_package (ZifStore *store,
+			   ZifPackage *package,
+			   ZifStoreResolveFlags flags,
+			   ZifState *state,
+			   GError **error)
+{
+	const gchar *search[] = { NULL, NULL };
+	GPtrArray *packages = NULL;
+	ZifPackage *package_store = NULL;
+
+	g_return_val_if_fail (ZIF_IS_STORE (store), NULL);
+	g_return_val_if_fail (ZIF_IS_PACKAGE (package), NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+	/* find the ZifPackage in the store */
+	search[0] = zif_package_get_name_version_arch (package);
+	packages = zif_store_resolve_full (store,
+					   (gchar **) search,
+					   flags,
+					   state,
+					   error);
+	if (packages == NULL)
+		goto out;
+	if (packages->len == 0) {
+		g_set_error (error,
+			     ZIF_STORE_ERROR,
+			     ZIF_STORE_ERROR_FAILED_TO_FIND,
+			     "failed to find %s",
+			     zif_package_get_printable (package));
+		goto out;
+	}
+	if (packages->len > 1) {
+		g_set_error (error,
+			     ZIF_STORE_ERROR,
+			     ZIF_STORE_ERROR_MULTIPLE_MATCHES,
+			     "multiple matches for %s",
+			     zif_package_get_printable (package));
+		goto out;
+	}
+	package_store = g_object_ref (g_ptr_array_index (packages, 0));
+out:
+	if (packages != NULL)
+		g_ptr_array_unref (packages);
+	return package_store;
+}
+
+/**
  * zif_store_what_depends:
  **/
 static GPtrArray *

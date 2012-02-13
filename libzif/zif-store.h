@@ -208,6 +208,11 @@ GPtrArray	*zif_store_resolve_full		(ZifStore		*store,
 						 ZifStoreResolveFlags	 flags,
 						 ZifState		*state,
 						 GError			**error);
+ZifPackage	*zif_store_resolve_package	(ZifStore		*store,
+						 ZifPackage		*package,
+						 ZifStoreResolveFlags	 flags,
+						 ZifState		*state,
+						 GError			**error);
 GPtrArray	*zif_store_what_provides	(ZifStore		*store,
 						 GPtrArray		*depends,
 						 ZifState		*state,
