@@ -1,15 +1,16 @@
 # SOME DESCRIPTIVE TITLE.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
-# 
+#
 # Translators:
+#   Tadashi Jokagi <elf@poyo.jp>, 2012
 msgid ""
 msgstr ""
 "Project-Id-Version: Zif\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-11-01 10:04+0000\n"
-"PO-Revision-Date: 2012-02-12 17:03+0900\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"PO-Revision-Date: 2012-02-14 12:11+0900\n"
+"Last-Translator: Tadashi Jokagi <elf@poyo.jp>\n"
 "Language-Team: Japanese (http://www.transifex.net/projects/p/freedesktop/team/ja/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -234,7 +235,7 @@ msgstr "説明"
 #. TRANSLATORS: strftime formatted please
 #: ../tools/zif-main.c:1432
 msgid "%F %R"
-msgstr ""
+msgstr "%Y年%m月%d日 %H時%M分"
 
 #: ../tools/zif-main.c:1467
 msgid "The history database is empty"
@@ -247,7 +248,7 @@ msgstr "トランザクション"
 #. TRANSLATORS: we've imported the yumdb into the history database
 #: ../tools/zif-main.c:1547
 msgid "All database entries imported into history"
-msgstr ""
+msgstr "全データベースのエントリーを履歴にインポートしました"
 
 #. TRANSLATORS: getting file lists for a package
 #: ../tools/zif-main.c:1589
@@ -317,7 +318,7 @@ msgstr "新しいバージョンを更新しています"
 #. TRANSLATORS: this is the reason the action is to be taken
 #: ../tools/zif-main.c:2180
 msgid "Removing due to multiple versions"
-msgstr ""
+msgstr "複数バージョンの間を削除しています"
 
 #. TRANSLATORS: this is the reason the action is to be taken
 #: ../tools/zif-main.c:2184
@@ -452,7 +453,7 @@ msgstr ""
 #. TRANSLATORS: performing action
 #: ../tools/zif-main.c:3528
 msgid "Refreshing cache"
-msgstr ""
+msgstr "キャッシュを再生成する"
 
 #. TRANSLATORS: error message
 #: ../tools/zif-main.c:3637
@@ -463,17 +464,17 @@ msgstr "パッケージはインストールされていません"
 #. TRANSLATORS: performing action
 #: ../tools/zif-main.c:3715
 msgid "Disabling repo"
-msgstr ""
+msgstr "リポジトリーを無効にしています"
 
 #. TRANSLATORS: performing action
 #: ../tools/zif-main.c:3786
 msgid "Enabling repo"
-msgstr ""
+msgstr "リポジトリーを有効にしています"
 
 #. TRANSLATORS: performing action
 #: ../tools/zif-main.c:3865
 msgid "Getting repo list"
-msgstr ""
+msgstr "リポジトリーの一覧を取得しています"
 
 #: ../tools/zif-main.c:4026
 msgid "Specify a category"
@@ -515,7 +516,7 @@ msgstr "グループ検索"
 #. TRANSLATORS: search, based on the package name only
 #: ../tools/zif-main.c:4329
 msgid "Searching name"
-msgstr ""
+msgstr "名前を検索しています"
 
 #. TRANSLATORS: used when the user did not explicitly specify a
 #. * list of updates to install
@@ -619,7 +620,7 @@ msgstr "コマンドが見つかりません。正しいコマンドは下記の
 #: ../tools/zif-main.c:5415
 #, c-format
 msgid "Welcome to the shell. Type '%s' to finish."
-msgstr ""
+msgstr "シェルへようこそ。「%s」を入力すると終了します。"
 
 #. TRANSLATORS: used when the install database is being checked
 #: ../tools/zif-main.c:5638
@@ -659,19 +660,19 @@ msgstr ""
 
 #: ../tools/zif-main.c:6458
 msgid "Show extra debugging information"
-msgstr ""
+msgstr "外部デバッグ情報を表示する"
 
 #: ../tools/zif-main.c:6460
 msgid "Enable low level profiling of Zif"
-msgstr ""
+msgstr "Zif の低レベルプロファイリングを有効にする"
 
 #: ../tools/zif-main.c:6462
 msgid "Enable background mode to run using less CPU"
-msgstr ""
+msgstr "CPU の低負荷状態でバックグラウンド モードを有効にする"
 
 #: ../tools/zif-main.c:6464
 msgid "Work offline when possible"
-msgstr ""
+msgstr "可能ならオフラインで処理をする"
 
 #: ../tools/zif-main.c:6466
 msgid "Take into account distribution versions when calculating updates"
@@ -679,7 +680,7 @@ msgstr ""
 
 #: ../tools/zif-main.c:6468
 msgid "Use different config file"
-msgstr ""
+msgstr "異なる設定ファイルを使う"
 
 #: ../tools/zif-main.c:6470
 msgid "Exclude certain packages"
@@ -687,11 +688,11 @@ msgstr ""
 
 #: ../tools/zif-main.c:6472
 msgid "Use different rpm database root"
-msgstr ""
+msgstr "異なる RPM データベースを使う"
 
 #: ../tools/zif-main.c:6474
 msgid "Proxy server setting"
-msgstr ""
+msgstr "プロキシ― サーバーの設定"
 
 #: ../tools/zif-main.c:6476
 msgid "Permitted age of the cache in seconds, 0 for never (default)"
@@ -784,7 +785,7 @@ msgstr ""
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6767
 msgid "Check for newer operating system versions"
-msgstr ""
+msgstr "新しいオペレーション システムのバージョンを調べる"
 
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6772
@@ -799,17 +800,17 @@ msgstr ""
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6782
 msgid "Display a helpful usage message"
-msgstr ""
+msgstr "有益な使い方を表示する"
 
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6787
 msgid "Install a package"
-msgstr ""
+msgstr "パッケージをインストールする"
 
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6792
 msgid "Downgrade a package to a previous version"
-msgstr ""
+msgstr "前のバージョンにパッケージをダウンロードする"
 
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6797
@@ -909,7 +910,7 @@ msgstr "最新のバージョンにオペレーション 視すt目うをアッ�
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6892
 msgid "Live-upgrade the operating system to a newer version"
-msgstr ""
+msgstr "より新しいバージョンにオペレーション システムをライブ アップグレードする"
 
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6897
@@ -1019,7 +1020,7 @@ msgstr ""
 #. TRANSLATORS: error message
 #: ../tools/zif-main.c:7023
 msgid "Nothing to do"
-msgstr ""
+msgstr "することは何もありません"
 
 #. TRANSLATORS: error message
 #: ../tools/zif-main.c:7027
@@ -1039,7 +1040,7 @@ msgstr ""
 #. TRANSLATORS: error message
 #: ../tools/zif-main.c:7041
 msgid "Failed to store"
-msgstr ""
+msgstr "保存に失敗しました"
 
 #. TRANSLATORS: error message
 #: ../tools/zif-main.c:7045
