@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: Zif\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-11-01 10:04+0000\n"
-"PO-Revision-Date: 2012-02-13 13:28+0900\n"
+"PO-Revision-Date: 2012-02-14 12:11+0900\n"
 "Last-Translator: Tadashi Jokagi <elf@poyo.jp>\n"
 "Language-Team: Japanese (http://www.transifex.net/projects/p/freedesktop/team/ja/)\n"
 "MIME-Version: 1.0\n"
@@ -664,15 +664,15 @@ msgstr "外部デバッグ情報を表示する"
 
 #: ../tools/zif-main.c:6460
 msgid "Enable low level profiling of Zif"
-msgstr ""
+msgstr "Zif の低レベルプロファイリングを有効にする"
 
 #: ../tools/zif-main.c:6462
 msgid "Enable background mode to run using less CPU"
-msgstr ""
+msgstr "CPU の低負荷状態でバックグラウンド モードを有効にする"
 
 #: ../tools/zif-main.c:6464
 msgid "Work offline when possible"
-msgstr ""
+msgstr "可能ならオフラインで処理をする"
 
 #: ../tools/zif-main.c:6466
 msgid "Take into account distribution versions when calculating updates"
@@ -688,7 +688,7 @@ msgstr ""
 
 #: ../tools/zif-main.c:6472
 msgid "Use different rpm database root"
-msgstr ""
+msgstr "異なる RPM データベースを使う"
 
 #: ../tools/zif-main.c:6474
 msgid "Proxy server setting"
@@ -800,7 +800,7 @@ msgstr ""
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6782
 msgid "Display a helpful usage message"
-msgstr ""
+msgstr "有益な使い方を表示する"
 
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6787
@@ -910,7 +910,7 @@ msgstr "最新のバージョンにオペレーション 視すt目うをアッ�
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6892
 msgid "Live-upgrade the operating system to a newer version"
-msgstr ""
+msgstr "より新しいバージョンにオペレーション システムをライブ アップグレードする"
 
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6897
@@ -1020,7 +1020,7 @@ msgstr ""
 #. TRANSLATORS: error message
 #: ../tools/zif-main.c:7023
 msgid "Nothing to do"
-msgstr ""
+msgstr "することは何もありません"
 
 #. TRANSLATORS: error message
 #: ../tools/zif-main.c:7027
