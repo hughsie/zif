@@ -69,7 +69,7 @@ ZifHistory	*zif_history_new			(void);
 
 gboolean	 zif_history_add_entry			(ZifHistory	*history,
 							 ZifPackage	*package,
-							 guint		 timestamp,
+							 gint64		 timestamp,
 							 ZifTransactionReason reason,
 							 guint		 uid,
 							 const gchar	*command_line,
@@ -80,23 +80,23 @@ GArray		*zif_history_get_transactions_for_package (ZifHistory	*history,
 							 ZifPackage	*package,
 							 GError		**error);
 GPtrArray	*zif_history_get_packages		(ZifHistory	*history,
-							 guint		 timestamp,
+							 gint64		 timestamp,
 							 GError		**error);
 guint		 zif_history_get_uid			(ZifHistory	*history,
 							 ZifPackage	*package,
-							 guint		 timestamp,
+							 gint64		 timestamp,
 							 GError		**error);
 gchar		*zif_history_get_cmdline		(ZifHistory	*history,
 							 ZifPackage	*package,
-							 guint		 timestamp,
+							 gint64		 timestamp,
 							 GError		**error);
 gchar		*zif_history_get_repo			(ZifHistory	*history,
 							 ZifPackage	*package,
-							 guint		 timestamp,
+							 gint64		 timestamp,
 							 GError		**error);
 ZifTransactionReason zif_history_get_reason		(ZifHistory	*history,
 							 ZifPackage	*package,
-							 guint		 timestamp,
+							 gint64		 timestamp,
 							 GError		**error);
 gchar		*zif_history_get_repo_newest		(ZifHistory	*history,
 							 ZifPackage	*package,

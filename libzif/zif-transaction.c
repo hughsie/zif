@@ -3792,7 +3792,7 @@ zif_transaction_auto_remove_user_pkg (ZifTransaction *transaction,
 	GError *error_local = NULL;
 	GPtrArray *packages = NULL;
 	guint i;
-	guint timestamp;
+	gint64 timestamp;
 	ZifPackage *package_tmp;
 	ZifState *state_local;
 	ZifTransactionReason reason;
@@ -3816,8 +3816,8 @@ zif_transaction_auto_remove_user_pkg (ZifTransaction *transaction,
 	}
 
 	/* get the latest transaction */
-	timestamp = g_array_index (array, guint, 0);
-	g_debug ("timestamp=%i", timestamp);
+	timestamp = g_array_index (array, gint64, 0);
+	g_debug ("timestamp=%li", timestamp);
 
 	/* check the reason was user-action */
 	reason = zif_history_get_reason (priv->history,
@@ -3841,7 +3841,7 @@ zif_transaction_auto_remove_user_pkg (ZifTransaction *transaction,
 					     timestamp,
 					     &error_local);
 	if (packages == NULL) {
-		g_warning ("failed to get packages for timestamp %i: %s",
+		g_warning ("failed to get packages for timestamp %li: %s",
 			   timestamp, error_local->message);
 		g_error_free (error_local);
 		goto out;
@@ -5558,12 +5558,12 @@ zif_transaction_write_history (ZifTransaction *transaction,
 {
 	gboolean ret = TRUE;
 	guint i;
-	guint timestamp;
+	gint64 timestamp;
 	ZifPackage *package_tmp;
 	ZifTransactionItem *item;
 	ZifTransactionPrivate *priv = transaction->priv;
 
-	timestamp = g_get_real_time () / G_USEC_PER_SEC;
+	timestamp = g_get_real_time ();
 	for (i=0; i<transaction->priv->install->len; i++) {
 		package_tmp = g_ptr_array_index (transaction->priv->install, i);
 		item = zif_transaction_package_get_item (package_tmp);

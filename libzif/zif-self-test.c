@@ -4154,7 +4154,7 @@ zif_history_func (void)
 	gchar *tmp;
 	GError *error = NULL;
 	GPtrArray *packages;
-	guint timestamp;
+	gint64 timestamp;
 	guint uid;
 	ZifConfig *config;
 	ZifDb *db;
@@ -4179,7 +4179,7 @@ zif_history_func (void)
 	history = zif_history_new ();
 
 	/* add an entry */
-	timestamp = g_get_real_time () / G_USEC_PER_SEC;
+	timestamp = g_get_real_time ();
 	package1 = zif_package_new ();
 	ret = zif_package_set_id (package1,
 				  "hal;0.1-1.fc13;i386;fedora",
@@ -4226,7 +4226,7 @@ zif_history_func (void)
 	g_assert_no_error (error);
 	g_assert (transactions != NULL);
 	g_assert_cmpint (transactions->len, ==, 1);
-	g_assert_cmpint (g_array_index (transactions, guint, 0), ==, timestamp);
+	g_assert_cmpint (g_array_index (transactions, gint64, 0) - timestamp, <, 10);
 
 	/* get both packages */
 	packages = zif_history_get_packages (history,
@@ -4292,7 +4292,7 @@ zif_history_func (void)
 	g_free (tmp);
 
 	/* check uid */
-	uid = zif_history_get_uid (history, package3, 1287927872, &error);
+	uid = zif_history_get_uid (history, package3, 1287927872000000, &error);
 	g_assert_no_error (error);
 	g_assert_cmpint (uid, ==, 500);
 

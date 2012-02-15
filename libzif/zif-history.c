@@ -176,7 +176,7 @@ out:
 gboolean
 zif_history_add_entry (ZifHistory *history,
 		       ZifPackage *package,
-		       guint timestamp,
+		       gint64 timestamp,
 		       ZifTransactionReason reason,
 		       guint uid,
 		       const gchar *command_line,
@@ -265,9 +265,9 @@ zif_history_add_entry (ZifHistory *history,
 			  zif_package_get_arch (package),
 			  -1,
 			  SQLITE_STATIC);
-	sqlite3_bind_int (statement,
-			  9,
-			  timestamp);
+	sqlite3_bind_int64 (statement,
+			    9,
+			    timestamp);
 
 	/* execute statement */
 	rc = sqlite3_step (statement);
@@ -298,11 +298,11 @@ zif_history_get_transactions_sqlite_cb (void *data,
 					gchar **col_name)
 {
 	gint i;
-	guint timestamp;
+	gint64 timestamp;
 	GArray **array = (GArray **) data;
 
 	for (i=0; i<argc; i++) {
-		timestamp = atoi (argv[i]);
+		timestamp = atol (argv[i]);
 		g_array_append_val (*array, timestamp);
 	}
 	return 0;
@@ -390,7 +390,6 @@ zif_history_get_transactions_for_package (ZifHistory *history,
 	gchar *error_msg = NULL;
 	gint rc;
 
-
 	g_return_val_if_fail (ZIF_IS_HISTORY (history), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
@@ -404,7 +403,8 @@ zif_history_get_transactions_for_package (ZifHistory *history,
 	/* return all the different transaction timestamps */
 	array_tmp = g_array_new (FALSE, FALSE, sizeof (guint));
 	statement = g_strdup_printf ("SELECT DISTINCT timestamp "
-				     "FROM packages WHERE name = \'%s\' AND arch = \'%s\'",
+				     "FROM packages WHERE name = \'%s\' AND arch = \'%s\' "
+				     "ORDER BY timestamp DESC",
 				     name, arch);
 	rc = sqlite3_exec (history->priv->db,
 			   statement,
@@ -472,7 +472,7 @@ zif_history_get_packages_sqlite_cb (void *data,
  **/
 GPtrArray *
 zif_history_get_packages (ZifHistory *history,
-			  guint timestamp,
+			  gint64 timestamp,
 			  GError **error)
 {
 	gboolean ret;
@@ -494,7 +494,7 @@ zif_history_get_packages (ZifHistory *history,
 	/* return all the different transaction timestamps */
 	array_tmp = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	statement = g_strdup_printf ("SELECT name, version, arch, from_repo "
-				     "FROM packages WHERE timestamp = %i",
+				     "FROM packages WHERE timestamp = %li",
 				     timestamp);
 	rc = sqlite3_exec (history->priv->db,
 			   statement,
@@ -549,7 +549,7 @@ zif_history_get_uid_sqlite_cb (void *data,
 guint
 zif_history_get_uid (ZifHistory *history,
 		     ZifPackage *package,
-		     guint timestamp,
+		     gint64 timestamp,
 		     GError **error)
 {
 	gboolean ret;
@@ -570,7 +570,7 @@ zif_history_get_uid (ZifHistory *history,
 
 	/* return all the different transaction timestamps */
 	statement = g_strdup_printf ("SELECT installed_by FROM packages "
-				     "WHERE timestamp = %i AND "
+				     "WHERE timestamp = %li AND "
 				     "name = '%s' AND "
 				     "version = '%s' AND "
 				     "arch = '%s' LIMIT 1;",
@@ -627,7 +627,7 @@ zif_history_get_string_sqlite_cb (void *data,
 gchar *
 zif_history_get_cmdline (ZifHistory *history,
 			 ZifPackage *package,
-			 guint timestamp,
+			 gint64 timestamp,
 			 GError **error)
 {
 	gboolean ret;
@@ -648,7 +648,7 @@ zif_history_get_cmdline (ZifHistory *history,
 
 	/* return all the different transaction timestamps */
 	statement = g_strdup_printf ("SELECT command_line FROM packages "
-				     "WHERE timestamp = %i AND "
+				     "WHERE timestamp = %li AND "
 				     "name = '%s' AND "
 				     "version = '%s' AND "
 				     "arch = '%s' LIMIT 1;",
@@ -691,7 +691,7 @@ out:
 gchar *
 zif_history_get_repo (ZifHistory *history,
 		      ZifPackage *package,
-		      guint timestamp,
+		      gint64 timestamp,
 		      GError **error)
 {
 	gboolean ret;
@@ -712,7 +712,7 @@ zif_history_get_repo (ZifHistory *history,
 
 	/* return all the different transaction timestamps */
 	statement = g_strdup_printf ("SELECT from_repo FROM packages "
-				     "WHERE timestamp = %i AND "
+				     "WHERE timestamp = %li AND "
 				     "name = '%s' AND "
 				     "version = '%s' AND "
 				     "arch = '%s' LIMIT 1;",
@@ -763,7 +763,7 @@ out:
 ZifTransactionReason
 zif_history_get_reason (ZifHistory *history,
 			ZifPackage *package,
-			guint timestamp,
+			gint64 timestamp,
 			GError **error)
 {
 	gboolean ret;
@@ -785,7 +785,7 @@ zif_history_get_reason (ZifHistory *history,
 
 	/* return all the different transaction timestamps */
 	statement = g_strdup_printf ("SELECT reason FROM packages "
-				     "WHERE timestamp = %i AND "
+				     "WHERE timestamp = %li AND "
 				     "name = '%s' AND "
 				     "version = '%s' AND "
 				     "arch = '%s' LIMIT 1;",
@@ -911,7 +911,7 @@ zif_history_import (ZifHistory *history,
 	ZifPackage *package;
 	ZifTransactionReason reason;
 	guint uid;
-	guint timestamp;
+	gint64 timestamp;
 	gchar *tmp;
 
 	g_return_val_if_fail (ZIF_IS_HISTORY (history), FALSE);
@@ -966,7 +966,7 @@ zif_history_import (ZifHistory *history,
 					 "from_repo_timestamp",
 					 NULL);
 		if (tmp != NULL)
-			timestamp = atoi (tmp);
+			timestamp = atol (tmp) * G_USEC_PER_SEC;
 		g_free (tmp);
 
 		/* get repo_id */
