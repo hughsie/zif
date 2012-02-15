@@ -3704,7 +3704,7 @@ zif_transaction_auto_remove_pkg (ZifTransaction *transaction,
 	state_local = zif_state_get_child (state);
 	package_local = zif_store_resolve_package (priv->store_local,
 						   package,
-						   ZIF_STORE_RESOLVE_FLAG_USE_NAME_VERSION_ARCH,
+						   ZIF_STORE_RESOLVE_FLAG_USE_NAME_ARCH,
 						   state_local,
 						   &error_local);
 	if (package_local == NULL) {
@@ -3790,13 +3790,15 @@ zif_transaction_auto_remove_user_pkg (ZifTransaction *transaction,
 	GArray *array;
 	gboolean ret = TRUE;
 	GError *error_local = NULL;
-	GPtrArray *packages = NULL;
-	guint i;
 	gint64 timestamp;
+	GPtrArray *packages = NULL;
+	GPtrArray *packages_tmp;
+	guint i;
+	guint j;
 	ZifPackage *package_tmp;
 	ZifState *state_local;
-	ZifTransactionReason reason;
 	ZifTransactionPrivate *priv = transaction->priv;
+	ZifTransactionReason reason = ZIF_TRANSACTION_REASON_INVALID;
 
 	/* find the transactions involving this package */
 	array = zif_history_get_transactions_for_package (priv->history,
@@ -3815,28 +3817,57 @@ zif_transaction_auto_remove_user_pkg (ZifTransaction *transaction,
 		goto out;
 	}
 
-	/* get the latest transaction */
-	timestamp = g_array_index (array, gint64, 0);
-	g_debug ("timestamp=%li", timestamp);
+	/* get the transaction where the package was installed */
+	for (i = 0; i < array->len; i++) {
+		timestamp = g_array_index (array, gint64, i);
 
-	/* check the reason was user-action */
-	reason = zif_history_get_reason (priv->history,
-					 package,
-					 timestamp,
-					 &error_local);
-	if (reason == ZIF_TRANSACTION_REASON_INVALID) {
-		g_debug ("did not get the transaction reason: %s",
-			 error_local->message);
-		g_error_free (error_local);
-		goto out;
+		/* find the package for this *old* transaction, rather
+		 * than using the package we want to remove */
+		packages_tmp = zif_history_get_packages (priv->history,
+							 timestamp,
+							 error);
+		if (packages_tmp == NULL) {
+			ret = FALSE;
+			goto out;
+		}
+		for (j = 0; j < packages_tmp->len; j++) {
+			package_tmp = g_ptr_array_index (packages_tmp, j);
+
+			/* check is the same package name */
+			if (g_strcmp0 (zif_package_get_name (package),
+				       zif_package_get_name (package_tmp)) != 0) {
+				continue;
+			}
+
+			/* check the reason was user-action */
+			reason = zif_history_get_reason (priv->history,
+							 package_tmp,
+							 timestamp,
+							 error);
+			if (reason == ZIF_TRANSACTION_REASON_INVALID) {
+				ret = FALSE;
+				goto out;
+			}
+
+			/* found something */
+			g_debug ("%s timestamp=%li [%s]",
+				 zif_package_get_name (package_tmp),
+				 timestamp,
+				 zif_transaction_reason_to_string (reason));
+			if (reason == ZIF_TRANSACTION_REASON_INSTALL_USER_ACTION)
+				break;
+		}
+		g_ptr_array_unref (packages_tmp);
+		if (reason == ZIF_TRANSACTION_REASON_INSTALL_USER_ACTION)
+			break;
 	}
+
 	if (reason != ZIF_TRANSACTION_REASON_INSTALL_USER_ACTION) {
-		g_debug ("not user action: %s",
-			 zif_transaction_reason_to_string (reason));
+		g_debug ("not user action, so skipping");
 		goto out;
 	}
 
-	/* get the packages in this transaction */
+	/* get all the packages in this transaction */
 	packages = zif_history_get_packages (priv->history,
 					     timestamp,
 					     &error_local);
