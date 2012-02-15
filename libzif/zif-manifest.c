@@ -521,6 +521,7 @@ zif_manifest_check_section (ZifManifest *manifest,
 	ZifManifestAction action = ZIF_MANIFEST_ACTION_UNKNOWN;
 	ZifPackage *package = NULL;
 	ZifState *state_local;
+	ZifState *state_loop;
 	ZifStore *local = NULL;
 	ZifStore *remote = NULL;
 	ZifStore *store_hint;
@@ -535,6 +536,7 @@ zif_manifest_check_section (ZifManifest *manifest,
 				   -1);
 	if (!ret)
 		goto out;
+
 	/* create virtual stores */
 	local = zif_store_meta_new ();
 	zif_store_meta_set_is_local (ZIF_STORE_META (local), TRUE);
@@ -551,12 +553,13 @@ zif_manifest_check_section (ZifManifest *manifest,
 
 	state_local = zif_state_get_child (state);
 	lines = g_strsplit (data, "\n", -1);
+	zif_state_set_number_steps (state_local, g_strv_length (lines));
 	for (i=0; lines[i] != NULL; i++) {
 
 		if (lines[i][0] == '\0')
-			continue;
+			goto skip;
 		if (lines[i][0] == '#')
-			continue;
+			goto skip;
 
 		/* special command */
 		if (g_strcmp0 (lines[i], "disable") == 0) {
@@ -583,7 +586,7 @@ zif_manifest_check_section (ZifManifest *manifest,
 		/* parse the tree */
 		tmp = lines[i] + level;
 		if (tmp[0] == '\0')
-			continue;
+			goto skip;
 		g_debug ("ln %i, level=%i, data=%s", i, level, tmp);
 		if (level == 0) {
 			section = zif_manifest_section_from_string (tmp);
@@ -672,13 +675,13 @@ zif_manifest_check_section (ZifManifest *manifest,
 				} else {
 					store_hint = local;
 				}
-				zif_state_reset (state_local);
+				state_loop = zif_state_get_child (state_local);
 				ret = zif_manifest_add_package_to_transaction (manifest,
 									       transaction,
 									       store_hint,
 									       action,
 									       tmp,
-									       state_local,
+									       state_loop,
 									       error);
 				if (!ret)
 					goto out;
@@ -712,7 +715,13 @@ zif_manifest_check_section (ZifManifest *manifest,
 		} else {
 			g_assert_not_reached ();
 		}
+skip:
+		/* this section done */
+		ret = zif_state_done (state_local, error);
+		if (!ret)
+			goto out;
 	}
+
 	/* this section done */
 	ret = zif_state_done (state, error);
 	if (!ret)
