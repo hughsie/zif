@@ -1,0 +1,36 @@
+# Install a package that drags in a dep, and then remove it
+
+local
+
+remote
+	hal;0:0.1.0-1;i386;meta
+		Requires
+			hal-info
+	hal-info;0:0.1.0-1;i386;meta
+
+transaction
+	install
+		hal
+
+result
+	hal;0:0.1.0-1;i386;meta
+	hal-info;0:0.1.0-1;i386;meta
+
+config
+	archinfo=i386
+	clean_requirements_on_remove=1
+	history_db=/tmp/history.db
+
+# ----------------------------------------------------------------------
+flush
+# ----------------------------------------------------------------------
+
+local
+	hal;0:0.1.0-1;i386;meta
+	hal-info;0:0.1.0-1;i386;meta
+
+transaction
+	remove
+		hal
+
+result
