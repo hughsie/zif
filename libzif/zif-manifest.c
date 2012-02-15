@@ -498,26 +498,16 @@ out:
 }
 
 /**
- * zif_manifest_check:
- * @manifest: A #ZifManifest
- * @filename: A maifest file to use
- * @error: A #GError, or %NULL
- *
- * Resolves and checks a transaction.
- *
- * Return value: %TRUE for success, %FALSE otherwise
- *
- * Since: 0.1.3
+ * zif_manifest_check_section:
  **/
-gboolean
-zif_manifest_check (ZifManifest *manifest,
-		    const gchar *filename,
-		    ZifState *state,
-		    GError **error)
+static gboolean
+zif_manifest_check_section (ZifManifest *manifest,
+			    const gchar *data,
+			    ZifState *state,
+			    GError **error)
 {
 	const gchar *tmp;
 	gboolean ret;
-	gchar *data = NULL;
 	gchar **lines = NULL;
 	GError *error_local = NULL;
 	GPtrArray *remote_array = NULL;
@@ -536,9 +526,6 @@ zif_manifest_check (ZifManifest *manifest,
 	ZifStore *store_hint;
 	ZifTransaction *transaction = NULL;
 
-	g_return_val_if_fail (ZIF_IS_MANIFEST (manifest), FALSE);
-	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
-
 	/* setup steps */
 	ret = zif_state_set_steps (state,
 				   error,
@@ -548,11 +535,6 @@ zif_manifest_check (ZifManifest *manifest,
 				   -1);
 	if (!ret)
 		goto out;
-
-	/* load file */
-	g_debug ("             ---            ");
-	g_debug ("loading manifest %s", filename);
-
 	/* create virtual stores */
 	local = zif_store_meta_new ();
 	zif_store_meta_set_is_local (ZIF_STORE_META (local), TRUE);
@@ -567,11 +549,7 @@ zif_manifest_check (ZifManifest *manifest,
 	zif_transaction_set_store_local (transaction, local);
 	zif_transaction_set_stores_remote (transaction, remote_array);
 
-	/* parse file */
 	state_local = zif_state_get_child (state);
-	ret = g_file_get_contents (filename, &data, NULL, error);
-	if (!ret)
-		goto out;
 	lines = g_strsplit (data, "\n", -1);
 	for (i=0; lines[i] != NULL; i++) {
 
@@ -582,7 +560,7 @@ zif_manifest_check (ZifManifest *manifest,
 
 		/* special command */
 		if (g_strcmp0 (lines[i], "disable") == 0) {
-			g_debug ("Skipping %s as disabled", filename);
+			g_debug ("Skipping as disabled");
 			ret = zif_state_finished (state, error);
 			goto out;
 		}
@@ -597,9 +575,8 @@ zif_manifest_check (ZifManifest *manifest,
 			g_set_error (error,
 				     ZIF_MANIFEST_ERROR,
 				     ZIF_MANIFEST_ERROR_FAILED,
-				     "too much indentation '%s' in %s",
-				     lines[i],
-				     filename);
+				     "too much indentation '%s'",
+				     lines[i]);
 			goto out;
 		}
 
@@ -615,9 +592,8 @@ zif_manifest_check (ZifManifest *manifest,
 				g_set_error (error,
 					     ZIF_MANIFEST_ERROR,
 					     ZIF_MANIFEST_ERROR_FAILED,
-					     "unknown section '%s' in %s",
-					     tmp,
-					     filename);
+					     "unknown section '%s'",
+					     tmp);
 				goto out;
 			}
 		} else if (level == 1) {
@@ -662,9 +638,8 @@ zif_manifest_check (ZifManifest *manifest,
 					g_set_error (error,
 						     ZIF_MANIFEST_ERROR,
 						     ZIF_MANIFEST_ERROR_FAILED,
-						     "unknown transaction kind '%s' in %s",
-						     tmp,
-						     filename);
+						     "unknown transaction kind '%s'",
+						     tmp);
 					goto out;
 				}
 			} else {
@@ -672,9 +647,8 @@ zif_manifest_check (ZifManifest *manifest,
 				g_set_error (error,
 					     ZIF_MANIFEST_ERROR,
 					     ZIF_MANIFEST_ERROR_FAILED,
-					     "unexpected subcommand '%s' in %s",
-					     tmp,
-					     filename);
+					     "unexpected subcommand '%s'",
+					     tmp);
 				goto out;
 			}
 		} else if (level == 2) {
@@ -686,9 +660,8 @@ zif_manifest_check (ZifManifest *manifest,
 					g_set_error (error,
 						     ZIF_MANIFEST_ERROR,
 						     ZIF_MANIFEST_ERROR_FAILED,
-						     "unknown depend kind '%s' in %s",
-						     tmp,
-						     filename);
+						     "unknown depend kind '%s'",
+						     tmp);
 					goto out;
 				}
 			} else if (section == ZIF_MANIFEST_SECTION_TRANSACTION) {
@@ -714,9 +687,8 @@ zif_manifest_check (ZifManifest *manifest,
 				g_set_error (error,
 					     ZIF_MANIFEST_ERROR,
 					     ZIF_MANIFEST_ERROR_FAILED,
-					     "unexpected subsubcommand '%s' in %s",
-					     tmp,
-					     filename);
+					     "unexpected subsubcommand '%s'",
+					     tmp);
 				goto out;
 			}
 		} else if (level == 3) {
@@ -733,9 +705,8 @@ zif_manifest_check (ZifManifest *manifest,
 				g_set_error (error,
 					     ZIF_MANIFEST_ERROR,
 					     ZIF_MANIFEST_ERROR_FAILED,
-					     "syntax error '%s' in %s",
-					     tmp,
-					     filename);
+					     "syntax error '%s'",
+					     tmp);
 				goto out;
 			}
 		} else {
@@ -831,7 +802,7 @@ zif_manifest_check (ZifManifest *manifest,
 		if (!ret)
 			goto out;
 	} else {
-		g_warning ("result usually required in %s...", filename);
+		g_warning ("result usually required...");
 	}
 
 	/* write history */
@@ -847,7 +818,6 @@ zif_manifest_check (ZifManifest *manifest,
 	if (!ret)
 		goto out;
 out:
-	g_free (data);
 	g_strfreev (lines);
 	if (local != NULL)
 		g_object_unref (local);
@@ -863,6 +833,49 @@ out:
 		g_ptr_array_unref (resolve_install);
 	if (resolve_remove != NULL)
 		g_ptr_array_unref (resolve_remove);
+	return ret;
+}
+
+/**
+ * zif_manifest_check:
+ * @manifest: A #ZifManifest
+ * @filename: A maifest file to use
+ * @error: A #GError, or %NULL
+ *
+ * Resolves and checks a transaction.
+ *
+ * Return value: %TRUE for success, %FALSE otherwise
+ *
+ * Since: 0.1.3
+ **/
+gboolean
+zif_manifest_check (ZifManifest *manifest,
+		    const gchar *filename,
+		    ZifState *state,
+		    GError **error)
+{
+	gboolean ret;
+	gchar *data = NULL;
+
+	g_return_val_if_fail (ZIF_IS_MANIFEST (manifest), FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+	/* load file */
+	g_debug ("             ---            ");
+	g_debug ("loading manifest %s", filename);
+
+	/* reset so the history enable is per-file, not per-instance */
+	manifest->priv->write_history = FALSE;
+
+	/* parse file */
+	ret = g_file_get_contents (filename, &data, NULL, error);
+	if (!ret)
+		goto out;
+	ret = zif_manifest_check_section (manifest, data, state, error);
+	if (!ret)
+		goto out;
+out:
+	g_free (data);
 	return ret;
 }
 
