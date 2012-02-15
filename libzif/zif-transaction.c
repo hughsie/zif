@@ -3710,6 +3710,11 @@ zif_transaction_auto_remove_user_pkg (ZifTransaction *transaction,
 		g_error_free (error_local);
 		goto out;
 	}
+	if (array->len == 0) {
+		g_debug ("Did not find %s in the history DB",
+			 zif_package_get_printable (package));
+		goto out;
+	}
 
 	/* get the latest transaction */
 	timestamp = g_array_index (array, guint, 0);
