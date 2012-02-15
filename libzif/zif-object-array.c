@@ -76,6 +76,30 @@ zif_object_array_add_array (GPtrArray *array, GPtrArray *source)
 }
 
 /**
+ * zif_object_array_copy:
+ * @array: A #GPtrArray
+ *
+ * Create a new instance of the array, and incrementing the refcount on
+ * the contents.
+ *
+ * Return value: (transfer full): A new #GPtrArray instance, free with g_ptr_array_unref()
+ *
+ * Since: 0.2.7
+ **/
+GPtrArray *
+zif_object_array_copy (GPtrArray *array)
+{
+	GPtrArray *new;
+
+	g_return_val_if_fail (array != NULL, NULL);
+
+	new = zif_object_array_new ();
+	zif_object_array_add_array (new, array);
+
+	return new;
+}
+
+/**
  * zif_object_array_new:
  *
  * Return value: (transfer full): A new #GPtrArray instance, free with g_ptr_array_unref()

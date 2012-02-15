@@ -37,6 +37,7 @@ void		 zif_object_array_add		(GPtrArray	*array,
 						 gpointer	 object);
 void		 zif_object_array_add_array	(GPtrArray	*array,
 						 GPtrArray	*source);
+GPtrArray	*zif_object_array_copy		(GPtrArray	*array);
 
 G_END_DECLS
 
