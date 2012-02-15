@@ -1333,7 +1333,7 @@ zif_store_resolve_package (ZifStore *store,
 			   ZifState *state,
 			   GError **error)
 {
-	const gchar *search[] = { NULL, NULL };
+	GPtrArray *search;
 	GPtrArray *packages = NULL;
 	ZifPackage *package_store = NULL;
 
@@ -1343,9 +1343,16 @@ zif_store_resolve_package (ZifStore *store,
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* find the ZifPackage in the store */
-	search[0] = zif_package_get_name_version_arch (package);
+	search = g_ptr_array_new ();
+	if ((flags & ZIF_STORE_RESOLVE_FLAG_USE_NAME) > 0)
+		g_ptr_array_add (search, (gpointer) zif_package_get_name (package));
+	if ((flags & ZIF_STORE_RESOLVE_FLAG_USE_NAME_ARCH) > 0)
+		g_ptr_array_add (search, (gpointer) zif_package_get_name_arch (package));
+	if ((flags & ZIF_STORE_RESOLVE_FLAG_USE_NAME_VERSION_ARCH) > 0)
+		g_ptr_array_add (search, (gpointer) zif_package_get_name_version_arch (package));
+	g_ptr_array_add (search, NULL);
 	packages = zif_store_resolve_full (store,
-					   (gchar **) search,
+					   (gchar **) search->pdata,
 					   flags,
 					   state,
 					   error);
@@ -1369,6 +1376,7 @@ zif_store_resolve_package (ZifStore *store,
 	}
 	package_store = g_object_ref (g_ptr_array_index (packages, 0));
 out:
+	g_ptr_array_unref (search);
 	if (packages != NULL)
 		g_ptr_array_unref (packages);
 	return package_store;
