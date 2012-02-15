@@ -171,6 +171,7 @@ libzif_la_SOURCES =						\
 	zif-string.h						\
 	zif-transaction.c					\
 	zif-transaction.h					\
+	zif-transaction-private.h				\
 	zif-update.c						\
 	zif-update.h						\
 	zif-update-info.c					\

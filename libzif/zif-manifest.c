@@ -62,6 +62,7 @@
 #include "zif-store-array.h"
 #include "zif-store-meta.h"
 #include "zif-transaction.h"
+#include "zif-transaction-private.h"
 #include "zif-utils.h"
 
 #define ZIF_MANIFEST_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_MANIFEST, ZifManifestPrivate))
@@ -74,6 +75,7 @@
 struct _ZifManifestPrivate
 {
 	ZifConfig		*config;
+	gboolean		 write_history;
 };
 
 typedef enum {
@@ -410,6 +412,8 @@ zif_manifest_set_config (ZifManifest *manifest,
 	vars = g_strsplit (config, "=", 2);
 	zif_config_unset (manifest->priv->config, vars[0], NULL);
 	g_debug ("config %s=%s", vars[0], vars[1]);
+	if (g_strcmp0 (vars[0], "history_db") == 0)
+		manifest->priv->write_history = TRUE;
 	ret = zif_config_set_string (manifest->priv->config,
 				     vars[0], vars[1],
 				     error);
@@ -828,6 +832,14 @@ zif_manifest_check (ZifManifest *manifest,
 			goto out;
 	} else {
 		g_warning ("result usually required in %s...", filename);
+	}
+
+	/* write history */
+	if (manifest->priv->write_history) {
+		g_debug ("writing history");
+		ret = zif_transaction_write_history (transaction, error);
+		if (!ret)
+			goto out;
 	}
 
 	/* this section done */

@@ -76,6 +76,7 @@
 #include "zif-store-meta.h"
 #include "zif-store-remote-private.h"
 #include "zif-transaction.h"
+#include "zif-transaction-private.h"
 #include "zif-utils-private.h"
 
 #define ZIF_TRANSACTION_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_TRANSACTION, ZifTransactionPrivate))
@@ -5429,10 +5430,20 @@ g_get_real_time (void)
 
 /**
  * zif_transaction_write_history:
+ * @transaction: A #ZifTransaction
+ * @error: A #GError, or %NULL
+ *
+ * Writes the transaction to the history database.
+ * You normally don't have to use this function, it's called
+ * automatically if zif_transaction_commit_full() completes successfully.
+ *
+ * Return value: %TRUE for success
+ *
+ * Since: 0.2.7
  **/
-static gboolean
+gboolean
 zif_transaction_write_history (ZifTransaction *transaction,
-			      GError **error)
+			       GError **error)
 {
 	gboolean ret = TRUE;
 	guint i;
