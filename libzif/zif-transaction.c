@@ -2198,6 +2198,87 @@ out:
 }
 
 /**
+ * zif_transaction_get_package_provide_local_other:
+ *
+ * Find out if anything *else* provides this in the installed store.
+ **/
+static gboolean
+zif_transaction_get_package_provide_local_other (ZifTransaction *transaction,
+						 ZifPackage *package_ignore,
+						 ZifDepend *depend,
+						 ZifPackage **package_provides,
+						 ZifState *state,
+						 GError **error)
+{
+	gboolean ret = FALSE;
+	GPtrArray *array = NULL;
+	guint i;
+	ZifDepend *satisfies;
+	ZifPackage *package_tmp;
+	ZifState *state_local;
+
+	/* setup states */
+	ret = zif_state_set_steps (state,
+				   error,
+				   20, /* get-packages */
+				   80, /* search */
+				   -1);
+	if (!ret)
+		goto out;
+
+	/* get packages */
+	state_local = zif_state_get_child (state);
+	array = zif_store_get_packages (transaction->priv->store_local,
+					state_local,
+					error);
+	if (array == NULL)
+		goto out;
+
+	/* done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* look through the package store and find if something *else*
+	 * provides what we are looking for */
+	state_local = zif_state_get_child (state);
+	for (i = 0; i < array->len; i++) {
+
+		/* don't remove ourself */
+		package_tmp = g_ptr_array_index (array, i);
+		if (package_ignore == package_tmp)
+			continue;
+
+		/* do we provide the dep? */
+		zif_state_reset (state_local);
+		ret = zif_package_provides (package_tmp,
+					    depend,
+					    &satisfies,
+					    state_local,
+					    error);
+		if (!ret)
+			goto out;
+
+		/* yes, so abort */
+		if (satisfies != NULL) {
+			g_object_unref (satisfies);
+			if (package_provides != NULL)
+				*package_provides = g_object_ref (package_tmp);
+			break;
+		}
+	}
+
+	/* done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+out:
+	if (array != NULL)
+		g_ptr_array_unref (array);
+	return ret;
+}
+
+/**
  * zif_transaction_resolve_remove_require:
  *
  * Remove any package that needs the @depend provided by @source.
@@ -2364,7 +2445,25 @@ zif_transaction_resolve_remove_require (ZifTransactionResolve *data,
 				continue;
 			}
 
+			/* find out if anything *else* provides this in the installed store */
+			package_in_install = NULL;
+			zif_state_reset (data->state);
+			ret = zif_transaction_get_package_provide_local_other (data->transaction,
+									       item->package,
+									       satisfies,
+									       &package_in_install,
+									       data->state,
+									       error);
 			g_object_unref (satisfies);
+			if (!ret)
+				goto out;
+			if (package_in_install != NULL) {
+				g_debug ("%s provides %s which is alternatively installed",
+					 zif_package_get_id (package_in_install),
+					 zif_depend_get_description (depend_tmp));
+				g_object_unref (package_in_install);
+				continue;
+			}
 
 			/* remove this too */
 			g_debug ("depend %s is required by %s (installed), so remove",
