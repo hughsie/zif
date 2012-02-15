@@ -316,7 +316,7 @@ zif_history_get_transactions_sqlite_cb (void *data,
  * Returns an array of transaction timestamps.
  * Each timestamp may correspond to a number of modified packages.
  *
- * Return value: (transfer full): an #GArray of guint
+ * Return value: (transfer full): an #GArray of gint64
  *
  * Since: 0.2.4
  **/
@@ -339,7 +339,7 @@ zif_history_list_transactions (ZifHistory *history, GError **error)
 		goto out;
 
 	/* return all the different transaction timestamps */
-	array_tmp = g_array_new (FALSE, FALSE, sizeof (guint));
+	array_tmp = g_array_new (FALSE, FALSE, sizeof (gint64));
 	statement = "SELECT DISTINCT timestamp FROM packages ORDER BY timestamp ASC";
 	rc = sqlite3_exec (history->priv->db,
 			   statement,
@@ -372,7 +372,7 @@ out:
  * Returns an array of transaction timestamps.
  * Each timestamp may correspond to a number of modified packages.
  *
- * Return value: (transfer full): an #GArray of guint
+ * Return value: (transfer full): an #GArray of gint64
  *
  * Since: 0.2.6
  **/
@@ -401,7 +401,7 @@ zif_history_get_transactions_for_package (ZifHistory *history,
 	name = zif_package_get_name (package);
 	arch = zif_package_get_arch (package);
 	/* return all the different transaction timestamps */
-	array_tmp = g_array_new (FALSE, FALSE, sizeof (guint));
+	array_tmp = g_array_new (FALSE, FALSE, sizeof (gint64));
 	statement = g_strdup_printf ("SELECT DISTINCT timestamp "
 				     "FROM packages WHERE name = \'%s\' AND arch = \'%s\' "
 				     "ORDER BY timestamp DESC",
@@ -966,7 +966,7 @@ zif_history_import (ZifHistory *history,
 					 "from_repo_timestamp",
 					 NULL);
 		if (tmp != NULL)
-			timestamp = atol (tmp) * G_USEC_PER_SEC;
+			timestamp = g_ascii_strtoll (tmp, NULL, 10) * G_USEC_PER_SEC;
 		g_free (tmp);
 
 		/* get repo_id */
