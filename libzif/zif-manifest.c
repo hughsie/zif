@@ -856,6 +856,9 @@ zif_manifest_check (ZifManifest *manifest,
 {
 	gboolean ret;
 	gchar *data = NULL;
+	gchar **sections = NULL;
+	guint i;
+	ZifState *state_local;
 
 	g_return_val_if_fail (ZIF_IS_MANIFEST (manifest), FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
@@ -871,10 +874,28 @@ zif_manifest_check (ZifManifest *manifest,
 	ret = g_file_get_contents (filename, &data, NULL, error);
 	if (!ret)
 		goto out;
-	ret = zif_manifest_check_section (manifest, data, state, error);
-	if (!ret)
-		goto out;
+
+	/* parse each section */
+	sections = g_strsplit (data, "flush\n", -1);
+	zif_state_set_number_steps (state, g_strv_length (sections));
+	for (i = 0; sections[i] != NULL; i++) {
+
+		/* parse this chunk */
+		state_local = zif_state_get_child (state);
+		ret = zif_manifest_check_section (manifest,
+						  sections[i],
+						  state_local,
+						  error);
+		if (!ret)
+			goto out;
+
+		/* this section done */
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
+	}
 out:
+	g_strfreev (sections);
 	g_free (data);
 	return ret;
 }
