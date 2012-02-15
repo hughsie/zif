@@ -3606,9 +3606,14 @@ zif_transaction_auto_remove_pkg (ZifTransaction *transaction,
 						   package,
 						   ZIF_STORE_RESOLVE_FLAG_USE_NAME_VERSION_ARCH,
 						   state_local,
-						   error);
+						   &error_local);
 	if (package_local == NULL) {
-		ret = FALSE;
+		/* not fatal to the transaction */
+		g_debug ("failed to find %s that was installed package: %s",
+			 zif_package_get_printable (package),
+			 error_local->message);
+		g_error_free (error_local);
+		ret = zif_state_finished (state, error);
 		goto out;
 	}
 
