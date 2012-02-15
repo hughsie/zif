@@ -433,6 +433,9 @@ zif_manifest_func (void)
 	for (i=0; i<array->len; i++) {
 		filename = g_ptr_array_index (array, i);
 		zif_state_reset (state);
+		ret = zif_config_reset_default (config, &error);
+		g_assert_no_error (error);
+		g_assert (ret);
 		ret = zif_manifest_check (manifest, filename, state, &error);
 		g_assert_no_error (error);
 		g_assert (ret);
