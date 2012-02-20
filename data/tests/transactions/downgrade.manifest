@@ -1,0 +1,27 @@
+# Downgrade a package which also causes libraries to be downgraded
+
+local
+	gphoto;1.0-2;i386;meta
+		Requires
+			libexif = 1.0-2
+	libexif;1.0-2;i386;meta
+remote
+	gphoto;1.0-2;i386;meta
+		Requires
+			libexif = 1.0-2
+	gphoto;1.0-1;i386;meta
+		Requires
+			libexif = 1.0-1
+	libexif;1.0-1;i386;meta
+	libexif;1.0-2;i386;meta
+
+transaction
+	downgrade
+		gphoto;1.0-1;i386;meta
+
+result
+	libexif;1.0-1;i386;meta
+	gphoto;1.0-1;i386;meta
+
+config
+	archinfo=i386
