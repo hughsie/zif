@@ -74,5 +74,7 @@ ChangeLog:
 
 .PHONY: ChangeLog
 
+uninstall-am:
+	$(RM) -R $(DESTDIR)$(localstatedir)/lib/zif
 
 -include $(top_srcdir)/git.mk
