@@ -6514,8 +6514,10 @@ main (int argc, char *argv[])
 	/* create helper object */
 	priv = g_new0 (ZifCmdPrivate, 1);
 
+#if (GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION < 31)
 	if (! g_thread_supported ())
 		g_thread_init (NULL);
+#endif
 	g_type_init ();
 
 	priv->context = g_option_context_new ("ZIF Console Program");

@@ -42,7 +42,9 @@ main (int argc, char **argv)
 	ZifState *state;
 
 	g_type_init ();
+#if (GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION < 31)
 	g_thread_init (NULL);
+#endif
 
 	hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
 	config = zif_config_new ();
