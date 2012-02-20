@@ -497,9 +497,9 @@ zif_cmd_get_descriptions (GPtrArray *array)
 		g_string_append (string, " ");
 		len = strlen (item->name);
 		for (j=len; j<max_len+2; j++)
-			g_string_append_c (string, ' ');
+			g_string_append (string, " ");
 		g_string_append (string, item->description);
-		g_string_append_c (string, '\n');
+		g_string_append (string, "\n");
 	}
 
 	/* remove trailing newline */
