@@ -494,7 +494,7 @@ zif_history_get_packages (ZifHistory *history,
 	/* return all the different transaction timestamps */
 	array_tmp = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	statement = g_strdup_printf ("SELECT name, version, arch, from_repo "
-				     "FROM packages WHERE timestamp = %li",
+				     "FROM packages WHERE timestamp = %" G_GINT64_FORMAT,
 				     timestamp);
 	rc = sqlite3_exec (history->priv->db,
 			   statement,
@@ -570,7 +570,7 @@ zif_history_get_uid (ZifHistory *history,
 
 	/* return all the different transaction timestamps */
 	statement = g_strdup_printf ("SELECT installed_by FROM packages "
-				     "WHERE timestamp = %li AND "
+				     "WHERE timestamp = %" G_GINT64_FORMAT " AND "
 				     "name = '%s' AND "
 				     "version = '%s' AND "
 				     "arch = '%s' LIMIT 1;",
@@ -648,7 +648,7 @@ zif_history_get_cmdline (ZifHistory *history,
 
 	/* return all the different transaction timestamps */
 	statement = g_strdup_printf ("SELECT command_line FROM packages "
-				     "WHERE timestamp = %li AND "
+				     "WHERE timestamp = %" G_GINT64_FORMAT " AND "
 				     "name = '%s' AND "
 				     "version = '%s' AND "
 				     "arch = '%s' LIMIT 1;",
@@ -712,7 +712,7 @@ zif_history_get_repo (ZifHistory *history,
 
 	/* return all the different transaction timestamps */
 	statement = g_strdup_printf ("SELECT from_repo FROM packages "
-				     "WHERE timestamp = %li AND "
+				     "WHERE timestamp = %" G_GINT64_FORMAT " AND "
 				     "name = '%s' AND "
 				     "version = '%s' AND "
 				     "arch = '%s' LIMIT 1;",
@@ -785,7 +785,7 @@ zif_history_get_reason (ZifHistory *history,
 
 	/* return all the different transaction timestamps */
 	statement = g_strdup_printf ("SELECT reason FROM packages "
-				     "WHERE timestamp = %li AND "
+				     "WHERE timestamp = %" G_GINT64_FORMAT " AND "
 				     "name = '%s' AND "
 				     "version = '%s' AND "
 				     "arch = '%s' LIMIT 1;",

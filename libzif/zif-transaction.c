@@ -3850,7 +3850,7 @@ zif_transaction_auto_remove_user_pkg (ZifTransaction *transaction,
 			}
 
 			/* found something */
-			g_debug ("%s timestamp=%li [%s]",
+			g_debug ("%s timestamp=%" G_GINT64_FORMAT " [%s]",
 				 zif_package_get_name (package_tmp),
 				 timestamp,
 				 zif_transaction_reason_to_string (reason));
@@ -3872,7 +3872,7 @@ zif_transaction_auto_remove_user_pkg (ZifTransaction *transaction,
 					     timestamp,
 					     &error_local);
 	if (packages == NULL) {
-		g_warning ("failed to get packages for timestamp %li: %s",
+		g_warning ("failed to get packages for timestamp %" G_GINT64_FORMAT ": %s",
 			   timestamp, error_local->message);
 		g_error_free (error_local);
 		goto out;
