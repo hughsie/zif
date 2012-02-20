@@ -175,7 +175,7 @@ zif_package_rhn_list_files (ZifPackageRhn *rhn,
 	GHashTable *hash;
 	GPtrArray *files = NULL;
 	guint i;
-	GValueArray *array = NULL;
+	GArray *array = NULL;
 	GValue *value;
 	SoupMessage *msg;
 	ZifPackage *pkg = ZIF_PACKAGE (rhn);
@@ -204,7 +204,7 @@ zif_package_rhn_list_files (ZifPackageRhn *rhn,
 	ret = soup_xmlrpc_extract_method_response (msg->response_body->data,
 						   msg->response_body->length,
 						   &error_local,
-						   G_TYPE_VALUE_ARRAY, &array);
+						   G_TYPE_ARRAY, &array);
 	if (!ret) {
 		g_set_error (error,
 			     ZIF_PACKAGE_ERROR,
@@ -219,8 +219,8 @@ zif_package_rhn_list_files (ZifPackageRhn *rhn,
 
 	/* get packages */
 	files = g_ptr_array_new_with_free_func (g_free);
-	for (i=0; i<array->n_values; i++) {
-		hash = g_value_get_boxed (&array->values[i]);
+	for (i=0; i<array->len; i++) {
+		hash = g_array_index (array, GHashTable *, i);
 
 		/* FIXME: do we care that we're adding directories? */
 		value = g_hash_table_lookup (hash, "file_path");
@@ -231,7 +231,7 @@ zif_package_rhn_list_files (ZifPackageRhn *rhn,
 	zif_package_set_files (pkg, files);
 out:
 	if (array != NULL)
-		g_value_array_free (array);
+		g_array_free (array, TRUE);
 	if (files != NULL)
 		g_ptr_array_unref (files);
 	g_object_unref (msg);
@@ -281,7 +281,7 @@ zif_package_rhn_list_deps (ZifPackageRhn *rhn,
 	GPtrArray *provides = NULL;
 	GPtrArray *requires = NULL;
 	guint i;
-	GValueArray *array = NULL;
+	GArray *array = NULL;
 	GValue *modifier;
 	GValue *name;
 	GValue *value;
@@ -313,7 +313,7 @@ zif_package_rhn_list_deps (ZifPackageRhn *rhn,
 	ret = soup_xmlrpc_extract_method_response (msg->response_body->data,
 						   msg->response_body->length,
 						   &error_local,
-						   G_TYPE_VALUE_ARRAY, &array);
+						   G_TYPE_ARRAY, &array);
 	if (!ret) {
 		g_set_error (error,
 			     ZIF_PACKAGE_ERROR,
@@ -331,8 +331,8 @@ zif_package_rhn_list_deps (ZifPackageRhn *rhn,
 	requires = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	obsoletes = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	conflicts = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
-	for (i=0; i<array->n_values; i++) {
-		hash = g_value_get_boxed (&array->values[i]);
+	for (i=0; i<array->len; i++) {
+		hash = g_array_index (array, GHashTable *, i);
 
 		value = g_hash_table_lookup (hash, "dependency_type");
 		type = g_value_get_string (value);
@@ -372,7 +372,7 @@ zif_package_rhn_list_deps (ZifPackageRhn *rhn,
 	zif_package_set_conflicts (pkg, conflicts);
 out:
 	if (array != NULL)
-		g_value_array_free (array);
+		g_array_free (array, TRUE);
 	if (provides != NULL)
 		g_ptr_array_unref (provides);
 	if (requires != NULL)

@@ -456,7 +456,7 @@ zif_store_rhn_load (ZifStore *store,
 	GHashTable *hash;
 	GThreadPool *pool = NULL;
 	guint i;
-	GValueArray *array = NULL;
+	GArray *array = NULL;
 	SoupMessage *msg = NULL;
 	ZifPackage *package;
 	ZifStoreRhn *rhn = ZIF_STORE_RHN (store);
@@ -517,7 +517,7 @@ zif_store_rhn_load (ZifStore *store,
 	ret = soup_xmlrpc_extract_method_response (msg->response_body->data,
 						   msg->response_body->length,
 						   &error_local,
-						   G_TYPE_VALUE_ARRAY, &array);
+						   G_TYPE_ARRAY, &array);
 	if (!ret) {
 		g_set_error (error,
 			     ZIF_STORE_ERROR,
@@ -540,9 +540,9 @@ zif_store_rhn_load (ZifStore *store,
 				  rhn, ZIF_STORE_RHN_MAX_THREADS, TRUE, NULL);
 
 	/* get packages */
-	g_debug ("got %i elements", array->n_values);
-	for (i=0; i<array->n_values; i++) {
-		hash = g_value_get_boxed (&array->values[i]);
+	g_debug ("got %i elements", array->len);
+	for (i=0; i<array->len; i++) {
+		hash = g_array_index (array, GHashTable *, i);
 		package = zif_store_rhn_add_package (store, hash, error);
 		if (package == NULL) {
 			ret = FALSE;
@@ -564,7 +564,7 @@ out:
 	if (pool != NULL)
 		g_thread_pool_free (pool, FALSE, TRUE);
 	if (array != NULL)
-		g_value_array_free (array);
+		g_array_free (array, TRUE);
 	if (msg != NULL)
 		g_object_unref (msg);
 	return ret;
