@@ -13,4 +13,5 @@ sudo yum install -y			\
 	rpm-devel			\
 	sqlite-devel			\
 	xz-devel			\
+	gobject-introspection-devel	\
 	zlib-devel
