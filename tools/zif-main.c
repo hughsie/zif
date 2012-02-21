@@ -1420,11 +1420,18 @@ zif_cmd_dep_obsoletes (ZifCmdPrivate *priv, gchar **values, GError **error)
  * zif_get_localised_date:
  **/
 static gchar *
-zif_get_localised_date (guint timestamp)
+zif_get_localised_date (gint64 timestamp)
 {
 	struct tm *tmp;
 	gchar buffer[100];
-	time_t timet = timestamp;
+	time_t timet;
+
+	/* timestamps used to be in seconds, now are in usecs */
+	if (timestamp < 2000 * G_USEC_PER_SEC) {
+		timet = timestamp;
+	} else {
+		timet = timestamp / G_USEC_PER_SEC;
+	}
 
 	/* get printed string */
 	tmp = localtime (&timet);
@@ -1448,7 +1455,7 @@ zif_cmd_history_list (ZifCmdPrivate *priv, gchar **values, GError **error)
 	gchar *reason_pad;
 	GPtrArray *packages;
 	guint i, j;
-	guint timestamp;
+	gint64 timestamp;
 	guint uid;
 	ZifPackage *package;
 	ZifTransactionReason reason;
@@ -1467,7 +1474,9 @@ zif_cmd_history_list (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 	/* list them */
 	for (i = 0; i < transactions->len; i++) {
-		timestamp = g_array_index (transactions, guint, i);
+		timestamp = g_array_index (transactions, gint64, i);
+		if (timestamp == 0)
+			continue;
 
 		/* get packages */
 		packages = zif_history_get_packages (priv->history,
