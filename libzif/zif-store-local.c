@@ -395,7 +395,10 @@ zif_store_local_load (ZifStore *store, ZifState *state, GError **error)
 	} while (TRUE);
 
 	/* turn checks back on */
-	zif_state_set_report_progress (state, TRUE);
+	zif_state_set_report_progress (state_local, TRUE);
+	ret = zif_state_finished (state_local, error);
+	if (!ret)
+		goto out;
 
 	/* lookup in history database */
 	use_installed_history = zif_config_get_boolean (local->priv->config,
