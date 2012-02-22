@@ -1,3 +1,19 @@
+Version 0.2.8
+~~~~~~~~~~~~~
+Released: 2012-02-22
+
+New Features:
+ - Add an 'remove-with-deps' option to auto-remove packages earlier installed as dependencies (Richard Hughes)
+ - Add zif_store_resolve_package() to resolve a single package (Richard Hughes)
+ - Allow multiple sections inside manifest files (Richard Hughes)
+
+Bugfixes:
+ - Do not remove a dep package on remove that has the require provided by something else (Richard Hughes)
+ - Don't abort the auto-remove transaction if an original dep is no longer installed (Richard Hughes)
+ - Fix a critical warning when getting repomd from a broken repo (Richard Hughes)
+ - Fix the progress state when searching for files (Richard Hughes)
+ - Make the transaction history timestamps 64 bits in size (Richard Hughes)
+
 Version 0.2.7
 ~~~~~~~~~~~~~
 Released: 2012-02-03
