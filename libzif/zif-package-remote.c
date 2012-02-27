@@ -700,7 +700,7 @@ zif_package_remote_ensure_data (ZifPackage *pkg,
 {
 	gboolean ret = FALSE;
 	GPtrArray *array = NULL;
-	ZifString *tmp;
+	ZifString *tmp = NULL;
 	const gchar *text;
 	const gchar *group;
 	ZifPackageRemote *pkg_remote = ZIF_PACKAGE_REMOTE (pkg);
@@ -729,6 +729,14 @@ zif_package_remote_ensure_data (ZifPackage *pkg,
 
 		/* set for this package */
 		zif_package_set_files (pkg, array);
+
+	} else if (type == ZIF_PACKAGE_ENSURE_TYPE_DESCRIPTION) {
+
+		/* some repo data doesn't include this for each package,
+		 * so just set this to something sane rather than
+		 * showing an error */
+		tmp = zif_string_new ("No description provided");
+		zif_package_set_description (pkg, tmp);
 
 	} else if (type == ZIF_PACKAGE_ENSURE_TYPE_REQUIRES) {
 
@@ -844,19 +852,21 @@ zif_package_remote_ensure_data (ZifPackage *pkg,
 
 		tmp = zif_string_new (group);
 		zif_package_set_group (pkg, tmp);
-		zif_string_unref (tmp);
 	} else {
 		g_set_error (error,
 			     ZIF_PACKAGE_ERROR,
 			     ZIF_PACKAGE_ERROR_NO_SUPPORT,
-			     "Ensure type '%s' not supported on ZifPackageRemote",
-			     zif_package_ensure_type_to_string (type));
+			     "Ensure type '%s' not supported on ZifPackageRemote %s",
+			     zif_package_ensure_type_to_string (type),
+			     zif_package_get_printable (pkg));
 		goto out;
 	}
 
 	/* success */
 	ret = TRUE;
 out:
+	if (tmp != NULL)
+		zif_string_unref (tmp);
 	if (array != NULL)
 		g_ptr_array_unref (array);
 	return ret;
