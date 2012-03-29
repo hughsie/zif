@@ -103,6 +103,7 @@ zif_config_load (ZifConfig *config,
 {
 	gboolean ret = TRUE;
 	GError *error_local = NULL;
+	guint config_schema_version;
 
 	/* already loaded */
 	if (config->priv->loaded)
@@ -133,6 +134,36 @@ zif_config_load (ZifConfig *config,
 			     config->priv->filename,
 			     error_local->message);
 		g_error_free (error_local);
+		goto out;
+	}
+
+	/* check schema version key exists */
+	config_schema_version = g_key_file_get_integer (config->priv->file_default,
+							"main",
+							"config_schema_version",
+							&error_local);
+	if (config_schema_version == 0) {
+		ret = FALSE;
+		g_set_error (error,
+			     ZIF_CONFIG_ERROR,
+			     ZIF_CONFIG_ERROR_FAILED,
+			     "failed to load config file %s: %s - "
+			     "check your installation of Zif",
+			     config->priv->filename,
+			     error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* check schema version */
+	if (config_schema_version != 1) {
+		ret = FALSE;
+		g_set_error (error,
+			     ZIF_CONFIG_ERROR,
+			     ZIF_CONFIG_ERROR_FAILED,
+			     "failed to load config file %s - "
+			     "check your installation of Zif",
+			     config->priv->filename);
 		goto out;
 	}
 
