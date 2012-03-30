@@ -121,6 +121,7 @@ const gchar		*zif_package_get_name_version	(ZifPackage	*package);
 const gchar		*zif_package_get_name_version_arch (ZifPackage	*package);
 const gchar		*zif_package_get_name		(ZifPackage	*package);
 const gchar		*zif_package_get_version	(ZifPackage	*package);
+const gchar		*zif_package_get_version_arch	(ZifPackage	*package);
 const gchar		*zif_package_get_arch		(ZifPackage	*package);
 const gchar		*zif_package_get_data		(ZifPackage	*package);
 ZifPackageTrustKind	 zif_package_get_trust_kind	(ZifPackage	*package);
