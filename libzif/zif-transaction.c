@@ -50,6 +50,7 @@
 #include <glib.h>
 #include <glib/gstdio.h>
 #include <fcntl.h>
+#include <sys/utsname.h>
 
 #include <rpm/rpmdb.h>
 #include <rpm/rpmlib.h>
@@ -849,6 +850,42 @@ zif_transaction_add_update (ZifTransaction *transaction, ZifPackage *package, GE
 }
 
 /**
+ * zif_transaction_check_running_kernel:
+ **/
+static gboolean
+zif_transaction_check_running_kernel (ZifTransaction *transaction,
+				      ZifPackage *package,
+				      GError **error)
+{
+	gboolean ret = TRUE;
+	struct utsname uname_data;
+
+	/* not even a kernel package */
+	if (g_strcmp0 (zif_package_get_name (package), "kernel") != 0)
+		goto out;
+
+	/* not the currently running arch */
+	uname (&uname_data);
+	if (g_strcmp0 (zif_package_get_version_arch (package),
+		       uname_data.release) == 0) {
+		ret = FALSE;
+		g_set_error (error,
+			     ZIF_TRANSACTION_ERROR,
+			     ZIF_TRANSACTION_ERROR_FAILED_KERNEL_RUNNING,
+			     "cannot remove currently running kernel %s",
+			     uname_data.release);
+		goto out;
+	}
+
+	/* all okay */
+	g_debug ("Okay to remove kernel as not running %s:%s",
+		 zif_package_get_arch (package),
+		 uname_data.release);
+out:
+	return ret;
+}
+
+/**
  * zif_transaction_add_remove_internal:
  **/
 static gboolean
@@ -862,6 +899,7 @@ zif_transaction_add_remove_internal (ZifTransaction *transaction,
 	guint i;
 	gchar **protected_packages = NULL;
 	gchar *related_packages_str = NULL;
+	GError *error_local = NULL;
 
 	/* is package protected */
 	protected_packages = zif_config_get_strv (transaction->priv->config,
@@ -886,6 +924,22 @@ zif_transaction_add_remove_internal (ZifTransaction *transaction,
 	ret = zif_transaction_check_excludes (transaction, package, error);
 	if (!ret)
 		goto out;
+
+	/* check we're not trying to remove the running kernel */
+	ret = zif_transaction_check_running_kernel (transaction, package, &error_local);
+	if (!ret) {
+		/* if we tried to clean up old kernels, then don't warn */
+		if (reason == ZIF_TRANSACTION_REASON_REMOVE_AS_ONLYN) {
+			ret = TRUE;
+			g_debug ("ignoring error: %s", error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+
+		/* otherwise go down in a ball of flames */
+		g_propagate_error (error, error_local);
+		goto out;
+	}
 
 	/* add to remove */
 	ret = zif_transaction_add_to_array (transaction->priv->remove,
