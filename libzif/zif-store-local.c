@@ -245,9 +245,6 @@ zif_store_local_set_releasever (ZifStoreLocal *store,
 		goto out;
 	}
 
-	releasever = g_strdup (zif_package_get_version (package_tmp));
-	g_strdelimit (releasever, "-", '\0');
-
 	/* set the releasever */
 	g_debug ("setting releasever '%s'", releasever);
 	ret = zif_config_set_string (store->priv->config,
