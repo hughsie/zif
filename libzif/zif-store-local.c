@@ -181,8 +181,10 @@ zif_store_local_set_releasever (ZifStoreLocal *store,
 	gboolean ret = FALSE;
 	gchar *releasever = NULL;
 	gchar *releasever_pkg;
+	gchar **version_split = NULL;
 	GPtrArray *depends = NULL;
 	GPtrArray *packages = NULL;
+	guint release_ver_type;
 	ZifDepend *depend;
 	ZifPackage *package_tmp;
 
@@ -224,6 +226,25 @@ zif_store_local_set_releasever (ZifStoreLocal *store,
 
 	/* parse the package version */
 	package_tmp = g_ptr_array_index (packages, 0);
+	version_split = g_strsplit_set (zif_package_get_version (package_tmp),
+					":-", 3);
+
+	/* epoch:version-release */
+	release_ver_type = g_strv_length (version_split);
+	if (release_ver_type == 3) {
+		releasever = g_strdup (version_split[1]);
+	} else if (release_ver_type == 2) {
+		releasever = g_strdup (version_split[0]);
+	} else {
+		ret = FALSE;
+		g_set_error (error,
+			     ZIF_STORE_ERROR,
+			     ZIF_STORE_ERROR_NO_RELEASEVER,
+			     "unexpected release version format %s",
+			     zif_package_get_version (package_tmp));
+		goto out;
+	}
+
 	releasever = g_strdup (zif_package_get_version (package_tmp));
 	g_strdelimit (releasever, "-", '\0');
 
@@ -238,6 +259,7 @@ zif_store_local_set_releasever (ZifStoreLocal *store,
 out:
 	g_free (releasever);
 	g_free (releasever_pkg);
+	g_strfreev (version_split);
 	if (depends != NULL)
 		g_ptr_array_unref (depends);
 	if (packages != NULL)
