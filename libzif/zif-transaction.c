@@ -4090,30 +4090,36 @@ zif_transaction_resolve (ZifTransaction *transaction, ZifState *state, GError **
 		 priv->remove->len);
 
 	/* setup state */
-	ret = zif_state_set_steps (state,
-				   error,
-				   10, /* clear requires */
-				   90, /* resolves dep */
-				   -1);
-	if (!ret)
-		goto out;
-
-	/* check for packages to autoremove */
 	autoremove = zif_config_get_boolean (priv->config,
 					     "clean_requirements_on_remove", NULL);
-	if (autoremove && priv->remove->len > 0) {
-		state_local = zif_state_get_child (state);
-		ret = zif_transaction_auto_remove (transaction,
-						   state_local,
-						   error);
+	if (autoremove) {
+		ret = zif_state_set_steps (state,
+					   error,
+					   5, /* clear requires */
+					   95, /* resolves dep */
+					   -1);
+		if (!ret)
+			goto out;
+	} else {
+		zif_state_set_number_steps (state, 1);
+	}
+
+	/* check for packages to autoremove */
+	if (autoremove) {
+		if (priv->remove->len > 0) {
+			state_local = zif_state_get_child (state);
+			ret = zif_transaction_auto_remove (transaction,
+							   state_local,
+							   error);
+			if (!ret)
+				goto out;
+		}
+
+		/* done */
+		ret = zif_state_done (state, error);
 		if (!ret)
 			goto out;
 	}
-
-	/* done */
-	ret = zif_state_done (state, error);
-	if (!ret)
-		goto out;
 
 	data = g_new0 (ZifTransactionResolve, 1);
 	data->state = zif_state_get_child (state);
@@ -4607,9 +4613,9 @@ zif_transaction_prepare (ZifTransaction *transaction, ZifState *state, GError **
 	/* set steps */
 	ret = zif_state_set_steps (state,
 				   error,
-				   10, /* check downloads exist */
-				   80, /* download them */
-				   10, /* mark as trusted / untrusted */
+				   5, /* check downloads exist */
+				   90, /* download them */
+				   5, /* mark as trusted / untrusted */
 				   -1);
 	if (!ret)
 		goto out;

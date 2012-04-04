@@ -293,9 +293,9 @@ zif_store_local_load (ZifStore *store, ZifState *state, GError **error)
 	if (local->priv->prefix == NULL) {
 		ret = zif_state_set_steps (state,
 					   error,
-					   10, /* set prefix */
+					   5, /* set prefix */
 					   80, /* add packages */
-					   10, /* set releasever */
+					   15, /* set releasever */
 					   -1);
 	} else {
 		ret = zif_state_set_steps (state,

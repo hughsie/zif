@@ -1071,8 +1071,8 @@ zif_store_resolve_full_try (ZifStore *store,
 	} else {
 		ret = zif_state_set_steps (state,
 					   error,
-					   80, /* load */
-					   20, /* search */
+					   95, /* load */
+					   5, /* search */
 					   -1);
 		if (!ret)
 			goto out;

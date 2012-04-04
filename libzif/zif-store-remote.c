@@ -500,8 +500,8 @@ repomd_confirm:
 	} else {
 		ret = zif_state_set_steps (state,
 					   error,
-					   10, /* load */
-					   90, /* download */
+					   5, /* load */
+					   95, /* download */
 					   -1);
 		if (!ret)
 			goto out;
@@ -1436,9 +1436,9 @@ zif_store_remote_process_repomd (ZifStoreRemote *store,
 	} else {
 		ret = zif_state_set_steps (state,
 					   error,
-					   10, /* parse */
-					   80, /* check */
-					   10, /* parse */
+					   30, /* parse */
+					   30, /* check */
+					   40, /* parse */
 					   -1);
 		if (!ret)
 			goto out;

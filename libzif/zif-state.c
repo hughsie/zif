@@ -1378,7 +1378,7 @@ zif_state_show_profile (ZifState *state)
 		g_string_append_printf (result, "%.0f, ",
 					state->priv->step_profile[i] / division);
 	}
-	g_printerr ("%s-1 ] at %s\n", result->str, state->priv->id);
+	g_printerr ("\n\n%s-1 ] at %s\n\n", result->str, state->priv->id);
 	g_string_free (result, TRUE);
 }
 
