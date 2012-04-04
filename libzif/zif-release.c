@@ -641,18 +641,8 @@ zif_release_make_kernel_default_once (ZifRelease *release, GError **error)
 		goto out;
 	}
 
-	/* We want to run something like:
-	 *
-	 * /bin/echo 'savedefault --default=0 --once' | /sbin/grub > /dev/null
-	 *
-	 * ...but this won't work in C and is a bodge.
-	 * Ideally we want to add --once to the list of grubby commands. */
-	cmdline = g_strdup_printf ("/sbin/grubby "
-				   "--config-file=/boot/grub/grub.conf "
-				   "--set-default=%s/vmlinuz",
-				   boot_dir);
-
 	/* we're not running as root */
+	cmdline = g_strdup_printf (SBINDIR "/grub2-reboot %i", 0);
 	if (!g_str_has_prefix (boot_dir, "/boot")) {
 		g_debug ("not running grub as not installing root, would have run '%s'",
 			 cmdline);

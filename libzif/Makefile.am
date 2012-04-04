@@ -21,6 +21,7 @@ INCLUDES = \
 	-DLOCALSTATEDIR=\""$(localstatedir)"\" 			\
 	-DTOP_SRCDIR=\""$(top_srcdir)"\" 			\
 	-DPACKAGE_DATA_DIR=\""$(datadir)"\"			\
+	-DSBINDIR=\""$(sbindir)"\"				\
 	-DSYSCONFDIR=\""$(sysconfdir)"\"			\
 	-DPACKAGE_LOCALE_DIR=\""$(prefix)/$(DATADIRNAME)/locale"\"
 
