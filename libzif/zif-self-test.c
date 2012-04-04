@@ -693,7 +693,7 @@ zif_config_changed_func (void)
 	g_assert (config != NULL);
 
 	filename = g_build_filename (zif_tmpdir, "zif.conf", NULL);
-	ret = g_file_set_contents (filename, "[main]\n", -1, &error);
+	ret = g_file_set_contents (filename, "[main]\nconfig_schema_version=1\n", -1, &error);
 	g_assert_no_error (error);
 	g_assert (ret);
 	ret = zif_config_set_filename (config, filename, &error);
@@ -710,7 +710,7 @@ zif_config_changed_func (void)
 	g_assert (ret);
 
 	/* touch file, and ensure file is autoloaded */
-	ret = g_file_set_contents (filename, "[main]\nkey=value\n", -1, &error);
+	ret = g_file_set_contents (filename, "[main]\nkey=value\nconfig_schema_version=1\n", -1, &error);
 	g_assert_no_error (error);
 	g_assert (ret);
 
