@@ -559,9 +559,12 @@ zif_state_set_percentage (ZifState *state, guint percentage)
 
 	/* is it less */
 	if (percentage < state->priv->last_percentage) {
-		zif_state_print_parent_chain (state, 0);
-		g_critical ("percentage should not go down from %i to %i on %p!",
-			    state->priv->last_percentage, percentage, state);
+		if (state->priv->enable_profile) {
+			zif_state_print_parent_chain (state, 0);
+			g_critical ("percentage should not go down from %i to %i on %p!",
+				    state->priv->last_percentage, percentage, state);
+		}
+		goto out;
 	}
 
 	/* we're done, so we're not preventing cancellation anymore */
