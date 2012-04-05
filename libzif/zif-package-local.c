@@ -321,6 +321,7 @@ zif_package_local_ensure_data (ZifPackage *pkg,
 				g_ptr_array_add (files, filename);
 			}
 			zif_package_set_files (pkg, files);
+			zif_package_set_provides_files (pkg, files);
 			g_ptr_array_unref (files);
 
 			/* free, as we have files */
@@ -330,6 +331,7 @@ zif_package_local_ensure_data (ZifPackage *pkg,
 		} else {
 			files = g_ptr_array_new_with_free_func (g_free);
 			zif_package_set_files (pkg, files);
+			zif_package_set_provides_files (pkg, files);
 			g_ptr_array_unref (files);
 		}
 

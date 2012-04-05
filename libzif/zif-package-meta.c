@@ -185,6 +185,7 @@ zif_package_meta_ensure_data (ZifPackage *pkg, ZifPackageEnsureType type, ZifSta
 	} else if (type == ZIF_PACKAGE_ENSURE_TYPE_FILES) {
 		depends = zif_package_meta_get_string_array (ZIF_PACKAGE_META(pkg), "File");
 		zif_package_set_files (pkg, depends);
+		zif_package_set_provides_files (pkg, depends);
 		g_ptr_array_unref (depends);
 
 	} else if (type == ZIF_PACKAGE_ENSURE_TYPE_REQUIRES) {

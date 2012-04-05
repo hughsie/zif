@@ -2330,20 +2330,37 @@ zif_package_add_file (ZifPackage *package, const gchar *filename)
 void
 zif_package_set_files (ZifPackage *package, GPtrArray *files)
 {
+	g_return_if_fail (ZIF_IS_PACKAGE (package));
+	g_return_if_fail (files != NULL);
+	g_return_if_fail (package->priv->files == NULL);
+
+	package->priv->files = g_ptr_array_ref (files);
+}
+
+/**
+ * zif_package_set_provides_files:
+ * @package: A #ZifPackage
+ * @files: The package provides
+ *
+ * Sets the package file provides
+ *
+ * Since: 0.2.9
+ **/
+void
+zif_package_set_provides_files (ZifPackage *package,
+				GPtrArray *files)
+{
 	const gchar *filename;
 	guint i;
 
 	g_return_if_fail (ZIF_IS_PACKAGE (package));
 	g_return_if_fail (files != NULL);
-	g_return_if_fail (package->priv->files == NULL);
 
 	/* add files as provides to 'any' cache */
 	for (i=0; i<files->len; i++) {
 		filename = g_ptr_array_index (files, i);
 		zif_package_add_files_internal (package, filename);
 	}
-
-	package->priv->files = g_ptr_array_ref (files);
 }
 
 /**

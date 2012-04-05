@@ -729,6 +729,7 @@ zif_package_remote_ensure_data (ZifPackage *pkg,
 
 		/* set for this package */
 		zif_package_set_files (pkg, array);
+		zif_package_set_provides_files (pkg, array);
 
 	} else if (type == ZIF_PACKAGE_ENSURE_TYPE_DESCRIPTION) {
 

@@ -212,6 +212,7 @@ zif_md_filelists_xml_parser_end_element (GMarkupParseContext *context, const gch
 				/* end of list */
 				if (g_strcmp0 (element_name, "package") == 0) {
 					zif_package_set_files (filelists_xml->priv->package_temp, filelists_xml->priv->array_temp);
+					zif_package_set_provides_files (filelists_xml->priv->package_temp, filelists_xml->priv->array_temp);
 					g_ptr_array_add (filelists_xml->priv->array, filelists_xml->priv->package_temp);
 					filelists_xml->priv->package_temp = NULL;
 					filelists_xml->priv->array_temp = NULL;
