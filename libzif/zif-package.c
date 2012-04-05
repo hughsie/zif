@@ -2338,6 +2338,22 @@ zif_package_set_files (ZifPackage *package, GPtrArray *files)
 }
 
 /**
+ * zif_package_str_has_prefix:
+ **/
+static gboolean
+zif_package_str_has_prefix (const gchar *filename, gchar **strv)
+{
+	guint i;
+	if (strv == NULL)
+		return FALSE;
+	for (i = 0; strv[i] != NULL; i++) {
+		if (g_str_has_prefix (filename, strv[i]))
+			return TRUE;
+	}
+	return FALSE;
+}
+
+/**
  * zif_package_set_provides_files:
  * @package: A #ZifPackage
  * @files: The package provides
@@ -2351,16 +2367,29 @@ zif_package_set_provides_files (ZifPackage *package,
 				GPtrArray *files)
 {
 	const gchar *filename;
+	gboolean ret;
+	gchar **file_prefixes;
 	guint i;
+	ZifConfig *config;
 
 	g_return_if_fail (ZIF_IS_PACKAGE (package));
 	g_return_if_fail (files != NULL);
 
+	/* get the list of file prefixes to ignore */
+	config = zif_config_new ();
+	file_prefixes = zif_config_get_strv (config,
+					     "ignore_file_dep_prefixes",
+					     NULL);
+
 	/* add files as provides to 'any' cache */
 	for (i=0; i<files->len; i++) {
 		filename = g_ptr_array_index (files, i);
-		zif_package_add_files_internal (package, filename);
+		ret = zif_package_str_has_prefix (filename, file_prefixes);
+		if (!ret)
+			zif_package_add_files_internal (package, filename);
 	}
+	g_strfreev (file_prefixes);
+	g_object_unref (config);
 }
 
 /**
