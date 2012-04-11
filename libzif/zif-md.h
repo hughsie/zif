@@ -52,6 +52,11 @@ struct _ZifMd
 {
 	GObject			 parent;
 	ZifMdPrivate		*priv;
+	/* Padding for future expansion */
+	void (*_zif_reserved1) (void);
+	void (*_zif_reserved2) (void);
+	void (*_zif_reserved3) (void);
+	void (*_zif_reserved4) (void);
 };
 
 struct _ZifMdClass

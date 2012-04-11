@@ -50,6 +50,11 @@ struct _ZifCategory
 struct _ZifCategoryClass
 {
 	GObjectClass		parent_class;
+	/* Padding for future expansion */
+	void (*_zif_reserved1) (void);
+	void (*_zif_reserved2) (void);
+	void (*_zif_reserved3) (void);
+	void (*_zif_reserved4) (void);
 };
 
 GType		 zif_category_get_type		  	(void);

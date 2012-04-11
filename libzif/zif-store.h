@@ -129,7 +129,12 @@ struct _ZifStoreClass
 						 GError			**error);
 	const gchar	*(*get_id)		(ZifStore		*store);
 	void		 (*print)		(ZifStore		*store);
-	/* TODO: next time we break API, add padding! */
+
+	/* Padding for future expansion */
+	void (*_zif_reserved1) (void);
+	void (*_zif_reserved2) (void);
+	void (*_zif_reserved3) (void);
+	void (*_zif_reserved4) (void);
 };
 
 typedef enum {
