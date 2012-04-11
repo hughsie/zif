@@ -3,19 +3,20 @@
 # This file is distributed under the same license as the PACKAGE package.
 # 
 # Translators:
+# Martin Srebotnjak <miles@filmsi.net>, 2012.
 msgid ""
 msgstr ""
 "Project-Id-Version: Zif\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-02-22 16:44+0000\n"
-"PO-Revision-Date: 2012-02-22 16:56+0000\n"
-"Last-Translator: Richard Hughes <richard@hughsie.com>\n"
-"Language-Team: Chinese (China) <i18n-zh@googlegroups.com>\n"
+"PO-Revision-Date: 2012-03-26 18:22+0000\n"
+"Last-Translator: Martin Srebotnjak <miles@filmsi.net>\n"
+"Language-Team: Slovenian <lugos-slo@lugos.si>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: zh_CN\n"
-"Plural-Forms: nplurals=1; plural=0\n"
+"Language: sl\n"
+"Plural-Forms: nplurals=4; plural=(n%100==1 ? 0 : n%100==2 ? 1 : n%100==3 || n%100==4 ? 2 : 3)\n"
 
 #: ../tools/zif-main.c:68
 msgid "[⚐]"
@@ -38,13 +39,13 @@ msgstr ""
 #. * package files are being checked for consitency
 #: ../tools/zif-main.c:165
 msgid "Checking"
-msgstr ""
+msgstr "Preverjanje"
 
 #. TRANSLATORS: A file is currently downloading
 #. TRANSLATORS: downloading packages
 #: ../tools/zif-main.c:169 ../tools/zif-main.c:683
 msgid "Downloading"
-msgstr ""
+msgstr "Prenašanje"
 
 #. TRANSLATORS: A repository file is being read, and
 #. * the packages created internally
@@ -90,41 +91,41 @@ msgstr ""
 #. TRANSLATORS: performing action
 #: ../tools/zif-main.c:206 ../tools/zif-main.c:2178 ../tools/zif-main.c:2586
 msgid "Installing"
-msgstr ""
+msgstr "Nameščanje"
 
 #. TRANSLATORS: removing (deleting) a package
 #. TRANSLATORS: this is the reason the action is to be taken
 #. TRANSLATORS: performing action
 #: ../tools/zif-main.c:210 ../tools/zif-main.c:2198 ../tools/zif-main.c:3605
 msgid "Removing"
-msgstr ""
+msgstr "Odstranjevanje"
 
 #. TRANSLATORS: updating an old version to a new version
 #. TRANSLATORS: this is the reason the action is to be taken
 #. TRANSLATORS: updating several packages
 #: ../tools/zif-main.c:214 ../tools/zif-main.c:2202 ../tools/zif-main.c:4591
 msgid "Updating"
-msgstr ""
+msgstr "Posodabljanje"
 
 #. TRANSLATORS: Cleaning up after an update, where we
 #. * remove the old version
 #. TRANSLATORS: we're cleaning the repo, deleting old files
 #: ../tools/zif-main.c:219 ../tools/zif-main.c:523
 msgid "Cleaning"
-msgstr ""
+msgstr "Čiščenje"
 
 #. TRANSLATORS: getting ready to do run the transaction,
 #. * doing things like checking the database and checking
 #. * for file conflicts
 #: ../tools/zif-main.c:225
 msgid "Preparing"
-msgstr ""
+msgstr "Pripravljanje"
 
 #. TRANSLATORS: checking the transaction for file
 #. * conflicts after packages have been downloaded
 #: ../tools/zif-main.c:230
 msgid "Testing"
-msgstr ""
+msgstr "Preizkušanje"
 
 #. TRANSLATORS: loading the rpmdb
 #: ../tools/zif-main.c:234

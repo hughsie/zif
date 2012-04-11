@@ -3,27 +3,28 @@
 # This file is distributed under the same license as the PACKAGE package.
 # 
 # Translators:
+#   <kristjan.schmidt@googlemail.com>, 2012.
 msgid ""
 msgstr ""
 "Project-Id-Version: Zif\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-02-22 16:44+0000\n"
-"PO-Revision-Date: 2012-02-22 16:56+0000\n"
-"Last-Translator: Richard Hughes <richard@hughsie.com>\n"
-"Language-Team: Chinese (China) <i18n-zh@googlegroups.com>\n"
+"PO-Revision-Date: 2012-04-01 19:09+0000\n"
+"Last-Translator: kristjan <kristjan.schmidt@googlemail.com>\n"
+"Language-Team: Esperanto (http://www.transifex.net/projects/p/freedesktop/language/eo/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: zh_CN\n"
-"Plural-Forms: nplurals=1; plural=0\n"
+"Language: eo\n"
+"Plural-Forms: nplurals=2; plural=(n != 1)\n"
 
 #: ../tools/zif-main.c:68
 msgid "[⚐]"
-msgstr ""
+msgstr "[⚐]"
 
 #: ../tools/zif-main.c:70
 msgid "[⚑]"
-msgstr ""
+msgstr "[⚑]"
 
 #: ../tools/zif-main.c:83
 msgid "Updates installed package"
@@ -44,7 +45,7 @@ msgstr ""
 #. TRANSLATORS: downloading packages
 #: ../tools/zif-main.c:169 ../tools/zif-main.c:683
 msgid "Downloading"
-msgstr ""
+msgstr "Elŝuto"
 
 #. TRANSLATORS: A repository file is being read, and
 #. * the packages created internally
@@ -197,11 +198,11 @@ msgstr ""
 #. TRANSLATORS: these are headers for the package data
 #: ../tools/zif-main.c:1173
 msgid "Name"
-msgstr ""
+msgstr "Nomo"
 
 #: ../tools/zif-main.c:1174
 msgid "Version"
-msgstr ""
+msgstr "Versio"
 
 #: ../tools/zif-main.c:1175
 msgid "Arch"
@@ -209,7 +210,7 @@ msgstr ""
 
 #: ../tools/zif-main.c:1176
 msgid "Size"
-msgstr ""
+msgstr "Grando"
 
 #: ../tools/zif-main.c:1177
 msgid "Repo"
@@ -225,16 +226,16 @@ msgstr ""
 
 #: ../tools/zif-main.c:1180
 msgid "License"
-msgstr ""
+msgstr "Permesilo"
 
 #: ../tools/zif-main.c:1181
 msgid "Description"
-msgstr ""
+msgstr "Priskribo"
 
 #. TRANSLATORS: strftime formatted please
 #: ../tools/zif-main.c:1440
 msgid "%F %R"
-msgstr ""
+msgstr "%F %R"
 
 #: ../tools/zif-main.c:1471
 msgid "The history database is empty"
@@ -302,7 +303,7 @@ msgstr ""
 #: ../tools/zif-main.c:2039
 #, c-format
 msgid "No value for %s"
-msgstr ""
+msgstr "Neniu valoro por %s"
 
 #. TRANSLATORS: this is the reason the action is to be taken
 #: ../tools/zif-main.c:2170
@@ -515,7 +516,7 @@ msgstr ""
 #. TRANSLATORS: searching by a specific group
 #: ../tools/zif-main.c:4280
 msgid "Search group"
-msgstr ""
+msgstr "Serĉi grupon"
 
 #. TRANSLATORS: search, based on the package name only
 #: ../tools/zif-main.c:4355
@@ -578,11 +579,11 @@ msgstr ""
 
 #: ../tools/zif-main.c:4840
 msgid "Title:"
-msgstr ""
+msgstr "Titolo:"
 
 #: ../tools/zif-main.c:4844
 msgid "Description:"
-msgstr ""
+msgstr "Priskribo:"
 
 #: ../tools/zif-main.c:4848
 msgid "Issued:"
@@ -809,7 +810,7 @@ msgstr ""
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6818
 msgid "Install a package"
-msgstr ""
+msgstr "Instali pakaĵon"
 
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6823

@@ -1,3 +1,24 @@
+Version 0.2.9
+~~~~~~~~~~~~~
+Released: 2012-04-11
+
+Notes:
+ - A few nice bugfixes, and a neat feature to reduce the time spent
+   checking conflicts by more than 40%.
+
+New Features:
+ - Add a schema version to the config file to detect old versions of the config file
+ - Add zif_package_get_version_arch() to get a version.arch string for a package
+ - Add zif_package_set_provides_files() so the file provides can be set manually
+ - Filter out file deps never used for conflicts checking
+
+Bugfixes:
+ - Correctly parse the releasever when the providing package has an epoch
+ - Do not ever remove the currently running kernel
+ - Don't show a warning if remote repomd doesn't set a description for a package
+ - Only print the 'percentage should not go down...' message if we are profiling
+ - Switch to grub2-reboot when setting the default grub entry
+
 Version 0.2.8
 ~~~~~~~~~~~~~
 Released: 2012-02-22
