@@ -412,6 +412,7 @@ typedef struct {
 	ZifRepos		*repos;
 	ZifState		*state;
 	ZifStore		*store_local;
+	ZifStore		*store_directory;
 	ZifHistory		*history;
 	guint			 uid;
 	gchar			*cmdline;
@@ -1846,12 +1847,17 @@ zif_get_update_array (ZifCmdPrivate *priv, ZifState *state, GError **error)
 
 	/* add remote stores to array */
 	store_array = zif_store_array_new ();
-	state_local = zif_state_get_child (state);
-	ret = zif_store_array_add_remote_enabled (store_array,
-						  state_local,
-						  error);
-	if (!ret)
-		goto out;
+	if (priv->store_directory == NULL){
+		state_local = zif_state_get_child (state);
+		ret = zif_store_array_add_remote_enabled (store_array,
+							  state_local,
+							  error);
+		if (!ret)
+			goto out;
+	} else {
+		zif_store_array_add_store (store_array,
+					   priv->store_directory);
+	}
 
 	/* this section done */
 	ret = zif_state_done (state, error);
@@ -6473,6 +6479,7 @@ main (int argc, char *argv[])
 	gchar *root = NULL;
 	gchar *enablerepo = NULL;
 	gchar *disablerepo = NULL;
+	gchar *package_dump = NULL;
 	GError *error = NULL;
 	gint retval = 0;
 	gint terminal_cols = 0;
@@ -6512,6 +6519,8 @@ main (int argc, char *argv[])
 			_("Enable one or more repositories"), NULL },
 		{ "disablerepo", '\0', 0, G_OPTION_ARG_STRING, &disablerepo,
 			_("Disable one or more repositories"), NULL },
+		{ "package-dump", '\0', 0, G_OPTION_ARG_FILENAME, &package_dump,
+			_("Specify a directory of packages as a remote store"), NULL },
 		{ NULL}
 	};
 
@@ -6650,6 +6659,21 @@ main (int argc, char *argv[])
 					     &error);
 		if (!ret) {
 			g_error ("failed to set pkg_compare_mode: %s",
+				 error->message);
+			g_error_free (error);
+			goto out;
+		}
+	}
+
+	/* do we want to use a package dump rather than a repodata */
+	if (package_dump != NULL) {
+		priv->store_directory = zif_store_directory_new ();
+		ret = zif_store_directory_set_path (ZIF_STORE_DIRECTORY (priv->store_directory),
+						    package_dump,
+						    TRUE,
+						    &error);
+		if (!ret) {
+			g_error ("failed to setup package dump: %s",
 				 error->message);
 			g_error_free (error);
 			goto out;
@@ -7218,6 +7242,8 @@ out:
 			g_object_unref (priv->history);
 		if (priv->store_local != NULL)
 			g_object_unref (priv->store_local);
+		if (priv->store_directory != NULL)
+			g_object_unref (priv->store_directory);
 		if (priv->config != NULL)
 			g_object_unref (priv->config);
 		if (priv->state != NULL)
@@ -7232,6 +7258,7 @@ out:
 	}
 
 	/* free state */
+	g_free (package_dump);
 	g_free (enablerepo);
 	g_free (disablerepo);
 	g_free (root);
