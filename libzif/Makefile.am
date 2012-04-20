@@ -61,6 +61,7 @@ libzif_include_HEADERS =					\
 	zif-state.h						\
 	zif-state-private.h					\
 	zif-store-array.h					\
+	zif-store-directory.h					\
 	zif-store.h						\
 	zif-store-local.h					\
 	zif-store-meta.h					\
@@ -158,6 +159,8 @@ libzif_la_SOURCES =						\
 	zif-store-array.c					\
 	zif-store-array.h					\
 	zif-store.c						\
+	zif-store-directory.c					\
+	zif-store-directory.h					\
 	zif-store.h						\
 	zif-store-local.c					\
 	zif-store-local.h					\

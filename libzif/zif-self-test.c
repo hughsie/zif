@@ -63,6 +63,7 @@
 #include "zif-repos.h"
 #include "zif-state-private.h"
 #include "zif-store-array.h"
+#include "zif-store-directory.h"
 #include "zif-store.h"
 #include "zif-store-local.h"
 #include "zif-store-meta.h"
@@ -141,6 +142,39 @@ out:
 				g_assert (!zif_config_is_instance_valid ()); \
 				g_assert (!zif_lock_is_instance_valid ()); \
 				} while (0);
+
+static void
+zif_store_directory_func (void)
+{
+	ZifStore *store;
+	ZifState *state;
+	gchar *path;
+	gboolean ret;
+	GError *error = NULL;
+	GPtrArray *packages;
+
+	path = zif_test_get_data_file (".");
+	store = zif_store_directory_new ();
+	ret = zif_store_directory_set_path (ZIF_STORE_DIRECTORY (store),
+					    path,
+					    TRUE,
+					    &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+	g_assert_cmpint (zif_store_get_size (store), ==, 0);
+
+	/* get packages */
+	state = zif_state_new ();
+	packages = zif_store_get_packages (store, state, &error);
+	g_assert_no_error (error);
+	g_assert (packages != NULL);
+	g_assert_cmpint (packages->len, ==, 3);
+
+	g_ptr_array_unref (packages);
+	g_object_unref (store);
+	g_object_unref (state);
+	g_free (path);
+}
 
 static void
 zif_package_array_func (void)
@@ -4430,6 +4464,7 @@ main (int argc, char **argv)
 	g_test_add_func ("/zif/store-local", zif_store_local_func);
 	g_test_add_func ("/zif/store-meta", zif_store_meta_func);
 	g_test_add_func ("/zif/store-remote", zif_store_remote_func);
+	g_test_add_func ("/zif/store-directory", zif_store_directory_func);
 	g_test_add_func ("/zif/store-rhn", zif_store_rhn_func);
 	g_test_add_func ("/zif/string", zif_string_func);
 	g_test_add_func ("/zif/transaction", zif_transaction_func);

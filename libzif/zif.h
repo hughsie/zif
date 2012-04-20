@@ -43,6 +43,7 @@
 #include <zif-repos.h>
 #include <zif-state.h>
 #include <zif-store-array.h>
+#include <zif-store-directory.h>
 #include <zif-store-local.h>
 #include <zif-store-meta.h>
 #include <zif-store-remote.h>
