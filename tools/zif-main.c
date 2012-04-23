@@ -1064,6 +1064,21 @@ out:
 }
 
 /**
+ * zif_cmd_pad_string:
+ **/
+static void
+zif_cmd_pad_string (GString *str,
+		    const gchar *key,
+		    const gchar *value,
+		    guint padding)
+{
+	gchar *tmp;
+	tmp = zif_strpad (key, padding);
+	g_string_append_printf (str, "%s : %s\n", tmp, value);
+	g_free (tmp);
+}
+
+/**
  * zif_cmd_get_details:
  **/
 static gboolean
@@ -1073,7 +1088,9 @@ zif_cmd_get_details (ZifCmdPrivate *priv, gchar **values, GError **error)
 	const gchar *license;
 	const gchar *summary;
 	const gchar *url;
+	const guint padding = 12;
 	gboolean ret = FALSE;
+	gchar *size_tmp;
 	GPtrArray *array = NULL;
 	GPtrArray *store_array = NULL;
 	GString *string = NULL;
@@ -1171,21 +1188,28 @@ zif_cmd_get_details (ZifCmdPrivate *priv, gchar **values, GError **error)
 		size = zif_package_get_size (package, state_loop, NULL);
 
 		/* TRANSLATORS: these are headers for the package data */
-		g_string_append_printf (string, "%s\t : %s\n", _("Name"), zif_package_get_name (package));
-		g_string_append_printf (string, "%s\t : %s\n", _("Version"), zif_package_get_version (package));
-		g_string_append_printf (string, "%s\t : %s\n", _("Arch"), zif_package_get_arch (package));
-		g_string_append_printf (string, "%s\t : %" G_GUINT64_FORMAT " bytes\n", _("Size"), size);
-		g_string_append_printf (string, "%s\t : %s\n", _("Repo"), zif_package_get_data (package));
-		g_string_append_printf (string, "%s\t : %s\n", _("Summary"), summary);
-		g_string_append_printf (string, "%s\t : %s\n", _("URL"), url);
-		g_string_append_printf (string, "%s\t : %s\n", _("License"), license);
-		g_string_append_printf (string, "%s\t : %s\n", _("Description"), description);
+		zif_cmd_pad_string (string, _("Name"), zif_package_get_name (package), padding);
+		zif_cmd_pad_string (string, _("Arch"), zif_package_get_arch (package), padding);
+		zif_cmd_pad_string (string, _("Version"), zif_package_get_version (package), padding);
+		size_tmp = g_format_size (size);
+		zif_cmd_pad_string (string, _("Size"), size_tmp, padding);
+		g_free (size_tmp);
+		zif_cmd_pad_string (string, _("Repo"), zif_package_get_data (package), padding);
+		zif_cmd_pad_string (string, _("Summary"), summary, padding);
+		zif_cmd_pad_string (string, _("URL"), url, padding);
+		zif_cmd_pad_string (string, _("License"), license, padding);
+		zif_cmd_pad_string (string, _("Description"), description, padding);
+		g_string_append (string, "\n");
 
 		/* this section done */
 		ret = zif_state_done (state_local, error);
 		if (!ret)
 			goto out;
 	}
+
+	/* remove trailing newline */
+	if (string->len > 0)
+		g_string_set_size (string, string->len - 1);
 
 	/* this section done */
 	ret = zif_state_done (priv->state, error);
