@@ -1310,6 +1310,15 @@ zif_legal_func (void)
 	zif_check_singletons ();
 }
 
+static guint _zif_lock_state_changed = 0;
+
+static void
+zif_lock_state_changed_cb (ZifLock *lock, guint bitfield, gpointer user_data)
+{
+	g_debug ("lock state now %i", bitfield);
+	_zif_lock_state_changed++;
+}
+
 static void
 zif_lock_func (void)
 {
@@ -1331,12 +1340,15 @@ zif_lock_func (void)
 
 	lock = zif_lock_new ();
 	g_assert (lock != NULL);
+	g_signal_connect (lock, "state-changed",
+			  G_CALLBACK (zif_lock_state_changed_cb), NULL);
 
 	/* set this to somewhere we can write to */
 	pidfile = g_build_filename (zif_tmpdir, "zif.lock", NULL);
 	zif_config_set_string (config, "pidfile", pidfile, NULL);
 
 	/* nothing yet! */
+	g_assert_cmpint (zif_lock_get_state (lock), ==, 0);
 	ret = zif_lock_release (lock, ZIF_LOCK_TYPE_RPMDB_WRITE, &error);
 	g_assert_error (error, ZIF_LOCK_ERROR, ZIF_LOCK_ERROR_NOT_LOCKED);
 	g_assert (!ret);
@@ -1346,16 +1358,21 @@ zif_lock_func (void)
 	ret = zif_lock_take (lock, ZIF_LOCK_TYPE_RPMDB_WRITE, &error);
 	g_assert_no_error (error);
 	g_assert (ret);
+	g_assert_cmpint (zif_lock_get_state (lock), ==, 1 << ZIF_LOCK_TYPE_RPMDB_WRITE);
+	g_assert_cmpint (_zif_lock_state_changed, ==, 1);
 
 	/* take a different one */
 	ret = zif_lock_take (lock, ZIF_LOCK_TYPE_REPO_WRITE, &error);
 	g_assert_no_error (error);
 	g_assert (ret);
+	g_assert_cmpint (zif_lock_get_state (lock), ==, 1 << ZIF_LOCK_TYPE_RPMDB_WRITE | 1 << ZIF_LOCK_TYPE_REPO_WRITE);
+	g_assert_cmpint (_zif_lock_state_changed, ==, 2);
 
 	/* take two */
 	ret = zif_lock_take (lock, ZIF_LOCK_TYPE_RPMDB_WRITE, &error);
 	g_assert_no_error (error);
 	g_assert (ret);
+	g_assert_cmpint (zif_lock_get_state (lock), ==, 1 << ZIF_LOCK_TYPE_RPMDB_WRITE | 1 << ZIF_LOCK_TYPE_REPO_WRITE);
 
 	/* release one */
 	ret = zif_lock_release (lock, ZIF_LOCK_TYPE_RPMDB_WRITE, &error);
@@ -1377,6 +1394,8 @@ zif_lock_func (void)
 	g_assert_error (error, ZIF_LOCK_ERROR, ZIF_LOCK_ERROR_NOT_LOCKED);
 	g_assert (!ret);
 	g_clear_error (&error);
+	g_assert_cmpint (zif_lock_get_state (lock), ==, 0);
+	g_assert_cmpint (_zif_lock_state_changed, ==, 6);
 
 	g_object_unref (lock);
 	g_object_unref (config);

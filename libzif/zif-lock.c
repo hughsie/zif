@@ -52,6 +52,13 @@ struct _ZifLockPrivate
 	guint			 refcount[ZIF_LOCK_TYPE_LAST];
 };
 
+enum {
+	SIGNAL_STATE_CHANGED,
+	SIGNAL_LAST
+};
+
+static guint signals [SIGNAL_LAST] = { 0 };
+
 static gpointer zif_lock_object = NULL;
 
 G_DEFINE_TYPE (ZifLock, zif_lock, G_TYPE_OBJECT)
@@ -222,6 +229,43 @@ zif_lock_get_cmdline_for_pid (guint pid)
 }
 
 /**
+ * zif_lock_get_state:
+ * @lock: A #ZifLock
+ *
+ * Gets a bitfield of what locks have been taken
+ *
+ * Return value: A bitfield.
+ *
+ * Since: 0.3.0
+ **/
+guint
+zif_lock_get_state (ZifLock *lock)
+{
+	guint bitfield = 0;
+	guint i;
+
+	g_return_val_if_fail (ZIF_IS_LOCK (lock), FALSE);
+
+	for (i = 0; i < ZIF_LOCK_TYPE_LAST; i++) {
+		if (lock->priv->refcount[i] == 0)
+			continue;
+		bitfield += 1 << i;
+	}
+	return bitfield;
+}
+
+/**
+ * zif_lock_emit_state:
+ **/
+static void
+zif_lock_emit_state (ZifLock *lock)
+{
+	guint bitfield = 0;
+	bitfield = zif_lock_get_state (lock);
+	g_signal_emit (lock, signals [SIGNAL_STATE_CHANGED], 0, bitfield);
+}
+
+/**
  * zif_lock_take:
  * @lock: A #ZifLock
  * @type: A ZifLockType, e.g. %ZIF_LOCK_TYPE_RPMDB_WRITE
@@ -298,6 +342,9 @@ zif_lock_take (ZifLock *lock, ZifLockType type, GError **error)
 		}
 	}
 
+	/* emit the new locking bitfield */
+	zif_lock_emit_state (lock);
+
 	/* increment ref count */
 	lock->priv->refcount[type]++;
 
@@ -369,6 +416,9 @@ zif_lock_release (ZifLock *lock, ZifLockType type, GError **error)
 			goto out;
 		}
 	}
+
+	/* emit the new locking bitfield */
+	zif_lock_emit_state (lock);
 
 	/* success */
 	ret = TRUE;
@@ -483,6 +533,13 @@ zif_lock_class_init (ZifLockClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 	object_class->finalize = zif_lock_finalize;
+
+	signals [SIGNAL_STATE_CHANGED] =
+		g_signal_new ("state-changed",
+			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,
+			      G_STRUCT_OFFSET (ZifLockClass, state_changed),
+			      NULL, NULL, g_cclosure_marshal_VOID__UINT,
+			      G_TYPE_NONE, 1, G_TYPE_UINT);
 
 	g_type_class_add_private (klass, sizeof (ZifLockPrivate));
 }

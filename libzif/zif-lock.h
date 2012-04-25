@@ -51,6 +51,9 @@ struct _ZifLock
 struct _ZifLockClass
 {
 	GObjectClass		 parent_class;
+	/* Signals */
+	void			(* state_changed)	(ZifLock	*lock,
+							 guint		 state_bitfield);
 	/* Padding for future expansion */
 	void (*_zif_reserved1) (void);
 	void (*_zif_reserved2) (void);
@@ -95,6 +98,7 @@ gboolean	 zif_lock_release		(ZifLock	*lock,
 						 ZifLockType	 type,
 						 GError		**error);
 const gchar	*zif_lock_type_to_string	(ZifLockType	 lock_type);
+guint		 zif_lock_get_state		(ZifLock	*lock);
 
 G_END_DECLS
 
