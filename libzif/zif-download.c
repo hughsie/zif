@@ -577,21 +577,29 @@ zif_download_file (ZifDownload *download,
 	soup_session_send_message (download->priv->session, flight->msg);
 
 	/* find length */
-	if (flight->msg->status_code == SOUP_STATUS_CANCELLED) {
+	switch (flight->msg->status_code) {
+	case SOUP_STATUS_CANCELLED:
 		ret = FALSE;
 		g_set_error_literal (error,
 				     ZIF_STATE_ERROR,
 				     ZIF_STATE_ERROR_CANCELLED,
 				     soup_status_get_phrase (flight->msg->status_code));
 		goto out;
-	} else if (flight->msg->status_code == SOUP_STATUS_TRY_AGAIN) {
+	case SOUP_STATUS_CANT_CONNECT:
+	case SOUP_STATUS_CANT_CONNECT_PROXY:
+	case SOUP_STATUS_CANT_RESOLVE:
+	case SOUP_STATUS_CANT_RESOLVE_PROXY:
+	case SOUP_STATUS_TRY_AGAIN:
 		ret = FALSE;
 		g_set_error_literal (error,
 				     ZIF_DOWNLOAD_ERROR,
 				     ZIF_DOWNLOAD_ERROR_FAILED,
 				     "kicked mirror");
 		goto out;
-	} else if (!SOUP_STATUS_IS_SUCCESSFUL (flight->msg->status_code)) {
+	default:
+		break;
+	}
+	if (!SOUP_STATUS_IS_SUCCESSFUL (flight->msg->status_code)) {
 		ret = FALSE;
 		g_set_error (error,
 			     ZIF_DOWNLOAD_ERROR,
