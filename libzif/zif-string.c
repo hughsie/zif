@@ -60,6 +60,7 @@ zif_string_new (const gchar *value)
 	string = g_slice_new (ZifStringInternal);
 	string->count = 1;
 	string->value = g_strdup (value);
+	string->is_static = FALSE;
 	return (ZifString *) string;
 }
 
@@ -81,6 +82,7 @@ zif_string_new_value (gchar *value)
 	string = g_slice_new (ZifStringInternal);
 	string->count = 1;
 	string->value = value;
+	string->is_static = TRUE;
 	return (ZifString *) string;
 }
 
