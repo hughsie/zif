@@ -361,10 +361,13 @@ zif_package_local_ensure_data (ZifPackage *pkg,
 	} else if (type == ZIF_PACKAGE_ENSURE_TYPE_URL) {
 		/* url */
 		tmp = zif_get_header_string (header, RPMTAG_URL);
-		if (tmp != NULL) {
-			zif_package_set_url (pkg, tmp);
-			zif_string_unref (tmp);
+		if (tmp == NULL) {
+			g_warning ("no url for %s",
+				   zif_package_get_id (pkg));
+			tmp = zif_string_new ("");
 		}
+		zif_package_set_url (pkg, tmp);
+		zif_string_unref (tmp);
 
 	} else if (type == ZIF_PACKAGE_ENSURE_TYPE_SIZE) {
 		/* size */
