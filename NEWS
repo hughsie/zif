@@ -1,3 +1,22 @@
+Version 0.3.0
+~~~~~~~~~~~~~
+Released: 2012-06-02
+
+Notes:
+ - This break ABI by adding padding to all the Class structs, although
+   there are no actual API changes.
+
+New Features:
+ - Add ZifStoreDirectory which allows us to use a directory of rpm files as a remote store
+ - Add --package-dump to specify a remote file dump in the command line tool
+ - Add zif_lock_get_state() to get what locks are being held
+
+Bugfixes:
+ - Pad the output of 'zif get-details pkgname' in a better way
+ - Allow the repo to be skipped if libsoup returns with 'Cannot resolve hostname'
+ - Do not rely on g_slice_new() being zeroed
+ - Do not crash if a package does not have a URL set
+
 Version 0.2.9
 ~~~~~~~~~~~~~
 Released: 2012-04-11

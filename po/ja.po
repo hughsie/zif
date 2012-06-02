@@ -5,13 +5,14 @@
 # Translators:
 # Tadashi Jokagi <elf2000@gmail.com>, 2012.
 #   Tadashi Jokagi <elf@poyo.jp>, 2012.
+# Tomoyuki KATO <tomo@dream.daynight.jp>, 2012.
 msgid ""
 msgstr ""
 "Project-Id-Version: Zif\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-02-22 16:44+0000\n"
-"PO-Revision-Date: 2012-02-22 16:56+0000\n"
-"Last-Translator: Richard Hughes <richard@hughsie.com>\n"
+"POT-Creation-Date: 2012-04-04 18:03+0100\n"
+"PO-Revision-Date: 2012-05-23 13:12+0000\n"
+"Last-Translator: Tomoyuki KATO <tomo@dream.daynight.jp>\n"
 "Language-Team: Japanese (http://www.transifex.net/projects/p/freedesktop/language/ja/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -29,7 +30,7 @@ msgstr "[⚑]"
 
 #: ../tools/zif-main.c:83
 msgid "Updates installed package"
-msgstr ""
+msgstr "インストールされているパッケージを更新します"
 
 #. TRANSLATORS: there are no packages that match
 #: ../tools/zif-main.c:115
@@ -445,7 +446,7 @@ msgstr "ファイルをインストールしています"
 #. TRANSLATORS: performing action
 #: ../tools/zif-main.c:3366
 msgid "Checking manifests"
-msgstr ""
+msgstr "マニフェストを確認中です"
 
 #: ../tools/zif-main.c:3387
 msgid "All manifest files were checked successfully"
@@ -662,7 +663,7 @@ msgstr "鍵の一覧"
 #. TRANSLATORS: the user just did ctrl-c
 #: ../tools/zif-main.c:6414 ../tools/zif-main.c:6445
 msgid "Cancellation in progress..."
-msgstr ""
+msgstr "取り消し中です..."
 
 #: ../tools/zif-main.c:6484
 msgid "Show extra debugging information"
@@ -710,7 +711,7 @@ msgstr ""
 
 #: ../tools/zif-main.c:6506
 msgid "Only use the exact architecture packages for this machine"
-msgstr ""
+msgstr "このマシン向けアーキテクチャーのパッケージのみを使用します"
 
 #: ../tools/zif-main.c:6508
 msgid "Assume yes to all questions"
@@ -826,12 +827,12 @@ msgstr "ローカルのパッケージをインストールする"
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6833
 msgid "Check a transaction manifest"
-msgstr ""
+msgstr "トランザクションのマニフェストを確認します"
 
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6838
 msgid "Dump a transaction manifest to a file"
-msgstr ""
+msgstr "トランザクションのマニフェストをファイルに出力します"
 
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6843
@@ -846,7 +847,7 @@ msgstr "パッケージの削除"
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6853
 msgid "Remove a package with dependencies"
-msgstr ""
+msgstr "依存性のあるパッケージを削除します"
 
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6858
@@ -1021,7 +1022,7 @@ msgstr "システムの状態が正しくありません"
 #. TRANSLATORS: error message
 #: ../tools/zif-main.c:7049
 msgid "Unhandled state error"
-msgstr ""
+msgstr "未処理の状態エラー"
 
 #. TRANSLATORS: error message
 #: ../tools/zif-main.c:7055
@@ -1046,7 +1047,7 @@ msgstr "トランザクションで衝突です"
 #. TRANSLATORS: error message
 #: ../tools/zif-main.c:7071
 msgid "Unhandled transaction error"
-msgstr ""
+msgstr "未処理のトランザクションエラー"
 
 #. TRANSLATORS: error message
 #: ../tools/zif-main.c:7077
@@ -1086,22 +1087,22 @@ msgstr "ロックしていません"
 #. TRANSLATORS: error message
 #: ../tools/zif-main.c:7105
 msgid "There are multiple matches"
-msgstr ""
+msgstr "複数の項目が一致しました"
 
 #. TRANSLATORS: error message
 #: ../tools/zif-main.c:7109
 msgid "Unhandled store error"
-msgstr ""
+msgstr "未処理の保存エラー"
 
 #. TRANSLATORS: error message
 #: ../tools/zif-main.c:7115
 msgid "Package operation failed"
-msgstr ""
+msgstr "パッケージ操作に失敗しました"
 
 #. TRANSLATORS: error message
 #: ../tools/zif-main.c:7119
 msgid "Unhandled package error"
-msgstr ""
+msgstr "未処理のパッケージエラー"
 
 #. TRANSLATORS: error message
 #: ../tools/zif-main.c:7125
@@ -1116,12 +1117,12 @@ msgstr ""
 #. TRANSLATORS: error message
 #: ../tools/zif-main.c:7135
 msgid "Settings operation failed"
-msgstr ""
+msgstr "設定操作に失敗しました"
 
 #. TRANSLATORS: error message
 #: ../tools/zif-main.c:7139
 msgid "Unhandled config error"
-msgstr ""
+msgstr "未処理の設定エラー"
 
 #. TRANSLATORS: error message
 #: ../tools/zif-main.c:7145
@@ -1146,7 +1147,7 @@ msgstr "ダウンロードがキャンセルされました"
 #. TRANSLATORS: error message
 #: ../tools/zif-main.c:7161
 msgid "Unhandled download error"
-msgstr ""
+msgstr "未処理のダウンロードエラー"
 
 #. TRANSLATORS: error message
 #. TRANSLATORS: we suck
@@ -1167,9 +1168,9 @@ msgstr "権限がありません"
 #. TRANSLATORS: error message
 #: ../tools/zif-main.c:7183
 msgid "Unhandled metadata error"
-msgstr ""
+msgstr "未処理のメタ情報エラー"
 
 #. TRANSLATORS: error message
 #: ../tools/zif-main.c:7193
 msgid "Unhandled repos error"
-msgstr ""
+msgstr "未処理のリポジトリーエラー"

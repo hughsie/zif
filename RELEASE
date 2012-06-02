@@ -5,8 +5,8 @@ zif Release Notes
 git shortlog zif_0_2_9.. | grep -i -v trivial | grep -v Merge > NEWS.new
 
 --------------------------------------------------------------------------------
-Version 0.2.10
-~~~~~~~~~~~~~~
+Version 0.3.0
+~~~~~~~~~~~~~
 Released: 2012-xx-xx
 
 Notes:
@@ -25,8 +25,8 @@ cd po && make Zif.pot
 
 4. Commit changes in zif git:
 
-git commit -a -m "Release version 0.2.10"
-git tag -s -f -m "Release 0.2.10" zif_0_2_10
+git commit -a -m "Release version 0.3.0"
+git tag -s -f -m "Release 0.3.0" zif_0_3_0
 <gpg password>
 git push --tags
 git push

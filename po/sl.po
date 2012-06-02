@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Zif\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-02-22 16:44+0000\n"
-"PO-Revision-Date: 2012-03-26 18:22+0000\n"
+"POT-Creation-Date: 2012-04-04 18:03+0100\n"
+"PO-Revision-Date: 2012-06-01 20:22+0000\n"
 "Last-Translator: Martin Srebotnjak <miles@filmsi.net>\n"
 "Language-Team: Slovenian <lugos-slo@lugos.si>\n"
 "MIME-Version: 1.0\n"
@@ -20,11 +20,11 @@ msgstr ""
 
 #: ../tools/zif-main.c:68
 msgid "[⚐]"
-msgstr ""
+msgstr "[⚐]"
 
 #: ../tools/zif-main.c:70
 msgid "[⚑]"
-msgstr ""
+msgstr "[⚑]"
 
 #: ../tools/zif-main.c:83
 msgid "Updates installed package"
@@ -51,7 +51,7 @@ msgstr "Prenašanje"
 #. * the packages created internally
 #: ../tools/zif-main.c:174
 msgid "Loading repository"
-msgstr ""
+msgstr "Nalaganje skladišča"
 
 #. TRANSLATORS: when a compressed metadata file is
 #. * being uncompressed onto the disk
@@ -64,27 +64,27 @@ msgstr ""
 #. * dependencies where required
 #: ../tools/zif-main.c:185
 msgid "Calculating install"
-msgstr ""
+msgstr "Izračunavanje namestitve"
 
 #. TRANSLATORS: when the transaction is being resolved,
 #. * and we make sure that it makes sense by removing
 #. * dependencies where required
 #: ../tools/zif-main.c:191
 msgid "Calculating removal"
-msgstr ""
+msgstr "Izračunavanje odstranitve"
 
 #. TRANSLATORS: when the transaction is being resolved,
 #. * and we make sure that it makes sense by adding and
 #. * removing dependencies where required
 #: ../tools/zif-main.c:197
 msgid "Calculating update"
-msgstr ""
+msgstr "Izračunavane posodobitve"
 
 #. TRANSLATORS: when the transaction is being checked
 #. * for conflicting packages
 #: ../tools/zif-main.c:202
 msgid "Checking conflicts"
-msgstr ""
+msgstr "Preverjanje sporov"
 
 #. TRANSLATORS: installing a package to the local system
 #. TRANSLATORS: this is the reason the action is to be taken
@@ -160,7 +160,7 @@ msgstr ""
 #. TRANSLATORS: getting the hierarchical groups from the server
 #: ../tools/zif-main.c:821
 msgid "Getting categories"
-msgstr ""
+msgstr "Pridobivanje kategorij"
 
 #. TRANSLATORS: error message: user needs to specify a value
 #: ../tools/zif-main.c:931 ../tools/zif-main.c:1126 ../tools/zif-main.c:1269
@@ -198,11 +198,11 @@ msgstr ""
 #. TRANSLATORS: these are headers for the package data
 #: ../tools/zif-main.c:1173
 msgid "Name"
-msgstr ""
+msgstr "Ime"
 
 #: ../tools/zif-main.c:1174
 msgid "Version"
-msgstr ""
+msgstr "Različica"
 
 #: ../tools/zif-main.c:1175
 msgid "Arch"
@@ -210,7 +210,7 @@ msgstr ""
 
 #: ../tools/zif-main.c:1176
 msgid "Size"
-msgstr ""
+msgstr "Velikost"
 
 #: ../tools/zif-main.c:1177
 msgid "Repo"
@@ -218,19 +218,19 @@ msgstr ""
 
 #: ../tools/zif-main.c:1178
 msgid "Summary"
-msgstr ""
+msgstr "Povzetek"
 
 #: ../tools/zif-main.c:1179
 msgid "URL"
-msgstr ""
+msgstr "URL"
 
 #: ../tools/zif-main.c:1180
 msgid "License"
-msgstr ""
+msgstr "Dovoljenje"
 
 #: ../tools/zif-main.c:1181
 msgid "Description"
-msgstr ""
+msgstr "Opis"
 
 #. TRANSLATORS: strftime formatted please
 #: ../tools/zif-main.c:1440
@@ -253,7 +253,7 @@ msgstr ""
 #. TRANSLATORS: getting file lists for a package
 #: ../tools/zif-main.c:1591
 msgid "Getting files"
-msgstr ""
+msgstr "Pridobivanje datotek"
 
 #: ../tools/zif-main.c:1653
 msgid "Failed to match any packages for :"
@@ -266,17 +266,17 @@ msgstr ""
 #. TRANSLATORS: getting all the packages
 #: ../tools/zif-main.c:1771
 msgid "Getting packages"
-msgstr ""
+msgstr "Pridobivanje paketov"
 
 #. TRANSLATORS: getting the list of packages that can be updated
 #: ../tools/zif-main.c:1892
 msgid "Getting updates"
-msgstr ""
+msgstr "Pridobivanje posodobitev"
 
 #. TRANSLATORS: getting details of any distro upgrades
 #: ../tools/zif-main.c:1945
 msgid "Getting upgrades"
-msgstr ""
+msgstr "Pridobivanje nadgradenj"
 
 #: ../tools/zif-main.c:1986
 msgid "No distribution upgrades are available."
@@ -303,7 +303,7 @@ msgstr ""
 #: ../tools/zif-main.c:2039
 #, c-format
 msgid "No value for %s"
-msgstr ""
+msgstr "Ni vrednosti za %s"
 
 #. TRANSLATORS: this is the reason the action is to be taken
 #: ../tools/zif-main.c:2170
@@ -323,12 +323,12 @@ msgstr ""
 #. TRANSLATORS: this is the reason the action is to be taken
 #: ../tools/zif-main.c:2186
 msgid "Removing for dependencies"
-msgstr ""
+msgstr "Odstranjevanje zaradi odvisnosti"
 
 #. TRANSLATORS: this is the reason the action is to be taken
 #: ../tools/zif-main.c:2190
 msgid "Removing old versions"
-msgstr ""
+msgstr "Odstranjevanje starih različic"
 
 #. TRANSLATORS: this is the reason the action is to be taken
 #: ../tools/zif-main.c:2194
@@ -374,7 +374,7 @@ msgstr ""
 #. TRANSLATORS: this is the reason the action is to be taken
 #: ../tools/zif-main.c:2234
 msgid "Unknown reason"
-msgstr ""
+msgstr "Neznan razlog"
 
 #: ../tools/zif-main.c:2265
 msgid "Transaction summary:"
@@ -458,7 +458,7 @@ msgstr ""
 #. TRANSLATORS: performing action
 #: ../tools/zif-main.c:3535
 msgid "Refreshing cache"
-msgstr ""
+msgstr "Posodabljanje medpomnilnika"
 
 #. TRANSLATORS: error message
 #: ../tools/zif-main.c:3644

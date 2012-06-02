@@ -3,13 +3,14 @@
 # This file is distributed under the same license as the PACKAGE package.
 # 
 # Translators:
+# Jiri Grönroos <jiri.gronroos@iki.fi>, 2012.
 msgid ""
 msgstr ""
 "Project-Id-Version: Zif\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-02-22 16:44+0000\n"
-"PO-Revision-Date: 2010-11-30 05:52+0000\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"POT-Creation-Date: 2012-04-04 18:03+0100\n"
+"PO-Revision-Date: 2012-05-22 11:32+0000\n"
+"Last-Translator: Jiri Grönroos <jiri.gronroos@iki.fi>\n"
 "Language-Team: Finnish (http://www.transifex.net/projects/p/freedesktop/language/fi/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -19,11 +20,11 @@ msgstr ""
 
 #: ../tools/zif-main.c:68
 msgid "[⚐]"
-msgstr ""
+msgstr "[⚐]"
 
 #: ../tools/zif-main.c:70
 msgid "[⚑]"
-msgstr ""
+msgstr "[⚑]"
 
 #: ../tools/zif-main.c:83
 msgid "Updates installed package"
@@ -32,99 +33,99 @@ msgstr ""
 #. TRANSLATORS: there are no packages that match
 #: ../tools/zif-main.c:115
 msgid "There are no packages to show."
-msgstr ""
+msgstr "Ei näytettäviä paketteja."
 
 #. TRANSLATORS: this is when files, usually metadata or
 #. * package files are being checked for consitency
 #: ../tools/zif-main.c:165
 msgid "Checking"
-msgstr ""
+msgstr "Tarkistetaan"
 
 #. TRANSLATORS: A file is currently downloading
 #. TRANSLATORS: downloading packages
 #: ../tools/zif-main.c:169 ../tools/zif-main.c:683
 msgid "Downloading"
-msgstr ""
+msgstr "Ladataan"
 
 #. TRANSLATORS: A repository file is being read, and
 #. * the packages created internally
 #: ../tools/zif-main.c:174
 msgid "Loading repository"
-msgstr ""
+msgstr "Ladataan ohjelmistolähdettä"
 
 #. TRANSLATORS: when a compressed metadata file is
 #. * being uncompressed onto the disk
 #: ../tools/zif-main.c:179
 msgid "Decompressing"
-msgstr ""
+msgstr "Puretaan"
 
 #. TRANSLATORS: when the transaction is being resolved,
 #. * and we make sure that it makes sense by adding
 #. * dependencies where required
 #: ../tools/zif-main.c:185
 msgid "Calculating install"
-msgstr ""
+msgstr "Lasketaan asennusta"
 
 #. TRANSLATORS: when the transaction is being resolved,
 #. * and we make sure that it makes sense by removing
 #. * dependencies where required
 #: ../tools/zif-main.c:191
 msgid "Calculating removal"
-msgstr ""
+msgstr "Lasketaan poistoa"
 
 #. TRANSLATORS: when the transaction is being resolved,
 #. * and we make sure that it makes sense by adding and
 #. * removing dependencies where required
 #: ../tools/zif-main.c:197
 msgid "Calculating update"
-msgstr ""
+msgstr "Lasketaan päivitystä"
 
 #. TRANSLATORS: when the transaction is being checked
 #. * for conflicting packages
 #: ../tools/zif-main.c:202
 msgid "Checking conflicts"
-msgstr ""
+msgstr "Lasketaan ristiriitoja"
 
 #. TRANSLATORS: installing a package to the local system
 #. TRANSLATORS: this is the reason the action is to be taken
 #. TRANSLATORS: performing action
 #: ../tools/zif-main.c:206 ../tools/zif-main.c:2178 ../tools/zif-main.c:2586
 msgid "Installing"
-msgstr ""
+msgstr "Asennetaan"
 
 #. TRANSLATORS: removing (deleting) a package
 #. TRANSLATORS: this is the reason the action is to be taken
 #. TRANSLATORS: performing action
 #: ../tools/zif-main.c:210 ../tools/zif-main.c:2198 ../tools/zif-main.c:3605
 msgid "Removing"
-msgstr ""
+msgstr "Poistetaan"
 
 #. TRANSLATORS: updating an old version to a new version
 #. TRANSLATORS: this is the reason the action is to be taken
 #. TRANSLATORS: updating several packages
 #: ../tools/zif-main.c:214 ../tools/zif-main.c:2202 ../tools/zif-main.c:4591
 msgid "Updating"
-msgstr ""
+msgstr "Päivitetään"
 
 #. TRANSLATORS: Cleaning up after an update, where we
 #. * remove the old version
 #. TRANSLATORS: we're cleaning the repo, deleting old files
 #: ../tools/zif-main.c:219 ../tools/zif-main.c:523
 msgid "Cleaning"
-msgstr ""
+msgstr "Siivotaan"
 
 #. TRANSLATORS: getting ready to do run the transaction,
 #. * doing things like checking the database and checking
 #. * for file conflicts
 #: ../tools/zif-main.c:225
 msgid "Preparing"
-msgstr ""
+msgstr "Valmistellaan"
 
 #. TRANSLATORS: checking the transaction for file
 #. * conflicts after packages have been downloaded
 #: ../tools/zif-main.c:230
 msgid "Testing"
-msgstr ""
+msgstr "Testataan"
 
 #. TRANSLATORS: loading the rpmdb
 #: ../tools/zif-main.c:234
@@ -134,7 +135,7 @@ msgstr ""
 #. TRANSLATORS: calculating the update set
 #: ../tools/zif-main.c:238
 msgid "Checking updates"
-msgstr ""
+msgstr "Tarkistetaan päivityksiä"
 
 #: ../tools/zif-main.c:581
 msgid "No packages found"
@@ -148,13 +149,13 @@ msgstr ""
 #: ../tools/zif-main.c:668
 #, c-format
 msgid "No %s package was found"
-msgstr ""
+msgstr "Pakettia %s ei löytynyt"
 
 #. TRANSLATORS: finding packages in local and remote repos
 #. TRANSLATORS: finding packages from a name
 #: ../tools/zif-main.c:735 ../tools/zif-main.c:3974
 msgid "Finding package"
-msgstr ""
+msgstr "Etsitään pakettia"
 
 #. TRANSLATORS: getting the hierarchical groups from the server
 #: ../tools/zif-main.c:821
@@ -192,16 +193,16 @@ msgstr ""
 
 #: ../tools/zif-main.c:1154 ../tools/zif-main.c:1297
 msgid "No package was found"
-msgstr ""
+msgstr "Pakettia ei löytynyt"
 
 #. TRANSLATORS: these are headers for the package data
 #: ../tools/zif-main.c:1173
 msgid "Name"
-msgstr ""
+msgstr "Nimi"
 
 #: ../tools/zif-main.c:1174
 msgid "Version"
-msgstr ""
+msgstr "Versio"
 
 #: ../tools/zif-main.c:1175
 msgid "Arch"
@@ -209,7 +210,7 @@ msgstr ""
 
 #: ../tools/zif-main.c:1176
 msgid "Size"
-msgstr ""
+msgstr "Koko"
 
 #: ../tools/zif-main.c:1177
 msgid "Repo"
@@ -217,19 +218,19 @@ msgstr ""
 
 #: ../tools/zif-main.c:1178
 msgid "Summary"
-msgstr ""
+msgstr "Yhteenveto"
 
 #: ../tools/zif-main.c:1179
 msgid "URL"
-msgstr ""
+msgstr "Verkko-osoite"
 
 #: ../tools/zif-main.c:1180
 msgid "License"
-msgstr ""
+msgstr "Lisenssi"
 
 #: ../tools/zif-main.c:1181
 msgid "Description"
-msgstr ""
+msgstr "Kuvaus"
 
 #. TRANSLATORS: strftime formatted please
 #: ../tools/zif-main.c:1440
@@ -260,7 +261,7 @@ msgstr ""
 
 #: ../tools/zif-main.c:1675
 msgid "Package contains no files"
-msgstr ""
+msgstr "Paketti ei sisällä tiedostoja"
 
 #. TRANSLATORS: getting all the packages
 #: ../tools/zif-main.c:1771
@@ -327,7 +328,7 @@ msgstr ""
 #. TRANSLATORS: this is the reason the action is to be taken
 #: ../tools/zif-main.c:2190
 msgid "Removing old versions"
-msgstr ""
+msgstr "Poistetaan vanhat versiot"
 
 #. TRANSLATORS: this is the reason the action is to be taken
 #: ../tools/zif-main.c:2194
@@ -347,7 +348,7 @@ msgstr ""
 #. TRANSLATORS: this is the reason the action is to be taken
 #: ../tools/zif-main.c:2214
 msgid "Updating the system"
-msgstr ""
+msgstr "Päivitetään järjestelmää"
 
 #. TRANSLATORS: this is the reason the action is to be taken
 #. TRANSLATORS: performing action
@@ -363,7 +364,7 @@ msgstr ""
 #. TRANSLATORS: this is the reason the action is to be taken
 #: ../tools/zif-main.c:2226
 msgid "Removing current version"
-msgstr ""
+msgstr "Poistetaan nykyinen versio"
 
 #. TRANSLATORS: this is the reason the action is to be taken
 #: ../tools/zif-main.c:2230
@@ -422,12 +423,12 @@ msgstr ""
 #: ../tools/zif-main.c:2633
 #, c-format
 msgid "The %s package is already installed"
-msgstr ""
+msgstr "Paketti %s on jo asennettu"
 
 #. TRANSLATORS: error message
 #: ../tools/zif-main.c:2643
 msgid "All packages are already installed"
-msgstr ""
+msgstr "Kaikki paketit on jo asennettu"
 
 #. TRANSLATORS: error message
 #: ../tools/zif-main.c:2896
@@ -438,7 +439,7 @@ msgstr ""
 #. TRANSLATORS: performing action
 #: ../tools/zif-main.c:3037
 msgid "Installing file"
-msgstr ""
+msgstr "Asennetaan tiedostoa"
 
 #. TRANSLATORS: performing action
 #: ../tools/zif-main.c:3366
@@ -526,7 +527,7 @@ msgstr ""
 #. * list of updates to install
 #: ../tools/zif-main.c:4427
 msgid "Updating system"
-msgstr ""
+msgstr "Päivitetään järjestelmää"
 
 #: ../tools/zif-main.c:4507 ../tools/zif-main.c:4914
 msgid "Specify a distro name, e.g."
@@ -582,7 +583,7 @@ msgstr ""
 
 #: ../tools/zif-main.c:4844
 msgid "Description:"
-msgstr ""
+msgstr "Kuvaus:"
 
 #: ../tools/zif-main.c:4848
 msgid "Issued:"
@@ -614,12 +615,12 @@ msgstr ""
 #. TRANSLATORS: find out what package requires
 #: ../tools/zif-main.c:5287
 msgid "Requires"
-msgstr ""
+msgstr "Vaatii"
 
 #. TRANSLATORS: error message
 #: ../tools/zif-main.c:5379
 msgid "Command not found, valid commands are:"
-msgstr ""
+msgstr "Komentoa ei löytynyt. Kelvolliset komennot ovat:"
 
 #: ../tools/zif-main.c:5441
 #, c-format
@@ -629,7 +630,7 @@ msgstr ""
 #. TRANSLATORS: used when the install database is being checked
 #: ../tools/zif-main.c:5664
 msgid "Checking database"
-msgstr ""
+msgstr "Tarkistetaan tietokantaa"
 
 #. TRANSLATORS: used when the install database is being set
 #: ../tools/zif-main.c:5752
@@ -739,12 +740,12 @@ msgstr ""
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6748
 msgid "Remove cached data"
-msgstr ""
+msgstr "Poista välimuistissa olevat tiedot"
 
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6753
 msgid "Download a package"
-msgstr ""
+msgstr "Lataa paketti"
 
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6758
@@ -809,7 +810,7 @@ msgstr ""
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6818
 msgid "Install a package"
-msgstr ""
+msgstr "Asenna paketti"
 
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6823
@@ -819,7 +820,7 @@ msgstr ""
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6828
 msgid "Install a local package"
-msgstr ""
+msgstr "Asenna paikallinen paketti"
 
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6833
@@ -839,7 +840,7 @@ msgstr ""
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6848
 msgid "Remove a package"
-msgstr ""
+msgstr "Poista paketti"
 
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6853
@@ -909,7 +910,7 @@ msgstr ""
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6918
 msgid "Display details about an update"
-msgstr ""
+msgstr "Näytä tietoja päivityksestä"
 
 #. TRANSLATORS: command description
 #: ../tools/zif-main.c:6923
@@ -1074,12 +1075,12 @@ msgstr ""
 #. TRANSLATORS: error message
 #: ../tools/zif-main.c:7097
 msgid "Not supported"
-msgstr ""
+msgstr "Ei tuettu"
 
 #. TRANSLATORS: error message
 #: ../tools/zif-main.c:7101 ../tools/zif-main.c:7175
 msgid "Not locked"
-msgstr ""
+msgstr "Ei lukittu"
 
 #. TRANSLATORS: error message
 #: ../tools/zif-main.c:7105
@@ -1094,7 +1095,7 @@ msgstr ""
 #. TRANSLATORS: error message
 #: ../tools/zif-main.c:7115
 msgid "Package operation failed"
-msgstr ""
+msgstr "Pakettioperaatio epäonnistui"
 
 #. TRANSLATORS: error message
 #: ../tools/zif-main.c:7119
@@ -1124,7 +1125,7 @@ msgstr ""
 #. TRANSLATORS: error message
 #: ../tools/zif-main.c:7145
 msgid "Download failed"
-msgstr ""
+msgstr "Lataus epäonnistui"
 
 #. TRANSLATORS: error message
 #: ../tools/zif-main.c:7149
@@ -1134,12 +1135,12 @@ msgstr ""
 #. TRANSLATORS: error message
 #: ../tools/zif-main.c:7153
 msgid "No space left on device"
-msgstr ""
+msgstr "Laitteella ei ole vapaata tilaa"
 
 #. TRANSLATORS: error message
 #: ../tools/zif-main.c:7157
 msgid "Download was cancelled"
-msgstr ""
+msgstr "Lataus peruttiin"
 
 #. TRANSLATORS: error message
 #: ../tools/zif-main.c:7161
@@ -1150,7 +1151,7 @@ msgstr ""
 #. TRANSLATORS: we suck
 #: ../tools/zif-main.c:7167 ../tools/zif-main.c:7189 ../tools/zif-main.c:7200
 msgid "Failed"
-msgstr ""
+msgstr "Epäonnistui"
 
 #. TRANSLATORS: error message
 #: ../tools/zif-main.c:7171
