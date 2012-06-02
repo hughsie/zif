@@ -4983,7 +4983,7 @@ zif_transaction_ts_progress_cb (const void *arg,
 		g_debug ("something uninteresting");
 		break;
 	default:
-		g_warning ("something else entirely");
+		g_debug ("unknown transaction phase: %i", what);
 		break;
 	}
 
