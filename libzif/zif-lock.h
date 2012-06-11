@@ -81,16 +81,6 @@ GQuark		 zif_lock_error_quark		(void);
 ZifLock		*zif_lock_new			(void);
 gboolean	 zif_lock_is_instance_valid	(void);
 
-/* deprecated methods */
-gboolean	 zif_lock_is_locked		(ZifLock	*lock,
-						 guint		*pid);
-gboolean	 zif_lock_set_locked		(ZifLock	*lock,
-						 guint		*pid,
-						 GError		**error);
-gboolean	 zif_lock_set_unlocked		(ZifLock	*lock,
-						 GError		**error);
-
-/* new methods */
 gboolean	 zif_lock_take			(ZifLock	*lock,
 						 ZifLockType	 type,
 						 GError		**error);
