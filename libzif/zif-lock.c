@@ -48,8 +48,10 @@
  **/
 struct _ZifLockPrivate
 {
+	GMutex			 mutex;
 	ZifConfig		*config;
 	guint			 refcount[ZIF_LOCK_TYPE_LAST];
+	gpointer		 owner[ZIF_LOCK_TYPE_LAST];
 };
 
 enum {
@@ -291,6 +293,9 @@ zif_lock_take (ZifLock *lock, ZifLockType type, GError **error)
 	g_return_val_if_fail (ZIF_IS_LOCK (lock), FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
+	/* lock other threads */
+	g_mutex_lock (&lock->priv->mutex);
+
 	if (lock->priv->refcount[type] == 0) {
 
 		/* get the lock filename */
@@ -340,6 +345,18 @@ zif_lock_take (ZifLock *lock, ZifLockType type, GError **error)
 			g_error_free (error_local);
 			goto out;
 		}
+	} else {
+		/* we're trying to lock something that's already locked
+		 * in another thread */
+		if (lock->priv->owner[type] != g_thread_self ()) {
+			g_set_error (error,
+				     ZIF_LOCK_ERROR,
+				     ZIF_LOCK_ERROR_FAILED,
+				     "failed to obtain lock '%s' already taken by thread %p",
+				     zif_lock_type_to_string (type),
+				     lock->priv->owner[type]);
+			goto out;
+		}
 	}
 
 	/* emit the new locking bitfield */
@@ -347,10 +364,14 @@ zif_lock_take (ZifLock *lock, ZifLockType type, GError **error)
 
 	/* increment ref count */
 	lock->priv->refcount[type]++;
+	lock->priv->owner[type] = g_thread_self ();
 
 	/* success */
 	ret = TRUE;
 out:
+	/* unlock other threads */
+	g_mutex_unlock (&lock->priv->mutex);
+
 	g_free (pid_text);
 	g_free (pid_filename);
 	g_free (filename);
@@ -381,12 +402,25 @@ zif_lock_release (ZifLock *lock, ZifLockType type, GError **error)
 	g_return_val_if_fail (ZIF_IS_LOCK (lock), FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
+	/* lock other threads */
+	g_mutex_lock (&lock->priv->mutex);
+
 	/* never took */
 	if (lock->priv->refcount[type] == 0) {
 		g_set_error (error,
 			     ZIF_LOCK_ERROR,
 			     ZIF_LOCK_ERROR_NOT_LOCKED,
 			     "Lock %s was never taken",
+			     zif_lock_type_to_string (type));
+		goto out;
+	}
+
+	/* not the same thread */
+	if (lock->priv->owner[type] != g_thread_self ()) {
+		g_set_error (error,
+			     ZIF_LOCK_ERROR,
+			     ZIF_LOCK_ERROR_NOT_LOCKED,
+			     "Lock %s was not taken by this thread",
 			     zif_lock_type_to_string (type));
 		goto out;
 	}
@@ -415,6 +449,9 @@ zif_lock_release (ZifLock *lock, ZifLockType type, GError **error)
 			g_error_free (error_local);
 			goto out;
 		}
+
+		/* no thread now owns this lock */
+		lock->priv->owner[type] = NULL;
 	}
 
 	/* emit the new locking bitfield */
@@ -423,6 +460,8 @@ zif_lock_release (ZifLock *lock, ZifLockType type, GError **error)
 	/* success */
 	ret = TRUE;
 out:
+	/* unlock other threads */
+	g_mutex_unlock (&lock->priv->mutex);
 	if (file != NULL)
 		g_object_unref (file);
 	g_free (filename);

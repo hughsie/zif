@@ -1404,6 +1404,70 @@ zif_lock_func (void)
 	zif_check_singletons ();
 }
 
+static gpointer
+zif_self_test_lock_thread_one (gpointer data)
+{
+	GError *error = NULL;
+	gboolean ret;
+	ZifLock *lock = ZIF_LOCK (data);
+
+	g_usleep (G_USEC_PER_SEC / 100);
+	ret = zif_lock_take (lock, ZIF_LOCK_TYPE_REPO_WRITE, &error);
+	g_assert_error (error, ZIF_LOCK_ERROR, ZIF_LOCK_ERROR_FAILED);
+	g_assert (!ret);
+	g_error_free (error);
+	return NULL;
+}
+
+static void
+zif_lock_threads_func (void)
+{
+	gboolean ret;
+	gchar *filename;
+	gchar *pidfile;
+	GError *error = NULL;
+	GThread *one;
+	ZifConfig *config;
+	ZifLock *lock;
+
+	config = zif_config_new ();
+	g_assert (config != NULL);
+
+	filename = zif_test_get_data_file ("zif.conf");
+	ret = zif_config_set_filename (config, filename, &error);
+	g_free (filename);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	/* set this to somewhere we can write to */
+	pidfile = g_build_filename (zif_tmpdir, "zif.lock", NULL);
+	zif_config_set_string (config, "pidfile", pidfile, NULL);
+	g_free (pidfile);
+
+	/* take in master thread */
+	lock = zif_lock_new ();
+	ret = zif_lock_take (lock, ZIF_LOCK_TYPE_REPO_WRITE, &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	/* attempt to take in slave thread (should fail) */
+	one = g_thread_new ("zif-lock-one",
+			    zif_self_test_lock_thread_one,
+			    lock);
+
+	/* block, waiting for thread */
+	g_usleep (G_USEC_PER_SEC);
+
+	/* release lock */
+	ret = zif_lock_release (lock, ZIF_LOCK_TYPE_REPO_WRITE, &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	g_thread_unref (one);
+	g_object_unref (lock);
+	g_object_unref (config);
+}
+
 static void
 zif_md_func (void)
 {
@@ -4460,6 +4524,7 @@ main (int argc, char **argv)
 	g_test_add_func ("/zif/history", zif_history_func);
 	g_test_add_func ("/zif/legal", zif_legal_func);
 	g_test_add_func ("/zif/lock", zif_lock_func);
+	g_test_add_func ("/zif/lock[threads]", zif_lock_threads_func);
 	g_test_add_func ("/zif/manifest", zif_manifest_func);
 	g_test_add_func ("/zif/md", zif_md_func);
 	g_test_add_func ("/zif/md-comps", zif_md_comps_func);
