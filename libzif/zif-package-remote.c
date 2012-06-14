@@ -847,6 +847,7 @@ zif_package_remote_ensure_data (ZifPackage *pkg,
 			goto out;
 		group = zif_groups_get_group_for_cat (pkg_remote->priv->groups,
 						      text,
+						      state,
 						      error);
 		if (group == NULL)
 			goto out;

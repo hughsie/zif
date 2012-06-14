@@ -1862,7 +1862,8 @@ zif_store_remote_refresh (ZifStore *store, gboolean force, ZifState *state, GErr
 
 	/* take lock */
 	ret = zif_state_take_lock (state,
-				   ZIF_LOCK_TYPE_METADATA_WRITE,
+				   ZIF_LOCK_TYPE_METADATA,
+				   ZIF_LOCK_MODE_PROCESS,
 				   error);
 	if (!ret)
 		goto out;
@@ -2635,7 +2636,8 @@ zif_store_remote_set_enabled (ZifStoreRemote *store,
 
 	/* take lock */
 	ret = zif_state_take_lock (state,
-				   ZIF_LOCK_TYPE_REPO_WRITE,
+				   ZIF_LOCK_TYPE_REPO,
+				   ZIF_LOCK_MODE_PROCESS,
 				   error);
 	if (!ret)
 		goto out;
@@ -3171,8 +3173,9 @@ zif_store_remote_search_group (ZifStore *store, gchar **search, ZifState *state,
 	} else {
 		ret = zif_state_set_steps (state,
 					   error,
-					   80, /* load */
-					   20, /* search */
+					   80, /* load metadata */
+					   1, /* load groups */
+					   19, /* search */
 					   -1);
 		if (!ret)
 			goto out;
@@ -3202,8 +3205,17 @@ zif_store_remote_search_group (ZifStore *store, gchar **search, ZifState *state,
 	/* we can't just use zif_md_primary_*_search_group() as this searches
 	 * by *rpm* group, which isn't what we want -- instead we need to get
 	 * the list of categories for each group, and then return results. */
-	array_tmp = zif_groups_get_cats_for_group (remote->priv->groups, search[0], error);
+	state_local = zif_state_get_child (state);
+	array_tmp = zif_groups_get_cats_for_group (remote->priv->groups,
+						   search[0],
+						   state_local,
+						   error);
 	if (array_tmp == NULL)
+		goto out;
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
 		goto out;
 
 	/* no results for this group enum is not fatal */

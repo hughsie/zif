@@ -125,7 +125,7 @@ struct _ZifStatePrivate
 	ZifStateErrorHandlerCb	 error_handler_cb;
 	ZifStateLockHandlerCb	 lock_handler_cb;
 	ZifState		*parent;
-	GPtrArray		*locks;
+	GPtrArray		*lock_ids;
 	ZifLock			*lock;
 };
 
@@ -282,7 +282,8 @@ zif_state_set_lock_handler (ZifState *state,
 /**
  * zif_state_take_lock:
  * @state: A #ZifState
- * @lock_type: A #ZifLockType, e.g. %ZIF_LOCK_TYPE_RPMDB_WRITE
+ * @lock_type: A #ZifLockType, e.g. %ZIF_LOCK_TYPE_RPMDB
+ * @lock_mode: A #ZifLockMode, e.g. %ZIF_LOCK_MODE_PROCESS
  * @error: A #GError
  *
  * Takes a lock of a specified type.
@@ -293,21 +294,27 @@ zif_state_set_lock_handler (ZifState *state,
  *
  * Return value: %FALSE if the lock is fatal, %TRUE otherwise
  *
- * Since: 0.1.6
+ * Since: 0.3.0
  **/
 gboolean
 zif_state_take_lock (ZifState *state,
 		     ZifLockType lock_type,
+		     ZifLockMode lock_mode,
 		     GError **error)
 {
-	gboolean ret = FALSE;
+	gboolean ret = TRUE;
+	guint lock_id = 0;
 
 	/* no custom handler */
 	if (state->priv->lock_handler_cb == NULL) {
-		ret = zif_lock_take (state->priv->lock,
-				     lock_type,
-				     error);
+		lock_id = zif_lock_take (state->priv->lock,
+					 lock_type,
+					 lock_mode,
+					 error);
+		if (lock_id == 0)
+			ret = FALSE;
 	} else {
+		lock_id = G_MAXUINT;
 		ret = state->priv->lock_handler_cb (state,
 						    state->priv->lock,
 						    lock_type,
@@ -318,10 +325,9 @@ zif_state_take_lock (ZifState *state,
 		goto out;
 
 	/* add the lock to an array so we can release on completion */
-	g_debug ("adding lock %s",
-		 zif_lock_type_to_string (lock_type));
-	g_ptr_array_add (state->priv->locks,
-			 GUINT_TO_POINTER (lock_type));
+	g_debug ("adding lock %i", lock_id);
+	g_ptr_array_add (state->priv->lock_ids,
+			 GUINT_TO_POINTER (lock_id));
 out:
 	return ret;
 }
@@ -504,20 +510,19 @@ zif_state_release_locks (ZifState *state)
 {
 	gboolean ret = TRUE;
 	guint i;
-	ZifLockType lock_type;
+	guint lock_id;
 
 	/* release each one */
-	for (i=0; i<state->priv->locks->len; i++) {
-		lock_type = GPOINTER_TO_UINT (g_ptr_array_index (state->priv->locks, i));
-		g_debug ("releasing lock %s",
-			 zif_lock_type_to_string (lock_type));
+	for (i = 0; i < state->priv->lock_ids->len; i++) {
+		lock_id = GPOINTER_TO_UINT (g_ptr_array_index (state->priv->lock_ids, i));
+		g_debug ("releasing lock %i", lock_id);
 		ret = zif_lock_release (state->priv->lock,
-					lock_type,
+					lock_id,
 					NULL);
 		if (!ret)
 			goto out;
 	}
-	g_ptr_array_set_size (state->priv->locks, 0);
+	g_ptr_array_set_size (state->priv->lock_ids, 0);
 out:
 	return ret;
 }
@@ -1600,7 +1605,7 @@ zif_state_finalize (GObject *object)
 		g_object_unref (state->priv->cancellable);
 	g_timer_destroy (state->priv->timer);
 	g_free (state->priv->speed_data);
-	g_ptr_array_unref (state->priv->locks);
+	g_ptr_array_unref (state->priv->lock_ids);
 	g_object_unref (state->priv->lock);
 
 	G_OBJECT_CLASS (zif_state_parent_class)->finalize (object);
@@ -1717,7 +1722,7 @@ zif_state_init (ZifState *state)
 	state->priv->action = ZIF_STATE_ACTION_UNKNOWN;
 	state->priv->last_action = ZIF_STATE_ACTION_UNKNOWN;
 	state->priv->timer = g_timer_new ();
-	state->priv->locks = g_ptr_array_new ();
+	state->priv->lock_ids = g_ptr_array_new ();
 	state->priv->report_progress = TRUE;
 	state->priv->lock = zif_lock_new ();
 	state->priv->speed_data = g_new0 (guint64, ZIF_STATE_SPEED_SMOOTHING_ITEMS);

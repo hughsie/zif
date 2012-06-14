@@ -1759,7 +1759,7 @@ zif_cmd_get_groups (ZifCmdPrivate *priv, gchar **values, GError **error)
 		goto out;
 
 	/* get bitfield */
-	array = zif_groups_get_groups (groups, error);
+	array = zif_groups_get_groups (groups, priv->state, error);
 	if (array == NULL) {
 		ret = FALSE;
 		goto out;
@@ -6347,7 +6347,10 @@ zif_take_lock_cb (ZifState *state,
 	for (i=0; i<lock_retries; i++) {
 
 		/* try to take */
-		ret = zif_lock_take (lock, lock_type, &error_local);
+		ret = zif_lock_take (lock,
+				     lock_type,
+				     ZIF_LOCK_MODE_PROCESS,
+				     &error_local);
 		if (ret)
 			break;
 
@@ -6488,13 +6491,14 @@ main (int argc, char *argv[])
 	gboolean assume_no = FALSE;
 	gboolean assume_yes = FALSE;
 	gboolean background = FALSE;
+	gboolean distro_sync = FALSE;
+	gboolean exact_arch = FALSE;
+	gboolean lock_all = FALSE;
 	gboolean offline = FALSE;
 	gboolean profile = FALSE;
 	gboolean ret;
 	gboolean skip_broken = FALSE;
-	gboolean exact_arch = FALSE;
 	gboolean verbose = FALSE;
-	gboolean distro_sync = FALSE;
 	gchar *cmd_descriptions = NULL;
 	gchar *config_file = NULL;
 	gchar *excludes = NULL;
@@ -6545,6 +6549,8 @@ main (int argc, char *argv[])
 			_("Disable one or more repositories"), NULL },
 		{ "package-dump", '\0', 0, G_OPTION_ARG_FILENAME, &package_dump,
 			_("Specify a directory of packages as a remote store"), NULL },
+		{ "lock-all", '\0', 0, G_OPTION_ARG_FILENAME, &lock_all,
+			_("Take all locks at startup rather than as required"), NULL },
 		{ NULL}
 	};
 
@@ -6746,9 +6752,11 @@ main (int argc, char *argv[])
 	g_signal_connect (priv->state, "notify::speed",
 			  G_CALLBACK (zif_state_speed_changed_cb),
 			  priv->progressbar);
-	zif_state_set_lock_handler (priv->state,
-				    zif_take_lock_cb,
-				    priv);
+	if (lock_all) {
+		zif_state_set_lock_handler (priv->state,
+					    zif_take_lock_cb,
+					    priv);
+	}
 
 	/* always set this, even if --skip-broken isn't set so we can
 	 * override the config file at runtime */

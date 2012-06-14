@@ -289,6 +289,14 @@ zif_store_local_load (ZifStore *store, ZifState *state, GError **error)
 	g_return_val_if_fail (ZIF_IS_STORE_LOCAL (store), FALSE);
 	g_return_val_if_fail (zif_state_valid (state), FALSE);
 
+	/* take lock */
+	ret = zif_state_take_lock (state,
+				   ZIF_LOCK_TYPE_RPMDB,
+				   ZIF_LOCK_MODE_THREAD,
+				   error);
+	if (!ret)
+		goto out;
+
 	/* setup steps */
 	if (local->priv->prefix == NULL) {
 		ret = zif_state_set_steps (state,

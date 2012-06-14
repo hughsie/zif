@@ -70,23 +70,36 @@ typedef enum {
 } ZifLockError;
 
 typedef enum {
-	ZIF_LOCK_TYPE_RPMDB_WRITE,
-	ZIF_LOCK_TYPE_REPO_WRITE,
-	ZIF_LOCK_TYPE_METADATA_WRITE,
+	ZIF_LOCK_TYPE_RPMDB,
+	ZIF_LOCK_TYPE_REPO,
+	ZIF_LOCK_TYPE_METADATA,
+	ZIF_LOCK_TYPE_GROUPS,
+	ZIF_LOCK_TYPE_RELEASE,
+	ZIF_LOCK_TYPE_CONFIG,
+	ZIF_LOCK_TYPE_HISTORY,
 	ZIF_LOCK_TYPE_LAST
 } ZifLockType;
+
+typedef enum {
+	ZIF_LOCK_MODE_THREAD,
+	ZIF_LOCK_MODE_PROCESS,
+	ZIF_LOCK_MODE_LAST
+} ZifLockMode;
 
 GType		 zif_lock_get_type		(void);
 GQuark		 zif_lock_error_quark		(void);
 ZifLock		*zif_lock_new			(void);
 gboolean	 zif_lock_is_instance_valid	(void);
 
-gboolean	 zif_lock_take			(ZifLock	*lock,
+guint		 zif_lock_take			(ZifLock	*lock,
 						 ZifLockType	 type,
+						 ZifLockMode	 mode,
 						 GError		**error);
 gboolean	 zif_lock_release		(ZifLock	*lock,
-						 ZifLockType	 type,
+						 guint		 id,
 						 GError		**error);
+void		 zif_lock_release_noerror	(ZifLock	*lock,
+						 guint		 id);
 const gchar	*zif_lock_type_to_string	(ZifLockType	 lock_type);
 guint		 zif_lock_get_state		(ZifLock	*lock);
 

@@ -172,6 +172,7 @@ void		 zif_state_set_lock_handler		(ZifState		*state,
 							 gpointer		 user_data);
 gboolean	 zif_state_take_lock			(ZifState		*state,
 							 ZifLockType		 lock_type,
+							 ZifLockMode		 lock_mode,
 							 GError			**error);
 
 G_END_DECLS

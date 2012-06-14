@@ -60,6 +60,7 @@ struct _ZifConfigPrivate
 	GHashTable		*hash_override;
 	GHashTable		*hash_default;
 	gchar			**basearch_list;
+	GMutex			 mutex;
 };
 
 G_DEFINE_TYPE (ZifConfig, zif_config, G_TYPE_OBJECT)
@@ -104,6 +105,9 @@ zif_config_load (ZifConfig *config,
 	gboolean ret = TRUE;
 	GError *error_local = NULL;
 	guint config_schema_version;
+
+	/* lock other threads */
+	g_mutex_lock (&config->priv->mutex);
 
 	/* already loaded */
 	if (config->priv->loaded)
@@ -170,6 +174,8 @@ zif_config_load (ZifConfig *config,
 	/* done */
 	config->priv->loaded = TRUE;
 out:
+	/* unlock other threads */
+	g_mutex_unlock (&config->priv->mutex);
 	return ret;
 }
 

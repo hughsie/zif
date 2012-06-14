@@ -50,9 +50,16 @@ struct _ZifLockPrivate
 {
 	GMutex			 mutex;
 	ZifConfig		*config;
-	guint			 refcount[ZIF_LOCK_TYPE_LAST];
-	gpointer		 owner[ZIF_LOCK_TYPE_LAST];
+	GPtrArray		*item_array;
 };
+
+typedef struct {
+	gpointer		 owner;
+	guint			 id;
+	guint			 refcount;
+	ZifLockMode		 mode;
+	ZifLockType		 type;
+} ZifLockItem;
 
 enum {
 	SIGNAL_STATE_CHANGED,
@@ -104,13 +111,78 @@ zif_lock_is_instance_valid (void)
 const gchar *
 zif_lock_type_to_string (ZifLockType lock_type)
 {
-	if (lock_type == ZIF_LOCK_TYPE_RPMDB_WRITE)
-		return "rpmdb-write";
-	if (lock_type == ZIF_LOCK_TYPE_REPO_WRITE)
-		return "repo-write";
-	if (lock_type == ZIF_LOCK_TYPE_METADATA_WRITE)
-		return "metadata-write";
+	if (lock_type == ZIF_LOCK_TYPE_RPMDB)
+		return "rpmdb";
+	if (lock_type == ZIF_LOCK_TYPE_REPO)
+		return "repo";
+	if (lock_type == ZIF_LOCK_TYPE_METADATA)
+		return "metadata";
+	if (lock_type == ZIF_LOCK_TYPE_GROUPS)
+		return "groups";
+	if (lock_type == ZIF_LOCK_TYPE_RELEASE)
+		return "release";
+	if (lock_type == ZIF_LOCK_TYPE_CONFIG)
+		return "config";
+	if (lock_type == ZIF_LOCK_TYPE_HISTORY)
+		return "history";
 	return "unknown";
+}
+
+/**
+ * zif_lock_get_item_by_type_mode:
+ **/
+static ZifLockItem *
+zif_lock_get_item_by_type_mode (ZifLock *lock,
+				ZifLockType type,
+				ZifLockMode mode)
+{
+	ZifLockItem *item;
+	guint i;
+
+	/* search for the item that matches type */
+	for (i = 0; i < lock->priv->item_array->len; i++) {
+		item = g_ptr_array_index (lock->priv->item_array, i);
+		if (item->type == type && item->mode == mode)
+			return item;
+	}
+	return NULL;
+}
+
+/**
+ * zif_lock_get_item_by_id:
+ **/
+static ZifLockItem *
+zif_lock_get_item_by_id (ZifLock *lock, guint id)
+{
+	ZifLockItem *item;
+	guint i;
+
+	/* search for the item that matches the ID */
+	for (i = 0; i < lock->priv->item_array->len; i++) {
+		item = g_ptr_array_index (lock->priv->item_array, i);
+		if (item->id == id)
+			return item;
+	}
+	return NULL;
+}
+
+/**
+ * zif_lock_create_item:
+ **/
+static ZifLockItem *
+zif_lock_create_item (ZifLock *lock, ZifLockType type, ZifLockMode mode)
+{
+	static guint id = 1;
+	ZifLockItem *item;
+
+	item = g_new0 (ZifLockItem, 1);
+	item->id = id++;
+	item->type = type;
+	item->owner = g_thread_self ();
+	item->refcount = 1;
+	item->mode = mode;
+	g_ptr_array_add (lock->priv->item_array, item);
+	return item;
 }
 
 /**
@@ -245,13 +317,13 @@ zif_lock_get_state (ZifLock *lock)
 {
 	guint bitfield = 0;
 	guint i;
+	ZifLockItem *item;
 
 	g_return_val_if_fail (ZIF_IS_LOCK (lock), FALSE);
 
-	for (i = 0; i < ZIF_LOCK_TYPE_LAST; i++) {
-		if (lock->priv->refcount[i] == 0)
-			continue;
-		bitfield += 1 << i;
+	for (i = 0; i < lock->priv->item_array->len; i++) {
+		item = g_ptr_array_index (lock->priv->item_array, i);
+		bitfield += 1 << item->type;
 	}
 	return bitfield;
 }
@@ -270,25 +342,31 @@ zif_lock_emit_state (ZifLock *lock)
 /**
  * zif_lock_take:
  * @lock: A #ZifLock
- * @type: A ZifLockType, e.g. %ZIF_LOCK_TYPE_RPMDB_WRITE
+ * @type: A #ZifLockType, e.g. %ZIF_LOCK_TYPE_RPMDB
+ * @mode: A #ZifLockMode, e.g. %ZIF_LOCK_MODE_PROCESS
  * @error: A #GError, or %NULL
  *
  * Tries to take a lock for the packaging system.
  *
- * Return value: %TRUE if we locked, else %FALSE and the error is set
+ * Return value: A lock ID greater than 0, or 0 for an error.
  *
- * Since: 0.1.6
+ * Since: 0.3.1
  **/
-gboolean
-zif_lock_take (ZifLock *lock, ZifLockType type, GError **error)
+guint
+zif_lock_take (ZifLock *lock,
+	       ZifLockType type,
+	       ZifLockMode mode,
+	       GError **error)
 {
-	gboolean ret = FALSE;
+	gboolean ret;
 	gchar *cmdline = NULL;
 	gchar *filename = NULL;
 	gchar *pid_filename = NULL;
 	gchar *pid_text = NULL;
 	GError *error_local = NULL;
+	guint id = 0;
 	guint pid;
+	ZifLockItem *item;
 
 	g_return_val_if_fail (ZIF_IS_LOCK (lock), FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
@@ -296,7 +374,17 @@ zif_lock_take (ZifLock *lock, ZifLockType type, GError **error)
 	/* lock other threads */
 	g_mutex_lock (&lock->priv->mutex);
 
-	if (lock->priv->refcount[type] == 0) {
+	/* find the lock type, and ensure we find a process lock for
+	 * a thread lock */
+	item = zif_lock_get_item_by_type_mode (lock, type, mode);
+	if (item == NULL && mode == ZIF_LOCK_MODE_THREAD) {
+		item = zif_lock_get_item_by_type_mode (lock,
+						       type,
+						       ZIF_LOCK_MODE_PROCESS);
+	}
+
+	/* create a lock file for process locks */
+	if (item == NULL && mode == ZIF_LOCK_MODE_PROCESS) {
 
 		/* get the lock filename */
 		filename = zif_lock_get_filename_for_type (lock,
@@ -345,29 +433,36 @@ zif_lock_take (ZifLock *lock, ZifLockType type, GError **error)
 			g_error_free (error_local);
 			goto out;
 		}
-	} else {
-		/* we're trying to lock something that's already locked
-		 * in another thread */
-		if (lock->priv->owner[type] != g_thread_self ()) {
-			g_set_error (error,
-				     ZIF_LOCK_ERROR,
-				     ZIF_LOCK_ERROR_FAILED,
-				     "failed to obtain lock '%s' already taken by thread %p",
-				     zif_lock_type_to_string (type),
-				     lock->priv->owner[type]);
-			goto out;
-		}
 	}
+
+	/* create new lock */
+	if (item == NULL) {
+		item = zif_lock_create_item (lock, type, mode);
+		id = item->id;
+		zif_lock_emit_state (lock);
+		goto out;
+	}
+
+	/* we're trying to lock something that's already locked
+	 * in another thread */
+	if (item->owner != g_thread_self ()) {
+		g_set_error (error,
+			     ZIF_LOCK_ERROR,
+			     ZIF_LOCK_ERROR_FAILED,
+			     "failed to obtain lock '%s' already taken by thread %p",
+			     zif_lock_type_to_string (type),
+			     item->owner);
+		goto out;
+	}
+
+	/* increment ref count */
+	item->refcount++;
 
 	/* emit the new locking bitfield */
 	zif_lock_emit_state (lock);
 
-	/* increment ref count */
-	lock->priv->refcount[type]++;
-	lock->priv->owner[type] = g_thread_self ();
-
 	/* success */
-	ret = TRUE;
+	id = item->id;
 out:
 	/* unlock other threads */
 	g_mutex_unlock (&lock->priv->mutex);
@@ -376,63 +471,67 @@ out:
 	g_free (pid_filename);
 	g_free (filename);
 	g_free (cmdline);
-	return ret;
+	return id;
 }
 
 /**
  * zif_lock_release:
  * @lock: A #ZifLock
- * @type: A ZifLockType, e.g. %ZIF_LOCK_TYPE_RPMDB_WRITE
+ * @id: A lock ID, as given by zif_lock_take()
  * @error: A #GError, or %NULL
  *
  * Tries to release a lock for the packaging system.
  *
  * Return value: %TRUE if we locked, else %FALSE and the error is set
  *
- * Since: 0.1.6
+ * Since: 0.3.1
  **/
 gboolean
-zif_lock_release (ZifLock *lock, ZifLockType type, GError **error)
+zif_lock_release (ZifLock *lock, guint id, GError **error)
 {
 	gboolean ret = FALSE;
 	gchar *filename = NULL;
 	GError *error_local = NULL;
 	GFile *file = NULL;
+	ZifLockItem *item;
 
 	g_return_val_if_fail (ZIF_IS_LOCK (lock), FALSE);
+	g_return_val_if_fail (id != 0, FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
 	/* lock other threads */
 	g_mutex_lock (&lock->priv->mutex);
 
 	/* never took */
-	if (lock->priv->refcount[type] == 0) {
+	item = zif_lock_get_item_by_id (lock, id);
+	if (item == NULL) {
 		g_set_error (error,
 			     ZIF_LOCK_ERROR,
 			     ZIF_LOCK_ERROR_NOT_LOCKED,
-			     "Lock %s was never taken",
-			     zif_lock_type_to_string (type));
+			     "Lock was never taken with id %i", id);
 		goto out;
 	}
 
 	/* not the same thread */
-	if (lock->priv->owner[type] != g_thread_self ()) {
+	if (item->owner != g_thread_self ()) {
 		g_set_error (error,
 			     ZIF_LOCK_ERROR,
 			     ZIF_LOCK_ERROR_NOT_LOCKED,
 			     "Lock %s was not taken by this thread",
-			     zif_lock_type_to_string (type));
+			     zif_lock_type_to_string (item->type));
 		goto out;
 	}
 
 	/* idecrement ref count */
-	lock->priv->refcount[type]--;
+	item->refcount--;
 
-	/* delete file? */
-	if (lock->priv->refcount[type] == 0) {
+	/* delete file for process locks */
+	if (item->refcount == 0 &&
+	    item->mode == ZIF_LOCK_MODE_PROCESS) {
+
 		/* get the lock filename */
 		filename = zif_lock_get_filename_for_type (lock,
-							   type,
+							   item->type,
 							   error);
 		if (filename == NULL)
 			goto out;
@@ -449,10 +548,11 @@ zif_lock_release (ZifLock *lock, ZifLockType type, GError **error)
 			g_error_free (error_local);
 			goto out;
 		}
-
-		/* no thread now owns this lock */
-		lock->priv->owner[type] = NULL;
 	}
+
+	/* no thread now owns this lock */
+	if (item->refcount == 0)
+		g_ptr_array_remove (lock->priv->item_array, item);
 
 	/* emit the new locking bitfield */
 	zif_lock_emit_state (lock);
@@ -469,6 +569,28 @@ out:
 }
 
 /**
+ * zif_lock_release_noerror:
+ * @lock: A #ZifLock
+ * @id: A lock ID, as given by zif_lock_take()
+ *
+ * Tries to release a lock for the packaging system. This method
+ * should not be used lightly as no error will be returned.
+ *
+ * Since: 0.3.1
+ **/
+void
+zif_lock_release_noerror (ZifLock *lock, guint id)
+{
+	gboolean ret;
+	GError *error = NULL;
+	ret = zif_lock_release (lock, id, &error);
+	if (!ret) {
+		g_warning ("Handled locally: %s", error->message);
+		g_error_free (error);
+	}
+}
+
+/**
  * zif_lock_finalize:
  **/
 static void
@@ -476,21 +598,24 @@ zif_lock_finalize (GObject *object)
 {
 	guint i;
 	ZifLock *lock;
+	ZifLockItem *item;
 
 	g_return_if_fail (object != NULL);
 	g_return_if_fail (ZIF_IS_LOCK (object));
 	lock = ZIF_LOCK (object);
 
 	/* unlock if we hold the lock */
-	for (i=0; i<ZIF_LOCK_TYPE_LAST; i++) {
-		if (lock->priv->refcount[i] > 0) {
+	for (i = 0; i < lock->priv->item_array->len; i++) {
+		item = g_ptr_array_index (lock->priv->item_array, i);
+		if (item->refcount > 0) {
 			g_warning ("held lock %s at shutdown",
-				   zif_lock_type_to_string (i));
-			zif_lock_release (lock, i, NULL);
+				   zif_lock_type_to_string (item->type));
+			zif_lock_release (lock, item->type, NULL);
 		}
 	}
 
 	g_object_unref (lock->priv->config);
+	g_ptr_array_unref (lock->priv->item_array);
 
 	G_OBJECT_CLASS (zif_lock_parent_class)->finalize (object);
 }
@@ -522,6 +647,7 @@ zif_lock_init (ZifLock *lock)
 {
 	lock->priv = ZIF_LOCK_GET_PRIVATE (lock);
 	lock->priv->config = zif_config_new ();
+	lock->priv->item_array = g_ptr_array_new_with_free_func (g_free);
 }
 
 /**

@@ -138,16 +138,17 @@ out:
 /**
  * zif_groups_load:
  * @groups: A #ZifGroups
+ * @state: A #ZifState to use for progress reporting
  * @error: A #GError, or %NULL
  *
  * Loads the mapping file from disk into memory.
  *
  * Return value: %TRUE for success, %FALSE otherwise
  *
- * Since: 0.1.0
+ * Since: 0.3.1
  **/
 gboolean
-zif_groups_load (ZifGroups *groups, GError **error)
+zif_groups_load (ZifGroups *groups, ZifState *state, GError **error)
 {
 	gboolean ret = TRUE;
 	gchar *data = NULL;
@@ -163,6 +164,14 @@ zif_groups_load (ZifGroups *groups, GError **error)
 
 	/* already loaded */
 	if (groups->priv->loaded)
+		goto out;
+
+	/* take lock */
+	ret = zif_state_take_lock (state,
+				   ZIF_LOCK_TYPE_GROUPS,
+				   ZIF_LOCK_MODE_THREAD,
+				   error);
+	if (!ret)
 		goto out;
 
 	/* no mapping file */
@@ -216,6 +225,7 @@ out:
 /**
  * zif_groups_get_groups:
  * @groups: A #ZifGroups
+ * @state: A #ZifState to use for progress reporting
  * @error: A #GError, or %NULL
  *
  * Gets the groups supported by the packaging system.
@@ -223,10 +233,12 @@ out:
  * Return value: (transfer full): An array of the string groups that are supported, free
  * with g_ptr_array_unref() when done.
  *
- * Since: 0.1.0
+ * Since: 0.3.1
  **/
 GPtrArray *
-zif_groups_get_groups (ZifGroups *groups, GError **error)
+zif_groups_get_groups (ZifGroups *groups,
+		       ZifState *state,
+		       GError **error)
 {
 	GError *error_local = NULL;
 	gboolean ret;
@@ -236,7 +248,7 @@ zif_groups_get_groups (ZifGroups *groups, GError **error)
 
 	/* if not already loaded, load */
 	if (!groups->priv->loaded) {
-		ret = zif_groups_load (groups, &error_local);
+		ret = zif_groups_load (groups, state, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_GROUPS_ERROR, ZIF_GROUPS_ERROR_FAILED,
 				     "failed to load config file: %s", error_local->message);
@@ -251,6 +263,7 @@ out:
 /**
  * zif_groups_get_categories:
  * @groups: A #ZifGroups
+ * @state: A #ZifState to use for progress reporting
  * @error: A #GError, or %NULL
  *
  * Gets the categories supported by the packaging system.
@@ -258,10 +271,12 @@ out:
  * Return value: (transfer full): An array of category list as strings, free
  * with g_ptr_array_unref() when done.
  *
- * Since: 0.1.0
+ * Since: 0.3.1
  **/
 GPtrArray *
-zif_groups_get_categories (ZifGroups *groups, GError **error)
+zif_groups_get_categories (ZifGroups *groups,
+			   ZifState *state,
+			   GError **error)
 {
 	guint i;
 	GPtrArray *array = NULL;
@@ -273,7 +288,7 @@ zif_groups_get_categories (ZifGroups *groups, GError **error)
 
 	/* if not already loaded, load */
 	if (!groups->priv->loaded) {
-		ret = zif_groups_load (groups, &error_local);
+		ret = zif_groups_load (groups, state, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_GROUPS_ERROR, ZIF_GROUPS_ERROR_FAILED,
 				     "failed to load config file: %s", error_local->message);
@@ -294,6 +309,7 @@ out:
  * zif_groups_get_cats_for_group:
  * @groups: A #ZifGroups
  * @group_enum: A group enumeration, e.g. "education"
+ * @state: A #ZifState to use for progress reporting
  * @error: A #GError, or %NULL
  *
  * Gets all the categories that map to to this group enumeration.
@@ -301,10 +317,13 @@ out:
  * Return value: (transfer full): An array of category list as strings, free
  * with g_ptr_array_unref() when done.
  *
- * Since: 0.1.1
+ * Since: 0.3.1
  **/
 GPtrArray *
-zif_groups_get_cats_for_group (ZifGroups *groups, const gchar *group_enum, GError **error)
+zif_groups_get_cats_for_group (ZifGroups *groups,
+			       const gchar *group_enum,
+			       ZifState *state,
+			       GError **error)
 {
 	guint i;
 	GPtrArray *array = NULL;
@@ -322,7 +341,7 @@ zif_groups_get_cats_for_group (ZifGroups *groups, const gchar *group_enum, GErro
 
 	/* if not already loaded, load */
 	if (!priv->loaded) {
-		ret = zif_groups_load (groups, &error_local);
+		ret = zif_groups_load (groups, state, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_GROUPS_ERROR, ZIF_GROUPS_ERROR_FAILED,
 				     "failed to load config file: %s", error_local->message);
@@ -353,16 +372,20 @@ out:
  * zif_groups_get_group_for_cat:
  * @groups: A #ZifGroups
  * @cat: Category name, e.g. "games/action"
+ * @state: A #ZifState to use for progress reporting
  * @error: A #GError, or %NULL
  *
  * Returns the group enumerated type for the category.
  *
  * Return value: A specific group name or %NULL
  *
- * Since: 0.1.0
+ * Since: 0.3.1
  **/
 const gchar *
-zif_groups_get_group_for_cat (ZifGroups *groups, const gchar *cat, GError **error)
+zif_groups_get_group_for_cat (ZifGroups *groups,
+			      const gchar *cat,
+			      ZifState *state,
+			      GError **error)
 {
 	const gchar *group = NULL;
 	GError *error_local = NULL;
@@ -374,7 +397,7 @@ zif_groups_get_group_for_cat (ZifGroups *groups, const gchar *cat, GError **erro
 
 	/* if not already loaded, load */
 	if (!groups->priv->loaded) {
-		ret = zif_groups_load (groups, &error_local);
+		ret = zif_groups_load (groups, state, &error_local);
 		if (!ret) {
 			g_set_error (error, ZIF_GROUPS_ERROR, ZIF_GROUPS_ERROR_FAILED,
 				     "failed to load config file: %s", error_local->message);

@@ -393,7 +393,10 @@ zif_package_local_ensure_data (ZifPackage *pkg,
 		text = zif_package_get_category (pkg, state, error);
 		if (text == NULL)
 			goto out;
-		group = zif_groups_get_group_for_cat (ZIF_PACKAGE_LOCAL(pkg)->priv->groups, text, error);
+		group = zif_groups_get_group_for_cat (ZIF_PACKAGE_LOCAL(pkg)->priv->groups,
+						      text,
+						      state,
+						      error);
 		if (group == NULL)
 			goto out;
 

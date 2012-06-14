@@ -274,6 +274,14 @@ zif_repos_load (ZifRepos *repos, ZifState *state, GError **error)
 	if (repos->priv->loaded)
 		goto out;
 
+	/* take lock */
+	ret = zif_state_take_lock (state,
+				   ZIF_LOCK_TYPE_REPO,
+				   ZIF_LOCK_MODE_THREAD,
+				   error);
+	if (!ret)
+		goto out;
+
 	/* set action */
 	zif_state_action_start (state, ZIF_STATE_ACTION_LOADING_REPOS, NULL);
 

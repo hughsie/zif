@@ -1230,6 +1230,7 @@ zif_groups_func (void)
 	const gchar *group;
 	const gchar *category;
 	gchar *filename;
+	ZifState *state;
 
 	groups = zif_groups_new ();
 	g_assert (groups != NULL);
@@ -1240,27 +1241,32 @@ zif_groups_func (void)
 	g_assert_no_error (error);
 	g_assert (ret);
 
-	ret = zif_groups_load (groups, &error);
+	state = zif_state_new ();
+	ret = zif_groups_load (groups, state, &error);
 	g_assert_no_error (error);
 	g_assert (ret);
 
-	array = zif_groups_get_groups (groups, &error);
+	zif_state_reset (state);
+	array = zif_groups_get_groups (groups, state, &error);
 	g_assert_no_error (error);
 	g_assert (array != NULL);
 	group = g_ptr_array_index (array, 0);
 	g_assert_cmpstr (group, ==, "admin-tools");
 
-	array = zif_groups_get_categories (groups, &error);
+	zif_state_reset (state);
+	array = zif_groups_get_categories (groups, state, &error);
 	g_assert_no_error (error);
 	g_assert (array != NULL);
 	g_assert_cmpint (array->len, >, 100);
 	g_ptr_array_unref (array);
 
-	group = zif_groups_get_group_for_cat (groups, "language-support;kashubian-support", &error);
+	zif_state_reset (state);
+	group = zif_groups_get_group_for_cat (groups, "language-support;kashubian-support", state, &error);
 	g_assert_no_error (error);
 	g_assert_cmpstr (group, ==, "localization");
 
-	array = zif_groups_get_cats_for_group (groups, "localization", &error);
+	zif_state_reset (state);
+	array = zif_groups_get_cats_for_group (groups, "localization", state, &error);
 	g_assert_no_error (error);
 	g_assert (array != NULL);
 	g_assert_cmpint (array->len, >, 50);
@@ -1269,6 +1275,7 @@ zif_groups_func (void)
 	g_ptr_array_unref (array);
 
 	g_object_unref (groups);
+	g_object_unref (state);
 
 	zif_check_singletons ();
 }
@@ -1325,6 +1332,8 @@ zif_lock_func (void)
 	ZifLock *lock;
 	ZifConfig *config;
 	gboolean ret;
+	guint lock_id1;
+	guint lock_id2;
 	GError *error = NULL;
 	gchar *pidfile;
 	gchar *filename;
@@ -1349,48 +1358,58 @@ zif_lock_func (void)
 
 	/* nothing yet! */
 	g_assert_cmpint (zif_lock_get_state (lock), ==, 0);
-	ret = zif_lock_release (lock, ZIF_LOCK_TYPE_RPMDB_WRITE, &error);
+	ret = zif_lock_release (lock, 999, &error);
 	g_assert_error (error, ZIF_LOCK_ERROR, ZIF_LOCK_ERROR_NOT_LOCKED);
 	g_assert (!ret);
 	g_clear_error (&error);
 
 	/* take one */
-	ret = zif_lock_take (lock, ZIF_LOCK_TYPE_RPMDB_WRITE, &error);
+	lock_id1 = zif_lock_take (lock,
+				  ZIF_LOCK_TYPE_RPMDB,
+				  ZIF_LOCK_MODE_PROCESS,
+				  &error);
 	g_assert_no_error (error);
-	g_assert (ret);
-	g_assert_cmpint (zif_lock_get_state (lock), ==, 1 << ZIF_LOCK_TYPE_RPMDB_WRITE);
+	g_assert (lock_id1 != 0);
+	g_assert_cmpint (zif_lock_get_state (lock), ==, 1 << ZIF_LOCK_TYPE_RPMDB);
 	g_assert_cmpint (_zif_lock_state_changed, ==, 1);
 
 	/* take a different one */
-	ret = zif_lock_take (lock, ZIF_LOCK_TYPE_REPO_WRITE, &error);
+	lock_id2 = zif_lock_take (lock,
+				  ZIF_LOCK_TYPE_REPO,
+				  ZIF_LOCK_MODE_PROCESS,
+				  &error);
 	g_assert_no_error (error);
-	g_assert (ret);
-	g_assert_cmpint (zif_lock_get_state (lock), ==, 1 << ZIF_LOCK_TYPE_RPMDB_WRITE | 1 << ZIF_LOCK_TYPE_REPO_WRITE);
+	g_assert (lock_id2 != 0);
+	g_assert (lock_id2 != lock_id1);
+	g_assert_cmpint (zif_lock_get_state (lock), ==, 1 << ZIF_LOCK_TYPE_RPMDB | 1 << ZIF_LOCK_TYPE_REPO);
 	g_assert_cmpint (_zif_lock_state_changed, ==, 2);
 
 	/* take two */
-	ret = zif_lock_take (lock, ZIF_LOCK_TYPE_RPMDB_WRITE, &error);
+	lock_id1 = zif_lock_take (lock,
+				  ZIF_LOCK_TYPE_RPMDB,
+				  ZIF_LOCK_MODE_PROCESS,
+				  &error);
 	g_assert_no_error (error);
-	g_assert (ret);
-	g_assert_cmpint (zif_lock_get_state (lock), ==, 1 << ZIF_LOCK_TYPE_RPMDB_WRITE | 1 << ZIF_LOCK_TYPE_REPO_WRITE);
+	g_assert (lock_id1 != 0);
+	g_assert_cmpint (zif_lock_get_state (lock), ==, 1 << ZIF_LOCK_TYPE_RPMDB | 1 << ZIF_LOCK_TYPE_REPO);
 
 	/* release one */
-	ret = zif_lock_release (lock, ZIF_LOCK_TYPE_RPMDB_WRITE, &error);
+	ret = zif_lock_release (lock, lock_id1, &error);
 	g_assert_no_error (error);
 	g_assert (ret);
 
 	/* release different one */
-	ret = zif_lock_release (lock, ZIF_LOCK_TYPE_REPO_WRITE, &error);
+	ret = zif_lock_release (lock, lock_id2, &error);
 	g_assert_no_error (error);
 	g_assert (ret);
 
 	/* release two */
-	ret = zif_lock_release (lock, ZIF_LOCK_TYPE_RPMDB_WRITE, &error);
+	ret = zif_lock_release (lock, lock_id1, &error);
 	g_assert_no_error (error);
 	g_assert (ret);
 
 	/* no more! */
-	ret = zif_lock_release (lock, ZIF_LOCK_TYPE_RPMDB_WRITE, &error);
+	ret = zif_lock_release (lock, lock_id1, &error);
 	g_assert_error (error, ZIF_LOCK_ERROR, ZIF_LOCK_ERROR_NOT_LOCKED);
 	g_assert (!ret);
 	g_clear_error (&error);
@@ -1408,13 +1427,16 @@ static gpointer
 zif_self_test_lock_thread_one (gpointer data)
 {
 	GError *error = NULL;
-	gboolean ret;
+	guint lock_id;
 	ZifLock *lock = ZIF_LOCK (data);
 
 	g_usleep (G_USEC_PER_SEC / 100);
-	ret = zif_lock_take (lock, ZIF_LOCK_TYPE_REPO_WRITE, &error);
+	lock_id = zif_lock_take (lock,
+				 ZIF_LOCK_TYPE_REPO,
+				 ZIF_LOCK_MODE_PROCESS,
+				 &error);
 	g_assert_error (error, ZIF_LOCK_ERROR, ZIF_LOCK_ERROR_FAILED);
-	g_assert (!ret);
+	g_assert_cmpint (lock_id, ==, 0);
 	g_error_free (error);
 	return NULL;
 }
@@ -1427,6 +1449,7 @@ zif_lock_threads_func (void)
 	gchar *pidfile;
 	GError *error = NULL;
 	GThread *one;
+	guint lock_id;
 	ZifConfig *config;
 	ZifLock *lock;
 
@@ -1446,9 +1469,12 @@ zif_lock_threads_func (void)
 
 	/* take in master thread */
 	lock = zif_lock_new ();
-	ret = zif_lock_take (lock, ZIF_LOCK_TYPE_REPO_WRITE, &error);
+	lock_id = zif_lock_take (lock,
+				 ZIF_LOCK_TYPE_REPO,
+				 ZIF_LOCK_MODE_PROCESS,
+				 &error);
 	g_assert_no_error (error);
-	g_assert (ret);
+	g_assert_cmpint (lock_id, >, 0);
 
 	/* attempt to take in slave thread (should fail) */
 	one = g_thread_new ("zif-lock-one",
@@ -1459,7 +1485,7 @@ zif_lock_threads_func (void)
 	g_usleep (G_USEC_PER_SEC);
 
 	/* release lock */
-	ret = zif_lock_release (lock, ZIF_LOCK_TYPE_REPO_WRITE, &error);
+	ret = zif_lock_release (lock, lock_id, &error);
 	g_assert_no_error (error);
 	g_assert (ret);
 
@@ -3221,14 +3247,16 @@ zif_state_locking_func (void)
 
 	/* lock once */
 	ret = zif_state_take_lock (state,
-				   ZIF_LOCK_TYPE_RPMDB_WRITE,
+				   ZIF_LOCK_TYPE_RPMDB,
+				   ZIF_LOCK_MODE_PROCESS,
 				   &error);
 	g_assert_no_error (error);
 	g_assert (ret);
 
 	/* succeeded, even again */
 	ret = zif_state_take_lock (state,
-				   ZIF_LOCK_TYPE_RPMDB_WRITE,
+				   ZIF_LOCK_TYPE_RPMDB,
+				   ZIF_LOCK_MODE_PROCESS,
 				   &error);
 	g_assert_no_error (error);
 	g_assert (ret);

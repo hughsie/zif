@@ -142,6 +142,14 @@ zif_release_load (ZifRelease *release, ZifState *state, GError **error)
 	ZifReleasePrivate *priv = release->priv;
 	ZifUpgrade *upgrade;
 
+	/* take lock */
+	ret = zif_state_take_lock (state,
+				   ZIF_LOCK_TYPE_RELEASE,
+				   ZIF_LOCK_MODE_THREAD,
+				   error);
+	if (!ret)
+		goto out;
+
 	/* nothing set */
 	cache_dir = zif_config_get_string (priv->config,
 					   "upgrade_cache_dir",

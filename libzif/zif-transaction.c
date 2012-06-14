@@ -4571,7 +4571,9 @@ out:
  * Since: 0.1.3
  **/
 gboolean
-zif_transaction_prepare (ZifTransaction *transaction, ZifState *state, GError **error)
+zif_transaction_prepare (ZifTransaction *transaction,
+			 ZifState *state,
+			 GError **error)
 {
 	const gchar *cache_filename;
 	gboolean ret = FALSE;
@@ -4589,6 +4591,14 @@ zif_transaction_prepare (ZifTransaction *transaction, ZifState *state, GError **
 	g_return_val_if_fail (ZIF_IS_TRANSACTION (transaction), FALSE);
 	g_return_val_if_fail (zif_state_valid (state), FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+	/* take lock */
+	ret = zif_state_take_lock (state,
+				   ZIF_LOCK_TYPE_RPMDB,
+				   ZIF_LOCK_MODE_THREAD,
+				   error);
+	if (!ret)
+		goto out;
 
 	/* get private */
 	priv = transaction->priv;
@@ -5840,7 +5850,8 @@ zif_transaction_commit_full (ZifTransaction *transaction,
 
 	/* take lock */
 	ret = zif_state_take_lock (state,
-				   ZIF_LOCK_TYPE_RPMDB_WRITE,
+				   ZIF_LOCK_TYPE_RPMDB,
+				   ZIF_LOCK_MODE_PROCESS,
 				   error);
 	if (!ret)
 		goto out;

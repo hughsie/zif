@@ -28,6 +28,8 @@
 
 #include <glib-object.h>
 
+#include "zif-state.h"
+
 G_BEGIN_DECLS
 
 #define ZIF_TYPE_GROUPS		(zif_groups_get_type ())
@@ -70,16 +72,21 @@ gboolean	 zif_groups_set_mapping_file	(ZifGroups	*groups,
 						 const gchar	*mapping_file,
 						 GError		**error);
 gboolean	 zif_groups_load		(ZifGroups	*groups,
+						 ZifState	*state,
 						 GError		**error);
 GPtrArray	*zif_groups_get_groups		(ZifGroups	*groups,
+						 ZifState	*state,
 						 GError		**error);
 GPtrArray	*zif_groups_get_categories	(ZifGroups	*groups,
+						 ZifState	*state,
 						 GError		**error);
 GPtrArray	*zif_groups_get_cats_for_group	(ZifGroups	*groups,
 						 const gchar	*group_enum,
+						 ZifState	*state,
 						 GError		**error);
 const gchar	*zif_groups_get_group_for_cat	(ZifGroups	*groups,
 						 const gchar	*cat,
+						 ZifState	*state,
 						 GError		**error);
 
 G_END_DECLS

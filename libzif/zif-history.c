@@ -80,10 +80,23 @@ zif_history_load (ZifHistory *history, GError **error)
 	gboolean ret = TRUE;
 	gchar *error_msg = NULL;
 	gint rc;
+	guint lock_id;
+	ZifLock *lock = NULL;
 
 	/* already loaded */
 	if (history->priv->loaded)
 		goto out;
+
+	/* take lock */
+	lock = zif_lock_new ();
+	lock_id = zif_lock_take (lock,
+				 ZIF_LOCK_TYPE_HISTORY,
+				 ZIF_LOCK_MODE_THREAD,
+				 error);
+	if (lock_id == 0) {
+		ret = FALSE;
+		goto out;
+	}
 
 	/* nothing set */
 	if (history->priv->filename == NULL) {
@@ -92,6 +105,7 @@ zif_history_load (ZifHistory *history, GError **error)
 								 error);
 		if (history->priv->filename == NULL) {
 			ret = FALSE;
+			zif_lock_release_noerror (lock, lock_id);
 			goto out;
 		}
 	}
@@ -100,8 +114,10 @@ zif_history_load (ZifHistory *history, GError **error)
 	ret = zif_ensure_parent_dir_exists (history->priv->filename,
 					    NULL,
 					    error);
-	if (!ret)
+	if (!ret) {
+		zif_lock_release_noerror (lock, lock_id);
 		goto out;
+	}
 
 	/* open db */
 	g_debug ("trying to open database '%s'", history->priv->filename);
@@ -116,6 +132,7 @@ zif_history_load (ZifHistory *history, GError **error)
 			     sqlite3_errmsg (history->priv->db));
 		sqlite3_close (history->priv->db);
 		history->priv->db = NULL;
+		zif_lock_release_noerror (lock, lock_id);
 		goto out;
 	}
 
@@ -155,7 +172,16 @@ zif_history_load (ZifHistory *history, GError **error)
 
 	/* yippee */
 	history->priv->loaded = TRUE;
+
+	/* unlock */
+	ret = zif_lock_release (lock,
+				lock_id,
+				error);
+	if (!ret)
+		goto out;
 out:
+	if (lock != NULL)
+		g_object_unref (lock);
 	return ret;
 }
 
