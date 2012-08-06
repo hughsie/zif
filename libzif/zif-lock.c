@@ -406,7 +406,6 @@ zif_lock_take (ZifLock *lock,
 							pid);
 			ret = g_file_test (pid_filename, G_FILE_TEST_EXISTS);
 			if (ret) {
-				ret = FALSE;
 				cmdline = zif_lock_get_cmdline_for_pid (pid);
 				g_set_error (error,
 					     ZIF_LOCK_ERROR,

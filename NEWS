@@ -1,3 +1,15 @@
+Version 0.3.1
+~~~~~~~~~~~~~
+Released: 2012-08-06
+
+New Features:
+ - Add a package-progress-changed signal on ZifState (Richard Hughes)
+ - Remove the deprecated ZifLock methods (Richard Hughes)
+ - Support per-thread and system-wide lock modes (Richard Hughes)
+
+Bugfixes:
+ - Make taking locks threadsafe (Richard Hughes)
+
 Version 0.3.0
 ~~~~~~~~~~~~~
 Released: 2012-06-02
