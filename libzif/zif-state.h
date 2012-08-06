@@ -84,6 +84,10 @@ struct _ZifStateClass
 	void		(* action_changed)		(ZifState	*state,
 							 ZifStateAction	 action,
 							 const gchar	*action_hint);
+	void		(* package_progress_changed)	(ZifState	*state,
+							 const gchar	*package_id,
+							 ZifStateAction	 action,
+							 guint		 percentage);
 	/* Padding for future expansion */
 	void (*_zif_reserved1) (void);
 	void (*_zif_reserved2) (void);
@@ -126,6 +130,10 @@ gboolean	 zif_state_set_steps_real		(ZifState		*state,
 							 const gchar		*strloc,
 							 gint			 value, ...);
 gboolean	 zif_state_set_percentage		(ZifState		*state,
+							 guint			 percentage);
+void		 zif_state_set_package_progress		(ZifState		*state,
+							 const gchar		*package_id,
+							 ZifStateAction		 action,
 							 guint			 percentage);
 guint		 zif_state_get_percentage		(ZifState		*state);
 gboolean	 zif_state_action_start			(ZifState		*state,

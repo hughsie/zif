@@ -212,6 +212,24 @@ out:
 }
 
 /**
+ * zif_package_array_percentage_changed_cb:
+ **/
+static void
+zif_package_array_percentage_changed_cb (ZifState *state,
+					 guint percentage,
+					 ZifPackage *package)
+{
+	/* update any UI */
+	g_debug ("%s is DOWNLOADING @%i%%",
+		 zif_package_get_id_basic (package),
+		 percentage);
+	zif_state_set_package_progress (state,
+					zif_package_get_id_basic (package),
+					ZIF_STATE_ACTION_DOWNLOADING,
+					percentage);
+}
+
+/**
  * zif_package_array_download:
  * @packages: array of %ZifPackage's
  * @directory: A local directory to save to, or %NULL to use the package cache
@@ -233,6 +251,7 @@ zif_package_array_download (GPtrArray *packages,
 	gboolean ret = TRUE;
 	GError *error_local = NULL;
 	guint i;
+	guint percentage_id;
 	ZifPackage *package;
 	ZifState *state_loop;
 
@@ -249,10 +268,14 @@ zif_package_array_download (GPtrArray *packages,
 		zif_state_action_start (state,
 					ZIF_STATE_ACTION_DOWNLOADING,
 					zif_package_get_id (package));
+		percentage_id = g_signal_connect (state_loop, "percentage-changed",
+						  G_CALLBACK (zif_package_array_percentage_changed_cb),
+						  package);
 		ret = zif_package_remote_download (ZIF_PACKAGE_REMOTE (package),
 						   directory,
 						   state_loop,
 						   &error_local);
+		g_signal_handler_disconnect (state_loop, percentage_id);
 		if (!ret) {
 			g_propagate_prefixed_error (error, error_local,
 						    "cannot download %s: ",

@@ -114,6 +114,7 @@ struct _ZifStatePrivate
 	guint			*step_data;
 	guint			 steps;
 	gulong			 action_child_id;
+	gulong			 package_progress_child_id;
 	gulong			 notify_speed_child_id;
 	gulong			 allow_cancel_child_id;
 	gulong			 percentage_child_id;
@@ -134,6 +135,7 @@ enum {
 	SIGNAL_SUBPERCENTAGE_CHANGED,
 	SIGNAL_ALLOW_CANCEL_CHANGED,
 	SIGNAL_ACTION_CHANGED,
+	SIGNAL_PACKAGE_PROGRESS_CHANGED,
 	SIGNAL_LAST
 };
 
@@ -724,6 +726,28 @@ zif_state_action_start (ZifState *state, ZifStateAction action, const gchar *act
 }
 
 /**
+ * zif_state_set_package_progress:
+ * @state: A #ZifState
+ * @package_id: A package_id
+ * @action: A #ZifStateAction
+ * @percentage: A percentage
+ *
+ * Sets any package progress.
+ *
+ * Since: 0.3.1
+ **/
+void
+zif_state_set_package_progress (ZifState *state,
+				const gchar *package_id,
+				ZifStateAction action,
+				guint percentage)
+{
+	/* just emit */
+	g_signal_emit (state, signals [SIGNAL_PACKAGE_PROGRESS_CHANGED], 0,
+		       package_id, action, percentage);
+}
+
+/**
  * zif_state_action_stop:
  * @state: A #ZifState
  *
@@ -953,6 +977,21 @@ zif_state_child_action_changed_cb (ZifState *child, ZifStateAction action, const
 }
 
 /**
+ * zif_state_child_package_progress_changed_cb:
+ **/
+static void
+zif_state_child_package_progress_changed_cb (ZifState *child,
+					     const gchar *package_id,
+					     ZifStateAction action,
+					     guint progress,
+					     ZifState *state)
+{
+	/* just emit */
+	g_signal_emit (state, signals [SIGNAL_ACTION_CHANGED], 0,
+		       package_id, action, progress);
+}
+
+/**
  * zif_state_reset:
  * @state: A #ZifState
  *
@@ -1004,6 +1043,11 @@ zif_state_reset (ZifState *state)
 		g_signal_handler_disconnect (state->priv->child,
 					     state->priv->action_child_id);
 		state->priv->action_child_id = 0;
+	}
+	if (state->priv->package_progress_child_id != 0) {
+		g_signal_handler_disconnect (state->priv->child,
+					     state->priv->package_progress_child_id);
+		state->priv->package_progress_child_id = 0;
 	}
 	if (state->priv->notify_speed_child_id != 0) {
 		g_signal_handler_disconnect (state->priv->child,
@@ -1085,6 +1129,8 @@ zif_state_get_child (ZifState *state)
 		g_signal_handler_disconnect (state->priv->child,
 					     state->priv->action_child_id);
 		g_signal_handler_disconnect (state->priv->child,
+					     state->priv->package_progress_child_id);
+		g_signal_handler_disconnect (state->priv->child,
 					     state->priv->notify_speed_child_id);
 		g_object_unref (state->priv->child);
 	}
@@ -1108,6 +1154,10 @@ zif_state_get_child (ZifState *state)
 	state->priv->action_child_id =
 		g_signal_connect (child, "action-changed",
 				  G_CALLBACK (zif_state_child_action_changed_cb),
+				  state);
+	state->priv->package_progress_child_id =
+		g_signal_connect (child, "package-progress-changed",
+				  G_CALLBACK (zif_state_child_package_progress_changed_cb),
 				  state);
 	state->priv->notify_speed_child_id =
 		g_signal_connect (child, "notify::speed",
@@ -1705,6 +1755,13 @@ zif_state_class_init (ZifStateClass *klass)
 			      G_STRUCT_OFFSET (ZifStateClass, action_changed),
 			      NULL, NULL, zif_marshal_VOID__UINT_STRING,
 			      G_TYPE_NONE, 2, G_TYPE_UINT, G_TYPE_STRING);
+
+	signals [SIGNAL_PACKAGE_PROGRESS_CHANGED] =
+		g_signal_new ("package-progress-changed",
+			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,
+			      G_STRUCT_OFFSET (ZifStateClass, package_progress_changed),
+			      NULL, NULL, g_cclosure_marshal_generic,
+			      G_TYPE_NONE, 3, G_TYPE_STRING, G_TYPE_UINT, G_TYPE_UINT);
 
 	g_type_class_add_private (klass, sizeof (ZifStatePrivate));
 }

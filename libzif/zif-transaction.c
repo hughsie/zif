@@ -4840,6 +4840,7 @@ zif_transaction_ts_progress_cb (const void *arg,
 	const char *filename = (const char *) key;
 	gboolean ret;
 	GError *error_local = NULL;
+	guint percentage;
 	guint speed;
 	void *rc = NULL;
 	ZifStateAction action;
@@ -4942,8 +4943,9 @@ zif_transaction_ts_progress_cb (const void *arg,
 		g_timer_reset (commit->timer);
 
 		/* progress */
+		percentage = (100.0f / (gfloat) total) * (gfloat) amount;
 		g_debug ("progress %i/%i", (gint32) amount, (gint32) total);
-		zif_state_set_percentage (commit->child, (100.0f / (gfloat) total) * (gfloat) amount);
+		zif_state_set_percentage (commit->child, percentage);
 		if (amount == total) {
 			ret = zif_state_done (commit->state, &error_local);
 			if (!ret) {
@@ -4951,6 +4953,16 @@ zif_transaction_ts_progress_cb (const void *arg,
 					   error_local->message);
 				g_error_free (error_local);
 			}
+		}
+
+		/* update UI */
+		item = zif_transaction_get_item_from_cache_filename_suffix (commit->transaction->priv->remove,
+									    filename);
+		if (item != NULL) {
+			zif_state_set_package_progress (commit->state,
+							zif_package_get_id_basic (item->package),
+							ZIF_STATE_ACTION_INSTALLING,
+							percentage);
 		}
 		break;
 

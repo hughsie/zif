@@ -267,6 +267,22 @@ zif_main_elipsize_middle_sha1 (gchar *filename)
 }
 
 /**
+ * zif_state_package_progress_changed_cb:
+ **/
+static void
+zif_state_package_progress_changed_cb (ZifState *state,
+				       const gchar *package_id,
+				       ZifStateAction action,
+				       guint percentage,
+				       ZifProgressBar *progressbar)
+{
+	g_debug ("%s is %s (%i)",
+		 package_id,
+		 zif_state_action_to_string (action),
+		 percentage);
+}
+
+/**
  * zif_state_action_changed_cb:
  **/
 static void
@@ -6751,6 +6767,9 @@ main (int argc, char *argv[])
 			  priv->progressbar);
 	g_signal_connect (priv->state, "notify::speed",
 			  G_CALLBACK (zif_state_speed_changed_cb),
+			  priv->progressbar);
+	g_signal_connect (priv->state, "package-progress-changed",
+			  G_CALLBACK (zif_state_package_progress_changed_cb),
 			  priv->progressbar);
 	if (lock_all) {
 		zif_state_set_lock_handler (priv->state,
