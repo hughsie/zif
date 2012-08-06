@@ -6,7 +6,7 @@ m4_define([zif_micro_version], [1])
 m4_define([zif_version],
           [zif_major_version.zif_minor_version.zif_micro_version])
 
-AC_INIT([zif],[0.3.0])
+AC_INIT([zif],[0.3.1])
 AC_CONFIG_SRCDIR(libzif)
 AM_INIT_AUTOMAKE([1.9 no-dist-gzip dist-xz tar-ustar])
 AC_CONFIG_HEADERS([config.h])
