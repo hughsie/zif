@@ -1862,6 +1862,9 @@ zif_md_primary_sql_func (void)
 	ZifPackage *package;
 	ZifState *state;
 	ZifConfig *config;
+	GTimer *timer;
+	gchar **tmp;
+	guint i;
 	const gchar *data[] = { "gnome-power-manager.i686", "gnome-color-manager.i686", NULL };
 	const gchar *data_glob[] = { "gnome-*", NULL };
 	const gchar *data_noarch[] = { "perl-Log-Message-Simple.i686", NULL };
@@ -1908,6 +1911,24 @@ zif_md_primary_sql_func (void)
 	g_assert_cmpstr (zif_package_get_source_filename (package, state, NULL), ==,
 			 "gnome-power-manager-2.30.1-1.fc13.src.rpm");
 	g_ptr_array_unref (array);
+
+	/* resolve a lot of items */
+	timer = g_timer_new ();
+	tmp = g_new0 (char *, 10000 + 1);
+	for (i = 0; i < 10000; i++)
+		tmp[i] = g_strdup_printf ("test%03i", i);
+	zif_state_reset (state);
+	array = zif_md_resolve_full (md,
+				     tmp,
+				     ZIF_STORE_RESOLVE_FLAG_USE_NAME,
+				     state,
+				     &error);
+	g_assert_no_error (error);
+	g_assert (array != NULL);
+	g_assert_cmpint (array->len, ==, 0);
+	g_ptr_array_unref (array);
+	g_assert_cmpint (g_timer_elapsed (timer, NULL), <, 1.0);
+	g_timer_destroy (timer);
 
 	/* resolving by name and globbing */
 	zif_state_reset (state);
