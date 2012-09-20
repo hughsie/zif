@@ -731,7 +731,7 @@ zif_file_decompress_zlib (const gchar *in, const gchar *out, ZifState *state, GE
 	gboolean ret = FALSE;
 	gint size;
 	gint written;
-	gzFile *f_in = NULL;
+	gzFile f_in = NULL;
 	FILE *f_out = NULL;
 	guchar buf[ZIF_BUFFER_SIZE];
 	GCancellable *cancellable;
