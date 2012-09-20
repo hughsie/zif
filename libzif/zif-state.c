@@ -742,6 +742,11 @@ zif_state_set_package_progress (ZifState *state,
 				ZifStateAction action,
 				guint percentage)
 {
+	g_return_if_fail (ZIF_IS_STATE (state));
+	g_return_if_fail (package_id != NULL);
+	g_return_if_fail (action != ZIF_STATE_ACTION_UNKNOWN);
+	g_return_if_fail (percentage <= 100);
+
 	/* just emit */
 	g_signal_emit (state, signals [SIGNAL_PACKAGE_PROGRESS_CHANGED], 0,
 		       package_id, action, percentage);
@@ -987,7 +992,7 @@ zif_state_child_package_progress_changed_cb (ZifState *child,
 					     ZifState *state)
 {
 	/* just emit */
-	g_signal_emit (state, signals [SIGNAL_ACTION_CHANGED], 0,
+	g_signal_emit (state, signals [SIGNAL_PACKAGE_PROGRESS_CHANGED], 0,
 		       package_id, action, progress);
 }
 

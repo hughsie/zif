@@ -2718,6 +2718,7 @@ zif_repos_func (void)
 
 static guint _allow_cancel_updates = 0;
 static guint _action_updates = 0;
+static guint _package_progress_updates = 0;
 static guint _last_percent = 0;
 static guint _last_subpercent = 0;
 
@@ -2747,6 +2748,21 @@ zif_state_test_action_changed_cb (ZifState *state, ZifStateAction action, gpoint
 }
 
 static void
+zif_state_test_package_progress_changed_cb (ZifState *state,
+					    const gchar *package_id,
+					    ZifStateAction action,
+					    guint percentage,
+					    gpointer data)
+{
+	g_assert (data == NULL);
+	g_debug ("%s now %s at %u",
+		 package_id,
+		 zif_state_action_to_string (action),
+		 percentage);
+	_package_progress_updates++;
+}
+
+static void
 zif_state_func (void)
 {
 	gboolean ret;
@@ -2764,6 +2780,7 @@ zif_state_func (void)
 	g_signal_connect (state, "subpercentage-changed", G_CALLBACK (zif_state_test_subpercentage_changed_cb), NULL);
 	g_signal_connect (state, "allow-cancel-changed", G_CALLBACK (zif_state_test_allow_cancel_changed_cb), NULL);
 	g_signal_connect (state, "action-changed", G_CALLBACK (zif_state_test_action_changed_cb), NULL);
+	g_signal_connect (state, "package-progress-changed", G_CALLBACK (zif_state_test_package_progress_changed_cb), NULL);
 
 	g_assert (zif_state_get_allow_cancel (state));
 	g_assert_cmpint (zif_state_get_action (state), ==, ZIF_STATE_ACTION_UNKNOWN);
@@ -2800,11 +2817,16 @@ zif_state_func (void)
 	ret = zif_state_done (state, NULL);
 	ret = zif_state_done (state, NULL);
 	ret = zif_state_done (state, NULL);
+	zif_state_set_package_progress (state,
+					"hal;0.0.1;i386;fedora",
+					ZIF_STATE_ACTION_DOWNLOADING,
+					50);
 	g_assert (zif_state_done (state, NULL));
 
 	g_assert (!zif_state_done (state, NULL));
-	g_assert ((_updates == 5));
-	g_assert ((_last_percent == 100));
+	g_assert_cmpint (_updates, ==, 5);
+	g_assert_cmpint (_package_progress_updates, ==, 1);
+	g_assert_cmpint (_last_percent, ==, 100);
 
 	/* ensure allow cancel as we're done */
 	g_assert (zif_state_get_allow_cancel (state));
@@ -2826,6 +2848,7 @@ zif_state_child_func (void)
 	_updates = 0;
 	_allow_cancel_updates = 0;
 	_action_updates = 0;
+	_package_progress_updates = 0;
 	state = zif_state_new ();
 	zif_state_set_allow_cancel (state, TRUE);
 	zif_state_set_number_steps (state, 2);
@@ -2833,6 +2856,7 @@ zif_state_child_func (void)
 	g_signal_connect (state, "subpercentage-changed", G_CALLBACK (zif_state_test_subpercentage_changed_cb), NULL);
 	g_signal_connect (state, "allow-cancel-changed", G_CALLBACK (zif_state_test_allow_cancel_changed_cb), NULL);
 	g_signal_connect (state, "action-changed", G_CALLBACK (zif_state_test_action_changed_cb), NULL);
+	g_signal_connect (state, "package-progress-changed", G_CALLBACK (zif_state_test_package_progress_changed_cb), NULL);
 
 	// state: |-----------------------|-----------------------|
 	// step1: |-----------------------|
@@ -2874,9 +2898,14 @@ zif_state_child_func (void)
 
 	g_debug ("child update #1");
 	ret = zif_state_done (child, NULL);
+	zif_state_set_package_progress (child,
+					"hal;0.0.1;i386;fedora",
+					ZIF_STATE_ACTION_DOWNLOADING,
+					50);
 
-	g_assert ((_updates == 2));
-	g_assert ((_last_percent == 75));
+	g_assert_cmpint (_updates, ==, 2);
+	g_assert_cmpint (_last_percent, ==, 75);
+	g_assert_cmpint (_package_progress_updates, ==, 1);
 
 	/* child action */
 	g_debug ("setting: downloading");
@@ -2899,7 +2928,7 @@ zif_state_child_func (void)
 	g_assert_cmpint (_action_updates, ==, 6);
 
 	g_assert_cmpint (_updates, ==, 3);
-	g_assert ((_last_percent == 100));
+	g_assert_cmpint (_last_percent, ==, 100);
 
 	/* ensure the child finishing cleared the allow cancel on the parent */
 	ret = zif_state_get_allow_cancel (state);
@@ -2912,7 +2941,7 @@ zif_state_child_func (void)
 
 	/* ensure we ignored the duplicate */
 	g_assert_cmpint (_updates, ==, 3);
-	g_assert ((_last_percent == 100));
+	g_assert_cmpint (_last_percent, ==, 100);
 
 	g_object_unref (state);
 
