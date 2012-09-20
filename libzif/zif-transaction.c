@@ -4836,6 +4836,58 @@ out:
 }
 
 /**
+ * zif_transaction_get_item_from_cache_package_nva:
+ **/
+static ZifTransactionItem *
+zif_transaction_get_item_from_cache_package_nva (GPtrArray *array,
+						 const gchar *package_nva)
+{
+	const gchar *package_nva_tmp;
+	guint i;
+	ZifPackage *package_tmp;
+	ZifTransactionItem *item;
+
+	for (i = 0; i<array->len; i++) {
+		package_tmp = g_ptr_array_index (array, i);
+		item = zif_transaction_package_get_item (package_tmp);
+		package_nva_tmp = zif_package_get_name_version_arch (item->package);
+		if (g_strcmp0 (package_nva_tmp, package_nva) == 0)
+			goto out;
+	}
+
+	/* failure */
+	item = NULL;
+out:
+	return item;
+}
+
+/**
+ * zif_transaction_get_item_from_cache_header:
+ **/
+static ZifTransactionItem *
+zif_transaction_get_item_from_cache_header (GPtrArray *array,
+					    Header hdr)
+{
+	gboolean ret;
+	ZifPackage *pkg;
+	ZifTransactionItem *item = NULL;
+
+	/* create a package just to get the name-version.release */
+	pkg = zif_package_local_new ();
+	ret = zif_package_local_set_from_header (ZIF_PACKAGE_LOCAL (pkg),
+						 hdr,
+						 ZIF_PACKAGE_LOCAL_FLAG_NOTHING,
+						 NULL);
+	if (!ret)
+		goto out;
+	item = zif_transaction_get_item_from_cache_package_nva (array,
+							        zif_package_get_name_version_arch (pkg));
+out:
+	g_object_unref (pkg);
+	return item;
+}
+
+/**
  * zif_transaction_rpmcb_type_to_string:
  **/
 static const gchar *
@@ -4918,21 +4970,26 @@ zif_transaction_ts_progress_cb (const void *arg,
 				fnpyKey key, void *data)
 {
 	const char *filename = (const char *) key;
+	const gchar *name = NULL;
 	gboolean ret;
 	GError *error_local = NULL;
 	guint percentage;
 	guint speed;
+	Header hdr = (Header) arg;
 	void *rc = NULL;
 	ZifStateAction action;
 	ZifTransactionItem *item;
 
 	ZifTransactionCommit *commit = (ZifTransactionCommit *) data;
 
-	g_debug ("phase: %s (%i/%i, %s)",
+	if (hdr != NULL)
+		name = headerGetString (hdr, RPMTAG_NAME);
+	g_debug ("phase: %s (%i/%i, %s/%s)",
 		 zif_transaction_rpmcb_type_to_string (what),
 		 (gint32) amount,
 		 (gint32) total,
-		 (const gchar *) key);
+		 (const gchar *) key,
+		 name);
 
 	switch (what) {
 	case RPMCALLBACK_INST_OPEN_FILE:
@@ -5011,7 +5068,6 @@ zif_transaction_ts_progress_cb (const void *arg,
 
 	case RPMCALLBACK_TRANS_PROGRESS:
 	case RPMCALLBACK_INST_PROGRESS:
-	case RPMCALLBACK_UNINST_PROGRESS:
 
 		/* we're preparing the transaction */
 		if (commit->step == ZIF_TRANSACTION_STEP_PREPARING ||
@@ -5034,14 +5090,52 @@ zif_transaction_ts_progress_cb (const void *arg,
 		zif_state_set_percentage (commit->child, percentage);
 
 		/* update UI */
-		item = zif_transaction_get_item_from_cache_filename_suffix (commit->transaction->priv->remove,
-									    filename);
-		if (item != NULL) {
-			zif_state_set_package_progress (commit->state,
-							zif_package_get_id_basic (item->package),
-							ZIF_STATE_ACTION_INSTALLING,
-							percentage);
+		item = zif_transaction_get_item_from_cache_header (commit->transaction->priv->install, hdr);
+		if (item == NULL) {
+			item = zif_transaction_get_item_from_cache_filename_suffix (commit->transaction->priv->install,
+										    filename);
 		}
+		if (item == NULL) {
+			g_warning ("cannot find %s", filename);
+			g_assert_not_reached ();
+			break;
+		}
+		zif_state_set_package_progress (commit->state,
+						zif_package_get_id_basic (item->package),
+						ZIF_STATE_ACTION_INSTALLING,
+						percentage);
+		break;
+
+	case RPMCALLBACK_UNINST_PROGRESS:
+
+		/* we're preparing the transaction */
+		if (commit->step == ZIF_TRANSACTION_STEP_PREPARING ||
+		    commit->step == ZIF_TRANSACTION_STEP_IGNORE) {
+			g_debug ("ignoring preparing %i / %i",
+				 (gint32) amount, (gint32) total);
+			break;
+		}
+
+		/* progress */
+		percentage = (100.0f / (gfloat) total) * (gfloat) amount;
+		g_debug ("progress %i/%i", (gint32) amount, (gint32) total);
+		zif_state_set_percentage (commit->child, percentage);
+
+		/* update UI */
+		item = zif_transaction_get_item_from_cache_header (commit->transaction->priv->remove, hdr);
+		if (item == NULL) {
+			item = zif_transaction_get_item_from_cache_filename_suffix (commit->transaction->priv->remove,
+										    filename);
+		}
+		if (item == NULL) {
+			g_warning ("cannot find %s", filename);
+			g_assert_not_reached ();
+			break;
+		}
+		zif_state_set_package_progress (commit->state,
+						zif_package_get_id_basic (item->package),
+						ZIF_STATE_ACTION_REMOVING,
+						percentage);
 		break;
 
 	case RPMCALLBACK_TRANS_START:
