@@ -962,7 +962,7 @@ _g_get_real_time (void)
 #endif
 
 /**
- * zif_download_location_full:
+ * zif_download_file_full:
  * @download: A #ZifDownload
  * @uri: A full remote URI.
  * @filename: Local filename to save to

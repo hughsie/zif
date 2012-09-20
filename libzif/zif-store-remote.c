@@ -4161,7 +4161,7 @@ out:
  *
  * Get the public key URLs for this repository.
  *
- * Return value: An array of key URLs, or %NULL.
+ * Return value: (transfer none): An array of key URLs, or %NULL.
  *
  * Since: 0.3.2
  **/
@@ -4215,6 +4215,7 @@ out:
 
 /**
  * zif_store_remote_get_files:
+ *
  * Return value: (transfer full): An array of strings
  **/
 GPtrArray *
@@ -4238,6 +4239,7 @@ out:
 
 /**
  * zif_store_remote_get_requires:
+ *
  * Return value: (transfer full): An array of #ZifDepend's, free with g_ptr_array_unref()
  **/
 GPtrArray *
@@ -4261,6 +4263,7 @@ out:
 
 /**
  * zif_store_remote_get_provides:
+ *
  * Return value: (transfer full): An array of #ZifDepend's, free with g_ptr_array_unref()
  **/
 GPtrArray *
@@ -4284,6 +4287,7 @@ out:
 
 /**
  * zif_store_remote_get_obsoletes:
+ *
  * Return value: (transfer full): An array of #ZifDepend's, free with g_ptr_array_unref()
  **/
 GPtrArray *
@@ -4307,6 +4311,7 @@ out:
 
 /**
  * zif_store_remote_get_conflicts:
+ *
  * Return value: (transfer full): An array of #ZifDepend's, free with g_ptr_array_unref()
  **/
 GPtrArray *

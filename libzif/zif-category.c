@@ -313,8 +313,8 @@ zif_category_class_init (ZifCategoryClass *klass)
 
 	/**
 	 * ZifCategory:parent-id:
-	 * Since: 0.1.0
 	 *
+	 * Since: 0.1.0
 	 */
 	pspec = g_param_spec_string ("parent-id", NULL, NULL,
 				     NULL,

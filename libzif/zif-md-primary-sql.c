@@ -792,7 +792,7 @@ zif_md_primary_sql_what_conflicts (ZifMd *md, GPtrArray *depends,
 }
 
 /**
- * zif_md_primary_sql_get_provides:
+ * zif_md_primary_sql_get_depends:
  **/
 static GPtrArray *
 zif_md_primary_sql_get_depends (ZifMd *md,

@@ -1162,11 +1162,6 @@ out:
 /**
  * zif_transaction_filter_best_provide:
  *
- * @array: ZifPackage's that provide @depend
- * @package_reason: The package we're trying to install
- * @depend: The thing we're looking for
- * @package_dep: (out): The best package that provides this dep
- *
  * This  is how yum does it:
  * Taken from: http://yum.baseurl.org/wiki/CompareProviders
  *

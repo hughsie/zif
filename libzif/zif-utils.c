@@ -271,7 +271,7 @@ zif_init (void)
 }
 
 /**
- * zif_store_remote_refresh_md:
+ * zif_guess_content_type:
  * @filename: The target filename
  *
  * Guesses a content type, based on the filename ending.
@@ -1465,7 +1465,7 @@ zif_str_compare_equal (const gchar *a, const gchar *b)
 }
 
 /**
- * zif_load_multiline_key_file: (skip):
+ * zif_load_multiline_key_file: (skip)
  * @filename: The repo file to load
  * @error: A #GError, or %NULL
  *
@@ -1543,7 +1543,7 @@ out:
 }
 
 /**
- * zif_string_replace: (skip):
+ * zif_string_replace: (skip)
  * @string: A GString
  * @search: The string to search for
  * @replace: The string to replace with

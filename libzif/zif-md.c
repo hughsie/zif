@@ -2207,7 +2207,7 @@ zif_md_class_init (ZifMdClass *klass)
 	object_class->set_property = zif_md_set_property;
 
 	/**
-	 * ZifUpdate:kind:
+	 * ZifMd:kind:
 	 *
 	 * Since: 0.1.3
 	 */
@@ -2217,7 +2217,7 @@ zif_md_class_init (ZifMdClass *klass)
 	g_object_class_install_property (object_class, PROP_KIND, pspec);
 
 	/**
-	 * ZifUpdate:filename:
+	 * ZifMd:filename:
 	 *
 	 * Since: 0.1.3
 	 */
@@ -2227,7 +2227,7 @@ zif_md_class_init (ZifMdClass *klass)
 	g_object_class_install_property (object_class, PROP_FILENAME, pspec);
 
 	/**
-	 * ZifUpdate:location:
+	 * ZifMd:location:
 	 *
 	 * Since: 0.1.3
 	 */

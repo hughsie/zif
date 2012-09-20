@@ -127,7 +127,7 @@ zif_package_set_compare_mode (ZifPackage *package,
 }
 
 /**
- * zif_package_compare_mode_to_string:
+ * zif_package_compare_mode_from_string:
  * @value: the compare mode to convert
  *
  * Converts a string to a #ZifPackageCompareMode.

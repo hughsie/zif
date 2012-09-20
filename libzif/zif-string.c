@@ -44,7 +44,7 @@ typedef struct {
 } ZifStringInternal;
 
 /**
- * zif_string_new: (skip):
+ * zif_string_new: (skip)
  * @value: string to copy
  *
  * Creates a new referenced counted string
@@ -65,7 +65,7 @@ zif_string_new (const gchar *value)
 }
 
 /**
- * zif_string_new_value: (skip):
+ * zif_string_new_value: (skip)
  * @value: string to use
  *
  * Creates a new referenced counted string, using the allocated memory.
@@ -87,7 +87,7 @@ zif_string_new_value (gchar *value)
 }
 
 /**
- * zif_string_new_static: (skip):
+ * zif_string_new_static: (skip)
  * @value: string to use
  *
  * Creates a new referenced counted string, using the static memory.
@@ -110,7 +110,7 @@ zif_string_new_static (const gchar *value)
 }
 
 /**
- * zif_string_ref: (skip):
+ * zif_string_ref: (skip)
  * @string: A #ZifString
  *
  * Increases the reference count on the object.
@@ -129,7 +129,7 @@ zif_string_ref (ZifString *string)
 }
 
 /**
- * zif_string_unref: (skip):
+ * zif_string_unref: (skip)
  * @string: A #ZifString
  *
  * Decreses the reference count on the object, and frees the value if
