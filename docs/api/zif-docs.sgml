@@ -37,7 +37,7 @@
         This manual documents features of ZIF.
       </para>
     </partintro>
-    <xi:include href="spec/zif-introduction.xml"/>
+    <xi:include href="zif-introduction.xml"/>
   </reference>
 
   <reference id="libzif">
