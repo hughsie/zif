@@ -5096,8 +5096,7 @@ zif_transaction_ts_progress_cb (const void *arg,
 										    filename);
 		}
 		if (item == NULL) {
-			g_warning ("cannot find %s", filename);
-			g_assert_not_reached ();
+			g_warning ("cannot find %s (%s)", filename, name);
 			break;
 		}
 		zif_state_set_package_progress (commit->state,
@@ -5128,8 +5127,7 @@ zif_transaction_ts_progress_cb (const void *arg,
 										    filename);
 		}
 		if (item == NULL) {
-			g_warning ("cannot find %s", filename);
-			g_assert_not_reached ();
+			g_warning ("cannot find %s", name);
 			break;
 		}
 		zif_state_set_package_progress (commit->state,
