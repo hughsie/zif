@@ -5032,14 +5032,6 @@ zif_transaction_ts_progress_cb (const void *arg,
 		percentage = (100.0f / (gfloat) total) * (gfloat) amount;
 		g_debug ("progress %i/%i", (gint32) amount, (gint32) total);
 		zif_state_set_percentage (commit->child, percentage);
-		if (amount == total) {
-			ret = zif_state_done (commit->state, &error_local);
-			if (!ret) {
-				g_warning ("state increment failed: %s",
-					   error_local->message);
-				g_error_free (error_local);
-			}
-		}
 
 		/* update UI */
 		item = zif_transaction_get_item_from_cache_filename_suffix (commit->transaction->priv->remove,
@@ -5069,10 +5061,10 @@ zif_transaction_ts_progress_cb (const void *arg,
 		g_debug ("transaction stop");
 		break;
 
+	case RPMCALLBACK_INST_STOP:
 	case RPMCALLBACK_UNINST_STOP:
 
-		/* no idea */
-		g_debug ("uninstall done");
+		/* phase complete */
 		ret = zif_state_done (commit->state, &error_local);
 		if (!ret) {
 			g_warning ("state increment failed: %s",
