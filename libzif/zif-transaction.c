@@ -4336,12 +4336,14 @@ zif_transaction_obtain_key_for_package (ZifTransaction *transaction,
 				        ZifState *state,
 				        GError **error)
 {
-	const gchar *pubkey;
 	const gchar *store_dir;
-	gboolean ret;
+	gboolean ret = TRUE;
 	gchar *filename_tmp = NULL;
+	gchar **pubkey;
+	guint i;
 	rpmKeyring keyring = NULL;
 	ZifDownload *download = NULL;
+	ZifState *state_local;
 	ZifStoreRemote *remote;
 
 	/* get the remote store for the package */
@@ -4374,30 +4376,41 @@ zif_transaction_obtain_key_for_package (ZifTransaction *transaction,
 					 "RPM-GPG-KEY",
 					 NULL);
 
-	/* download pubkey to temp location */
-	g_debug ("importing %s for %s",
-		 pubkey,
-		 zif_package_get_printable (package));
+	/* import _all_ the pubkeys */
 	download = zif_download_new ();
-	ret = zif_download_file_full (download,
-				      pubkey,
-				      filename_tmp,
-				      0,
-				      "application/pgp-keys",
-				      G_CHECKSUM_MD5,
-				      NULL,
-				      state,
-				      error);
-	if (!ret)
-		goto out;
+	zif_state_set_number_steps (state, g_strv_length (pubkey));
+	for (i = 0; pubkey[i] != NULL; i++) {
 
-	/* import it */
-	keyring = rpmtsGetKeyring (transaction->priv->ts, 1);
-	ret = zif_transaction_add_public_key_to_rpmdb (keyring,
-						       filename_tmp,
-						       error);
-	if (!ret)
-		goto out;
+		/* download pubkey to temp location */
+		g_debug ("importing %s for %s",
+			 pubkey[i],
+			 zif_package_get_printable (package));
+		state_local = zif_state_get_child (state);
+		ret = zif_download_file_full (download,
+					      pubkey[i],
+					      filename_tmp,
+					      0,
+					      "application/pgp-keys",
+					      G_CHECKSUM_MD5,
+					      NULL,
+					      state_local,
+					      error);
+		if (!ret)
+			goto out;
+
+		/* import it */
+		keyring = rpmtsGetKeyring (transaction->priv->ts, 1);
+		ret = zif_transaction_add_public_key_to_rpmdb (keyring,
+							       filename_tmp,
+							       error);
+		if (!ret)
+			goto out;
+
+		/* step done */
+		ret = zif_state_done (state, error);
+		if (!ret)
+			goto out;
+	}
 out:
 	g_free (filename_tmp);
 	if (keyring != NULL)

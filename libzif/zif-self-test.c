@@ -2641,6 +2641,7 @@ zif_repos_func (void)
 	gboolean ret;
 	gchar *filename;
 	gchar *pidfile;
+	gchar **pubkey;
 
 	/* set this up as dummy */
 	config = zif_config_new ();
@@ -2704,8 +2705,9 @@ zif_repos_func (void)
 	g_object_unref (store);
 
 	/* ensure we got the pubkey */
-	g_assert (g_str_has_prefix (zif_store_remote_get_pubkey (store),
-		  "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-"));
+	pubkey = zif_store_remote_get_pubkey (store);
+	g_assert (pubkey != NULL);
+	g_assert (g_str_has_prefix (pubkey[0], "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-"));
 
 	g_object_unref (state);
 	g_object_unref (repos);

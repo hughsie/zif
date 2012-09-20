@@ -86,7 +86,7 @@ struct _ZifStoreRemotePrivate
 	gchar			*cache_dir;		/* /var/cache/yum */
 	gchar			*repo_filename;		/* /etc/yum.repos.d/fedora.repo */
 	gchar			*media_id;		/* 1273587559.563492 */
-	gchar			*pubkey;		/* file:///etc/pki/rpm-gpg/RPM-GPG-KEY */
+	gchar			**pubkey;		/* file:///etc/pki/rpm-gpg/RPM-GPG-KEY */
 	guint			 metadata_expire;	/* in seconds */
 	guint			 download_retries;
 	gboolean		 enabled;
@@ -1998,6 +1998,7 @@ zif_store_remote_load (ZifStore *store, ZifState *state, GError **error)
 	gboolean ret = TRUE;
 	gboolean gpgcheck;
 	gchar *baseurl_temp;
+	gchar *pubkey_temp = NULL;
 	gchar *enabled = NULL;
 	gchar *filename;
 	gchar *media_root;
@@ -2174,13 +2175,14 @@ zif_store_remote_load (ZifStore *store, ZifState *state, GError **error)
 				      "gpgkey",
 				      NULL);
 	if (gpgcheck && temp != NULL) {
-		remote->priv->pubkey = zif_config_expand_substitutions (remote->priv->config,
-									temp,
-									error);
-		if (remote->priv->pubkey == NULL) {
+		pubkey_temp = zif_config_expand_substitutions (remote->priv->config,
+							       temp,
+							       error);
+		if (pubkey_temp == NULL) {
 			ret = FALSE;
 			goto out;
 		}
+		remote->priv->pubkey = g_strsplit (pubkey_temp, " ", -1);
 	}
 	g_free (temp);
 
@@ -2246,6 +2248,7 @@ zif_store_remote_load (ZifStore *store, ZifState *state, GError **error)
 		goto out;
 out:
 	g_free (metadata_expire);
+	g_free (pubkey_temp);
 	g_free (enabled);
 	return ret;
 }
@@ -4156,13 +4159,13 @@ out:
  * zif_store_remote_get_pubkey:
  * @store: A #ZifStoreRemote
  *
- * Get the public key URL for this repository.
+ * Get the public key URLs for this repository.
  *
- * Return value: The key URL, or %NULL.
+ * Return value: An array of key URLs, or %NULL.
  *
- * Since: 0.2.4
+ * Since: 0.3.2
  **/
-const gchar *
+gchar **
 zif_store_remote_get_pubkey (ZifStoreRemote *store)
 {
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), NULL);
@@ -4339,7 +4342,7 @@ zif_store_remote_file_monitor_cb (ZifMonitor *monitor, ZifStoreRemote *store)
 	g_free (store->priv->mirrorlist);
 	g_strfreev (store->priv->baseurl);
 	g_free (store->priv->metalink);
-	g_free (store->priv->pubkey);
+	g_strfreev (store->priv->pubkey);
 
 	store->priv->loaded = FALSE;
 	store->priv->loaded_metadata = FALSE;
@@ -4375,7 +4378,7 @@ zif_store_remote_finalize (GObject *object)
 	g_strfreev (store->priv->baseurl);
 	g_free (store->priv->mirrorlist);
 	g_free (store->priv->metalink);
-	g_free (store->priv->pubkey);
+	g_strfreev (store->priv->pubkey);
 	g_free (store->priv->cache_dir);
 	g_free (store->priv->repomd_filename);
 	g_free (store->priv->directory);

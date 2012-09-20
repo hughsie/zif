@@ -75,7 +75,7 @@ gboolean	 zif_store_remote_is_devel		(ZifStoreRemote		*store,
 const gchar	*zif_store_remote_get_name		(ZifStoreRemote		*store,
 							 ZifState		*state,
 							 GError			**error);
-const gchar	*zif_store_remote_get_pubkey		(ZifStoreRemote		*store);
+gchar		**zif_store_remote_get_pubkey		(ZifStoreRemote		*store);
 gboolean	 zif_store_remote_get_enabled		(ZifStoreRemote		*store,
 							 ZifState		*state,
 							 GError			**error);

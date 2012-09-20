@@ -502,7 +502,7 @@ void
 zif_package_remote_set_store_remote (ZifPackageRemote *pkg,
 				     ZifStoreRemote *store)
 {
-	const gchar *pubkey;
+	gchar **pubkey;
 
 	g_return_if_fail (ZIF_IS_PACKAGE_REMOTE (pkg));
 	g_return_if_fail (ZIF_IS_STORE_REMOTE (store));
