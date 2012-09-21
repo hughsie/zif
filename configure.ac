@@ -2,11 +2,11 @@ AC_PREREQ(2.63)
 
 m4_define([zif_major_version], [0])
 m4_define([zif_minor_version], [3])
-m4_define([zif_micro_version], [2])
+m4_define([zif_micro_version], [3])
 m4_define([zif_version],
           [zif_major_version.zif_minor_version.zif_micro_version])
 
-AC_INIT([zif],[0.3.2])
+AC_INIT([zif],[0.3.3])
 AC_CONFIG_SRCDIR(libzif)
 AM_INIT_AUTOMAKE([1.9 no-dist-gzip dist-xz tar-ustar])
 AC_CONFIG_HEADERS([config.h])
