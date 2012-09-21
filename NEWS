@@ -1,3 +1,14 @@
+Version 0.3.2
+~~~~~~~~~~~~~
+Released: 2012-09-21
+
+Bugfixes:
+ - Import all the GPG keys found from gpgkey in a repo file
+ - Add two more ignorable rpmCallbackTypes
+ - Use the new RPMCALLBACK_INST_STOP to control the install phases
+ - Ensure the package-progress gets set on the master ZifState
+ - Try harder to get the package progress when packages are being removed
+
 Version 0.3.1
 ~~~~~~~~~~~~~
 Released: 2012-08-06
