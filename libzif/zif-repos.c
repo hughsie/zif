@@ -479,7 +479,7 @@ out:
  *
  * Gets the enabled and disabled remote stores.
  *
- * Return value: (transfer full): A list of #ZifStore's
+ * Return value: (element-type ZifStore) (transfer container): A list of #ZifStore's
  *
  * Since: 0.1.0
  **/
@@ -522,7 +522,7 @@ out:
  *
  * Gets the enabled remote stores.
  *
- * Return value: (transfer full): A list of #ZifStore's
+ * Return value: (element-type ZifStore) (transfer container): A list of #ZifStore's
  *
  * Since: 0.1.0
  **/

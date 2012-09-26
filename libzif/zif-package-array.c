@@ -38,7 +38,7 @@
 /**
  * zif_package_array_new:
  *
- * Return value: (transfer full): A new #GPtrArray instance.
+ * Return value: (element-type ZifPackage) (transfer container): A new #GPtrArray instance.
  *
  * Since: 0.1.3
  **/
@@ -50,7 +50,7 @@ zif_package_array_new (void)
 
 /**
  * zif_package_array_find:
- * @array: Array of %ZifPackage's
+ * @array: (element-type ZifPackage): Array of %ZifPackage's
  * @package_id: A #GError, or %NULL
  * @error: A #GError, or %NULL
  *
@@ -94,7 +94,7 @@ zif_package_array_find (GPtrArray *array,
 
 /**
  * zif_package_array_get_newest:
- * @array: Array of %ZifPackage's
+ * @array: (element-type ZifPackage): Array of %ZifPackage's
  * @error: A #GError, or %NULL
  *
  * Returns the newest package from a list.
@@ -165,7 +165,7 @@ out:
 
 /**
  * zif_package_array_get_oldest:
- * @array: Array of %ZifPackage's
+ * @array: (element-type ZifPackage): Array of %ZifPackage's
  * @error: A #GError, or %NULL
  *
  * Returns the oldest package from a list.
@@ -445,7 +445,7 @@ zif_package_array_filter_duplicates (GPtrArray *packages)
 
 /**
  * zif_package_array_filter_best_arch32:
- * @array: Array of %ZifPackage's
+ * @array: (element-type ZifPackage): Array of %ZifPackage's
  *
  * Filters the array so that only the best version of a package remains.
  **/
@@ -497,7 +497,7 @@ zif_package_array_filter_best_arch32 (GPtrArray *array)
 
 /**
  * zif_package_array_filter_best_arch:
- * @array: Array of %ZifPackage's
+ * @array: (element-type ZifPackage): Array of %ZifPackage's
  *
  * Filters the array so that only the best version of a package remains.
  *
@@ -529,7 +529,7 @@ zif_package_array_filter_best_arch (GPtrArray *array, const gchar *arch)
 
 /**
  * zif_package_array_filter_arch:
- * @array: Array of %ZifPackage's
+ * @array: (element-type ZifPackage): Array of %ZifPackage's
  * @arch: architecture string, e.g. "i486"
  *
  * Filters the array so that only the matching arch of a package remains.
@@ -561,8 +561,8 @@ zif_package_array_filter_arch (GPtrArray *array, const gchar *arch)
 
 /**
  * zif_package_array_filter_provide:
- * @array: Array of %ZifPackage's
- * @depends: an array of #ZifDepend's
+ * @array: (element-type ZifPackage): Array of %ZifPackage's
+ * @depends: (element-type ZifDepend): an array of #ZifDepend's
  * @state: A #ZifState to use for progress reporting
  * @error: A #GError, or %NULL
  *
@@ -626,8 +626,8 @@ out:
 
 /**
  * zif_package_array_filter_require:
- * @array: Array of %ZifPackage's
- * @depends: an array of #ZifDepend's
+ * @array: (element-type ZifPackage): Array of %ZifPackage's
+ * @depends: (element-type ZifDepend): an array of #ZifDepend's
  * @state: A #ZifState to use for progress reporting
  * @error: A #GError, or %NULL
  *
@@ -691,8 +691,8 @@ out:
 
 /**
  * zif_package_array_filter_conflict:
- * @array: Array of %ZifPackage's
- * @depends: an array of #ZifDepend's
+ * @array: (element-type ZifPackage): Array of %ZifPackage's
+ * @depends: (element-type ZifDepend): an array of #ZifDepend's
  * @state: A #ZifState to use for progress reporting
  * @error: A #GError, or %NULL
  *
@@ -756,8 +756,8 @@ out:
 
 /**
  * zif_package_array_filter_obsolete:
- * @array: Array of %ZifPackage's
- * @depends: an array of #ZifDepend's
+ * @array: (element-type ZifPackage): Array of %ZifPackage's
+ * @depends: (element-type ZifDepend): an array of #ZifDepend's
  * @state: A #ZifState to use for progress reporting
  * @error: A #GError, or %NULL
  *
@@ -920,10 +920,10 @@ out:
 
 /**
  * zif_package_array_provide:
- * @array: Array of %ZifPackage's
+ * @array: (element-type ZifPackage): Array of %ZifPackage's
  * @depend: A dependency to try and satisfy
- * @best_depend: The best matched dependency, free with g_object_unref() if not %NULL
- * @results: A matched dependencies, free with g_ptr_array_unref() if not %NULL
+ * @best_depend: The best matched dependency if not %NULL
+ * @results: A matched dependencies if not %NULL
  * @state: A #ZifState to use for progress reporting
  * @error: A #GError, or %NULL
  *
@@ -953,10 +953,10 @@ zif_package_array_provide (GPtrArray *array,
 
 /**
  * zif_package_array_require:
- * @array: Array of %ZifPackage's
+ * @array: (element-type ZifPackage): Array of %ZifPackage's
  * @depend: A dependency to try and satisfy
- * @best_depend: The best matched dependency, free with g_object_unref() if not %NULL
- * @results: A matched dependencies, free with g_ptr_array_unref() if not %NULL
+ * @best_depend: The best matched dependency if not %NULL
+ * @results: A matched dependencies if not %NULL
  * @state: A #ZifState to use for progress reporting
  * @error: A #GError, or %NULL
  *
@@ -986,10 +986,10 @@ zif_package_array_require (GPtrArray *array,
 
 /**
  * zif_package_array_conflict:
- * @array: Array of %ZifPackage's
+ * @array: (element-type ZifPackage): Array of %ZifPackage's
  * @depend: A dependency to try and satisfy
- * @best_depend: The best matched dependency, free with g_object_unref() if not %NULL
- * @results: A matched dependencies, free with g_ptr_array_unref() if not %NULL
+ * @best_depend: The best matched dependency if not %NULL
+ * @results: A matched dependencies if not %NULL
  * @state: A #ZifState to use for progress reporting
  * @error: A #GError, or %NULL
  *
@@ -1019,10 +1019,10 @@ zif_package_array_conflict (GPtrArray *array,
 
 /**
  * zif_package_array_obsolete:
- * @array: Array of %ZifPackage's
+ * @array: (element-type ZifPackage): Array of %ZifPackage's
  * @depend: A dependency to try and satisfy
- * @best_depend: The best matched dependency, free with g_object_unref() if not %NULL
- * @results: A matched dependencies, free with g_ptr_array_unref() if not %NULL
+ * @best_depend: The best matched dependency if not %NULL
+ * @results: A matched dependencies if not %NULL
  * @state: A #ZifState to use for progress reporting
  * @error: A #GError, or %NULL
  *

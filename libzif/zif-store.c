@@ -395,13 +395,13 @@ zif_store_refresh (ZifStore *store,
 /**
  * zif_store_search_name:
  * @store: A #ZifStore
- * @search: A search term, e.g. "power"
+ * @search: (array zero-terminated=1) (element-type utf8): The search terms, e.g. "power"
  * @state: A #ZifState to use for progress reporting
  * @error: A #GError, or %NULL
  *
  * Find packages that match the package name in some part.
  *
- * Return value: (transfer full): An array of #ZifPackage's
+ * Return value: (element-type ZifPackage) (transfer container): An array of #ZifPackage's
  *
  * Since: 0.1.0
  **/
@@ -511,13 +511,13 @@ out:
 /**
  * zif_store_search_category:
  * @store: A #ZifStore
- * @search: A search term, e.g. "gnome/games"
+ * @search: (array zero-terminated=1) (element-type utf8): The search terms, e.g. "gnome/games"
  * @state: A #ZifState to use for progress reporting
  * @error: A #GError, or %NULL
  *
  * Return packages in a specific category.
  *
- * Return value: (transfer full): An array of #ZifPackage's
+ * Return value: (element-type ZifPackage) (transfer container): An array of #ZifPackage's
  *
  * Since: 0.1.0
  **/
@@ -625,13 +625,13 @@ out:
 /**
  * zif_store_search_details:
  * @store: A #ZifStore
- * @search: A search term, e.g. "trouble"
+ * @search: (array zero-terminated=1) (element-type utf8): The search terms, e.g. "trouble"
  * @state: A #ZifState to use for progress reporting
  * @error: A #GError, or %NULL
  *
  * Find packages that match some detail about the package.
  *
- * Return value: (transfer full): An array of #ZifPackage's
+ * Return value: (element-type ZifPackage) (transfer container): An array of #ZifPackage's
  *
  * Since: 0.1.0
  **/
@@ -744,13 +744,13 @@ out:
 /**
  * zif_store_search_group:
  * @store: A #ZifStore
- * @search: A search term, e.g. "games"
+ * @search: (array zero-terminated=1) (element-type utf8): The search terms, e.g. "games"
  * @state: A #ZifState to use for progress reporting
  * @error: A #GError, or %NULL
  *
  * Find packages that belong in a specific group.
  *
- * Return value: (transfer full): An array of #ZifPackage's
+ * Return value: (element-type ZifPackage) (transfer container): An array of #ZifPackage's
  *
  * Since: 0.1.0
  **/
@@ -860,13 +860,13 @@ out:
 /**
  * zif_store_search_file:
  * @store: A #ZifStore
- * @search: A search term, e.g. "/usr/bin/gnome-power-manager"
+ * @search: (array zero-terminated=1) (element-type utf8): The search terms, e.g. "/usr/bin/gnome-power-manager"
  * @state: A #ZifState to use for progress reporting
  * @error: A #GError, or %NULL
  *
  * Find packages that provide the specified file.
  *
- * Return value: (transfer full): An array of #ZifPackage's
+ * Return value: (element-type ZifPackage) (transfer container): An array of #ZifPackage's
  *
  * Since: 0.1.0
  **/
@@ -1181,7 +1181,7 @@ out:
 /**
  * zif_store_resolve_full:
  * @store: A #ZifStore
- * @search: A search term, e.g. "gnome-power-manager.i386"
+ * @search: (array zero-terminated=1) (element-type utf8): The search terms, e.g. "gnome-power-manager.i386"
  * @flags: A bitfield of %ZifStoreResolveFlags, e.g. %ZIF_STORE_RESOLVE_FLAG_USE_NAME_ARCH
  * @state: A #ZifState to use for progress reporting
  * @error: A #GError, or %NULL
@@ -1195,7 +1195,7 @@ out:
  * If no native packages are found, then the store is searched again,
  * this time matching any package regardless of architecture.
  *
- * Return value: (transfer full): An array of #ZifPackage's
+ * Return value: (element-type ZifPackage) (transfer container): An array of #ZifPackage's
  *
  * Since: 0.2.4
  **/
@@ -1219,7 +1219,7 @@ zif_store_resolve_full (ZifStore *store,
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	/* if we searched with prefer native and found no results, then
-	 * research without the flag set */
+	 * re-search without the flag set */
 	prefer_native = (flags & ZIF_STORE_RESOLVE_FLAG_PREFER_NATIVE) > 0;
 
 	/* setup steps */
@@ -1282,13 +1282,13 @@ out:
 /**
  * zif_store_resolve:
  * @store: A #ZifStore
- * @search: A search term, e.g. "gnome-power-manager"
+ * @search: (array zero-terminated=1) (element-type utf8): The search terms, e.g. "gnome-power-manager"
  * @state: A #ZifState to use for progress reporting
  * @error: A #GError, or %NULL
  *
  * Finds packages matching the package name exactly.
  *
- * Return value: (transfer full): An array of #ZifPackage's
+ * Return value: (element-type ZifPackage) (transfer container): An array of #ZifPackage's
  *
  * Since: 0.1.0
  **/
@@ -1509,7 +1509,7 @@ out:
  *
  * Find packages that provide a specific string.
  *
- * Return value: (transfer full): An array of #ZifPackage's
+ * Return value: (element-type ZifPackage) (transfer container): An array of #ZifPackage's
  *
  * Since: 0.1.3
  **/
@@ -1545,7 +1545,7 @@ zif_store_what_provides (ZifStore *store, GPtrArray *depends, ZifState *state, G
  *
  * Find packages that provide a specific string.
  *
- * Return value: (transfer full): An array of #ZifPackage's
+ * Return value: (element-type ZifPackage) (transfer container): An array of #ZifPackage's
  *
  * Since: 0.1.3
  **/
@@ -1581,7 +1581,7 @@ zif_store_what_requires (ZifStore *store, GPtrArray *depends, ZifState *state, G
  *
  * Find packages that obsolete a specific string.
  *
- * Return value: (transfer full): An array of #ZifPackage's
+ * Return value: (element-type ZifPackage) (transfer container): An array of #ZifPackage's
  *
  * Since: 0.1.3
  **/
@@ -1617,7 +1617,7 @@ zif_store_what_obsoletes (ZifStore *store, GPtrArray *depends, ZifState *state, 
  *
  * Find packages that conflict a specific string.
  *
- * Return value: (transfer full): An array of #ZifPackage's
+ * Return value: (element-type ZifPackage) (transfer container): An array of #ZifPackage's
  *
  * Since: 0.1.3
  **/
@@ -1652,7 +1652,7 @@ zif_store_what_conflicts (ZifStore *store, GPtrArray *depends, ZifState *state, 
  *
  * Return all packages in the #ZifStore's.
  *
- * Return value: (transfer full): An array of #ZifPackage's
+ * Return value: (element-type ZifPackage) (transfer container): An array of #ZifPackage's
  *
  * Since: 0.1.0
  **/
@@ -1842,7 +1842,7 @@ out:
  *
  * Return a list of custom categories.
  *
- * Return value: (transfer full): An array of #ZifCategory's, free with g_ptr_array_unref() when done.
+ * Return value: (element-type ZifCategory) (transfer container): An array of #ZifCategory's
  *
  * Since: 0.1.0
  **/

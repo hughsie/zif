@@ -82,7 +82,7 @@ zif_object_array_add_array (GPtrArray *array, GPtrArray *source)
  * Create a new instance of the array, and incrementing the refcount on
  * the contents.
  *
- * Return value: (transfer full): A new #GPtrArray instance, free with g_ptr_array_unref()
+ * Return value: (transfer container): A new #GPtrArray instance
  *
  * Since: 0.2.7
  **/
@@ -102,7 +102,7 @@ zif_object_array_copy (GPtrArray *array)
 /**
  * zif_object_array_new:
  *
- * Return value: (transfer full): A new #GPtrArray instance, free with g_ptr_array_unref()
+ * Return value: (transfer container): A new #GPtrArray instance
  *
  * Since: 0.1.3
  **/

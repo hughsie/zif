@@ -819,7 +819,7 @@ zif_md_unload (ZifMd *md, ZifState *state, GError **error)
  *
  * Finds all remote packages that match the name exactly.
  *
- * Return value: (transfer full): An array of #ZifPackageRemote's
+ * Return value: (element-type ZifPackageRemote) (transfer container): An array of #ZifPackageRemote's
  *
  * Since: 0.2.4
  **/
@@ -863,7 +863,7 @@ out:
  *
  * Finds all remote packages that match the name exactly.
  *
- * Return value: (transfer full): An array of #ZifPackageRemote's
+ * Return value: (element-type ZifPackageRemote) (transfer container): An array of #ZifPackageRemote's
  *
  * Since: 0.1.0
  **/
@@ -890,7 +890,7 @@ zif_md_resolve (ZifMd *md,
  * Gets a list of all packages that contain the file.
  * Results are pkgId's descriptors, i.e. 64 bit hashes as test.
  *
- * Return value: (transfer full): A string list of pkgId's
+ * Return value: (element-type utf8) (transfer container): A string list of pkgId's
  *
  * Since: 0.1.0
  **/
@@ -930,7 +930,7 @@ out:
  *
  * Finds all packages that match the name.
  *
- * Return value: (transfer full): An array of #ZifPackageRemote's
+ * Return value: (element-type ZifPackageRemote) (transfer container): An array of #ZifPackageRemote's
  *
  * Since: 0.1.0
  **/
@@ -970,7 +970,7 @@ out:
  *
  * Finds all packages that match the name or description.
  *
- * Return value: (transfer full): An array of #ZifPackageRemote's
+ * Return value: (element-type ZifPackageRemote) (transfer container): An array of #ZifPackageRemote's
  *
  * Since: 0.1.0
  **/
@@ -1010,7 +1010,7 @@ out:
  *
  * Finds all packages that match the group.
  *
- * Return value: (transfer full): An array of #ZifPackageRemote's
+ * Return value: (element-type ZifPackageRemote) (transfer container): An array of #ZifPackageRemote's
  *
  * Since: 0.1.0
  **/
@@ -1044,13 +1044,13 @@ out:
 /**
  * zif_md_search_pkgid:
  * @md: A #ZifMd
- * @search: A search term as a 64 bit hash
+ * @search: (array zero-terminated=1) (element-type utf8): The search terms as a 64 bit hash
  * @state: A #ZifState to use for progress reporting
  * @error: A #GError, or %NULL
  *
  * Finds all packages that match the given pkgId.
  *
- * Return value: (transfer full): An array of #ZifPackageRemote's
+ * Return value: (element-type ZifPackageRemote) (transfer container): An array of #ZifPackageRemote's
  *
  * Since: 0.1.0
  **/
@@ -1090,7 +1090,7 @@ out:
  *
  * Finds all packages that match the given provide.
  *
- * Return value: (transfer full): An array of #ZifPackageRemote's
+ * Return value: (element-type ZifPackageRemote) (transfer container): An array of #ZifPackageRemote's
  *
  * Since: 0.1.3
  **/
@@ -1132,7 +1132,7 @@ out:
  *
  * Finds all packages that match the given provide.
  *
- * Return value: (transfer full): An array of #ZifPackageRemote's
+ * Return value: (element-type ZifPackageRemote) (transfer container): An array of #ZifPackageRemote's
  *
  * Since: 0.1.3
  **/
@@ -1174,7 +1174,7 @@ out:
  *
  * Finds all packages that obsolete the given provide.
  *
- * Return value: (transfer full): An array of #ZifPackageRemote's
+ * Return value: (element-type ZifPackageRemote) (transfer container): An array of #ZifPackageRemote's
  *
  * Since: 0.1.3
  **/
@@ -1216,7 +1216,7 @@ out:
  *
  * Finds all packages that conflict with the given depends.
  *
- * Return value: (transfer full): An array of #ZifPackageRemote's
+ * Return value: (element-type ZifPackageRemote) (transfer container): An array of #ZifPackageRemote's
  *
  * Since: 0.1.3
  **/
@@ -1258,7 +1258,7 @@ out:
  *
  * Finds all packages that match PackageId.
  *
- * Return value: (transfer full): An array of #ZifPackageRemote's
+ * Return value: (element-type ZifPackageRemote) (transfer container): An array of #ZifPackageRemote's
  *
  * Since: 0.1.0
  **/
@@ -1298,7 +1298,7 @@ out:
  *
  * Gets the changelog data for a specific package
  *
- * Return value: (transfer full): An array of #ZifChangeset's
+ * Return value: (element-type ZifChangeset) (transfer container): An array of #ZifChangeset's
  *
  * Since: 0.1.0
  **/
@@ -1338,7 +1338,7 @@ out:
  *
  * Gets the file list for a specific package.
  *
- * Return value: (transfer full): an array of strings, free with g_ptr_array_unref()
+ * Return value: (element-type utf8) (transfer container): an array of strings
  *
  * Since: 0.1.0
  **/
@@ -1378,7 +1378,7 @@ out:
  *
  * Gets the provides for a specific package.
  *
- * Return value: (transfer full): An array of #ZifDepend's, free with g_ptr_array_unref()
+ * Return value: (element-type ZifDepend) (transfer container): An array of #ZifDepend's
  *
  * Since: 0.1.3
  **/
@@ -1418,7 +1418,7 @@ out:
  *
  * Gets the requires for a specific package.
  *
- * Return value: (transfer full): An array of #ZifDepend's, free with g_ptr_array_unref()
+ * Return value: (element-type ZifDepend) (transfer container): An array of #ZifDepend's
  *
  * Since: 0.1.3
  **/
@@ -1458,7 +1458,7 @@ out:
  *
  * Gets the obsoletes for a specific package.
  *
- * Return value: (transfer full): An array of #ZifDepend's, free with g_ptr_array_unref()
+ * Return value: (element-type ZifDepend) (transfer container): An array of #ZifDepend's
  *
  * Since: 0.1.3
  **/
@@ -1498,7 +1498,7 @@ out:
  *
  * Gets the conflicts for a specific package.
  *
- * Return value: (transfer full): An array of #ZifDepend's, free with g_ptr_array_unref()
+ * Return value: (element-type ZifDepend) (transfer container): An array of #ZifDepend's
  *
  * Since: 0.1.3
  **/
@@ -1537,7 +1537,7 @@ out:
  *
  * Returns all packages in the repo.
  *
- * Return value: (transfer full): An array of #ZifPackageRemote's
+ * Return value: (element-type ZifPackageRemote) (transfer container): An array of #ZifPackageRemote's
  *
  * Since: 0.1.0
  **/

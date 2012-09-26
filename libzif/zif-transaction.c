@@ -362,7 +362,7 @@ zif_transaction_get_package_array (GPtrArray *array)
  *
  * Gets the list of packages to be installed.
  *
- * Return value: (transfer full): An array of #ZifPackages, free with g_ptr_array_unref()
+ * Return value: (element-type ZifPackage) (transfer container): An array of #ZifPackages
  *
  * Since: 0.1.3
  **/
@@ -378,7 +378,7 @@ zif_transaction_get_install (ZifTransaction *transaction)
  *
  * Gets the list of packages to be removed.
  *
- * Return value: (transfer full): An array of #ZifPackages, free with g_ptr_array_unref()
+ * Return value: (element-type ZifPackage) (transfer container): An array of #ZifPackages
  *
  * Since: 0.1.3
  **/
@@ -480,7 +480,7 @@ zif_transaction_get_reason (ZifTransaction *transaction,
  *
  * Gets a list of packages that are due to be processed for a specific reason.
  *
- * Return value: (transfer full): An array of #ZifPackages, or %NULL for error. Free with g_ptr_array_unref()
+ * Return value: (element-type ZifPackage) (transfer container): An array of #ZifPackages, or %NULL for error.
  *
  * Since: 0.1.3
  **/

@@ -139,7 +139,7 @@ out:
  *
  * Finds all mirrors we should use.
  *
- * Return value: (transfer full): The URIs as an array of strings. The returned array should be freed with g_ptr_array_unref() when no longer needed.
+ * Return value: (element-type utf8) (transfer container): The URIs as an array of strings.
  *
  * Since: 0.1.0
  **/

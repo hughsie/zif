@@ -11,6 +11,9 @@ INCLUDES =						\
 	-DG_LOG_DOMAIN=\"Zif\"				\
 	-I$(top_srcdir)/libzif
 
+EXTRA_DIST =						\
+	zif-resolve-newest.py
+
 ZIF_LIBS =						\
 	$(GLIB_LIBS)					\
 	$(top_builddir)/libzif/libzif.la

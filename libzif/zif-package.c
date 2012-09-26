@@ -552,7 +552,7 @@ out:
  * zif_package_provides:
  * @package: A #ZifPackage
  * @depend: The dependency to try and satisfy
- * @satisfies: A matched dependency, free with g_object_unref() if not %NULL
+ * @satisfies: A matched dependency if not %NULL
  * @state: A #ZifState to use for progress reporting
  * @error: A #GError, or %NULL
  *
@@ -649,7 +649,7 @@ out:
  * zif_package_requires:
  * @package: A #ZifPackage
  * @depend: The dependency to try and satisfy
- * @satisfies: The matched dependency, free with g_object_unref() if not %NULL
+ * @satisfies: The matched dependency if not %NULL
  * @state: A #ZifState to use for progress reporting
  * @error: A #GError, or %NULL
  *
@@ -734,7 +734,7 @@ out:
  * zif_package_conflicts:
  * @package: A #ZifPackage
  * @depend: The dependency to try and satisfy
- * @satisfies: A matched dependency, free with g_object_unref() if not %NULL
+ * @satisfies: A matched dependency if not %NULL
  * @state: A #ZifState to use for progress reporting
  * @error: A #GError, or %NULL
  *
@@ -814,7 +814,7 @@ out:
  * zif_package_obsoletes:
  * @package: A #ZifPackage
  * @depend: The dependency to try and satisfy
- * @satisfies: A matched dependency, free with g_object_unref() if not %NULL
+ * @satisfies: A matched dependency if not %NULL
  * @state: A #ZifState to use for progress reporting
  * @error: A #GError, or %NULL
  *
@@ -1694,7 +1694,7 @@ zif_package_get_size (ZifPackage *package, ZifState *state, GError **error)
  *
  * Gets the file list for the package.
  *
- * Return value: (transfer full): An array of strings. The returned array should be
+ * Return value: (element-type utf8) (transfer container): An array of strings. The returned array should be
  * freed with g_ptr_array_unref() when no longer needed.
  *
  * Since: 0.1.0
@@ -1730,7 +1730,7 @@ zif_package_get_files (ZifPackage *package, ZifState *state, GError **error)
  *
  * Gets all the package requires.
  *
- * Return value: (transfer full): an array of ZifDepend's. The returned array should be
+ * Return value: (element-type ZifDepend) (transfer container): an array of ZifDepend's. The returned array should be
  * freed with g_ptr_array_unref() when no longer needed.
  *
  * Since: 0.1.0
@@ -1767,7 +1767,7 @@ zif_package_get_requires (ZifPackage *package, ZifState *state, GError **error)
  *
  * Get all the package provides.
  *
- * Return value: (transfer full): an array of ZifDepend's. The returned array should be
+ * Return value: (element-type ZifDepend) (transfer container): an array of ZifDepend's. The returned array should be
  * freed with g_ptr_array_unref() when no longer needed.
  *
  * Since: 0.1.0
@@ -1822,8 +1822,8 @@ zif_package_get_provides (ZifPackage *package, ZifState *state, GError **error)
  *
  * Get all the package obsoletes.
  *
- * Return value: (transfer full): an array of ZifDepend's.
- * The returned array should be freed with g_ptr_array_unref() when no longer needed.
+ * Return value: (element-type ZifDepend) (transfer container): an array of ZifDepend's.
+ *
  *
  * Since: 0.1.3
  **/
@@ -1859,7 +1859,7 @@ zif_package_get_obsoletes (ZifPackage *package, ZifState *state, GError **error)
  *
  * Get all the package conflicts.
  *
- * Return value: (transfer full): A reference counted #GPtrArray. The returned array
+ * Return value: (element-type ZifDepend) (transfer container): A reference counted #GPtrArray. The returned array
  * should be freed with g_ptr_array_unref() when no longer needed.
  *
  * Since: 0.1.3

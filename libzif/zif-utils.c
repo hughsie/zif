@@ -1229,7 +1229,7 @@ zif_file_is_compressed_name (const gchar *filename)
  * Splits a PackageID into the correct number of parts, checking the correct
  * number of delimiters are present.
  *
- * Return value: (transfer full): A #GStrv or %NULL if invalid, use g_strfreev() to free
+ * Return value: (element-type utf8) (transfer full): A #GStrv or %NULL if invalid
  *
  * Since: 0.1.0
  **/

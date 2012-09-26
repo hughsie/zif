@@ -473,13 +473,14 @@ out:
  *
  * Gets the delta details for the package_id.
  *
- * Return value: (transfer full): #ZifDelta or %NULL, free with g_object_unref()
+ * Return value: (transfer full): #ZifDelta or %NULL
  *
  * Since: 0.1.0
  **/
 ZifDelta *
 zif_md_delta_search_for_package (ZifMdDelta *md,
-				 const gchar *package_id_update, const gchar *package_id_installed,
+				 const gchar *package_id_update,
+				 const gchar *package_id_installed,
 				 ZifState *state, GError **error)
 {
 	guint i;

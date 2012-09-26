@@ -342,7 +342,7 @@ zif_history_get_transactions_sqlite_cb (void *data,
  * Returns an array of transaction timestamps.
  * Each timestamp may correspond to a number of modified packages.
  *
- * Return value: (transfer full): an #GArray of gint64
+ * Return value: (element-type gint64) (transfer container): an #GArray of gint64
  *
  * Since: 0.2.4
  **/
@@ -398,7 +398,7 @@ out:
  * Returns an array of transaction timestamps.
  * Each timestamp may correspond to a number of modified packages.
  *
- * Return value: (transfer full): an #GArray of gint64
+ * Return value: (element-type gint64) (transfer container): an #GArray of gint64
  *
  * Since: 0.2.6
  **/
@@ -492,7 +492,7 @@ zif_history_get_packages_sqlite_cb (void *data,
  *
  * Return all the packages that were modified on a specified timestamp.
  *
- * Return value: (transfer full): A #GPtrArray of ZifPackage's with the specified timestamp
+ * Return value: (element-type ZifPackage) (transfer container): A #GPtrArray of ZifPackage's with the specified timestamp
  *
  * Since: 0.2.4
  **/

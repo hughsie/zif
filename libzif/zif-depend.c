@@ -237,7 +237,7 @@ zif_depend_flag_to_string (ZifDependFlag flag)
  * Note: this function is deprecated, use zif_depend_get_description()
  * instead as it is more efficient.
  *
- * Return value: string value, free with g_free()
+ * Return value: string value
  *
  * Since: 0.1.0
  **/

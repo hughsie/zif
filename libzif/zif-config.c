@@ -339,7 +339,7 @@ out:
  *
  * Gets a string array value from a local setting, falling back to the config file.
  *
- * Return value: (transfer full): %NULL, or a string array, free with g_strfreev()
+ * Return value: (element-type utf8) (transfer full): %NULL, or a string array
  *
  * Since: 0.1.3
  **/
@@ -496,7 +496,7 @@ out:
  *
  * Replaces substitutions in text with the actual values of the running system.
  *
- * Return value: A new allocated string or %NULL for error, free with g_free()
+ * Return value: A new allocated string or %NULL for error
  *
  * Since: 0.1.0
  **/

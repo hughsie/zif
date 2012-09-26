@@ -515,7 +515,7 @@ out:
  *
  * Gets the available list of categories.
  *
- * Return value: (transfer full): %ZifCategory array of categories, with parent_id set to %NULL
+ * Return value: (element-type ZifCategory) (transfer container): %ZifCategory array of categories, with parent_id set to %NULL
  *
  * Since: 0.1.0
  **/
@@ -597,7 +597,7 @@ zif_md_comps_get_category_for_group (ZifMdComps *md, const gchar *group_id)
  *
  * Gets the list of groups for a specific category.
  *
- * Return value: (transfer full): %ZifCategory array of groups
+ * Return value: (element-type ZifCategory) (transfer container): %ZifCategory array of groups
  *
  * Since: 0.1.0
  **/
@@ -673,7 +673,7 @@ out:
  *
  * Gets the package names for a group.
  *
- * Return value: (transfer full): gchar pointer array of package names (not %ZifPackage's)
+ * Return value: (element-type utf8) (transfer container): gchar pointer array of package names (not %ZifPackage's)
  *
  * Since: 0.1.0
  **/

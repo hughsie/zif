@@ -100,7 +100,7 @@ zif_role_to_string (ZifRole role)
 
 /**
  * zif_store_array_add_store:
- * @store_array: An array of #ZifStores
+ * @store_array: (element-type ZifStore): An array of #ZifStores
  * @store: A #ZifStore to add
  *
  * Add a single #ZifStore to the #GPtrArray.
@@ -120,7 +120,7 @@ zif_store_array_add_store (GPtrArray *store_array, ZifStore *store)
 
 /**
  * zif_store_array_add_stores:
- * @store_array: An array of #ZifStores
+ * @store_array: (element-type ZifStore): An array of #ZifStores
  * @stores: An a rray of #ZifStore's to add
  *
  * Add an array of #ZifStore's to the #GPtrArray.
@@ -149,7 +149,7 @@ zif_store_array_add_stores (GPtrArray *store_array, GPtrArray *stores)
 
 /**
  * zif_store_array_add_local:
- * @store_array: An array of #ZifStores
+ * @store_array: (element-type ZifStore): An array of #ZifStores
  * @state: A #ZifState to use for progress reporting
  * @error: A #GError, or %NULL
  *
@@ -175,7 +175,7 @@ zif_store_array_add_local (GPtrArray *store_array, ZifState *state, GError **err
 
 /**
  * zif_store_array_add_remote:
- * @store_array: An array of #ZifStores
+ * @store_array: (element-type ZifStore): An array of #ZifStores
  * @state: A #ZifState to use for progress reporting
  * @error: A #GError, or %NULL
  *
@@ -218,7 +218,7 @@ out:
 
 /**
  * zif_store_array_add_remote_enabled:
- * @store_array: An array of #ZifStores
+ * @store_array: (element-type ZifStore): An array of #ZifStores
  * @state: A #ZifState to use for progress reporting
  * @error: A #GError, or %NULL
  *
@@ -370,7 +370,7 @@ out:
 
 /**
  * zif_store_array_find_package:
- * @store_array: An array of #ZifStores
+ * @store_array: (element-type ZifStore): An array of #ZifStores
  * @package_id: A PackageId which defines the package
  * @state: A #ZifState to use for progress reporting
  * @error: A #GError, or %NULL
@@ -449,7 +449,7 @@ out:
 
 /**
  * zif_store_array_clean:
- * @store_array: An array of #ZifStores
+ * @store_array: (element-type ZifStore): An array of #ZifStores
  * @state: A #ZifState to use for progress reporting
  * @error: A #GError, or %NULL
  *
@@ -514,7 +514,7 @@ out:
 
 /**
  * zif_store_array_refresh:
- * @store_array: An array of #ZifStores
+ * @store_array: (element-type ZifStore): An array of #ZifStores
  * @force: if the data should be re-downloaded if it's still valid
  * @state: A #ZifState to use for progress reporting
  * @error: A #GError, or %NULL
@@ -580,8 +580,8 @@ out:
 
 /**
  * zif_store_array_resolve_full:
- * @store_array: An array of #ZifStores
- * @search: The search terms, e.g. "gnome-power-manager"
+ * @store_array: (element-type ZifStore): An array of #ZifStores
+ * @search: (array zero-terminated=1) (element-type utf8): The search terms, e.g. "gnome-power-manager"
  * @flags: A bitfield of %ZifStoreResolveFlags, e.g. %ZIF_STORE_RESOLVE_FLAG_USE_NAME_ARCH
  * @state: A #ZifState to use for progress reporting
  * @error: A #GError, or %NULL
@@ -590,7 +590,7 @@ out:
  * matching the name, the name.arch or even the name-version depending
  * on the flags used..
  *
- * Return value: (transfer full): An array of #ZifPackage's
+ * Return value: (element-type ZifPackage) (transfer container): An array of #ZifPackage's
  *
  * Since: 0.2.4
  **/
@@ -613,14 +613,14 @@ zif_store_array_resolve_full (GPtrArray *store_array,
 
 /**
  * zif_store_array_resolve:
- * @store_array: An array of #ZifStores
- * @search: The search terms, e.g. "gnome-power-manager"
+ * @store_array: (element-type ZifStore): An array of #ZifStores
+ * @search: (array zero-terminated=1) (element-type utf8): The search terms, e.g. "gnome-power-manager"
  * @state: A #ZifState to use for progress reporting
  * @error: A #GError, or %NULL
  *
  * Finds packages matching the package name exactly.
  *
- * Return value: (transfer full): An array of #ZifPackage's
+ * Return value: (element-type ZifPackage) (transfer container): An array of #ZifPackage's
  *
  * Since: 0.1.0
  **/
@@ -637,14 +637,14 @@ zif_store_array_resolve (GPtrArray *store_array, gchar **search,
 
 /**
  * zif_store_array_search_name:
- * @store_array: An array of #ZifStores
- * @search: The search terms, e.g. "power"
+ * @store_array: (element-type ZifStore): An array of #ZifStores
+ * @search: (array zero-terminated=1) (element-type utf8): The search terms, e.g. "power"
  * @state: A #ZifState to use for progress reporting
  * @error: A #GError, or %NULL
  *
  * Find packages that match the package name in some part.
  *
- * Return value: (transfer full): An array of #ZifPackage's
+ * Return value: (element-type ZifPackage) (transfer container): An array of #ZifPackage's
  *
  * Since: 0.1.0
  **/
@@ -664,14 +664,14 @@ zif_store_array_search_name (GPtrArray *store_array, gchar **search,
 
 /**
  * zif_store_array_search_details:
- * @store_array: An array of #ZifStores
- * @search: The search terms, e.g. "trouble"
+ * @store_array: (element-type ZifStore): An array of #ZifStores
+ * @search: (array zero-terminated=1) (element-type utf8): The search terms, e.g. "trouble"
  * @state: A #ZifState to use for progress reporting
  * @error: A #GError, or %NULL
  *
  * Find packages that match some detail about the package.
  *
- * Return value: (transfer full): An array of #ZifPackage's
+ * Return value: (element-type ZifPackage) (transfer container): An array of #ZifPackage's
  *
  * Since: 0.1.0
  **/
@@ -691,14 +691,14 @@ zif_store_array_search_details (GPtrArray *store_array, gchar **search,
 
 /**
  * zif_store_array_search_group:
- * @store_array: An array of #ZifStores
+ * @store_array: (element-type ZifStore): An array of #ZifStores
  * @group_enum: The group enumerated values, e.g. "games"
  * @state: A #ZifState to use for progress reporting
  * @error: A #GError, or %NULL
  *
  * Find packages that belong in a specific group.
  *
- * Return value: (transfer full): An array of #ZifPackage's
+ * Return value: (element-type ZifPackage) (transfer container): An array of #ZifPackage's
  *
  * Since: 0.1.0
  **/
@@ -718,14 +718,14 @@ zif_store_array_search_group (GPtrArray *store_array, gchar **group_enum,
 
 /**
  * zif_store_array_search_category:
- * @store_array: An array of #ZifStores
+ * @store_array: (element-type ZifStore): An array of #ZifStores
  * @group_id: A group id, e.g. "gnome-system-tools"
  * @state: A #ZifState to use for progress reporting
  * @error: A #GError, or %NULL
  *
  * Find packages that belong in a specific category.
  *
- * Return value: (transfer full): An array of #ZifPackage's
+ * Return value: (element-type ZifPackage) (transfer container): An array of #ZifPackage's
  *
  * Since: 0.1.0
  **/
@@ -776,14 +776,14 @@ out:
 
 /**
  * zif_store_array_search_file:
- * @store_array: An array of #ZifStores
- * @search: The search terms, e.g. "/usr/bin/gnome-power-manager"
+ * @store_array: (element-type ZifStore): An array of #ZifStores
+ * @search: (array zero-terminated=1) (element-type utf8): The search terms, e.g. "/usr/bin/gnome-power-manager"
  * @state: A #ZifState to use for progress reporting
  * @error: A #GError, or %NULL
  *
  * Find packages that provide the specified file.
  *
- * Return value: (transfer full): An array of #ZifPackage's
+ * Return value: (element-type ZifPackage) (transfer container): An array of #ZifPackage's
  *
  * Since: 0.1.0
  **/
@@ -803,13 +803,13 @@ zif_store_array_search_file (GPtrArray *store_array, gchar **search,
 
 /**
  * zif_store_array_get_packages:
- * @store_array: An array of #ZifStores
+ * @store_array: (element-type ZifStore): An array of #ZifStores
  * @state: A #ZifState to use for progress reporting
  * @error: A #GError, or %NULL
  *
  * Return all packages in the #GPtrArray's.
  *
- * Return value: (transfer full): An array of #ZifPackage's
+ * Return value: (element-type ZifPackage) (transfer container): An array of #ZifPackage's
  *
  * Since: 0.1.0
  **/
@@ -829,14 +829,14 @@ zif_store_array_get_packages (GPtrArray *store_array,
 
 /**
  * zif_store_array_what_provides:
- * @store_array: An array of #ZifStores
+ * @store_array: (element-type ZifStore): An array of #ZifStores
  * @depends: A #ZifDepend to search for
  * @state: A #ZifState to use for progress reporting
  * @error: A #GError, or %NULL
  *
  * Find packages that provide a specific string.
  *
- * Return value: (transfer full): An array of #ZifPackage's
+ * Return value: (element-type ZifPackage) (transfer container): An array of #ZifPackage's
  *
  * Since: 0.1.3
  **/
@@ -856,14 +856,14 @@ zif_store_array_what_provides (GPtrArray *store_array, GPtrArray *depends,
 
 /**
  * zif_store_array_what_requires:
- * @store_array: An array of #ZifStores
+ * @store_array: (element-type ZifStore): An array of #ZifStores
  * @depends: A #ZifDepend to search for
  * @state: A #ZifState to use for progress reporting
  * @error: A #GError, or %NULL
  *
  * Find packages that require a specific string.
  *
- * Return value: (transfer full): An array of #ZifPackage's
+ * Return value: (element-type ZifPackage) (transfer container): An array of #ZifPackage's
  *
  * Since: 0.1.3
  **/
@@ -883,14 +883,14 @@ zif_store_array_what_requires (GPtrArray *store_array, GPtrArray *depends,
 
 /**
  * zif_store_array_what_obsoletes:
- * @store_array: An array of #ZifStores
+ * @store_array: (element-type ZifStore): An array of #ZifStores
  * @depends: A #ZifDepend to search for
  * @state: A #ZifState to use for progress reporting
  * @error: A #GError, or %NULL
  *
  * Find packages that conflict with a specific string.
  *
- * Return value: (transfer full): An array of #ZifPackage's
+ * Return value: (element-type ZifPackage) (transfer container): An array of #ZifPackage's
  *
  * Since: 0.1.3
  **/
@@ -911,14 +911,14 @@ zif_store_array_what_obsoletes (GPtrArray *store_array, GPtrArray *depends,
 
 /**
  * zif_store_array_what_conflicts:
- * @store_array: An array of #ZifStores
+ * @store_array: (element-type ZifStore): An array of #ZifStores
  * @depends: A #ZifDepend to search for
  * @state: A #ZifState to use for progress reporting
  * @error: A #GError, or %NULL
  *
  * Find packages that conflict with a specific string.
  *
- * Return value: (transfer full): An array of #ZifPackage's
+ * Return value: (element-type ZifPackage) (transfer container): An array of #ZifPackage's
  *
  * Since: 0.1.3
  **/
@@ -939,13 +939,13 @@ zif_store_array_what_conflicts (GPtrArray *store_array, GPtrArray *depends,
 
 /**
  * zif_store_array_get_categories:
- * @store_array: An array of #ZifStores
+ * @store_array: (element-type ZifStore): An array of #ZifStores
  * @state: A #ZifState to use for progress reporting
  * @error: A #GError, or %NULL
  *
  * Return a list of custom categories from all repos.
  *
- * Return value: (transfer full): An array of #ZifCategory's
+ * Return value: (element-type ZifCategory) (transfer container): An array of #ZifCategory's
  *
  * Since: 0.1.0
  **/
@@ -1007,14 +1007,14 @@ out:
 
 /**
  * zif_store_array_get_updates:
- * @store_array: An array of #ZifStores
+ * @store_array: (element-type ZifStore): An array of #ZifStores
  * @store_local: The #ZifStoreLocal to use for the installed packages
  * @state: A #ZifState to use for progress reporting
  * @error: A #GError, or %NULL
  *
  * Gets the list of packages that can be updated to newer versions.
  *
- * Return value: (transfer full): An array of the *new* #ZifPackage's, not the existing
+ * Return value: (element-type ZifPackage) (transfer container): An array of the *new* #ZifPackage's, not the existing
  * installed packages that are going to be updated.
  *
  * Note: this is a convenience function which makes a few assumptions.
@@ -1213,7 +1213,7 @@ out:
 /**
  * zif_store_array_new:
  *
- * Return value: (transfer full): A new #GPtrArray instance.
+ * Return value: (element-type ZifStore) (transfer container): A new #GPtrArray instance.
  *
  * Since: 0.1.0
  **/

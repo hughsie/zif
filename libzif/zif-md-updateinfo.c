@@ -593,7 +593,7 @@ out:
  *
  * Gets all the available update data.
  *
- * Return value: (transfer full): #GPtrArray of #ZifUpdate's, free with g_ptr_array_unref()
+ * Return value: (element-type ZifUpdate) (transfer container): #GPtrArray of #ZifUpdate's
  *
  * Since: 0.1.0
  **/
@@ -634,7 +634,7 @@ out:
  *
  * Gets the list of update details for the package_id.
  *
- * Return value: (transfer full): #GPtrArray of #ZifUpdate's, free with g_ptr_array_unref()
+ * Return value: (element-type ZifUpdate) (transfer container): #GPtrArray of #ZifUpdate's
  *
  * Since: 0.1.0
  **/

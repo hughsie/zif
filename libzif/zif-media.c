@@ -114,7 +114,7 @@ out:
  *
  * Finds the media root for a given media id.
  *
- * Return value: The media root, or %NULL. Free with g_free()
+ * Return value: The media root, or %NULL
  *
  * Since: 0.1.0
  **/
