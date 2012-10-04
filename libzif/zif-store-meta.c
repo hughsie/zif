@@ -141,6 +141,7 @@ zif_store_meta_new (void)
 	ZifStoreMeta *store_meta;
 	store_meta = g_object_new (ZIF_TYPE_STORE_META,
 				   "loaded", TRUE,
+				   "enabled", TRUE,
 				   NULL);
 	return ZIF_STORE (store_meta);
 }
