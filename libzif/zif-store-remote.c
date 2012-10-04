@@ -143,6 +143,16 @@ zif_store_remote_get_primary (ZifStoreRemote *store, GError **error)
 {
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), NULL);
 
+	/* are we now disabled */
+	if (!zif_store_get_enabled (ZIF_STORE (store))) {
+		g_set_error (error,
+			     ZIF_STORE_ERROR,
+			     ZIF_STORE_ERROR_NOT_ENABLED,
+			     "%s is not enabled after md load",
+			     store->priv->id);
+		goto out;
+	}
+
 	if (zif_md_get_location (store->priv->md_primary_sql) != NULL)
 		return store->priv->md_primary_sql;
 	if (zif_md_get_location (store->priv->md_primary_xml) != NULL)
@@ -153,6 +163,7 @@ zif_store_remote_get_primary (ZifStoreRemote *store, GError **error)
 		     ZIF_STORE_ERROR_FAILED,
 		     "remote store %s has no primary",
 		     store->priv->id);
+out:
 	return NULL;
 }
 

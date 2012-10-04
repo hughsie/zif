@@ -7122,6 +7122,10 @@ error:
 				/* TRANSLATORS: error message */
 				message = _("There are multiple matches");
 				break;
+			case ZIF_STORE_ERROR_NOT_ENABLED:
+				/* TRANSLATORS: error message */
+				message = _("Not enabled");
+				break;
 			default:
 				/* TRANSLATORS: error message */
 				message = _("Unhandled store error");
