@@ -335,6 +335,21 @@ zif_store_array_repos_search (GPtrArray *store_array,
 			goto out;
 		}
 		if (part == NULL) {
+
+			/* the store get disabled whilst being used */
+			if (g_error_matches (error_local,
+					     ZIF_STORE_ERROR,
+					     ZIF_STORE_ERROR_NOT_ENABLED)) {
+				g_debug ("repo %s disabled whilst being used: %s",
+					 zif_store_get_id (store),
+					 error_local->message);
+				g_clear_error (&error_local);
+				ret = zif_state_finished (state_local, error);
+				if (!ret)
+					goto out;
+				goto skip_error;
+			}
+
 			/* do we need to skip this error */
 			ret = zif_state_error_handler (state, error_local);
 			if (ret) {
