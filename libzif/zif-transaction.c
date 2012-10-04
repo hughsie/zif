@@ -1638,6 +1638,14 @@ zif_transaction_get_package_provide_from_remote (ZifTransaction *transaction,
 	for (i=0; i<transaction->priv->stores_remote->len; i++) {
 		store = g_ptr_array_index (transaction->priv->stores_remote, i);
 
+		/* check if the store is still enabled */
+		if (!zif_store_get_enabled (store)) {
+			ret = zif_state_done (state_local, error);
+			if (!ret)
+				goto out;
+			continue;
+		}
+
 		/* get provides */
 		state_loop = zif_state_get_child (state_local);
 		array_tmp = zif_store_what_provides (store,
@@ -6382,7 +6390,8 @@ zif_transaction_set_store_local (ZifTransaction *transaction,
  * @transaction: A #ZifTransaction
  * @stores: an array of #ZifStore's to use for available packages
  *
- * Sets the remote store for use in the transaction.
+ * Sets the remote stores for use in the transaction.
+ * Note: Only enabled stores will be used in the transaction.
  *
  * Since: 0.1.3
  **/
@@ -6390,13 +6399,21 @@ void
 zif_transaction_set_stores_remote (ZifTransaction *transaction,
 				   GPtrArray *stores)
 {
+	guint i;
+	ZifStore *store;
+
 	g_return_if_fail (ZIF_IS_TRANSACTION (transaction));
 	g_return_if_fail (stores != NULL);
 
 	/* keep a local refcounted copy */
-	if (transaction->priv->stores_remote != NULL)
-		g_ptr_array_unref (transaction->priv->stores_remote);
-	transaction->priv->stores_remote = g_ptr_array_ref (stores);
+	g_ptr_array_set_size (transaction->priv->stores_remote, 0);
+	for (i = 0; i < stores->len; i++) {
+		store = g_ptr_array_index (stores, i);
+		if (!zif_store_get_enabled (store))
+			continue;
+		zif_store_array_add_store (transaction->priv->stores_remote,
+					   store);
+	}
 }
 
 /**
@@ -6503,8 +6520,7 @@ zif_transaction_finalize (GObject *object)
 	g_hash_table_destroy (transaction->priv->remove_hash);
 	if (transaction->priv->store_local != NULL)
 		g_object_unref (transaction->priv->store_local);
-	if (transaction->priv->stores_remote != NULL)
-		g_ptr_array_unref (transaction->priv->stores_remote);
+	g_ptr_array_unref (transaction->priv->stores_remote);
 	g_free (transaction->priv->script_stdout);
 
 	G_OBJECT_CLASS (zif_transaction_parent_class)->finalize (object);
@@ -6536,6 +6552,7 @@ zif_transaction_init (ZifTransaction *transaction)
 	transaction->priv->db = zif_db_new ();
 	transaction->priv->history = zif_history_new ();
 	transaction->priv->ts = rpmtsCreate ();
+	transaction->priv->stores_remote = zif_store_array_new ();
 
 	/* packages we want to install */
 	transaction->priv->install = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
