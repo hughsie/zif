@@ -582,7 +582,9 @@ zif_store_local_new (void)
 	if (zif_store_local_object != NULL) {
 		g_object_ref (zif_store_local_object);
 	} else {
-		zif_store_local_object = g_object_new (ZIF_TYPE_STORE_LOCAL, NULL);
+		zif_store_local_object = g_object_new (ZIF_TYPE_STORE_LOCAL,
+						       "enabled", TRUE,
+						       NULL);
 		g_object_add_weak_pointer (zif_store_local_object, &zif_store_local_object);
 	}
 	return ZIF_STORE (zif_store_local_object);

@@ -56,6 +56,7 @@ struct _ZifStorePrivate
 enum {
 	PROP_0,
 	PROP_LOADED,
+	PROP_ENABLED,
 	PROP_LAST
 };
 
@@ -1989,6 +1990,9 @@ zif_store_get_property (GObject *object,
 	case PROP_LOADED:
 		g_value_set_boolean (value, priv->loaded);
 		break;
+	case PROP_ENABLED:
+		g_value_set_boolean (value, priv->enabled);
+		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
 		break;
@@ -2010,6 +2014,9 @@ zif_store_set_property (GObject *object,
 	switch (prop_id) {
 	case PROP_LOADED:
 		priv->loaded = g_value_get_boolean (value);
+		break;
+	case PROP_ENABLED:
+		priv->enabled = g_value_get_boolean (value);
 		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -2055,6 +2062,16 @@ zif_store_class_init (ZifStoreClass *klass)
 				      FALSE,
 				      G_PARAM_READWRITE);
 	g_object_class_install_property (object_class, PROP_LOADED, pspec);
+
+	/**
+	 * ZifStore:enabled:
+	 *
+	 * Since: 0.3.3
+	 */
+	pspec = g_param_spec_boolean ("enabled", NULL, NULL,
+				      FALSE,
+				      G_PARAM_READWRITE);
+	g_object_class_install_property (object_class, PROP_ENABLED, pspec);
 
 	g_type_class_add_private (klass, sizeof (ZifStorePrivate));
 }
