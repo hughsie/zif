@@ -1636,8 +1636,9 @@ zif_store_remote_load_metadata (ZifStoreRemote *store, ZifState *state, GError *
 						       state_local,
 						       &error_local);
 		if (!ret) {
-			if (error_local->domain == ZIF_STORE_ERROR &&
-			    error_local->code == ZIF_STORE_ERROR_RECOVERABLE) {
+			if (g_error_matches (error_local,
+					     ZIF_STORE_ERROR,
+					     ZIF_STORE_ERROR_RECOVERABLE)) {
 				g_debug ("ignoring %s", error_local->message);
 				g_error_free (error_local);
 				zif_state_reset (state);
@@ -1677,8 +1678,9 @@ zif_store_remote_load_metadata (ZifStoreRemote *store, ZifState *state, GError *
 					       state_local,
 					       &error_local);
 	if (!ret) {
-		if (error_local->domain == ZIF_STORE_ERROR &&
-		    error_local->code == ZIF_STORE_ERROR_RECOVERABLE) {
+		if (g_error_matches (error_local,
+				     ZIF_STORE_ERROR,
+				     ZIF_STORE_ERROR_RECOVERABLE)) {
 			g_debug ("ignoring %s", error_local->message);
 			g_error_free (error_local);
 			zif_state_reset (state);
