@@ -591,8 +591,10 @@ zif_filter_post_resolve (ZifCmdPrivate *priv,
 	/* be more harsh if we're exactarch */
 	archinfo = zif_config_get_string (priv->config,
 					  "archinfo", error);
-	if (archinfo == NULL)
+	if (archinfo == NULL) {
+		ret = FALSE;
 		goto out;
+	}
 	if (exactarch)
 		zif_package_array_filter_arch (array, archinfo);
 
@@ -1462,8 +1464,10 @@ zif_cmd_history_list (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 	/* get all transactions */
 	transactions = zif_history_list_transactions (priv->history, error);
-	if (transactions == NULL)
+	if (transactions == NULL) {
+		ret = FALSE;
 		goto out;
+	}
 
 	/* no entries */
 	if (transactions->len == 0) {
@@ -1914,8 +1918,10 @@ zif_cmd_get_updates (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 	/* get the update list */
 	array = zif_get_update_array (priv, priv->state, error);
-	if (array == NULL)
+	if (array == NULL) {
+		ret = FALSE;
 		goto out;
+	}
 
 	zif_progress_bar_end (priv->progressbar);
 	zif_print_packages (array);
@@ -3166,8 +3172,10 @@ zif_cmd_build_depends (ZifCmdPrivate *priv, gchar **values, GError **error)
 	stores = zif_repos_get_stores (repos,
 				       state_local,
 				       error);
-	if (stores == NULL)
+	if (stores == NULL) {
+		ret = FALSE;
 		goto out;
+	}
 
 	/* this section done */
 	ret = zif_state_done (priv->state, error);
@@ -3179,8 +3187,10 @@ zif_cmd_build_depends (ZifCmdPrivate *priv, gchar **values, GError **error)
 	stores_enabled = zif_repos_get_stores_enabled (repos,
 						       state_local,
 						       error);
-	if (stores_enabled == NULL)
+	if (stores_enabled == NULL) {
+		ret = FALSE;
 		goto out;
+	}
 
 	/* this section done */
 	ret = zif_state_done (priv->state, error);
@@ -5754,8 +5764,10 @@ zif_cmd_db_set (ZifCmdPrivate *priv, gchar **values, GError **error)
 	/* get package */
 	db = zif_db_new ();
 	array = zif_db_get_packages (db, error);
-	if (array == NULL)
+	if (array == NULL) {
+		ret = FALSE;
 		goto out;
+	}
 
 	/* find something */
 	for (i=0; i<array->len; i++) {
@@ -5825,8 +5837,10 @@ zif_cmd_db_get (ZifCmdPrivate *priv, gchar **values, GError **error)
 	/* get package */
 	db = zif_db_new ();
 	array = zif_db_get_packages (db, error);
-	if (array == NULL)
+	if (array == NULL) {
+		ret = FALSE;
 		goto out;
+	}
 
 	/* find something */
 	for (i=0; i<array->len; i++) {
@@ -5897,8 +5911,10 @@ zif_cmd_db_remove (ZifCmdPrivate *priv, gchar **values, GError **error)
 	/* get package */
 	db = zif_db_new ();
 	array = zif_db_get_packages (db, error);
-	if (array == NULL)
+	if (array == NULL) {
+		ret = FALSE;
 		goto out;
+	}
 
 	/* find something */
 	for (i=0; i<array->len; i++) {
@@ -5974,8 +5990,10 @@ zif_cmd_db_list (ZifCmdPrivate *priv, gchar **values, GError **error)
 	/* get package */
 	db = zif_db_new ();
 	array = zif_db_get_packages (db, error);
-	if (array == NULL)
+	if (array == NULL) {
+		ret = FALSE;
 		goto out;
+	}
 
 	/* find something */
 	for (i=0; i<array->len; i++) {
