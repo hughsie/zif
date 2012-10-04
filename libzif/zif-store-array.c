@@ -297,6 +297,10 @@ zif_store_array_repos_search (GPtrArray *store_array,
 	for (i=0; i<store_array->len; i++) {
 		store = g_ptr_array_index (store_array, i);
 
+		/* we disabled this store? */
+		if (!zif_store_get_enabled (store))
+			goto skip_error;
+
 		/* create a chain of states */
 		state_local = zif_state_get_child (state);
 
