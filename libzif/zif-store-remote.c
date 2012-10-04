@@ -1656,6 +1656,24 @@ zif_store_remote_load_metadata (ZifStoreRemote *store, ZifState *state, GError *
 				ret = zif_store_remote_load_metadata (store,
 								      state,
 								      error);
+			} else if (g_error_matches (error_local,
+						    ZIF_STORE_ERROR,
+						    ZIF_STORE_ERROR_FAILED_TO_DOWNLOAD)){
+				ret = zif_config_get_boolean (store->priv->config,
+							      "skip_if_unavailable",
+							      NULL);
+				if (ret) {
+					/* skip unavailable? */
+					g_debug ("disabling repo due to ignored error: %s",
+						 error_local->message);
+					zif_store_set_enabled (ZIF_STORE (store), FALSE);
+					g_error_free (error_local);
+					ret = zif_state_finished (state, error);
+					if (!ret)
+						goto out;
+				} else {
+					g_propagate_error (error, error_local);
+				}
 			} else {
 				g_propagate_error (error, error_local);
 			}
@@ -1674,9 +1692,30 @@ zif_store_remote_load_metadata (ZifStoreRemote *store, ZifState *state, GError *
 	state_local = zif_state_get_child (state);
 	ret = zif_store_remote_get_repomd (store,
 					   state_local,
-					   error);
-	if (!ret)
-		goto out;
+					   &error_local);
+	if (!ret) {
+		if (g_error_matches (error_local,
+				    ZIF_STORE_ERROR,
+				    ZIF_STORE_ERROR_FAILED_TO_DOWNLOAD)){
+			ret = zif_config_get_boolean (store->priv->config,
+						      "skip_if_unavailable",
+						      NULL);
+			if (ret) {
+				/* skip unavailable? */
+				g_debug ("disabling repo due to ignored error: %s",
+					 error_local->message);
+				zif_store_set_enabled (ZIF_STORE (store), FALSE);
+				g_error_free (error_local);
+				ret = zif_state_finished (state, error);
+				if (!ret)
+					goto out;
+			} else {
+				g_propagate_error (error, error_local);
+			}
+			goto out;
+		}
+		g_propagate_error (error, error_local);
+	}
 
 	/* done */
 	ret = zif_state_done (state, error);

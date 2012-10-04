@@ -3861,6 +3861,7 @@ zif_store_remote_func (void)
 
 	/* we want to fail the download */
 	g_assert (zif_config_set_boolean (config, "network", TRUE, NULL));
+	g_assert (zif_config_set_boolean (config, "skip_if_unavailable", FALSE, NULL));
 	download = zif_download_new ();
 	g_assert (download != NULL);
 
