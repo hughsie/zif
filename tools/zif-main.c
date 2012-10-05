@@ -2767,12 +2767,12 @@ zif_cmd_install (ZifCmdPrivate *priv, gchar **values, GError **error)
 		/* force this on, as some source repos don't provide the
 		 * right distro version */
 		ret = zif_config_unset (priv->config,
-					"skip_broken",
+					"skip_if_unavailable",
 					error);
 		if (!ret)
 			goto out;
 		ret = zif_config_set_boolean (priv->config,
-					      "skip_broken",
+					      "skip_if_unavailable",
 					      TRUE,
 					      error);
 		if (!ret)
