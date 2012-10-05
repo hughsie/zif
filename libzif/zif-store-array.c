@@ -99,11 +99,38 @@ zif_role_to_string (ZifRole role)
 }
 
 /**
+ * zif_store_array_find_by_id:
+ * @store_array: (element-type ZifStore): An array of #ZifStores
+ * @id: The ID of the #ZifStore, e.g. 'fedora-debuginfo'
+ *
+ * Finds a single #ZifStore in the #GPtrArray.
+ *
+ * Return value: (transfer none): a %ZifStore for success, %NULL otherwise
+ *
+ * Since: 0.3.4
+ **/
+ZifStore *
+zif_store_array_find_by_id (GPtrArray *store_array, const gchar *id)
+{
+	guint i;
+	ZifStore *store_tmp;
+
+	/* O(n) */
+	for (i = 0; i < store_array->len; i++) {
+		store_tmp = g_ptr_array_index (store_array, i);
+		if (g_strcmp0 (zif_store_get_id (store_tmp), id) == 0)
+			return store_tmp;
+	}
+	return NULL;
+}
+
+/**
  * zif_store_array_add_store:
  * @store_array: An array of #ZifStores
  * @store: A #ZifStore to add
  *
- * Add a single #ZifStore to the #GPtrArray.
+ * Add a single #ZifStore to the #GPtrArray if it does not already
+ * exist.
  *
  * Return value: %TRUE for success, %FALSE otherwise
  *
@@ -114,6 +141,9 @@ zif_store_array_add_store (GPtrArray *store_array, ZifStore *store)
 {
 	g_return_val_if_fail (store != NULL, FALSE);
 
+	/* does already exist in the store */
+	if (zif_store_array_find_by_id (store_array, zif_store_get_id (store)) != NULL)
+		return FALSE;
 	g_ptr_array_add (store_array, g_object_ref (store));
 	return TRUE;
 }
