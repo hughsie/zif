@@ -373,6 +373,24 @@ zif_transaction_get_install (ZifTransaction *transaction)
 }
 
 /**
+ * zif_transaction_get_update:
+ * @transaction: A #ZifTransaction
+ *
+ * Gets the list of packages to be updated.
+ * This is will only return packages if called before the transaction is
+ * resolved as the packages will be moved to remove and install actions.
+ *
+ * Return value: (element-type ZifPackage) (transfer container): An array of #ZifPackages
+ *
+ * Since: 0.3.3
+ **/
+GPtrArray *
+zif_transaction_get_update (ZifTransaction *transaction)
+{
+	return zif_transaction_get_package_array (transaction->priv->update);
+}
+
+/**
  * zif_transaction_get_remove:
  * @transaction: A #ZifTransaction
  *

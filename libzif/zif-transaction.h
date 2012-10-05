@@ -154,6 +154,7 @@ void		 zif_transaction_set_verbose		(ZifTransaction	*transaction,
 							 gboolean	 verbose);
 void		 zif_transaction_reset			(ZifTransaction	*transaction);
 GPtrArray	*zif_transaction_get_install		(ZifTransaction	*transaction);
+GPtrArray	*zif_transaction_get_update		(ZifTransaction	*transaction);
 GPtrArray	*zif_transaction_get_remove		(ZifTransaction	*transaction);
 const gchar	*zif_transaction_reason_to_string	(ZifTransactionReason reason);
 ZifTransactionReason zif_transaction_reason_from_string	(const gchar	*reason);
