@@ -2433,6 +2433,66 @@ g_format_size (guint64 size)
 #endif
 
 /**
+ * zif_auto_add_debuginfo_repos:
+ *
+ * The yum-plugin-auto-update-debug-info code "helpfully"
+ * enables debuginfo repos when we try to install -debuginfo
+ * packages, so we should probably copy that behaviour
+ **/
+static gboolean
+zif_auto_add_debuginfo_repos (ZifCmdPrivate *priv,
+			      GPtrArray *store_array,
+			      ZifState *state,
+			      GError **error)
+{
+	gboolean enable_debuginfo;
+	gboolean ret = TRUE;
+	GPtrArray *stores_debuginfo = NULL;
+	ZifRepos *repos = NULL;
+
+	enable_debuginfo = zif_config_get_boolean (priv->config,
+						   "auto_enable_debuginfo",
+						   NULL);
+	if (!enable_debuginfo) {
+		g_debug ("not auto-enabling debuginfo repos");
+		goto out;
+	}
+
+	/* find any repos that have suffix -debuginfo */
+	repos = zif_repos_new ();
+	stores_debuginfo = zif_repos_get_stores_debuginfo (repos,
+								state,
+								error);
+	if (stores_debuginfo == NULL) {
+		ret = FALSE;
+		goto out;
+	}
+	g_debug ("auto-adding %i debuginfo repos", stores_debuginfo->len);
+	zif_store_array_add_stores (store_array,
+				    stores_debuginfo);
+
+	/* force this on, as some source repos don't provide the
+	 * right distro version */
+	ret = zif_config_unset (priv->config,
+				"skip_if_unavailable",
+				error);
+	if (!ret)
+		goto out;
+	ret = zif_config_set_boolean (priv->config,
+				      "skip_if_unavailable",
+				      TRUE,
+				      error);
+	if (!ret)
+		goto out;
+out:
+	if (stores_debuginfo != NULL)
+		g_ptr_array_unref (stores_debuginfo);
+	if (repos != NULL)
+		g_object_unref (repos);
+	return ret;
+}
+
+/**
  * zif_transaction_run:
  **/
 static gboolean
@@ -2606,21 +2666,18 @@ out:
 static gboolean
 zif_cmd_install (ZifCmdPrivate *priv, gchar **values, GError **error)
 {
-	gboolean enable_debuginfo;
 	gboolean found;
 	gboolean has_debuginfo = FALSE;
 	gboolean ret = FALSE;
 	gchar **values_new = NULL;
 	GError *error_local = NULL;
 	GPtrArray *array = NULL;
-	GPtrArray *store_array_debuginfo = NULL;
 	GPtrArray *store_array_local = NULL;
 	GPtrArray *store_array_remote = NULL;
 	GString *string = NULL;
 	guint idx = 0;
 	guint i, j;
 	ZifPackage *package;
-	ZifRepos *repos = NULL;
 	ZifState *state_local;
 	ZifTransaction *transaction = NULL;
 
@@ -2731,7 +2788,9 @@ zif_cmd_install (ZifCmdPrivate *priv, gchar **values, GError **error)
 	/* check available */
 	store_array_remote = zif_store_array_new ();
 	state_local = zif_state_get_child (priv->state);
-	ret = zif_store_array_add_remote_enabled (store_array_remote, state_local, error);
+	ret = zif_store_array_add_remote_enabled (store_array_remote,
+						  state_local,
+						  error);
 	if (!ret)
 		goto out;
 
@@ -2740,36 +2799,13 @@ zif_cmd_install (ZifCmdPrivate *priv, gchar **values, GError **error)
 	if (!ret)
 		goto out;
 
-	/* the yum-plugin-auto-update-debug-info code "helpfully"
-	 * enables debuginfo repos when we try to install -debuginfo
-	 * packages, so we should probably copy that behaviour */
-	enable_debuginfo = zif_config_get_boolean (priv->config,
-						   "auto_enable_debuginfo",
-						   NULL);
-	if (enable_debuginfo && has_debuginfo) {
-		repos = zif_repos_new ();
-
-		/* enable any repos that have suffix -debuginfo */
+	/* enable debuginforepos if required */
+	if (has_debuginfo) {
 		state_local = zif_state_get_child (priv->state);
-		store_array_debuginfo = zif_repos_get_stores_debuginfo (repos,
-									state_local,
-									error);
-		if (store_array_debuginfo == NULL)
-			goto out;
-		zif_store_array_add_stores (store_array_remote,
-					    store_array_debuginfo);
-
-		/* force this on, as some source repos don't provide the
-		 * right distro version */
-		ret = zif_config_unset (priv->config,
-					"skip_if_unavailable",
-					error);
-		if (!ret)
-			goto out;
-		ret = zif_config_set_boolean (priv->config,
-					      "skip_if_unavailable",
-					      TRUE,
-					      error);
+		ret = zif_auto_add_debuginfo_repos (priv,
+						    store_array_remote,
+						    state_local,
+						    error);
 		if (!ret)
 			goto out;
 	}
@@ -2856,10 +2892,6 @@ out:
 	g_strfreev (values_new);
 	if (string != NULL)
 		g_string_free (string, TRUE);
-	if (store_array_debuginfo != NULL)
-		g_ptr_array_unref (store_array_debuginfo);
-	if (repos != NULL)
-		g_object_unref (repos);
 	if (transaction != NULL)
 		g_object_unref (transaction);
 	if (store_array_local != NULL)
