@@ -568,6 +568,60 @@ out:
 }
 
 /**
+ * zif_repos_get_stores_debuginfo:
+ * @repos: A #ZifRepos
+ * @state: A #ZifState to use for progress reporting
+ * @error: A #GError, or %NULL
+ *
+ * Gets the remote stores for debug packages.
+ *
+ * Return value: (element-type ZifStore) (transfer container): A list of #ZifStore's
+ *
+ * Since: 0.3.3
+ **/
+GPtrArray *
+zif_repos_get_stores_debuginfo (ZifRepos *repos,
+				ZifState *state,
+				GError **error)
+{
+	GPtrArray *array = NULL;
+	GError *error_local = NULL;
+	gboolean ret;
+	guint i;
+	ZifStore *store;
+
+	g_return_val_if_fail (ZIF_IS_REPOS (repos), NULL);
+	g_return_val_if_fail (zif_state_valid (state), NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+	/* if not already loaded, load */
+	if (!repos->priv->loaded) {
+		ret = zif_repos_load (repos, state, &error_local);
+		if (!ret) {
+			g_set_error (error,
+				     ZIF_REPOS_ERROR,
+				     ZIF_REPOS_ERROR_FAILED,
+				     "failed to load enabled repos: %s",
+				     error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+	}
+
+	/* add stores that have not been disabled */
+	array = zif_object_array_new ();
+	for (i = 0; i < repos->priv->list->len; i++) {
+		store = g_ptr_array_index (repos->priv->list, i);
+		if (g_str_has_suffix (zif_store_get_id (store), "-debuginfo")) {
+			zif_store_set_enabled (store, TRUE);
+			zif_object_array_add (array, store);
+		}
+	}
+out:
+	return array;
+}
+
+/**
  * zif_repos_get_store:
  * @repos: A #ZifRepos
  * @id: A repository id, e.g. "fedora"

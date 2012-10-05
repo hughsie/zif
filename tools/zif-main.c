@@ -2613,7 +2613,7 @@ zif_cmd_install (ZifCmdPrivate *priv, gchar **values, GError **error)
 	gchar **values_new = NULL;
 	GError *error_local = NULL;
 	GPtrArray *array = NULL;
-	GPtrArray *store_array_all = NULL;
+	GPtrArray *store_array_debuginfo = NULL;
 	GPtrArray *store_array_local = NULL;
 	GPtrArray *store_array_remote = NULL;
 	GString *string = NULL;
@@ -2622,7 +2622,6 @@ zif_cmd_install (ZifCmdPrivate *priv, gchar **values, GError **error)
 	ZifPackage *package;
 	ZifRepos *repos = NULL;
 	ZifState *state_local;
-	ZifStore *store_tmp;
 	ZifTransaction *transaction = NULL;
 
 	/* check we have a value */
@@ -2752,17 +2751,13 @@ zif_cmd_install (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 		/* enable any repos that have suffix -debuginfo */
 		state_local = zif_state_get_child (priv->state);
-		store_array_all = zif_repos_get_stores (repos, state_local, error);
-		if (store_array_all == NULL)
+		store_array_debuginfo = zif_repos_get_stores_debuginfo (repos,
+									state_local,
+									error);
+		if (store_array_debuginfo == NULL)
 			goto out;
-		for (i = 0; i < store_array_all->len; i++) {
-			store_tmp = g_ptr_array_index (store_array_all, i);
-			if (g_str_has_suffix (zif_store_get_id (store_tmp),
-					      "-debuginfo")) {
-				zif_store_array_add_store (store_array_remote,
-							   store_tmp);
-			}
-		}
+		zif_store_array_add_stores (store_array_remote,
+					    store_array_debuginfo);
 
 		/* force this on, as some source repos don't provide the
 		 * right distro version */
@@ -2861,8 +2856,8 @@ out:
 	g_strfreev (values_new);
 	if (string != NULL)
 		g_string_free (string, TRUE);
-	if (store_array_all != NULL)
-		g_ptr_array_unref (store_array_all);
+	if (store_array_debuginfo != NULL)
+		g_ptr_array_unref (store_array_debuginfo);
 	if (repos != NULL)
 		g_object_unref (repos);
 	if (transaction != NULL)

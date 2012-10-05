@@ -80,6 +80,9 @@ GPtrArray	*zif_repos_get_stores		(ZifRepos		*repos,
 GPtrArray	*zif_repos_get_stores_enabled	(ZifRepos		*repos,
 						 ZifState		*state,
 						 GError			**error);
+GPtrArray	*zif_repos_get_stores_debuginfo	(ZifRepos		*repos,
+						 ZifState		*state,
+						 GError			**error);
 ZifStoreRemote	*zif_repos_get_store		(ZifRepos		*repos,
 						 const gchar		*id,
 						 ZifState		*state,
