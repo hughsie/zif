@@ -38,6 +38,8 @@ G_BEGIN_DECLS
 GPtrArray	*zif_store_array_new			(void);
 
 /* stores */
+ZifStore	*zif_store_array_find_by_id		(GPtrArray		*store_array,
+							 const gchar		*id);
 gboolean	 zif_store_array_add_store		(GPtrArray		*store_array,
 							 ZifStore		*store);
 gboolean	 zif_store_array_add_stores		(GPtrArray		*store_array,
