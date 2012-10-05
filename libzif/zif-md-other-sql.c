@@ -128,7 +128,7 @@ zif_md_other_sql_sqlite_create_changelog_cb (void *data, gint argc, gchar **argv
 	gchar *endptr = NULL;
 
 	/* get the ID */
-	for (i=0; i<argc; i++) {
+	for (i = 0; i < argc; i++) {
 		if (g_strcmp0 (col_name[i], "date") == 0) {
 			date = g_ascii_strtoull (argv[i], &endptr, 10);
 			if (argv[i] == endptr)
@@ -202,7 +202,7 @@ zif_md_other_sql_sqlite_pkgkey_cb (void *data, gint argc, gchar **argv, gchar **
 	GPtrArray *array = (GPtrArray *) data;
 
 	/* get the ID */
-	for (i=0; i<argc; i++) {
+	for (i = 0; i < argc; i++) {
 		if (g_strcmp0 (col_name[i], "pkgKey") == 0) {
 			pkgkey = g_ascii_strtoull (argv[i], &endptr, 10);
 			if (argv[i] == endptr)
@@ -299,7 +299,7 @@ zif_md_other_sql_get_changelog (ZifMd *md, const gchar *pkgid,
 	state_local = zif_state_get_child (state);
 	if (pkgkey_array->len > 0)
 		zif_state_set_number_steps (state_local, pkgkey_array->len);
-	for (i=0; i<pkgkey_array->len; i++) {
+	for (i = 0; i < pkgkey_array->len; i++) {
 		pkgkey = GPOINTER_TO_UINT (g_ptr_array_index (pkgkey_array, i));
 
 		/* get changeset for pkgKey */

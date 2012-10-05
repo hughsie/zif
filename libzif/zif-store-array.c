@@ -138,7 +138,7 @@ zif_store_array_add_stores (GPtrArray *store_array, GPtrArray *stores)
 
 	g_return_val_if_fail (stores != NULL, FALSE);
 
-	for (i=0; i<stores->len; i++) {
+	for (i = 0; i < stores->len; i++) {
 		store = g_ptr_array_index (stores, i);
 		ret = zif_store_array_add_store (store_array, store);
 		if (!ret)
@@ -294,7 +294,7 @@ zif_store_array_repos_search (GPtrArray *store_array,
 
 	/* do each one */
 	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
-	for (i=0; i<store_array->len; i++) {
+	for (i = 0; i < store_array->len; i++) {
 		store = g_ptr_array_index (store_array, i);
 
 		/* we disabled this store? */
@@ -424,7 +424,7 @@ zif_store_array_find_package (GPtrArray *store_array, const gchar *package_id, Z
 	zif_state_set_number_steps (state, store_array->len);
 
 	/* do each one */
-	for (i=0; i<store_array->len; i++) {
+	for (i = 0; i < store_array->len; i++) {
 		store = g_ptr_array_index (store_array, i);
 
 		state_local = zif_state_get_child (state);
@@ -501,7 +501,7 @@ zif_store_array_clean (GPtrArray *store_array,
 	zif_state_set_number_steps (state, store_array->len);
 
 	/* do each one */
-	for (i=0; i<store_array->len; i++) {
+	for (i = 0; i < store_array->len; i++) {
 		store = g_ptr_array_index (store_array, i);
 
 		/* clean this one */
@@ -567,7 +567,7 @@ zif_store_array_refresh (GPtrArray *store_array, gboolean force,
 	zif_state_set_number_steps (state, store_array->len);
 
 	/* do each one */
-	for (i=0; i<store_array->len; i++) {
+	for (i = 0; i < store_array->len; i++) {
 		store = g_ptr_array_index (store_array, i);
 
 		/* refresh this one */
@@ -773,7 +773,7 @@ zif_store_array_search_category (GPtrArray *store_array, gchar **group_id,
 		goto out;
 
 	/* remove duplicate package_ids */
-	for (i=0; i<array->len; i++) {
+	for (i = 0; i < array->len; i++) {
 		package = g_ptr_array_index (array, i);
 		package_id = zif_package_get_id (package);
 		for (j=0; j<array->len; j++) {
@@ -995,7 +995,7 @@ zif_store_array_get_categories (GPtrArray *store_array,
 		goto out;
 
 	/* remove duplicate parents and groups */
-	for (i=0; i<array->len; i++) {
+	for (i = 0; i < array->len; i++) {
 		obj = g_ptr_array_index (array, i);
 		g_object_get (obj,
 			      "parent-id", &parent_id,
@@ -1104,7 +1104,7 @@ zif_store_array_get_updates (GPtrArray *store_array,
 
 	/* resolve each one remote */
 	search = g_new0 (gchar *, array_installed->len + 1);
-	for (i=0; i<array_installed->len; i++) {
+	for (i = 0; i < array_installed->len; i++) {
 		package = g_ptr_array_index (array_installed, i);
 		search[i] = g_strdup (zif_package_get_name (package));
 	}
@@ -1126,7 +1126,7 @@ zif_store_array_get_updates (GPtrArray *store_array,
 
 	/* find each one in a remote repo */
 	updates_available = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
-	for (i=0; i<array_installed->len; i++) {
+	for (i = 0; i < array_installed->len; i++) {
 		package = ZIF_PACKAGE (g_ptr_array_index (array_installed, i));
 
 		/* find updates */
@@ -1168,7 +1168,7 @@ zif_store_array_get_updates (GPtrArray *store_array,
 
 	/* add obsoletes */
 	depend_array = zif_object_array_new ();
-	for (i=0; i<array_installed->len; i++) {
+	for (i = 0; i < array_installed->len; i++) {
 		package = ZIF_PACKAGE (g_ptr_array_index (array_installed, i));
 		depend = zif_depend_new_from_values (zif_package_get_name (package),
 						     ZIF_DEPEND_FLAG_EQUAL,

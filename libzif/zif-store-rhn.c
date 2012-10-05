@@ -541,7 +541,7 @@ zif_store_rhn_load (ZifStore *store,
 
 	/* get packages */
 	g_debug ("got %i elements", array->len);
-	for (i=0; i<array->len; i++) {
+	for (i = 0; i < array->len; i++) {
 		hash = g_array_index (array, GHashTable *, i);
 		package = zif_store_rhn_add_package (store, hash, error);
 		if (package == NULL) {

@@ -206,7 +206,7 @@ zif_package_local_get_depends_from_name_flags_version (GPtrArray *names, GPtrArr
 
 	/* create requires */
 	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
-	for (i=0; i<names->len; i++) {
+	for (i = 0; i < names->len; i++) {
 
 		/* ignore rpmlib flags */
 		rpmflags = GPOINTER_TO_UINT (g_ptr_array_index (flags, i));
@@ -307,7 +307,7 @@ zif_package_local_ensure_data (ZifPackage *pkg,
 			}
 
 			files = g_ptr_array_new_with_free_func (g_free);
-			for (i=0; i<basenames->len; i++) {
+			for (i = 0; i < basenames->len; i++) {
 				guint idx;
 				idx = GPOINTER_TO_UINT (g_ptr_array_index (fileindex, i));
 				if (idx > dirnames->len) {

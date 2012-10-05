@@ -297,7 +297,7 @@ zif_groups_get_categories (ZifGroups *groups,
 
 	/* deep copy */
 	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_free);
-	for (i=0; i<groups->priv->categories->len; i++)
+	for (i = 0; i < groups->priv->categories->len; i++)
 		g_ptr_array_add (array, g_strdup (g_ptr_array_index (groups->priv->categories, i)));
 out:
 	return array;

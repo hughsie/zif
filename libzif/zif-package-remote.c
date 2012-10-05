@@ -94,7 +94,7 @@ zif_package_remote_set_from_repo (ZifPackageRemote *pkg, guint length, gchar **t
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
 	/* get the ID */
-	for (i=0; i<length; i++) {
+	for (i = 0; i < length; i++) {
 		if (g_strcmp0 (type[i], "name") == 0) {
 			name = data[i];
 		} else if (g_strcmp0 (type[i], "epoch") == 0) {

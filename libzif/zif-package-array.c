@@ -75,7 +75,7 @@ zif_package_array_find (GPtrArray *array,
 	g_return_val_if_fail (package_id != NULL, NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
-	for (i=0; i<array->len; i++) {
+	for (i = 0; i < array->len; i++) {
 		package_tmp = g_ptr_array_index (array, i);
 		if (g_strcmp0 (zif_package_get_id (package_tmp), package_id) == 0) {
 			package = g_object_ref (package_tmp);
@@ -260,7 +260,7 @@ zif_package_array_download (GPtrArray *packages,
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
 	zif_state_set_number_steps (state, packages->len);
-	for (i=0; i<packages->len; i++) {
+	for (i = 0; i < packages->len; i++) {
 		package = g_ptr_array_index (packages, i);
 		state_loop = zif_state_get_child (state);
 		g_debug ("downloading %s",
@@ -326,7 +326,7 @@ zif_package_array_filter_newest (GPtrArray *packages)
 					       g_free, g_object_unref);
 	hash_keep = g_hash_table_new_full (g_str_hash, g_str_equal,
 					   NULL, NULL);
-	for (i=0; i<packages->len; i++) {
+	for (i = 0; i < packages->len; i++) {
 		package = ZIF_PACKAGE (g_ptr_array_index (packages, i));
 		key = zif_package_get_name_arch (package);
 		package_tmp = g_hash_table_lookup (hash_namearch, key);
@@ -374,7 +374,7 @@ zif_package_array_filter_newest (GPtrArray *packages)
 
 	/* only add packages to array_new in hash_keep */
 	array_new = g_ptr_array_sized_new (packages->len);
-	for (i=0; i<packages->len; i++) {
+	for (i = 0; i < packages->len; i++) {
 		package = ZIF_PACKAGE (g_ptr_array_index (packages, i));
 		key = zif_package_get_id_basic (package);
 		tmp = g_hash_table_lookup (hash_keep, key);
@@ -386,7 +386,7 @@ zif_package_array_filter_newest (GPtrArray *packages)
 
 	/* just copy the contents of the new array into the old array */
 	g_ptr_array_set_size (packages, 0);
-	for (i=0; i<array_new->len; i++) {
+	for (i = 0; i < array_new->len; i++) {
 		package = ZIF_PACKAGE (g_ptr_array_index (array_new, i));
 		g_ptr_array_add (packages, package);
 	}
@@ -420,7 +420,7 @@ zif_package_array_filter_duplicates (GPtrArray *packages)
 	array_new = g_ptr_array_sized_new (packages->len);
 	hash_keep = g_hash_table_new_full (g_str_hash, g_str_equal,
 					   NULL, NULL);
-	for (i=0; i<packages->len; i++) {
+	for (i = 0; i < packages->len; i++) {
 		package = ZIF_PACKAGE (g_ptr_array_index (packages, i));
 		key = zif_package_get_id_basic (package);
 		tmp = g_hash_table_lookup (hash_keep, key);
@@ -435,7 +435,7 @@ zif_package_array_filter_duplicates (GPtrArray *packages)
 
 	/* just copy the contents of the new array into the old array */
 	g_ptr_array_set_size (packages, 0);
-	for (i=0; i<array_new->len; i++) {
+	for (i = 0; i < array_new->len; i++) {
 		package = ZIF_PACKAGE (g_ptr_array_index (array_new, i));
 		g_ptr_array_add (packages, package);
 	}
@@ -458,7 +458,7 @@ zif_package_array_filter_best_arch32 (GPtrArray *array)
 	const gchar *best_arch = NULL;
 
 	/* find the best arch */
-	for (i=0; i<array->len; i++) {
+	for (i = 0; i < array->len; i++) {
 		package = g_ptr_array_index (array, i);
 		arch = zif_package_get_arch (package);
 		if (g_strcmp0 (arch, "x86_64") == 0 ||
@@ -477,7 +477,7 @@ zif_package_array_filter_best_arch32 (GPtrArray *array)
 	}
 
 	/* remove any that are not best */
-	for (i=0; i<array->len;) {
+	for (i = 0; i < array->len;) {
 		package = g_ptr_array_index (array, i);
 		arch = zif_package_get_arch (package);
 		if (g_strcmp0 (arch, best_arch) != 0 &&
@@ -544,7 +544,7 @@ zif_package_array_filter_arch (GPtrArray *array, const gchar *arch)
 	ZifPackage *package;
 
 	/* remove any that are not best */
-	for (i=0; i<array->len;) {
+	for (i = 0; i < array->len;) {
 		package = g_ptr_array_index (array, i);
 		arch_tmp = zif_package_get_arch (package);
 		if (g_strcmp0 (arch_tmp, "noarch") == 0) {
@@ -592,7 +592,7 @@ zif_package_array_filter_provide (GPtrArray *array,
 
 	/* remove entries that do not satisfy the dep */
 	zif_state_set_number_steps (state, array->len);
-	for (i=0; i<array->len;) {
+	for (i = 0; i < array->len;) {
 		package = g_ptr_array_index (array, i);
 		state_local = zif_state_get_child (state);
 
@@ -657,7 +657,7 @@ zif_package_array_filter_require (GPtrArray *array,
 
 	/* remove entries that do not satisfy the dep */
 	zif_state_set_number_steps (state, array->len);
-	for (i=0; i<array->len;) {
+	for (i = 0; i < array->len;) {
 		package = g_ptr_array_index (array, i);
 		state_local = zif_state_get_child (state);
 
@@ -722,7 +722,7 @@ zif_package_array_filter_conflict (GPtrArray *array,
 
 	/* remove entries that do not satisfy the dep */
 	zif_state_set_number_steps (state, array->len);
-	for (i=0; i<array->len;) {
+	for (i = 0; i < array->len;) {
 		package = g_ptr_array_index (array, i);
 		state_local = zif_state_get_child (state);
 
@@ -787,7 +787,7 @@ zif_package_array_filter_obsolete (GPtrArray *array,
 
 	/* remove entries that do not satisfy the dep */
 	zif_state_set_number_steps (state, array->len);
-	for (i=0; i<array->len;) {
+	for (i = 0; i < array->len;) {
 		package = g_ptr_array_index (array, i);
 		state_local = zif_state_get_child (state);
 
@@ -847,7 +847,7 @@ zif_package_array_depend (GPtrArray *array,
 		*provides = zif_package_array_new ();
 
 	/* interate through the array */
-	for (i=0; i<array->len; i++) {
+	for (i = 0; i < array->len; i++) {
 		package_tmp = g_ptr_array_index (array, i);
 
 		/* does this match */

@@ -327,7 +327,7 @@ zif_history_get_transactions_sqlite_cb (void *data,
 	gint64 timestamp;
 	GArray **array = (GArray **) data;
 
-	for (i=0; i<argc; i++) {
+	for (i = 0; i < argc; i++) {
 		timestamp = atol (argv[i]);
 		g_array_append_val (*array, timestamp);
 	}

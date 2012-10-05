@@ -299,7 +299,7 @@ zif_package_array_func (void)
 	array = zif_package_array_new ();
 
 	/* add same pkg a few times */
-	for (i=0; i<1000; i++) {
+	for (i = 0; i < 1000; i++) {
 		pkg = zif_package_new ();
 		ret = zif_package_set_id (pkg, "hal;0.2-1.fc13;i686;installed", NULL);
 		g_assert (ret);
@@ -464,7 +464,7 @@ zif_manifest_func (void)
 
 	/* run each sample transactions */
 	state = zif_state_new ();
-	for (i=0; i<array->len; i++) {
+	for (i = 0; i < array->len; i++) {
 		filename = g_ptr_array_index (array, i);
 		zif_state_reset (state);
 		ret = zif_config_reset_default (config, &error);
@@ -2769,7 +2769,7 @@ zif_state_func (void)
 	guint i;
 	ZifState *state;
 
-	for (i=0; i<ZIF_STATE_ACTION_UNKNOWN ;i++)
+	for (i = 0; i < ZIF_STATE_ACTION_UNKNOWN ;i++)
 		g_assert (zif_state_action_to_string (i) != NULL);
 
 	_updates = 0;
@@ -4250,7 +4250,7 @@ zif_utils_func (void)
 
 	/* get the time it takes to split a million strings */
 	timer = g_timer_new ();
-	for (i=0; i<iterations; i++) {
+	for (i = 0; i < iterations; i++) {
 		split = zif_package_id_split (package_id_const);
 		g_strfreev (split);
 	}
@@ -4258,7 +4258,7 @@ zif_utils_func (void)
 
 	/* get the time it takes to iterate a million strings */
 	g_timer_reset (timer);
-	for (i=0; i<iterations; i++) {
+	for (i = 0; i < iterations; i++) {
 		name = zif_package_id_get_name (package_id_const);
 		g_free (name);
 	}

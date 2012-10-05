@@ -68,7 +68,7 @@ zif_package_meta_get_string (ZifPackageMeta *pkg, const gchar *key)
 
 	/* find a single string */
 	keylen = strlen (key);
-	for (i=0; i<pkg->priv->array->len; i++) {
+	for (i = 0; i < pkg->priv->array->len; i++) {
 		data = g_ptr_array_index (pkg->priv->array, i);
 		if (g_str_has_prefix (data, key)) {
 			if (data[keylen + 1] == ' ')
@@ -98,7 +98,7 @@ zif_package_meta_get_depends (ZifPackageMeta *pkg, const gchar *key, GError **er
 	/* find an array of ZifDepends */
 	keylen = strlen (key);
 	depends_tmp = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
-	for (i=0; i<pkg->priv->array->len; i++) {
+	for (i = 0; i < pkg->priv->array->len; i++) {
 		data = g_ptr_array_index (pkg->priv->array, i);
 		if (g_str_has_prefix (data, key)) {
 			if (data[keylen + 1] == ' ')
@@ -140,7 +140,7 @@ zif_package_meta_get_string_array (ZifPackageMeta *pkg, const gchar *key)
 	/* find an array of strings */
 	keylen = strlen (key);
 	value = g_ptr_array_new_with_free_func (g_free);
-	for (i=0; i<pkg->priv->array->len; i++) {
+	for (i = 0; i < pkg->priv->array->len; i++) {
 		data = g_ptr_array_index (pkg->priv->array, i);
 		if (g_str_has_prefix (data, key)) {
 			if (data[keylen + 1] == ' ')

@@ -346,7 +346,7 @@ zif_transaction_get_package_array (GPtrArray *array)
 
 	/* just copy out the package data */
 	packages = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
-	for (i=0; i<array->len; i++) {
+	for (i = 0; i < array->len; i++) {
 		package = g_ptr_array_index (array, i);
 		item = zif_transaction_package_get_item (ZIF_PACKAGE (package));
 		if (item->cancelled)
@@ -420,7 +420,7 @@ zif_transaction_get_item_from_array_by_related_package (GPtrArray *array,
 
 	/* find a package that matches */
 	package_id = zif_package_get_id (package);
-	for (i=0; i<array->len; i++) {
+	for (i = 0; i < array->len; i++) {
 		package_tmp = g_ptr_array_index (array, i);
 		item = zif_transaction_package_get_item (package_tmp);
 		if (item->related_packages->len == 0)
@@ -499,7 +499,7 @@ zif_transaction_get_array_for_reason (ZifTransaction *transaction,
 	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 
 	/* find all the installed packages that match */
-	for (i=0; i<transaction->priv->install->len; i++) {
+	for (i = 0; i < transaction->priv->install->len; i++) {
 		package = g_ptr_array_index (transaction->priv->install, i);
 		item = zif_transaction_package_get_item (package);
 		if (item->cancelled)
@@ -509,7 +509,7 @@ zif_transaction_get_array_for_reason (ZifTransaction *transaction,
 	}
 
 	/* find all the removed packages that match */
-	for (i=0; i<transaction->priv->remove->len; i++) {
+	for (i = 0; i < transaction->priv->remove->len; i++) {
 		package = g_ptr_array_index (transaction->priv->remove, i);
 		item = zif_transaction_package_get_item (package);
 		if (item->cancelled)
@@ -548,7 +548,7 @@ zif_transaction_add_to_array (GPtrArray *array,
 
 	/* copy in related_packages, ignoring the package itself */
 	if (related_packages != NULL) {
-		for (i=0; i<related_packages->len; i++) {
+		for (i = 0; i < related_packages->len; i++) {
 			package_tmp = g_ptr_array_index (related_packages, i);
 			if (zif_package_compare (package_tmp, package) == 0)
 				continue;
@@ -584,7 +584,7 @@ zif_transaction_get_package_id_descriptions (GPtrArray *array)
 
 	/* make string list, with a maximum of 10 items */
 	string = g_string_new ("");
-	for (i=0; i<array->len && i < 10; i++) {
+	for (i = 0; i < array->len && i < 10; i++) {
 		package = g_ptr_array_index (array, i);
 		g_string_append_printf (string, "%s,",
 					zif_package_get_id (package));
@@ -1542,7 +1542,7 @@ zif_transaction_get_package_requires_from_local (ZifTransaction *transaction,
 
 	/* search it */
 	*requires = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
-	for (i=0; i<array->len; i++) {
+	for (i = 0; i < array->len; i++) {
 		package = g_ptr_array_index (array, i);
 
 		/* is already being removed? */
@@ -1635,7 +1635,7 @@ zif_transaction_get_package_provide_from_remote (ZifTransaction *transaction,
 
 	/* find the depend in the store array */
 	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
-	for (i=0; i<transaction->priv->stores_remote->len; i++) {
+	for (i = 0; i < transaction->priv->stores_remote->len; i++) {
 		store = g_ptr_array_index (transaction->priv->stores_remote, i);
 
 		/* check if the store is still enabled */
@@ -1848,7 +1848,7 @@ zif_transaction_resolve_install_depend (ZifTransactionResolve *data,
 		g_ptr_array_add (related_packages, package_provide);
 
 		/* remove old versions */
-		for (i=0; i<already_installed->len; i++) {
+		for (i = 0; i < already_installed->len; i++) {
 			package = g_ptr_array_index (already_installed, i);
 			g_debug ("%s is already installed, and we want %s, so removing installed version",
 				 zif_package_get_id (package),
@@ -2182,7 +2182,7 @@ skip_resolve:
 	}
 	g_debug ("got %i requires", requires->len);
 	if (data->transaction->priv->verbose) {
-		for (i=0; i<requires->len; i++) {
+		for (i = 0; i < requires->len; i++) {
 			depend = g_ptr_array_index (requires, i);
 			g_debug ("%i\t%s", i+1,
 				 zif_depend_get_description (depend));
@@ -2190,7 +2190,7 @@ skip_resolve:
 	}
 
 	/* find each require */
-	for (i=0; i<requires->len; i++) {
+	for (i = 0; i < requires->len; i++) {
 		depend = g_ptr_array_index (requires, i);
 		ret = zif_transaction_resolve_install_depend (data, depend, item, error);
 		if (!ret) {
@@ -2218,7 +2218,7 @@ skip_resolve:
 	}
 	g_debug ("got %i obsoletes", obsoletes->len);
 	if (data->transaction->priv->verbose) {
-		for (i=0; i<obsoletes->len; i++) {
+		for (i = 0; i < obsoletes->len; i++) {
 			depend = g_ptr_array_index (obsoletes, i);
 			g_debug ("%i\t%s", i+1,
 				 zif_depend_get_description (depend));
@@ -2226,7 +2226,7 @@ skip_resolve:
 	}
 
 	/* find each obsolete */
-	for (i=0; i<obsoletes->len; i++) {
+	for (i = 0; i < obsoletes->len; i++) {
 		depend = g_ptr_array_index (obsoletes, i);
 		ret = zif_transaction_resolve_remove_depend (data, depend, item, error);
 		if (!ret) {
@@ -2363,7 +2363,7 @@ zif_transaction_resolve_remove_require (ZifTransactionResolve *data,
 	/* does anything *else* provide the depend that's installed? */
 	array_temp = g_ptr_array_new ();
 	depend_array_filtered = zif_object_array_new ();
-	for (i=0; i<depend_array->len; i++) {
+	for (i = 0; i < depend_array->len; i++) {
 		depend_tmp = g_ptr_array_index (depend_array, i);
 
 		g_ptr_array_set_size (array_temp, 0);
@@ -2456,12 +2456,12 @@ zif_transaction_resolve_remove_require (ZifTransactionResolve *data,
 			 package_requires->len,
 			 zif_depend_get_description (depend_tmp),
 			 zif_package_get_id (item->package));
-		for (i=0; i<package_requires->len; i++) {
+		for (i = 0; i < package_requires->len; i++) {
 			package = g_ptr_array_index (package_requires, i);
 			g_debug ("%i.\t%s", i+1, zif_package_get_id (package));
 		}
 	}
-	for (i=0; i<package_requires->len; i++) {
+	for (i = 0; i < package_requires->len; i++) {
 		package = g_ptr_array_index (package_requires, i);
 
 		/* don't remove ourself */
@@ -2625,7 +2625,7 @@ zif_transaction_resolve_remove_item (ZifTransactionResolve *data,
 	/* find each provide */
 	if (data->transaction->priv->verbose) {
 		g_debug ("got %i provides", provides->len);
-		for (i=0; i<provides->len; i++) {
+		for (i = 0; i < provides->len; i++) {
 			depend = g_ptr_array_index (provides, i);
 			g_debug ("%i.\t%s", i+1, zif_depend_get_description (depend));
 		}
@@ -2658,7 +2658,7 @@ zif_transaction_show_array (const gchar *title, GPtrArray *array)
 
 	/* print list */
 	g_debug ("%s", title);
-	for (i=0; i<array->len; i++) {
+	for (i = 0; i < array->len; i++) {
 		package_tmp = g_ptr_array_index (array, i);
 		item = zif_transaction_package_get_item (package_tmp);
 		if (item->cancelled)
@@ -2728,13 +2728,13 @@ zif_transaction_get_newest_from_remote_by_names (ZifTransactionResolve *data,
 	/* more then one */
 	g_debug ("multiple remote stores provide %s",
 		 zif_package_get_name (package));
-	for (i=0; i<matches->len; i++) {
+	for (i = 0; i < matches->len; i++) {
 		package_best = g_ptr_array_index (matches, i);
 		g_debug ("%i.\t%s", i+1, zif_package_get_id (package_best));
 	}
 
 	/* filter out any architectures that don't satisfy */
-	for (i=0; i<matches->len;) {
+	for (i = 0; i < matches->len;) {
 		package_best = g_ptr_array_index (matches, i);
 		if (!zif_package_is_compatible_arch (package, package_best)) {
 			g_ptr_array_remove_index_fast (matches, i);
@@ -2752,7 +2752,7 @@ zif_transaction_get_newest_from_remote_by_names (ZifTransactionResolve *data,
 	/* more then one */
 	g_debug ("multiple remote stores still provide %s",
 		 zif_package_get_name (package));
-	for (i=0; i<matches->len; i++) {
+	for (i = 0; i < matches->len; i++) {
 		package_best = g_ptr_array_index (matches, i);
 		g_debug ("%i.\t%s", i+1, zif_package_get_id (package_best));
 	}
@@ -2825,7 +2825,7 @@ zif_transaction_resolve_update_item (ZifTransactionResolve *data,
 		 zif_package_get_id (item->package),
 		 zif_depend_get_description (depend));
 	if (obsoletes->len > 0) {
-		for (i=0; i<obsoletes->len; i++) {
+		for (i = 0; i < obsoletes->len; i++) {
 			package = g_ptr_array_index (obsoletes, i);
 			g_debug ("%i.\t%s",
 				 i+1,
@@ -3086,7 +3086,7 @@ zif_transaction_resolve_conflicts_item (ZifTransactionResolve *data,
 	g_debug ("checking %i provides for %s",
 		 provides->len,
 		 zif_package_get_id (item->package));
-	for (i=0; i<provides->len; i++) {
+	for (i = 0; i < provides->len; i++) {
 
 		depend = g_ptr_array_index (provides, i);
 		g_debug ("checking provide %s",
@@ -3118,7 +3118,7 @@ zif_transaction_resolve_conflicts_item (ZifTransactionResolve *data,
 	g_debug ("checking %i conflicts for %s",
 		 provides->len,
 		 zif_package_get_id (item->package));
-	for (i=0; i<conflicts->len; i++) {
+	for (i = 0; i < conflicts->len; i++) {
 		depend = g_ptr_array_index (conflicts, i);
 
 		/* does this install conflict with another package */
@@ -3244,7 +3244,7 @@ zif_transaction_resolve_wind_back_failure (ZifTransaction *transaction, ZifTrans
 	/* remove the things we just added to the install queue too */
 	zif_transaction_resolve_wind_back_failure_package (transaction,
 							   item->package);
-	for (i=0; i<item->related_packages->len; i++) {
+	for (i = 0; i < item->related_packages->len; i++) {
 		update_package = g_ptr_array_index (item->related_packages, i);
 		zif_transaction_resolve_wind_back_failure_package (transaction,
 								   update_package);
@@ -3263,7 +3263,7 @@ zif_transaction_get_array_resolved (GPtrArray *array)
 	ZifTransactionItem *item;
 
 	/* count each transaction that's been processed or ignored */
-	for (i=0; i<array->len; i++) {
+	for (i = 0; i < array->len; i++) {
 		package_tmp = g_ptr_array_index (array, i);
 		item = zif_transaction_package_get_item (package_tmp);
 		if (item->resolved ||
@@ -3318,7 +3318,7 @@ zif_transaction_get_array_success (GPtrArray *array)
 	ZifTransactionItem *item;
 
 	/* count each transaction that's been processed or ignored */
-	for (i=0; i<array->len; i++) {
+	for (i = 0; i < array->len; i++) {
 		package_tmp = g_ptr_array_index (array, i);
 		item = zif_transaction_package_get_item (package_tmp);
 		if (item->resolved)
@@ -3372,7 +3372,7 @@ zif_transaction_setup_post_resolve_package_array (ZifTransactionResolve *data,
 		goto out;
 	}
 
-	for (i=0; i<packages->len; i++) {
+	for (i = 0; i < packages->len; i++) {
 		package_tmp = g_ptr_array_index (packages, i);
 		zif_store_add_package (data->post_resolve_package_array,
 				       package_tmp,
@@ -3380,13 +3380,13 @@ zif_transaction_setup_post_resolve_package_array (ZifTransactionResolve *data,
 	}
 
 	/* coldplug */
-	for (i=0; i<priv->install->len; i++) {
+	for (i = 0; i < priv->install->len; i++) {
 		package_tmp = g_ptr_array_index (priv->install, i);
 		zif_store_add_package (data->post_resolve_package_array,
 				       package_tmp,
 				       NULL);
 	}
-	for (i=0; i<priv->remove->len; i++) {
+	for (i = 0; i < priv->remove->len; i++) {
 		package_tmp = g_ptr_array_index (priv->remove, i);
 		zif_store_remove_package (data->post_resolve_package_array,
 					  package_tmp,
@@ -3422,7 +3422,7 @@ zif_transaction_resolve_loop (ZifTransactionResolve *data, ZifState *state, GErr
 
 	/* for each package set to be installed */
 	g_debug ("starting INSTALL on loop %i", data->resolve_count);
-	for (i=0; i<priv->install->len; i++) {
+	for (i = 0; i < priv->install->len; i++) {
 		package_tmp = g_ptr_array_index (priv->install, i);
 		item = zif_transaction_package_get_item (package_tmp);
 		if (item->resolved)
@@ -3473,7 +3473,7 @@ zif_transaction_resolve_loop (ZifTransactionResolve *data, ZifState *state, GErr
 
 	/* for each package set to be updated */
 	g_debug ("starting UPDATE on loop %i", data->resolve_count);
-	for (i=0; i<priv->update->len; i++) {
+	for (i = 0; i < priv->update->len; i++) {
 		package_tmp = g_ptr_array_index (priv->update, i);
 		item = zif_transaction_package_get_item (package_tmp);
 		if (item->resolved)
@@ -3529,7 +3529,7 @@ zif_transaction_resolve_loop (ZifTransactionResolve *data, ZifState *state, GErr
 
 	/* for each package set to be removed */
 	g_debug ("starting REMOVE on loop %i", data->resolve_count);
-	for (i=0; i<priv->remove->len; i++) {
+	for (i = 0; i < priv->remove->len; i++) {
 		package_tmp = g_ptr_array_index (priv->remove, i);
 		item = zif_transaction_package_get_item (package_tmp);
 		if (item->resolved) {
@@ -3587,7 +3587,7 @@ zif_transaction_resolve_loop (ZifTransactionResolve *data, ZifState *state, GErr
 
 	/* check conflicts */
 	g_debug ("starting CONFLICTS on loop %i", data->resolve_count);
-	for (i=0; i<priv->install->len; i++) {
+	for (i = 0; i < priv->install->len; i++) {
 		package_tmp = g_ptr_array_index (priv->install, i);
 		item = zif_transaction_package_get_item (package_tmp);
 		if (item->cancelled)
@@ -4650,7 +4650,7 @@ zif_transaction_prepare (ZifTransaction *transaction,
 	download = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	state_local = zif_state_get_child (state);
 	zif_state_set_number_steps (state_local, priv->install->len);
-	for (i=0; i<priv->install->len; i++) {
+	for (i = 0; i < priv->install->len; i++) {
 
 		package_tmp = g_ptr_array_index (priv->install, i);
 
@@ -4738,7 +4738,7 @@ skip:
 	keyring = rpmtsGetKeyring (transaction->priv->ts, 1);
 	state_local = zif_state_get_child (state);
 	zif_state_set_number_steps (state_local, priv->install->len);
-	for (i=0; i<priv->install->len; i++) {
+	for (i = 0; i < priv->install->len; i++) {
 		package_tmp = g_ptr_array_index (priv->install, i);
 
 		/* is local package */
@@ -4817,7 +4817,7 @@ zif_transaction_get_item_from_cache_filename_suffix (GPtrArray *array,
 
 	/* this is safe as the cache value will already be hot */
 	state = zif_state_new ();
-	for (i=0; i<array->len; i++) {
+	for (i = 0; i < array->len; i++) {
 		package_tmp = g_ptr_array_index (array, i);
 		item = zif_transaction_package_get_item (package_tmp);
 
@@ -5410,7 +5410,7 @@ zif_transaction_write_log (ZifTransaction *transaction, GError **error)
 
 	/* format data */
 	data = g_string_new ("");
-	for (i=0; i<transaction->priv->install->len; i++) {
+	for (i = 0; i < transaction->priv->install->len; i++) {
 		package_tmp = g_ptr_array_index (transaction->priv->install, i);
 		item = zif_transaction_package_get_item (package_tmp);
 		if (item->cancelled)
@@ -5421,7 +5421,7 @@ zif_transaction_write_log (ZifTransaction *transaction, GError **error)
 					zif_package_get_printable (item->package),
 					zif_transaction_reason_to_string (item->reason));
 	}
-	for (i=0; i<transaction->priv->remove->len; i++) {
+	for (i = 0; i < transaction->priv->remove->len; i++) {
 		package_tmp = g_ptr_array_index (transaction->priv->remove, i);
 		item = zif_transaction_package_get_item (package_tmp);
 		if (item->cancelled)
@@ -5575,7 +5575,7 @@ zif_transaction_write_yumdb (ZifTransaction *transaction,
 	if (transaction->priv->remove->len > 0)
 		zif_state_set_number_steps (state_local,
 					    transaction->priv->remove->len);
-	for (i=0; i<transaction->priv->remove->len; i++) {
+	for (i = 0; i < transaction->priv->remove->len; i++) {
 		package_tmp = g_ptr_array_index (transaction->priv->remove, i);
 		item = zif_transaction_package_get_item (package_tmp);
 		if (item->cancelled)
@@ -5599,7 +5599,7 @@ zif_transaction_write_yumdb (ZifTransaction *transaction,
 	if (transaction->priv->install->len > 0)
 		zif_state_set_number_steps (state_local,
 					    transaction->priv->install->len);
-	for (i=0; i<transaction->priv->install->len; i++) {
+	for (i = 0; i < transaction->priv->install->len; i++) {
 		package_tmp = g_ptr_array_index (transaction->priv->install, i);
 		item = zif_transaction_package_get_item (package_tmp);
 		if (item->cancelled)
@@ -5654,7 +5654,7 @@ zif_transaction_delete_packages (ZifTransaction *transaction,
 	/* delete each downloaded file */
 	state_local = zif_state_get_child (state);
 	zif_state_set_number_steps (state_local, priv->install->len);
-	for (i=0; i<priv->install->len; i++) {
+	for (i = 0; i < priv->install->len; i++) {
 		package_tmp = g_ptr_array_index (priv->install, i);
 
 		/* delete the cache file */
@@ -5860,7 +5860,7 @@ zif_transaction_write_history (ZifTransaction *transaction,
 	ZifTransactionPrivate *priv = transaction->priv;
 
 	timestamp = g_get_real_time ();
-	for (i=0; i<transaction->priv->install->len; i++) {
+	for (i = 0; i < transaction->priv->install->len; i++) {
 		package_tmp = g_ptr_array_index (transaction->priv->install, i);
 		item = zif_transaction_package_get_item (package_tmp);
 		if (item->cancelled)
@@ -5875,7 +5875,7 @@ zif_transaction_write_history (ZifTransaction *transaction,
 		if (!ret)
 			goto out;
 	}
-	for (i=0; i<transaction->priv->remove->len; i++) {
+	for (i = 0; i < transaction->priv->remove->len; i++) {
 		package_tmp = g_ptr_array_index (transaction->priv->remove, i);
 		item = zif_transaction_package_get_item (package_tmp);
 		if (item->cancelled)
@@ -6131,7 +6131,7 @@ zif_transaction_commit_full (ZifTransaction *transaction,
 	if (priv->install->len > 0)
 		zif_state_set_number_steps (state_local,
 					    priv->install->len);
-	for (i=0; i<priv->install->len; i++) {
+	for (i = 0; i < priv->install->len; i++) {
 		package_tmp = g_ptr_array_index (priv->install, i);
 		item = zif_transaction_package_get_item (package_tmp);
 
@@ -6157,7 +6157,7 @@ zif_transaction_commit_full (ZifTransaction *transaction,
 		goto out;
 
 	/* add things to remove */
-	for (i=0; i<priv->remove->len; i++) {
+	for (i = 0; i < priv->remove->len; i++) {
 		package_tmp = g_ptr_array_index (priv->remove, i);
 
 		/* not installed (depsolver has gone crazy) */
@@ -6220,7 +6220,7 @@ zif_transaction_commit_full (ZifTransaction *transaction,
 		problems_filter += RPMPROB_FILTER_DISKSPACE;
 
 	/* any downgrades? */
-	for (i=0; i<priv->install->len; i++) {
+	for (i = 0; i < priv->install->len; i++) {
 		package_tmp = g_ptr_array_index (priv->install, i);
 		item = zif_transaction_package_get_item (package_tmp);
 		if (item->reason == ZIF_TRANSACTION_REASON_DOWNGRADE_USER_ACTION ||

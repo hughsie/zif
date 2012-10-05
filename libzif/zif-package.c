@@ -327,13 +327,13 @@ zif_package_print (ZifPackage *package)
 	if (package->priv->files != NULL) {
 		g_print ("files:\n");
 		array = package->priv->files;
-		for (i=0; i<array->len; i++)
+		for (i = 0; i < array->len; i++)
 			g_print ("\t%s\n", (const gchar *) g_ptr_array_index (array, i));
 	}
 	if (package->priv->requires != NULL) {
 		g_print ("requires:\n");
 		array = package->priv->requires;
-		for (i=0; i<array->len; i++) {
+		for (i = 0; i < array->len; i++) {
 			depend = g_ptr_array_index (array, i);
 			text = zif_depend_get_description (depend);
 			g_print ("\t%s\n", text);
@@ -342,7 +342,7 @@ zif_package_print (ZifPackage *package)
 	if (package->priv->provides != NULL) {
 		g_print ("provides:\n");
 		array = package->priv->provides;
-		for (i=0; i<array->len; i++) {
+		for (i = 0; i < array->len; i++) {
 			depend = g_ptr_array_index (array, i);
 			text = zif_depend_get_description (depend);
 			g_print ("\t%s\n", text);
@@ -351,7 +351,7 @@ zif_package_print (ZifPackage *package)
 	if (package->priv->obsoletes != NULL) {
 		g_print ("obsoletes:\n");
 		array = package->priv->obsoletes;
-		for (i=0; i<array->len; i++) {
+		for (i = 0; i < array->len; i++) {
 			depend = g_ptr_array_index (array, i);
 			text = zif_depend_get_description (depend);
 			g_print ("\t%s\n", text);
@@ -360,7 +360,7 @@ zif_package_print (ZifPackage *package)
 	if (package->priv->conflicts != NULL) {
 		g_print ("conflicts:\n");
 		array = package->priv->conflicts;
-		for (i=0; i<array->len; i++) {
+		for (i = 0; i < array->len; i++) {
 			depend = g_ptr_array_index (array, i);
 			text = zif_depend_get_description (depend);
 			g_print ("\t%s\n", text);
@@ -423,7 +423,7 @@ zif_package_is_gui (ZifPackage *package)
 	array = zif_package_get_requires (package, state_tmp, NULL);
 	if (array == NULL)
 		goto out;
-	for (i=0; i<array->len; i++) {
+	for (i = 0; i < array->len; i++) {
 		depend = g_ptr_array_index (array, i);
 		name = zif_depend_get_name (depend);
 		if (g_strstr_len (name, -1, "gtk") != NULL ||
@@ -630,7 +630,7 @@ zif_package_provides (ZifPackage *package,
 	*satisfies = NULL;
 
 	/* find what we're looking for */
-	for (i=0; i<package->priv->provides->len; i++) {
+	for (i = 0; i < package->priv->provides->len; i++) {
 		depend_tmp = g_ptr_array_index (package->priv->provides, i);
 		ret = zif_depend_satisfies (depend_tmp, depend);
 		if (ret) {
@@ -713,7 +713,7 @@ zif_package_requires (ZifPackage *package,
 	*satisfies = NULL;
 
 	/* find what we're looking for */
-	for (i=0; i<package->priv->requires->len; i++) {
+	for (i = 0; i < package->priv->requires->len; i++) {
 		depend_tmp = g_ptr_array_index (package->priv->requires, i);
 		if (zif_depend_satisfies (depend_tmp, depend)) {
 			g_debug ("%s satisfied by %s",
@@ -795,7 +795,7 @@ zif_package_conflicts (ZifPackage *package,
 	}
 
 	/* find what we're looking for */
-	for (i=0; i<package->priv->conflicts->len; i++) {
+	for (i = 0; i < package->priv->conflicts->len; i++) {
 		depend_tmp = g_ptr_array_index (package->priv->conflicts, i);
 		ret = zif_depend_satisfies (depend_tmp, depend);
 		if (ret) {
@@ -879,7 +879,7 @@ zif_package_obsoletes (ZifPackage *package,
 	*satisfies = NULL;
 
 	/* find what we're looking for */
-	for (i=0; i<package->priv->obsoletes->len; i++) {
+	for (i = 0; i < package->priv->obsoletes->len; i++) {
 		depend_tmp = g_ptr_array_index (package->priv->obsoletes, i);
 		ret = zif_depend_satisfies (depend_tmp, depend);
 		if (ret) {
@@ -2382,7 +2382,7 @@ zif_package_set_provides_files (ZifPackage *package,
 					     NULL);
 
 	/* add files as provides to 'any' cache */
-	for (i=0; i<files->len; i++) {
+	for (i = 0; i < files->len; i++) {
 		filename = g_ptr_array_index (files, i);
 		ret = zif_package_str_has_prefix (filename, file_prefixes);
 		if (!ret)
@@ -2452,7 +2452,7 @@ zif_package_set_requires (ZifPackage *package, GPtrArray *requires)
 	g_return_if_fail (package->priv->requires == NULL);
 
 	/* add items to 'any' cache */
-	for (i=0; i<requires->len; i++) {
+	for (i = 0; i < requires->len; i++) {
 		depend_tmp = g_ptr_array_index (requires, i);
 		zif_package_add_require_internal (package, depend_tmp);
 	}
@@ -2524,13 +2524,13 @@ zif_package_set_provides (ZifPackage *package, GPtrArray *provides)
 	package->priv->provides_set = TRUE;
 
 	/* add items to 'any' cache */
-	for (i=0; i<provides->len; i++) {
+	for (i = 0; i < provides->len; i++) {
 		depend_tmp = g_ptr_array_index (provides, i);
 		zif_package_add_provide_internal (package, depend_tmp);
 	}
 
 	/* add to the array, not replace */
-	for (i=0; i<provides->len; i++) {
+	for (i = 0; i < provides->len; i++) {
 		depend_tmp = g_ptr_array_index (provides, i);
 		g_ptr_array_add (package->priv->provides,
 				 g_object_ref (depend_tmp));
@@ -2597,7 +2597,7 @@ zif_package_set_obsoletes (ZifPackage *package, GPtrArray *obsoletes)
 	g_return_if_fail (package->priv->obsoletes == NULL);
 
 	/* add items to 'any' cache */
-	for (i=0; i<obsoletes->len; i++) {
+	for (i = 0; i < obsoletes->len; i++) {
 		depend_tmp = g_ptr_array_index (obsoletes, i);
 		zif_package_add_obsolete_internal (package, depend_tmp);
 	}
@@ -2665,7 +2665,7 @@ zif_package_set_conflicts (ZifPackage *package, GPtrArray *conflicts)
 	g_return_if_fail (package->priv->conflicts == NULL);
 
 	/* add items to 'any' cache */
-	for (i=0; i<conflicts->len; i++) {
+	for (i = 0; i < conflicts->len; i++) {
 		depend_tmp = g_ptr_array_index (conflicts, i);
 		zif_package_add_conflict_internal (package, depend_tmp);
 	}

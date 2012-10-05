@@ -219,7 +219,7 @@ zif_package_rhn_list_files (ZifPackageRhn *rhn,
 
 	/* get packages */
 	files = g_ptr_array_new_with_free_func (g_free);
-	for (i=0; i<array->len; i++) {
+	for (i = 0; i < array->len; i++) {
 		hash = g_array_index (array, GHashTable *, i);
 
 		/* FIXME: do we care that we're adding directories? */
@@ -331,7 +331,7 @@ zif_package_rhn_list_deps (ZifPackageRhn *rhn,
 	requires = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	obsoletes = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	conflicts = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
-	for (i=0; i<array->len; i++) {
+	for (i = 0; i < array->len; i++) {
 		hash = g_array_index (array, GHashTable *, i);
 
 		value = g_hash_table_lookup (hash, "dependency_type");

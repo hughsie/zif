@@ -549,7 +549,7 @@ zif_md_comps_get_categories (ZifMdComps *md,
 	/* get categories */
 	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	len = md->priv->array_categories->len;
-	for (i=0; i<len; i++) {
+	for (i = 0; i < len; i++) {
 		data = g_ptr_array_index (md->priv->array_categories, i);
 		category = zif_category_new ();
 		zif_category_set_id (category, data->id);
@@ -575,7 +575,7 @@ zif_md_comps_get_category_for_group (ZifMdComps *md, const gchar *group_id)
 
 	/* find group matching group_id */
 	len = md->priv->array_groups->len;
-	for (i=0; i<len; i++) {
+	for (i = 0; i < len; i++) {
 		data = g_ptr_array_index (md->priv->array_groups, i);
 		if (g_strcmp0 (group_id, data->id) == 0) {
 			category = zif_category_new ();
@@ -633,7 +633,7 @@ zif_md_comps_get_groups_for_category (ZifMdComps *md, const gchar *category_id,
 
 	/* get categories */
 	len = md->priv->array_categories->len;
-	for (i=0; i<len; i++) {
+	for (i = 0; i < len; i++) {
 		data = g_ptr_array_index (md->priv->array_categories, i);
 
 		/* category matches */
@@ -716,7 +716,7 @@ zif_md_comps_get_packages_for_group (ZifMdComps *md, const gchar *group_id,
 
 	/* get packages in this group */
 	len = md->priv->array_groups->len;
-	for (i=0; i<len; i++) {
+	for (i = 0; i < len; i++) {
 		data = g_ptr_array_index (md->priv->array_groups, i);
 
 		/* category matches */

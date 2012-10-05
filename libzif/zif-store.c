@@ -151,7 +151,7 @@ zif_store_add_packages (ZifStore *store,
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
 	/* just add */
-	for (i=0; i<array->len; i++) {
+	for (i = 0; i < array->len; i++) {
 		package = g_ptr_array_index (array, i);
 		ret = zif_store_add_package (store, package, error);
 		if (!ret)
@@ -231,7 +231,7 @@ zif_store_remove_packages (ZifStore *store,
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
 	/* just remove */
-	for (i=0; i<array->len; i++) {
+	for (i = 0; i < array->len; i++) {
 		package = g_ptr_array_index (array, i);
 		ret = zif_store_remove_package (store, package, error);
 		if (!ret)
@@ -1040,7 +1040,7 @@ zif_store_resolve_full_try (ZifStore *store,
 		rpmGetArchInfo (&tmp, NULL);
 		j = g_strv_length (search);
 		search_native = g_new0 (gchar *, j + 1);
-		for (i=0; i<j; i++) {
+		for (i = 0; i < j; i++) {
 			if (zif_store_has_search_arch_suffix (search[i])) {
 				search_native[i] = g_strdup (search[i]);
 			} else {
@@ -1451,7 +1451,7 @@ zif_store_what_depends (ZifStore *store,
 	/* just use the helper function */
 	state_local = zif_state_get_child (state);
 	array_tmp = zif_object_array_new ();
-	for (i=0; i<depends->len; i++) {
+	for (i = 0; i < depends->len; i++) {
 		depend_tmp = g_ptr_array_index (depends, i);
 		if (type == ZIF_PACKAGE_ENSURE_TYPE_PROVIDES) {
 			ret = zif_package_array_provide (store->priv->packages,

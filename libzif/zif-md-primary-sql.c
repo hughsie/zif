@@ -371,7 +371,7 @@ zif_md_primary_sql_resolve (ZifMd *md,
 		g_free (statement);
 		if (tmp == NULL)
 			goto out;
-		for (i=0; i<tmp->len; i++)
+		for (i = 0; i < tmp->len; i++)
 			g_ptr_array_add (array_tmp, g_object_ref (g_ptr_array_index (tmp, i)));
 		g_ptr_array_unref (tmp);
 
@@ -398,7 +398,7 @@ zif_md_primary_sql_resolve (ZifMd *md,
 		g_free (statement);
 		if (tmp == NULL)
 			goto out;
-		for (i=0; i<tmp->len; i++)
+		for (i = 0; i < tmp->len; i++)
 			g_ptr_array_add (array_tmp, g_object_ref (g_ptr_array_index (tmp, i)));
 		g_ptr_array_unref (tmp);
 
@@ -423,7 +423,7 @@ zif_md_primary_sql_resolve (ZifMd *md,
 		g_free (statement);
 		if (tmp == NULL)
 			goto out;
-		for (i=0; i<tmp->len; i++)
+		for (i = 0; i < tmp->len; i++)
 			g_ptr_array_add (array_tmp, g_object_ref (g_ptr_array_index (tmp, i)));
 		g_ptr_array_unref (tmp);
 
@@ -449,7 +449,7 @@ zif_md_primary_sql_resolve (ZifMd *md,
 		g_free (statement);
 		if (tmp == NULL)
 			goto out;
-		for (i=0; i<tmp->len; i++)
+		for (i = 0; i < tmp->len; i++)
 			g_ptr_array_add (array_tmp, g_object_ref (g_ptr_array_index (tmp, i)));
 		g_ptr_array_unref (tmp);
 

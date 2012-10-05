@@ -628,7 +628,7 @@ zif_md_primary_xml_filter (ZifMd *md,
 	/* search array */
 	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	packages = md_primary->priv->array;
-	for (i=0; i<packages->len; i++) {
+	for (i = 0; i < packages->len; i++) {
 		package = g_ptr_array_index (packages, i);
 		if (filter_func (package, user_data, compare_func))
 			g_ptr_array_add (array, g_object_ref (package));
@@ -806,7 +806,7 @@ zif_md_primary_xml_resolve (ZifMd *md,
 						 error);
 		if (tmp == NULL)
 			goto out;
-		for (i=0; i<tmp->len; i++)
+		for (i = 0; i < tmp->len; i++)
 			g_ptr_array_add (array_tmp, g_object_ref (g_ptr_array_index (tmp, i)));
 		g_ptr_array_unref (tmp);
 
@@ -827,7 +827,7 @@ zif_md_primary_xml_resolve (ZifMd *md,
 						 error);
 		if (tmp == NULL)
 			goto out;
-		for (i=0; i<tmp->len; i++)
+		for (i = 0; i < tmp->len; i++)
 			g_ptr_array_add (array_tmp, g_object_ref (g_ptr_array_index (tmp, i)));
 		g_ptr_array_unref (tmp);
 
@@ -848,7 +848,7 @@ zif_md_primary_xml_resolve (ZifMd *md,
 						 error);
 		if (tmp == NULL)
 			goto out;
-		for (i=0; i<tmp->len; i++)
+		for (i = 0; i < tmp->len; i++)
 			g_ptr_array_add (array_tmp, g_object_ref (g_ptr_array_index (tmp, i)));
 		g_ptr_array_unref (tmp);
 
@@ -869,7 +869,7 @@ zif_md_primary_xml_resolve (ZifMd *md,
 						 error);
 		if (tmp == NULL)
 			goto out;
-		for (i=0; i<tmp->len; i++)
+		for (i = 0; i < tmp->len; i++)
 			g_ptr_array_add (array_tmp, g_object_ref (g_ptr_array_index (tmp, i)));
 		g_ptr_array_unref (tmp);
 
@@ -1092,7 +1092,7 @@ zif_md_primary_xml_what_provides_cb (ZifPackage *package,
 	}
 
 	/* find a depends string */
-	for (i=0; i<array->len; i++) {
+	for (i = 0; i < array->len; i++) {
 		depend_tmp = g_ptr_array_index (array, i);
 		for (j=0; j<depends->len; j++) {
 			depend = g_ptr_array_index (depends, j);
@@ -1135,7 +1135,7 @@ zif_md_primary_xml_what_requires_cb (ZifPackage *package,
 	}
 
 	/* find a depends string */
-	for (i=0; i<array->len; i++) {
+	for (i = 0; i < array->len; i++) {
 		depend_tmp = g_ptr_array_index (array, i);
 		for (j=0; j<depends->len; j++) {
 			depend = g_ptr_array_index (depends, j);
@@ -1178,7 +1178,7 @@ zif_md_primary_xml_what_obsoletes_cb (ZifPackage *package,
 	}
 
 	/* find a depends string */
-	for (i=0; i<array->len; i++) {
+	for (i = 0; i < array->len; i++) {
 		depend_tmp = g_ptr_array_index (array, i);
 		for (j=0; j<depends->len; j++) {
 			depend = g_ptr_array_index (depends, j);
@@ -1221,7 +1221,7 @@ zif_md_primary_xml_what_conflicts_cb (ZifPackage *package,
 	}
 
 	/* find a depends string */
-	for (i=0; i<array->len; i++) {
+	for (i = 0; i < array->len; i++) {
 		depend_tmp = g_ptr_array_index (array, i);
 		for (j=0; j<depends->len; j++) {
 			depend = g_ptr_array_index (depends, j);
@@ -1374,7 +1374,7 @@ zif_md_primary_xml_get_depends (ZifMd *md,
 	ZifPackage *pkg_tmp;
 
 	array = primary_xml->priv->array;
-	for (i=0; i<array->len; i++) {
+	for (i = 0; i < array->len; i++) {
 		pkg_tmp = g_ptr_array_index (array, i);
 		if (zif_package_compare (pkg_tmp, package) == 0) {
 			if (g_strcmp0 (type, "provides") == 0) {

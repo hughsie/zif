@@ -406,7 +406,7 @@ zif_md_filelists_xml_get_files (ZifMd *md, ZifPackage *package,
 	/* search array */
 	pkgid = zif_package_get_pkgid (package);
 	packages = md_filelists->priv->array;
-	for (i=0; i<packages->len; i++) {
+	for (i = 0; i < packages->len; i++) {
 		package_tmp = g_ptr_array_index (packages, i);
 		pkgid_tmp = zif_package_get_pkgid (package_tmp);
 		if (g_strcmp0 (pkgid, pkgid_tmp) == 0) {
@@ -513,7 +513,7 @@ zif_md_filelists_xml_search_file (ZifMd *md, gchar **search,
 
 	/* search array */
 	packages = md_filelists->priv->array;
-	for (i=0; i<packages->len; i++) {
+	for (i = 0; i < packages->len; i++) {
 		package = g_ptr_array_index (packages, i);
 		pkgid = zif_package_get_pkgid (package);
 		state_loop = zif_state_get_child (state_local);

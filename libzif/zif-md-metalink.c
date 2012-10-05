@@ -300,7 +300,7 @@ zif_md_metalink_get_uris (ZifMdMetalink *md, guint threshold,
 	/* get list */
 	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_free);
 	len = metalink->priv->array->len;
-	for (i=0; i<len; i++) {
+	for (i = 0; i < len; i++) {
 		data = g_ptr_array_index (metalink->priv->array, i);
 
 		/* ignore not http mirrors */

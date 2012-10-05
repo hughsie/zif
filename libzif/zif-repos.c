@@ -429,7 +429,7 @@ zif_repos_load (ZifRepos *repos, ZifState *state, GError **error)
 	state_local = zif_state_get_child (state);
 	if (repos->priv->list->len > 0)
 		zif_state_set_number_steps (state_local, repos->priv->list->len);
-	for (i=0; i<repos->priv->list->len; i++) {
+	for (i = 0; i < repos->priv->list->len; i++) {
 		store = g_ptr_array_index (repos->priv->list, i);
 
 		/* load, which sets the repo enabled state */
@@ -557,7 +557,7 @@ zif_repos_get_stores_enabled (ZifRepos *repos,
 
 	/* add stores that have not been disabled */
 	array = zif_object_array_new ();
-	for (i=0; i<repos->priv->list->len; i++) {
+	for (i = 0; i < repos->priv->list->len; i++) {
 		store = g_ptr_array_index (repos->priv->list, i);
 		if (zif_store_get_enabled (store)) {
 			zif_object_array_add (array, store);
@@ -613,7 +613,7 @@ zif_repos_get_store (ZifRepos *repos,
 	}
 
 	/* search though all the cached repos */
-	for (i=0; i<repos->priv->list->len; i++) {
+	for (i = 0; i < repos->priv->list->len; i++) {
 		store_tmp = g_ptr_array_index (repos->priv->list, i);
 
 		/* get the id */

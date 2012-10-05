@@ -397,7 +397,7 @@ zif_release_get_upgrades_new (ZifRelease *release,
 
 	/* success */
 	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
-	for (i=0; i<release->priv->array->len; i++) {
+	for (i = 0; i < release->priv->array->len; i++) {
 		upgrade = g_ptr_array_index (release->priv->array, i);
 		if (zif_upgrade_get_version (upgrade) > version)
 			g_ptr_array_add (array, g_object_ref (upgrade));
@@ -442,7 +442,7 @@ zif_release_get_upgrade_for_version (ZifRelease *release,
 	}
 
 	/* find upgrade */
-	for (i=0; i<release->priv->array->len; i++) {
+	for (i = 0; i < release->priv->array->len; i++) {
 		upgrade_tmp = g_ptr_array_index (release->priv->array, i);
 		if (zif_upgrade_get_version (upgrade_tmp) == version) {
 			upgrade = g_object_ref (upgrade_tmp);

@@ -694,7 +694,7 @@ zif_download_location_array_get_index (GPtrArray *array, const gchar *uri)
 	ZifDownloadItem *item;
 
 	/* find the uri */
-	for (i=0; i<array->len; i++) {
+	for (i = 0; i < array->len; i++) {
 		item = g_ptr_array_index (array, i);
 		if (g_strcmp0 (item->uri, uri) == 0)
 			return i;
@@ -759,7 +759,7 @@ zif_download_location_add_array (ZifDownload *download, GPtrArray *array, GError
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
 	/* add each uri */
-	for (i=0; i<array->len; i++) {
+	for (i = 0; i < array->len; i++) {
 		uri = g_ptr_array_index (array, i);
 		ret = zif_download_location_add_uri (download, uri, error);
 		if (!ret)

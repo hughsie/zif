@@ -374,7 +374,7 @@ zif_md_filelists_sql_search_file (ZifMd *md, gchar **search,
 
 	/* convert each pkgKey */
 	array_tmp = g_ptr_array_new_with_free_func ((GDestroyNotify) g_free);
-	for (i=0; i<pkgkey_array->len; i++) {
+	for (i = 0; i < pkgkey_array->len; i++) {
 		guint key;
 		gchar *pkgid = NULL;
 

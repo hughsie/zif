@@ -670,7 +670,7 @@ zif_md_updateinfo_get_detail_for_package (ZifMdUpdateinfo *md, const gchar *pack
 
 	/* get packages in this group */
 	len = md->priv->array_updates->len;
-	for (i=0; i<len; i++) {
+	for (i = 0; i < len; i++) {
 		update = g_ptr_array_index (md->priv->array_updates, i);
 
 		/* have we matched on any entries */

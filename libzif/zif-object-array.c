@@ -69,7 +69,7 @@ zif_object_array_add_array (GPtrArray *array, GPtrArray *source)
 	g_return_if_fail (array != NULL);
 	g_return_if_fail (source != NULL);
 
-	for (i=0; i<source->len; i++) {
+	for (i = 0; i < source->len; i++) {
 		temp = g_ptr_array_index (source, i);
 		g_ptr_array_add (array, g_object_ref (temp));
 	}

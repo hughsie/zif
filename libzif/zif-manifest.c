@@ -355,7 +355,7 @@ zif_manifest_check_array (GPtrArray *array,
 			     "post action database wrong size %i when supposed to be %i",
 			     array->len, packages->len);
 		g_debug ("listing files in store");
-		for (i=0; i<array->len; i++) {
+		for (i = 0; i < array->len; i++) {
 			package = g_ptr_array_index (array, i);
 			g_debug ("%i.\t%s", i+1, zif_package_get_printable (package));
 		}

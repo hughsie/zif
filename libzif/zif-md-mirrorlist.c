@@ -176,7 +176,7 @@ zif_md_mirrorlist_get_uris (ZifMdMirrorlist *md, ZifState *state, GError **error
 	/* get list */
 	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_free);
 	len = mirrorlist->priv->array->len;
-	for (i=0; i<len; i++) {
+	for (i = 0; i < len; i++) {
 		data = g_ptr_array_index (mirrorlist->priv->array, i);
 		uri = zif_config_expand_substitutions (md->priv->config, data, &error_local);
 		if (uri == NULL) {

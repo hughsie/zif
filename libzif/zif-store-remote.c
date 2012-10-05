@@ -752,7 +752,7 @@ zif_store_remote_add_changelog (ZifStoreRemote *store, ZifUpdate *update,
 	}
 
 	/* add the changesets (the changelog) to the update */
-	for (i=0; i<changelog->len; i++) {
+	for (i = 0; i < changelog->len; i++) {
 		changeset = g_ptr_array_index (changelog, i);
 		zif_update_add_changeset (update, changeset);
 
@@ -3157,7 +3157,7 @@ zif_store_remote_search_category (ZifStore *store, gchar **group_id, ZifState *s
 	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 
 	/* resolve names */
-	for (i=0; i<array_names->len; i++) {
+	for (i = 0; i < array_names->len; i++) {
 		name = g_ptr_array_index (array_names, i);
 
 		/* state */
@@ -3570,7 +3570,7 @@ zif_store_remote_get_categories (ZifStore *store, ZifState *state, GError **erro
 	zif_state_set_number_steps (state_local, array_cats->len);
 
 	/* get groups for categories */
-	for (i=0; i<array_cats->len; i++) {
+	for (i = 0; i < array_cats->len; i++) {
 		category = g_ptr_array_index (array_cats, i);
 
 		/* get the groups for this category */
@@ -3973,7 +3973,7 @@ zif_store_remote_convert_pkgids_to_packages (ZifMd *primary,
 	zif_state_set_number_steps (state, pkgids->len);
 
 	array_tmp = zif_object_array_new ();
-	for (i=0; i<pkgids->len; i++) {
+	for (i = 0; i < pkgids->len; i++) {
 		pkgid = g_ptr_array_index (pkgids, i);
 
 		/* get the results (should just be one) */

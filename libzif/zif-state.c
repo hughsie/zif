@@ -1423,13 +1423,13 @@ zif_state_show_profile (ZifState *state)
 	guint uncumalitive = 0;
 
 	/* get the total time so we can work out the divisor */
-	for (i=0; i<state->priv->steps; i++)
+	for (i = 0; i < state->priv->steps; i++)
 		total_time += state->priv->step_profile[i];
 	division = total_time / 100.0f;
 
 	/* what we set */
 	result = g_string_new ("steps were set as [ ");
-	for (i=0; i<state->priv->steps; i++) {
+	for (i = 0; i < state->priv->steps; i++) {
 		g_string_append_printf (result, "%i, ",
 					state->priv->step_data[i] - uncumalitive);
 		uncumalitive = state->priv->step_data[i];
@@ -1437,7 +1437,7 @@ zif_state_show_profile (ZifState *state)
 
 	/* what we _should_ have set */
 	g_string_append_printf (result, "-1 ] but should have been: [ ");
-	for (i=0; i<state->priv->steps; i++) {
+	for (i = 0; i < state->priv->steps; i++) {
 		g_string_append_printf (result, "%.0f, ",
 					state->priv->step_profile[i] / division);
 	}
