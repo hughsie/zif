@@ -2503,6 +2503,7 @@ zif_transaction_run (ZifCmdPrivate *priv, ZifTransaction *transaction, ZifState 
 	gboolean untrusted = FALSE;
 	gchar *size_str = NULL;
 	GPtrArray *install = NULL;
+	GPtrArray *packages = NULL;
 	GPtrArray *store_array_remote = NULL;
 	guint64 size;
 	guint i;
@@ -2513,7 +2514,8 @@ zif_transaction_run (ZifCmdPrivate *priv, ZifTransaction *transaction, ZifState 
 	ret = zif_state_set_steps (state,
 				   error,
 				   1, /* add remote stores */
-				   25, /* resolve */
+				   1, /* add debuginfo */
+				   24, /* resolve */
 				   5, /* get sizes */
 				   30, /* prepare */
 				   39, /* commit */
@@ -2527,6 +2529,27 @@ zif_transaction_run (ZifCmdPrivate *priv, ZifTransaction *transaction, ZifState 
 	ret = zif_store_array_add_remote_enabled (store_array_remote, state_local, error);
 	if (!ret)
 		goto out;
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* are there any debuginfo packages */
+	packages = zif_transaction_get_update (transaction);
+	for (i = 0; i < packages->len; i++) {
+		package_tmp = g_ptr_array_index (packages, i);
+		if (g_str_has_suffix (zif_package_get_name (package_tmp), "-debuginfo")) {
+			state_local = zif_state_get_child (state);
+			ret = zif_auto_add_debuginfo_repos (priv,
+							    store_array_remote,
+							    state_local,
+							    error);
+			if (!ret)
+				goto out;
+			break;
+		}
+	}
 
 	/* set local store */
 	zif_transaction_set_store_local (transaction, priv->store_local);
@@ -2655,6 +2678,8 @@ zif_transaction_run (ZifCmdPrivate *priv, ZifTransaction *transaction, ZifState 
 out:
 	if (store_array_remote != NULL)
 		g_ptr_array_unref (store_array_remote);
+	if (packages != NULL)
+		g_ptr_array_unref (packages);
 	if (install != NULL)
 		g_ptr_array_unref (install);
 	return ret;
