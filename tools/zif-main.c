@@ -4042,6 +4042,7 @@ zif_cmd_resolve (ZifCmdPrivate *priv, gchar **values, GError **error)
 	gboolean ret = FALSE;
 	GPtrArray *array = NULL;
 	GPtrArray *store_array = NULL;
+	guint i;
 	ZifState *state_local;
 
 	/* check we have a value */
@@ -4061,7 +4062,8 @@ zif_cmd_resolve (ZifCmdPrivate *priv, gchar **values, GError **error)
 				   error,
 				   1, /* add local */
 				   1, /* add remote */
-				   98, /* search */
+				   1, /* add debuginfo */
+				   97, /* search */
 				   -1);
 	if (!ret)
 		goto out;
@@ -4082,6 +4084,25 @@ zif_cmd_resolve (ZifCmdPrivate *priv, gchar **values, GError **error)
 	ret = zif_store_array_add_remote_enabled (store_array, state_local, error);
 	if (!ret)
 		goto out;
+
+	/* this section done */
+	ret = zif_state_done (priv->state, error);
+	if (!ret)
+		goto out;
+
+	/* enable debuginfo repos if required */
+	for (i = 0; values[i] != NULL; i++) {
+		if (g_str_has_suffix (values[i], "-debuginfo")) {
+			state_local = zif_state_get_child (priv->state);
+			ret = zif_auto_add_debuginfo_repos (priv,
+							    store_array,
+							    state_local,
+							    error);
+			if (!ret)
+				goto out;
+			break;
+		}
+	}
 
 	/* this section done */
 	ret = zif_state_done (priv->state, error);
@@ -4192,6 +4213,7 @@ zif_cmd_search_details (ZifCmdPrivate *priv, gchar **values, GError **error)
 	gboolean ret = FALSE;
 	GPtrArray *array = NULL;
 	GPtrArray *store_array = NULL;
+	guint i;
 	ZifState *state_local;
 
 	/* check we have a value */
@@ -4209,7 +4231,8 @@ zif_cmd_search_details (ZifCmdPrivate *priv, gchar **values, GError **error)
 				   error,
 				   1, /* add local */
 				   1, /* add remote */
-				   98, /* search */
+				   1, /* add debuginfo */
+				   97, /* search */
 				   -1);
 	if (!ret)
 		goto out;
@@ -4231,6 +4254,25 @@ zif_cmd_search_details (ZifCmdPrivate *priv, gchar **values, GError **error)
 	ret = zif_store_array_add_remote_enabled (store_array, state_local, error);
 	if (!ret)
 		goto out;
+
+	/* this section done */
+	ret = zif_state_done (priv->state, error);
+	if (!ret)
+		goto out;
+
+	/* enable debuginfo repos if required */
+	for (i = 0; values[i] != NULL; i++) {
+		if (g_str_has_suffix (values[i], "-debuginfo")) {
+			state_local = zif_state_get_child (priv->state);
+			ret = zif_auto_add_debuginfo_repos (priv,
+							    store_array,
+							    state_local,
+							    error);
+			if (!ret)
+				goto out;
+			break;
+		}
+	}
 
 	/* this section done */
 	ret = zif_state_done (priv->state, error);
@@ -4425,6 +4467,7 @@ zif_cmd_search_name (ZifCmdPrivate *priv, gchar **values, GError **error)
 	gboolean ret = FALSE;
 	GPtrArray *array = NULL;
 	GPtrArray *store_array = NULL;
+	guint i;
 	ZifState *state_local;
 
 	/* check we have a value */
@@ -4442,7 +4485,8 @@ zif_cmd_search_name (ZifCmdPrivate *priv, gchar **values, GError **error)
 				   error,
 				   1, /* add local */
 				   1, /* add remote */
-				   98, /* search */
+				   1, /* add debuginfo */
+				   97, /* search */
 				   -1);
 	if (!ret)
 		goto out;
@@ -4463,6 +4507,25 @@ zif_cmd_search_name (ZifCmdPrivate *priv, gchar **values, GError **error)
 	ret = zif_store_array_add_remote_enabled (store_array, state_local, error);
 	if (!ret)
 		goto out;
+
+	/* this section done */
+	ret = zif_state_done (priv->state, error);
+	if (!ret)
+		goto out;
+
+	/* enable debuginfo repos if required */
+	for (i = 0; values[i] != NULL; i++) {
+		if (g_str_has_suffix (values[i], "-debuginfo")) {
+			state_local = zif_state_get_child (priv->state);
+			ret = zif_auto_add_debuginfo_repos (priv,
+							    store_array,
+							    state_local,
+							    error);
+			if (!ret)
+				goto out;
+			break;
+		}
+	}
 
 	/* this section done */
 	ret = zif_state_done (priv->state, error);
@@ -4677,8 +4740,8 @@ zif_cmd_update (ZifCmdPrivate *priv, gchar **values, GError **error)
 	ret = zif_state_set_steps (priv->state,
 				   error,
 				   1, /* add local */
-				   5, /* add updates */
-				   94, /* run transaction */
+				   5, /* resolve */
+				   94 , /* run transaction */
 				   -1);
 	if (!ret)
 		goto out;
