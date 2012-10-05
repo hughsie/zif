@@ -1600,7 +1600,6 @@ zif_transaction_get_package_provide_from_remote (ZifTransaction *transaction,
 						 GError **error)
 {
 	gboolean ret;
-	gboolean skip_broken;
 	GError *error_local = NULL;
 	GPtrArray *array = NULL;
 	GPtrArray *array_tmp;
@@ -1627,11 +1626,6 @@ zif_transaction_get_package_provide_from_remote (ZifTransaction *transaction,
 	state_local = zif_state_get_child (state);
 	zif_state_set_number_steps (state_local,
 				    transaction->priv->stores_remote->len);
-
-	/* ignore broken repos? */
-	skip_broken = zif_config_get_boolean (transaction->priv->config,
-					      "skip_broken",
-					      NULL);
 
 	/* find the depend in the store array */
 	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
@@ -1663,11 +1657,10 @@ zif_transaction_get_package_provide_from_remote (ZifTransaction *transaction,
 							  error);
 				if (!ret)
 					goto out;
-			} else if (skip_broken &&
-				   g_error_matches (error_local,
+			} else if (g_error_matches (error_local,
 						    ZIF_STORE_ERROR,
-						    ZIF_STORE_ERROR_FAILED_TO_DOWNLOAD)) {
-				g_debug ("ignoring repo error as skip-broken: %s",
+						    ZIF_STORE_ERROR_NOT_ENABLED)) {
+				g_debug ("ignoring repo error as not enabled: %s",
 					 error_local->message);
 				g_clear_error (&error_local);
 				ret = zif_state_finished (state_loop,
