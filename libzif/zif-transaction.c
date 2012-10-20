@@ -5067,8 +5067,8 @@ zif_transaction_ts_progress_cb (const void *arg,
 		item = zif_transaction_get_item_from_cache_filename_suffix (commit->transaction->priv->remove,
 									    filename);
 		if (item == NULL) {
-			g_warning ("cannot find %s", filename);
-			g_assert_not_reached ();
+			g_debug ("cannot find %s", filename);
+			break;
 		}
 
 		/* map to correct action code */
@@ -5115,7 +5115,7 @@ zif_transaction_ts_progress_cb (const void *arg,
 										    filename);
 		}
 		if (item == NULL) {
-			g_warning ("cannot find %s (%s)", filename, name);
+			g_debug ("cannot find %s (%s)", filename, name);
 			break;
 		}
 		zif_state_set_package_progress (commit->state,
@@ -5146,7 +5146,7 @@ zif_transaction_ts_progress_cb (const void *arg,
 										    filename);
 		}
 		if (item == NULL) {
-			g_warning ("cannot find %s", name);
+			g_debug ("cannot find %s", name);
 			break;
 		}
 		zif_state_set_package_progress (commit->state,
