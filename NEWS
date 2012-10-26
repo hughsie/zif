@@ -1,3 +1,25 @@
+Version 0.3.3
+~~~~~~~~~~~~~
+Released: 2012-10-24
+
+New Features:
+ - Add zif_repos_get_stores_debuginfo() helper function
+ - Add zif_transaction_get_update() for pre-resolve checks
+ - Enable any debuginfo repos if the user searches for a debuginfo package
+ - Enable the debuginfo repos if any updates pull them in as deps
+ - Fix a lot of GObject Introspection tags and add a small python example
+ - Support the skip_if_unavailable config option
+
+Bugfixes:
+ - Be less vocal when we can't find an librpm-referenced package in the transaction set
+ - Do not return primary metadata when the ZifStore is not enabled
+ - Don't allow a store to be added to a ZifStoreArray more than once
+ - Don't make broken repos conditional on --skip-broken when depsolving
+ - Ensure all errors are reported in the zif command line tool
+ - If the ZifStore gets disabled don't keep trying to use it in ZifStoreArray
+ - Only use enabled ZifStoreRemote's when depsolving
+ - Skip errors when using ZifStoreArray and a ZifStore gets disabled whilst being used
+
 Version 0.3.2
 ~~~~~~~~~~~~~
 Released: 2012-09-21
