@@ -5106,7 +5106,8 @@ zif_transaction_ts_progress_cb (const void *arg,
 		/* progress */
 		percentage = (100.0f / (gfloat) total) * (gfloat) amount;
 		g_debug ("progress %i/%i", (gint32) amount, (gint32) total);
-		zif_state_set_percentage (commit->child, percentage);
+		if (commit->child != NULL)
+			zif_state_set_percentage (commit->child, percentage);
 
 		/* update UI */
 		item = zif_transaction_get_item_from_cache_header (commit->transaction->priv->install, hdr);
@@ -5137,7 +5138,8 @@ zif_transaction_ts_progress_cb (const void *arg,
 		/* progress */
 		percentage = (100.0f / (gfloat) total) * (gfloat) amount;
 		g_debug ("progress %i/%i", (gint32) amount, (gint32) total);
-		zif_state_set_percentage (commit->child, percentage);
+		if (commit->child != NULL)
+			zif_state_set_percentage (commit->child, percentage);
 
 		/* update UI */
 		item = zif_transaction_get_item_from_cache_header (commit->transaction->priv->remove, hdr);
