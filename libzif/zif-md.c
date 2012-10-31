@@ -2040,27 +2040,8 @@ zif_md_check_uncompressed (ZifMd *md, ZifState *state, GError **error)
 	/* set action */
 	zif_state_action_start (state, ZIF_STATE_ACTION_CHECKING, filename);
 
-	/* get contents */
-	cancellable = zif_state_get_cancellable (state);
-	file = g_file_new_for_path (filename);
-	ret = g_file_load_contents (file,
-				    cancellable,
-				    &data,
-				    &length,
-				    NULL,
-				    &error_local);
-	if (!ret) {
-		g_set_error (error,
-			     ZIF_MD_ERROR,
-			     ZIF_MD_ERROR_FILE_NOT_EXISTS,
-			     "failed to get contents of %s: %s",
-			     filename,
-			     error_local->message);
-		g_error_free (error_local);
-		goto out;
-	}
-
 	/* check age */
+	file = g_file_new_for_path (filename);
 	ret = zif_md_check_age (md, file, error);
 	if (!ret)
 		goto out;
@@ -2069,6 +2050,28 @@ zif_md_check_uncompressed (ZifMd *md, ZifState *state, GError **error)
 	ret = zif_state_done (state, error);
 	if (!ret)
 		goto out;
+
+	/* get contents */
+	if (md->priv->kind == ZIF_MD_KIND_METALINK ||
+	    md->priv->kind == ZIF_MD_KIND_MIRRORLIST) {
+		cancellable = zif_state_get_cancellable (state);
+		ret = g_file_load_contents (file,
+					    cancellable,
+					    &data,
+					    &length,
+					    NULL,
+					    &error_local);
+		if (!ret) {
+			g_set_error (error,
+				     ZIF_MD_ERROR,
+				     ZIF_MD_ERROR_FILE_NOT_EXISTS,
+				     "failed to get contents of %s: %s",
+				     filename,
+				     error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+	}
 
 	/* metalink has no checksum... */
 	if (md->priv->kind == ZIF_MD_KIND_METALINK) {
