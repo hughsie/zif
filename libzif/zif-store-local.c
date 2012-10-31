@@ -47,6 +47,7 @@
 #include "zif-package-private.h"
 #include "zif-state-private.h"
 #include "zif-store-local.h"
+#include "zif-store-meta.h"
 #include "zif-utils-private.h"
 
 #define ZIF_STORE_LOCAL_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), ZIF_TYPE_STORE_LOCAL, ZifStoreLocalPrivate))
@@ -178,21 +179,54 @@ zif_store_local_set_releasever (ZifStoreLocal *store,
 				ZifState *state,
 				GError **error)
 {
+	const gchar *search_release[] = { "-release", NULL };
 	gboolean ret = FALSE;
 	gchar *releasever = NULL;
-	gchar *releasever_pkg;
+	gchar *releasever_pkg = NULL;
 	gchar **version_split = NULL;
 	GPtrArray *depends = NULL;
 	GPtrArray *packages = NULL;
+	GPtrArray *packages_release = NULL;
 	guint release_ver_type;
 	ZifDepend *depend;
 	ZifPackage *package_tmp;
+	ZifState *state_local;
+	ZifStore *store_release = NULL;
+
+	/* set steps */
+	ret = zif_state_set_steps (state,
+				   error,
+				   50, /* filter *-release packages */
+				   50, /* search them for the require */
+				   -1);
+	if (!ret)
+		goto out;
 
 	/* get the package name of the provide */
 	releasever_pkg = zif_config_get_string (store->priv->config,
 						"releasever_pkg",
 						error);
 	if (releasever_pkg == NULL)
+		goto out;
+
+	/* create a new meta store with just the release packages in */
+	state_local = zif_state_get_child (state);
+	packages_release = zif_store_search_name (ZIF_STORE (store),
+						  (gchar **) search_release,
+						  state_local,
+						  error);
+	if (packages_release == NULL) {
+		ret = FALSE;
+		goto out;
+	}
+	store_release = zif_store_meta_new ();
+	ret = zif_store_add_packages (store_release, packages_release, error);
+	if (!ret)
+		goto out;
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
 		goto out;
 
 	/* get the thing that provides the releasever_pkg */
@@ -204,14 +238,20 @@ zif_store_local_set_releasever (ZifStoreLocal *store,
 	if (!ret)
 		goto out;
 	g_ptr_array_add (depends, depend);
-	packages = zif_store_what_provides (ZIF_STORE (store),
+	state_local = zif_state_get_child (state);
+	packages = zif_store_what_provides (ZIF_STORE (store_release),
 					    depends,
-					    state,
+					    state_local,
 					    error);
 	if (packages == NULL) {
 		ret = FALSE;
 		goto out;
 	}
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 
 	/* invalid */
 	if (packages->len == 0) {
@@ -261,6 +301,10 @@ out:
 		g_ptr_array_unref (depends);
 	if (packages != NULL)
 		g_ptr_array_unref (packages);
+	if (store_release != NULL)
+		g_object_unref (store_release);
+	if (packages_release != NULL)
+		g_ptr_array_unref (packages_release);
 	return ret;
 }
 
