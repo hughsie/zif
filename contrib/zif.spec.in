@@ -29,6 +29,7 @@ Requires: wget
 %if 0%{?fedora} > 14
 BuildRequires: gobject-introspection-devel
 %endif
+BuildRequires: libattr-devel
 
 %description
 Zif is a simple yum-compatible library that provides read-write

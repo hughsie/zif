@@ -146,6 +146,16 @@ PKG_CHECK_MODULES(RPM, rpm)
 PKG_CHECK_MODULES(SOUP, libsoup-2.4)
 
 dnl ---------------------------------------------------------------------------
+dnl - use xattr to speed up checksumming files using the mtime as a key
+dnl ---------------------------------------------------------------------------
+AC_CHECK_HEADERS([attr/xattr.h],
+		 HAVE_XATTR_H="yes",
+		 HAVE_XATTR_H="no")
+if test "x$HAVE_XATTR_H" = "xno"; then
+	AC_MSG_ERROR([Cannot find xattr.h])
+fi
+
+dnl ---------------------------------------------------------------------------
 dnl - new RPM?
 dnl ---------------------------------------------------------------------------
 AC_CHECK_HEADERS("rpm/rpmprob.h",

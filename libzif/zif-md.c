@@ -36,6 +36,8 @@
 #include <glib/gstdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <sys/types.h>
+#include <attr/xattr.h>
 
 #include "zif-config.h"
 #include "zif-md.h"
@@ -1690,6 +1692,7 @@ zif_md_check_age (ZifMd *md, GFile *file, GError **error)
 	GFileInfo *file_info = NULL;
 	GError *error_local = NULL;
 	guint64 modified, age;
+	guint64 *tmp;
 	gchar *filename = NULL;
 
 	/* get file attributes */
@@ -1731,10 +1734,197 @@ zif_md_check_age (ZifMd *md, GFile *file, GError **error)
 			     "data is too old: %s", filename);
 		goto out;
 	}
+
+	/* save the mtime on the GFile */
+	tmp = g_new0 (guint64, 1);
+	*tmp = modified;
+	g_object_set_data_full (G_OBJECT (file),
+				"Zif::GFileTimeModified",
+				tmp,
+				g_free);
 out:
 	g_free (filename);
 	if (file_info != NULL)
 		g_object_unref (file_info);
+	return ret;
+}
+
+/**
+ * zif_md_file_checksum_matches_no_xattr:
+ **/
+static gboolean
+zif_md_file_checksum_matches_no_xattr (GFile *file,
+				       const gchar *checksum_wanted,
+				       GChecksumType checksum_type,
+				       ZifState *state,
+				       GError **error)
+{
+	gboolean ret;
+	GCancellable *cancellable;
+	gchar *checksum = NULL;
+	gchar *data = NULL;
+	gchar *filename = NULL;
+	gchar *key = NULL;
+	GError *error_local = NULL;
+	gint rc;
+	gsize length;
+	guint64 *tmp;
+
+	/* setup state */
+	ret = zif_state_set_steps (state,
+				   error,
+				   20, /* load file */
+				   80, /* calc checksum */
+				   -1);
+	if (!ret)
+		goto out;
+
+	/* set action */
+	filename = g_file_get_path (file);
+	zif_state_action_start (state, ZIF_STATE_ACTION_CHECKING, filename);
+
+	/* get contents */
+	cancellable = zif_state_get_cancellable (state);
+	ret = g_file_load_contents (file,
+				    cancellable,
+				    &data,
+				    &length,
+				    NULL,
+				    &error_local);
+	if (!ret) {
+		g_set_error (error,
+			     ZIF_MD_ERROR,
+			     ZIF_MD_ERROR_FILE_NOT_EXISTS,
+			     "failed to get contents of %s: %s",
+			     filename,
+			     error_local->message);
+		g_error_free (error_local);
+		goto out;
+	}
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	checksum = g_compute_checksum_for_data (checksum_type,
+						(guchar*) data,
+						length);
+
+	/* matches? */
+	ret = (g_strcmp0 (checksum, checksum_wanted) == 0);
+	if (!ret) {
+		g_set_error (error,
+			     ZIF_MD_ERROR,
+			     ZIF_MD_ERROR_CHECKSUM_INVALID,
+			     "checksum incorrect, wanted %s, got %s for %s",
+			     checksum_wanted, checksum, filename);
+		goto out;
+	}
+
+	/* set xattr */
+	tmp = g_object_get_data (G_OBJECT (file),
+				 "Zif::GFileTimeModified");
+	if (tmp == NULL) {
+		ret = FALSE;
+		g_set_error (error,
+			     ZIF_MD_ERROR,
+			     ZIF_MD_ERROR_CHECKSUM_INVALID,
+			     "failed to get mtime on %s",
+			     filename);
+		goto out;
+	}
+	key = g_strdup_printf ("user.Zif.MdChecksum[%" G_GUINT64_FORMAT "]",
+			       *tmp);
+	g_debug ("setting xattr key '%s' to %s", key, checksum);
+	rc = setxattr (filename,
+		       key,
+		       checksum,
+		       strlen (checksum) + 1,
+		       XATTR_CREATE);
+	if (rc < 0) {
+		ret = FALSE;
+		g_set_error (error,
+			     ZIF_MD_ERROR,
+			     ZIF_MD_ERROR_CHECKSUM_INVALID,
+			     "failed to set xattr on %s",
+			     filename);
+		goto out;
+	}
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+out:
+	g_free (key);
+	g_free (filename);
+	g_free (data);
+	g_free (checksum);
+	return ret;
+}
+
+/**
+ * zif_md_file_checksum_matches:
+ **/
+static gboolean
+zif_md_file_checksum_matches (GFile *file,
+			      const gchar *checksum_wanted,
+			      GChecksumType checksum_type,
+			      ZifState *state,
+			      GError **error)
+{
+	gboolean ret;
+	gchar buffer[256];
+	gchar *filename;
+	gssize length;
+	gchar *key = NULL;
+	guint64 *tmp;
+
+	/* check to see if we have a cached checksum */
+	filename = g_file_get_path (file);
+	tmp = g_object_get_data (G_OBJECT (file),
+				 "Zif::GFileTimeModified");
+	if (tmp == NULL) {
+		ret = FALSE;
+		g_set_error (error,
+			     ZIF_MD_ERROR,
+			     ZIF_MD_ERROR_CHECKSUM_INVALID,
+			     "failed to get mtime on %s",
+			     filename);
+		goto out;
+	}
+	key = g_strdup_printf ("user.Zif.MdChecksum[%" G_GUINT64_FORMAT "]",
+			       *tmp);
+	g_debug ("using xattr key '%s'", key);
+	length = getxattr (filename,
+			   key,
+			   buffer,
+			   sizeof (buffer));
+	if (length < 0) {
+		g_debug ("no xattr available on %s", filename);
+		ret = zif_md_file_checksum_matches_no_xattr (file,
+							     checksum_wanted,
+							     checksum_type,
+							     state,
+							     error);
+		goto out;
+	}
+
+	/* matches? */
+	g_debug ("got xattr cache value of %s", buffer);
+	ret = (g_strcmp0 (buffer, checksum_wanted) == 0);
+	if (!ret) {
+		g_set_error (error,
+			     ZIF_MD_ERROR,
+			     ZIF_MD_ERROR_CHECKSUM_INVALID,
+			     "xattr checksum incorrect, wanted %s, got %s for %s",
+			     checksum_wanted, buffer, filename);
+		goto out;
+	}
+out:
+	g_free (filename);
+	g_free (key);
 	return ret;
 }
 
@@ -1753,29 +1943,15 @@ out:
 gboolean
 zif_md_check_compressed (ZifMd *md, ZifState *state, GError **error)
 {
-	gboolean ret = FALSE;
-	GFile *file = NULL;
-	GError *error_local = NULL;
-	gchar *data = NULL;
-	gchar *checksum = NULL;
 	const gchar *filename;
-	const gchar *checksum_wanted;
-	gsize length;
+	gboolean ret = FALSE;
 	GCancellable *cancellable;
+	GFile *file = NULL;
 
 	g_return_val_if_fail (ZIF_IS_MD (md), FALSE);
 	g_return_val_if_fail (zif_state_valid (state), FALSE);
 	g_return_val_if_fail (md->priv->id != NULL, FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
-
-	/* setup state */
-	ret = zif_state_set_steps (state,
-				   error,
-				   20, /* load */
-				   80, /* check checksum */
-				   -1);
-	if (!ret)
-		goto out;
 
 	/* these are not compressed */
 	if (md->priv->kind == ZIF_MD_KIND_METALINK ||
@@ -1820,35 +1996,8 @@ zif_md_check_compressed (ZifMd *md, ZifState *state, GError **error)
 	if (!ret)
 		goto out;
 
-	/* set action */
-	zif_state_action_start (state, ZIF_STATE_ACTION_CHECKING, filename);
-
-	/* get contents */
-	ret = g_file_load_contents (file,
-				    cancellable,
-				    &data,
-				    &length,
-				    NULL,
-				    &error_local);
-	if (!ret) {
-		g_set_error (error,
-			     ZIF_MD_ERROR,
-			     ZIF_MD_ERROR_FILE_NOT_EXISTS,
-			     "failed to get contents of %s: %s",
-			     filename,
-			     error_local->message);
-		g_error_free (error_local);
-		goto out;
-	}
-
-	/* this section done */
-	ret = zif_state_done (state, error);
-	if (!ret)
-		goto out;
-
 	/* no checksum set */
-	checksum_wanted = md->priv->checksum;
-	if (checksum_wanted == NULL) {
+	if (md->priv->checksum == NULL) {
 		g_set_error (error,
 			     ZIF_MD_ERROR,
 			     ZIF_MD_ERROR_FAILED,
@@ -1858,23 +2007,16 @@ zif_md_check_compressed (ZifMd *md, ZifState *state, GError **error)
 	}
 
 	/* compute checksum */
-	zif_state_set_allow_cancel (state, FALSE);
-	checksum = g_compute_checksum_for_data (md->priv->checksum_type,
-						(guchar*) data, length);
-
-	/* matches? */
-	ret = (g_strcmp0 (checksum, checksum_wanted) == 0);
-	if (!ret) {
-		g_set_error (error,
-			     ZIF_MD_ERROR,
-			     ZIF_MD_ERROR_CHECKSUM_INVALID,
-			     "checksum incorrect, wanted %s, got %s for %s",
-			     checksum_wanted, checksum, filename);
+	ret = zif_md_file_checksum_matches (file,
+					    md->priv->checksum,
+					    md->priv->checksum_type,
+					    state,
+					    error);
+	if (!ret)
 		goto out;
-	}
 
 	g_debug ("%s compressed checksum correct (%s)",
-		 filename, checksum_wanted);
+		 filename, md->priv->checksum);
 
 	/* this section done */
 	ret = zif_state_done (state, error);
@@ -1883,8 +2025,6 @@ zif_md_check_compressed (ZifMd *md, ZifState *state, GError **error)
 out:
 	if (file != NULL)
 		g_object_unref (file);
-	g_free (data);
-	g_free (checksum);
 	return ret;
 }
 
@@ -1907,13 +2047,13 @@ zif_md_check_uncompressed (ZifMd *md, ZifState *state, GError **error)
 	const gchar *filename;
 	gboolean ret = FALSE;
 	GCancellable *cancellable;
-	gchar *checksum = NULL;
 	gchar *data = NULL;
 	gchar **lines = NULL;
 	GError *error_local = NULL;
 	GFile *file = NULL;
 	gsize length;
 	guint i;
+	ZifState *state_local;
 
 	g_return_val_if_fail (ZIF_IS_MD (md), FALSE);
 	g_return_val_if_fail (zif_state_valid (state), FALSE);
@@ -2032,23 +2172,14 @@ zif_md_check_uncompressed (ZifMd *md, ZifState *state, GError **error)
 	}
 
 	/* compute checksum */
-	zif_state_set_allow_cancel (state, FALSE);
-	checksum = g_compute_checksum_for_data (md->priv->checksum_type,
-						(guchar*) data, length);
-
-	/* matches? */
-	ret = (g_strcmp0 (checksum, checksum_wanted) == 0);
-	if (!ret) {
-		g_set_error (error,
-			     ZIF_MD_ERROR,
-			     ZIF_MD_ERROR_CHECKSUM_INVALID,
-			     "checksum incorrect, wanted %s, got %s for %s",
-			     checksum_wanted, checksum, filename);
+	state_local = zif_state_get_child (state);
+	ret = zif_md_file_checksum_matches (file,
+					    md->priv->checksum_uncompressed,
+					    md->priv->checksum_type,
+					    state_local,
+					    error);
+	if (!ret)
 		goto out;
-	}
-
-	g_debug ("%s uncompressed checksum correct (%s)",
-		 filename, checksum_wanted);
 
 	/* this section done */
 	ret = zif_state_done (state, error);
@@ -2058,7 +2189,6 @@ out:
 	if (file != NULL)
 		g_object_unref (file);
 	g_free (data);
-	g_free (checksum);
 	g_strfreev (lines);
 	return ret;
 }
