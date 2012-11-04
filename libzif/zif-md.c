@@ -1972,11 +1972,6 @@ zif_md_check_compressed (ZifMd *md, ZifState *state, GError **error)
 
 	g_debug ("%s compressed checksum correct (%s)",
 		 filename, md->priv->checksum);
-
-	/* this section done */
-	ret = zif_state_done (state, error);
-	if (!ret)
-		goto out;
 out:
 	if (file != NULL)
 		g_object_unref (file);
