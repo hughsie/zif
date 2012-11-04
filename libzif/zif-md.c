@@ -1692,6 +1692,7 @@ zif_md_check_age (ZifMd *md, GFile *file, GError **error)
 	GFileInfo *file_info = NULL;
 	GError *error_local = NULL;
 	guint64 modified, age;
+	guint64 *tmp;
 	gchar *filename = NULL;
 
 	/* get file attributes */
@@ -1733,6 +1734,14 @@ zif_md_check_age (ZifMd *md, GFile *file, GError **error)
 			     "data is too old: %s", filename);
 		goto out;
 	}
+
+	/* save the mtime on the GFile */
+	tmp = g_new0 (guint64, 1);
+	*tmp = modified;
+	g_object_set_data_full (G_OBJECT (file),
+				"Zif::GFileTimeModified",
+				tmp,
+				g_free);
 out:
 	g_free (filename);
 	if (file_info != NULL)
@@ -1755,9 +1764,11 @@ zif_md_file_checksum_matches_no_xattr (GFile *file,
 	gchar *checksum = NULL;
 	gchar *data = NULL;
 	gchar *filename = NULL;
+	gchar *key = NULL;
 	GError *error_local = NULL;
 	gint rc;
 	gsize length;
+	guint64 *tmp;
 
 	/* setup state */
 	ret = zif_state_set_steps (state,
@@ -1812,8 +1823,22 @@ zif_md_file_checksum_matches_no_xattr (GFile *file,
 	}
 
 	/* set xattr */
+	tmp = g_object_get_data (G_OBJECT (file),
+				 "Zif::GFileTimeModified");
+	if (tmp == NULL) {
+		ret = FALSE;
+		g_set_error (error,
+			     ZIF_MD_ERROR,
+			     ZIF_MD_ERROR_CHECKSUM_INVALID,
+			     "failed to get mtime on %s",
+			     filename);
+		goto out;
+	}
+	key = g_strdup_printf ("user.Zif.MdChecksum[%" G_GUINT64_FORMAT "]",
+			       *tmp);
+	g_debug ("setting xattr key '%s' to %s", key, checksum);
 	rc = setxattr (filename,
-		       "user.Zif.MdChecksum",
+		       key,
 		       checksum,
 		       strlen (checksum) + 1,
 		       XATTR_CREATE);
@@ -1832,6 +1857,7 @@ zif_md_file_checksum_matches_no_xattr (GFile *file,
 	if (!ret)
 		goto out;
 out:
+	g_free (key);
 	g_free (filename);
 	g_free (data);
 	g_free (checksum);
@@ -1852,14 +1878,31 @@ zif_md_file_checksum_matches (GFile *file,
 	gchar buffer[256];
 	gchar *filename;
 	gssize length;
+	gchar *key = NULL;
+	guint64 *tmp;
 
 	/* check to see if we have a cached checksum */
 	filename = g_file_get_path (file);
+	tmp = g_object_get_data (G_OBJECT (file),
+				 "Zif::GFileTimeModified");
+	if (tmp == NULL) {
+		ret = FALSE;
+		g_set_error (error,
+			     ZIF_MD_ERROR,
+			     ZIF_MD_ERROR_CHECKSUM_INVALID,
+			     "failed to get mtime on %s",
+			     filename);
+		goto out;
+	}
+	key = g_strdup_printf ("user.Zif.MdChecksum[%" G_GUINT64_FORMAT "]",
+			       *tmp);
+	g_debug ("using xattr key '%s'", key);
 	length = getxattr (filename,
-			   "user.Zif.MdChecksum",
+			   key,
 			   buffer,
 			   sizeof (buffer));
 	if (length < 0) {
+		g_debug ("no xattr available on %s", filename);
 		ret = zif_md_file_checksum_matches_no_xattr (file,
 							     checksum_wanted,
 							     checksum_type,
@@ -1869,6 +1912,7 @@ zif_md_file_checksum_matches (GFile *file,
 	}
 
 	/* matches? */
+	g_debug ("got xattr cache value of %s", buffer);
 	ret = (g_strcmp0 (buffer, checksum_wanted) == 0);
 	if (!ret) {
 		g_set_error (error,
@@ -1880,6 +1924,7 @@ zif_md_file_checksum_matches (GFile *file,
 	}
 out:
 	g_free (filename);
+	g_free (key);
 	return ret;
 }
 
