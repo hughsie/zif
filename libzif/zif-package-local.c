@@ -297,14 +297,6 @@ zif_package_local_ensure_data (ZifPackage *pkg,
 						     "possibly corrupt db?");
 				goto out;
 			}
-			if (fileindex->len > fileindex->len) {
-				g_set_error_literal (error,
-						     ZIF_PACKAGE_ERROR,
-						     ZIF_PACKAGE_ERROR_FAILED,
-						     "internal error, fileindex length is bigger than index length, "
-						     "possibly corrupt db?");
-				goto out;
-			}
 
 			files = g_ptr_array_new_with_free_func (g_free);
 			for (i=0; i<basenames->len; i++) {
