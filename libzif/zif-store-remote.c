@@ -3577,7 +3577,6 @@ zif_store_remote_what_provides (ZifStore *store, GPtrArray *depends,
 	GPtrArray *array_filelists = NULL;
 	GPtrArray *array = NULL;
 	GPtrArray *array_primary = NULL;
-	GPtrArray *pkgids = NULL;
 	guint i;
 	guint idx = 0;
 	ZifDepend *depend_tmp;
@@ -3680,8 +3679,6 @@ zif_store_remote_what_provides (ZifStore *store, GPtrArray *depends,
 	zif_package_array_filter_duplicates (array);
 out:
 	g_strfreev (search);
-	if (pkgids != NULL)
-		g_ptr_array_unref (pkgids);
 	if (array_primary != NULL)
 		g_ptr_array_unref (array_primary);
 	if (array_filelists != NULL)

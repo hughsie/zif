@@ -1211,7 +1211,6 @@ zif_transaction_filter_best_provide (ZifTransaction *transaction,
 	gint best_score = G_MININT;
 	gint *scores = NULL;
 	GPtrArray *array_best = NULL;
-	GPtrArray *depend_array = NULL;
 	guint i;
 	ZifPackage *package_tmp;
 	ZifState *state_local;
@@ -1387,8 +1386,6 @@ out:
 			g_object_unref (provide_data->best_depend);
 		g_free (provide_data);
 	}
-	if (depend_array != NULL)
-		g_ptr_array_unref (depend_array);
 	return ret;
 }
 
