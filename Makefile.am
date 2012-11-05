@@ -16,6 +16,16 @@ security-check:
 snapshot:
 	$(MAKE) dist distdir=$(PACKAGE)-$(VERSION)-`date +"%Y%m%d"`
 
+coverity:
+	$(MAKE) clean;					\
+	cov-build --dir cov-int $(MAKE);		\
+	tar czvf zif-coverity.tgz cov-int;		\
+	curl --form file=@zif-coverity.tgz		\
+	     --form project=zif				\
+	     --form password=$(COVERITY_PASSWORD)	\
+	     --form email=$(COVERITY_EMAIL)		\
+	     http://scan5.coverity.com/cgi-bin/upload.py
+
 DISTCLEANFILES =					\
 	zif-*.tar.gz
 
