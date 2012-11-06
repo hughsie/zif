@@ -378,6 +378,8 @@ zif_store_remote_parser_text (GMarkupParseContext *context, const gchar *text, g
 			      gpointer user_data, GError **error)
 
 {
+	gchar *endptr = NULL;
+	guint64 timestamp;
 	ZifMd *md;
 	ZifStoreRemote *store = user_data;
 
@@ -389,12 +391,40 @@ zif_store_remote_parser_text (GMarkupParseContext *context, const gchar *text, g
 	if (md == NULL)
 		return;
 
-	if (store->priv->parser_section == ZIF_STORE_REMOTE_PARSER_SECTION_CHECKSUM)
+	if (store->priv->parser_section == ZIF_STORE_REMOTE_PARSER_SECTION_CHECKSUM) {
+		g_debug ("setting checksum %s on %s [%s]",
+			 text,
+			 store->priv->id,
+			 zif_md_kind_to_text (zif_md_get_kind (md)));
 		zif_md_set_checksum (md, text);
-	else if (store->priv->parser_section == ZIF_STORE_REMOTE_PARSER_SECTION_CHECKSUM_UNCOMPRESSED)
+		goto out;
+	}
+	if (store->priv->parser_section == ZIF_STORE_REMOTE_PARSER_SECTION_CHECKSUM_UNCOMPRESSED) {
+		g_debug ("setting uncompressed checksum %s on %s [%s]",
+			 text,
+			 store->priv->id,
+			 zif_md_kind_to_text (zif_md_get_kind (md)));
 		zif_md_set_checksum_uncompressed (md, text);
-	else if (store->priv->parser_section == ZIF_STORE_REMOTE_PARSER_SECTION_TIMESTAMP)
-		zif_md_set_timestamp (md, atol (text));
+		goto out;
+	}
+	if (store->priv->parser_section == ZIF_STORE_REMOTE_PARSER_SECTION_TIMESTAMP) {
+		timestamp = g_ascii_strtoull (text, &endptr, 10);
+		if (timestamp == 0) {
+			g_warning ("failed to parse timestamp: '%s'", text);
+			goto out;
+		}
+		if (endptr != NULL && endptr[0] != '\0') {
+			/* for some reason sqlite metadata is now being
+			 * generated with a fractional timestamp */
+			g_debug ("ignoring fractional timestamp of %s on %s [%s]",
+				 endptr, store->priv->id,
+				 zif_md_kind_to_text (zif_md_get_kind (md)));
+		}
+		zif_md_set_timestamp (md, timestamp);
+		goto out;
+	}
+out:
+	return;
 }
 
 /**
