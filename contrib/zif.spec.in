@@ -25,6 +25,7 @@ BuildRequires: zlib-devel
 BuildRequires: gpgme-devel
 BuildRequires: intltool
 BuildRequires: gettext
+BuildRequires: libattr-devel
 BuildRequires: gobject-introspection-devel
 
 %description
