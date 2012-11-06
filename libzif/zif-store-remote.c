@@ -1715,6 +1715,7 @@ zif_store_remote_load_metadata (ZifStoreRemote *store, ZifState *state, GError *
 			goto out;
 		}
 		g_propagate_error (error, error_local);
+		goto out;
 	}
 
 	/* done */
