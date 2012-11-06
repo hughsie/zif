@@ -401,6 +401,7 @@ zif_store_local_load (ZifStore *store, ZifState *state, GError **error)
 
 	/* get list */
 	ts = rpmtsCreate ();
+	rpmtsSetVSFlags (ts, RPMVSF_NOHDRCHK);
 	rc = rpmtsSetRootDir (ts, local->priv->prefix);
 	if (rc < 0) {
 		ret = FALSE;
