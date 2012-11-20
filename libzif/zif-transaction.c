@@ -1526,17 +1526,27 @@ zif_transaction_get_package_requires_from_local (ZifTransaction *transaction,
 {
 	gboolean ret = TRUE;
 	GError *error_local = NULL;
-	GPtrArray *array;
+	GPtrArray *array = NULL;
 	guint i, j;
 	ZifDepend *depend;
 	ZifDepend *satisfies = NULL;
 	ZifPackage *package;
 	ZifTransactionItem *item;
+	ZifState *state_local;
+
+	/* setup states */
+	ret = zif_state_set_steps (state,
+				   error,
+				   80, /* get-packages */
+				   20, /* search */
+				   -1);
+	if (!ret)
+		goto out;
 
 	/* get the package list */
-	zif_state_reset (state);
+	state_local = zif_state_get_child (state);
 	array = zif_store_get_packages (transaction->priv->store_local,
-					state,
+					state_local,
 					&error_local);
 	if (array == NULL) {
 		/* this is special */
@@ -1555,7 +1565,13 @@ zif_transaction_get_package_requires_from_local (ZifTransaction *transaction,
 		goto out;
 	}
 
+	/* done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
 	/* search it */
+	state_local = zif_state_get_child (state);
 	*requires = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 	for (i = 0; i < array->len; i++) {
 		package = g_ptr_array_index (array, i);
@@ -1570,10 +1586,11 @@ zif_transaction_get_package_requires_from_local (ZifTransaction *transaction,
 
 			/* get requires */
 			depend = g_ptr_array_index (depend_array, j);
+			zif_state_reset (state_local);
 			ret = zif_package_requires (package,
 						    depend,
 						    &satisfies,
-						    state,
+						    state_local,
 						    error);
 			if (!ret) {
 				g_assert (error == NULL || *error != NULL);
@@ -1590,6 +1607,11 @@ zif_transaction_get_package_requires_from_local (ZifTransaction *transaction,
 			}
 		}
 	}
+
+	/* done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 
 	/* filter */
 	zif_package_array_filter_duplicates (*requires);
