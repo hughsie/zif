@@ -1619,10 +1619,6 @@ zif_state_finished_real (ZifState *state, GError **error, const gchar *strloc)
 		goto out;
 	}
 
-	/* do we care */
-	if (!state->priv->report_progress)
-		goto out;
-
 	/* is already at 100%? */
 	if (state->priv->current == state->priv->steps)
 		goto out;
