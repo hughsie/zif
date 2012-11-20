@@ -2281,6 +2281,7 @@ zif_transaction_get_package_provide_local_other (ZifTransaction *transaction,
 	ZifDepend *satisfies;
 	ZifPackage *package_tmp;
 	ZifState *state_local;
+	ZifState *state_loop;
 
 	/* setup states */
 	ret = zif_state_set_steps (state,
@@ -2307,6 +2308,7 @@ zif_transaction_get_package_provide_local_other (ZifTransaction *transaction,
 	/* look through the package store and find if something *else*
 	 * provides what we are looking for */
 	state_local = zif_state_get_child (state);
+	zif_state_set_number_steps (state_local, array->len);
 	for (i = 0; i < array->len; i++) {
 
 		/* don't remove ourself */
@@ -2315,12 +2317,17 @@ zif_transaction_get_package_provide_local_other (ZifTransaction *transaction,
 			continue;
 
 		/* do we provide the dep? */
-		zif_state_reset (state_local);
+		state_loop = zif_state_get_child (state_local);
 		ret = zif_package_provides (package_tmp,
 					    depend,
 					    &satisfies,
-					    state_local,
+					    state_loop,
 					    error);
+		if (!ret)
+			goto out;
+
+		/* done */
+		ret = zif_state_done (state_local, error);
 		if (!ret)
 			goto out;
 
@@ -2329,6 +2336,9 @@ zif_transaction_get_package_provide_local_other (ZifTransaction *transaction,
 			g_object_unref (satisfies);
 			if (package_provides != NULL)
 				*package_provides = g_object_ref (package_tmp);
+			ret = zif_state_finished (state_local, error);
+			if (!ret)
+				goto out;
 			break;
 		}
 	}
