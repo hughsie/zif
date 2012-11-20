@@ -3274,6 +3274,58 @@ zif_state_take_lock_cb (ZifState *state,
 }
 
 static void
+zif_state_finished_func (void)
+{
+	ZifState *state_local;
+	ZifState *state;
+	gboolean ret;
+	GError *error = NULL;
+	guint i;
+
+	state = zif_state_new ();
+	ret = zif_state_set_steps (state,
+				   &error,
+				   90,
+				   10,
+				   -1);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	zif_state_set_allow_cancel (state, FALSE);
+	zif_state_action_start (state,
+				ZIF_STATE_ACTION_LOADING_RPMDB, "/");
+
+	state_local = zif_state_get_child (state);
+	zif_state_set_report_progress (state_local, FALSE);
+
+	for (i = 0; i < 10; i++) {
+		/* check cancelled (okay to reuse as we called
+		 * zif_state_set_report_progress before)*/
+		ret = zif_state_done (state_local, &error);
+		g_assert_no_error (error);
+		g_assert (ret);
+	} 
+
+	/* turn checks back on */
+	zif_state_set_report_progress (state_local, TRUE);
+	ret = zif_state_finished (state_local, &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	/* this section done */
+	ret = zif_state_done (state, &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	/* this section done */
+	ret = zif_state_done (state, &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+
+	g_object_unref (state);
+}
+
+static void
 zif_state_locking_func (void)
 {
 	gboolean ret;
@@ -4595,6 +4647,7 @@ main (int argc, char **argv)
 	g_test_add_func ("/zif/state[error-handler]", zif_state_error_handler_func);
 	g_test_add_func ("/zif/state[speed]", zif_state_speed_func);
 	g_test_add_func ("/zif/state[locking]", zif_state_locking_func);
+	g_test_add_func ("/zif/state[finished]", zif_state_finished_func);
 	g_test_add_func ("/zif/changeset", zif_changeset_func);
 	g_test_add_func ("/zif/config", zif_config_func);
 	g_test_add_func ("/zif/config[changed]", zif_config_changed_func);
