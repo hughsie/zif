@@ -20,6 +20,8 @@ coverity:
 	$(MAKE) clean;					\
 	cov-build --dir cov-int $(MAKE);		\
 	tar czvf zif-coverity.tgz cov-int;		\
+	set COVERITY_EMAIL=`cat ~/.coverity | grep EMAIL | cut -f2`; \
+	set COVERITY_PASSWORD=`cat ~/.coverity | grep PASSWORD_zif | cut -f2`; \
 	curl --form file=@zif-coverity.tgz		\
 	     --form project=zif				\
 	     --form password=$(COVERITY_PASSWORD)	\
