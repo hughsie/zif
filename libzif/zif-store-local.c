@@ -413,10 +413,6 @@ zif_store_local_load (ZifStore *store, ZifState *state, GError **error)
 	 * the transaction in a nice way */
 	zif_state_cancel_on_signal (state, SIGINT);
 
-	/* we don't know how many packages there are */
-	state_local = zif_state_get_child (state);
-	zif_state_set_report_progress (state_local, FALSE);
-
 	/* add each package from the rpmdb */
 	do {
 		header = rpmdbNextIterator (mi);
@@ -451,18 +447,11 @@ zif_store_local_load (ZifStore *store, ZifState *state, GError **error)
 			g_object_unref (package);
 		}
 
-		/* check cancelled (okay to reuse as we called
-		 * zif_state_set_report_progress before)*/
-		ret = zif_state_done (state_local, error);
+		/* check cancelled */
+		ret = zif_state_check (state, error);
 		if (!ret)
 			goto out;
 	} while (TRUE);
-
-	/* turn checks back on */
-	zif_state_set_report_progress (state_local, TRUE);
-	ret = zif_state_finished (state_local, error);
-	if (!ret)
-		goto out;
 
 	/* lookup in history database */
 	use_installed_history = zif_config_get_boolean (local->priv->config,

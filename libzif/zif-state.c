@@ -1411,6 +1411,44 @@ zif_state_set_process_event_sources (ZifState *state, gboolean run)
 }
 
 /**
+ * zif_state_check:
+ * @state: A #ZifState
+ * @error: A #GError or %NULL
+ *
+ * Do any checks to see if the task has been cancelled.
+ *
+ * Return value: %TRUE for success, %FALSE otherwise
+ *
+ * Since: 0.3.4
+ **/
+gboolean
+zif_state_check (ZifState *state, GError **error)
+{
+	gboolean ret = TRUE;
+
+	g_return_val_if_fail (state != NULL, FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+	/* clear queue */
+	if (state->priv->process_event_sources) {
+		while (g_main_context_pending (NULL))
+			g_main_context_iteration (NULL, FALSE);
+	}
+
+	/* are we cancelled */
+	if (g_cancellable_is_cancelled (state->priv->cancellable)) {
+		g_set_error_literal (error,
+				     ZIF_STATE_ERROR,
+				     ZIF_STATE_ERROR_CANCELLED,
+				     "cancelled by user action");
+		ret = FALSE;
+		goto out;
+	}
+out:
+	return ret;
+}
+
+/**
  * zif_state_done_real:
  * @state: A #ZifState
  * @error: A #GError or %NULL
@@ -1424,26 +1462,17 @@ zif_state_set_process_event_sources (ZifState *state, gboolean run)
 gboolean
 zif_state_done_real (ZifState *state, GError **error, const gchar *strloc)
 {
-	gboolean ret = TRUE;
+	gboolean ret;
 	gdouble elapsed;
 	gfloat percentage;
 
 	g_return_val_if_fail (state != NULL, FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
-	/* clear queue */
-	if (state->priv->process_event_sources) {
-		while (g_main_context_pending (NULL))
-			g_main_context_iteration (NULL, FALSE);
-	}
-
-	/* are we cancelled */
-	if (g_cancellable_is_cancelled (state->priv->cancellable)) {
-		g_set_error_literal (error, ZIF_STATE_ERROR, ZIF_STATE_ERROR_CANCELLED,
-				     "cancelled by user action");
-		ret = FALSE;
+	/* check */
+	ret = zif_state_check (state, error);
+	if (!ret)
 		goto out;
-	}
 
 	/* do we care */
 	if (!state->priv->report_progress)
@@ -1540,24 +1569,15 @@ out:
 gboolean
 zif_state_finished_real (ZifState *state, GError **error, const gchar *strloc)
 {
-	gboolean ret = TRUE;
+	gboolean ret;
 
 	g_return_val_if_fail (state != NULL, FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
-	/* clear queue */
-	if (state->priv->process_event_sources) {
-		while (g_main_context_pending (NULL))
-			g_main_context_iteration (NULL, FALSE);
-	}
-
-	/* are we cancelled */
-	if (g_cancellable_is_cancelled (state->priv->cancellable)) {
-		g_set_error_literal (error, ZIF_STATE_ERROR, ZIF_STATE_ERROR_CANCELLED,
-				     "cancelled by user action");
-		ret = FALSE;
+	/* check */
+	ret = zif_state_check (state, error);
+	if (!ret)
 		goto out;
-	}
 
 	/* do we care */
 	if (!state->priv->report_progress)
