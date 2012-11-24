@@ -843,6 +843,7 @@ zif_history_get_reason (ZifHistory *history,
 	}
 	reason = zif_transaction_reason_from_string (reason_str);
 out:
+	g_free (reason_str);
 	g_free (statement);
 	return reason;
 }
