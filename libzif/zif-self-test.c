@@ -1929,6 +1929,7 @@ zif_md_primary_sql_func (void)
 	g_ptr_array_unref (array);
 	g_assert_cmpint (g_timer_elapsed (timer, NULL), <, 1.0);
 	g_timer_destroy (timer);
+	g_strfreev (tmp);
 
 	/* resolving by name and globbing */
 	zif_state_reset (state);
