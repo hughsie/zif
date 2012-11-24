@@ -381,13 +381,13 @@ zif_history_get_transactions_for_package (ZifHistory *history,
 					  ZifPackage *package,
 					  GError **error)
 {
-	const gchar *statement;
 	const gchar *name;
 	const gchar *arch;
 	GArray *array = NULL;
 	GArray *array_tmp = NULL;
 	gboolean ret = TRUE;
 	gchar *error_msg = NULL;
+	gchar *statement = NULL;
 	gint rc;
 
 	g_return_val_if_fail (ZIF_IS_HISTORY (history), NULL);
@@ -423,6 +423,7 @@ zif_history_get_transactions_for_package (ZifHistory *history,
 	/* success */
 	array = g_array_ref (array_tmp);
 out:
+	g_free (statement);
 	if (array_tmp != NULL)
 		g_array_unref (array_tmp);
 	return array;
