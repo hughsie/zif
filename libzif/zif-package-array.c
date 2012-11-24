@@ -584,6 +584,7 @@ zif_package_array_filter_provide (GPtrArray *array,
 	ZifDepend *satisfies = NULL;
 	ZifDepend *depend_tmp;
 	ZifState *state_local;
+	ZifState *state_loop;
 
 	g_return_val_if_fail (array != NULL, FALSE);
 	g_return_val_if_fail (depends != NULL, FALSE);
@@ -595,20 +596,30 @@ zif_package_array_filter_provide (GPtrArray *array,
 	for (i = 0; i < array->len;) {
 		package = g_ptr_array_index (array, i);
 		state_local = zif_state_get_child (state);
+		zif_state_set_number_steps (state_local, depends->len);
 
 		/* try each depend as 'OR' */
 		for (j=0; j<depends->len; j++) {
 			depend_tmp = g_ptr_array_index (depends, j);
-			zif_state_reset (state_local); //FIXME
+			state_loop = zif_state_get_child (state_local);
 			ret = zif_package_provides (package,
 						    depend_tmp,
 						    &satisfies,
-						    state_local,
+						    state_loop,
 						    error);
 			if (!ret)
 				goto out;
-			if (satisfies != NULL)
+			if (satisfies != NULL) {
+				ret = zif_state_finished (state_local, error);
+				if (!ret)
+					goto out;
 				break;
+			}
+
+			/* done */
+			ret = zif_state_done (state_local, error);
+			if (!ret)
+				goto out;
 		}
 		ret = zif_state_done (state, error);
 		if (!ret)
@@ -649,6 +660,7 @@ zif_package_array_filter_require (GPtrArray *array,
 	ZifDepend *satisfies = NULL;
 	ZifDepend *depend_tmp;
 	ZifState *state_local;
+	ZifState *state_loop;
 
 	g_return_val_if_fail (array != NULL, FALSE);
 	g_return_val_if_fail (depends != NULL, FALSE);
@@ -660,20 +672,30 @@ zif_package_array_filter_require (GPtrArray *array,
 	for (i = 0; i < array->len;) {
 		package = g_ptr_array_index (array, i);
 		state_local = zif_state_get_child (state);
+		zif_state_set_number_steps (state_local, depends->len);
 
 		/* try each depend as 'OR' */
 		for (j=0; j<depends->len; j++) {
 			depend_tmp = g_ptr_array_index (depends, j);
-			zif_state_reset (state_local); //FIXME
+			state_loop = zif_state_get_child (state_local);
 			ret = zif_package_requires (package,
 						    depend_tmp,
 						    &satisfies,
-						    state_local,
+						    state_loop,
 						    error);
 			if (!ret)
 				goto out;
-			if (satisfies != NULL)
+			if (satisfies != NULL) {
+				ret = zif_state_finished (state_local, error);
+				if (!ret)
+					goto out;
 				break;
+			}
+
+			/* done */
+			ret = zif_state_done (state_local, error);
+			if (!ret)
+				goto out;
 		}
 		ret = zif_state_done (state, error);
 		if (!ret)
@@ -714,6 +736,7 @@ zif_package_array_filter_conflict (GPtrArray *array,
 	ZifDepend *satisfies = NULL;
 	ZifDepend *depend_tmp;
 	ZifState *state_local;
+	ZifState *state_loop;
 
 	g_return_val_if_fail (array != NULL, FALSE);
 	g_return_val_if_fail (depends != NULL, FALSE);
@@ -725,20 +748,30 @@ zif_package_array_filter_conflict (GPtrArray *array,
 	for (i = 0; i < array->len;) {
 		package = g_ptr_array_index (array, i);
 		state_local = zif_state_get_child (state);
+		zif_state_set_number_steps (state_local, depends->len);
 
 		/* try each depend as 'OR' */
 		for (j=0; j<depends->len; j++) {
 			depend_tmp = g_ptr_array_index (depends, j);
-			zif_state_reset (state_local); //FIXME
+			state_loop = zif_state_get_child (state_local);
 			ret = zif_package_conflicts (package,
 						     depend_tmp,
 						     &satisfies,
-						     state_local,
+						     state_loop,
 						     error);
 			if (!ret)
 				goto out;
-			if (satisfies != NULL)
+			if (satisfies != NULL) {
+				ret = zif_state_finished (state_local, error);
+				if (!ret)
+					goto out;
 				break;
+			}
+
+			/* done */
+			ret = zif_state_done (state_local, error);
+			if (!ret)
+				goto out;
 		}
 		ret = zif_state_done (state, error);
 		if (!ret)
@@ -779,6 +812,7 @@ zif_package_array_filter_obsolete (GPtrArray *array,
 	ZifDepend *satisfies = NULL;
 	ZifDepend *depend_tmp;
 	ZifState *state_local;
+	ZifState *state_loop;
 
 	g_return_val_if_fail (array != NULL, FALSE);
 	g_return_val_if_fail (depends != NULL, FALSE);
@@ -790,20 +824,30 @@ zif_package_array_filter_obsolete (GPtrArray *array,
 	for (i = 0; i < array->len;) {
 		package = g_ptr_array_index (array, i);
 		state_local = zif_state_get_child (state);
+		zif_state_set_number_steps (state_local, depends->len);
 
 		/* try each depend as 'OR' */
 		for (j=0; j<depends->len; j++) {
 			depend_tmp = g_ptr_array_index (depends, j);
-			zif_state_reset (state_local); //FIXME
+			state_loop = zif_state_get_child (state_local);
 			ret = zif_package_obsoletes (package,
 						     depend_tmp,
 						     &satisfies,
-						     state_local,
+						     state_loop,
 						     error);
 			if (!ret)
 				goto out;
-			if (satisfies != NULL)
+			if (satisfies != NULL) {
+				ret = zif_state_finished (state_local, error);
+				if (!ret)
+					goto out;
 				break;
+			}
+
+			/* done */
+			ret = zif_state_done (state_local, error);
+			if (!ret)
+				goto out;
 		}
 		ret = zif_state_done (state, error);
 		if (!ret)
