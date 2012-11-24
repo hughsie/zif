@@ -143,6 +143,9 @@ gboolean	 zif_state_action_stop			(ZifState		*state);
 const gchar	*zif_state_action_to_string		(ZifStateAction		 action);
 ZifStateAction	 zif_state_get_action			(ZifState		*state);
 const gchar	*zif_state_get_action_hint		(ZifState		*state);
+gboolean	 zif_state_check			(ZifState		*state,
+							 GError			 **error)
+							 G_GNUC_WARN_UNUSED_RESULT;
 gboolean	 zif_state_done_real			(ZifState		*state,
 							 GError			 **error,
 							 const gchar		*strloc)
