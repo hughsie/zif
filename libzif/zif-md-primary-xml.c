@@ -670,6 +670,7 @@ zif_md_primary_xml_resolve_name_arch_kill_arch (ZifPackage *package,
 						ZifStrCompareFunc compare_func)
 {
 	guint i;
+	gboolean ret = FALSE;
 	const gchar *value;
 	gchar *tmp;
 	gchar **search = g_strdupv (user_data);
@@ -683,11 +684,13 @@ zif_md_primary_xml_resolve_name_arch_kill_arch (ZifPackage *package,
 	}
 	value = zif_package_get_name (package);
 	for (i=0; search[i] != NULL; i++) {
-		if (compare_func (value, search[i]))
-			return TRUE;
+		if (compare_func (value, search[i])) {
+			ret = TRUE;
+			break;
+		}
 	}
 	g_strfreev (search);
-	return FALSE;
+	return ret;
 }
 
 /**
