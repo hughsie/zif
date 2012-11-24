@@ -69,7 +69,7 @@ zif_string_new (const gchar *value)
  * @value: string to use
  *
  * Creates a new referenced counted string, using the allocated memory.
- * Do not free this string as it is now owned by the #ZifString.
+ * Do not free @value as it is now owned by the #ZifString.
  *
  * Return value: New allocated string
  *
@@ -82,7 +82,7 @@ zif_string_new_value (gchar *value)
 	string = g_slice_new (ZifStringInternal);
 	string->count = 1;
 	string->value = value;
-	string->is_static = TRUE;
+	string->is_static = FALSE;
 	return (ZifString *) string;
 }
 
