@@ -1117,7 +1117,8 @@ zif_release_get_keyfile_value (const gchar *filename,
 	file = g_file_new_for_path (filename);
 	ret = g_file_load_contents (file, NULL, &data, NULL, NULL, &error);
 	if (!ret) {
-		g_warning ("cannot open i18n: %s", error->message);
+		g_debug ("cannot open i18n file %s: %s",
+			 filename, error->message);
 		g_error_free (error);
 		goto out;
 	}
@@ -1146,7 +1147,10 @@ static gchar *
 zif_release_get_lang (void)
 {
 	gchar *lang;
-	lang = zif_release_get_keyfile_value ("/etc/sysconfig/i18n", "LANG");
+
+	lang = zif_release_get_keyfile_value ("/etc/locale.conf", "LANG");
+	if (lang == NULL)
+		lang = zif_release_get_keyfile_value ("/etc/sysconfig/i18n", "LANG");
 	if (lang == NULL) {
 		lang = g_strdup ("en_US.UTF-8");
 		g_warning ("failed to get LANG, falling back to %s", lang);
@@ -1161,7 +1165,9 @@ static gchar *
 zif_release_get_keymap (void)
 {
 	gchar *keymap;
-	keymap = zif_release_get_keyfile_value ("/etc/sysconfig/keyboard", "KEYTABLE");
+	keymap = zif_release_get_keyfile_value ("/etc/vconsole.conf", "KEYMAP");
+	if (keymap == NULL)
+		keymap = zif_release_get_keyfile_value ("/etc/sysconfig/keyboard", "KEYTABLE");
 	if (keymap == NULL) {
 		keymap = g_strdup ("us");
 		g_warning ("failed to get KEYTABLE, falling back to %s", keymap);
