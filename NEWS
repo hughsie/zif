@@ -1,3 +1,30 @@
+Version 0.3.4
+~~~~~~~~~~~~~
+Released: 2012-11-25
+
+Notes:
+ - Cold startup is now much quicker. Typically this makes the command
+   line 'zif' executable 80% faster to startup.
+ - There are many fixes specifically for Fedora 18. If you're using this
+   release already then you really want to upgrade.
+
+New Features:
+ - Store the metdata checksum in an xattr to speed up checking metadata
+
+Bugfixes:
+ - Do not crash when removing deps of packages
+ - Filter the *-release packages before finding 'releasever_pkg'
+ - Only read the metadata files from disk if we need to check the contents
+ - Turn off header validation when loading the rpmdb
+ - Ignore any fractional part of the timestamp when parsing repomd.xml
+ - Don't reset the local state when getting package deps
+ - Don't reset the parent state when getting package requires
+ - Do not use zif_state_reset() when filtering a package array
+ - Don't use the deprecated sysconfig files that have been removed in F18
+ - Add zif_state_check() as a lightweight way of checking for cancellation
+ - Own the string value if zif_string_new_value() is used
+ - Fix several other small memory leaks
+
 Version 0.3.3
 ~~~~~~~~~~~~~
 Released: 2012-10-24
