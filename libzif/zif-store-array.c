@@ -604,6 +604,20 @@ zif_store_array_refresh (GPtrArray *store_array, gboolean force,
 		state_local = zif_state_get_child (state);
 		ret = zif_store_refresh (store, force, state_local, &error_local);
 		if (!ret) {
+			/* the store get disabled whilst being used */
+			if (g_error_matches (error_local,
+					     ZIF_STORE_ERROR,
+					     ZIF_STORE_ERROR_NOT_ENABLED)) {
+				g_debug ("repo %s disabled whilst being used: %s",
+					 zif_store_get_id (store),
+					 error_local->message);
+				g_clear_error (&error_local);
+				ret = zif_state_finished (state_local, error);
+				if (!ret)
+					goto out;
+				goto skip_error;
+			}
+
 			/* do we need to skip this error */
 			if (zif_state_error_handler (state, error_local)) {
 				g_clear_error (&error_local);
