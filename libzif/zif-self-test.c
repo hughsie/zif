@@ -137,12 +137,6 @@ out:
 	return full;
 }
 
-/* not a function, as we want the line number */
-#define zif_check_singletons()	do { \
-				g_assert (!zif_config_is_instance_valid ()); \
-				g_assert (!zif_lock_is_instance_valid ()); \
-				} while (0);
-
 static void
 zif_store_directory_func (void)
 {
@@ -155,6 +149,7 @@ zif_store_directory_func (void)
 
 	path = zif_test_get_data_file (".");
 	store = zif_store_directory_new ();
+	g_object_add_weak_pointer (G_OBJECT (store), (gpointer *) &store);
 	ret = zif_store_directory_set_path (ZIF_STORE_DIRECTORY (store),
 					    path,
 					    TRUE,
@@ -165,6 +160,7 @@ zif_store_directory_func (void)
 
 	/* get packages */
 	state = zif_state_new ();
+	g_object_add_weak_pointer (G_OBJECT (state), (gpointer *) &state);
 	packages = zif_store_get_packages (store, state, &error);
 	g_assert_no_error (error);
 	g_assert (packages != NULL);
@@ -172,7 +168,9 @@ zif_store_directory_func (void)
 
 	g_ptr_array_unref (packages);
 	g_object_unref (store);
+	g_assert (store == NULL);
 	g_object_unref (state);
+	g_assert (state == NULL);
 	g_free (path);
 }
 
@@ -339,7 +337,7 @@ zif_release_func (void)
 		return;
 
 	config = zif_config_new ();
-	g_assert (config != NULL);
+	g_object_add_weak_pointer (G_OBJECT (config), (gpointer *) &config);
 
 	filename = zif_test_get_data_file ("zif.conf");
 	ret = zif_config_set_filename (config, filename, &error);
@@ -356,8 +354,12 @@ zif_release_func (void)
 			       "http://people.freedesktop.org/~hughsient/fedora/preupgrade/releases.txt", NULL);
 
 	state = zif_state_new ();
+	g_object_add_weak_pointer (G_OBJECT (state), (gpointer *) &state);
 	download = zif_download_new ();
+	g_object_add_weak_pointer (G_OBJECT (download), (gpointer *) &download);
+	g_object_add_weak_pointer (G_OBJECT (download), (gpointer *) &download);
 	release = zif_release_new ();
+	g_object_add_weak_pointer (G_OBJECT (release), (gpointer *) &release);
 
 	/* ensure file is not present */
 	filename_releases = g_build_filename (zif_tmpdir, "releases.txt", NULL);
@@ -397,12 +399,14 @@ zif_release_func (void)
 
 	g_free (filename_releases);
 	g_free (filename_treeinfo);
-	g_object_unref (config);
 	g_object_unref (release);
+	g_assert (release == NULL);
 	g_object_unref (download);
+	g_assert (download == NULL);
 	g_object_unref (state);
-
-	zif_check_singletons ();
+	g_assert (state == NULL);
+	g_object_unref (config);
+	g_assert (config == NULL);
 }
 
 static gint
@@ -428,7 +432,7 @@ zif_manifest_func (void)
 	ZifConfig *config;
 
 	config = zif_config_new ();
-	g_assert (config != NULL);
+	g_object_add_weak_pointer (G_OBJECT (config), (gpointer *) &config);
 
 	filename_tmp = zif_test_get_data_file ("zif.conf");
 	ret = zif_config_set_filename (config, filename_tmp, &error);
@@ -438,6 +442,7 @@ zif_manifest_func (void)
 
 	/* create new manifest */
 	manifest = zif_manifest_new ();
+	g_object_add_weak_pointer (G_OBJECT (manifest), (gpointer *) &manifest);
 	g_assert (manifest != NULL);
 
 	/* open directory of test data */
@@ -464,6 +469,7 @@ zif_manifest_func (void)
 
 	/* run each sample transactions */
 	state = zif_state_new ();
+	g_object_add_weak_pointer (G_OBJECT (state), (gpointer *) &state);
 	for (i = 0; i < array->len; i++) {
 		filename = g_ptr_array_index (array, i);
 		zif_state_reset (state);
@@ -478,10 +484,11 @@ zif_manifest_func (void)
 	g_ptr_array_unref (array);
 	g_free (dirname);
 	g_object_unref (state);
-	g_object_unref (config);
+	g_assert (state == NULL);
 	g_object_unref (manifest);
-
-	zif_check_singletons ();
+	g_assert (manifest == NULL);
+	g_object_unref (config);
+	g_assert (config == NULL);
 }
 
 static void
@@ -500,6 +507,7 @@ zif_transaction_func (void)
 	ZifTransactionReason reason;
 
 	state = zif_state_new ();
+	g_object_add_weak_pointer (G_OBJECT (state), (gpointer *) &state);
 	transaction = zif_transaction_new ();
 	zif_transaction_set_verbose (transaction, TRUE);
 
@@ -583,10 +591,9 @@ zif_transaction_func (void)
 
 	g_ptr_array_unref (remotes);
 	g_object_unref (state);
+	g_assert (state == NULL);
 	g_object_unref (local);
 	g_object_unref (transaction);
-
-	zif_check_singletons ();
 }
 
 static void
@@ -616,8 +623,6 @@ zif_changeset_func (void)
 	g_assert_cmpstr (zif_changeset_get_version (changeset), ==, "2.29.91-1.fc13");
 
 	g_object_unref (changeset);
-
-	zif_check_singletons ();
 }
 
 static void
@@ -633,7 +638,7 @@ zif_config_func (void)
 	gchar *filename;
 
 	config = zif_config_new ();
-	g_assert (config != NULL);
+	g_object_add_weak_pointer (G_OBJECT (config), (gpointer *) &config);
 
 	filename = zif_test_get_data_file ("zif.conf");
 	ret = zif_config_set_filename (config, filename, &error);
@@ -702,8 +707,7 @@ zif_config_func (void)
 	g_free (basearch);
 
 	g_object_unref (config);
-
-	zif_check_singletons ();
+	g_assert (config == NULL);
 }
 
 /**
@@ -724,7 +728,7 @@ zif_config_changed_func (void)
 	ZifConfig *config;
 
 	config = zif_config_new ();
-	g_assert (config != NULL);
+	g_object_add_weak_pointer (G_OBJECT (config), (gpointer *) &config);
 
 	filename = g_build_filename (zif_tmpdir, "zif.conf", NULL);
 	ret = g_file_set_contents (filename, "[main]\nconfig_schema_version=1\n", -1, &error);
@@ -764,9 +768,8 @@ zif_config_changed_func (void)
 	g_free (value);
 
 	g_object_unref (config);
+	g_assert (config == NULL);
 	g_free (filename);
-
-	zif_check_singletons ();
 }
 
 static void
@@ -847,8 +850,6 @@ zif_db_func (void)
 	g_ptr_array_unref (array);
 
 	g_object_unref (db);
-
-	zif_check_singletons ();
 }
 
 static void
@@ -1039,8 +1040,6 @@ zif_depend_func (void)
 	g_assert_cmpstr (zif_depend_get_version (depend), ==, NULL);
 	g_assert_cmpint (zif_depend_get_flag (depend), ==, ZIF_DEPEND_FLAG_ANY);
 	g_object_unref (depend);
-
-	zif_check_singletons ();
 }
 
 static guint _updates = 0;
@@ -1084,11 +1083,13 @@ zif_download_func (void)
 	GError *error = NULL;
 
 	download = zif_download_new ();
+	g_object_add_weak_pointer (G_OBJECT (download), (gpointer *) &download);
 	g_assert (download != NULL);
 	state = zif_state_new ();
+	g_object_add_weak_pointer (G_OBJECT (state), (gpointer *) &state);
 	g_assert (state != NULL);
 	config = zif_config_new ();
-	g_assert (config != NULL);
+	g_object_add_weak_pointer (G_OBJECT (config), (gpointer *) &config);
 
 	/* get config file */
 	filename = zif_test_get_data_file ("zif.conf");
@@ -1214,10 +1215,11 @@ out:
 	if (cancellable != NULL)
 		g_object_unref (cancellable);
 	g_object_unref (download);
-	g_object_unref (config);
+	g_assert (download == NULL);
 	g_object_unref (state);
-
-	zif_check_singletons ();
+	g_assert (state == NULL);
+	g_object_unref (config);
+	g_assert (config == NULL);
 }
 
 static void
@@ -1242,6 +1244,7 @@ zif_groups_func (void)
 	g_assert (ret);
 
 	state = zif_state_new ();
+	g_object_add_weak_pointer (G_OBJECT (state), (gpointer *) &state);
 	ret = zif_groups_load (groups, state, &error);
 	g_assert_no_error (error);
 	g_assert (ret);
@@ -1276,8 +1279,7 @@ zif_groups_func (void)
 
 	g_object_unref (groups);
 	g_object_unref (state);
-
-	zif_check_singletons ();
+	g_assert (state == NULL);
 }
 
 static void
@@ -1313,8 +1315,6 @@ zif_legal_func (void)
 	g_assert (!is_free);
 
 	g_object_unref (legal);
-
-	zif_check_singletons ();
 }
 
 static guint _zif_lock_state_changed = 0;
@@ -1339,7 +1339,7 @@ zif_lock_func (void)
 	gchar *filename;
 
 	config = zif_config_new ();
-	g_assert (config != NULL);
+	g_object_add_weak_pointer (G_OBJECT (config), (gpointer *) &config);
 
 	filename = zif_test_get_data_file ("zif.conf");
 	ret = zif_config_set_filename (config, filename, &error);
@@ -1418,9 +1418,8 @@ zif_lock_func (void)
 
 	g_object_unref (lock);
 	g_object_unref (config);
+	g_assert (config == NULL);
 	g_free (pidfile);
-
-	zif_check_singletons ();
 }
 
 static gpointer
@@ -1454,7 +1453,7 @@ zif_lock_threads_func (void)
 	ZifLock *lock;
 
 	config = zif_config_new ();
-	g_assert (config != NULL);
+	g_object_add_weak_pointer (G_OBJECT (config), (gpointer *) &config);
 
 	filename = zif_test_get_data_file ("zif.conf");
 	ret = zif_config_set_filename (config, filename, &error);
@@ -1492,6 +1491,8 @@ zif_lock_threads_func (void)
 	g_thread_unref (one);
 	g_object_unref (lock);
 	g_object_unref (config);
+	g_assert (config == NULL);
+	g_assert (config == NULL);
 }
 
 static void
@@ -1503,6 +1504,7 @@ zif_md_func (void)
 	ZifState *state;
 
 	state = zif_state_new ();
+	g_object_add_weak_pointer (G_OBJECT (state), (gpointer *) &state);
 
 	md = zif_md_new ();
 	g_assert (md != NULL);
@@ -1518,8 +1520,7 @@ zif_md_func (void)
 
 	g_object_unref (md);
 	g_object_unref (state);
-
-	zif_check_singletons ();
+	g_assert (state == NULL);
 }
 
 static void
@@ -1534,6 +1535,7 @@ zif_md_comps_func (void)
 	gchar *filename;
 
 	state = zif_state_new ();
+	g_object_add_weak_pointer (G_OBJECT (state), (gpointer *) &state);
 
 	md = zif_md_comps_new ();
 	g_assert (md != NULL);
@@ -1588,8 +1590,7 @@ zif_md_comps_func (void)
 
 	g_object_unref (md);
 	g_object_unref (state);
-
-	zif_check_singletons ();
+	g_assert (state == NULL);
 }
 
 static void
@@ -1605,6 +1606,7 @@ zif_md_filelists_sql_func (void)
 	gchar *filename;
 
 	state = zif_state_new ();
+	g_object_add_weak_pointer (G_OBJECT (state), (gpointer *) &state);
 
 	md = zif_md_filelists_sql_new ();
 	g_assert (md != NULL);
@@ -1635,8 +1637,7 @@ zif_md_filelists_sql_func (void)
 
 	g_object_unref (md);
 	g_object_unref (state);
-
-	zif_check_singletons ();
+	g_assert (state == NULL);
 }
 
 static void
@@ -1653,12 +1654,14 @@ zif_md_filelists_xml_func (void)
 	ZifConfig *config;
 
 	state = zif_state_new ();
+	g_object_add_weak_pointer (G_OBJECT (state), (gpointer *) &state);
 
 	md = zif_md_filelists_xml_new ();
 	g_assert (md != NULL);
 	g_assert (!zif_md_get_is_loaded (md));
 
 	config = zif_config_new ();
+	g_object_add_weak_pointer (G_OBJECT (config), (gpointer *) &config);
 	filename = zif_test_get_data_file ("zif.conf");
 	zif_config_set_filename (config, filename, NULL);
 	g_free (filename);
@@ -1686,10 +1689,10 @@ zif_md_filelists_xml_func (void)
 	g_ptr_array_unref (array);
 
 	g_object_unref (state);
+	g_assert (state == NULL);
 	g_object_unref (md);
 	g_object_unref (config);
-
-	zif_check_singletons ();
+	g_assert (config == NULL);
 }
 
 static void
@@ -1705,7 +1708,9 @@ zif_md_metalink_func (void)
 	gchar *filename;
 
 	state = zif_state_new ();
+	g_object_add_weak_pointer (G_OBJECT (state), (gpointer *) &state);
 	config = zif_config_new ();
+	g_object_add_weak_pointer (G_OBJECT (config), (gpointer *) &config);
 	filename = zif_test_get_data_file ("zif.conf");
 	zif_config_set_filename (config, filename, NULL);
 	g_free (filename);
@@ -1735,9 +1740,9 @@ zif_md_metalink_func (void)
 
 	g_object_unref (md);
 	g_object_unref (state);
+	g_assert (state == NULL);
 	g_object_unref (config);
-
-	zif_check_singletons ();
+	g_assert (config == NULL);
 }
 
 static void
@@ -1754,7 +1759,9 @@ zif_md_mirrorlist_func (void)
 	gchar *basearch;
 
 	state = zif_state_new ();
+	g_object_add_weak_pointer (G_OBJECT (state), (gpointer *) &state);
 	config = zif_config_new ();
+	g_object_add_weak_pointer (G_OBJECT (config), (gpointer *) &config);
 	filename = zif_test_get_data_file ("zif.conf");
 	zif_config_set_filename (config, filename, NULL);
 	g_free (filename);
@@ -1789,9 +1796,9 @@ zif_md_mirrorlist_func (void)
 
 	g_object_unref (md);
 	g_object_unref (state);
+	g_assert (state == NULL);
 	g_object_unref (config);
-
-	zif_check_singletons ();
+	g_assert (config == NULL);
 }
 
 static void
@@ -1807,12 +1814,15 @@ zif_md_other_sql_func (void)
 	gchar *filename;
 
 	state = zif_state_new ();
+	g_object_add_weak_pointer (G_OBJECT (state), (gpointer *) &state);
 
 	config = zif_config_new ();
+	g_object_add_weak_pointer (G_OBJECT (config), (gpointer *) &config);
 	zif_config_set_uint (config, "metadata_expire", 0, NULL);
 	zif_config_set_uint (config, "mirrorlist_expire", 0, NULL);
 
 	md = zif_md_other_sql_new ();
+	g_object_add_weak_pointer (G_OBJECT (md), (gpointer *) &md);
 	g_assert (md != NULL);
 	g_assert (!zif_md_get_is_loaded (md));
 
@@ -1845,11 +1855,12 @@ zif_md_other_sql_func (void)
 	/* remove array */
 	g_ptr_array_unref (array);
 
-	g_object_unref (config);
 	g_object_unref (state);
+	g_assert (state == NULL);
 	g_object_unref (md);
-
-	zif_check_singletons ();
+	g_assert (md == NULL);
+	g_object_unref (config);
+	g_assert (config == NULL);
 }
 
 static void
@@ -1871,12 +1882,15 @@ zif_md_primary_sql_func (void)
 	gchar *filename;
 
 	state = zif_state_new ();
+	g_object_add_weak_pointer (G_OBJECT (state), (gpointer *) &state);
 
 	md = zif_md_primary_sql_new ();
+	g_object_add_weak_pointer (G_OBJECT (md), (gpointer *) &md);
 	g_assert (md != NULL);
 	g_assert (!zif_md_get_is_loaded (md));
 
 	config = zif_config_new ();
+	g_object_add_weak_pointer (G_OBJECT (config), (gpointer *) &config);
 	filename = zif_test_get_data_file ("zif.conf");
 	zif_config_set_filename (config, filename, NULL);
 	g_free (filename);
@@ -1957,10 +1971,11 @@ zif_md_primary_sql_func (void)
 	g_ptr_array_unref (array);
 
 	g_object_unref (state);
-	g_object_unref (config);
+	g_assert (state == NULL);
 	g_object_unref (md);
-
-	zif_check_singletons ();
+	g_assert (md == NULL);
+	g_object_unref (config);
+	g_assert (config == NULL);
 }
 
 static void
@@ -1982,6 +1997,7 @@ zif_md_primary_xml_func (void)
 	ZifStoreRemote *store_remote;
 
 	config = zif_config_new ();
+	g_object_add_weak_pointer (G_OBJECT (config), (gpointer *) &config);
 	filename = zif_test_get_data_file ("zif.conf");
 	zif_config_set_filename (config, filename, NULL);
 	zif_config_set_boolean (config, "network", FALSE, NULL);
@@ -1990,6 +2006,7 @@ zif_md_primary_xml_func (void)
 	g_free (filename);
 
 	state = zif_state_new ();
+	g_object_add_weak_pointer (G_OBJECT (state), (gpointer *) &state);
 
 	/* get remote store */
 	store_remote = ZIF_STORE_REMOTE (zif_store_remote_new ());
@@ -2142,10 +2159,10 @@ zif_md_primary_xml_func (void)
 
 	g_object_unref (store_remote);
 	g_object_unref (state);
+	g_assert (state == NULL);
 	g_object_unref (md);
 	g_object_unref (config);
-
-	zif_check_singletons ();
+	g_assert (config == NULL);
 }
 
 static void
@@ -2159,6 +2176,7 @@ zif_md_updateinfo_func (void)
 	gchar *filename;
 
 	state = zif_state_new ();
+	g_object_add_weak_pointer (G_OBJECT (state), (gpointer *) &state);
 
 	md = zif_md_updateinfo_new ();
 	g_assert (md != NULL);
@@ -2185,8 +2203,7 @@ zif_md_updateinfo_func (void)
 	g_ptr_array_unref (array);
 	g_object_unref (md);
 	g_object_unref (state);
-
-	zif_check_singletons ();
+	g_assert (state == NULL);
 }
 
 static void
@@ -2199,6 +2216,7 @@ zif_md_delta_func (void)
 	gchar *filename;
 
 	state = zif_state_new ();
+	g_object_add_weak_pointer (G_OBJECT (state), (gpointer *) &state);
 
 	md = zif_md_delta_new ();
 	g_assert (md != NULL);
@@ -2227,8 +2245,7 @@ zif_md_delta_func (void)
 	g_object_unref (delta);
 	g_object_unref (md);
 	g_object_unref (state);
-
-	zif_check_singletons ();
+	g_assert (state == NULL);
 }
 
 static void
@@ -2245,8 +2262,6 @@ zif_monitor_test_touch (gpointer data)
 	utime (filename, NULL);
 	g_free (filename);
 	return FALSE;
-
-	zif_check_singletons ();
 }
 
 static void
@@ -2276,8 +2291,6 @@ zif_monitor_func (void)
 	/* wait for changed */
 	g_main_loop_unref (loop);
 	g_object_unref (monitor);
-
-	zif_check_singletons ();
 }
 
 static void
@@ -2338,8 +2351,6 @@ zif_package_func (void)
 	g_assert_cmpstr (zif_package_get_id (a), ==, "colord;0.0.1-1.fc15;i386;installed:fedora");
 	g_assert_cmpstr (zif_package_get_data (a), ==, "installed:fedora");
 	g_object_unref (a);
-
-	zif_check_singletons ();
 }
 
 static void
@@ -2384,8 +2395,6 @@ zif_package_local_func (void)
 			 ZIF_PACKAGE_TRUST_KIND_UNKNOWN);
 
 	g_object_unref (pkg);
-
-	zif_check_singletons ();
 }
 
 static void
@@ -2399,6 +2408,7 @@ zif_package_meta_func (void)
 	GPtrArray *depends;
 
 	state = zif_state_new ();
+	g_object_add_weak_pointer (G_OBJECT (state), (gpointer *) &state);
 	pkg = zif_package_meta_new ();
 	g_assert (pkg != NULL);
 
@@ -2457,8 +2467,7 @@ zif_package_meta_func (void)
 	g_free (filename);
 	g_object_unref (pkg);
 	g_object_unref (state);
-
-	zif_check_singletons ();
+	g_assert (state == NULL);
 }
 
 static void
@@ -2466,7 +2475,6 @@ zif_package_remote_func (void)
 {
 	gchar *filename;
 	GError *error = NULL;
-	ZifPackage *pkg;
 	ZifStoreRemote *store_remote;
 	ZifPackage *package;
 	ZifState *state;
@@ -2485,6 +2493,7 @@ zif_package_remote_func (void)
 
 	/* set this up as dummy */
 	config = zif_config_new ();
+	g_object_add_weak_pointer (G_OBJECT (config), (gpointer *) &config);
 	filename = zif_test_get_data_file ("zif.conf");
 	zif_config_set_filename (config, filename, NULL);
 	zif_config_set_boolean (config, "network", TRUE, NULL);
@@ -2502,9 +2511,10 @@ zif_package_remote_func (void)
 	g_free (filename);
 
 	state = zif_state_new ();
+	g_object_add_weak_pointer (G_OBJECT (state), (gpointer *) &state);
 
 	store = ZIF_STORE_LOCAL (zif_store_local_new ());
-	g_assert (store != NULL);
+	g_object_add_weak_pointer (G_OBJECT (store), (gpointer *) &store);
 	filename = zif_test_get_data_file ("root");
 	zif_store_local_set_prefix (store, filename, &error);
 	g_free (filename);
@@ -2517,9 +2527,6 @@ zif_package_remote_func (void)
 	g_assert_no_error (error);
 	g_assert (ret);
 
-	pkg = zif_package_remote_new ();
-	g_assert (pkg != NULL);
-
 	/* get remote store */
 	store_remote = ZIF_STORE_REMOTE (zif_store_remote_new ());
 	zif_state_reset (state);
@@ -2531,12 +2538,13 @@ zif_package_remote_func (void)
 
 	/* set a package ID that does exist */
 	package = zif_package_remote_new ();
+	g_object_add_weak_pointer (G_OBJECT (package), (gpointer *) &package);
 	ret = zif_package_set_id (package, "gnome-power-manager;2.30.1-1.fc13;i686;fedora", &error);
 	g_assert_no_error (error);
 	g_assert (ret);
 
 	/* check trust */
-	g_assert_cmpint (zif_package_get_trust_kind (pkg), ==,
+	g_assert_cmpint (zif_package_get_trust_kind (package), ==,
 			 ZIF_PACKAGE_TRUST_KIND_UNKNOWN);
 
 	/* set remote store */
@@ -2558,6 +2566,7 @@ zif_package_remote_func (void)
 	g_assert_cmpint (changelog->len, ==, 1);
 
 	g_object_unref (package);
+	g_assert (package == NULL);
 
 	/* set a package ID that does not exist */
 	package = zif_package_remote_new ();
@@ -2618,16 +2627,16 @@ zif_package_remote_func (void)
 	/* delete files we created */
 	g_unlink ("../data/tests/./fedora/packages/powerman-2.3.5-2.fc13.i686.rpm");
 out:
-	g_object_unref (config);
 	g_object_unref (package);
-	g_object_unref (pkg);
 	g_object_unref (repos);
 	g_object_unref (state);
+	g_assert (state == NULL);
 	g_object_unref (store);
+	g_assert (store == NULL);
 	g_object_unref (store_remote);
 	g_ptr_array_unref (changelog);
-
-	zif_check_singletons ();
+	g_object_unref (config);
+	g_assert (config == NULL);
 }
 
 static void
@@ -2646,6 +2655,7 @@ zif_repos_func (void)
 
 	/* set this up as dummy */
 	config = zif_config_new ();
+	g_object_add_weak_pointer (G_OBJECT (config), (gpointer *) &config);
 	filename = zif_test_get_data_file ("zif.conf");
 	zif_config_set_filename (config, filename, NULL);
 	g_free (filename);
@@ -2655,10 +2665,12 @@ zif_repos_func (void)
 	g_free (pidfile);
 
 	repos = zif_repos_new ();
+	g_object_add_weak_pointer (G_OBJECT (repos), (gpointer *) &repos);
 	g_assert (repos != NULL);
 
 	/* use state object */
 	state = zif_state_new ();
+	g_object_add_weak_pointer (G_OBJECT (state), (gpointer *) &state);
 
 	filename = zif_test_get_data_file ("repos");
 	ret = zif_repos_set_repos_dir (repos, filename, &error);
@@ -2711,10 +2723,11 @@ zif_repos_func (void)
 	g_assert (g_str_has_prefix (pubkey[0], "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-"));
 
 	g_object_unref (state);
+	g_assert (state == NULL);
 	g_object_unref (repos);
+	g_assert (repos == NULL);
 	g_object_unref (config);
-
-	zif_check_singletons ();
+	g_assert (config == NULL);
 }
 
 static guint _allow_cancel_updates = 0;
@@ -2776,6 +2789,7 @@ zif_state_func (void)
 	_updates = 0;
 
 	state = zif_state_new ();
+	g_object_add_weak_pointer (G_OBJECT (state), (gpointer *) &state);
 	g_assert (state != NULL);
 	g_signal_connect (state, "percentage-changed", G_CALLBACK (zif_state_test_percentage_changed_cb), NULL);
 	g_signal_connect (state, "subpercentage-changed", G_CALLBACK (zif_state_test_subpercentage_changed_cb), NULL);
@@ -2833,10 +2847,9 @@ zif_state_func (void)
 	g_assert (zif_state_get_allow_cancel (state));
 
 	g_object_unref (state);
+	g_assert (state == NULL);
 
-	/* check we've not leaked anything */
-	zif_check_singletons ();
-}
+	/* check we've not leaked anything */}
 
 static void
 zif_state_child_func (void)
@@ -2851,6 +2864,7 @@ zif_state_child_func (void)
 	_action_updates = 0;
 	_package_progress_updates = 0;
 	state = zif_state_new ();
+	g_object_add_weak_pointer (G_OBJECT (state), (gpointer *) &state);
 	zif_state_set_allow_cancel (state, TRUE);
 	zif_state_set_number_steps (state, 2);
 	g_signal_connect (state, "percentage-changed", G_CALLBACK (zif_state_test_percentage_changed_cb), NULL);
@@ -2945,10 +2959,9 @@ zif_state_child_func (void)
 	g_assert_cmpint (_last_percent, ==, 100);
 
 	g_object_unref (state);
+	g_assert (state == NULL);
 
-	/* check we've not leaked anything */
-	zif_check_singletons ();
-}
+	/* check we've not leaked anything */}
 
 static void
 zif_state_parent_one_step_proxy_func (void)
@@ -2959,6 +2972,7 @@ zif_state_parent_one_step_proxy_func (void)
 	/* reset */
 	_updates = 0;
 	state = zif_state_new ();
+	g_object_add_weak_pointer (G_OBJECT (state), (gpointer *) &state);
 	zif_state_set_number_steps (state, 1);
 	g_signal_connect (state, "percentage-changed", G_CALLBACK (zif_state_test_percentage_changed_cb), NULL);
 	g_signal_connect (state, "subpercentage-changed", G_CALLBACK (zif_state_test_subpercentage_changed_cb), NULL);
@@ -2976,10 +2990,9 @@ zif_state_parent_one_step_proxy_func (void)
 	g_assert (_last_percent == 33);
 
 	g_object_unref (state);
+	g_assert (state == NULL);
 
-	/* check we've not leaked anything */
-	zif_check_singletons ();
-}
+	/* check we've not leaked anything */}
 
 static void
 zif_state_non_equal_steps_func (void)
@@ -2992,6 +3005,7 @@ zif_state_non_equal_steps_func (void)
 
 	/* test non-equal steps */
 	state = zif_state_new ();
+	g_object_add_weak_pointer (G_OBJECT (state), (gpointer *) &state);
 	zif_state_set_enable_profile (state, TRUE);
 	ret = zif_state_set_steps (state,
 				   &error,
@@ -3105,10 +3119,9 @@ zif_state_non_equal_steps_func (void)
 	g_assert_cmpint (zif_state_get_percentage (state), ==, 100);
 
 	g_object_unref (state);
+	g_assert (state == NULL);
 
-	/* check we've not leaked anything */
-	zif_check_singletons ();
-}
+	/* check we've not leaked anything */}
 
 static void
 zif_state_no_progress_func (void)
@@ -3120,6 +3133,7 @@ zif_state_no_progress_func (void)
 
 	/* test a state where we don't care about progress */
 	state = zif_state_new ();
+	g_object_add_weak_pointer (G_OBJECT (state), (gpointer *) &state);
 	zif_state_set_report_progress (state, FALSE);
 
 	zif_state_set_number_steps (state, 3);
@@ -3146,10 +3160,9 @@ zif_state_no_progress_func (void)
 	g_assert_cmpint (zif_state_get_percentage (state), ==, 0);
 
 	g_object_unref (state);
+	g_assert (state == NULL);
 
-	/* check we've not leaked anything */
-	zif_check_singletons ();
-}
+	/* check we've not leaked anything */}
 
 static void
 zif_state_finish_func (void)
@@ -3161,6 +3174,7 @@ zif_state_finish_func (void)
 
 	/* check straight finish */
 	state = zif_state_new ();
+	g_object_add_weak_pointer (G_OBJECT (state), (gpointer *) &state);
 	zif_state_set_number_steps (state, 3);
 
 	child = zif_state_get_child (state);
@@ -3175,10 +3189,9 @@ zif_state_finish_func (void)
 	g_assert (ret);
 
 	g_object_unref (state);
+	g_assert (state == NULL);
 
-	/* check we've not leaked anything */
-	zif_check_singletons ();
-}
+	/* check we've not leaked anything */}
 
 static gboolean
 zif_state_error_handler_cb (const GError *error, gpointer user_data)
@@ -3198,6 +3211,7 @@ zif_state_error_handler_func (void)
 
 	/* test error ignoring */
 	state = zif_state_new ();
+	g_object_add_weak_pointer (G_OBJECT (state), (gpointer *) &state);
 	error = g_error_new (1, 0, "this is error: %i", 999);
 	ret = zif_state_error_handler (state, error);
 	g_assert (!ret);
@@ -3217,13 +3231,13 @@ zif_state_error_handler_func (void)
 	g_assert (ret);
 
 	g_object_unref (state);
+	g_assert (state == NULL);
 	g_clear_error (&error);
 
 	/* check we've not leaked anything */
-	zif_check_singletons ();
-
 	/* test new child gets error handler passed to it */
 	state = zif_state_new ();
+	g_object_add_weak_pointer (G_OBJECT (state), (gpointer *) &state);
 	error = g_error_new (1, 0, "this is error: %i", 999);
 	zif_state_set_error_handler (state, zif_state_error_handler_cb, NULL);
 	child = zif_state_get_child (state);
@@ -3231,11 +3245,10 @@ zif_state_error_handler_func (void)
 	g_assert (ret);
 
 	g_object_unref (state);
+	g_assert (state == NULL);
 	g_clear_error (&error);
 
-	/* check we've not leaked anything */
-	zif_check_singletons ();
-}
+	/* check we've not leaked anything */}
 
 static void
 zif_state_speed_func (void)
@@ -3244,6 +3257,7 @@ zif_state_speed_func (void)
 
 	/* speed averaging test */
 	state = zif_state_new ();
+	g_object_add_weak_pointer (G_OBJECT (state), (gpointer *) &state);
 	g_assert_cmpint (zif_state_get_speed (state), ==, 0);
 	zif_state_set_speed (state, 100);
 	g_assert_cmpint (zif_state_get_speed (state), ==, 100);
@@ -3258,10 +3272,9 @@ zif_state_speed_func (void)
 	zif_state_set_speed (state, 600);
 	g_assert_cmpint (zif_state_get_speed (state), ==, 400);
 	g_object_unref (state);
+	g_assert (state == NULL);
 
-	/* check we've not leaked anything */
-	zif_check_singletons ();
-}
+	/* check we've not leaked anything */}
 
 static gboolean
 zif_state_take_lock_cb (ZifState *state,
@@ -3284,6 +3297,7 @@ zif_state_finished_func (void)
 	guint i;
 
 	state = zif_state_new ();
+	g_object_add_weak_pointer (G_OBJECT (state), (gpointer *) &state);
 	ret = zif_state_set_steps (state,
 				   &error,
 				   90,
@@ -3324,6 +3338,7 @@ zif_state_finished_func (void)
 	g_assert (ret);
 
 	g_object_unref (state);
+	g_assert (state == NULL);
 }
 
 static void
@@ -3338,6 +3353,7 @@ zif_state_locking_func (void)
 
 	/* locking test */
 	config = zif_config_new ();
+	g_object_add_weak_pointer (G_OBJECT (config), (gpointer *) &config);
 	filename = zif_test_get_data_file ("zif.conf");
 	zif_config_set_filename (config, filename, NULL);
 	g_free (filename);
@@ -3347,6 +3363,7 @@ zif_state_locking_func (void)
 	g_free (pidfile);
 
 	state = zif_state_new ();
+	g_object_add_weak_pointer (G_OBJECT (state), (gpointer *) &state);
 
 	zif_state_set_lock_handler (state, zif_state_take_lock_cb, NULL);
 
@@ -3367,9 +3384,9 @@ zif_state_locking_func (void)
 	g_assert (ret);
 
 	g_object_unref (state);
+	g_assert (state == NULL);
 	g_object_unref (config);
-
-	zif_check_singletons ();
+	g_assert (config == NULL);
 }
 
 static void
@@ -3396,6 +3413,7 @@ zif_store_local_func (void)
 
 	/* set these up as dummy */
 	config = zif_config_new ();
+	g_object_add_weak_pointer (G_OBJECT (config), (gpointer *) &config);
 	filename = zif_test_get_data_file ("zif.conf");
 	zif_config_set_filename (config, filename, NULL);
 	g_free (filename);
@@ -3414,6 +3432,7 @@ zif_store_local_func (void)
 
 	/* use state object */
 	state = zif_state_new ();
+	g_object_add_weak_pointer (G_OBJECT (state), (gpointer *) &state);
 
 	/* set a cancellable, as we're using the store directly */
 	cancellable = g_cancellable_new ();
@@ -3427,7 +3446,7 @@ zif_store_local_func (void)
 	g_assert (ret);
 
 	store = ZIF_STORE_LOCAL (zif_store_local_new ());
-	g_assert (store != NULL);
+	g_object_add_weak_pointer (G_OBJECT (store), (gpointer *) &store);
 
 	filename = zif_test_get_data_file ("root");
 	zif_store_local_set_prefix (store, filename, &error);
@@ -3649,12 +3668,13 @@ zif_store_local_func (void)
 	g_ptr_array_unref (array);
 
 	g_object_unref (store);
+	g_assert (store == NULL);
 	g_object_unref (groups);
-	g_object_unref (config);
 	g_object_unref (legal);
 	g_object_unref (state);
-
-	zif_check_singletons ();
+	g_assert (state == NULL);
+	g_object_unref (config);
+	g_assert (config == NULL);
 }
 
 static void
@@ -3670,9 +3690,11 @@ zif_store_meta_func (void)
 	GPtrArray *array;
 
 	store = zif_store_meta_new ();
+	g_object_add_weak_pointer (G_OBJECT (store), (gpointer *) &store);
 
 	/* create virtal package to add to the store */
 	state = zif_state_new ();
+	g_object_add_weak_pointer (G_OBJECT (state), (gpointer *) &state);
 	pkg = zif_package_meta_new ();
 	filename = zif_test_get_data_file ("test.spec");
 	ret = zif_package_meta_set_from_filename (ZIF_PACKAGE_META(pkg), filename, &error);
@@ -3723,9 +3745,9 @@ zif_store_meta_func (void)
 	g_free (filename);
 	g_object_unref (pkg);
 	g_object_unref (state);
+	g_assert (state == NULL);
 	g_object_unref (store);
-
-	zif_check_singletons ();
+	g_assert (store == NULL);
 }
 
 static void
@@ -3750,6 +3772,7 @@ zif_store_remote_func (void)
 
 	/* set this up as dummy */
 	config = zif_config_new ();
+	g_object_add_weak_pointer (G_OBJECT (config), (gpointer *) &config);
 	filename = zif_test_get_data_file ("zif.conf");
 	filename_db = g_build_filename (zif_tmpdir, "history.db", NULL);
 	zif_config_set_filename (config, filename, NULL);
@@ -3769,9 +3792,10 @@ zif_store_remote_func (void)
 
 	/* use state object */
 	state = zif_state_new ();
+	g_object_add_weak_pointer (G_OBJECT (state), (gpointer *) &state);
 
 	store = ZIF_STORE_REMOTE (zif_store_remote_new ());
-	g_assert (store != NULL);
+	g_object_add_weak_pointer (G_OBJECT (store), (gpointer *) &store);
 
 	zif_state_reset (state);
 	filename = zif_test_get_data_file ("repos/fedora.repo");
@@ -3782,6 +3806,7 @@ zif_store_remote_func (void)
 
 	/* setup state */
 	groups = zif_groups_new ();
+	g_object_add_weak_pointer (G_OBJECT (groups), (gpointer *) &groups);
 	filename = zif_test_get_data_file ("yum-comps-groups.conf");
 	zif_groups_set_mapping_file (groups, filename, NULL);
 	g_free (filename);
@@ -3902,9 +3927,11 @@ zif_store_remote_func (void)
 	g_free (tmp);
 
 	g_object_unref (store);
+	g_assert (store == NULL);
 
 	/* location does not exist */
 	store = ZIF_STORE_REMOTE (zif_store_remote_new ());
+	g_object_add_weak_pointer (G_OBJECT (store), (gpointer *) &store);
 	zif_state_reset (state);
 	filename = zif_test_get_data_file ("invalid.repo");
 	ret = zif_store_remote_set_from_file (store, filename, "invalid", state, &error);
@@ -3916,7 +3943,7 @@ zif_store_remote_func (void)
 	g_assert (zif_config_set_boolean (config, "network", TRUE, NULL));
 	g_assert (zif_config_set_boolean (config, "skip_if_unavailable", FALSE, NULL));
 	download = zif_download_new ();
-	g_assert (download != NULL);
+	g_object_add_weak_pointer (G_OBJECT (download), (gpointer *) &download);
 
 	zif_state_reset (state);
 	in_array[0] = "/usr/bin/gnome-power-manager";
@@ -3925,10 +3952,12 @@ zif_store_remote_func (void)
 	g_assert (array == NULL);
 
 	g_object_unref (store);
+	g_assert (store == NULL);
 	g_clear_error (&error);
 
 	/* check with invalid repomd */
 	store = ZIF_STORE_REMOTE (zif_store_remote_new ());
+	g_object_add_weak_pointer (G_OBJECT (store), (gpointer *) &store);
 	zif_state_reset (state);
 	filename = zif_test_get_data_file ("corrupt-repomd.repo");
 	g_assert (filename != NULL);
@@ -3959,7 +3988,9 @@ zif_store_remote_func (void)
 
 	/* check with invalid repomd */
 	g_object_unref (store);
+	g_assert (store == NULL);
 	store = ZIF_STORE_REMOTE (zif_store_remote_new ());
+	g_object_add_weak_pointer (G_OBJECT (store), (gpointer *) &store);
 	zif_state_reset (state);
 	filename = zif_test_get_data_file ("corrupt-repomd.repo");
 	ret = zif_store_remote_set_from_file (store, filename, "corrupt-repomd", state, &error);
@@ -3982,6 +4013,7 @@ zif_store_remote_func (void)
 	g_assert_cmpint (array->len, ==, 1);
 	g_ptr_array_unref (array);
 	g_object_unref (store);
+	g_assert (store == NULL);
 
 	/* start afresh */
 	ret = g_spawn_command_line_sync ("rm -rf ../data/tests/corrupt-repomd/*", NULL, NULL, NULL, &error);
@@ -4000,6 +4032,7 @@ zif_store_remote_func (void)
 
 	/* try to clean a blank repo */
 	store = ZIF_STORE_REMOTE (zif_store_remote_new ());
+	g_object_add_weak_pointer (G_OBJECT (store), (gpointer *) &store);
 	zif_state_reset (state);
 	filename = zif_test_get_data_file ("corrupt-repomd.repo");
 	ret = zif_store_remote_set_from_file (store, filename, "corrupt-repomd", state, &error);
@@ -4023,13 +4056,16 @@ zif_store_remote_func (void)
 	g_assert (array != NULL);
 
 	g_object_unref (download);
+	g_assert (download == NULL);
 	g_object_unref (store);
-	g_object_unref (config);
+	g_assert (store == NULL);
 	g_object_unref (state);
-	g_object_unref (groups);
+	g_assert (state == NULL);
 	g_object_unref (store_local);
-
-	zif_check_singletons ();
+	g_object_unref (groups);
+	g_assert (groups == NULL);
+	g_object_unref (config);
+	g_assert (config == NULL);
 }
 
 static void
@@ -4045,6 +4081,7 @@ zif_store_rhn_func (void)
 
 	/* set this up as dummy */
 	config = zif_config_new ();
+	g_object_add_weak_pointer (G_OBJECT (config), (gpointer *) &config);
 	filename = zif_test_get_data_file ("zif.conf");
 	zif_config_set_filename (config, filename, NULL);
 	zif_config_set_uint (config, "metadata_expire", 0, NULL);
@@ -4057,9 +4094,10 @@ zif_store_rhn_func (void)
 
 	/* use state object */
 	state = zif_state_new ();
+	g_object_add_weak_pointer (G_OBJECT (state), (gpointer *) &state);
 
 	store = zif_store_rhn_new ();
-	g_assert (store != NULL);
+	g_object_add_weak_pointer (G_OBJECT (store), (gpointer *) &store);
 
 	/* try to load without session key */
 	zif_state_reset (state);
@@ -4114,10 +4152,11 @@ zif_store_rhn_func (void)
 #endif
 
 	g_object_unref (store);
-	g_object_unref (config);
+	g_assert (store == NULL);
 	g_object_unref (state);
-
-	zif_check_singletons ();
+	g_assert (state == NULL);
+	g_object_unref (config);
+	g_assert (config == NULL);
 }
 
 static void
@@ -4131,8 +4170,6 @@ zif_string_func (void)
 	g_assert_cmpstr (zif_string_get_value (string), ==, "kernel");
 	string = zif_string_unref (string);
 	g_assert (string == NULL);
-
-	zif_check_singletons ();
 }
 
 static void
@@ -4185,6 +4222,7 @@ zif_utils_func (void)
 	ZifState *state;
 
 	state = zif_state_new ();
+	g_object_add_weak_pointer (G_OBJECT (state), (gpointer *) &state);
 
 	package_id = zif_package_id_from_nevra ("kernel", 0, "0.1.0", "1", "i386", "fedora");
 	g_assert_cmpstr (package_id, ==, "kernel;0.1.0-1;i386;fedora");
@@ -4322,6 +4360,7 @@ zif_utils_func (void)
 
 	g_timer_destroy (timer);
 	g_object_unref (state);
+	g_assert (state == NULL);
 
 	/* test GPGME functionality */
 	filename = zif_test_get_data_file ("signed-metadata/repomd.xml");
@@ -4403,8 +4442,6 @@ zif_utils_func (void)
 	g_assert_cmpint (str->len, ==, strlen (str->str));
 
 	g_string_free (str, TRUE);
-
-	zif_check_singletons ();
 }
 
 static void
@@ -4429,6 +4466,7 @@ zif_history_func (void)
 
 	/* set this up as dummy */
 	config = zif_config_new ();
+	g_object_add_weak_pointer (G_OBJECT (config), (gpointer *) &config);
 	filename = zif_test_get_data_file ("zif.conf");
 	filename_db = g_build_filename (zif_tmpdir, "history.db", NULL);
 	zif_config_set_filename (config, filename, NULL);
@@ -4440,6 +4478,7 @@ zif_history_func (void)
 
 	/* create a new file */
 	history = zif_history_new ();
+	g_object_add_weak_pointer (G_OBJECT (history), (gpointer *) &history);
 
 	/* add an entry */
 	timestamp = g_get_real_time ();
@@ -4539,6 +4578,7 @@ zif_history_func (void)
 
 	/* create a dummy database */
 	db = zif_db_new ();
+	g_object_add_weak_pointer (G_OBJECT (db), (gpointer *) &db);
 	ret = zif_db_set_root (db, "../data/tests/yumdb", &error);
 	g_assert_no_error (error);
 	g_assert (ret);
@@ -4562,9 +4602,12 @@ zif_history_func (void)
 	g_object_unref (package1);
 	g_object_unref (package2);
 	g_object_unref (package3);
-	g_object_unref (config);
 	g_object_unref (history);
+	g_assert (history == NULL);
 	g_object_unref (db);
+	g_assert (db == NULL);
+	g_object_unref (config);
+	g_assert (config == NULL);
 }
 
 static gboolean
