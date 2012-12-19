@@ -1,4 +1,6 @@
 EXTRA_DIST =							\
+	downgrade.manifest					\
+	downgrade-with-dep.manifest				\
 	get-updates.manifest					\
 	get-updates-with-obsolete.manifest			\
 	get-updates-with-obsolete-multiarch.manifest		\
@@ -34,9 +36,13 @@ EXTRA_DIST =							\
 	install-with-remote-dep-with-remote-dep.manifest	\
 	install-with-update.manifest				\
 	install-with-virtual-dep.manifest			\
+	parsing-whitespace.manifest				\
+	remove-auto-deps-after-update.manifest			\
+	remove-auto-deps.manifest				\
 	remove.manifest						\
 	remove-with-dep-half-provided.manifest			\
 	remove-with-dep.manifest				\
+	remove-with-dep-multiple-versions.manifest		\
 	remove-with-dep-reverse.manifest			\
 	remove-with-dep-with-dep.manifest			\
 	remove-with-file-dep.manifest				\
@@ -47,6 +53,8 @@ EXTRA_DIST =							\
 	update-causing-update.manifest				\
 	update-empty-repos.manifest				\
 	update-installed-where-dep-is-removed.manifest		\
+	update-kernel-multiple-versions.manifest		\
+	update-kernel-multiple-versions-remove.manifest		\
 	update-kernel-not-debug.manifest			\
 	update.manifest						\
 	update-multiarch.manifest				\
