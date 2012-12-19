@@ -1,0 +1,100 @@
+# Install a package that drags in two deps, install another package
+# that also requires the fist dep, and then remove the first package --
+# the shared dep should not be removed, nor the second package
+
+config
+	archinfo=i386
+	clean_requirements_on_remove=1
+	history_db=/tmp/history.db
+
+local
+
+remote
+	vlc;0:0.1.0-1;i386;meta
+		Requires
+			libcaca
+			libvlc
+	mplayer;0:0.1.0-1;i386;meta
+		Requires
+			libcaca
+			libmplayer
+	libcaca;0:0.1.0-1;i386;meta
+		Requires
+			libmatroska
+	libmatroska;0:0.1.0-1;i386;meta
+	libvlc;0:0.1.0-1;i386;meta
+	libmplayer;0:0.1.0-1;i386;meta
+
+transaction
+	install
+		vlc
+
+result
+	vlc;0:0.1.0-1;i386;meta
+	libcaca;0:0.1.0-1;i386;meta
+	libmatroska;0:0.1.0-1;i386;meta
+	libvlc;0:0.1.0-1;i386;meta
+
+# ----------------------------------------------------------------------
+flush
+# ----------------------------------------------------------------------
+
+local
+	vlc;0:0.1.0-1;i386;meta
+		Requires
+			libcaca
+			libvlc
+	libcaca;0:0.1.0-1;i386;meta
+		Requires
+			libmatroska
+	libmatroska;0:0.1.0-1;i386;meta
+	libvlc;0:0.1.0-1;i386;meta
+
+remote
+	mplayer;0:0.1.0-1;i386;meta
+		Requires
+			libcaca
+			libmplayer
+	libmplayer;0:0.1.0-1;i386;meta
+
+transaction
+	install
+		mplayer
+
+result
+	vlc;0:0.1.0-1;i386;meta
+	libcaca;0:0.1.0-1;i386;meta
+	libmatroska;0:0.1.0-1;i386;meta
+	libvlc;0:0.1.0-1;i386;meta
+	mplayer;0:0.1.0-1;i386;meta
+	libmplayer;0:0.1.0-1;i386;meta
+
+# ----------------------------------------------------------------------
+flush
+# ----------------------------------------------------------------------
+
+local
+	vlc;0:0.1.0-1;i386;meta
+		Requires
+			libcaca
+			libvlc
+	mplayer;0:0.1.0-1;i386;meta
+		Requires
+			libcaca
+			libmplayer
+	libcaca;0:0.1.0-1;i386;meta
+		Requires
+			libmatroska
+	libmatroska;0:0.1.0-1;i386;meta
+	libvlc;0:0.1.0-1;i386;meta
+	libmplayer;0:0.1.0-1;i386;meta
+
+transaction
+	remove
+		vlc
+
+result
+	mplayer;0:0.1.0-1;i386;meta
+	libcaca;0:0.1.0-1;i386;meta
+	libmatroska;0:0.1.0-1;i386;meta
+	libmplayer;0:0.1.0-1;i386;meta

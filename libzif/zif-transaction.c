@@ -3671,6 +3671,7 @@ out:
  **/
 static gboolean
 _zif_store_can_auto_remove (ZifStore *store,
+			    ZifPackage *package_user_action,
 			    ZifPackage *package,
 			    gboolean *auto_remove,
 			    ZifState *state,
@@ -3703,6 +3704,13 @@ _zif_store_can_auto_remove (ZifStore *store,
 		ret = FALSE;
 		goto out;
 	}
+	for (i = 0; i < provides->len; i++) {
+		ZifDepend *depend;
+		depend = g_ptr_array_index (provides, i);
+		g_debug ("autoremove: %s provides %s",
+			 zif_package_get_printable (package),
+			 zif_depend_get_description (depend));
+	}
 
 	/* this section done */
 	ret = zif_state_done (state, error);
@@ -3718,6 +3726,28 @@ _zif_store_can_auto_remove (ZifStore *store,
 	if (packages_req == NULL) {
 		ret = FALSE;
 		goto out;
+	}
+
+	/* of course the package the user tried to remove requires this,
+	 * else it wouldn't be installed in the first place as a dep */
+	for (i = 0; i < packages_req->len;) {
+		package_tmp = g_ptr_array_index (packages_req, i);
+		if (zif_package_compare (package_tmp, package_user_action) == 0) {
+			g_ptr_array_remove_index (packages_req, i);
+			continue;
+		}
+		if (zif_package_compare (package_tmp, package) == 0) {
+			g_ptr_array_remove_index (packages_req, i);
+			continue;
+		}
+		i++;
+	}
+	for (i = 0; i < packages_req->len; i++) {
+		package_tmp = g_ptr_array_index (packages_req, i);
+		g_debug ("autoremove: other package %s requires one of "
+			 "the provides from %s",
+			 zif_package_get_printable (package_tmp),
+			 zif_package_get_printable (package));
 	}
 
 	/* shortcut */
@@ -3750,11 +3780,19 @@ _zif_store_can_auto_remove (ZifStore *store,
 	if (!ret)
 		goto out;
 
-	for (i = 0; i < packages_provides->len; i++) {
+	/* remove the package that provides itself */
+	for (i = 0; i < packages_provides->len;) {
 		package_tmp = g_ptr_array_index (packages_provides, i);
-		if (zif_package_compare (package_tmp, package) == 0)
+		if (zif_package_compare (package_tmp, package) == 0) {
+			g_ptr_array_remove_index (packages_provides, i);
 			continue;
-		g_debug ("%s provides the dep, so okay to remove",
+		}
+		i++;
+	}
+	if (packages_provides->len != 0) {
+		package_tmp = g_ptr_array_index (packages_provides, i);
+		g_debug ("autoremove: an alternate package %s provides "
+			 "the dep, so okay to remove",
 			 zif_package_get_printable (package_tmp));
 		*auto_remove = TRUE;
 	}
@@ -3775,11 +3813,12 @@ out:
  **/
 static gboolean
 zif_transaction_auto_remove_pkg (ZifTransaction *transaction,
-				 ZifPackage *package,
+				 ZifPackage *package_user_action,
+				 ZifPackage *package_related,
 				 ZifState *state,
 				 GError **error)
 {
-	gboolean auto_remove;
+	gboolean auto_remove = FALSE;
 	gboolean ret = TRUE;
 	GError *error_local = NULL;
 	GPtrArray *related_packages = NULL;
@@ -3800,14 +3839,14 @@ zif_transaction_auto_remove_pkg (ZifTransaction *transaction,
 	/* convert a ZifPackage into a ZifPackageLocal */
 	state_local = zif_state_get_child (state);
 	package_local = zif_store_resolve_package (priv->store_local,
-						   package,
+						   package_related,
 						   ZIF_STORE_RESOLVE_FLAG_USE_NAME_ARCH,
 						   state_local,
 						   &error_local);
 	if (package_local == NULL) {
 		/* not fatal to the transaction */
 		g_debug ("failed to find %s that was installed package: %s",
-			 zif_package_get_printable (package),
+			 zif_package_get_printable (package_related),
 			 error_local->message);
 		g_error_free (error_local);
 		ret = zif_state_finished (state, error);
@@ -3822,6 +3861,7 @@ zif_transaction_auto_remove_pkg (ZifTransaction *transaction,
 	/* can we autoremove this package? */
 	state_local = zif_state_get_child (state);
 	ret = _zif_store_can_auto_remove (priv->store_local,
+					  package_user_action,
 					  package_local,
 					  &auto_remove,
 					  state_local,
@@ -3846,7 +3886,7 @@ zif_transaction_auto_remove_pkg (ZifTransaction *transaction,
 			 zif_package_get_printable (package_local));
 		related_packages = zif_object_array_new ();
 		zif_object_array_add (related_packages,
-				      package);
+				      package_user_action);
 
 		/* pass in the ZifPackageLocal, not the bare ZifPackage */
 		ret = zif_transaction_add_remove_internal (transaction,
@@ -4002,10 +4042,11 @@ zif_transaction_auto_remove_user_pkg (ZifTransaction *transaction,
 		}
 
 		/* check if we can autoremove this */
-		g_debug ("check %s for deps",
+		g_debug ("check %s for autoremove",
 			 zif_package_get_printable (package_tmp));
 		state_local = zif_state_get_child (state);
 		ret = zif_transaction_auto_remove_pkg (transaction,
+						       package,
 						       package_tmp,
 						       state_local,
 						       error);

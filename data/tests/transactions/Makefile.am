@@ -37,6 +37,7 @@ EXTRA_DIST =							\
 	install-with-update.manifest				\
 	install-with-virtual-dep.manifest			\
 	parsing-whitespace.manifest				\
+	remove-auto-deps-after-install.manifest			\
 	remove-auto-deps-after-update.manifest			\
 	remove-auto-deps.manifest				\
 	remove.manifest						\
