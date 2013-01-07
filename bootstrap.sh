@@ -10,6 +10,7 @@ sudo yum install -y			\
 	libarchive-devel		\
 	libsoup-devel			\
 	libtool				\
+	libattr-devel			\
 	rpm-devel			\
 	sqlite-devel			\
 	xz-devel			\
