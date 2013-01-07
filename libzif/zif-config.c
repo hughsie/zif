@@ -950,6 +950,14 @@ zif_config_init (ZifConfig *config)
 	    g_strcmp0 (value, "i586") == 0 ||
 	    g_strcmp0 (value, "i686") == 0)
 		value = "i386";
+	if (g_strcmp0 (value, "armv7l") == 0 ||
+	    g_strcmp0 (value, "armv6l") == 0 ||
+	    g_strcmp0 (value, "armv5tejl") == 0 ||
+	    g_strcmp0 (value, "armv5tel") == 0)
+		value = "arm";
+	if (g_strcmp0 (value, "armv7hnl") == 0 ||
+	    g_strcmp0 (value, "armv7hl") == 0)
+		value = "armhfp";
 	zif_config_set_default (config, "basearch", value);
 }
 
