@@ -543,7 +543,7 @@ out:
  *
  * Gets the list of architectures that packages are native on for this machine.
  *
- * Return value: (transfer none): An a rray of strings, do not free, e.g. [ "i386", "i486", "noarch" ]
+ * Return value: (transfer none): An array of strings, e.g. [ "i386", "i486", "noarch" ]
  *
  * Since: 0.1.0
  **/
