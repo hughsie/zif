@@ -1,3 +1,32 @@
+Version 0.2.10
+~~~~~~~~~~~~~~
+Released: 2013-01-08
+
+New Features:
+ - Add a new logo for Zif (Ryan Lerch)
+ - Add zif_state_check() as a lightweight way of checking for cancellation (Richard Hughes)
+ - Add zif_transaction_get_update() for pre-resolve checks (Richard Hughes)
+
+Bugfixes:
+ - Do not crash if a package does not have a URL set (Richard Hughes)
+ - Do not rely on g_slice_new() being zeroed (Richard Hughes)
+ - Do not return primary metadata when the ZifStore is not enabled (Richard Hughes)
+ - Don't allow a store to be added to a ZifStoreArray more than once (Richard Hughes)
+ - Don't reset the parent state when getting package requires (Richard Hughes)
+ - Don't use the deprecated sysconfig files that have been removed in F18 (Richard Hughes)
+ - Ensure all errors are reported in the zif command line tool (Richard Hughes)
+ - Filter the *-release packages before finding 'releasever_pkg' (Richard Hughes)
+ - Fix a small memory leak when calling zif_history_get_reason() (Richard Hughes)
+ - Fix a small memory leak when calling zif_history_get_transactions_for_package() (Richard Hughes)
+ - Fix a small memory leak when resolving from a ZifMdPrimaryXml when searching for noarch (Richard Hughes)
+ - If the ZifStore gets disabled don't keep trying to use it in ZifStoreArray (Richard Hughes)
+ - Ignore any fractional part of the timestamp when parsing repomd.xml (Richard Hughes)
+ - Only read the metadata files from disk if we need to check the contents (Richard Hughes)
+ - Own the string value if zif_string_new_value() is used (Richard Hughes)
+ - Set the correct basearch for ARM processors (Richard Hughes)
+ - Store the file checksum in the xattr to speed up checking metadata at startup (Richard Hughes)
+ - Turn off header validation when loading the rpmdb (Richard Hughes)
+
 Version 0.2.9
 ~~~~~~~~~~~~~
 Released: 2012-04-11
