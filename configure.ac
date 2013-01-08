@@ -164,6 +164,12 @@ AC_CHECK_HEADERS("rpm/rpmprob.h",
 if test "x$HAVE_RPMPROB_H" = "xyes"; then
 	AC_DEFINE(HAVE_RPMPROB_H,1,[have rpmprob.h])
 fi
+AX_CHECK_ENUM([rpm/rpmcallback.h], [RPMCALLBACK_INST_STOP],
+		HAVE_RPM_NEW_CALLBACKS="yes",
+		HAVE_RPM_NEW_CALLBACKS="no")
+if test "x$HAVE_RPM_NEW_CALLBACKS" = "xyes"; then
+	AC_DEFINE(HAVE_RPM_NEW_CALLBACKS,1,[have new rpm callbacks])
+fi
 
 dnl ---------------------------------------------------------------------------
 dnl - libarchive

@@ -5035,6 +5035,7 @@ zif_transaction_rpmcb_type_to_string (const rpmCallbackType what)
 	case RPMCALLBACK_SCRIPT_ERROR:
 		type = "script-error";
 		break;
+#ifdef HAVE_RPM_NEW_CALLBACKS
 	case RPMCALLBACK_SCRIPT_START:
 		type = "script-start";
 		break;
@@ -5044,6 +5045,7 @@ zif_transaction_rpmcb_type_to_string (const rpmCallbackType what)
 	case RPMCALLBACK_INST_STOP:
 		type = "install-stop";
 		break;
+#endif
 	}
 	return type;
 }
@@ -5244,7 +5246,9 @@ zif_transaction_ts_progress_cb (const void *arg,
 		g_debug ("transaction stop");
 		break;
 
+#ifdef HAVE_RPM_NEW_CALLBACKS
 	case RPMCALLBACK_INST_STOP:
+#endif
 	case RPMCALLBACK_UNINST_STOP:
 
 		/* phase complete */
@@ -5259,8 +5263,10 @@ zif_transaction_ts_progress_cb (const void *arg,
 	case RPMCALLBACK_UNPACK_ERROR:
 	case RPMCALLBACK_CPIO_ERROR:
 	case RPMCALLBACK_SCRIPT_ERROR:
+#ifdef HAVE_RPM_NEW_CALLBACKS
 	case RPMCALLBACK_SCRIPT_START:
 	case RPMCALLBACK_SCRIPT_STOP:
+#endif
 	case RPMCALLBACK_UNKNOWN:
 	case RPMCALLBACK_REPACKAGE_PROGRESS:
 	case RPMCALLBACK_REPACKAGE_START:
