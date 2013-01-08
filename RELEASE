@@ -2,12 +2,12 @@ zif Release Notes
 
 1. Write NEWS entries for zif in the same format as usual.
 
-git shortlog zif_0_2_9.. | grep -i -v trivial | grep -v Merge > NEWS.new
+git shortlog zif_0_2_10.. | grep -i -v trivial | grep -v Merge > NEWS.new
 
 --------------------------------------------------------------------------------
-Version 0.2.10
+Version 0.2.11
 ~~~~~~~~~~~~~~
-Released: 2012-xx-xx
+Released: 2013-xx-xx
 
 Notes:
 
@@ -20,8 +20,8 @@ Bugfixes:
 
 4. Commit changes in zif git:
 
-git commit -a -m "Release version 0.2.10"
-git tag -s -f -m "Release 0.2.10" zif_0_2_10
+git commit -a -m "Release version 0.2.11"
+git tag -s -f -m "Release 0.2.11" zif_0_2_11
 <gpg password>
 git push --tags
 git push
