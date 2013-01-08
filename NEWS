@@ -1,3 +1,18 @@
+Version 0.3.5
+~~~~~~~~~~~~~
+Released: 2013-01-08
+
+New Features:
+ - Add a new logo for Zif (Ryan Lerch)
+
+Bugfixes:
+ - Don't fail 'zif refresh-cache' if a repo is unavailable (Richard Hughes)
+ - Ensure all the manifest files get included in the tarball (Richard Hughes)
+ - Fix compilation with old versions of rpm (Richard Hughes)
+ - Fix 'zif remove-with-deps' to not remove user-action packages (Richard Hughes)
+ - Set the correct basearch for ARM processors (Richard Hughes)
+ - Use g_object_add_weak_pointer() to check for refcounting bugs (Richard Hughes)
+
 Version 0.3.4
 ~~~~~~~~~~~~~
 Released: 2012-11-25
