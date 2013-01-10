@@ -1,4 +1,5 @@
 sudo yum install -y			\
+	make				\
 	bzip2-devel			\
 	docbook-utils			\
 	gettext				\
