@@ -265,7 +265,7 @@ zif_release_load (ZifRelease *release, ZifState *state, GError **error)
 	}
 
 	/* find our release version in each one */
-	for (i=0; groups[i] != NULL; i++) {
+	for (i = 0; groups[i] != NULL; i++) {
 		upgrade = zif_upgrade_new ();
 		g_debug ("adding %s", groups[i]);
 		zif_upgrade_set_id (upgrade, groups[i]);
@@ -1126,7 +1126,7 @@ zif_release_get_keyfile_value (const gchar *filename,
 	/* look for key */
 	len = strlen (key);
 	lines = g_strsplit (data, "\n", -1);
-	for (i=0; lines[i] != NULL; i++) {
+	for (i = 0; lines[i] != NULL; i++) {
 		if (g_str_has_prefix (lines[i], key)) {
 			value = g_strdup (lines[i]+len+2);
 			g_strdelimit (value, "\"", '\0');
@@ -1591,7 +1591,7 @@ zif_release_get_mtab_entry (const gchar *mount_point, GError **error)
 
 	/* find the mountpoint, and get the device name */
 	lines = g_strsplit (data, "\n", -1);
-	for (i=0; lines[i] != NULL && device == NULL; i++) {
+	for (i = 0; lines[i] != NULL && device == NULL; i++) {
 		if (lines[i][0] == '\0')
 			continue;
 		split = g_strsplit (lines[i], " ", -1);

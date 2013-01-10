@@ -107,7 +107,7 @@ zif_legal_load (ZifLegal *legal, GError **error)
 
 	/* add licenses */
 	lines = g_strsplit (data, "\n", -1);
-	for (i=0; lines[i] != NULL; i++)
+	for (i = 0; lines[i] != NULL; i++)
 		g_hash_table_insert (legal->priv->hash, g_strdup (lines[i]), GINT_TO_POINTER(1));
 
 	/* how many licenses? */
@@ -170,7 +170,7 @@ zif_legal_is_free (ZifLegal *legal, const gchar *string, gboolean *is_free, GErr
 
 	/* split AND */
 	groups = g_strsplit (string, " and ", -1);
-	for (i=0; groups[i] != NULL; i++) {
+	for (i = 0; groups[i] != NULL; i++) {
 		/* remove grouping */
 		g_strdelimit (groups[i], "()", ' ');
 
@@ -178,7 +178,7 @@ zif_legal_is_free (ZifLegal *legal, const gchar *string, gboolean *is_free, GErr
 		licenses = g_strsplit (groups[i], " or ", 0);
 
 		group_is_free = FALSE;
-		for (j=0; licenses[j] != NULL; j++) {
+		for (j = 0; licenses[j] != NULL; j++) {
 
 			/* remove 'and later' */
 			g_strdelimit (licenses[j], "+", ' ');

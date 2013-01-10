@@ -258,7 +258,7 @@ zif_md_primary_sql_get_statement_for_pred (const gchar *pred,
 	/* use stripped arch? */
 	if (g_strstr_len (pred, -1, "$NOARCH") != NULL) {
 		search_noarch = g_strdupv (search);
-		for (i=0; search[i] != NULL; i++) {
+		for (i = 0; search[i] != NULL; i++) {
 			tmp = strrchr (search_noarch[i], '.');
 			if (tmp != NULL)
 				*tmp = '\0';
@@ -279,7 +279,7 @@ zif_md_primary_sql_get_statement_for_pred (const gchar *pred,
 
 	/* search with predicate */
 	statement = g_string_new ("BEGIN;\n");
-	for (i=0; search[i] != NULL; i++) {
+	for (i = 0; search[i] != NULL; i++) {
 		if (i % max_items == 0)
 			g_string_append (statement, ZIF_MD_PRIMARY_SQL_HEADER " WHERE ");
 		temp = g_string_new (pred_glob->str);
@@ -648,12 +648,12 @@ zif_md_primary_sql_what_depends (ZifMd *md, const gchar *table_name, GPtrArray *
 	statement = g_string_new ("");
 	g_string_append (statement, "BEGIN;\n");
 
-	for (j=0; j<depends->len; j+= ZIF_MD_PRIMARY_SQL_MAX_EXPRESSION_DEPTH) {
+	for (j = 0; j < depends->len; j+= ZIF_MD_PRIMARY_SQL_MAX_EXPRESSION_DEPTH) {
 		g_string_append_printf (statement, ZIF_MD_PRIMARY_SQL_HEADER ", %s depend WHERE "
 					"p.pkgKey = depend.pkgKey AND (",
 					table_name);
 
-		for (i=j; i<depends->len && (i-j)<ZIF_MD_PRIMARY_SQL_MAX_EXPRESSION_DEPTH; i++) {
+		for (i=j; i < depends->len && (i-j)<ZIF_MD_PRIMARY_SQL_MAX_EXPRESSION_DEPTH; i++) {
 			depend_tmp = g_ptr_array_index (depends, i);
 			g_string_append_printf (statement, "depend.name = '%s' OR ",
 						zif_depend_get_name (depend_tmp));
@@ -665,10 +665,10 @@ zif_md_primary_sql_what_depends (ZifMd *md, const gchar *table_name, GPtrArray *
 
 	/* a package always provides itself, even without an explicit provide */
 	if (g_strcmp0 (table_name, "provides") == 0) {
-		for (j=0; j<depends->len; j+= ZIF_MD_PRIMARY_SQL_MAX_EXPRESSION_DEPTH) {
+		for (j = 0; j < depends->len; j+= ZIF_MD_PRIMARY_SQL_MAX_EXPRESSION_DEPTH) {
 			g_string_append (statement, ZIF_MD_PRIMARY_SQL_HEADER " WHERE ");
 
-			for (i=j; i<depends->len && (i-j)<ZIF_MD_PRIMARY_SQL_MAX_EXPRESSION_DEPTH; i++) {
+			for (i=j; i < depends->len && (i-j)<ZIF_MD_PRIMARY_SQL_MAX_EXPRESSION_DEPTH; i++) {
 				depend_tmp = g_ptr_array_index (depends, i);
 				g_string_append_printf (statement, "p.name = '%s' OR ",
 							zif_depend_get_name (depend_tmp));

@@ -397,7 +397,7 @@ zif_store_array_repos_search (GPtrArray *store_array,
 			goto out;
 		}
 
-		for (j=0; j<part->len; j++) {
+		for (j = 0; j < part->len; j++) {
 			package = g_ptr_array_index (part, j);
 			g_ptr_array_add (array, g_object_ref (package));
 		}
@@ -820,7 +820,7 @@ zif_store_array_search_category (GPtrArray *store_array, gchar **group_id,
 	for (i = 0; i < array->len; i++) {
 		package = g_ptr_array_index (array, i);
 		package_id = zif_package_get_id (package);
-		for (j=0; j<array->len; j++) {
+		for (j = 0; j < array->len; j++) {
 			if (i == j)
 				continue;
 			package = g_ptr_array_index (array, j);
@@ -1045,7 +1045,7 @@ zif_store_array_get_categories (GPtrArray *store_array,
 			      "parent-id", &parent_id,
 			      "cat-id", &cat_id,
 			      NULL);
-		for (j=0; j<array->len; j++) {
+		for (j = 0; j < array->len; j++) {
 			if (i == j)
 				continue;
 			obj_tmp = g_ptr_array_index (array, j);
@@ -1174,7 +1174,7 @@ zif_store_array_get_updates (GPtrArray *store_array,
 		package = ZIF_PACKAGE (g_ptr_array_index (array_installed, i));
 
 		/* find updates */
-		for (j=0; j<updates->len; j++) {
+		for (j = 0; j < updates->len; j++) {
 			update = ZIF_PACKAGE (g_ptr_array_index (updates, j));
 
 			/* newer? */
@@ -1229,7 +1229,7 @@ zif_store_array_get_updates (GPtrArray *store_array,
 							  error);
 	if (array_obsoletes == NULL)
 		goto out;
-	for (j=0; j<array_obsoletes->len; j++) {
+	for (j = 0; j < array_obsoletes->len; j++) {
 		update = ZIF_PACKAGE (g_ptr_array_index (array_obsoletes, j));
 		g_debug ("*** obsolete %s",
 			 zif_package_get_printable (update));

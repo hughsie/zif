@@ -133,7 +133,7 @@ zif_md_filelists_xml_parser_start_element (GMarkupParseContext *context,
 				zif_package_set_compare_mode (filelists_xml->priv->package_temp,
 							      filelists_xml->priv->compare_mode);
 				filelists_xml->priv->array_temp = g_ptr_array_new_with_free_func (g_free);
-				for (i=0; attribute_names[i] != NULL; i++) {
+				for (i = 0; attribute_names[i] != NULL; i++) {
 					if (g_strcmp0 (attribute_names[i], "pkgid") == 0) {
 						tmp = zif_string_new (attribute_values[i]);
 						zif_package_set_pkgid (filelists_xml->priv->package_temp,
@@ -520,7 +520,7 @@ zif_md_filelists_xml_search_file (ZifMd *md, gchar **search,
 		files = zif_package_get_files (package, state_loop, NULL);
 		for (k=0; k<files->len; k++) {
 			filename = g_ptr_array_index (files, k);
-			for (j=0; search[j] != NULL; j++) {
+			for (j = 0; search[j] != NULL; j++) {
 				if (g_strcmp0 (filename, search[j]) == 0) {
 					g_ptr_array_add (array, g_strdup (pkgid));
 					break;

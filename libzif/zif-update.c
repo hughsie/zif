@@ -517,7 +517,7 @@ zif_update_add_changeset (ZifUpdate *update, ZifChangeset *changeset)
 
 	/* check this changeset hasn't already been added */
 	date = zif_changeset_get_date (changeset);
-	for (i=0; i < update->priv->changelog->len; i++) {
+	for (i = 0; i < update->priv->changelog->len; i++) {
 		changeset_tmp = g_ptr_array_index (update->priv->changelog, i);
 		date_tmp = zif_changeset_get_date (changeset_tmp);
 		if (date == date_tmp) {

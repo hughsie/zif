@@ -249,7 +249,7 @@ zif_store_remote_parser_start_element (GMarkupParseContext *context, const gchar
 		store->priv->parser_type = ZIF_MD_KIND_UNKNOWN;
 
 		/* find type */
-		for (i=0; attribute_names[i] != NULL; i++) {
+		for (i = 0; attribute_names[i] != NULL; i++) {
 			if (g_strcmp0 (attribute_names[i], "type") == 0) {
 				if (g_strcmp0 (attribute_values[i], "primary") == 0)
 					store->priv->parser_type = ZIF_MD_KIND_PRIMARY_XML;
@@ -279,7 +279,7 @@ zif_store_remote_parser_start_element (GMarkupParseContext *context, const gchar
 					g_string_append_printf (string, "unhandled data type '%s', expecting ", attribute_values[i]);
 
 					/* list all the types we support */
-					for (j=1; j<ZIF_MD_KIND_LAST; j++)
+					for (j=1; j < ZIF_MD_KIND_LAST; j++)
 						g_string_append_printf (string, "%s, ", zif_md_kind_to_text (j));
 
 					/* remove triling comma and space */
@@ -307,7 +307,7 @@ zif_store_remote_parser_start_element (GMarkupParseContext *context, const gchar
 
 	/* location */
 	if (g_strcmp0 (element_name, "location") == 0) {
-		for (i=0; attribute_names[i] != NULL; i++) {
+		for (i = 0; attribute_names[i] != NULL; i++) {
 			if (g_strcmp0 (attribute_names[i], "href") == 0) {
 				zif_md_set_location (md, attribute_values[i]);
 				continue;
@@ -330,7 +330,7 @@ zif_store_remote_parser_start_element (GMarkupParseContext *context, const gchar
 
 	/* checksum */
 	if (g_strcmp0 (element_name, "checksum") == 0) {
-		for (i=0; attribute_names[i] != NULL; i++) {
+		for (i = 0; attribute_names[i] != NULL; i++) {
 			if (g_strcmp0 (attribute_names[i], "type") == 0) {
 				zif_md_set_checksum_type (md, zif_store_remote_checksum_type_from_text (attribute_values[i]));
 				break;
@@ -1153,7 +1153,7 @@ zif_store_remote_parse_repomd (ZifStoreRemote *store,
 	max_age = zif_config_get_uint (store->priv->config, "metadata_expire", NULL);
 
 	/* set MD id and filename for each repo type */
-	for (i=1; i<ZIF_MD_KIND_LAST; i++) {
+	for (i=1; i < ZIF_MD_KIND_LAST; i++) {
 		md = zif_store_remote_get_md_from_type (store, i);
 		if (md == NULL)
 			continue;
@@ -1231,7 +1231,7 @@ zif_store_remote_get_repomd (ZifStoreRemote *store,
 
 	/* always add the baseurl as a location if it is set */
 	if (store->priv->baseurl != NULL) {
-		for (i=0; priv->baseurl[i] != NULL; i++) {
+		for (i = 0; priv->baseurl[i] != NULL; i++) {
 			zif_download_location_add_uri (priv->download,
 						       priv->baseurl[i],
 						       NULL);
@@ -2206,7 +2206,7 @@ zif_store_remote_load (ZifStore *store, ZifState *state, GError **error)
 			goto out;
 		}
 		remote->priv->baseurl = g_strsplit (baseurl_temp, ";", -1);
-		for (i=0; remote->priv->baseurl[i] != NULL; i++) {
+		for (i = 0; remote->priv->baseurl[i] != NULL; i++) {
 			zif_download_location_add_uri (remote->priv->download,
 						       remote->priv->baseurl[i],
 						       NULL);
@@ -2506,7 +2506,7 @@ zif_store_remote_clean (ZifStore *store, ZifState *state, GError **error)
 	/* set MD id and filename for each repo type */
 	state_local = zif_state_get_child (state);
 	zif_state_set_number_steps (state_local, ZIF_MD_KIND_LAST - 1);
-	for (i=1; i<ZIF_MD_KIND_LAST; i++) {
+	for (i=1; i < ZIF_MD_KIND_LAST; i++) {
 		md = zif_store_remote_get_md_from_type (remote, i);
 		if (md == NULL) {
 			/* TODO: until we've created ZifMdComps and ZifMdOther we'll get warnings here */
@@ -2618,7 +2618,7 @@ zif_store_remote_set_id (ZifStoreRemote *store, const gchar *id)
 	store->priv->id = g_strdup (id);
 
 	/* set MD id for each repo type */
-	for (i=1; i<ZIF_MD_KIND_LAST; i++) {
+	for (i=1; i < ZIF_MD_KIND_LAST; i++) {
 		md = zif_store_remote_get_md_from_type (store, i);
 		if (md == NULL)
 			continue;
@@ -3315,7 +3315,7 @@ zif_store_remote_search_group (ZifStore *store, gchar **search, ZifState *state,
 
 	/* convert from pointer array to (gchar **) */
 	search_cats = g_new0 (gchar *, array_tmp->len + 1);
-	for (i=0; i < array_tmp->len; i++)
+	for (i = 0; i < array_tmp->len; i++)
 		search_cats[i] = g_strdup (g_ptr_array_index (array_tmp, i));
 
 	/* now search by category */
@@ -3626,7 +3626,7 @@ zif_store_remote_get_categories (ZifStore *store, ZifState *state, GError **erro
 			g_ptr_array_add (array, g_object_ref (category));
 
 			/* second, add the groups belonging to this parent */
-			for (j=0; j<array_groups->len; j++) {
+			for (j = 0; j < array_groups->len; j++) {
 				group = g_ptr_array_index (array_groups, j);
 				category_tmp = g_object_ref (group);
 				g_ptr_array_add (array, category_tmp);
@@ -4573,7 +4573,7 @@ zif_store_remote_init (ZifStoreRemote *store)
 	}
 
 	/* set set parent reference on each repo */
-	for (i=1; i<ZIF_MD_KIND_LAST; i++) {
+	for (i=1; i < ZIF_MD_KIND_LAST; i++) {
 		md = zif_store_remote_get_md_from_type (store, i);
 		if (md != NULL)
 			zif_md_set_store (md, ZIF_STORE (store));

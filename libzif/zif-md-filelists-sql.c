@@ -139,7 +139,7 @@ zif_md_filelists_sql_sqlite_get_pkgkey_cb (void *data, gint argc, gchar **argv, 
 	ZifMdFilelistsSqlData *fldata = (ZifMdFilelistsSqlData *) data;
 
 	/* get pointers to the arguments */
-	for (i=0;i<argc;i++) {
+	for (i = 0; i < argc; i++) {
 		if (g_strcmp0 (col_name[i], "pkgKey") == 0)
 			id_r = &argv[i];
 		else if (g_strcmp0 (col_name[i], "filenames") == 0)
@@ -154,7 +154,7 @@ zif_md_filelists_sql_sqlite_get_pkgkey_cb (void *data, gint argc, gchar **argv, 
 
 	/* split the filenames */
 	filenames = g_strsplit (*filenames_r, "/", -1);
-	for (i=0; filenames[i] != NULL ;i++) {
+	for (i = 0; filenames[i] != NULL ; i++) {
 		/* do we match */
 		if (g_strcmp0 (fldata->filename, filenames[i]) == 0) {
 			g_debug ("found %s for %s", filenames[i], *id_r);
@@ -179,7 +179,7 @@ zif_md_filelists_sql_sqlite_get_files_cb (void *data, gint argc, gchar **argv, g
 	GPtrArray **array = (GPtrArray **) data;
 
 	/* get pointers to the arguments */
-	for (i=0;i<argc;i++) {
+	for (i = 0; i < argc; i++) {
 		if (g_strcmp0 (col_name[i], "filenames") == 0)
 			filename = &argv[i];
 		else if (g_strcmp0 (col_name[i], "dirname") == 0)
@@ -194,7 +194,7 @@ zif_md_filelists_sql_sqlite_get_files_cb (void *data, gint argc, gchar **argv, g
 
 	/* the repomd is encoded with a / to separate files... urgh */
 	split = g_strsplit (*filename, "/", -1);
-	for (i=0; split[i] != NULL; i++) {
+	for (i = 0; split[i] != NULL; i++) {
 		g_ptr_array_add (*array,
 				 g_build_filename (*dirname,
 						   split[i],
@@ -329,7 +329,7 @@ zif_md_filelists_sql_search_file (ZifMd *md, gchar **search,
 	state_local = zif_state_get_child (state);
 	zif_state_set_number_steps (state_local, g_strv_length (search));
 	pkgkey_array = g_ptr_array_new ();
-	for (j=0; search[j] != NULL; j++) {
+	for (j = 0; search[j] != NULL; j++) {
 
 		/* split the search term into directory and filename */
 		dirname = g_path_get_dirname (search[j]);

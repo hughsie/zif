@@ -443,7 +443,7 @@ zif_transaction_get_item_from_array_by_related_package (GPtrArray *array,
 		item = zif_transaction_package_get_item (package_tmp);
 		if (item->related_packages->len == 0)
 			continue;
-		for (j=0; j<item->related_packages->len; j++) {
+		for (j = 0; j < item->related_packages->len; j++) {
 			related_package = g_ptr_array_index (item->related_packages, j);
 			if (g_strcmp0 (zif_package_get_id (related_package), package_id) == 0)
 				return item;
@@ -635,7 +635,7 @@ zif_transaction_check_excludes (ZifTransaction *transaction,
 					NULL);
 	if (excludes == NULL)
 		goto out;
-	for (i=0; excludes[i] != NULL; i++) {
+	for (i = 0; excludes[i] != NULL; i++) {
 		if (g_strcmp0 (excludes[i],
 			       zif_package_get_name (package)) == 0) {
 			ret = FALSE;
@@ -925,7 +925,7 @@ zif_transaction_add_remove_internal (ZifTransaction *transaction,
 						  NULL);
 	if (reason == ZIF_TRANSACTION_REASON_REMOVE_USER_ACTION &&
 	    protected_packages != NULL) {
-		for (i=0; protected_packages[i] != NULL; i++) {
+		for (i = 0; protected_packages[i] != NULL; i++) {
 			if (g_strcmp0 (protected_packages[i],
 				       zif_package_get_name (package)) == 0) {
 				g_set_error (error,
@@ -1582,7 +1582,7 @@ zif_transaction_get_package_requires_from_local (ZifTransaction *transaction,
 		if (item != NULL)
 			continue;
 
-		for (j=0; j<depend_array->len; j++) {
+		for (j = 0; j < depend_array->len; j++) {
 
 			/* get requires */
 			depend = g_ptr_array_index (depend_array, j);
@@ -2058,7 +2058,7 @@ zif_transaction_get_package_onlyn (ZifTransaction *transaction,
 					       NULL);
 	if (installonlypkgs == NULL)
 		goto out;
-	for (i=0; installonlypkgs[i] != NULL; i++) {
+	for (i = 0; installonlypkgs[i] != NULL; i++) {
 		if (g_strcmp0 (zif_package_get_name (package),
 			       installonlypkgs[i]) == 0) {
 			only_n = zif_config_get_uint (transaction->priv->config,
@@ -2433,7 +2433,7 @@ zif_transaction_resolve_remove_require (ZifTransactionResolve *data,
 
 		/* is the thing that provides this compatible? */
 		other_provides = FALSE;
-		for (j=0; j<local_provides->len; j++) {
+		for (j = 0; j < local_provides->len; j++) {
 			package = g_ptr_array_index (local_provides, j);
 			if (zif_package_compare (package, item->package) == 0)
 				continue;
@@ -2509,7 +2509,7 @@ zif_transaction_resolve_remove_require (ZifTransactionResolve *data,
 			continue;
 
 		/* process each depend */
-		for (j=0; j<depend_array_filtered->len; j++) {
+		for (j = 0; j < depend_array_filtered->len; j++) {
 
 			/* is the thing that the package requires provided by something in install
 			 * NOTE: we need to get the actual depend of the package, not the thing passed to us */
@@ -4936,7 +4936,7 @@ zif_transaction_get_item_from_cache_package_nva (GPtrArray *array,
 	ZifPackage *package_tmp;
 	ZifTransactionItem *item;
 
-	for (i = 0; i<array->len; i++) {
+	for (i = 0; i < array->len; i++) {
 		package_tmp = g_ptr_array_index (array, i);
 		item = zif_transaction_package_get_item (package_tmp);
 		package_nva_tmp = zif_package_get_name_version_arch (item->package);

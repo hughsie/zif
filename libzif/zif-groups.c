@@ -195,7 +195,7 @@ zif_groups_load (ZifGroups *groups, ZifState *state, GError **error)
 
 	/* process each line */
 	lines = g_strsplit (data, "\n", 0);
-	for (i=0; lines[i] != NULL; i++) {
+	for (i = 0; lines[i] != NULL; i++) {
 		cols = g_strsplit (lines[i], "=", -1);
 		if (g_strv_length (cols) != 2)
 			goto cont;
@@ -205,7 +205,7 @@ zif_groups_load (ZifGroups *groups, ZifState *state, GError **error)
 
 		/* add entries to cats list and dist */
 		entries = g_strsplit (cols[1], ",", -1);
-		for (j=0; entries[j] != NULL; j++) {
+		for (j = 0; entries[j] != NULL; j++) {
 			g_ptr_array_add (groups->priv->categories, g_strdup (entries[j]));
 			g_hash_table_insert (groups->priv->hash, g_strdup (entries[j]), g_strdup (cols[0]));
 		}
@@ -351,7 +351,7 @@ zif_groups_get_cats_for_group (ZifGroups *groups,
 	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_free);
 
 	/* go through categories and get groups, if they match, then add */
-	for (i=0; i < priv->categories->len; i++) {
+	for (i = 0; i < priv->categories->len; i++) {
 		category = g_ptr_array_index (priv->categories, i);
 
 		/* get cat -> group mapping */

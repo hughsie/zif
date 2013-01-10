@@ -314,7 +314,7 @@ zif_md_other_sql_get_changelog (ZifMd *md, const gchar *pkgid,
 		/* no results */
 		if (array_tmp->len == 0)
 			g_warning ("no changelog for pkgKey %i", pkgkey);
-		for (j=0; j<array_tmp->len; j++) {
+		for (j = 0; j < array_tmp->len; j++) {
 			changeset = g_ptr_array_index (array_tmp, j);
 			g_ptr_array_add (array, g_object_ref (changeset));
 		}

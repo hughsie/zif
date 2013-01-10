@@ -151,7 +151,7 @@ zif_md_updateinfo_parser_start_element (GMarkupParseContext *context, const gcha
 			updateinfo->priv->update_temp = zif_update_new ();
 
 			/* find the update status and type as a bonus */
-			for (i=0; attribute_names[i] != NULL; i++) {
+			for (i = 0; attribute_names[i] != NULL; i++) {
 				if (g_strcmp0 (attribute_names[i], "status") == 0) {
 					zif_update_set_state (updateinfo->priv->update_temp,
 							      zif_update_state_from_string (attribute_values[i]));
@@ -201,7 +201,7 @@ zif_md_updateinfo_parser_start_element (GMarkupParseContext *context, const gcha
 				updateinfo->priv->section_group = ZIF_MD_UPDATEINFO_SECTION_UPDATE_ISSUED;
 
 				/* find the issued date */
-				for (i=0; attribute_names[i] != NULL; i++) {
+				for (i = 0; attribute_names[i] != NULL; i++) {
 					if (g_strcmp0 (attribute_names[i], "date") == 0) {
 						iso8601 = zif_md_updateinfo_fix_iso8601 (attribute_values[i]);
 						zif_update_set_issued (updateinfo->priv->update_temp, iso8601);
@@ -233,7 +233,7 @@ zif_md_updateinfo_parser_start_element (GMarkupParseContext *context, const gcha
 				updateinfo->priv->update_info_temp = zif_update_info_new ();
 
 				/* find the details about the info */
-				for (i=0; attribute_names[i] != NULL; i++) {
+				for (i = 0; attribute_names[i] != NULL; i++) {
 					if (g_strcmp0 (attribute_names[i], "href") == 0) {
 						zif_update_info_set_url (updateinfo->priv->update_info_temp,
 									 attribute_values[i]);
@@ -285,7 +285,7 @@ zif_md_updateinfo_parser_start_element (GMarkupParseContext *context, const gcha
 				updateinfo->priv->package_temp = zif_package_new ();
 
 				/* find the details about the package */
-				for (i=0; attribute_names[i] != NULL; i++) {
+				for (i = 0; attribute_names[i] != NULL; i++) {
 					if (g_strcmp0 (attribute_names[i], "name") == 0)
 						name = attribute_values[i];
 					else if (g_strcmp0 (attribute_names[i], "epoch") == 0)
@@ -678,7 +678,7 @@ zif_md_updateinfo_get_detail_for_package (ZifMdUpdateinfo *md, const gchar *pack
 
 		/* get the list of packages updated by this update */
 		array_tmp = zif_update_get_packages (update);
-		for (j=0; j<array_tmp->len; j++) {
+		for (j = 0; j < array_tmp->len; j++) {
 			package = g_ptr_array_index (array_tmp, j);
 			if (g_strcmp0 (zif_package_get_id (package), package_id) == 0) {
 				ret = TRUE;

@@ -220,7 +220,7 @@ zif_md_comps_parser_start_element (GMarkupParseContext *context, const gchar *el
 
 			/* find the package type as a bonus */
 			comps->priv->section_group_type = ZIF_MD_COMPS_SECTION_GROUP_TYPE_UNKNOWN;
-			for (i=0; attribute_names[i] != NULL; i++) {
+			for (i = 0; attribute_names[i] != NULL; i++) {
 				if (g_strcmp0 (element_name, "type") == 0) {
 					if (g_strcmp0 (attribute_values[i], "default"))
 						comps->priv->section_group_type = ZIF_MD_COMPS_SECTION_GROUP_TYPE_DEFAULT;
@@ -639,7 +639,7 @@ zif_md_comps_get_groups_for_category (ZifMdComps *md, const gchar *category_id,
 		/* category matches */
 		if (g_strcmp0 (category_id, data->id) == 0) {
 			array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
-			for (j=0; j<data->grouplist->len; j++) {
+			for (j = 0; j < data->grouplist->len; j++) {
 				id = g_ptr_array_index (data->grouplist, j);
 				/* find group matching group_id */
 				category = zif_md_comps_get_category_for_group (md, id);
@@ -722,7 +722,7 @@ zif_md_comps_get_packages_for_group (ZifMdComps *md, const gchar *group_id,
 		/* category matches */
 		if (g_strcmp0 (group_id_child, data->id) == 0) {
 			array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_free);
-			for (j=0; j<data->packagelist->len; j++) {
+			for (j = 0; j < data->packagelist->len; j++) {
 				packagename = g_ptr_array_index (data->packagelist, j);
 				g_ptr_array_add (array, g_strdup (packagename));
 			}

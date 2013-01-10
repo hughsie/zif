@@ -155,7 +155,7 @@ zif_get_header_uint32_index (Header header, rpmTag tag, guint length)
 		goto out;
 	array = g_ptr_array_new ();
 	data = rpmtdGetUint32 (td);
-	for (i=0;i<length; i++)
+	for (i = 0; i < length; i++)
 		g_ptr_array_add (array, GUINT_TO_POINTER (*(data+i)));
 out:
 	rpmtdFreeData (td);

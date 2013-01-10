@@ -2783,7 +2783,7 @@ zif_state_func (void)
 	guint i;
 	ZifState *state;
 
-	for (i = 0; i < ZIF_STATE_ACTION_UNKNOWN ;i++)
+	for (i = 0; i < ZIF_STATE_ACTION_UNKNOWN ; i++)
 		g_assert (zif_state_action_to_string (i) != NULL);
 
 	_updates = 0;

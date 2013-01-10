@@ -491,7 +491,7 @@ zif_state_set_speed (ZifState *state, guint64 speed)
 	state->priv->speed_data[0] = speed;
 
 	/* get the average */
-	for (i=0; i < ZIF_STATE_SPEED_SMOOTHING_ITEMS; i++) {
+	for (i = 0; i < ZIF_STATE_SPEED_SMOOTHING_ITEMS; i++) {
 		if (state->priv->speed_data[i] > 0) {
 			sum += state->priv->speed_data[i];
 			sum_cnt++;
@@ -1358,7 +1358,7 @@ zif_state_set_steps_real (ZifState *state, GError **error, const gchar *strloc, 
 
 	/* process the valist */
 	va_start (args, value);
-	for (i=0;; i++) {
+	for (i = 0;; i++) {
 		value_temp = va_arg (args, gint);
 		if (value_temp == -1)
 			break;
@@ -1393,7 +1393,7 @@ zif_state_set_steps_real (ZifState *state, GError **error, const gchar *strloc, 
 	state->priv->step_profile = g_new0 (gdouble, i+2);
 	state->priv->step_data[0] = total;
 	va_start (args, value);
-	for (i=0;; i++) {
+	for (i = 0;; i++) {
 		value_temp = va_arg (args, gint);
 		if (value_temp == -1)
 			break;

@@ -693,7 +693,7 @@ zif_config_set_filename (ZifConfig *config,
 
 	/* copy into GStrv array */
 	config->priv->basearch_list = g_new0 (gchar*, array->len+1);
-	for (i=0; i < array->len; i++) {
+	for (i = 0; i < array->len; i++) {
 		text = g_ptr_array_index (array, i);
 		config->priv->basearch_list[i] = g_strdup (text);
 	}

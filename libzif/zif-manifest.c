@@ -334,7 +334,7 @@ zif_manifest_check_array (GPtrArray *array,
 
 	/* find each package */
 	state = zif_state_new ();
-	for (i=0; i < packages->len; i++) {
+	for (i = 0; i < packages->len; i++) {
 
 		package_tmp = g_ptr_array_index (packages, i);
 
@@ -554,7 +554,7 @@ zif_manifest_check_section (ZifManifest *manifest,
 	state_local = zif_state_get_child (state);
 	lines = g_strsplit (data, "\n", -1);
 	zif_state_set_number_steps (state_local, g_strv_length (lines));
-	for (i=0; lines[i] != NULL; i++) {
+	for (i = 0; lines[i] != NULL; i++) {
 
 		if (lines[i][0] == '\0')
 			goto skip;

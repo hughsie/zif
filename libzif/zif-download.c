@@ -238,7 +238,7 @@ zif_download_check_content_types (GFile *file,
 	content_type = g_file_info_get_attribute_string (info,
 							 G_FILE_ATTRIBUTE_STANDARD_CONTENT_TYPE);
 	expected = g_strsplit (content_types_expected, ",", -1);
-	for (i=0; expected[i] != NULL; i++) {
+	for (i = 0; expected[i] != NULL; i++) {
 		ret = g_strcmp0 (content_type, expected[i]) == 0;
 		if (ret)
 			break;

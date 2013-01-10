@@ -105,7 +105,7 @@ zif_md_mirrorlist_load (ZifMd *md, ZifState *state, GError **error)
 
 	/* split, and add uris */
 	lines = g_strsplit (contents, "\n", -1);
-	for (i=0; lines[i] != NULL; i++) {
+	for (i = 0; lines[i] != NULL; i++) {
 		if (lines[i][0] == '\0' ||
 		    lines[i][0] == '#')
 			continue;

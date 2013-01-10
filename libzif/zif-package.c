@@ -481,7 +481,7 @@ zif_package_is_native (ZifPackage *package)
 	arch = package->priv->package_id_split[ZIF_PACKAGE_ID_ARCH];
 	config = zif_config_new ();
 	array = zif_config_get_basearch_array (config);
-	for (i=0; array[i] != NULL; i++) {
+	for (i = 0; array[i] != NULL; i++) {
 		if (g_strcmp0 (array[i], arch) == 0) {
 			ret = TRUE;
 			break;

@@ -355,13 +355,13 @@ zif_db_get_packages_for_filename (ZifDb *db,
 
 	/* join up name */
 	name = g_string_new ("");
-	for (i=1; i<len-3; i++)
+	for (i=1; i < len-3; i++)
 		g_string_append_printf (name, "%s-", split[i]);
 	g_string_set_size (name, name->len - 1);
 
 	/* join up version */
 	version = g_string_new ("");
-	for (i=len-3; i<len-1; i++)
+	for (i=len-3; i < len-1; i++)
 		g_string_append_printf (version, "%s-", split[i]);
 	g_string_set_size (version, version->len - 1);
 

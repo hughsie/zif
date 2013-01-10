@@ -195,7 +195,7 @@ zif_md_primary_xml_parser_start_element (GMarkupParseContext *context, const gch
 			}
 			if (g_strcmp0 (element_name, "version") == 0) {
 				primary_xml->priv->section_package = ZIF_MD_PRIMARY_XML_SECTION_PACKAGE_VERSION;
-				for (i=0; attribute_names[i] != NULL; i++) {
+				for (i = 0; attribute_names[i] != NULL; i++) {
 					if (g_strcmp0 (attribute_names[i], "rel") == 0) {
 						primary_xml->priv->package_release_temp = g_strdup (attribute_values[i]);
 					} else if (g_strcmp0 (attribute_names[i], "epoch") == 0) {
@@ -208,7 +208,7 @@ zif_md_primary_xml_parser_start_element (GMarkupParseContext *context, const gch
 			}
 			if (g_strcmp0 (element_name, "size") == 0) {
 				primary_xml->priv->section_package = ZIF_MD_PRIMARY_XML_SECTION_PACKAGE_SIZE;
-				for (i=0; attribute_names[i] != NULL; i++) {
+				for (i = 0; attribute_names[i] != NULL; i++) {
 					if (g_strcmp0 (attribute_names[i], "package") == 0) {
 						zif_package_set_size (primary_xml->priv->package_temp, atoi (attribute_values[i]));
 					}
@@ -217,7 +217,7 @@ zif_md_primary_xml_parser_start_element (GMarkupParseContext *context, const gch
 			}
 			if (g_strcmp0 (element_name, "time") == 0) {
 				primary_xml->priv->section_package = ZIF_MD_PRIMARY_XML_SECTION_PACKAGE_VERSION;
-				for (i=0; attribute_names[i] != NULL; i++) {
+				for (i = 0; attribute_names[i] != NULL; i++) {
 					if (g_strcmp0 (attribute_names[i], "file") == 0) {
 						zif_package_set_time_file (primary_xml->priv->package_temp, atoi (attribute_values[i]));
 					}
@@ -226,7 +226,7 @@ zif_md_primary_xml_parser_start_element (GMarkupParseContext *context, const gch
 			}
 			if (g_strcmp0 (element_name, "location") == 0) {
 				primary_xml->priv->section_package = ZIF_MD_PRIMARY_XML_SECTION_PACKAGE_LOCATION;
-				for (i=0; attribute_names[i] != NULL; i++) {
+				for (i = 0; attribute_names[i] != NULL; i++) {
 					if (g_strcmp0 (attribute_names[i], "href") == 0) {
 						tmp = zif_string_new (attribute_values[i]);
 						zif_package_set_location_href (primary_xml->priv->package_temp,
@@ -654,7 +654,7 @@ zif_md_primary_xml_resolve_name_cb (ZifPackage *package,
 	const gchar *value;
 	gchar **search = (gchar **) user_data;
 	value = zif_package_get_name (package);
-	for (i=0; search[i] != NULL; i++) {
+	for (i = 0; search[i] != NULL; i++) {
 		if (compare_func (value, search[i]))
 			return TRUE;
 	}
@@ -677,13 +677,13 @@ zif_md_primary_xml_resolve_name_arch_kill_arch (ZifPackage *package,
 
 	/* we don't use this code path for non-noarch packages as it
 	 * means copying the search GStrv each time */
-	for (i=0; search[i] != NULL; i++) {
+	for (i = 0; search[i] != NULL; i++) {
 		tmp = strrchr (search[i], '.');
 		if (tmp != NULL)
 			*tmp = '\0';
 	}
 	value = zif_package_get_name (package);
-	for (i=0; search[i] != NULL; i++) {
+	for (i = 0; search[i] != NULL; i++) {
 		if (compare_func (value, search[i])) {
 			ret = TRUE;
 			break;
@@ -714,7 +714,7 @@ zif_md_primary_xml_resolve_name_arch_cb (ZifPackage *package,
 	}
 
 	value = zif_package_get_name_arch (package);
-	for (i=0; search[i] != NULL; i++) {
+	for (i = 0; search[i] != NULL; i++) {
 		if (compare_func (value, search[i]))
 			return TRUE;
 	}
@@ -733,7 +733,7 @@ zif_md_primary_xml_resolve_name_version_cb (ZifPackage *package,
 	const gchar *value;
 	gchar **search = (gchar **) user_data;
 	value = zif_package_get_name_version (package);
-	for (i=0; search[i] != NULL; i++) {
+	for (i = 0; search[i] != NULL; i++) {
 		if (compare_func (value, search[i]))
 			return TRUE;
 	}
@@ -752,7 +752,7 @@ zif_md_primary_xml_resolve_name_version_arch_cb (ZifPackage *package,
 	const gchar *value;
 	gchar **search = (gchar **) user_data;
 	value = zif_package_get_name_version_arch (package);
-	for (i=0; search[i] != NULL; i++) {
+	for (i = 0; search[i] != NULL; i++) {
 		if (compare_func (value, search[i]))
 			return TRUE;
 	}
@@ -901,7 +901,7 @@ zif_md_primary_xml_search_name_cb (ZifPackage *package,
 	const gchar *value;
 	gchar **search = (gchar **) user_data;
 	value = zif_package_get_name (package);
-	for (i=0; search[i] != NULL; i++) {
+	for (i = 0; search[i] != NULL; i++) {
 		if (g_strstr_len (value, -1, search[i]) != NULL)
 			return TRUE;
 	}
@@ -953,7 +953,7 @@ zif_md_primary_xml_search_details_cb (ZifPackage *package,
 		g_error_free (error);
 		goto out;
 	}
-	for (i=0; search[i] != NULL; i++) {
+	for (i = 0; search[i] != NULL; i++) {
 		if (g_strstr_len (name, -1, search[i]) != NULL) {
 			ret = TRUE;
 			break;
@@ -1009,7 +1009,7 @@ zif_md_primary_xml_search_group_cb (ZifPackage *package,
 		g_error_free (error);
 		goto out;
 	}
-	for (i=0; search[i] != NULL; i++) {
+	for (i = 0; search[i] != NULL; i++) {
 		if (g_strstr_len (value, -1, search[i]) != NULL) {
 			ret = TRUE;
 			goto out;
@@ -1047,7 +1047,7 @@ zif_md_primary_xml_search_pkgid_cb (ZifPackage *package,
 	const gchar *pkgid;
 	gchar **search = (gchar **) user_data;
 	pkgid = zif_package_get_pkgid (package);
-	for (i=0; search[i] != NULL; i++) {
+	for (i = 0; search[i] != NULL; i++) {
 		if (g_strcmp0 (pkgid, search[i]) == 0)
 			return TRUE;
 	}
@@ -1097,7 +1097,7 @@ zif_md_primary_xml_what_provides_cb (ZifPackage *package,
 	/* find a depends string */
 	for (i = 0; i < array->len; i++) {
 		depend_tmp = g_ptr_array_index (array, i);
-		for (j=0; j<depends->len; j++) {
+		for (j = 0; j < depends->len; j++) {
 			depend = g_ptr_array_index (depends, j);
 			if (zif_depend_satisfies (depend_tmp, depend)) {
 				ret = TRUE;
@@ -1140,7 +1140,7 @@ zif_md_primary_xml_what_requires_cb (ZifPackage *package,
 	/* find a depends string */
 	for (i = 0; i < array->len; i++) {
 		depend_tmp = g_ptr_array_index (array, i);
-		for (j=0; j<depends->len; j++) {
+		for (j = 0; j < depends->len; j++) {
 			depend = g_ptr_array_index (depends, j);
 			if (zif_depend_satisfies (depend_tmp, depend)) {
 				ret = TRUE;
@@ -1183,7 +1183,7 @@ zif_md_primary_xml_what_obsoletes_cb (ZifPackage *package,
 	/* find a depends string */
 	for (i = 0; i < array->len; i++) {
 		depend_tmp = g_ptr_array_index (array, i);
-		for (j=0; j<depends->len; j++) {
+		for (j = 0; j < depends->len; j++) {
 			depend = g_ptr_array_index (depends, j);
 			if (zif_depend_satisfies (depend_tmp, depend)) {
 				ret = TRUE;
@@ -1226,7 +1226,7 @@ zif_md_primary_xml_what_conflicts_cb (ZifPackage *package,
 	/* find a depends string */
 	for (i = 0; i < array->len; i++) {
 		depend_tmp = g_ptr_array_index (array, i);
-		for (j=0; j<depends->len; j++) {
+		for (j = 0; j < depends->len; j++) {
 			depend = g_ptr_array_index (depends, j);
 			if (zif_depend_satisfies (depend_tmp, depend)) {
 				ret = TRUE;

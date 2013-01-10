@@ -480,10 +480,10 @@ zif_store_search_name (ZifStore *store,
 
 	/* iterate list */
 	array_tmp = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
-	for (i=0;i<store->priv->packages->len;i++) {
+	for (i = 0; i < store->priv->packages->len; i++) {
 		package = g_ptr_array_index (store->priv->packages, i);
 		name = zif_package_get_name (package);
-		for (j=0; search[j] != NULL; j++) {
+		for (j = 0; search[j] != NULL; j++) {
 			if (strcasestr (name, search[j]) != NULL) {
 				g_ptr_array_add (array_tmp, g_object_ref (package));
 				break;
@@ -598,11 +598,11 @@ zif_store_search_category (ZifStore *store,
 
 	/* iterate list */
 	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
-	for (i=0;i<store->priv->packages->len;i++) {
+	for (i = 0; i < store->priv->packages->len; i++) {
 		package = g_ptr_array_index (store->priv->packages, i);
 		state_loop = zif_state_get_child (state_local);
 		category = zif_package_get_category (package, state_loop, NULL);
-		for (j=0; search[j] != NULL; j++) {
+		for (j = 0; search[j] != NULL; j++) {
 			if (g_strcmp0 (category, search[j]) == 0) {
 				g_ptr_array_add (array, g_object_ref (package));
 				break;
@@ -713,12 +713,12 @@ zif_store_search_details (ZifStore *store,
 
 	/* iterate list */
 	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
-	for (i=0;i<store->priv->packages->len;i++) {
+	for (i = 0; i < store->priv->packages->len; i++) {
 		package = g_ptr_array_index (store->priv->packages, i);
 		state_loop = zif_state_get_child (state_local);
 		description = zif_package_get_description (package, state_loop, NULL);
 		name = zif_package_get_name (package);
-		for (j=0; search[j] != NULL; j++) {
+		for (j = 0; search[j] != NULL; j++) {
 			if (strcasestr (name, search[j]) != NULL) {
 				g_ptr_array_add (array, g_object_ref (package));
 				break;
@@ -832,9 +832,9 @@ zif_store_search_group (ZifStore *store,
 
 	/* iterate list */
 	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
-	for (i=0;i<store->priv->packages->len;i++) {
+	for (i = 0; i < store->priv->packages->len; i++) {
 		package = g_ptr_array_index (store->priv->packages, i);
-		for (j=0; search[j] != NULL; j++) {
+		for (j = 0; search[j] != NULL; j++) {
 			group = search[j];
 			state_loop = zif_state_get_child (state_local);
 			group_tmp = zif_package_get_group (package, state_loop, NULL);
@@ -949,7 +949,7 @@ zif_store_search_file (ZifStore *store,
 
 	/* iterate list */
 	array_tmp = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
-	for (i=0;i<store->priv->packages->len;i++) {
+	for (i = 0; i < store->priv->packages->len; i++) {
 		package = g_ptr_array_index (store->priv->packages, i);
 		state_loop = zif_state_get_child (state_local);
 		files = zif_package_get_files (package, state_loop, &error_local);
@@ -962,7 +962,7 @@ zif_store_search_file (ZifStore *store,
 			g_error_free (error_local);
 			goto out;
 		}
-		for (j=0; j<files->len; j++) {
+		for (j = 0; j < files->len; j++) {
 			filename = g_ptr_array_index (files, j);
 			for (l=0; search[l] != NULL; l++) {
 				if (g_strcmp0 (search[l], filename) == 0) {
@@ -1122,13 +1122,13 @@ zif_store_resolve_full_try (ZifStore *store,
 
 	/* iterate list */
 	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
-	for (i=0;i<store->priv->packages->len;i++) {
+	for (i = 0; i < store->priv->packages->len; i++) {
 		package = g_ptr_array_index (store->priv->packages, i);
 
 		/* name */
 		if ((flags & ZIF_STORE_RESOLVE_FLAG_USE_NAME) > 0) {
 			tmp = zif_package_get_name (package);
-			for (j=0; search_native[j] != NULL; j++) {
+			for (j = 0; search_native[j] != NULL; j++) {
 				if (compare_func (tmp, search_native[j]))
 					g_ptr_array_add (array, g_object_ref (package));
 			}
@@ -1137,7 +1137,7 @@ zif_store_resolve_full_try (ZifStore *store,
 		/* name.arch */
 		if ((flags & ZIF_STORE_RESOLVE_FLAG_USE_NAME_ARCH) > 0) {
 			tmp = zif_package_get_name_arch (package);
-			for (j=0; search_native[j] != NULL; j++) {
+			for (j = 0; search_native[j] != NULL; j++) {
 				if (compare_func (tmp, search_native[j]))
 					g_ptr_array_add (array, g_object_ref (package));
 			}
@@ -1146,7 +1146,7 @@ zif_store_resolve_full_try (ZifStore *store,
 		/* name-version */
 		if ((flags & ZIF_STORE_RESOLVE_FLAG_USE_NAME_VERSION) > 0) {
 			tmp = zif_package_get_name_version (package);
-			for (j=0; search_native[j] != NULL; j++) {
+			for (j = 0; search_native[j] != NULL; j++) {
 				if (compare_func (tmp, search_native[j]))
 					g_ptr_array_add (array, g_object_ref (package));
 			}
@@ -1155,7 +1155,7 @@ zif_store_resolve_full_try (ZifStore *store,
 		/* name-version.arch */
 		if ((flags & ZIF_STORE_RESOLVE_FLAG_USE_NAME_VERSION_ARCH) > 0) {
 			tmp = zif_package_get_name_version_arch (package);
-			for (j=0; search_native[j] != NULL; j++) {
+			for (j = 0; search_native[j] != NULL; j++) {
 				if (compare_func (tmp, search_native[j]))
 					g_ptr_array_add (array, g_object_ref (package));
 			}
@@ -1933,7 +1933,7 @@ zif_store_print (ZifStore *store)
 		return;
 	}
 
-	for (i=0;i<store->priv->packages->len;i++) {
+	for (i = 0; i < store->priv->packages->len; i++) {
 		package = g_ptr_array_index (store->priv->packages, i);
 		zif_package_print (package);
 	}

@@ -120,7 +120,7 @@ zif_print_packages (GPtrArray *array)
 	g_ptr_array_sort (array, zif_package_sort_cb);
 
 	/* get the padding required */
-	for (i=0;i<array->len;i++) {
+	for (i = 0; i < array->len; i++) {
 		package = g_ptr_array_index (array, i);
 		printable = zif_package_get_printable (package);
 		j = strlen (printable);
@@ -129,7 +129,7 @@ zif_print_packages (GPtrArray *array)
 	}
 
 	/* print the packages */
-	for (i=0;i<array->len;i++) {
+	for (i = 0; i < array->len; i++) {
 		package = g_ptr_array_index (array, i);
 		zif_print_package (package, max + 2);
 	}
@@ -476,7 +476,7 @@ zif_cmd_add (GPtrArray *array, const gchar *name, const gchar *description, ZifC
 
 	/* add each one */
 	names = g_strsplit (name, ",", -1);
-	for (i=0; names[i] != NULL; i++) {
+	for (i = 0; names[i] != NULL; i++) {
 		item = g_new0 (ZifCmdItem, 1);
 		item->name = g_strdup (names[i]);
 		if (i == 0) {
@@ -513,7 +513,7 @@ zif_cmd_get_descriptions (GPtrArray *array)
 		g_string_append (string, item->name);
 		g_string_append (string, " ");
 		len = strlen (item->name);
-		for (j=len; j<max_len+2; j++)
+		for (j=len; j < max_len+2; j++)
 			g_string_append (string, " ");
 		g_string_append (string, item->description);
 		g_string_append (string, "\n");
@@ -903,7 +903,7 @@ zif_cmd_get_categories (ZifCmdPrivate *priv, gchar **values, GError **error)
 		} else {
 			g_print ("%s", cat_id);
 		}
-		for (j=len; j<len_max + 1; j++)
+		for (j=len; j < len_max + 1; j++)
 			g_print (" ");
 		g_print ("%s",
 			 zif_category_get_name (obj));
@@ -1048,7 +1048,7 @@ zif_cmd_get_depends (ZifCmdPrivate *priv, gchar **values, GError **error)
 	}
 
 	/* print all of them */
-	for (j=0;j<provides->len;j++) {
+	for (j = 0; j < provides->len; j++) {
 		package = g_ptr_array_index (provides, j);
 		/* TRANSLATORS: this is a item prefix */
 		g_string_append_printf (string, "   %s %s\n",
@@ -1376,7 +1376,7 @@ zif_cmd_dep_common (ZifCmdPrivate *priv, ZifPackageEnsureType type,
 		}
 
 		zif_progress_bar_end (priv->progressbar);
-		for (j=0; j<depends->len; j++) {
+		for (j = 0; j < depends->len; j++) {
 			depend = g_ptr_array_index (depends, j);
 			if (g_str_has_prefix (zif_depend_get_name (depend), "/"))
 				continue;
@@ -1704,7 +1704,7 @@ zif_cmd_get_files (ZifCmdPrivate *priv, gchar **values, GError **error)
 	string = g_string_new ("");
 	state_local = zif_state_get_child (priv->state);
 	zif_state_set_number_steps (state_local, array->len);
-	for (j=0; j<array->len; j++) {
+	for (j = 0; j < array->len; j++) {
 		package = g_ptr_array_index (array, j);
 		g_string_append_printf (string, "Package %s\n",
 					zif_package_get_printable (package));
@@ -2084,7 +2084,7 @@ zif_cmd_get_config_value (ZifCmdPrivate *priv, gchar **values, GError **error)
 	}
 
 	/* get value */
-	for (i=0; values[i] != NULL; i++) {
+	for (i = 0; values[i] != NULL; i++) {
 		value = zif_config_get_string (priv->config, values[i], NULL);
 		if (value == NULL) {
 			/* TRANSLATORS: there was no value in the config files */
@@ -2315,11 +2315,11 @@ zif_main_show_transaction (ZifTransaction *transaction)
 		-1 };
 
 	g_print ("%s\n", _("Transaction summary:"));
-	for (i=0; order[i] != -1; i++) {
+	for (i = 0; order[i] != -1; i++) {
 		array = zif_transaction_get_array_for_reason (transaction, order[i]);
 		if (array->len > 0) {
 			g_print ("  %s:\n", zif_transaction_reason_to_string_localized (order[i]));
-			for (j=0; j<array->len; j++) {
+			for (j = 0; j < array->len; j++) {
 				package = g_ptr_array_index (array, j);
 				g_print ("  %i.\t%s\n",
 					 j+1,
@@ -2803,7 +2803,7 @@ zif_cmd_install (ZifCmdPrivate *priv, gchar **values, GError **error)
 		goto out;
 
 	/* are there any debuginfo packages */
-	for (i=0; values[i] != NULL; i++) {
+	for (i = 0; values[i] != NULL; i++) {
 		if (g_str_has_suffix (values[i], "-debuginfo")) {
 			has_debuginfo = TRUE;
 			break;
@@ -3151,7 +3151,7 @@ zif_cmd_local_install (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 	/* read file */
 	array = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
-	for (i=0; values[i] != NULL; i++) {
+	for (i = 0; values[i] != NULL; i++) {
 		package = zif_package_local_new ();
 		g_ptr_array_add (array, package);
 		ret = zif_package_local_set_from_filename (ZIF_PACKAGE_LOCAL (package),
@@ -3345,7 +3345,7 @@ zif_cmd_build_depends (ZifCmdPrivate *priv, gchar **values, GError **error)
 						    error);
 		if (depends == NULL)
 			goto out;
-		for (j=0; j<depends->len; j++) {
+		for (j = 0; j < depends->len; j++) {
 			depend = g_ptr_array_index (depends, j);
 			g_debug ("%s needs %s",
 				 zif_package_get_printable (package),
@@ -3478,7 +3478,7 @@ zif_cmd_manifest_check (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 	/* check the manifest */
 	manifest = zif_manifest_new ();
-	for (i=0; values[i] != NULL; i++) {
+	for (i = 0; values[i] != NULL; i++) {
 		state_local = zif_state_get_child (priv->state);
 		ret = zif_manifest_check (manifest, values[i], state_local, error);
 		if (!ret)
@@ -5019,7 +5019,7 @@ zif_cmd_update_details (ZifCmdPrivate *priv, gchar **values, GError **error)
 						_("Issued:"), zif_update_get_issued (update));
 		}
 		update_infos = zif_update_get_update_infos (update);
-		for (j=0; j<update_infos->len; j++) {
+		for (j = 0; j < update_infos->len; j++) {
 			info = g_ptr_array_index (update_infos, j);
 			g_string_append_printf (string, "%s\t%s\t%s\n",
 						zif_update_info_kind_to_string (zif_update_info_get_kind (info)),
@@ -5027,7 +5027,7 @@ zif_cmd_update_details (ZifCmdPrivate *priv, gchar **values, GError **error)
 						zif_update_info_get_title (info));
 		}
 		changelog = zif_update_get_changelog (update);
-		for (j=0; j<changelog->len; j++) {
+		for (j = 0; j < changelog->len; j++) {
 			changeset = g_ptr_array_index (changelog, j);
 			g_string_append_printf (string, "%s - %s\n%s\n",
 						zif_changeset_get_author (changeset),
@@ -5169,7 +5169,7 @@ zif_cmd_parse_depends (gchar **values, GError **error)
 
 	/* parse the depends */
 	depend_array_tmp = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
-	for (i=0; values[i] != NULL; i++) {
+	for (i = 0; values[i] != NULL; i++) {
 		depend = zif_depend_new ();
 		ret = zif_depend_parse_description (depend, values[i], error);
 		if (!ret) {
@@ -6186,7 +6186,7 @@ zif_cmd_db_list (ZifCmdPrivate *priv, gchar **values, GError **error)
 	}
 
 	/* get the padding required */
-	for (i=0;i<keys->len;i++) {
+	for (i = 0; i < keys->len; i++) {
 		key = g_ptr_array_index (keys, i);
 		j = strlen (key);
 		if (j > max)
@@ -6210,7 +6210,7 @@ zif_cmd_db_list (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 		/* print */
 		g_print ("%s", key);
-		for (j=0; j<max - strlen (key); j++)
+		for (j = 0; j < max - strlen (key); j++)
 			g_print (" ");
 		g_print (" = %s\n", value);
 		g_free (value);
@@ -6287,7 +6287,7 @@ zif_create_deptree (ZifPackage *package,
 	zif_store_add_package (store_processed, package, NULL);
 
 	/* process all packages we got before */
-	for (i = 0; i<packages->len; i++) {
+	for (i = 0; i < packages->len; i++) {
 
 		zif_state_reset(state);
 		state_local = zif_state_get_child (state);
@@ -6562,7 +6562,7 @@ zif_main_set_stores_runtime_enable (ZifCmdPrivate *priv,
 
 	/* enable or disable each one */
 	repos = g_strsplit (repo_str, ",", -1);
-	for (i=0; repos[i] != NULL; i++) {
+	for (i = 0; repos[i] != NULL; i++) {
 		zif_state_reset (priv->state);
 		store = zif_repos_get_store (priv->repos,
 					     repos[i],

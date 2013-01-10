@@ -265,7 +265,7 @@ zif_package_meta_set_from_data (ZifPackageMeta *pkg, gchar **data)
 	g_return_val_if_fail (ZIF_IS_PACKAGE_META (pkg), FALSE);
 	g_return_val_if_fail (data != NULL, FALSE);
 
-	for (i=0; data[i] != NULL; i++) {
+	for (i = 0; data[i] != NULL; i++) {
 		if (g_strstr_len (data[i], -1, ":") != NULL) {
 			g_debug ("adding data %s", data[i]);
 			g_ptr_array_add (pkg->priv->array, g_strdup (data[i]));

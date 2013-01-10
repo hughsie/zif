@@ -330,7 +330,7 @@ zif_list_print_array (GPtrArray *array)
 	guint i;
 	ZifPackage *package;
 
-	for (i=0;i<array->len;i++) {
+	for (i = 0; i < array->len; i++) {
 		package = g_ptr_array_index (array, i);
 		zif_package_print (package);
 	}
@@ -467,7 +467,7 @@ zif_package_id_to_nevra (const gchar *package_id,
 
 	/* we could have "1-2" or "3:1-2" */
 	ver_start = ver = split[ZIF_PACKAGE_ID_VERSION];
-	for (i=0; ver[i] != '\0'; i++) {
+	for (i = 0; ver[i] != '\0'; i++) {
 		if (ver[i] == ':') {
 			ver[i] = '\0';
 			ver_start = &ver[i+1];
@@ -1502,7 +1502,7 @@ zif_load_multiline_key_file (const gchar *filename,
 	/* split into lines */
 	string = g_string_new ("");
 	lines = g_strsplit (data, "\n", -1);
-	for (i=0; lines[i] != NULL; i++) {
+	for (i = 0; lines[i] != NULL; i++) {
 		/* if a line starts with whitespace, then append it on
 		 * the previous line */
 		g_strdelimit (lines[i], "\t", ' ');

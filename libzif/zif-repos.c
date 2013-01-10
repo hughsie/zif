@@ -197,7 +197,7 @@ zif_repos_get_for_filename (ZifRepos *repos,
 	zif_state_set_number_steps (state, groups_length);
 
 	/* create each repo */
-	for (i=0; repos_groups[i] != NULL; i++) {
+	for (i = 0; repos_groups[i] != NULL; i++) {
 		store = ZIF_STORE_REMOTE (zif_store_remote_new ());
 		state_local = zif_state_get_child (state);
 		ret = zif_store_remote_set_from_file (store,
@@ -364,7 +364,7 @@ zif_repos_load (ZifRepos *repos, ZifState *state, GError **error)
 		zif_state_set_number_steps (state_local, repofiles->len);
 
 	/* for each repo files */
-	for (i=0; i < repofiles->len; i++) {
+	for (i = 0; i < repofiles->len; i++) {
 
 		/* setup watch */
 		filename = g_ptr_array_index (repofiles, i);

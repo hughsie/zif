@@ -118,7 +118,7 @@ zif_md_metalink_parser_start_element (GMarkupParseContext *context, const gchar 
 	metalink->priv->temp = g_new0 (ZifMdMetalinkData, 1);
 
 	/* read keys */
-	for (i=0; attribute_names[i] != NULL; i++) {
+	for (i = 0; attribute_names[i] != NULL; i++) {
 		if (g_strcmp0 (attribute_names[i], "protocol") == 0)
 			metalink->priv->temp->protocol = zif_md_metalink_protocol_type_from_text (attribute_values[i]);
 		if (g_strcmp0 (attribute_names[i], "preference") == 0)

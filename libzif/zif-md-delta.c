@@ -113,7 +113,7 @@ zif_md_delta_parser_start_element (GMarkupParseContext *context, const gchar *el
 			delta->priv->section = ZIF_MD_DELTA_XML_NEWPACKAGE;
 
 			/* find the package-id */
-			for (i=0; attribute_names[i] != NULL; i++) {
+			for (i = 0; attribute_names[i] != NULL; i++) {
 				if (g_strcmp0 (attribute_names[i], "name") == 0)
 					name = attribute_values[i];
 				else if (g_strcmp0 (attribute_names[i], "epoch") == 0)
@@ -153,7 +153,7 @@ zif_md_delta_parser_start_element (GMarkupParseContext *context, const gchar *el
 				delta->priv->delta_temp = zif_delta_new ();
 
 				/* find the package-id */
-				for (i=0; attribute_names[i] != NULL; i++) {
+				for (i = 0; attribute_names[i] != NULL; i++) {
 					if (g_strcmp0 (attribute_names[i], "oldepoch") == 0)
 						epoch = atoi (attribute_values[i]);
 					else if (g_strcmp0 (attribute_names[i], "oldversion") == 0)
