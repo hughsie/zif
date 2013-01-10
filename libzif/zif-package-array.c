@@ -343,7 +343,11 @@ zif_package_array_filter_newest (GPtrArray *packages)
 		}
 
 		/* the new package is the same */
-		retval = zif_package_compare (package, package_tmp);
+		retval = zif_package_compare_full (package,
+						   package_tmp,
+						   ZIF_PACKAGE_COMPARE_FLAG_CHECK_NAME |
+						   ZIF_PACKAGE_COMPARE_FLAG_CHECK_ARCH |
+						   ZIF_PACKAGE_COMPARE_FLAG_CHECK_INSTALLED);
 		if (retval == G_MAXINT) {
 			g_warning ("failed to compare %s:%s",
 				   zif_package_get_id_basic (package),
