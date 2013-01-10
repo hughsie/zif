@@ -87,6 +87,7 @@ struct _ZifStoreRemotePrivate
 	gchar			*repo_filename;		/* /etc/yum.repos.d/fedora.repo */
 	gchar			*media_id;		/* 1273587559.563492 */
 	gchar			**pubkey;		/* file:///etc/pki/rpm-gpg/RPM-GPG-KEY */
+	gboolean		 pubkey_enabled;	/* if gpgcheck is set */
 	guint			 metadata_expire;	/* in seconds */
 	guint			 download_retries;
 	gboolean		 enabled;
@@ -2079,7 +2080,6 @@ zif_store_remote_load (ZifStore *store, ZifState *state, GError **error)
 {
 	gboolean got_baseurl = FALSE;
 	gboolean ret = TRUE;
-	gboolean gpgcheck;
 	gchar *baseurl_temp;
 	gchar *pubkey_temp = NULL;
 	gchar *enabled = NULL;
@@ -2249,15 +2249,15 @@ zif_store_remote_load (ZifStore *store, ZifState *state, GError **error)
 	g_free (temp);
 
 	/* get public key for repo */
-	gpgcheck = g_key_file_get_boolean (remote->priv->file,
-					   remote->priv->id,
-					   "gpgcheck",
-					   NULL);
+	remote->priv->pubkey_enabled = g_key_file_get_boolean (remote->priv->file,
+							       remote->priv->id,
+							       "gpgcheck",
+							       NULL);
 	temp = g_key_file_get_string (remote->priv->file,
 				      remote->priv->id,
 				      "gpgkey",
 				      NULL);
-	if (gpgcheck && temp != NULL) {
+	if (temp != NULL) {
 		pubkey_temp = zif_config_expand_substitutions (remote->priv->config,
 							       temp,
 							       error);
@@ -4251,6 +4251,24 @@ zif_store_remote_get_pubkey (ZifStoreRemote *store)
 	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), NULL);
 	g_return_val_if_fail (store->priv->id != NULL, NULL);
 	return store->priv->pubkey;
+}
+
+/**
+ * zif_store_remote_get_pubkey_enabled:
+ * @store: A #ZifStoreRemote
+ *
+ * Get the public key URLs for this repository is enabled.
+ *
+ * Return value: %TRUE is gpgcheck is enabled.
+ *
+ * Since: 0.3.6
+ **/
+gboolean
+zif_store_remote_get_pubkey_enabled (ZifStoreRemote *store)
+{
+	g_return_val_if_fail (ZIF_IS_STORE_REMOTE (store), FALSE);
+	g_return_val_if_fail (store->priv->id != NULL, FALSE);
+	return store->priv->pubkey_enabled;
 }
 
 /**

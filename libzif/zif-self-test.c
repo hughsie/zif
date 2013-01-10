@@ -2736,6 +2736,7 @@ zif_repos_func (void)
 
 	/* ensure we got the pubkey */
 	pubkey = zif_store_remote_get_pubkey (store);
+	g_assert (zif_store_remote_get_pubkey_enabled (store));
 	g_assert (pubkey != NULL);
 	g_assert (g_str_has_prefix (pubkey[0], "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-"));
 

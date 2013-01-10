@@ -502,6 +502,7 @@ void
 zif_package_remote_set_store_remote (ZifPackageRemote *pkg,
 				     ZifStoreRemote *store)
 {
+	gboolean pubkey_enabled;
 	gchar **pubkey;
 
 	g_return_if_fail (ZIF_IS_PACKAGE_REMOTE (pkg));
@@ -510,12 +511,13 @@ zif_package_remote_set_store_remote (ZifPackageRemote *pkg,
 
 	/* is the remote store protected with public keys */
 	pubkey = zif_store_remote_get_pubkey (store);
-	if (pubkey == NULL) {
-		zif_package_set_trust_kind (ZIF_PACKAGE (pkg),
-					    ZIF_PACKAGE_TRUST_KIND_NONE);
-	} else {
+	pubkey_enabled = zif_store_remote_get_pubkey_enabled (store);
+	if (pubkey != NULL && pubkey_enabled) {
 		zif_package_set_trust_kind (ZIF_PACKAGE (pkg),
 					    ZIF_PACKAGE_TRUST_KIND_PUBKEY_UNVERIFIED);
+	} else {
+		zif_package_set_trust_kind (ZIF_PACKAGE (pkg),
+					    ZIF_PACKAGE_TRUST_KIND_NONE);
 	}
 
 	pkg->priv->store_remote = g_object_ref (store);
