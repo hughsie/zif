@@ -266,6 +266,7 @@ zif_package_array_func (void)
 
 	/* add old pkg */
 	pkg = zif_package_new ();
+	zif_package_set_installed (pkg, TRUE);
 	ret = zif_package_set_id (pkg, "hal;0.1-1.fc13;i686;installed", &error);
 	g_assert_no_error (error);
 	g_assert (ret);
@@ -273,6 +274,7 @@ zif_package_array_func (void)
 
 	/* add newer pkg */
 	pkg = zif_package_new ();
+	zif_package_set_installed (pkg, TRUE);
 	ret = zif_package_set_id (pkg, "hal;0.2-1.fc13;i686;installed", &error);
 	g_assert_no_error (error);
 	g_assert (ret);
@@ -280,7 +282,8 @@ zif_package_array_func (void)
 
 	/* add same pkg */
 	pkg = zif_package_new ();
-	ret = zif_package_set_id (pkg, "hal;0.2-1.fc13;i686;installed", &error);
+	zif_package_set_installed (pkg, FALSE);
+	ret = zif_package_set_id (pkg, "hal;0.2-1.fc13;i686;fedora", &error);
 	g_assert_no_error (error);
 	g_assert (ret);
 	g_ptr_array_add (array, pkg);
@@ -2313,6 +2316,20 @@ zif_package_func (void)
 	g_assert (ret);
 	retval = zif_package_compare (a, b);
 	g_assert_cmpint (retval, ==, -1);
+
+	/* check compare with flags */
+	a = zif_package_new ();
+	zif_package_set_installed (a, TRUE);
+	ret = zif_package_set_id (a, "colord;0.0.1-1.fc15;i386;fedora", &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+	b = zif_package_new ();
+	zif_package_set_installed (b, FALSE);
+	ret = zif_package_set_id (b, "colord;0.0.1-1.fc14;i386;fedora", &error);
+	g_assert_no_error (error);
+	g_assert (ret);
+	retval = zif_package_compare_full (a, b, ZIF_PACKAGE_COMPARE_FLAG_CHECK_INSTALLED);
+	g_assert_cmpint (retval, ==, 1);
 
 	/* check compare with distro-sync */
 	zif_package_set_compare_mode (a, ZIF_PACKAGE_COMPARE_MODE_DISTRO);

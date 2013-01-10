@@ -203,6 +203,18 @@ zif_package_compare_full (ZifPackage *a,
 	g_return_val_if_fail (splita != NULL, G_MAXINT);
 	g_return_val_if_fail (splitb != NULL, G_MAXINT);
 
+	/* check the installed status is the same */
+	if ((flags & ZIF_PACKAGE_COMPARE_FLAG_CHECK_INSTALLED) > 0) {
+		if (a->priv->installed && !b->priv->installed) {
+			val = 1;
+			goto out;
+		}
+		if (!a->priv->installed && b->priv->installed) {
+			val = -1;
+			goto out;
+		}
+	}
+
 	/* check name the same */
 	if ((flags & ZIF_PACKAGE_COMPARE_FLAG_CHECK_NAME) > 0) {
 		if (g_strcmp0 (splita[ZIF_PACKAGE_ID_NAME],
