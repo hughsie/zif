@@ -59,6 +59,7 @@ GLib headers and libraries for zif.
 %configure \
         --enable-gtk-doc \
         --disable-static \
+        --disable-silent-rules \
         --disable-dependency-tracking
 
 make %{?_smp_mflags}
