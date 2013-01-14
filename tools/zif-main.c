@@ -2686,6 +2686,25 @@ out:
 }
 
 /**
+ * zif_cmd_install_is_provide:
+ **/
+static gboolean
+zif_cmd_install_is_provide (const gchar *name)
+{
+	gchar *para_l;
+	gchar *para_r;
+
+	/* ensure this is of the form 'pkgconfig(colord)' */
+	para_l = g_strstr_len (name, -1, "(");
+	if (para_l == NULL && para_l > name)
+		return FALSE;
+	para_r = g_strstr_len (name, -1, ")");
+	if (para_r == NULL || para_r < para_l)
+		return FALSE;
+	return TRUE;
+}
+
+/**
  * zif_cmd_install:
  **/
 static gboolean
@@ -2697,11 +2716,13 @@ zif_cmd_install (ZifCmdPrivate *priv, gchar **values, GError **error)
 	gchar **values_new = NULL;
 	GError *error_local = NULL;
 	GPtrArray *array = NULL;
+	GPtrArray *depends = NULL;
 	GPtrArray *store_array_local = NULL;
 	GPtrArray *store_array_remote = NULL;
 	GString *string = NULL;
 	guint idx = 0;
 	guint i, j;
+	ZifDepend *depend;
 	ZifPackage *package;
 	ZifState *state_local;
 	ZifTransaction *transaction = NULL;
@@ -2745,13 +2766,28 @@ zif_cmd_install (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 	/* check not already installed */
 	state_local = zif_state_get_child (priv->state);
-	array = zif_store_array_resolve_full (store_array_local,
-					      values,
-					      ZIF_STORE_RESOLVE_FLAG_USE_ALL |
-					      ZIF_STORE_RESOLVE_FLAG_USE_GLOB |
-					      ZIF_STORE_RESOLVE_FLAG_PREFER_NATIVE,
-					      state_local,
-					      error);
+	if (zif_cmd_install_is_provide (values[0])) {
+		depends = zif_object_array_new ();
+		for (i = 0; values[i] != NULL; i++) {
+			depend = zif_depend_new_from_values (values[i],
+							     ZIF_DEPEND_FLAG_ANY,
+							     "");
+			g_ptr_array_add (depends, depend);
+		}
+		array = zif_store_array_what_provides (store_array_local,
+						       depends,
+						       state_local,
+						       error);
+		zif_package_array_filter_newest (array);
+	} else {
+		array = zif_store_array_resolve_full (store_array_local,
+						      values,
+						      ZIF_STORE_RESOLVE_FLAG_USE_ALL |
+						      ZIF_STORE_RESOLVE_FLAG_USE_GLOB |
+						      ZIF_STORE_RESOLVE_FLAG_PREFER_NATIVE,
+						      state_local,
+						      error);
+	}
 	if (array == NULL) {
 		ret = FALSE;
 		goto out;
@@ -2842,13 +2878,21 @@ zif_cmd_install (ZifCmdPrivate *priv, gchar **values, GError **error)
 
 	/* check we can find a package of this name */
 	state_local = zif_state_get_child (priv->state);
-	array = zif_store_array_resolve_full (store_array_remote,
-					      values_new,
-					      ZIF_STORE_RESOLVE_FLAG_USE_ALL |
-					      ZIF_STORE_RESOLVE_FLAG_USE_GLOB |
-					      ZIF_STORE_RESOLVE_FLAG_PREFER_NATIVE,
-					      state_local,
-					      error);
+	if (depends != NULL) {
+		array = zif_store_array_what_provides (store_array_remote,
+						       depends,
+						       state_local,
+						       error);
+		zif_package_array_filter_newest (array);
+	} else {
+		array = zif_store_array_resolve_full (store_array_remote,
+						      values_new,
+						      ZIF_STORE_RESOLVE_FLAG_USE_ALL |
+						      ZIF_STORE_RESOLVE_FLAG_USE_GLOB |
+						      ZIF_STORE_RESOLVE_FLAG_PREFER_NATIVE,
+						      state_local,
+						      error);
+	}
 	if (array == NULL) {
 		ret = FALSE;
 		goto out;
@@ -2917,6 +2961,8 @@ out:
 	g_strfreev (values_new);
 	if (string != NULL)
 		g_string_free (string, TRUE);
+	if (depends != NULL)
+		g_ptr_array_unref (depends);
 	if (transaction != NULL)
 		g_object_unref (transaction);
 	if (store_array_local != NULL)
