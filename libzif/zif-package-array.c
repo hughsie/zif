@@ -328,7 +328,7 @@ zif_package_array_filter_newest (GPtrArray *packages)
 					   NULL, NULL);
 	for (i = 0; i < packages->len; i++) {
 		package = ZIF_PACKAGE (g_ptr_array_index (packages, i));
-		key = zif_package_get_name_arch (package);
+		key = zif_package_get_name (package);
 		package_tmp = g_hash_table_lookup (hash_namearch, key);
 
 		/* does not already exist */
