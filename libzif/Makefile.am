@@ -3,7 +3,7 @@ INTROSPECTION_GIRS =
 INTROSPECTION_SCANNER_ARGS = --add-include-path=$(srcdir)
 INTROSPECTION_COMPILER_ARGS = --includedir=$(srcdir)
 
-INCLUDES = \
+AM_CPPFLAGS = \
 	$(GLIB_CFLAGS)						\
 	$(SQLITE_CFLAGS)					\
 	$(RPM_CFLAGS)						\
@@ -280,7 +280,7 @@ introspection_sources =						\
 
 Zif-1.0.gir: libzif.la
 Zif_1_0_gir_INCLUDES = GObject-2.0 Gio-2.0
-Zif_1_0_gir_CFLAGS = $(INCLUDES)
+Zif_1_0_gir_CFLAGS = $(AM_CPPFLAGS)
 Zif_1_0_gir_SCANNERFLAGS = --identifier-prefix=Zif \
 				--symbol-prefix=zif_ \
 				--warn-all \

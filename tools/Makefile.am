@@ -1,4 +1,4 @@
-INCLUDES =						\
+AM_CPPFLAGS =						\
 	$(GLIB_CFLAGS)					\
 	$(SQLITE_CFLAGS)				\
 	-DBINDIR=\"$(bindir)\"			 	\
