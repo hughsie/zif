@@ -6648,6 +6648,7 @@ main (int argc, char *argv[])
 	gboolean ret;
 	gboolean skip_broken = FALSE;
 	gboolean verbose = FALSE;
+	gboolean version = FALSE;
 	gchar *cmd_descriptions = NULL;
 	gchar *config_file = NULL;
 	gchar *excludes = NULL;
@@ -6700,6 +6701,8 @@ main (int argc, char *argv[])
 			_("Specify a directory of packages as a remote store"), NULL },
 		{ "lock-all", '\0', 0, G_OPTION_ARG_FILENAME, &lock_all,
 			_("Take all locks at startup rather than as required"), NULL },
+		{ "version", '\0', 0, G_OPTION_ARG_NONE, &version,
+			_("Show the version number and then quit"), NULL },
 		{ NULL}
 	};
 
@@ -6736,6 +6739,12 @@ main (int argc, char *argv[])
 	if (terminal_cols < 0)
 		terminal_cols = 0;
 	zif_progress_bar_set_size (priv->progressbar, terminal_cols);
+
+	/* just show the version */
+	if (version) {
+		g_print ("%s\n", PACKAGE_VERSION);
+		goto out;
+	}
 
 	/* save in the private data */
 	priv->assume_no = assume_no;
