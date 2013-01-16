@@ -62,6 +62,7 @@ EXTRA_DIST =							\
 	update-nothing.manifest					\
 	update-package-rename.manifest				\
 	update-package-where-dep-is-provided-by-installed.manifest	\
+	update-self-obsolete.manifest				\
 	update-single-multiple-deps.manifest			\
 	update-single-required-by-installed.manifest		\
 	update-two-packages-with-newer-version.manifest		\

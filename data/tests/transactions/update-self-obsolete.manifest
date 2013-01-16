@@ -1,0 +1,26 @@
+# xxxxxxxxxxxxxxxxxxxx
+
+config
+	archinfo=x86_64
+
+local
+	colord;0.1.27-2;i386;meta
+	colord;0.1.27-2;x86_64;meta
+
+remote
+	colord;0.1.28-1;x86_64;meta
+		Requires
+			colord-libs
+		Obsoletes
+			colord < 0.1.27-3
+	colord-libs;0.1.28-1;x86_64;meta
+	colord-libs;0.1.28-1;i386;meta
+
+transaction
+	update
+		colord;0.1.27-2;i386;meta
+		colord;0.1.27-2;x86_64;meta
+
+result
+	colord;0.1.28-1;x86_64;meta
+	colord-libs;0.1.28-1;x86_64;meta
