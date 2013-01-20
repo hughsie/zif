@@ -2694,6 +2694,10 @@ zif_cmd_install_is_provide (const gchar *name)
 	gchar *para_l;
 	gchar *para_r;
 
+	/* is a file */
+	if (name[0] == '/')
+		return TRUE;
+
 	/* ensure this is of the form 'pkgconfig(colord)' */
 	para_l = g_strstr_len (name, -1, "(");
 	if (para_l == NULL && para_l > name)
