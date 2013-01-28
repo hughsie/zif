@@ -1981,10 +1981,31 @@ zif_store_remote_refresh (ZifStore *store, gboolean force, ZifState *state, GErr
 					      NULL,
 					      state_local,
 					      &error_local);
+
 	if (!ret) {
-		g_set_error (error, error_local->domain, error_local->code,
-			     "failed to download repomd: %s", error_local->message);
-		g_error_free (error_local);
+		if (g_error_matches (error_local,
+				     ZIF_STORE_ERROR,
+				     ZIF_STORE_ERROR_FAILED_TO_DOWNLOAD)) {
+			ret = zif_config_get_boolean (remote->priv->config,
+						      "skip_if_unavailable",
+						      NULL);
+			if (ret) {
+				/* skip unavailable? */
+				g_debug ("disabling repo due to ignored error: %s",
+					 error_local->message);
+				zif_store_set_enabled (ZIF_STORE (store), FALSE);
+				g_error_free (error_local);
+				ret = zif_state_finished (state, error);
+				if (!ret)
+					goto out;
+			} else {
+				g_propagate_error (error, error_local);
+			}
+		} else {
+			g_set_error (error, error_local->domain, error_local->code,
+				     "failed to download repomd: %s", error_local->message);
+			g_error_free (error_local);
+		}
 		goto out;
 	}
 
