@@ -1111,11 +1111,14 @@ zif_store_array_get_updates (GPtrArray *store_array,
 	/* setup state with the correct number of steps */
 	ret = zif_state_set_steps (state,
 				   error,
-				   5, /* get local packages */
-				   5, /* filter newest */
+				   1, /* get local packages */
+				   1, /* filter newest */
 				   10, /* resolve local list to remote */
-				   10, /* add obsoletes */
-				   70, /* filter out anything not newer */
+				   1, /* filter the updates to the newest */
+				   9, /* find any updates for installed set */
+				   76, /* find anything installed that is obsoleted */
+				   1, /* filter obsoletes by arch */
+				   1, /* filter any duplicate updates */
 				   -1);
 	if (!ret)
 		goto out;
@@ -1167,6 +1170,11 @@ zif_store_array_get_updates (GPtrArray *store_array,
 
 	/* some repos contain lots of versions of one package */
 	zif_package_array_filter_newest (updates);
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 
 	/* find each one in a remote repo */
 	updates_available = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
@@ -1245,6 +1253,11 @@ zif_store_array_get_updates (GPtrArray *store_array,
 			 zif_package_get_printable (update));
 	}
 
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
 	/* filter by best architecture, as obsoletes do not have an arch */
 	config = zif_config_new ();
 	archinfo = zif_config_get_string (config,
@@ -1253,6 +1266,11 @@ zif_store_array_get_updates (GPtrArray *store_array,
 	if (archinfo == NULL)
 		goto out;
 	zif_package_array_filter_best_arch (array_obsoletes, archinfo);
+
+	/* this section done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
 
 	/* add obsolete array to updates */
 	zif_object_array_add_array (updates_available, array_obsoletes);
