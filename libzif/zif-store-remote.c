@@ -1712,6 +1712,7 @@ zif_store_remote_load_metadata (ZifStoreRemote *store, ZifState *state, GError *
 		}
 
 		/* done */
+		store->priv->loaded_metadata = TRUE;
 		ret = zif_state_done (state, error);
 		if (!ret)
 			goto out;
@@ -1776,6 +1777,7 @@ zif_store_remote_load_metadata (ZifStoreRemote *store, ZifState *state, GError *
 	}
 
 	/* done */
+	store->priv->loaded_metadata = TRUE;
 	ret = zif_state_done (state, error);
 	if (!ret)
 		goto out;
