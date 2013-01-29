@@ -61,6 +61,7 @@ struct _ZifMdPrimarySqlPrivate
 	gboolean		 loaded;
 	sqlite3			*db;
 	ZifConfig		*config;
+	GHashTable		*obsoletes_name;
 };
 
 typedef struct {
@@ -83,12 +84,30 @@ zif_md_primary_sql_unload (ZifMd *md, ZifState *state, GError **error)
 }
 
 /**
+ * zif_md_primary_sql_sqlite_name_depends_cb:
+ **/
+static gint
+zif_md_primary_sql_sqlite_name_depends_cb (void *data,
+					   gint argc,
+					   gchar **argv,
+					   gchar **col_name)
+{
+	GHashTable *hash = (GHashTable *) data;
+	g_hash_table_insert (hash,
+			     g_strdup (argv[0]),
+			     GINT_TO_POINTER (1));
+	return 0;
+}
+
+/**
  * zif_md_primary_sql_load:
  **/
 static gboolean
 zif_md_primary_sql_load (ZifMd *md, ZifState *state, GError **error)
 {
 	const gchar *filename;
+	const gchar *statement;
+	gchar *error_msg = NULL;
 	gint rc;
 	ZifMdPrimarySql *primary_sql = ZIF_MD_PRIMARY_SQL (md);
 
@@ -120,6 +139,19 @@ zif_md_primary_sql_load (ZifMd *md, ZifState *state, GError **error)
 
 	/* we don't need to keep syncing */
 	sqlite3_exec (primary_sql->priv->db, "PRAGMA synchronous=OFF;", NULL, NULL, NULL);
+
+	/* populate the obsoletes name cache */
+	statement = "SELECT name FROM obsoletes;";
+	rc = sqlite3_exec (primary_sql->priv->db, statement,
+			   zif_md_primary_sql_sqlite_name_depends_cb,
+			   primary_sql->priv->obsoletes_name,
+			   &error_msg);
+	if (rc != SQLITE_OK) {
+		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_BAD_SQL,
+			     "SQL error: %s", error_msg);
+		sqlite3_free (error_msg);
+		goto out;
+	}
 
 	primary_sql->priv->loaded = TRUE;
 out:
@@ -585,20 +617,25 @@ zif_md_primary_sql_sqlite_depend_cb (void *data, gint argc, gchar **argv, gchar 
  * zif_md_primary_sql_what_depends:
  **/
 static GPtrArray *
-zif_md_primary_sql_what_depends (ZifMd *md, const gchar *table_name, GPtrArray *depends,
-				 ZifState *state, GError **error)
+zif_md_primary_sql_what_depends (ZifMd *md,
+				 const gchar *table_name,
+				 GPtrArray *depends,
+				 ZifState *state,
+				 GError **error)
 {
-	GString *statement = NULL;
-	gchar *error_msg = NULL;
-	gint rc;
-	guint i, j;
 	gboolean ret;
+	gchar *error_msg = NULL;
 	GError *error_local = NULL;
+	gint rc;
 	GPtrArray *array = NULL;
-	ZifState *state_local;
+	GPtrArray *depends2 = NULL;
+	GString *statement = NULL;
+	guint i, j;
 	ZifDepend *depend_tmp;
 	ZifMdPrimarySqlData *data = NULL;
 	ZifMdPrimarySql *md_primary_sql = ZIF_MD_PRIMARY_SQL (md);
+	ZifPackageEnsureType ensure_type = ZIF_PACKAGE_ENSURE_TYPE_LAST;
+	ZifState *state_local;
 
 	g_return_val_if_fail (zif_state_valid (state), NULL);
 
@@ -643,18 +680,44 @@ zif_md_primary_sql_what_depends (ZifMd *md, const gchar *table_name, GPtrArray *
 	data->id = zif_md_get_id (ZIF_MD (md));
 	data->packages = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 
+	/* convert to enum type */
+	if (g_strcmp0 (table_name, "requires") == 0)
+		ensure_type = ZIF_PACKAGE_ENSURE_TYPE_REQUIRES;
+	else if (g_strcmp0 (table_name, "provides") == 0)
+		ensure_type = ZIF_PACKAGE_ENSURE_TYPE_PROVIDES;
+	else if (g_strcmp0 (table_name, "conflicts") == 0)
+		ensure_type = ZIF_PACKAGE_ENSURE_TYPE_CONFLICTS;
+	else if (g_strcmp0 (table_name, "obsoletes") == 0)
+		ensure_type = ZIF_PACKAGE_ENSURE_TYPE_OBSOLETES;
+	else
+		g_assert_not_reached ();
+
+	/* can we limit the size of the SQL statement by removing
+	 * queries with names that we know are not in the table */
+	depends2 = g_ptr_array_new ();
+	for (i = 0; i < depends->len; i++) {
+		depend_tmp = g_ptr_array_index (depends, i);
+		if (ensure_type == ZIF_PACKAGE_ENSURE_TYPE_OBSOLETES) {
+			if (g_hash_table_lookup (md_primary_sql->priv->obsoletes_name,
+						 zif_depend_get_name (depend_tmp)) == NULL) {
+				continue;
+			}
+		}
+		g_ptr_array_add (depends2, depend_tmp);
+	}
+
 	/* create one super huge statement with 'ORs' rather than doing
 	 * thousands of indervidual queries */
 	statement = g_string_new ("");
 	g_string_append (statement, "BEGIN;\n");
 
-	for (j = 0; j < depends->len; j+= ZIF_MD_PRIMARY_SQL_MAX_EXPRESSION_DEPTH) {
+	for (j = 0; j < depends2->len; j += ZIF_MD_PRIMARY_SQL_MAX_EXPRESSION_DEPTH) {
 		g_string_append_printf (statement, ZIF_MD_PRIMARY_SQL_HEADER ", %s depend WHERE "
 					"p.pkgKey = depend.pkgKey AND (",
 					table_name);
 
-		for (i=j; i < depends->len && (i-j)<ZIF_MD_PRIMARY_SQL_MAX_EXPRESSION_DEPTH; i++) {
-			depend_tmp = g_ptr_array_index (depends, i);
+		for (i = j; i < depends2->len && (i-j) < ZIF_MD_PRIMARY_SQL_MAX_EXPRESSION_DEPTH; i++) {
+			depend_tmp = g_ptr_array_index (depends2, i);
 			g_string_append_printf (statement, "depend.name = '%s' OR ",
 						zif_depend_get_name (depend_tmp));
 		}
@@ -664,12 +727,12 @@ zif_md_primary_sql_what_depends (ZifMd *md, const gchar *table_name, GPtrArray *
 	}
 
 	/* a package always provides itself, even without an explicit provide */
-	if (g_strcmp0 (table_name, "provides") == 0) {
-		for (j = 0; j < depends->len; j+= ZIF_MD_PRIMARY_SQL_MAX_EXPRESSION_DEPTH) {
+	if (ensure_type == ZIF_PACKAGE_ENSURE_TYPE_PROVIDES) {
+		for (j = 0; j < depends2->len; j+= ZIF_MD_PRIMARY_SQL_MAX_EXPRESSION_DEPTH) {
 			g_string_append (statement, ZIF_MD_PRIMARY_SQL_HEADER " WHERE ");
 
-			for (i=j; i < depends->len && (i-j)<ZIF_MD_PRIMARY_SQL_MAX_EXPRESSION_DEPTH; i++) {
-				depend_tmp = g_ptr_array_index (depends, i);
+			for (i=j; i < depends2->len && (i-j)<ZIF_MD_PRIMARY_SQL_MAX_EXPRESSION_DEPTH; i++) {
+				depend_tmp = g_ptr_array_index (depends2, i);
 				g_string_append_printf (statement, "p.name = '%s' OR ",
 							zif_depend_get_name (depend_tmp));
 			}
@@ -708,24 +771,24 @@ zif_md_primary_sql_what_depends (ZifMd *md, const gchar *table_name, GPtrArray *
 
 	/* filter results */
 	state_local = zif_state_get_child (state);
-	if (g_strcmp0 (table_name, "provides") == 0) {
+	if (ensure_type == ZIF_PACKAGE_ENSURE_TYPE_PROVIDES) {
 		ret = zif_package_array_filter_provide (data->packages,
-							depends,
+							depends2,
 							state_local,
 							error);
-	} else if (g_strcmp0 (table_name, "requires") == 0) {
+	} else if (ensure_type == ZIF_PACKAGE_ENSURE_TYPE_REQUIRES) {
 		ret = zif_package_array_filter_require (data->packages,
-							depends,
+							depends2,
 							state_local,
 							error);
-	} else if (g_strcmp0 (table_name, "obsoletes") == 0) {
+	} else if (ensure_type == ZIF_PACKAGE_ENSURE_TYPE_OBSOLETES) {
 		ret = zif_package_array_filter_obsolete (data->packages,
-							 depends,
+							 depends2,
 							 state_local,
 							 error);
-	} else if (g_strcmp0 (table_name, "conflicts") == 0) {
+	} else if (ensure_type == ZIF_PACKAGE_ENSURE_TYPE_CONFLICTS) {
 		ret = zif_package_array_filter_conflict (data->packages,
-							 depends,
+							 depends2,
 							 state_local,
 							 error);
 	} else {
@@ -746,6 +809,8 @@ out:
 		g_ptr_array_unref (data->packages);
 		g_free (data);
 	}
+	if (depends2 != NULL)
+		g_ptr_array_unref (depends2);
 	if (statement != NULL)
 		g_string_free (statement, TRUE);
 	return array;
@@ -981,6 +1046,7 @@ zif_md_primary_sql_finalize (GObject *object)
 
 	sqlite3_close (md->priv->db);
 	g_object_unref (md->priv->config);
+	g_hash_table_unref (md->priv->obsoletes_name);
 
 	G_OBJECT_CLASS (zif_md_primary_sql_parent_class)->finalize (object);
 }
@@ -1026,6 +1092,11 @@ zif_md_primary_sql_init (ZifMdPrimarySql *md)
 	md->priv->loaded = FALSE;
 	md->priv->db = NULL;
 	md->priv->config = zif_config_new ();
+	md->priv->obsoletes_name =
+		g_hash_table_new_full (g_str_hash,
+				       g_str_equal,
+				       g_free,
+				       NULL);
 }
 
 /**

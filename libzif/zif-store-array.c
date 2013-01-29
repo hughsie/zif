@@ -1111,14 +1111,14 @@ zif_store_array_get_updates (GPtrArray *store_array,
 	/* setup state with the correct number of steps */
 	ret = zif_state_set_steps (state,
 				   error,
-				   1, /* get local packages */
-				   1, /* filter newest */
-				   10, /* resolve local list to remote */
-				   1, /* filter the updates to the newest */
-				   9, /* find any updates for installed set */
-				   76, /* find anything installed that is obsoleted */
-				   1, /* filter obsoletes by arch */
-				   1, /* filter any duplicate updates */
+				   1,	/* get local packages */
+				   1,	/* filter newest */
+				   20,	/* resolve local list to remote */
+				   3,	/* filter the updates to the newest */
+				   55,	/* find any updates for installed set */
+				   18,	/* find anything installed that is obsoleted */
+				   1,	/* filter obsoletes by arch */
+				   1,	/* filter any duplicate updates */
 				   -1);
 	if (!ret)
 		goto out;
