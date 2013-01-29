@@ -2799,6 +2799,11 @@ zif_transaction_get_newest_from_remote_by_names (ZifTransactionResolve *data,
 
 	/* get the newest package */
 	package_best = zif_package_array_get_newest (matches, error);
+	if (package_best == NULL) {
+		package_best = g_object_ref (g_ptr_array_index (matches, 0));
+		g_debug ("cannot decide between packages, choosing %s",
+			 zif_package_get_id (package_best));
+	}
 out:
 	if (matches != NULL)
 		g_ptr_array_unref (matches);
