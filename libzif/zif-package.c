@@ -173,6 +173,14 @@ zif_package_compare_mode_to_string (ZifPackageCompareMode value)
  * @flags: The amount of checking to do, e.g. %ZIF_PACKAGE_COMPARE_FLAG_CHECK_NAME
  *
  * Compares one package versions against each other.
+ * The order for comparison is, assuming all flags are set:
+ *
+ * 1. #ZifPackage object
+ * 2. Installed status (optional)
+ * 3. Name (optional)
+ * 4. Architecture compatibility (optional)
+ * 5. Version (optional)
+ * 6. Repo name (optional)
  *
  * Return value: 1 for a>b, 0 for a==b, -1 for b>a, or G_MAXINT for error
  *
@@ -185,7 +193,7 @@ zif_package_compare_full (ZifPackage *a,
 {
 	gchar **splita;
 	gchar **splitb;
-	gint val = G_MAXINT;
+	gint val = 0;
 
 	g_return_val_if_fail (ZIF_IS_PACKAGE (a), G_MAXINT);
 	g_return_val_if_fail (ZIF_IS_PACKAGE (b), G_MAXINT);
@@ -217,8 +225,9 @@ zif_package_compare_full (ZifPackage *a,
 
 	/* check name the same */
 	if ((flags & ZIF_PACKAGE_COMPARE_FLAG_CHECK_NAME) > 0) {
-		if (g_strcmp0 (splita[ZIF_PACKAGE_ID_NAME],
-			       splitb[ZIF_PACKAGE_ID_NAME]) != 0)
+		val = g_strcmp0 (splita[ZIF_PACKAGE_ID_NAME],
+				 splitb[ZIF_PACKAGE_ID_NAME]);
+		if (val != 0)
 			goto out;
 	}
 
@@ -226,14 +235,29 @@ zif_package_compare_full (ZifPackage *a,
 	if ((flags & ZIF_PACKAGE_COMPARE_FLAG_CHECK_ARCH) > 0) {
 		if (!zif_arch_is_native (splita[ZIF_PACKAGE_ID_ARCH],
 					 splitb[ZIF_PACKAGE_ID_ARCH])) {
-			goto out;
+			val = g_strcmp0 (splita[ZIF_PACKAGE_ID_ARCH],
+					 splitb[ZIF_PACKAGE_ID_ARCH]);
+			if (val != 0)
+				goto out;
 		}
 	}
 
 	/* do a version compare */
-	val = zif_compare_evr_full (splita[ZIF_PACKAGE_ID_VERSION],
-				    splitb[ZIF_PACKAGE_ID_VERSION],
-				    a->priv->compare_mode);
+	if ((flags & ZIF_PACKAGE_COMPARE_FLAG_CHECK_VERSION) > 0) {
+		val = zif_compare_evr_full (splita[ZIF_PACKAGE_ID_VERSION],
+					    splitb[ZIF_PACKAGE_ID_VERSION],
+					    a->priv->compare_mode);
+		if (val != 0)
+			goto out;
+	}
+
+	/* do data compare as a last resort, e.g. 'updates-testing' */
+	if ((flags & ZIF_PACKAGE_COMPARE_FLAG_CHECK_DATA) > 0) {
+		val = g_strcmp0 (splita[ZIF_PACKAGE_ID_DATA],
+				 splitb[ZIF_PACKAGE_ID_DATA]);
+		if (val != 0)
+			goto out;
+	}
 out:
 	return val;
 }
@@ -255,8 +279,10 @@ gint
 zif_package_compare (ZifPackage *a, ZifPackage *b)
 {
 	return zif_package_compare_full (a, b,
+					 ZIF_PACKAGE_COMPARE_FLAG_CHECK_INSTALLED |
 					 ZIF_PACKAGE_COMPARE_FLAG_CHECK_NAME |
-					 ZIF_PACKAGE_COMPARE_FLAG_CHECK_ARCH);
+					 ZIF_PACKAGE_COMPARE_FLAG_CHECK_ARCH |
+					 ZIF_PACKAGE_COMPARE_FLAG_CHECK_VERSION);
 }
 
 /**

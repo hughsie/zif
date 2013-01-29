@@ -98,6 +98,7 @@ zif_package_array_find (GPtrArray *array,
  * @error: A #GError, or %NULL
  *
  * Returns the newest package from a list.
+ * The package name is not used when calculating the newest package.
  *
  * Return value: (transfer full): A single %ZifPackage, or %NULL in the case of an error.
  * The returned object should be freed with g_object_unref() when no
@@ -134,25 +135,10 @@ zif_package_array_get_newest (GPtrArray *array, GError **error)
 		package_tmp = g_ptr_array_index (array, i);
 		retval = zif_package_compare_full (package_tmp,
 						   package_newest,
-						   ZIF_PACKAGE_COMPARE_FLAG_CHECK_NAME |
+						   ZIF_PACKAGE_COMPARE_FLAG_CHECK_VERSION |
 						   ZIF_PACKAGE_COMPARE_FLAG_CHECK_ARCH);
-		if (retval == G_MAXINT) {
-			g_debug ("cannot compare %s with %s using NVA, falling back to VA",
-				 zif_package_get_id (package_tmp),
-				 zif_package_get_id (package_newest));
-			retval = zif_package_compare_full (package_tmp,
-							   package_newest,
-							   ZIF_PACKAGE_COMPARE_FLAG_CHECK_ARCH);
-			if (retval == G_MAXINT) {
-				g_set_error (error,
-					     ZIF_PACKAGE_ERROR,
-					     ZIF_PACKAGE_ERROR_FAILED,
-					     "cannot compare %s with %s",
-					     zif_package_get_id (package_tmp),
-					     zif_package_get_id (package_newest));
-				goto out;
-			}
-		}
+		if (retval == 0)
+			goto out;
 		if (retval > 0)
 			package_newest = package_tmp;
 	}
@@ -345,11 +331,12 @@ zif_package_array_filter_newest (GPtrArray *packages)
 		/* the new package is the same */
 		retval = zif_package_compare_full (package,
 						   package_tmp,
-						   ZIF_PACKAGE_COMPARE_FLAG_CHECK_NAME |
 						   ZIF_PACKAGE_COMPARE_FLAG_CHECK_ARCH |
-						   ZIF_PACKAGE_COMPARE_FLAG_CHECK_INSTALLED);
-		if (retval == G_MAXINT) {
-			g_warning ("failed to compare %s:%s",
+						   ZIF_PACKAGE_COMPARE_FLAG_CHECK_VERSION |
+						   ZIF_PACKAGE_COMPARE_FLAG_CHECK_INSTALLED |
+						   ZIF_PACKAGE_COMPARE_FLAG_CHECK_DATA);
+		if (retval == 0) {
+			g_warning ("failed to compare %s : %s",
 				   zif_package_get_id_basic (package),
 				   zif_package_get_id_basic (package_tmp));
 			continue;

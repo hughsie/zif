@@ -1177,9 +1177,19 @@ zif_store_array_get_updates (GPtrArray *store_array,
 		for (j = 0; j < updates->len; j++) {
 			update = ZIF_PACKAGE (g_ptr_array_index (updates, j));
 
+			/* correct package name and arch */
+			val = zif_package_compare_full (update,
+							package,
+							ZIF_PACKAGE_COMPARE_FLAG_CHECK_NAME |
+							ZIF_PACKAGE_COMPARE_FLAG_CHECK_ARCH);
+			if (val != 0)
+				continue;
+
 			/* newer? */
-			val = zif_package_compare (update, package);
-			if (val == G_MAXINT)
+			val = zif_package_compare_full (update,
+							package,
+							ZIF_PACKAGE_COMPARE_FLAG_CHECK_VERSION);
+			if (val == 0)
 				continue;
 
 			/* arch okay, add to list */

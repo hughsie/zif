@@ -236,8 +236,7 @@ zif_package_array_func (void)
 
 	g_ptr_array_unref (array);
 
-	/* ensure we can't filter newest when there are two different
-	 * architectures in the array */
+	/* ensure we return x86_64 as newer than i386 */
 	array = zif_package_array_new ();
 
 	/* add first i386 pkg */
@@ -255,9 +254,9 @@ zif_package_array_func (void)
 	g_ptr_array_add (array, pkg);
 
 	pkg = zif_package_array_get_newest (array, &error);
-	g_assert_error (error, ZIF_PACKAGE_ERROR, ZIF_PACKAGE_ERROR_FAILED);
-	g_assert (pkg == NULL);
-	g_clear_error (&error);
+	g_assert_no_error (error);
+	g_assert (pkg != NULL);
+	g_assert_cmpstr (zif_package_get_id (pkg), ==, "hal;0.1-1.fc13;x86_64;installed");
 
 	g_ptr_array_unref (array);
 
@@ -2320,7 +2319,7 @@ zif_package_func (void)
 	/* check compare with flags */
 	a = zif_package_new ();
 	zif_package_set_installed (a, TRUE);
-	ret = zif_package_set_id (a, "colord;0.0.1-1.fc15;i386;fedora", &error);
+	ret = zif_package_set_id (a, "colord;0.0.1-1.fc15;i386;installed", &error);
 	g_assert_no_error (error);
 	g_assert (ret);
 	b = zif_package_new ();
@@ -2345,15 +2344,18 @@ zif_package_func (void)
 	g_assert_no_error (error);
 	g_assert (ret);
 	b = zif_package_new ();
-	ret = zif_package_set_id (b, "colord-freeworld;0.0.2-1.fc14;i386;fedora", &error);
+	ret = zif_package_set_id (b, "colord-freeworld;0.0.2-1.fc14;i586;fedora", &error);
 	g_assert_no_error (error);
 	g_assert (ret);
 	retval = zif_package_compare_full (a, b,
-					   ZIF_PACKAGE_COMPARE_FLAG_CHECK_NAME);
-	g_assert_cmpint (retval, ==, G_MAXINT);
-	retval = zif_package_compare_full (a, b,
-					   0);
+					   ZIF_PACKAGE_COMPARE_FLAG_CHECK_VERSION);
 	g_assert_cmpint (retval, ==, -1);
+	retval = zif_package_compare_full (a, b,
+					   ZIF_PACKAGE_COMPARE_FLAG_CHECK_NAME);
+	g_assert_cmpint (retval, <, 0);
+	retval = zif_package_compare_full (a, b,
+					   ZIF_PACKAGE_COMPARE_FLAG_CHECK_ARCH);
+	g_assert_cmpint (retval, ==, 0);
 
 	g_object_unref (a);
 	g_object_unref (b);
@@ -3337,7 +3339,7 @@ zif_state_finished_func (void)
 		ret = zif_state_done (state_local, &error);
 		g_assert_no_error (error);
 		g_assert (ret);
-	} 
+	}
 
 	/* turn checks back on */
 	zif_state_set_report_progress (state_local, TRUE);
