@@ -137,8 +137,10 @@ zif_package_array_get_newest (GPtrArray *array, GError **error)
 						   package_newest,
 						   ZIF_PACKAGE_COMPARE_FLAG_CHECK_VERSION |
 						   ZIF_PACKAGE_COMPARE_FLAG_CHECK_ARCH);
+		/* if the packages are identical in every way, just
+		 * choose the 1st package that was added to the array */
 		if (retval == 0)
-			goto out;
+			continue;
 		if (retval > 0)
 			package_newest = package_tmp;
 	}
