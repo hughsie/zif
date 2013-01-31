@@ -4616,7 +4616,7 @@ zif_transaction_prepare_ensure_trusted (ZifTransaction *transaction,
 	}
 
 	/* obtain repo keys automatically */
-	if (rc == RPMRC_NOKEY) {
+	if (rc == RPMRC_NOKEY && ZIF_IS_PACKAGE_REMOTE (package)) {
 		ret = zif_transaction_obtain_key_for_package (transaction,
 							      package,
 							      state,
