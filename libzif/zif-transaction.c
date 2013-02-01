@@ -954,6 +954,19 @@ zif_transaction_add_remove_internal (ZifTransaction *transaction,
 			goto out;
 		}
 
+		/* if we only have one kernel installed, and the new
+		 * kernel wants to remove the old kernel, just leave the
+		 * old kernel in place */
+		if (g_error_matches (error_local,
+				     ZIF_TRANSACTION_ERROR,
+				     ZIF_TRANSACTION_ERROR_FAILED_KERNEL_RUNNING)) {
+			ret = TRUE;
+			g_debug ("not removing old kernel: %s",
+				 error_local->message);
+			g_error_free (error_local);
+			goto out;
+		}
+
 		/* otherwise go down in a ball of flames */
 		g_propagate_error (error, error_local);
 		goto out;
