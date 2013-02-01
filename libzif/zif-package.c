@@ -279,7 +279,6 @@ gint
 zif_package_compare (ZifPackage *a, ZifPackage *b)
 {
 	return zif_package_compare_full (a, b,
-					 ZIF_PACKAGE_COMPARE_FLAG_CHECK_INSTALLED |
 					 ZIF_PACKAGE_COMPARE_FLAG_CHECK_NAME |
 					 ZIF_PACKAGE_COMPARE_FLAG_CHECK_ARCH |
 					 ZIF_PACKAGE_COMPARE_FLAG_CHECK_VERSION);
