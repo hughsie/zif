@@ -61,6 +61,7 @@ struct _ZifMdPrimarySqlPrivate
 	gboolean		 loaded;
 	sqlite3			*db;
 	ZifConfig		*config;
+	GHashTable		*conflicts_name;
 	GHashTable		*obsoletes_name;
 };
 
@@ -145,6 +146,19 @@ zif_md_primary_sql_load (ZifMd *md, ZifState *state, GError **error)
 	rc = sqlite3_exec (primary_sql->priv->db, statement,
 			   zif_md_primary_sql_sqlite_name_depends_cb,
 			   primary_sql->priv->obsoletes_name,
+			   &error_msg);
+	if (rc != SQLITE_OK) {
+		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_BAD_SQL,
+			     "SQL error: %s", error_msg);
+		sqlite3_free (error_msg);
+		goto out;
+	}
+
+	/* populate the conflicts name cache */
+	statement = "SELECT name FROM conflicts;";
+	rc = sqlite3_exec (primary_sql->priv->db, statement,
+			   zif_md_primary_sql_sqlite_name_depends_cb,
+			   primary_sql->priv->conflicts_name,
 			   &error_msg);
 	if (rc != SQLITE_OK) {
 		g_set_error (error, ZIF_MD_ERROR, ZIF_MD_ERROR_BAD_SQL,
@@ -626,6 +640,7 @@ zif_md_primary_sql_what_depends (ZifMd *md,
 	gboolean ret;
 	gchar *error_msg = NULL;
 	GError *error_local = NULL;
+	GHashTable *hash_tmp = NULL;
 	gint rc;
 	GPtrArray *array = NULL;
 	GPtrArray *depends2 = NULL;
@@ -681,27 +696,29 @@ zif_md_primary_sql_what_depends (ZifMd *md,
 	data->packages = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 
 	/* convert to enum type */
-	if (g_strcmp0 (table_name, "requires") == 0)
+	if (g_strcmp0 (table_name, "requires") == 0) {
 		ensure_type = ZIF_PACKAGE_ENSURE_TYPE_REQUIRES;
-	else if (g_strcmp0 (table_name, "provides") == 0)
+	} else if (g_strcmp0 (table_name, "provides") == 0) {
 		ensure_type = ZIF_PACKAGE_ENSURE_TYPE_PROVIDES;
-	else if (g_strcmp0 (table_name, "conflicts") == 0)
+	} else if (g_strcmp0 (table_name, "conflicts") == 0) {
 		ensure_type = ZIF_PACKAGE_ENSURE_TYPE_CONFLICTS;
-	else if (g_strcmp0 (table_name, "obsoletes") == 0)
+		hash_tmp = md_primary_sql->priv->conflicts_name;
+	} else if (g_strcmp0 (table_name, "obsoletes") == 0) {
 		ensure_type = ZIF_PACKAGE_ENSURE_TYPE_OBSOLETES;
-	else
+		hash_tmp = md_primary_sql->priv->obsoletes_name;
+	} else {
 		g_assert_not_reached ();
+	}
 
 	/* can we limit the size of the SQL statement by removing
 	 * queries with names that we know are not in the table */
 	depends2 = g_ptr_array_new ();
 	for (i = 0; i < depends->len; i++) {
 		depend_tmp = g_ptr_array_index (depends, i);
-		if (ensure_type == ZIF_PACKAGE_ENSURE_TYPE_OBSOLETES) {
-			if (g_hash_table_lookup (md_primary_sql->priv->obsoletes_name,
-						 zif_depend_get_name (depend_tmp)) == NULL) {
-				continue;
-			}
+		if (hash_tmp != NULL &&
+		    g_hash_table_lookup (hash_tmp,
+					 zif_depend_get_name (depend_tmp)) == NULL) {
+			continue;
 		}
 		g_ptr_array_add (depends2, depend_tmp);
 	}
@@ -1046,6 +1063,7 @@ zif_md_primary_sql_finalize (GObject *object)
 
 	sqlite3_close (md->priv->db);
 	g_object_unref (md->priv->config);
+	g_hash_table_unref (md->priv->conflicts_name);
 	g_hash_table_unref (md->priv->obsoletes_name);
 
 	G_OBJECT_CLASS (zif_md_primary_sql_parent_class)->finalize (object);
@@ -1092,6 +1110,11 @@ zif_md_primary_sql_init (ZifMdPrimarySql *md)
 	md->priv->loaded = FALSE;
 	md->priv->db = NULL;
 	md->priv->config = zif_config_new ();
+	md->priv->conflicts_name =
+		g_hash_table_new_full (g_str_hash,
+				       g_str_equal,
+				       g_free,
+				       NULL);
 	md->priv->obsoletes_name =
 		g_hash_table_new_full (g_str_hash,
 				       g_str_equal,
