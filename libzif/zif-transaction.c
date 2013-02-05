@@ -2766,7 +2766,7 @@ zif_transaction_get_newest_from_remote_by_names (ZifTransactionResolve *data,
 	if (matches->len == 0) {
 		g_set_error (error,
 			     ZIF_TRANSACTION_ERROR,
-			     ZIF_TRANSACTION_ERROR_FAILED,
+			     ZIF_TRANSACTION_ERROR_NOTHING_TO_DO,
 			     "cannot find newest remote package %s",
 			     zif_package_get_name (package));
 		goto out;

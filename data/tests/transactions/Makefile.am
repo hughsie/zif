@@ -59,6 +59,7 @@ EXTRA_DIST =							\
 	update-kernel-not-debug.manifest			\
 	update.manifest						\
 	update-multiarch.manifest				\
+	update-no-remote-package.manifest			\
 	update-nothing.manifest					\
 	update-package-rename.manifest				\
 	update-package-where-dep-is-provided-by-installed.manifest	\
