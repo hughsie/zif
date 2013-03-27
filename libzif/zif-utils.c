@@ -284,9 +284,9 @@ const gchar *
 zif_guess_content_type (const gchar *filename)
 {
 	if (g_str_has_suffix (filename, ".gz"))
-		return "application/x-gzip";
+		return "application/x-gzip,application/gzip";
 	if (g_str_has_suffix (filename, ".bz2"))
-		return "application/x-bzip";
+		return "application/x-bzip,application/bzip";
 	if (g_str_has_suffix (filename, ".xml"))
 		return "application/xml";
 	if (g_str_has_suffix (filename, "mirrorlist.txt"))
