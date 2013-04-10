@@ -172,7 +172,7 @@ zif_download_file_got_chunk_cb (SoupMessage *msg, SoupBuffer *chunk,
 			flight->slow_updates_cnt++;
 
 		/* too many chances, you *are* the weakest link */
-		if (flight->slow_updates_cnt > 2) {
+		if (flight->slow_updates_cnt > 5) {
 			g_debug ("downloading at %" G_GUINT64_FORMAT "kb/sec "
 				 "(less that %ikb/sec), "
 				 "so kicking mirror",
