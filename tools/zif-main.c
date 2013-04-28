@@ -6693,6 +6693,7 @@ main (int argc, char *argv[])
 	gboolean distro_sync = FALSE;
 	gboolean exact_arch = FALSE;
 	gboolean lock_all = FALSE;
+	gboolean nogpgcheck = FALSE;
 	gboolean offline = FALSE;
 	gboolean profile = FALSE;
 	gboolean ret;
@@ -6723,6 +6724,8 @@ main (int argc, char *argv[])
 			_("Enable background mode to run using less CPU"), NULL },
 		{ "offline", 'o', 0, G_OPTION_ARG_NONE, &offline,
 			_("Work offline when possible"), NULL },
+		{ "nogpgcheck", '\0', 0, G_OPTION_ARG_NONE, &nogpgcheck,
+			_("Disable GPG signature checking"), NULL },
 		{ "distro-sync", '\0', 0, G_OPTION_ARG_NONE, &distro_sync,
 			_("Take into account distribution versions when calculating updates"), NULL },
 		{ "config", 'c', 0, G_OPTION_ARG_STRING, &config_file,
@@ -6939,6 +6942,10 @@ main (int argc, char *argv[])
 	/* are we allowed to access the repos */
 	if (!offline)
 		zif_config_set_boolean (priv->config, "network", TRUE, NULL);
+
+	/* if we check GPG keys */
+	if (nogpgcheck)
+		zif_config_set_boolean (priv->config, "nogpgcheck", TRUE, NULL);
 
 	/* set the maximum age of the repo data */
 	if (age > 0)

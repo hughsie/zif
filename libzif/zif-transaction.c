@@ -4544,6 +4544,15 @@ zif_transaction_prepare_ensure_trusted (ZifTransaction *transaction,
 	ZifPackage *package_tmp = NULL;
 	ZifPackageTrustKind trust_kind = ZIF_PACKAGE_TRUST_KIND_NONE;
 
+	/* user disabled this */
+	if (zif_config_get_boolean (transaction->priv->config,
+				    "nogpgcheck",
+				    NULL)) {
+		ret = TRUE;
+		g_debug ("Skipping GPG checks");
+		goto out;
+	}
+
 	/* get the local file */
 	cache_filename = zif_package_get_cache_filename (package,
 							 NULL,
