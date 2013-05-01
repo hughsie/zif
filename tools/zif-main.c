@@ -6520,6 +6520,251 @@ out:
 }
 
 /**
+ * zif_cmd_print_rdeptree:
+ *
+ * Recursively prints a tree of all packages that a specified package pulls.
+ **/
+static gboolean
+zif_create_rdeptree (ZifPackage *package,
+		    ZifState *state,
+		    ZifStore *store,
+		    ZifStore *store_processed,
+		    guint depth,
+		    GString *str,
+		    gboolean *tree_array,
+		    GError **error)
+{
+	const gchar *pkg_id; /* the package_id of pkg */
+	gboolean ret;
+	GPtrArray *packages = NULL;
+	GPtrArray *requires = NULL;
+	guint i;
+	guint current_childs = 0;
+	guint our_depth;
+	guint x;
+	ZifPackage *current_package;
+	ZifPackage *pkg; /* the package we pull from the store */
+	ZifState *state_local;
+
+	zif_state_set_number_steps (state, 2);
+
+	/* Find out what "package" rquires */
+	state_local = zif_state_get_child (state);
+	requires = zif_package_get_requires (package,
+					     state_local,
+					     error);
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* Get all packages which require what "package" provides
+	 * TODO: Filter out (or mark in a special way) packages which
+	 * requires provides that other packages can supply. */
+	state_local = zif_state_get_child (state);
+	packages = zif_store_what_provides (store,
+					    requires,
+					    state_local,
+					    error);
+	if (packages == NULL) {
+		ret = FALSE;
+		goto out;
+	}
+	zif_package_array_filter_duplicates (packages);
+
+	/* this step done */
+	ret = zif_state_done (state, error);
+	if (!ret)
+		goto out;
+
+	/* add package to the store as we've already showed it
+	 * before this function was called */
+	zif_store_add_package (store_processed, package, NULL);
+
+	/* process all packages we got before */
+	for (i = 0; i < packages->len; i++) {
+
+		zif_state_reset(state);
+		state_local = zif_state_get_child (state);
+		/* Figure out if we processed this package already */
+		current_package = g_ptr_array_index (packages, i);
+		pkg_id = zif_package_get_id (current_package);
+		pkg = zif_store_find_package (store_processed,
+					      pkg_id,
+					      state_local,
+					      NULL);
+		if (pkg == NULL) {
+
+			zif_state_reset (state);
+			g_string_append (str, "\n");
+
+			if (i == packages->len-1)
+	 			tree_array[depth] = TRUE;
+			else
+				tree_array[depth] = FALSE;
+
+			/* draw tree */
+			for (x=0; x<depth; x++) {
+				if (tree_array[x] == FALSE)
+					g_string_append (str, "| ");
+				else
+					g_string_append (str, "  ");
+				if (depth > 0)
+					g_string_append (str, " ");
+			}
+			if (i == packages->len-1)
+				g_string_append (str, "`");
+			else
+				g_string_append (str, "|");
+
+			/* print the package name and arch */
+			g_string_append_printf (str, "--%s",
+						zif_package_get_name_arch (current_package), actual_len, current_childs);
+
+			/* so we'd know we already processed it */
+
+			ret = zif_store_add_package (store_processed,
+						     current_package,
+						     error);
+			if (!ret)
+				goto out;
+
+			/* limit recursion */
+			if (depth < 50) {
+				our_depth = depth + 1;
+				state_local = zif_state_get_child (state);
+				ret = zif_create_rdeptree (current_package,
+							  state_local,
+							  store,
+							  store_processed,
+							  our_depth,
+							  str,
+							  tree_array,
+							  error);
+				if (!ret)
+					goto out;
+			}
+		} else {
+			if (pkg != NULL)
+				g_object_unref (pkg);
+		}
+	}
+out:
+	if (requires != NULL)
+		g_ptr_array_unref (requires);
+	if (packages != NULL)
+		g_ptr_array_unref (packages);
+	return ret;
+}
+
+
+static gboolean
+zif_cmd_rdeptree (ZifCmdPrivate *priv, gchar **values, GError **error)
+{
+	gboolean ret = FALSE;
+	gboolean tree_array[50];
+	guint i;
+	GPtrArray *resolved_packages;
+	GString *tree = NULL;
+	ZifPackage *package_tmp;
+	ZifState *state_local;
+	ZifState *state_loop;
+	ZifStore *store_processed;
+
+	/* enough arguments */
+	if (g_strv_length (values) < 1) {
+		g_set_error_literal (error,
+				     1, 0,
+				     /* TRANSLATORS: error code */
+				     "Invalid argument, need '<package>'");
+		goto out;
+	}
+
+	/* setup state */
+	ret = zif_state_set_steps (priv->state,
+				   error,
+				   45, /* resolve */
+				   55, /* get deps */
+				   -1);
+	if (!ret)
+		goto out;
+
+	tree = g_string_new ("");
+	store_processed = zif_store_meta_new ();
+
+	/* get packages */
+	state_local = zif_state_get_child (priv->state);
+	resolved_packages = zif_store_resolve (priv->store_local,
+					       values,
+					       state_local,
+					       error);
+	if (resolved_packages == NULL) {
+		ret = FALSE;
+		goto out;
+	}
+
+	/* this step done */
+	ret = zif_state_done (priv->state, error);
+	if (!ret)
+		goto out;
+
+	/* failed */
+	if (resolved_packages->len == 0) {
+		ret = FALSE;
+		g_set_error (error,
+			     1, 0,
+			     /* TRANSLATORS: error code */
+			     "Cannot find installed package '%s'",
+			     values[0]);
+		goto out;
+	}
+
+	/* get the deptree for each package */
+	state_local = zif_state_get_child (priv->state);
+	zif_state_set_number_steps (state_local,
+				    resolved_packages->len);
+	for (i = 0; i < resolved_packages->len; i++) {
+		package_tmp = g_ptr_array_index (resolved_packages, i);
+
+		/* split up packages */
+		if (i > 0)
+			g_string_append (tree, "\n\n");
+
+		g_string_append_printf (tree, "%s",
+					zif_package_get_printable (package_tmp));
+		state_loop = zif_state_get_child (state_local);
+		zif_state_set_report_progress (state_loop, FALSE);
+		ret = zif_create_rdeptree (package_tmp,
+					  state_loop,
+					  priv->store_local,
+					  store_processed,
+					  0,
+					  tree,
+					  tree_array,
+					  error);
+		if (!ret)
+			goto out;
+
+		/* this step done */
+		ret = zif_state_done (state_local, error);
+		if (!ret)
+			goto out;
+	}
+
+	/* this step done */
+	ret = zif_state_done (priv->state, error);
+	if (!ret)
+		goto out;
+
+	/* print */
+	zif_progress_bar_end (priv->progressbar);
+	g_print ("%s\n", tree->str);
+out:
+	if (tree != NULL)
+		g_string_free (tree, TRUE);
+	return ret;
+}
+
+/**
  * zif_take_lock_cb:
  **/
 static gboolean
@@ -7286,6 +7531,12 @@ main (int argc, char *argv[])
 		     /* TRANSLATORS: command description */
 		     _("Shows a list of packages that depend on a specified package"),
 		     zif_cmd_deptree);
+		     
+	zif_cmd_add (priv->cmd_array,
+		     "rdeptree",
+		     /* TRANSLATORS: command description */
+		     _("Shows a tree of packages that a specified package pulls as dependencies (including indirect ones)"),
+		     zif_cmd_rdeptree);
 
 	/* sort by command name */
 	g_ptr_array_sort (priv->cmd_array,
