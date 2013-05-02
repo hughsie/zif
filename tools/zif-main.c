@@ -6539,7 +6539,6 @@ zif_create_rdeptree (ZifPackage *package,
 	GPtrArray *packages = NULL;
 	GPtrArray *requires = NULL;
 	guint i;
-	guint current_childs = 0;
 	guint our_depth;
 	guint x;
 	ZifPackage *current_package;
@@ -6618,7 +6617,7 @@ zif_create_rdeptree (ZifPackage *package,
 
 			/* print the package name and arch */
 			g_string_append_printf (str, "--%s",
-						zif_package_get_name_arch (current_package), actual_len, current_childs);
+						zif_package_get_name_arch (current_package));
 
 			/* so we'd know we already processed it */
 
