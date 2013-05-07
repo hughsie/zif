@@ -410,6 +410,7 @@ skip_error:
 	}
 
 	/* we're done */
+	zif_package_array_filter_duplicates (array);
 	array_results = g_ptr_array_ref (array);
 out:
 	if (array != NULL)
