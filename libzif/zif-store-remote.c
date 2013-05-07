@@ -3278,7 +3278,13 @@ zif_store_remote_search_group (ZifStore *store, gchar **search, ZifState *state,
 
 	/* setup state */
 	if (remote->priv->loaded_metadata) {
-		zif_state_set_number_steps (state, 1);
+		ret = zif_state_set_steps (state,
+					   error,
+					   1, /* load groups */
+					   99, /* search */
+					   -1);
+		if (!ret)
+			goto out;
 	} else {
 		ret = zif_state_set_steps (state,
 					   error,
@@ -3697,7 +3703,13 @@ zif_store_remote_what_provides (ZifStore *store, GPtrArray *depends,
 
 	/* setup state */
 	if (remote->priv->loaded_metadata) {
-		zif_state_set_number_steps (state, 1);
+		ret = zif_state_set_steps (state,
+					   error,
+					   50, /* what provides (primary) */
+					   50, /* what provides (filelists) */
+					   -1);
+		if (!ret)
+			goto out;
 	} else {
 		ret = zif_state_set_steps (state,
 					   error,
