@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Zif\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-01-08 09:34+0000\n"
-"PO-Revision-Date: 2012-10-26 09:17+0000\n"
+"POT-Creation-Date: 2013-05-08 08:34+0100\n"
+"PO-Revision-Date: 2013-05-08 08:11+0000\n"
 "Last-Translator: Richard Hughes <richard@hughsie.com>\n"
 "Language-Team: Greek (http://www.transifex.com/projects/p/freedesktop/language/el/)\n"
 "MIME-Version: 1.0\n"
@@ -88,21 +88,21 @@ msgstr ""
 #. TRANSLATORS: installing a package to the local system
 #. TRANSLATORS: this is the reason the action is to be taken
 #. TRANSLATORS: performing action
-#: ../tools/zif-main.c:206 ../tools/zif-main.c:2230 ../tools/zif-main.c:2719
+#: ../tools/zif-main.c:206 ../tools/zif-main.c:2230 ../tools/zif-main.c:2744
 msgid "Installing"
 msgstr ""
 
 #. TRANSLATORS: removing (deleting) a package
 #. TRANSLATORS: this is the reason the action is to be taken
 #. TRANSLATORS: performing action
-#: ../tools/zif-main.c:210 ../tools/zif-main.c:2250 ../tools/zif-main.c:3713
+#: ../tools/zif-main.c:210 ../tools/zif-main.c:2250 ../tools/zif-main.c:3763
 msgid "Removing"
 msgstr ""
 
 #. TRANSLATORS: updating an old version to a new version
 #. TRANSLATORS: this is the reason the action is to be taken
 #. TRANSLATORS: updating several packages
-#: ../tools/zif-main.c:214 ../tools/zif-main.c:2254 ../tools/zif-main.c:4762
+#: ../tools/zif-main.c:214 ../tools/zif-main.c:2254 ../tools/zif-main.c:4812
 msgid "Updating"
 msgstr ""
 
@@ -152,7 +152,7 @@ msgstr ""
 
 #. TRANSLATORS: finding packages in local and remote repos
 #. TRANSLATORS: finding packages from a name
-#: ../tools/zif-main.c:754 ../tools/zif-main.c:4083
+#: ../tools/zif-main.c:754 ../tools/zif-main.c:4133
 msgid "Finding package"
 msgstr ""
 
@@ -163,8 +163,8 @@ msgstr ""
 
 #. TRANSLATORS: error message: user needs to specify a value
 #: ../tools/zif-main.c:950 ../tools/zif-main.c:1162 ../tools/zif-main.c:1312
-#: ../tools/zif-main.c:1631 ../tools/zif-main.c:2714 ../tools/zif-main.c:2953
-#: ../tools/zif-main.c:3708 ../tools/zif-main.c:4078
+#: ../tools/zif-main.c:1631 ../tools/zif-main.c:2739 ../tools/zif-main.c:3003
+#: ../tools/zif-main.c:3758 ../tools/zif-main.c:4128
 #, c-format
 msgid "Specify a package name"
 msgstr ""
@@ -186,7 +186,7 @@ msgstr ""
 
 #. TRANSLATORS: getting the details (summary, size, etc) of a package
 #. TRANSLATORS: gettin details about an update
-#: ../tools/zif-main.c:1122 ../tools/zif-main.c:4903
+#: ../tools/zif-main.c:1122 ../tools/zif-main.c:4953
 msgid "Getting details"
 msgstr ""
 
@@ -351,7 +351,7 @@ msgstr ""
 
 #. TRANSLATORS: this is the reason the action is to be taken
 #. TRANSLATORS: performing action
-#: ../tools/zif-main.c:2270 ../tools/zif-main.c:2958
+#: ../tools/zif-main.c:2270 ../tools/zif-main.c:3008
 msgid "Downgrading"
 msgstr ""
 
@@ -419,768 +419,783 @@ msgstr ""
 msgid "Transaction success!"
 msgstr ""
 
-#: ../tools/zif-main.c:2766
+#: ../tools/zif-main.c:2806
 #, c-format
 msgid "The %s package is already installed"
 msgstr ""
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:2776
+#: ../tools/zif-main.c:2816
 msgid "All packages are already installed"
 msgstr ""
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:3000
+#: ../tools/zif-main.c:3050
 #, c-format
 msgid "%s is not already installed"
 msgstr ""
 
 #. TRANSLATORS: performing action
-#: ../tools/zif-main.c:3141
+#: ../tools/zif-main.c:3191
 msgid "Installing file"
 msgstr ""
 
 #. TRANSLATORS: performing action
-#: ../tools/zif-main.c:3474
+#: ../tools/zif-main.c:3524
 msgid "Checking manifests"
 msgstr ""
 
-#: ../tools/zif-main.c:3495
+#: ../tools/zif-main.c:3545
 msgid "All manifest files were checked successfully"
 msgstr ""
 
 #. TRANSLATORS: performing action
-#: ../tools/zif-main.c:3532
+#: ../tools/zif-main.c:3582
 msgid "Dumping manifest"
 msgstr ""
 
 #. TRANSLATORS: performing action
-#: ../tools/zif-main.c:3643
+#: ../tools/zif-main.c:3693
 msgid "Refreshing cache"
 msgstr ""
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:3752
+#: ../tools/zif-main.c:3802
 #, c-format
 msgid "The package is not installed"
 msgstr ""
 
 #. TRANSLATORS: performing action
-#: ../tools/zif-main.c:3849
+#: ../tools/zif-main.c:3899
 msgid "Disabling repo"
 msgstr ""
 
 #. TRANSLATORS: performing action
-#: ../tools/zif-main.c:3920
+#: ../tools/zif-main.c:3970
 msgid "Enabling repo"
 msgstr ""
 
 #. TRANSLATORS: performing action
-#: ../tools/zif-main.c:3999
+#: ../tools/zif-main.c:4049
 msgid "Getting repo list"
 msgstr ""
 
-#: ../tools/zif-main.c:4181
+#: ../tools/zif-main.c:4231
 msgid "Specify a category"
 msgstr ""
 
 #. TRANSLATORS: returning all packages that match a category
-#: ../tools/zif-main.c:4186
+#: ../tools/zif-main.c:4236
 msgid "Search category"
 msgstr ""
 
 #. TRANSLATORS: user needs to specify something
-#: ../tools/zif-main.c:4247 ../tools/zif-main.c:4425 ../tools/zif-main.c:4501
-#: ../tools/zif-main.c:5204 ../tools/zif-main.c:5286 ../tools/zif-main.c:5368
-#: ../tools/zif-main.c:5453
+#: ../tools/zif-main.c:4297 ../tools/zif-main.c:4475 ../tools/zif-main.c:4551
+#: ../tools/zif-main.c:5254 ../tools/zif-main.c:5336 ../tools/zif-main.c:5418
+#: ../tools/zif-main.c:5503
 #, c-format
 msgid "No search term specified"
 msgstr ""
 
 #. TRANSLATORS: searching by package details, not just name
-#: ../tools/zif-main.c:4252
+#: ../tools/zif-main.c:4302
 msgid "Searching details"
 msgstr ""
 
 #. TRANSLATORS: user needs to specify something
-#: ../tools/zif-main.c:4344
+#: ../tools/zif-main.c:4394
 msgid "Specify a filename"
 msgstr ""
 
 #. TRANSLATORS: searching for a specific file
-#: ../tools/zif-main.c:4349
+#: ../tools/zif-main.c:4399
 msgid "Searching file"
 msgstr ""
 
 #. TRANSLATORS: searching by a specific group
-#: ../tools/zif-main.c:4430
+#: ../tools/zif-main.c:4480
 msgid "Search group"
 msgstr ""
 
 #. TRANSLATORS: search, based on the package name only
-#: ../tools/zif-main.c:4506
+#: ../tools/zif-main.c:4556
 msgid "Searching name"
 msgstr ""
 
 #. TRANSLATORS: used when the user did not explicitly specify a
 #. * list of updates to install
-#: ../tools/zif-main.c:4598
+#: ../tools/zif-main.c:4648
 msgid "Updating system"
 msgstr ""
 
-#: ../tools/zif-main.c:4678 ../tools/zif-main.c:5085
+#: ../tools/zif-main.c:4728 ../tools/zif-main.c:5135
 msgid "Specify a distro name, e.g."
 msgstr ""
 
 #. TRANSLATORS: upgrading to a new distro release, *not*
 #. * updating to a new package version
-#: ../tools/zif-main.c:4684 ../tools/zif-main.c:5111
+#: ../tools/zif-main.c:4734 ../tools/zif-main.c:5161
 msgid "Upgrading"
 msgstr ""
 
 #. TRANSLATORS: error message, invalid value
-#: ../tools/zif-main.c:4690 ../tools/zif-main.c:5117
+#: ../tools/zif-main.c:4740 ../tools/zif-main.c:5167
 msgid "Distribution name invalid"
 msgstr ""
 
 #. TRANSLATORS: error message, invalid value
-#: ../tools/zif-main.c:4697 ../tools/zif-main.c:5124
+#: ../tools/zif-main.c:4747 ../tools/zif-main.c:5174
 msgid "Only 'fedora' is supported"
 msgstr ""
 
 #. TRANSLATORS: error message, invalid value
-#: ../tools/zif-main.c:4705 ../tools/zif-main.c:5132
+#: ../tools/zif-main.c:4755 ../tools/zif-main.c:5182
 #, c-format
 msgid "Version number %i is invalid"
 msgstr ""
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:4801
+#: ../tools/zif-main.c:4851
 #, c-format
 msgid "The %s package is not installed"
 msgstr ""
 
-#: ../tools/zif-main.c:4984
+#: ../tools/zif-main.c:5034
 msgid "No update detail"
 msgstr ""
 
-#: ../tools/zif-main.c:4999
+#: ../tools/zif-main.c:5049
 msgid "Kind:"
 msgstr ""
 
-#: ../tools/zif-main.c:5003
+#: ../tools/zif-main.c:5053
 msgid "State:"
 msgstr ""
 
-#: ../tools/zif-main.c:5007
+#: ../tools/zif-main.c:5057
 msgid "ID:"
 msgstr ""
 
-#: ../tools/zif-main.c:5011
+#: ../tools/zif-main.c:5061
 msgid "Title:"
 msgstr ""
 
-#: ../tools/zif-main.c:5015
+#: ../tools/zif-main.c:5065
 msgid "Description:"
 msgstr ""
 
-#: ../tools/zif-main.c:5019
+#: ../tools/zif-main.c:5069
 msgid "Issued:"
 msgstr ""
 
-#: ../tools/zif-main.c:5092
+#: ../tools/zif-main.c:5142
 msgid "Specify a update type, e.g."
 msgstr ""
 
-#: ../tools/zif-main.c:5105
+#: ../tools/zif-main.c:5155
 msgid "Invalid update type, only these types are supported:"
 msgstr ""
 
 #. TRANSLATORS: find out what package conflicts
-#: ../tools/zif-main.c:5209
+#: ../tools/zif-main.c:5259
 msgid "Conflicts"
 msgstr ""
 
 #. TRANSLATORS: find out what package obsoletes
-#: ../tools/zif-main.c:5291
+#: ../tools/zif-main.c:5341
 msgid "Obsoletes"
 msgstr ""
 
 #. TRANSLATORS: find out what package provides
-#: ../tools/zif-main.c:5373
+#: ../tools/zif-main.c:5423
 msgid "Provides"
 msgstr ""
 
 #. TRANSLATORS: find out what package requires
-#: ../tools/zif-main.c:5458
+#: ../tools/zif-main.c:5508
 msgid "Requires"
 msgstr ""
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5550
+#: ../tools/zif-main.c:5600
 msgid "Command not found, valid commands are:"
 msgstr ""
 
-#: ../tools/zif-main.c:5612
+#: ../tools/zif-main.c:5662
 #, c-format
 msgid "Welcome to the shell. Type '%s' to finish."
 msgstr ""
 
 #. TRANSLATORS: used when the install database is being checked
-#: ../tools/zif-main.c:5835
+#: ../tools/zif-main.c:5885
 msgid "Checking database"
 msgstr ""
 
 #. TRANSLATORS: used when the install database is being set
-#: ../tools/zif-main.c:5923
+#: ../tools/zif-main.c:5973
 msgid "Setting key"
 msgstr ""
 
 #. TRANSLATORS: used when the install database is being set
-#: ../tools/zif-main.c:5996
+#: ../tools/zif-main.c:6046
 msgid "Getting key"
 msgstr ""
 
 #. TRANSLATORS: used when the install database is being set
-#: ../tools/zif-main.c:6070
+#: ../tools/zif-main.c:6120
 msgid "Deleting key"
 msgstr ""
 
 #. TRANSLATORS: this is when the database key is deleted, e.g.
 #. * "from_repo deleted");
-#: ../tools/zif-main.c:6113
+#: ../tools/zif-main.c:6163
 msgid "deleted"
 msgstr ""
 
 #. TRANSLATORS: used when the install database is listed
-#: ../tools/zif-main.c:6149
+#: ../tools/zif-main.c:6199
 msgid "Listing keys"
 msgstr ""
 
 #. TRANSLATORS: the user just did ctrl-c
-#: ../tools/zif-main.c:6596 ../tools/zif-main.c:6627
+#: ../tools/zif-main.c:6890 ../tools/zif-main.c:6921
 msgid "Cancellation in progress..."
 msgstr ""
 
-#: ../tools/zif-main.c:6668
+#: ../tools/zif-main.c:6964
 msgid "Show extra debugging information"
 msgstr ""
 
-#: ../tools/zif-main.c:6670
+#: ../tools/zif-main.c:6966
 msgid "Enable low level profiling of Zif"
 msgstr ""
 
-#: ../tools/zif-main.c:6672
+#: ../tools/zif-main.c:6968
 msgid "Enable background mode to run using less CPU"
 msgstr ""
 
-#: ../tools/zif-main.c:6674
+#: ../tools/zif-main.c:6970
 msgid "Work offline when possible"
 msgstr ""
 
-#: ../tools/zif-main.c:6676
+#: ../tools/zif-main.c:6972
+msgid "Disable GPG signature checking"
+msgstr ""
+
+#: ../tools/zif-main.c:6974
 msgid "Take into account distribution versions when calculating updates"
 msgstr ""
 
-#: ../tools/zif-main.c:6678
+#: ../tools/zif-main.c:6976
 msgid "Use different config file"
 msgstr ""
 
-#: ../tools/zif-main.c:6680
+#: ../tools/zif-main.c:6978
 msgid "Exclude certain packages"
 msgstr ""
 
-#: ../tools/zif-main.c:6682
+#: ../tools/zif-main.c:6980
 msgid "Use different rpm database root"
 msgstr ""
 
-#: ../tools/zif-main.c:6684
+#: ../tools/zif-main.c:6982
 msgid "Proxy server setting"
 msgstr ""
 
-#: ../tools/zif-main.c:6686
+#: ../tools/zif-main.c:6984
 msgid "Permitted age of the cache in seconds, 0 for never (default)"
 msgstr ""
 
-#: ../tools/zif-main.c:6688
+#: ../tools/zif-main.c:6986
 msgid "Skip broken dependencies and repos rather than failing"
 msgstr ""
 
-#: ../tools/zif-main.c:6690
+#: ../tools/zif-main.c:6988
 msgid "Only use the exact architecture packages for this machine"
 msgstr ""
 
-#: ../tools/zif-main.c:6692
+#: ../tools/zif-main.c:6990
 msgid "Assume yes to all questions"
 msgstr ""
 
-#: ../tools/zif-main.c:6694
+#: ../tools/zif-main.c:6992
 msgid "Assume no to all questions"
 msgstr ""
 
-#: ../tools/zif-main.c:6696
+#: ../tools/zif-main.c:6994
 msgid "Enable one or more repositories"
 msgstr ""
 
-#: ../tools/zif-main.c:6698
+#: ../tools/zif-main.c:6996
 msgid "Disable one or more repositories"
 msgstr ""
 
-#: ../tools/zif-main.c:6700
+#: ../tools/zif-main.c:6998
 msgid "Specify a directory of packages as a remote store"
 msgstr ""
 
-#: ../tools/zif-main.c:6702
+#: ../tools/zif-main.c:7000
 msgid "Take all locks at startup rather than as required"
 msgstr ""
 
+#: ../tools/zif-main.c:7002
+msgid "Show the version number and then quit"
+msgstr ""
+
 #. TRANSLATORS: we can't run as the user
-#: ../tools/zif-main.c:6870
+#: ../tools/zif-main.c:7176
 msgid "Cannot specify age when not a privileged user."
 msgstr ""
 
 #. TRANSLATORS: we can't download new stuff as a user
-#: ../tools/zif-main.c:6875
+#: ../tools/zif-main.c:7181
 msgid "Enabling offline mode as user unprivileged."
 msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6956
+#: ../tools/zif-main.c:7266
 msgid "Remove cached data"
 msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6961
+#: ../tools/zif-main.c:7271
 msgid "Download a package"
 msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6966
+#: ../tools/zif-main.c:7276
 msgid "Find a given package given the ID"
 msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6971
+#: ../tools/zif-main.c:7281
 msgid "Returns the list of categories"
 msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6976
+#: ../tools/zif-main.c:7286
 msgid "List a package's dependencies"
 msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6981
+#: ../tools/zif-main.c:7291
 msgid "Display details about a package or group of packages"
 msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6986
+#: ../tools/zif-main.c:7296
 msgid "List the files in a package"
 msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6991
+#: ../tools/zif-main.c:7301
 msgid "Get the groups the system supports"
 msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6996
+#: ../tools/zif-main.c:7306
 msgid "List all packages"
 msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7001
+#: ../tools/zif-main.c:7311
 msgid "Check for available package updates"
 msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7006
+#: ../tools/zif-main.c:7316
 msgid "Check for newer operating system versions"
 msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7011
+#: ../tools/zif-main.c:7321
 msgid "Get an expanded value from the config file"
 msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7016
+#: ../tools/zif-main.c:7326
 msgid "Installs the build dependencies for a given package"
 msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7021
+#: ../tools/zif-main.c:7331
 msgid "Display a helpful usage message"
 msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7026
+#: ../tools/zif-main.c:7336
 msgid "Install a package"
 msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7031
+#: ../tools/zif-main.c:7341
 msgid "Downgrade a package to a previous version"
 msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7036
+#: ../tools/zif-main.c:7346
 msgid "Install a local package"
 msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7041
+#: ../tools/zif-main.c:7351
 msgid "Check a transaction manifest"
 msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7046
+#: ../tools/zif-main.c:7356
 msgid "Dump a transaction manifest to a file"
 msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7051
+#: ../tools/zif-main.c:7361
 msgid "Generate the metadata cache"
 msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7056
+#: ../tools/zif-main.c:7366
 msgid "Remove a package"
 msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7061
+#: ../tools/zif-main.c:7371
 msgid "Remove a package with dependencies"
 msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7066
+#: ../tools/zif-main.c:7376
 msgid "Disable a specific software repository"
 msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7071
+#: ../tools/zif-main.c:7381
 msgid "Enable a specific software repository"
 msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7076
+#: ../tools/zif-main.c:7386
 msgid "Display the configured software repositories"
 msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7081
+#: ../tools/zif-main.c:7391
 msgid "Find a given package name"
 msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7086
+#: ../tools/zif-main.c:7396
 msgid "Search package details for the given category"
 msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7091
+#: ../tools/zif-main.c:7401
 msgid "Search package details for the given string"
 msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7096
+#: ../tools/zif-main.c:7406
 msgid "Search packages for the given filename"
 msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7101
+#: ../tools/zif-main.c:7411
 msgid "Search packages in the given group"
 msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7106
+#: ../tools/zif-main.c:7416
 msgid "Search package name for the given string"
 msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7111
+#: ../tools/zif-main.c:7421
 msgid "Run an interactive shell"
 msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7116
+#: ../tools/zif-main.c:7426
 msgid "Update a package to the newest available version"
 msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7121
+#: ../tools/zif-main.c:7431
 msgid "Update a package taking into account distribution version"
 msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7126
+#: ../tools/zif-main.c:7436
 msgid "Display details about an update"
 msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7131
+#: ../tools/zif-main.c:7441
 msgid "Upgrade the operating system to a newer version"
 msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7136
+#: ../tools/zif-main.c:7446
 msgid "Live-upgrade the operating system to a newer version"
 msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7141
+#: ../tools/zif-main.c:7451
 msgid "Find what package conflicts with the given value"
 msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7146
+#: ../tools/zif-main.c:7456
 msgid "Find what package obsoletes the given value"
 msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7151
+#: ../tools/zif-main.c:7461
 msgid "Find what package provides the given value"
 msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7156
+#: ../tools/zif-main.c:7466
 msgid "Find what package requires the given value"
 msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7161
+#: ../tools/zif-main.c:7471
 msgid "Check for problems in the installed database"
 msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7166
+#: ../tools/zif-main.c:7476
 msgid "Get a value in the package database"
 msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7171
+#: ../tools/zif-main.c:7481
 msgid "Set a value in the installed package database"
 msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7176
+#: ../tools/zif-main.c:7486
 msgid "Remove a value from the installed package database"
 msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7181
+#: ../tools/zif-main.c:7491
 msgid "List values from the installed package database"
 msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7186
+#: ../tools/zif-main.c:7496
 msgid "Gets the provides for a given package"
 msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7191
+#: ../tools/zif-main.c:7501
 msgid "Gets the requires for a given package"
 msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7196
+#: ../tools/zif-main.c:7506
 msgid "Gets the conflicts for a given package"
 msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7201
+#: ../tools/zif-main.c:7511
 msgid "Gets the obsoletes for a given package"
 msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7206
+#: ../tools/zif-main.c:7516
 msgid "Gets the transaction history list"
 msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7211
+#: ../tools/zif-main.c:7521
 msgid "Gets the transaction history for a specified package"
 msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7216
+#: ../tools/zif-main.c:7526
 msgid "Imports the history data from a legacy database"
 msgstr ""
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7221
+#: ../tools/zif-main.c:7531
 msgid "Shows a list of packages that depend on a specified package"
 msgstr ""
 
+#. TRANSLATORS: command description
+#: ../tools/zif-main.c:7537
+msgid ""
+"Shows a tree of packages that a specified package pulls as dependencies "
+"(including indirect ones)"
+msgstr ""
+
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7249
+#: ../tools/zif-main.c:7565
 msgid "Cancelled"
 msgstr ""
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7253
+#: ../tools/zif-main.c:7569
 msgid "The system state was invalid"
 msgstr ""
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7257
+#: ../tools/zif-main.c:7573
 msgid "Unhandled state error"
 msgstr ""
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7263
+#: ../tools/zif-main.c:7579
 msgid "The transaction failed"
 msgstr ""
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7267
+#: ../tools/zif-main.c:7583
 msgid "Nothing to do"
 msgstr ""
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7271
+#: ../tools/zif-main.c:7587
 msgid "No supported"
 msgstr ""
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7275
+#: ../tools/zif-main.c:7591
 msgid "The transaction conflicts"
 msgstr ""
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7279
+#: ../tools/zif-main.c:7595
 msgid "Unhandled transaction error"
 msgstr ""
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7285
+#: ../tools/zif-main.c:7601
 msgid "Failed to store"
 msgstr ""
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7289
+#: ../tools/zif-main.c:7605
 msgid "Failed as offline"
 msgstr ""
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7293
+#: ../tools/zif-main.c:7609
 msgid "Failed to find"
 msgstr ""
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7297
+#: ../tools/zif-main.c:7613
 msgid "Failed to download"
 msgstr ""
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7301
+#: ../tools/zif-main.c:7617
 msgid "Store array is empty"
 msgstr ""
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7305
+#: ../tools/zif-main.c:7621
 msgid "Not supported"
 msgstr ""
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7309 ../tools/zif-main.c:7387
+#: ../tools/zif-main.c:7625 ../tools/zif-main.c:7703
 msgid "Not locked"
 msgstr ""
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7313
+#: ../tools/zif-main.c:7629
 msgid "There are multiple matches"
 msgstr ""
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7317
+#: ../tools/zif-main.c:7633
 msgid "Not enabled"
 msgstr ""
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7321
+#: ../tools/zif-main.c:7637
 msgid "Unhandled store error"
 msgstr ""
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7327
+#: ../tools/zif-main.c:7643
 msgid "Package operation failed"
 msgstr ""
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7331
+#: ../tools/zif-main.c:7647
 msgid "Unhandled package error"
 msgstr ""
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7337
+#: ../tools/zif-main.c:7653
 msgid "History operation failed"
 msgstr ""
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7341
+#: ../tools/zif-main.c:7657
 msgid "Unhandled history error"
 msgstr ""
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7347
+#: ../tools/zif-main.c:7663
 msgid "Settings operation failed"
 msgstr ""
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7351
+#: ../tools/zif-main.c:7667
 msgid "Unhandled config error"
 msgstr ""
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7357
+#: ../tools/zif-main.c:7673
 msgid "Download failed"
 msgstr ""
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7361
+#: ../tools/zif-main.c:7677
 msgid "Download failed as permission denied"
 msgstr ""
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7365
+#: ../tools/zif-main.c:7681
 msgid "No space left on device"
 msgstr ""
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7369
+#: ../tools/zif-main.c:7685
 msgid "Download was cancelled"
 msgstr ""
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7373
+#: ../tools/zif-main.c:7689
 msgid "Unhandled download error"
 msgstr ""
 
 #. TRANSLATORS: error message
 #. TRANSLATORS: we suck
-#: ../tools/zif-main.c:7379 ../tools/zif-main.c:7401 ../tools/zif-main.c:7412
+#: ../tools/zif-main.c:7695 ../tools/zif-main.c:7717 ../tools/zif-main.c:7728
 msgid "Failed"
 msgstr ""
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7383
+#: ../tools/zif-main.c:7699
 msgid "Already locked"
 msgstr ""
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7391
+#: ../tools/zif-main.c:7707
 msgid "No permissions"
 msgstr ""
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7395
+#: ../tools/zif-main.c:7711
 msgid "Unhandled metadata error"
 msgstr ""
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7405
+#: ../tools/zif-main.c:7721
 msgid "Unhandled repos error"
 msgstr ""

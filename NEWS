@@ -1,3 +1,37 @@
+Version 0.3.6
+~~~~~~~~~~~~~
+Released: 2013-05-07
+
+New Features:
+ - Add an installed flag as an additional optional check for comparing packages (Richard Hughes)
+ - Add a --version argument to the Zif command line tool (Richard Hughes)
+ - Add support for the nogpgcheck command line option (Richard Hughes)
+ - Add the rdeptree command (Elad Alfassa)
+ - Add zif_store_remote_get_pubkey_enabled() to be able to get the keys even when gpgcheck=0 (Richard Hughes)
+ - Install the package when the user does 'zif install /usr/sbin/powertop' (Richard Hughes)
+ - Print the raw timing data when profile is enabled (Richard Hughes)
+ - Support installing packages using an rpm provide name (Richard Hughes)
+
+Bugfixes:
+ - Cache the conflicts name table in ZifMdPrimarySql as it is typically small (Richard Hughes)
+ - Clarify what zif_package_compare_full() does and add several new check flags (Richard Hughes)
+ - Do not abort because an update tries to remove the running kernel (Richard Hughes)
+ - Do not abort the comparison if the same package is in an array more than once (Richard Hughes)
+ - Do not load the ZifStoreRemote metadata every time it is used (Richard Hughes)
+ - Do not return an error on update if a local package is not resolvable in a remote store (Richard Hughes)
+ - Do not return duplicate results from zif_store_array_x functions (Richard Hughes)
+ - Don't change behaviour of zif_package_compare() compared to previous releases (Richard Hughes)
+ - Don't use the deprecated INCLUDES in Makefile.am (Richard Hughes)
+ - Fix a crash when using 'zif local-install' on an unsigned package (Richard Hughes)
+ - Fix some metadata downloads being retried over and over again (Richard Hughes)
+ - Fix two progress warnings when ZifStoreRemote metadata has already been loaded (Richard Hughes)
+ - Make the slow updates check more forgiving (Richard Hughes)
+ - Never use -Werror (Richard Hughes)
+ - Skip unavailable repos when refreshing the metadata (Richard Hughes)
+ - Speed up zif_store_array_get_updates() by a factor of 4.6 (Richard Hughes)
+ - Use only the name as the key when filtering packages by newest (Richard Hughes)
+ - When there are two versions of the same package, prefer showing the installed version (Richard Hughes)
+
 Version 0.3.5
 ~~~~~~~~~~~~~
 Released: 2013-01-08

@@ -3,13 +3,13 @@
 # This file is distributed under the same license as the PACKAGE package.
 # 
 # Translators:
-# Seong-ho Cho <darkcircle.0426@gmail.com>, 2012.
+# Darkcircle <darkcircle.0426@gmail.com>, 2012
 msgid ""
 msgstr ""
 "Project-Id-Version: Zif\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-01-08 09:34+0000\n"
-"PO-Revision-Date: 2012-10-26 09:17+0000\n"
+"POT-Creation-Date: 2013-05-08 08:34+0100\n"
+"PO-Revision-Date: 2013-05-08 08:11+0000\n"
 "Last-Translator: Richard Hughes <richard@hughsie.com>\n"
 "Language-Team: Korean (http://www.transifex.com/projects/p/freedesktop/language/ko/)\n"
 "MIME-Version: 1.0\n"
@@ -89,21 +89,21 @@ msgstr "충돌 검사중"
 #. TRANSLATORS: installing a package to the local system
 #. TRANSLATORS: this is the reason the action is to be taken
 #. TRANSLATORS: performing action
-#: ../tools/zif-main.c:206 ../tools/zif-main.c:2230 ../tools/zif-main.c:2719
+#: ../tools/zif-main.c:206 ../tools/zif-main.c:2230 ../tools/zif-main.c:2744
 msgid "Installing"
 msgstr "설치중"
 
 #. TRANSLATORS: removing (deleting) a package
 #. TRANSLATORS: this is the reason the action is to be taken
 #. TRANSLATORS: performing action
-#: ../tools/zif-main.c:210 ../tools/zif-main.c:2250 ../tools/zif-main.c:3713
+#: ../tools/zif-main.c:210 ../tools/zif-main.c:2250 ../tools/zif-main.c:3763
 msgid "Removing"
 msgstr "제거중"
 
 #. TRANSLATORS: updating an old version to a new version
 #. TRANSLATORS: this is the reason the action is to be taken
 #. TRANSLATORS: updating several packages
-#: ../tools/zif-main.c:214 ../tools/zif-main.c:2254 ../tools/zif-main.c:4762
+#: ../tools/zif-main.c:214 ../tools/zif-main.c:2254 ../tools/zif-main.c:4812
 msgid "Updating"
 msgstr "업데이트중"
 
@@ -153,7 +153,7 @@ msgstr "%s 패키지가 없습니다"
 
 #. TRANSLATORS: finding packages in local and remote repos
 #. TRANSLATORS: finding packages from a name
-#: ../tools/zif-main.c:754 ../tools/zif-main.c:4083
+#: ../tools/zif-main.c:754 ../tools/zif-main.c:4133
 msgid "Finding package"
 msgstr "패키지 찾는 중"
 
@@ -164,8 +164,8 @@ msgstr "분류 가져오는 중"
 
 #. TRANSLATORS: error message: user needs to specify a value
 #: ../tools/zif-main.c:950 ../tools/zif-main.c:1162 ../tools/zif-main.c:1312
-#: ../tools/zif-main.c:1631 ../tools/zif-main.c:2714 ../tools/zif-main.c:2953
-#: ../tools/zif-main.c:3708 ../tools/zif-main.c:4078
+#: ../tools/zif-main.c:1631 ../tools/zif-main.c:2739 ../tools/zif-main.c:3003
+#: ../tools/zif-main.c:3758 ../tools/zif-main.c:4128
 #, c-format
 msgid "Specify a package name"
 msgstr "패키지 이름을 지정하여 주십시오"
@@ -187,7 +187,7 @@ msgstr "제공자:"
 
 #. TRANSLATORS: getting the details (summary, size, etc) of a package
 #. TRANSLATORS: gettin details about an update
-#: ../tools/zif-main.c:1122 ../tools/zif-main.c:4903
+#: ../tools/zif-main.c:1122 ../tools/zif-main.c:4953
 msgid "Getting details"
 msgstr "세부내용 가져오는 중"
 
@@ -352,7 +352,7 @@ msgstr "시스템 업데이트중"
 
 #. TRANSLATORS: this is the reason the action is to be taken
 #. TRANSLATORS: performing action
-#: ../tools/zif-main.c:2270 ../tools/zif-main.c:2958
+#: ../tools/zif-main.c:2270 ../tools/zif-main.c:3008
 msgid "Downgrading"
 msgstr "다운그레이드중"
 
@@ -420,768 +420,783 @@ msgstr "신뢰할 수 없는 패키지가 있습니다:"
 msgid "Transaction success!"
 msgstr "트랜잭션에 성공했습니다!"
 
-#: ../tools/zif-main.c:2766
+#: ../tools/zif-main.c:2806
 #, c-format
 msgid "The %s package is already installed"
 msgstr "%s 패키지는 이미 설치했습니다"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:2776
+#: ../tools/zif-main.c:2816
 msgid "All packages are already installed"
 msgstr "모든 패키지는 이미 설치했습니다"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:3000
+#: ../tools/zif-main.c:3050
 #, c-format
 msgid "%s is not already installed"
 msgstr "%s을(를) 아직 설치하지 않았습니다"
 
 #. TRANSLATORS: performing action
-#: ../tools/zif-main.c:3141
+#: ../tools/zif-main.c:3191
 msgid "Installing file"
 msgstr "파일 설치중"
 
 #. TRANSLATORS: performing action
-#: ../tools/zif-main.c:3474
+#: ../tools/zif-main.c:3524
 msgid "Checking manifests"
 msgstr "매니페스트 검사중"
 
-#: ../tools/zif-main.c:3495
+#: ../tools/zif-main.c:3545
 msgid "All manifest files were checked successfully"
 msgstr "모든 매니페스트 파일을 성공적으로 검사했습니다"
 
 #. TRANSLATORS: performing action
-#: ../tools/zif-main.c:3532
+#: ../tools/zif-main.c:3582
 msgid "Dumping manifest"
 msgstr "매니페스트 기록 저장중"
 
 #. TRANSLATORS: performing action
-#: ../tools/zif-main.c:3643
+#: ../tools/zif-main.c:3693
 msgid "Refreshing cache"
 msgstr "캐시 새로고치는 중"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:3752
+#: ../tools/zif-main.c:3802
 #, c-format
 msgid "The package is not installed"
 msgstr "패키지를 설치하지 않았습니다"
 
 #. TRANSLATORS: performing action
-#: ../tools/zif-main.c:3849
+#: ../tools/zif-main.c:3899
 msgid "Disabling repo"
 msgstr "저장소 비활성화중"
 
 #. TRANSLATORS: performing action
-#: ../tools/zif-main.c:3920
+#: ../tools/zif-main.c:3970
 msgid "Enabling repo"
 msgstr "저장소 활성화중"
 
 #. TRANSLATORS: performing action
-#: ../tools/zif-main.c:3999
+#: ../tools/zif-main.c:4049
 msgid "Getting repo list"
 msgstr "저장소 목록 가져오는 중"
 
-#: ../tools/zif-main.c:4181
+#: ../tools/zif-main.c:4231
 msgid "Specify a category"
 msgstr "분류 지정"
 
 #. TRANSLATORS: returning all packages that match a category
-#: ../tools/zif-main.c:4186
+#: ../tools/zif-main.c:4236
 msgid "Search category"
 msgstr "분류 검색"
 
 #. TRANSLATORS: user needs to specify something
-#: ../tools/zif-main.c:4247 ../tools/zif-main.c:4425 ../tools/zif-main.c:4501
-#: ../tools/zif-main.c:5204 ../tools/zif-main.c:5286 ../tools/zif-main.c:5368
-#: ../tools/zif-main.c:5453
+#: ../tools/zif-main.c:4297 ../tools/zif-main.c:4475 ../tools/zif-main.c:4551
+#: ../tools/zif-main.c:5254 ../tools/zif-main.c:5336 ../tools/zif-main.c:5418
+#: ../tools/zif-main.c:5503
 #, c-format
 msgid "No search term specified"
 msgstr "검색 단어를 지정하지 않았습니다"
 
 #. TRANSLATORS: searching by package details, not just name
-#: ../tools/zif-main.c:4252
+#: ../tools/zif-main.c:4302
 msgid "Searching details"
 msgstr "세부내용 검색중"
 
 #. TRANSLATORS: user needs to specify something
-#: ../tools/zif-main.c:4344
+#: ../tools/zif-main.c:4394
 msgid "Specify a filename"
 msgstr "파일 이름을 지정"
 
 #. TRANSLATORS: searching for a specific file
-#: ../tools/zif-main.c:4349
+#: ../tools/zif-main.c:4399
 msgid "Searching file"
 msgstr "파일 검색중"
 
 #. TRANSLATORS: searching by a specific group
-#: ../tools/zif-main.c:4430
+#: ../tools/zif-main.c:4480
 msgid "Search group"
 msgstr "그룹 검색"
 
 #. TRANSLATORS: search, based on the package name only
-#: ../tools/zif-main.c:4506
+#: ../tools/zif-main.c:4556
 msgid "Searching name"
 msgstr "이름 검색중"
 
 #. TRANSLATORS: used when the user did not explicitly specify a
 #. * list of updates to install
-#: ../tools/zif-main.c:4598
+#: ../tools/zif-main.c:4648
 msgid "Updating system"
 msgstr "시스템 업데이트중"
 
-#: ../tools/zif-main.c:4678 ../tools/zif-main.c:5085
+#: ../tools/zif-main.c:4728 ../tools/zif-main.c:5135
 msgid "Specify a distro name, e.g."
 msgstr "배포본 이름을 지정 하십시오. 예)."
 
 #. TRANSLATORS: upgrading to a new distro release, *not*
 #. * updating to a new package version
-#: ../tools/zif-main.c:4684 ../tools/zif-main.c:5111
+#: ../tools/zif-main.c:4734 ../tools/zif-main.c:5161
 msgid "Upgrading"
 msgstr "업그레이드중"
 
 #. TRANSLATORS: error message, invalid value
-#: ../tools/zif-main.c:4690 ../tools/zif-main.c:5117
+#: ../tools/zif-main.c:4740 ../tools/zif-main.c:5167
 msgid "Distribution name invalid"
 msgstr "배포본 이름이 잘못되었습니다"
 
 #. TRANSLATORS: error message, invalid value
-#: ../tools/zif-main.c:4697 ../tools/zif-main.c:5124
+#: ../tools/zif-main.c:4747 ../tools/zif-main.c:5174
 msgid "Only 'fedora' is supported"
 msgstr "'페도라'만 지원합니다"
 
 #. TRANSLATORS: error message, invalid value
-#: ../tools/zif-main.c:4705 ../tools/zif-main.c:5132
+#: ../tools/zif-main.c:4755 ../tools/zif-main.c:5182
 #, c-format
 msgid "Version number %i is invalid"
 msgstr "%i 버전 번호가 잘못되었습니다"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:4801
+#: ../tools/zif-main.c:4851
 #, c-format
 msgid "The %s package is not installed"
 msgstr "%s 패키지를 설치하지 않았습니다"
 
-#: ../tools/zif-main.c:4984
+#: ../tools/zif-main.c:5034
 msgid "No update detail"
 msgstr "업데이트 세부 내용이 없습니다"
 
-#: ../tools/zif-main.c:4999
+#: ../tools/zif-main.c:5049
 msgid "Kind:"
 msgstr "종류:"
 
-#: ../tools/zif-main.c:5003
+#: ../tools/zif-main.c:5053
 msgid "State:"
 msgstr "상태:"
 
-#: ../tools/zif-main.c:5007
+#: ../tools/zif-main.c:5057
 msgid "ID:"
 msgstr "ID:"
 
-#: ../tools/zif-main.c:5011
+#: ../tools/zif-main.c:5061
 msgid "Title:"
 msgstr "제목:"
 
-#: ../tools/zif-main.c:5015
+#: ../tools/zif-main.c:5065
 msgid "Description:"
 msgstr "설명:"
 
-#: ../tools/zif-main.c:5019
+#: ../tools/zif-main.c:5069
 msgid "Issued:"
 msgstr "등록:"
 
-#: ../tools/zif-main.c:5092
+#: ../tools/zif-main.c:5142
 msgid "Specify a update type, e.g."
 msgstr "업데이트 형식을 지정하십시오. 예)."
 
-#: ../tools/zif-main.c:5105
+#: ../tools/zif-main.c:5155
 msgid "Invalid update type, only these types are supported:"
 msgstr "잘못된 업데이트 형식입니다. 이 형식만 지원합니다:"
 
 #. TRANSLATORS: find out what package conflicts
-#: ../tools/zif-main.c:5209
+#: ../tools/zif-main.c:5259
 msgid "Conflicts"
 msgstr "충돌"
 
 #. TRANSLATORS: find out what package obsoletes
-#: ../tools/zif-main.c:5291
+#: ../tools/zif-main.c:5341
 msgid "Obsoletes"
 msgstr "오래됨"
 
 #. TRANSLATORS: find out what package provides
-#: ../tools/zif-main.c:5373
+#: ../tools/zif-main.c:5423
 msgid "Provides"
 msgstr "제공"
 
 #. TRANSLATORS: find out what package requires
-#: ../tools/zif-main.c:5458
+#: ../tools/zif-main.c:5508
 msgid "Requires"
 msgstr "필수"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:5550
+#: ../tools/zif-main.c:5600
 msgid "Command not found, valid commands are:"
 msgstr "명령을 찾을 수 없습니다. 유효한 명령은 다음과 같습니다:"
 
-#: ../tools/zif-main.c:5612
+#: ../tools/zif-main.c:5662
 #, c-format
 msgid "Welcome to the shell. Type '%s' to finish."
 msgstr "쉘에 잘 오셨습니다. 끝내려면 '%s'을(를) 입력하십시오."
 
 #. TRANSLATORS: used when the install database is being checked
-#: ../tools/zif-main.c:5835
+#: ../tools/zif-main.c:5885
 msgid "Checking database"
 msgstr "데이터베이스 검사중"
 
 #. TRANSLATORS: used when the install database is being set
-#: ../tools/zif-main.c:5923
+#: ../tools/zif-main.c:5973
 msgid "Setting key"
 msgstr "키 설정중"
 
 #. TRANSLATORS: used when the install database is being set
-#: ../tools/zif-main.c:5996
+#: ../tools/zif-main.c:6046
 msgid "Getting key"
 msgstr "키 가져오는 중"
 
 #. TRANSLATORS: used when the install database is being set
-#: ../tools/zif-main.c:6070
+#: ../tools/zif-main.c:6120
 msgid "Deleting key"
 msgstr "키 삭제중"
 
 #. TRANSLATORS: this is when the database key is deleted, e.g.
 #. * "from_repo deleted");
-#: ../tools/zif-main.c:6113
+#: ../tools/zif-main.c:6163
 msgid "deleted"
 msgstr "삭제함"
 
 #. TRANSLATORS: used when the install database is listed
-#: ../tools/zif-main.c:6149
+#: ../tools/zif-main.c:6199
 msgid "Listing keys"
 msgstr "키 조회중"
 
 #. TRANSLATORS: the user just did ctrl-c
-#: ../tools/zif-main.c:6596 ../tools/zif-main.c:6627
+#: ../tools/zif-main.c:6890 ../tools/zif-main.c:6921
 msgid "Cancellation in progress..."
 msgstr "진행과정중 취소..."
 
-#: ../tools/zif-main.c:6668
+#: ../tools/zif-main.c:6964
 msgid "Show extra debugging information"
 msgstr "추가 디버깅 정보 보이기"
 
-#: ../tools/zif-main.c:6670
+#: ../tools/zif-main.c:6966
 msgid "Enable low level profiling of Zif"
 msgstr "Zif의 저수준 프로파일링 활성화"
 
-#: ../tools/zif-main.c:6672
+#: ../tools/zif-main.c:6968
 msgid "Enable background mode to run using less CPU"
 msgstr "CPU를 적게 사용하여 실행하기 위해 백그라운드 모드 활성화"
 
-#: ../tools/zif-main.c:6674
+#: ../tools/zif-main.c:6970
 msgid "Work offline when possible"
 msgstr "가능하다면 오프라인으로 작업"
 
-#: ../tools/zif-main.c:6676
+#: ../tools/zif-main.c:6972
+msgid "Disable GPG signature checking"
+msgstr ""
+
+#: ../tools/zif-main.c:6974
 msgid "Take into account distribution versions when calculating updates"
 msgstr "업데이트를 계산할 때 배포본 버전 고려"
 
-#: ../tools/zif-main.c:6678
+#: ../tools/zif-main.c:6976
 msgid "Use different config file"
 msgstr "다른 설정 파일을 사용"
 
-#: ../tools/zif-main.c:6680
+#: ../tools/zif-main.c:6978
 msgid "Exclude certain packages"
 msgstr "일부 패키지 제외"
 
-#: ../tools/zif-main.c:6682
+#: ../tools/zif-main.c:6980
 msgid "Use different rpm database root"
 msgstr "다른 RPM 데이터베이스 루트 사용"
 
-#: ../tools/zif-main.c:6684
+#: ../tools/zif-main.c:6982
 msgid "Proxy server setting"
 msgstr "프록시 서버 설정"
 
-#: ../tools/zif-main.c:6686
+#: ../tools/zif-main.c:6984
 msgid "Permitted age of the cache in seconds, 0 for never (default)"
 msgstr "허용할 초 단위 캐시 수명입니다. 0은 설정하지 않습니다(기본)"
 
-#: ../tools/zif-main.c:6688
+#: ../tools/zif-main.c:6986
 msgid "Skip broken dependencies and repos rather than failing"
 msgstr "깨진 의존성과 저장소를 실패로 간주하기보다는 건너뜀"
 
-#: ../tools/zif-main.c:6690
+#: ../tools/zif-main.c:6988
 msgid "Only use the exact architecture packages for this machine"
 msgstr "이 장치에 대한 확실한 아키텍처 패키지만 사용"
 
-#: ../tools/zif-main.c:6692
+#: ../tools/zif-main.c:6990
 msgid "Assume yes to all questions"
 msgstr "문모든 질문에 예로 간주"
 
-#: ../tools/zif-main.c:6694
+#: ../tools/zif-main.c:6992
 msgid "Assume no to all questions"
 msgstr "모든 질문에 아니오로 간주"
 
-#: ../tools/zif-main.c:6696
+#: ../tools/zif-main.c:6994
 msgid "Enable one or more repositories"
 msgstr "하나 이상의 저장소 활성화"
 
-#: ../tools/zif-main.c:6698
+#: ../tools/zif-main.c:6996
 msgid "Disable one or more repositories"
 msgstr "하나 이상의 저장소 비활성화"
 
-#: ../tools/zif-main.c:6700
+#: ../tools/zif-main.c:6998
 msgid "Specify a directory of packages as a remote store"
 msgstr "패키지 디렉터리를 원격 저장소로 지정"
 
-#: ../tools/zif-main.c:6702
+#: ../tools/zif-main.c:7000
 msgid "Take all locks at startup rather than as required"
 msgstr "모든 잠금을 필수로 두기보다는 시작시 잠금조치"
 
+#: ../tools/zif-main.c:7002
+msgid "Show the version number and then quit"
+msgstr ""
+
 #. TRANSLATORS: we can't run as the user
-#: ../tools/zif-main.c:6870
+#: ../tools/zif-main.c:7176
 msgid "Cannot specify age when not a privileged user."
 msgstr "허용하지 않은 사용자가 접근했을 때 수명을 지정할 수 없습니다."
 
 #. TRANSLATORS: we can't download new stuff as a user
-#: ../tools/zif-main.c:6875
+#: ../tools/zif-main.c:7181
 msgid "Enabling offline mode as user unprivileged."
 msgstr "허가 받지 않은 사용자에게 오프라인 모드를 활성화 중입니다."
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6956
+#: ../tools/zif-main.c:7266
 msgid "Remove cached data"
 msgstr "캐시에 저장한 데이터를 제거합니다"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6961
+#: ../tools/zif-main.c:7271
 msgid "Download a package"
 msgstr "패키지를 다운로드합니다"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6966
+#: ../tools/zif-main.c:7276
 msgid "Find a given package given the ID"
 msgstr "주어진 ID로 주어진 패키지를 찾습니다"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6971
+#: ../tools/zif-main.c:7281
 msgid "Returns the list of categories"
 msgstr "분류 항목을 반환합니다"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6976
+#: ../tools/zif-main.c:7286
 msgid "List a package's dependencies"
 msgstr "패키지 의존성을 나열합니다"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6981
+#: ../tools/zif-main.c:7291
 msgid "Display details about a package or group of packages"
 msgstr "패키지 정보 또는 패키지 그룹 세부내용을 표시합니다"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6986
+#: ../tools/zif-main.c:7296
 msgid "List the files in a package"
 msgstr "패키지의 파일을 나열합니다"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6991
+#: ../tools/zif-main.c:7301
 msgid "Get the groups the system supports"
 msgstr "시스템에서 지원하는 그룹을 가져옵니다"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:6996
+#: ../tools/zif-main.c:7306
 msgid "List all packages"
 msgstr "모든 패키지를 나열합니다"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7001
+#: ../tools/zif-main.c:7311
 msgid "Check for available package updates"
 msgstr "사용할 수 있는 패키지 업데이트를 검사합니다"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7006
+#: ../tools/zif-main.c:7316
 msgid "Check for newer operating system versions"
 msgstr "새로운 운영 체제 버전을 검사합니다"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7011
+#: ../tools/zif-main.c:7321
 msgid "Get an expanded value from the config file"
 msgstr "설정 파일에서 확장 값을 가져옵니다"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7016
+#: ../tools/zif-main.c:7326
 msgid "Installs the build dependencies for a given package"
 msgstr "주어진 패키지에 대한 빌드 의존성을 설치합니다"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7021
+#: ../tools/zif-main.c:7331
 msgid "Display a helpful usage message"
 msgstr "유용한 사용법 메시지를 표시합니다"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7026
+#: ../tools/zif-main.c:7336
 msgid "Install a package"
 msgstr "패키지를 설치합니다"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7031
+#: ../tools/zif-main.c:7341
 msgid "Downgrade a package to a previous version"
 msgstr "이전 버전으로 패키지를 다운그레이드합니다"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7036
+#: ../tools/zif-main.c:7346
 msgid "Install a local package"
 msgstr "지역 패키지를 설치합니다"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7041
+#: ../tools/zif-main.c:7351
 msgid "Check a transaction manifest"
 msgstr "트랜잭션 매니페스트를 검사합니다"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7046
+#: ../tools/zif-main.c:7356
 msgid "Dump a transaction manifest to a file"
 msgstr "트랜잭션 매니페스트를 파일에 저장합니다"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7051
+#: ../tools/zif-main.c:7361
 msgid "Generate the metadata cache"
 msgstr "메타데이터 캐시를 생성합니다"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7056
+#: ../tools/zif-main.c:7366
 msgid "Remove a package"
 msgstr "패키지를 제거합니다"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7061
+#: ../tools/zif-main.c:7371
 msgid "Remove a package with dependencies"
 msgstr "패키지와 의존성을 제거합니다"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7066
+#: ../tools/zif-main.c:7376
 msgid "Disable a specific software repository"
 msgstr "지정한 프로그램 저장소를 비활성화합니다"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7071
+#: ../tools/zif-main.c:7381
 msgid "Enable a specific software repository"
 msgstr "지정한 프로그램 저장소를 활성화합니다"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7076
+#: ../tools/zif-main.c:7386
 msgid "Display the configured software repositories"
 msgstr "설정한 프로그램 저장소를 표시합니다"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7081
+#: ../tools/zif-main.c:7391
 msgid "Find a given package name"
 msgstr "주어진 패키지 이름을 찾습니다"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7086
+#: ../tools/zif-main.c:7396
 msgid "Search package details for the given category"
 msgstr "주어진 분류에 대한 패키지 세부설명을 검색합니다"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7091
+#: ../tools/zif-main.c:7401
 msgid "Search package details for the given string"
 msgstr "주어진 문자열에 대한 패키지 세부설명을 검색합니다"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7096
+#: ../tools/zif-main.c:7406
 msgid "Search packages for the given filename"
 msgstr "주어진 파일 이름에 대한 패키지를 검색합니다"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7101
+#: ../tools/zif-main.c:7411
 msgid "Search packages in the given group"
 msgstr "주어진 그룹 이름으로 패키지를 검색합니다"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7106
+#: ../tools/zif-main.c:7416
 msgid "Search package name for the given string"
 msgstr "주어진 문자열에 대한 패키지 이름을 검색합니다"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7111
+#: ../tools/zif-main.c:7421
 msgid "Run an interactive shell"
 msgstr "대화형 쉘을 실행합니다"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7116
+#: ../tools/zif-main.c:7426
 msgid "Update a package to the newest available version"
 msgstr "새로 사용할 수 있는 버전으로 패키지를 업데이트합니다"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7121
+#: ../tools/zif-main.c:7431
 msgid "Update a package taking into account distribution version"
 msgstr "배포 버전을 고려하여 패키지를 업데이트합니다"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7126
+#: ../tools/zif-main.c:7436
 msgid "Display details about an update"
 msgstr "업데이트 정보 세부사항을 표시합니다"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7131
+#: ../tools/zif-main.c:7441
 msgid "Upgrade the operating system to a newer version"
 msgstr "운영체제를 새 버전으로 업그레이드합니다"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7136
+#: ../tools/zif-main.c:7446
 msgid "Live-upgrade the operating system to a newer version"
 msgstr "운영체제를 새 버전으로 라이브 업그레이드합니다"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7141
+#: ../tools/zif-main.c:7451
 msgid "Find what package conflicts with the given value"
 msgstr "주어진 값으로 어떤 패키지가 충돌하는지 찾아봅니다"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7146
+#: ../tools/zif-main.c:7456
 msgid "Find what package obsoletes the given value"
 msgstr "주어진 값으로 어떤 패키지가 오래되었는지 찾아봅니다"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7151
+#: ../tools/zif-main.c:7461
 msgid "Find what package provides the given value"
 msgstr "주어진 값으로 어떤 패키지를 제공하는지 찾아봅니다"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7156
+#: ../tools/zif-main.c:7466
 msgid "Find what package requires the given value"
 msgstr "주어진 값으로 어떤 패키지가 필요한지 찾아봅니다"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7161
+#: ../tools/zif-main.c:7471
 msgid "Check for problems in the installed database"
 msgstr "설치한 데이터페이스의 문제점을 검사합니다"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7166
+#: ../tools/zif-main.c:7476
 msgid "Get a value in the package database"
 msgstr "패키지 데이터베이스의 값을 가져옵니다"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7171
+#: ../tools/zif-main.c:7481
 msgid "Set a value in the installed package database"
 msgstr "패키지 데이터베이스에 값을 설정합니다"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7176
+#: ../tools/zif-main.c:7486
 msgid "Remove a value from the installed package database"
 msgstr "설치한 패키지 데이터베이스의 값을 제거합니다"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7181
+#: ../tools/zif-main.c:7491
 msgid "List values from the installed package database"
 msgstr "설치한 패키지 데이터베이스의 값을 조회합니다"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7186
+#: ../tools/zif-main.c:7496
 msgid "Gets the provides for a given package"
 msgstr "주어진 패키지의 제공 요소를 가져옵니다"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7191
+#: ../tools/zif-main.c:7501
 msgid "Gets the requires for a given package"
 msgstr "주어진 패키지의 필수 요소를 가져옵니다"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7196
+#: ../tools/zif-main.c:7506
 msgid "Gets the conflicts for a given package"
 msgstr "주어진 패키지의 충돌 요소를 가져옵니다"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7201
+#: ../tools/zif-main.c:7511
 msgid "Gets the obsoletes for a given package"
 msgstr "주어진 패키지의 오래된 요소를 가져옵니다"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7206
+#: ../tools/zif-main.c:7516
 msgid "Gets the transaction history list"
 msgstr "트랜잭션 기록 목록을 가져옵니다"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7211
+#: ../tools/zif-main.c:7521
 msgid "Gets the transaction history for a specified package"
 msgstr "지정한 패키지에 대한 트랜잭션 기록을 가져옵니다"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7216
+#: ../tools/zif-main.c:7526
 msgid "Imports the history data from a legacy database"
 msgstr "레거시 데이터베이스에서 기록 데이터를 가져옵니다"
 
 #. TRANSLATORS: command description
-#: ../tools/zif-main.c:7221
+#: ../tools/zif-main.c:7531
 msgid "Shows a list of packages that depend on a specified package"
 msgstr "지정한 페키지에 의존하는 패키지 목록을 보여줍니다"
 
+#. TRANSLATORS: command description
+#: ../tools/zif-main.c:7537
+msgid ""
+"Shows a tree of packages that a specified package pulls as dependencies "
+"(including indirect ones)"
+msgstr ""
+
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7249
+#: ../tools/zif-main.c:7565
 msgid "Cancelled"
 msgstr "취소함"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7253
+#: ../tools/zif-main.c:7569
 msgid "The system state was invalid"
 msgstr "시스템 상태가 잘못되었습니다"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7257
+#: ../tools/zif-main.c:7573
 msgid "Unhandled state error"
 msgstr "처리하지 못한 상태 오류"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7263
+#: ../tools/zif-main.c:7579
 msgid "The transaction failed"
 msgstr "트랜잭션에 실패했습니다"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7267
+#: ../tools/zif-main.c:7583
 msgid "Nothing to do"
 msgstr "처리 사항이 없습니다"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7271
+#: ../tools/zif-main.c:7587
 msgid "No supported"
 msgstr "지원하지 않습니다"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7275
+#: ../tools/zif-main.c:7591
 msgid "The transaction conflicts"
 msgstr "트랜잭션이 충돌하였습니다"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7279
+#: ../tools/zif-main.c:7595
 msgid "Unhandled transaction error"
 msgstr "처리하지 못한 트랜잭션 오류"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7285
+#: ../tools/zif-main.c:7601
 msgid "Failed to store"
 msgstr "저장에 실패했습니다"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7289
+#: ../tools/zif-main.c:7605
 msgid "Failed as offline"
 msgstr "오프라인 상태에서 실패했습니다"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7293
+#: ../tools/zif-main.c:7609
 msgid "Failed to find"
 msgstr "찾기에 실패했습니다"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7297
+#: ../tools/zif-main.c:7613
 msgid "Failed to download"
 msgstr "다운로드에 실패했습니다"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7301
+#: ../tools/zif-main.c:7617
 msgid "Store array is empty"
 msgstr "저장한 배열이 비어있습니다"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7305
+#: ../tools/zif-main.c:7621
 msgid "Not supported"
 msgstr "지원하지 않습니다"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7309 ../tools/zif-main.c:7387
+#: ../tools/zif-main.c:7625 ../tools/zif-main.c:7703
 msgid "Not locked"
 msgstr "잠금 상태가 아닙니다"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7313
+#: ../tools/zif-main.c:7629
 msgid "There are multiple matches"
 msgstr "일치 요소가 여러개 있습니다"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7317
+#: ../tools/zif-main.c:7633
 msgid "Not enabled"
 msgstr ""
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7321
+#: ../tools/zif-main.c:7637
 msgid "Unhandled store error"
 msgstr "처리하지 못한 저장 오류"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7327
+#: ../tools/zif-main.c:7643
 msgid "Package operation failed"
 msgstr "패키지 처리에 실패했습니다"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7331
+#: ../tools/zif-main.c:7647
 msgid "Unhandled package error"
 msgstr "처리하지 못한 패키지 오류"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7337
+#: ../tools/zif-main.c:7653
 msgid "History operation failed"
 msgstr "기록 처리에 실패했습니다"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7341
+#: ../tools/zif-main.c:7657
 msgid "Unhandled history error"
 msgstr "처리하지 못한 기록 오류"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7347
+#: ../tools/zif-main.c:7663
 msgid "Settings operation failed"
 msgstr "설정 처리에 실패했습니다"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7351
+#: ../tools/zif-main.c:7667
 msgid "Unhandled config error"
 msgstr "처리하지 못한 설정 오류"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7357
+#: ../tools/zif-main.c:7673
 msgid "Download failed"
 msgstr "다운로드에 실패했습니다"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7361
+#: ../tools/zif-main.c:7677
 msgid "Download failed as permission denied"
 msgstr "권한이 거부되어 다운로드에 실패했습니다"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7365
+#: ../tools/zif-main.c:7681
 msgid "No space left on device"
 msgstr "장치에 빈 공간이 없습니다"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7369
+#: ../tools/zif-main.c:7685
 msgid "Download was cancelled"
 msgstr "다운로드를 취소했습니다"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7373
+#: ../tools/zif-main.c:7689
 msgid "Unhandled download error"
 msgstr "처리하지 못한 다운로드 오류"
 
 #. TRANSLATORS: error message
 #. TRANSLATORS: we suck
-#: ../tools/zif-main.c:7379 ../tools/zif-main.c:7401 ../tools/zif-main.c:7412
+#: ../tools/zif-main.c:7695 ../tools/zif-main.c:7717 ../tools/zif-main.c:7728
 msgid "Failed"
 msgstr "실패"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7383
+#: ../tools/zif-main.c:7699
 msgid "Already locked"
 msgstr "이미 잠겨있습니다"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7391
+#: ../tools/zif-main.c:7707
 msgid "No permissions"
 msgstr "권한이 없습니다"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7395
+#: ../tools/zif-main.c:7711
 msgid "Unhandled metadata error"
 msgstr "처리하지 못한 메타데이터 오류"
 
 #. TRANSLATORS: error message
-#: ../tools/zif-main.c:7405
+#: ../tools/zif-main.c:7721
 msgid "Unhandled repos error"
 msgstr "처리하지 못한 저장소 오류"
