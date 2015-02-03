@@ -62,8 +62,6 @@ AC_DEFINE_UNQUOTED([GETTEXT_PACKAGE],["$GETTEXT_PACKAGE"],[gettext domain])
 # set up gtk-doc
 GTK_DOC_CHECK(1.9)
 
-AC_PATH_PROG(GLIB_GENMARSHAL, glib-genmarshal)
-
 dnl ---------------------------------------------------------------------------
 dnl - Able to use gpgme functionality
 dnl ---------------------------------------------------------------------------

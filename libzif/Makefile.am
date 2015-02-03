@@ -105,8 +105,6 @@ libzif_la_SOURCES =						\
 	zif-lock.h						\
 	zif-manifest.c						\
 	zif-manifest.h						\
-	zif-marshal.c						\
-	zif-marshal.h						\
 	zif-md.c						\
 	zif-md-comps.c						\
 	zif-md-comps.h						\
@@ -190,19 +188,6 @@ libzif_la_SOURCES =						\
 	zif-utils-private.h					\
 	zif-version.h
 
-zif-marshal.c: zif-marshal.list
-	echo "#include \"zif-marshal.h\"" > $@ && \
-	@GLIB_GENMARSHAL@ $< --prefix=zif_marshal --body >> $@
-
-zif-marshal.h: zif-marshal.list
-	@GLIB_GENMARSHAL@ $< --prefix=zif_marshal --header > $@
-
-BUILT_SOURCES = 						\
-	zif-marshal.c						\
-	zif-marshal.h
-
-CLEANFILES = $(BUILT_SOURCES)
-
 libzif_la_LIBADD =						\
 	$(GLIB_LIBS)						\
 	$(SQLITE_LIBS)						\
@@ -223,6 +208,8 @@ libzif_la_LDFLAGS =						\
 
 libzif_la_CFLAGS =						\
 	$(WARNINGFLAGS_C)
+
+CLEANFILES =
 
 if ZIF_BUILD_TESTS
 check_PROGRAMS =						\
@@ -308,7 +295,6 @@ install-data-hook:
 
 EXTRA_DIST =							\
 	zif-version.h.in					\
-	zif-marshal.list					\
 	zif.pc.in
 
 clean-local:

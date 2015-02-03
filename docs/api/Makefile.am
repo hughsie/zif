@@ -38,7 +38,6 @@ CFILE_GLOB=$(top_srcdir)/libzif/zif-*.c
 # Header files to ignore when scanning.
 IGNORE_HFILES =						\
 	config.h					\
-	zif-marshal.h					\
 	$(NULL)
 
 # Images to copy into HTML directory.

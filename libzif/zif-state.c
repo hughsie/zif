@@ -83,7 +83,6 @@
 #include <signal.h>
 #include <rpm/rpmsq.h>
 
-#include "zif-marshal.h"
 #include "zif-utils.h"
 #include "zif-state-private.h"
 
@@ -1779,7 +1778,7 @@ zif_state_class_init (ZifStateClass *klass)
 		g_signal_new ("action-changed",
 			      G_TYPE_FROM_CLASS (object_class), G_SIGNAL_RUN_LAST,
 			      G_STRUCT_OFFSET (ZifStateClass, action_changed),
-			      NULL, NULL, zif_marshal_VOID__UINT_STRING,
+			      NULL, NULL, g_cclosure_marshal_generic,
 			      G_TYPE_NONE, 2, G_TYPE_UINT, G_TYPE_STRING);
 
 	signals [SIGNAL_PACKAGE_PROGRESS_CHANGED] =
