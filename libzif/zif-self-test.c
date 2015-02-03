@@ -4687,10 +4687,7 @@ int
 main (int argc, char **argv)
 {
 	gint retval;
-	g_type_init ();
-#if (GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION < 31)
-	g_thread_init (NULL);
-#endif
+
 	g_test_init (&argc, &argv, NULL);
 
 	/* only critical and error are fatal */

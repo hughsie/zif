@@ -36,11 +36,6 @@ main (int argc, char **argv)
 	ZifStore *store;
 	ZifRepos *repos;
 
-	g_type_init ();
-#if (GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION < 31)
-	g_thread_init (NULL);
-#endif
-
 	/* the config file provides defaults */
 	config = zif_config_new ();
 	ret = zif_config_set_filename (config, "../etc/zif.conf", &error);
