@@ -39,15 +39,11 @@
 #include <zlib.h>
 #include <lzma.h>
 #include <fnmatch.h>
-
-#ifdef USE_GPGME
 #include <gpgme.h>
-#endif
 
 #include "zif-utils-private.h"
 #include "zif-package.h"
 
-#ifdef USE_GPGME
 /**
  * zif_utils_gpg_check_signature:
  **/
@@ -101,14 +97,12 @@ zif_utils_gpg_check_signature (gpgme_signature_t signature,
 	}
 	return ret;
 }
-#endif
 
 gboolean
 zif_utils_gpg_verify (const gchar *filename,
 		      const gchar *filename_gpg,
 		      GError **error)
 {
-#ifdef USE_GPGME
 	gboolean ret = FALSE;
 	gpgme_ctx_t ctx = NULL;
 	gpgme_data_t repomd_gpg = NULL;
@@ -215,10 +209,6 @@ out:
 	gpgme_data_release (repomd_gpg);
 	gpgme_data_release (repomd);
 	return ret;
-#else
-	g_set_error_literal (error, 1, 0, "gpg not supported, cannot verify");
-	return TRUE;
-#endif
 }
 
 /**

@@ -62,28 +62,6 @@ AC_DEFINE_UNQUOTED([GETTEXT_PACKAGE],["$GETTEXT_PACKAGE"],[gettext domain])
 # set up gtk-doc
 GTK_DOC_CHECK(1.9)
 
-dnl ---------------------------------------------------------------------------
-dnl - Able to use gpgme functionality
-dnl ---------------------------------------------------------------------------
-AC_ARG_ENABLE(gpgme, AS_HELP_STRING([--enable-gpgme],[Build gpgme functionality]),
-	      build_gpgme=$enableval,build_gpgme=yes)
-if test x$build_gpgme = xyes; then
-	AC_MSG_CHECKING([for gpgme])
-	if ! test -x "/usr/bin/gpgme-config"; then
-		AC_MSG_ERROR([Cannot locate gpgme])
-	else
-		AC_MSG_RESULT([yes])
-		GPGME_CFLAGS="`\"/usr/bin/gpgme-config\" --cflags`"
-		GPGME_LIBS="`\"/usr/bin/gpgme-config\" --libs`"
-		AC_SUBST([GPGME_CFLAGS])
-		AC_SUBST([GPGME_LIBS])
-		AC_DEFINE(USE_GPGME, 1, [if we should use gpgme])
-	fi
-	build_gpgme=yes
-else
-	build_gpgme=no
-fi
-
 if test "$GCC" = "yes"; then
 	WARNINGFLAGS_C="$WARNINGFLAGS_C -Wall"
 	WARNINGFLAGS_C="$WARNINGFLAGS_C -Wcast-align -Wno-uninitialized"
@@ -124,6 +102,20 @@ PKG_CHECK_MODULES(GLIB, glib-2.0 >= $GLIB_REQUIRED gobject-2.0 gthread-2.0)
 PKG_CHECK_MODULES(SQLITE, sqlite3)
 PKG_CHECK_MODULES(RPM, rpm)
 PKG_CHECK_MODULES(SOUP, libsoup-2.4)
+
+dnl ---------------------------------------------------------------------------
+dnl - Able to use gpgme
+dnl ---------------------------------------------------------------------------
+AC_MSG_CHECKING([for gpgme])
+if ! test -x "/usr/bin/gpgme-config"; then
+	AC_MSG_ERROR([Cannot locate gpgme])
+else
+	AC_MSG_RESULT([yes])
+	GPGME_CFLAGS="`\"/usr/bin/gpgme-config\" --cflags`"
+	GPGME_LIBS="`\"/usr/bin/gpgme-config\" --libs`"
+	AC_SUBST([GPGME_CFLAGS])
+	AC_SUBST([GPGME_LIBS])
+fi
 
 dnl ---------------------------------------------------------------------------
 dnl - use xattr to speed up checksumming files using the mtime as a key
