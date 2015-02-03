@@ -1192,6 +1192,8 @@ zif_file_get_uncompressed_name (const gchar *filename)
 	len = strlen (tmp);
 	if (len > 4 && g_str_has_suffix (tmp, ".gz"))
 		tmp[len-3] = '\0';
+	else if (len > 4 && g_str_has_suffix (tmp, ".xz"))
+		tmp[len-3] = '\0';
 	else if (len > 5 && g_str_has_suffix (tmp, ".bz2"))
 		tmp[len-4] = '\0';
 
