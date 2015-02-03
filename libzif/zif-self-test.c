@@ -1183,16 +1183,9 @@ zif_download_func (void)
 	g_assert_cmpint (_updates, >, 5);
 
 	/* setup cancel */
-#if GLIB_CHECK_VERSION(2,31,7)
 	g_thread_new ("zif-self-test",
 		      (GThreadFunc) zif_download_cancel_thread_cb,
 		      cancellable);
-#else
-	g_thread_create ((GThreadFunc) zif_download_cancel_thread_cb,
-			 cancellable,
-			 FALSE,
-			 NULL);
-#endif
 
 	zif_state_reset (state);
 	ret = zif_download_file (download, "http://people.freedesktop.org/~hughsient/temp/Screenshot.png",

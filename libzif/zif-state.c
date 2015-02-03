@@ -79,9 +79,7 @@
 #endif
 
 #include <glib.h>
-#if GLIB_CHECK_VERSION(2,29,19)
 #include <glib-unix.h>
-#endif
 #include <signal.h>
 #include <rpm/rpmsq.h>
 
@@ -1210,7 +1208,6 @@ out:
 	return child;
 }
 
-#if GLIB_CHECK_VERSION(2,29,19)
 static gboolean
 zif_state_cancel_on_signal_cb (gpointer user_data)
 {
@@ -1220,7 +1217,6 @@ zif_state_cancel_on_signal_cb (gpointer user_data)
 	g_cancellable_cancel (cancellable);
 	return FALSE;
 }
-#endif
 
 /**
  * zif_state_cancel_on_signal:
@@ -1243,14 +1239,12 @@ zif_state_cancel_on_signal (ZifState *state, gint signum)
 	/* so we can't create this */
 	g_assert (state->priv->cancellable != NULL);
 
-#if GLIB_CHECK_VERSION(2,29,19)
 	/* undo librpms attempt to steal SIGINT, and instead fail
 	 * the transaction in a nice way */
 	rpmsqEnable (-SIGINT, NULL);
 	g_unix_signal_add (signum,
 			   zif_state_cancel_on_signal_cb,
 			   state->priv->cancellable);
-#endif
 }
 
 /**

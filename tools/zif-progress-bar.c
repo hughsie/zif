@@ -97,11 +97,7 @@ zif_progress_bar_redraw (ZifProgressBar *progress_bar)
 
 	/* print speed */
 	if (priv->speed != 0) {
-#if GLIB_CHECK_VERSION(2,30,0)
 		speed_tmp = g_format_size (priv->speed);
-#else
-		speed_tmp = g_format_size_for_display (priv->speed);
-#endif
 		g_print (" [%s/s]", speed_tmp);
 		section += strlen (speed_tmp) + 6;
 		g_free (speed_tmp);

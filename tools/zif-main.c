@@ -25,9 +25,7 @@
 #include <glib/gi18n.h>
 #include <glib/gstdio.h>
 #include <glib.h>
-#if GLIB_CHECK_VERSION(2,29,19)
 #include <glib-unix.h>
-#endif
 
 #include <errno.h>
 #include <locale.h>
@@ -2423,14 +2421,6 @@ out:
 	g_ptr_array_unref (install);
 	return size_retval;
 }
-
-#if !GLIB_CHECK_VERSION(2,29,14)
-static gchar *
-g_format_size (guint64 size)
-{
-	return g_strdup_printf ("%.1f Mb", (gdouble) size / (1024 * 1024));
-}
-#endif
 
 /**
  * zif_auto_add_debuginfo_repos:
@@ -6873,8 +6863,6 @@ out:
 	return ret;
 }
 
-#if GLIB_CHECK_VERSION(2,29,19)
-
 /**
  * zif_main_sigint_cb:
  **/
@@ -6897,33 +6885,6 @@ zif_main_sigint_cb (gpointer user_data)
 
 	return FALSE;
 }
-
-#else
-
-static ZifState *_state = NULL;
-
-/**
- * zif_main_sigint_cb:
- **/
-static void
-zif_main_sigint_cb (int sig)
-{
-	GCancellable *cancellable;
-	g_debug ("Handling SIGINT");
-
-	/* restore default ASAP, as the cancels might hang */
-	signal (SIGINT, SIG_DFL);
-
-	/* cancel any tasks still running */
-	if (_state != NULL) {
-		cancellable = zif_state_get_cancellable (_state);
-		/* TRANSLATORS: the user just did ctrl-c */
-		g_print ("%s\n", _("Cancellation in progress..."));
-		g_cancellable_cancel (cancellable);
-	}
-}
-
-#endif
 
 /**
  * main:
@@ -7040,14 +7001,10 @@ main (int argc, char *argv[])
 	/* save in the private data */
 	priv->assume_no = assume_no;
 
-#if GLIB_CHECK_VERSION(2,29,19)
 	/* do stuff on ctrl-c */
 	g_unix_signal_add (SIGINT,
 			   zif_main_sigint_cb,
 			   priv);
-#else
-	signal (SIGINT, zif_main_sigint_cb);
-#endif
 
 	/* don't let GIO start it's own session bus */
 	g_unsetenv ("DBUS_SESSION_BUS_ADDRESS");
@@ -7246,11 +7203,6 @@ main (int argc, char *argv[])
 		/* restore progress */
 		zif_state_reset (priv->state);
 	}
-
-#if !GLIB_CHECK_VERSION(2,29,19)
-	/* for the signal handler */
-	_state = priv->state;
-#endif
 
 	/* add commands */
 	priv->cmd_array = g_ptr_array_new_with_free_func ((GDestroyNotify) zif_cmd_item_free);

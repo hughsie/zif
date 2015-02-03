@@ -5940,17 +5940,6 @@ out:
 	return ret;
 }
 
-#if !GLIB_CHECK_VERSION(2,28,0)
-#include <sys/time.h>
-static gint64
-g_get_real_time (void)
-{
-	struct timeval tv;
-	gettimeofday (&tv, NULL);
-	return (tv.tv_sec * G_USEC_PER_SEC) + tv.tv_usec;
-}
-#endif
-
 /**
  * zif_transaction_write_history:
  * @transaction: A #ZifTransaction
