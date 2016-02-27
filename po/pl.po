@@ -3,16 +3,16 @@
 # This file is distributed under the same license as the PACKAGE package.
 # 
 # Translators:
-# Piotr Drąg <piotrdrag@gmail.com>, 2011-2012
+# Piotr Drąg <piotrdrag@gmail.com>, 2011-2013,2015
 # Richard Hughes <richard@hughsie.com>, 2011
 msgid ""
 msgstr ""
 "Project-Id-Version: Zif\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-05-08 08:34+0100\n"
-"PO-Revision-Date: 2013-05-08 08:11+0000\n"
-"Last-Translator: Richard Hughes <richard@hughsie.com>\n"
-"Language-Team: Polish (http://www.transifex.com/projects/p/freedesktop/language/pl/)\n"
+"PO-Revision-Date: 2015-08-27 15:20+0000\n"
+"Last-Translator: Piotr Drąg <piotrdrag@gmail.com>\n"
+"Language-Team: Polish (http://www.transifex.com/freedesktop/zif/language/pl/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -548,7 +548,7 @@ msgstr "Nieprawidłowa nazwa dystrybucji"
 #. TRANSLATORS: error message, invalid value
 #: ../tools/zif-main.c:4747 ../tools/zif-main.c:5174
 msgid "Only 'fedora' is supported"
-msgstr "Obsługiwana jest tylko \"fedora\""
+msgstr "Obsługiwana jest tylko „fedora”"
 
 #. TRANSLATORS: error message, invalid value
 #: ../tools/zif-main.c:4755 ../tools/zif-main.c:5182
@@ -626,7 +626,7 @@ msgstr "Nie odnaleziono polecenia, prawidłowe to:"
 #: ../tools/zif-main.c:5662
 #, c-format
 msgid "Welcome to the shell. Type '%s' to finish."
-msgstr "Witamy w powłoce. Wpisanie \"%s\" zakończy."
+msgstr "Witamy w powłoce. Wpisanie „%s” zakończy."
 
 #. TRANSLATORS: used when the install database is being checked
 #: ../tools/zif-main.c:5885
@@ -662,7 +662,7 @@ msgstr "Wyświetlanie listy kluczy"
 #. TRANSLATORS: the user just did ctrl-c
 #: ../tools/zif-main.c:6890 ../tools/zif-main.c:6921
 msgid "Cancellation in progress..."
-msgstr "Trwa anulowanie..."
+msgstr "Trwa anulowanie…"
 
 #: ../tools/zif-main.c:6964
 msgid "Show extra debugging information"
@@ -682,7 +682,7 @@ msgstr "Działa w trybie offline, kiedy to możliwe"
 
 #: ../tools/zif-main.c:6972
 msgid "Disable GPG signature checking"
-msgstr ""
+msgstr "Wyłącza sprawdzanie podpisów GPG"
 
 #: ../tools/zif-main.c:6974
 msgid "Take into account distribution versions when calculating updates"
@@ -742,7 +742,7 @@ msgstr "Zajmuje wszystkie blokady podczas uruchamiania, zamiast w razie potrzeby
 
 #: ../tools/zif-main.c:7002
 msgid "Show the version number and then quit"
-msgstr ""
+msgstr "Wyświetla numer wersji i kończy działanie"
 
 #. TRANSLATORS: we can't run as the user
 #: ../tools/zif-main.c:7176
@@ -1029,7 +1029,7 @@ msgstr "Wyświetla listę pakietów, które zależą od podanego pakietu"
 msgid ""
 "Shows a tree of packages that a specified package pulls as dependencies "
 "(including indirect ones)"
-msgstr ""
+msgstr "Wyświetla drzewo pakietów, które podany pakiet wymaga jako zależności (w tym niebezpośrednio)"
 
 #. TRANSLATORS: error message
 #: ../tools/zif-main.c:7565

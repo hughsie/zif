@@ -1,8 +1,9 @@
 [main]
-host = http://www.transifex.net
+host = https://www.transifex.com
 
 [zif.master]
 file_filter = po/<lang>.po
 source_file = po/Zif.pot
 source_lang = en
+type = PO
 
